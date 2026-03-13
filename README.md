@@ -62,7 +62,7 @@ git push -u origin main
 
 **Growth Hybrid (24):** AMD, AEM, ATAT, CVX, CWAN, CNX, COIN, EIX, FINV, FTNT, GFI, SUPV, HRMY, HUT, KEYS, MARA, NVDA, NXPI, OKE, PDD, HOOD, SYF, TSM, TOL
 
-**Digital Asset ETFs (2):** IBIT, ETHA
+**Digital Asset ETFs (2):** IBIT, ETHA 
 
 ---
 
