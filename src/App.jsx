@@ -45,6 +45,8 @@ const GAME_OVERLAY = { key: "gameType", label: "Infinite vs Finite", icon: "♾�
 // ── API Configuration ───────────────────────────────────────────────────────
 const ALPACA_BASE = "https://data.alpaca.markets";
 const ALPACA_PAPER_BASE = "https://paper-api.alpaca.markets";
+const ENV_API_KEY = import.meta.env.VITE_ALPACA_KEY || "";
+const ENV_API_SECRET = import.meta.env.VITE_ALPACA_SECRET || "";
 
 // ── Utility Functions ───────────────────────────────────────────────────────
 const fmt = (n) => {
@@ -67,8 +69,8 @@ const fmtVol = (n) => {
 
 // ── Main App ────────────────────────────────────────────────────────────────
 export default function IOWNDashboard() {
-  const [apiKey, setApiKey] = useState("");
-  const [apiSecret, setApiSecret] = useState("");
+  const [apiKey, setApiKey] = useState(ENV_API_KEY);
+  const [apiSecret, setApiSecret] = useState(ENV_API_SECRET);
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
   const [quotes, setQuotes] = useState({});
@@ -159,6 +161,13 @@ export default function IOWNDashboard() {
       return () => clearInterval(intervalRef.current);
     }
   }, [authenticated, refreshInterval, fetchSnapshots]);
+
+  // Auto-authenticate if env keys are baked in at build time
+  useEffect(() => {
+    if (ENV_API_KEY && ENV_API_SECRET && !authenticated) {
+      authenticate();
+    }
+  }, []);
 
   // ── Screening Score Management ──────────────────────────────────────────
   const updateScore = (symbol, dimension, value) => {
