@@ -18,12 +18,12 @@ const loadSleeves = () => { try { const s = localStorage.getItem("iown_sleeves")
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
 const BENCHMARKS = [
-  { sym: "IUSG", name: "Growth BM" },
-  { sym: "DVY", name: "Dividend BM" },
-  { sym: "IWS", name: "Mid-Val BM" },
-  { sym: "SPY", name: "S&P 500" },
-  { sym: "QQQ", name: "Nasdaq 100" },
-  { sym: "DIA", name: "Dow Jones" },
+  { sym: "IUSG", name: "IUSG" },
+  { sym: "DVY", name: "DVY" },
+  { sym: "IWS", name: "IWS" },
+  { sym: "SPY", name: "SPY" },
+  { sym: "QQQ", name: "QQQ" },
+  { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
 const BASE = "https://data.alpaca.markets";
