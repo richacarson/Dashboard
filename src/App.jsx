@@ -141,50 +141,6 @@ function ChartOverlay({ symbol, onClose }) {
   );
 }
 
-/* ── Pull to Refresh ── */
-function usePullToRefresh(onRefresh, enabled) {
-  const [pullY, setPullY] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
-  const startY = useRef(0);
-  const canPull = useRef(false);
-  const scrollRef = useRef(null);
-  const threshold = 80;
-
-  const onTouchStart = useCallback((e) => {
-    if (!enabled || refreshing) return;
-    const el = scrollRef.current;
-    if (el && el.scrollTop <= 0) {
-      startY.current = e.touches[0].clientY;
-      canPull.current = true;
-    } else {
-      canPull.current = false;
-    }
-  }, [enabled, refreshing]);
-
-  const onTouchMove = useCallback((e) => {
-    if (!canPull.current || refreshing) return;
-    const delta = e.touches[0].clientY - startY.current;
-    if (delta > 5) {
-      setPullY(Math.min(delta * 0.5, 120));
-    }
-  }, [refreshing]);
-
-  const onTouchEnd = useCallback(async () => {
-    if (!canPull.current) return;
-    canPull.current = false;
-    if (pullY >= threshold && !refreshing) {
-      setRefreshing(true);
-      setPullY(0);
-      await onRefresh();
-      setRefreshing(false);
-    } else {
-      setPullY(0);
-    }
-  }, [pullY, refreshing, onRefresh]);
-
-  return { pullY, refreshing, scrollRef, onTouchStart, onTouchMove, onTouchEnd };
-}
-
 /* ═══════════════════════════════════════════════════════════════════
    MAIN APP
    ═══════════════════════════════════════════════════════════════════ */
@@ -246,8 +202,6 @@ export default function App() {
   useEffect(() => {
     if (authed && refresh) { iRef.current = setInterval(fetchData, refresh * 1000); return () => clearInterval(iRef.current); }
   }, [authed, refresh, fetchData]);
-
-  const { pullY, refreshing, scrollRef, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(fetchData, authed);
 
   const chg = s => { const q = quotes[s], b = bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const sleeveOf = s => { for (const [k, v] of Object.entries(SLEEVES)) if (v.symbols.includes(s)) return { k, ...v }; return null; };
@@ -451,15 +405,8 @@ export default function App() {
   };
 
   return (
-    <div ref={scrollRef} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+    <div
       style={{ minHeight: "100dvh", background: C.bg, color: C.t1, paddingBottom: 90, overflowY: "auto" }}>
-
-      {/* Pull to refresh */}
-      {(pullY > 0 || refreshing) && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: pullY > 0 ? pullY : 50, overflow: "hidden", transition: pullY > 0 ? "none" : "height 0.3s ease", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          <div style={{ width: 24, height: 24, borderRadius: 12, border: `2px solid ${C.border}`, borderTopColor: refreshing ? C.up : (pullY >= 80 ? C.up : C.t4), animation: refreshing ? "spin 0.7s linear infinite" : "none", transition: "border-color 0.2s" }} />
-        </div>
-      )}
 
       {/* HEADER */}
       <div style={{
