@@ -42,6 +42,7 @@ const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
 const ES = import.meta.env.VITE_ALPACA_SECRET || "";
+const FK = import.meta.env.VITE_FMP_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
 const pct = n => (n == null || isNaN(n)) ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -84,6 +85,64 @@ function Sparkline({ points, chg, width = 90, height = 32 }) {
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block", flexShrink: 0 }}>
       <path d={d} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
+  );
+}
+
+/* ── Portfolio Heatmap ── */
+function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
+  // Build cells from all sleeves
+  const cells = [];
+  for (const [k, sleeve] of Object.entries(sleeves)) {
+    for (const s of sleeve.symbols) {
+      const c = chgFn(s);
+      cells.push({ sym: s, chg: c ?? 0, name: namesFn[s] || s, sleeve: sleeve.name });
+    }
+  }
+  // Sort by absolute change (biggest blocks first) for treemap feel
+  cells.sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg));
+
+  const maxAbs = Math.max(...cells.map(c => Math.abs(c.chg)), 1);
+
+  const getColor = (chg) => {
+    const intensity = Math.min(Math.abs(chg) / Math.max(maxAbs, 2), 1);
+    if (chg > 0) {
+      const r = Math.round(8 + intensity * 10);
+      const g = Math.round(30 + intensity * 100);
+      const b2 = Math.round(15 + intensity * 40);
+      return `rgb(${r},${g},${b2})`;
+    } else if (chg < 0) {
+      const r = Math.round(50 + intensity * 150);
+      const g = Math.round(15 + intensity * 15);
+      const b2 = Math.round(15 + intensity * 15);
+      return `rgb(${r},${g},${b2})`;
+    }
+    return C.card;
+  };
+
+  if (!cells.length) return null;
+
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
+      gap: 3, borderRadius: 14, overflow: "hidden",
+    }}>
+      {cells.map(cell => (
+        <div key={cell.sym} onClick={() => onTap(cell.sym)} style={{
+          background: getColor(cell.chg),
+          padding: "10px 6px", cursor: "pointer",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          minHeight: 64, borderRadius: 4, transition: "opacity 0.15s",
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", letterSpacing: 0.3, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{cell.sym}</div>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)",
+            marginTop: 2, fontVariantNumeric: "tabular-nums",
+            textShadow: "0 1px 2px rgba(0,0,0,0.4)",
+          }}>{cell.chg >= 0 ? "+" : ""}{cell.chg.toFixed(1)}%</div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -673,6 +732,14 @@ export default function App() {
                 ))}
               </div>
             </div>
+
+            {/* Heatmap */}
+            {Object.keys(quotes).length > 0 && (
+              <div style={{ paddingTop: 28, paddingBottom: 20 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
+                <Heatmap sleeves={sleeves} chgFn={chg} namesFn={names} onTap={s => setChartSymbol(s)} />
+              </div>
+            )}
           </div>
         )}
 

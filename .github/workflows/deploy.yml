@@ -34,6 +34,7 @@ jobs:
         env:
           VITE_ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
           VITE_ALPACA_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+          VITE_FMP_KEY: ${{ secrets.FMP_API }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
