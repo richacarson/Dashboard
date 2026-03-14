@@ -29,6 +29,8 @@ const loadSleeves = () => {
 };
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
+const CORE_KEYS = ["dividend", "growth", "digital"];
+const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
   { sym: "IUSG", name: "IUSG" },
   { sym: "DVY", name: "DVY" },
@@ -224,10 +226,13 @@ export default function App() {
   const [newListIcon, setNewListIcon] = useState("📊");
   const [sleeveSort, setSleeveSort] = useState({}); // { [key]: "alpha" | "chgUp" | "chgDn" }
   const [researchView, setResearchView] = useState("dividend"); // "dividend" | "growth"
+  const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
+  const [broadNews, setBroadNews] = useState([]);
   const iRef = useRef(null);
   const wsRef = useRef(null);
 
   const ALL = useMemo(() => getAllSyms(sleeves), [sleeves]);
+  const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
 
   // Persist sleeves changes
   useEffect(() => { saveSleeves(sleeves); }, [sleeves]);
@@ -325,12 +330,14 @@ export default function App() {
   const fetchNews = useCallback(async () => {
     if (!apiKey || !apiSecret) return;
     try {
-      const r = await fetch(`${BASE}/v1beta1/news?symbols=${ALL.join(",")}&limit=30&sort=desc`, { headers: hdrs });
-      if (!r.ok) return;
-      const d = await r.json();
-      setNews(d.news || []);
+      // Holdings news: only core portfolio symbols
+      const holdingsR = await fetch(`${BASE}/v1beta1/news?symbols=${coreSyms.join(",")}&limit=30&sort=desc`, { headers: hdrs });
+      if (holdingsR.ok) { const d = await holdingsR.json(); setNews(d.news || []); }
+      // Broad market news: no symbol filter
+      const broadR = await fetch(`${BASE}/v1beta1/news?limit=30&sort=desc`, { headers: hdrs });
+      if (broadR.ok) { const d = await broadR.json(); setBroadNews(d.news || []); }
     } catch {}
-  }, [apiKey, apiSecret, hdrs]);
+  }, [apiKey, apiSecret, hdrs, coreSyms]);
 
   /* ── Fetch fundamentals from FMP ── */
   const fetchFundamentals = useCallback(async () => {
@@ -783,7 +790,7 @@ export default function App() {
             <div style={{ paddingTop: 28 }}>
               <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Top Movers</div>
               <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: "0 16px" }}>
-                {ALL.filter(s => chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 6).map((s, i, arr) => (
+                {coreSyms.filter(s => chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 6).map((s, i, arr) => (
                   <div key={s}>
                     <TickerRow s={s} />
                     {i < arr.length - 1 && <div style={{ height: 1, background: C.border }} />}
@@ -796,7 +803,7 @@ export default function App() {
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
-                <Heatmap sleeves={sleeves} chgFn={chg} namesFn={names} onTap={s => setChartSymbol(s)} />
+                <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => setChartSymbol(s)} />
               </div>
             )}
           </div>
@@ -806,50 +813,62 @@ export default function App() {
         {tab === "news" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>News</div>
-            {news.length === 0 && (
-              <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                {loading ? "Loading news…" : "No news available"}
-              </div>
-            )}
-            {news.map((article, i) => (
-              <div key={article.id || i} onClick={() => article.url && window.open(article.url, "_blank")}
-                style={{
-                  padding: "16px 0", borderBottom: `1px solid ${C.border}`,
-                  cursor: article.url ? "pointer" : "default",
-                }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                  {/* Article thumbnail */}
-                  {article.images?.[0]?.url && (
-                    <img src={article.images[0].url} alt="" style={{
-                      width: 72, height: 72, borderRadius: 10, objectFit: "cover",
-                      flexShrink: 0, background: C.card,
-                    }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* Source + time */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5 }}>{article.source}</span>
-                      <span style={{ fontSize: 11, color: C.t4 }}>{ago(article.created_at || article.updated_at)}</span>
-                    </div>
-                    {/* Headline */}
-                    <div style={{ fontSize: 15, fontWeight: 600, color: C.t1, lineHeight: 1.4, marginBottom: 6,
-                      display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
-                    }}>{article.headline}</div>
-                    {/* Symbol tags */}
-                    {article.symbols?.length > 0 && (
-                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                        {article.symbols.filter(s => ALL.includes(s)).slice(0, 4).map(s => (
-                          <span key={s} style={{
-                            fontSize: 10, fontWeight: 700, color: C.t3, background: C.accentSoft,
-                            padding: "2px 6px", borderRadius: 4, letterSpacing: 0.3,
-                          }}>{s}</span>
-                        ))}
-                      </div>
+            {/* Toggle: Holdings / Broad Market */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+              {[{ v: "holdings", l: "Holdings" }, { v: "broad", l: "Broad Market" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setNewsMode(v)} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${newsMode === v ? C.borderActive : C.border}`,
+                  background: newsMode === v ? C.accentSoft : "transparent",
+                  color: newsMode === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{l}</button>
+              ))}
+            </div>
+            {(() => {
+              const articles = newsMode === "holdings"
+                ? news.filter(a => a.symbols?.some(s => coreSyms.includes(s)))
+                : broadNews;
+              if (!articles.length) return (
+                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
+                  {loading ? "Loading news…" : "No news available"}
+                </div>
+              );
+              return articles.map((article, i) => (
+                <div key={article.id || i} onClick={() => article.url && window.open(article.url, "_blank")}
+                  style={{
+                    padding: "16px 0", borderBottom: `1px solid ${C.border}`,
+                    cursor: article.url ? "pointer" : "default",
+                  }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                    {article.images?.[0]?.url && (
+                      <img src={article.images[0].url} alt="" style={{
+                        width: 72, height: 72, borderRadius: 10, objectFit: "cover",
+                        flexShrink: 0, background: C.card,
+                      }} />
                     )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5 }}>{article.source}</span>
+                        <span style={{ fontSize: 11, color: C.t4 }}>{ago(article.created_at || article.updated_at)}</span>
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: C.t1, lineHeight: 1.4, marginBottom: 6,
+                        display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
+                      }}>{article.headline}</div>
+                      {article.symbols?.length > 0 && (
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                          {article.symbols.filter(s => coreSyms.includes(s)).slice(0, 4).map(s => (
+                            <span key={s} style={{
+                              fontSize: 10, fontWeight: 700, color: C.t3, background: C.accentSoft,
+                              padding: "2px 6px", borderRadius: 4, letterSpacing: 0.3,
+                            }}>{s}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         )}
 
