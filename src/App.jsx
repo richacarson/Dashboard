@@ -9,12 +9,14 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
    - WebSocket real-time streaming
    ═══════════════════════════════════════════════════════════════════ */
 
-const SLEEVES = {
-  dividend: { name: "Dividend Strategy", short: "DIV", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], tag: "#5B8C3E", icon: "🏌️" },
-  growth: { name: "Growth Strategy", short: "GRO", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], tag: "#3D7A5A", icon: "⏳" },
-  digital: { name: "Digital Assets", short: "ETF", symbols: ["IBIT","ETHA"], tag: "#2A6B6B", icon: "💣" },
+const DEFAULT_SLEEVES = {
+  dividend: { name: "Dividend Strategy", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "🏌️" },
+  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], icon: "⏳" },
+  digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "💣" },
 };
-const ALL = [...SLEEVES.dividend.symbols, ...SLEEVES.growth.symbols, ...SLEEVES.digital.symbols];
+const loadSleeves = () => { try { const s = localStorage.getItem("iown_sleeves"); return s ? JSON.parse(s) : DEFAULT_SLEEVES; } catch { return DEFAULT_SLEEVES; } };
+const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
+const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
@@ -100,6 +102,7 @@ export default function App() {
   const [bars, setBars] = useState({});
   const [intradayPts, setIntradayPts] = useState({});
   const [names, setNames] = useState({});
+  const [sleeves, setSleeves] = useState(loadSleeves);
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
@@ -108,8 +111,40 @@ export default function App() {
   const [chartSymbol, setChartSymbol] = useState(null);
   const [refresh, setRefresh] = useState(30);
   const [mounted, setMounted] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [addTickerFor, setAddTickerFor] = useState(null); // sleeve key
+  const [tickerInput, setTickerInput] = useState("");
+  const [showAddList, setShowAddList] = useState(false);
+  const [newListName, setNewListName] = useState("");
+  const [newListIcon, setNewListIcon] = useState("📊");
   const iRef = useRef(null);
   const wsRef = useRef(null);
+
+  const ALL = useMemo(() => getAllSyms(sleeves), [sleeves]);
+
+  // Persist sleeves changes
+  useEffect(() => { saveSleeves(sleeves); }, [sleeves]);
+
+  // CRUD for sleeves
+  const addList = () => {
+    if (!newListName.trim()) return;
+    const key = newListName.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + Date.now();
+    setSleeves(p => ({ ...p, [key]: { name: newListName.trim(), symbols: [], icon: newListIcon } }));
+    setNewListName(""); setNewListIcon("📊"); setShowAddList(false);
+  };
+  const removeList = k => { setSleeves(p => { const n = { ...p }; delete n[k]; return n; }); };
+  const addSymbol = (k, sym) => {
+    const s = sym.toUpperCase().trim();
+    if (!s) return;
+    setSleeves(p => {
+      if (p[k]?.symbols.includes(s)) return p;
+      return { ...p, [k]: { ...p[k], symbols: [...p[k].symbols, s] } };
+    });
+    setTickerInput(""); setAddTickerFor(null);
+  };
+  const removeSymbol = (k, sym) => {
+    setSleeves(p => ({ ...p, [k]: { ...p[k], symbols: p[k].symbols.filter(s => s !== sym) } }));
+  };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
 
@@ -119,16 +154,15 @@ export default function App() {
   const fetchNames = useCallback(async () => {
     try {
       const results = {};
-      // Fetch in batches — assets endpoint is per-symbol
       for (const s of ALL) {
         try {
           const r = await fetch(`${PAPER}/v2/assets/${s}`, { headers: hdrs });
           if (r.ok) { const d = await r.json(); results[s] = d.name; }
         } catch {}
       }
-      setNames(results);
+      setNames(prev => ({ ...prev, ...results }));
     } catch {}
-  }, [hdrs]);
+  }, [hdrs, ALL]);
 
   /* ── Fetch snapshot data ── */
   const fetchData = useCallback(async () => {
@@ -224,7 +258,6 @@ export default function App() {
   }, [authed, refresh, fetchData, fetchNews]);
 
   const chg = s => { const q = quotes[s], b = bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
-  const sleeveOf = s => { for (const [, v] of Object.entries(SLEEVES)) if (v.symbols.includes(s)) return v; return null; };
 
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
 
@@ -305,28 +338,46 @@ export default function App() {
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const SleeveSection = ({ k, sleeve }) => {
     const isOpen = openSleeves[k];
+    // Calculate average change for this sleeve
+    const changes = sleeve.symbols.map(chg).filter(c => c !== null);
+    const avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+    const isAddingTicker = addTickerFor === k;
+
     return (
       <div>
         {/* Sleeve header row */}
-        <div onClick={() => toggleSleeve(k)} style={{ display: "flex", alignItems: "center", padding: "18px 0", cursor: "pointer" }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 14, marginRight: 16,
-            background: C.card, border: `1px solid ${C.border}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 26, flexShrink: 0,
-          }}>{sleeve.icon}</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: C.t1 }}>{sleeve.name}</div>
-            <div style={{ fontSize: 13, color: C.t4, marginTop: 2 }}>{sleeve.symbols.length} items</div>
+        <div style={{ display: "flex", alignItems: "center", padding: "18px 0" }}>
+          {/* Edit mode: delete list button */}
+          {editMode && (
+            <div onClick={() => { if (confirm(`Delete "${sleeve.name}"?`)) removeList(k); }} style={{ width: 28, height: 28, borderRadius: 14, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 10, cursor: "pointer", flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            </div>
+          )}
+          <div onClick={() => toggleSleeve(k)} style={{ display: "flex", alignItems: "center", flex: 1, cursor: "pointer" }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 14, marginRight: 16,
+              background: C.card, border: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 26, flexShrink: 0,
+            }}>{sleeve.icon}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: C.t1 }}>{sleeve.name}</div>
+              <div style={{ fontSize: 13, color: C.t4, marginTop: 2 }}>{sleeve.symbols.length} items</div>
+            </div>
           </div>
-          {/* Chevron */}
-          <div style={{
-            width: 40, height: 40, borderRadius: 20, border: `1px solid ${C.border}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "transform 0.2s",
-            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+          {/* Right side: avg change + chevron */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {avgChg != null && (
+              <span style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: avgChg >= 0 ? C.up : C.dn }}>{pct(avgChg)}</span>
+            )}
+            <div onClick={() => toggleSleeve(k)} style={{
+              width: 40, height: 40, borderRadius: 20, border: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+              cursor: "pointer",
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </div>
           </div>
         </div>
         {/* Expanded ticker list */}
@@ -334,13 +385,41 @@ export default function App() {
           <div style={{ paddingLeft: 4, paddingRight: 4, animation: "fadeIn 0.2s ease" }}>
             {sleeve.symbols.map((s, i) => (
               <div key={s}>
-                <TickerRow s={s} />
-                {i < sleeve.symbols.length - 1 && <div style={{ height: 1, background: C.border, marginLeft: 0 }} />}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  {editMode && (
+                    <div onClick={() => removeSymbol(k, s)} style={{ width: 24, height: 24, borderRadius: 12, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, cursor: "pointer", flexShrink: 0 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    </div>
+                  )}
+                  <div style={{ flex: 1 }}><TickerRow s={s} /></div>
+                </div>
+                {i < sleeve.symbols.length - 1 && <div style={{ height: 1, background: C.border }} />}
               </div>
             ))}
+            {/* Add ticker row */}
+            {editMode && (
+              <div style={{ padding: "12px 0" }}>
+                {isAddingTicker ? (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="text" value={tickerInput} onChange={e => setTickerInput(e.target.value.toUpperCase())}
+                      onKeyDown={e => { if (e.key === "Enter") addSymbol(k, tickerInput); if (e.key === "Escape") { setAddTickerFor(null); setTickerInput(""); } }}
+                      placeholder="AAPL" autoFocus
+                      style={{ flex: 1, padding: "10px 14px", background: C.bg, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 14, fontWeight: 600, outline: "none", fontFamily: "inherit", letterSpacing: 1 }} />
+                    <button onClick={() => addSymbol(k, tickerInput)} style={{ padding: "10px 16px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Add</button>
+                    <button onClick={() => { setAddTickerFor(null); setTickerInput(""); }} style={{ padding: "10px 12px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, color: C.t4, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>✕</button>
+                  </div>
+                ) : (
+                  <div onClick={() => setAddTickerFor(k)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", color: C.t3, fontSize: 14, fontWeight: 600 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: C.accentSoft, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    </div>
+                    Add ticker
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-        {/* Bottom divider for sleeve */}
         <div style={{ height: 1, background: C.border }} />
       </div>
     );
@@ -380,11 +459,46 @@ export default function App() {
         {/* ━━━ HOME — Robinhood Lists Style ━━━ */}
         {tab === "home" && (
           <div style={{ animation: "fadeIn 0.3s ease" }}>
-            {/* Lists header */}
-            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, padding: "24px 0 8px" }}>Lists</div>
+            {/* Lists header with edit toggle */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 0 8px" }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Lists</div>
+              <button onClick={() => setEditMode(!editMode)} style={{
+                padding: "6px 14px", borderRadius: 8, border: `1px solid ${editMode ? C.borderActive : C.border}`,
+                background: editMode ? C.accentSoft : "transparent",
+                color: editMode ? C.t1 : C.t3, fontSize: 13, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>{editMode ? "Done" : "Edit"}</button>
+            </div>
+
+            {/* Create watchlist button */}
+            {editMode && !showAddList && (
+              <div onClick={() => setShowAddList(true)} style={{ display: "flex", alignItems: "center", padding: "16px 0", cursor: "pointer", borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ width: 56, height: 56, borderRadius: 14, marginRight: 16, background: C.card, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                </div>
+                <div style={{ fontSize: 17, fontWeight: 700, color: C.t1 }}>Create watchlist</div>
+              </div>
+            )}
+
+            {/* Add list form */}
+            {showAddList && (
+              <div style={{ padding: "16px 0", borderBottom: `1px solid ${C.border}`, animation: "fadeIn 0.2s ease" }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+                  <input type="text" value={newListIcon} onChange={e => setNewListIcon(e.target.value)} style={{ width: 50, padding: "10px 4px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 22, textAlign: "center", outline: "none", fontFamily: "inherit" }} />
+                  <input type="text" value={newListName} onChange={e => setNewListName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") addList(); }}
+                    placeholder="List name" autoFocus
+                    style={{ flex: 1, padding: "12px 14px", background: C.bg, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 15, fontWeight: 600, outline: "none", fontFamily: "inherit" }} />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={addList} style={{ flex: 1, padding: "12px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Create</button>
+                  <button onClick={() => { setShowAddList(false); setNewListName(""); }} style={{ padding: "12px 16px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, color: C.t4, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+                </div>
+              </div>
+            )}
 
             {/* Sleeve sections */}
-            {Object.entries(SLEEVES).map(([k, sleeve]) => (
+            {Object.entries(sleeves).map(([k, sleeve]) => (
               <SleeveSection key={k} k={k} sleeve={sleeve} />
             ))}
 
