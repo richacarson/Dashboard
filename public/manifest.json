@@ -1,1 +1,13 @@
-
+{
+  "name": "IOWN Portfolio Dashboard",
+  "short_name": "IOWN",
+  "description": "Real-time portfolio tracking for IOWN Investment Committee",
+  "start_url": "/Dashboard/",
+  "display": "standalone",
+  "background_color": "#080C04",
+  "theme_color": "#2C4A0F",
+  "icons": [
+    { "src": "icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
