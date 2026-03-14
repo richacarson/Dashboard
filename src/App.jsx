@@ -10,11 +10,23 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
    ═══════════════════════════════════════════════════════════════════ */
 
 const DEFAULT_SLEEVES = {
-  dividend: { name: "Dividend Strategy", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "🏌️" },
-  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], icon: "⏳" },
-  digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "💣" },
+  dividend: { name: "Dividend Strategy", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
+  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], icon: "🚀" },
+  digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
 };
-const loadSleeves = () => { try { const s = localStorage.getItem("iown_sleeves"); return s ? JSON.parse(s) : DEFAULT_SLEEVES; } catch { return DEFAULT_SLEEVES; } };
+const loadSleeves = () => {
+  try {
+    const s = localStorage.getItem("iown_sleeves");
+    if (!s) return DEFAULT_SLEEVES;
+    const parsed = JSON.parse(s);
+    // Migrate old icons to new defaults if user hasn't customized
+    const oldIcons = ["🏌️", "⏳", "💣"];
+    for (const [k, def] of Object.entries(DEFAULT_SLEEVES)) {
+      if (parsed[k] && oldIcons.includes(parsed[k].icon)) parsed[k].icon = def.icon;
+    }
+    return parsed;
+  } catch { return DEFAULT_SLEEVES; }
+};
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
 const BENCHMARKS = [
