@@ -205,6 +205,7 @@ export default function App() {
   const [names, setNames] = useState({});
   const [sleeves, setSleeves] = useState(loadSleeves);
   const [news, setNews] = useState([]);
+  const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const [tab, setTab] = useState("home");
@@ -222,6 +223,7 @@ export default function App() {
   const [newListName, setNewListName] = useState("");
   const [newListIcon, setNewListIcon] = useState("📊");
   const [sleeveSort, setSleeveSort] = useState({}); // { [key]: "alpha" | "chgUp" | "chgDn" }
+  const [researchView, setResearchView] = useState("dividend"); // "dividend" | "growth"
   const iRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -330,6 +332,62 @@ export default function App() {
     } catch {}
   }, [apiKey, apiSecret, hdrs]);
 
+  /* ── Fetch fundamentals from FMP ── */
+  const fetchFundamentals = useCallback(async () => {
+    if (!FK) return;
+    const cached = {};
+    try {
+      const old = JSON.parse(localStorage.getItem("iown_fmp_cache") || "{}");
+      const age = Date.now() - (old._ts || 0);
+      if (age < 6 * 3600000 && Object.keys(old).length > 2) { setFundamentals(old); return; } // cache 6h
+    } catch {}
+
+    const results = {};
+    // Batch: profile gives industry, pe, avgVol; ratios-ttm gives ROE, D/E, payout, PEG, margins; key-metrics-ttm gives ROIC, debtToFCF
+    for (const sym of ALL) {
+      try {
+        const [profR, ratR, metR, growR, chgR] = await Promise.all([
+          fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`).then(r => r.json()),
+          fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`).then(r => r.json()),
+          fetch(`https://financialmodelingprep.com/api/v3/key-metrics-ttm/${sym}?apikey=${FK}`).then(r => r.json()),
+          fetch(`https://financialmodelingprep.com/api/v3/financial-growth/${sym}?limit=5&apikey=${FK}`).then(r => r.json()),
+          fetch(`https://financialmodelingprep.com/api/v3/stock-price-change/${sym}?apikey=${FK}`).then(r => r.json()),
+        ]);
+        const prof = profR?.[0] || {};
+        const rat = ratR?.[0] || {};
+        const met = metR?.[0] || {};
+        const grow = growR || [];
+        const priceChg = chgR?.[0] || {};
+
+        // Revenue 5Y CAGR from growth array
+        const rev5y = grow.length >= 5 ? grow.slice(0, 5).reduce((s, g) => s + (g.revenueGrowth || 0), 0) / Math.min(grow.length, 5) : (grow[0]?.revenueGrowth ?? null);
+
+        results[sym] = {
+          industry: prof.industry || "—",
+          avgVol: prof.volAvg || null,
+          peTTM: rat.peRatioTTM ?? prof.pe ?? null,
+          peFwd: prof.peForward ?? null,
+          pegTTM: rat.pegRatioTTM ?? null,
+          yieldFwd: prof.dividendYielTTM ?? prof.lastDiv ? ((prof.lastDiv * 4) / (prof.price || 1) * 100) : null,
+          divGrowth5Y: null, // FMP doesn't directly provide this
+          consecutiveYears: null, // not in FMP free
+          payoutRatio: rat.payoutRatioTTM ?? null,
+          revenueYoY: grow[0]?.revenueGrowth ?? null,
+          revenue5Y: rev5y,
+          profitMargin: rat.netProfitMarginTTM ?? null,
+          roe: rat.returnOnEquityTTM ?? null,
+          de: rat.debtEquityRatioTTM ?? null,
+          debtToFCF: met.debtToFreeCashFlowTTM ?? null,
+          roic: met.roicTTM ?? null,
+          lastQtr: priceChg["3M"] ?? null,
+        };
+      } catch {}
+    }
+    results._ts = Date.now();
+    setFundamentals(results);
+    try { localStorage.setItem("iown_fmp_cache", JSON.stringify(results)); } catch {}
+  }, [ALL]);
+
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
     if (!apiKey || !apiSecret) return;
@@ -364,6 +422,7 @@ export default function App() {
       fetchIntraday();
       fetchNames();
       fetchNews();
+      fetchFundamentals();
       connectWS();
     } catch { setAuthErr("Invalid API keys."); }
   };
@@ -795,6 +854,99 @@ export default function App() {
         )}
 
         {/* ━━━ SETTINGS ━━━ */}
+        {tab === "research" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Research</div>
+            {/* Toggle dividend / growth */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+              {[{ v: "dividend", l: "💰 Dividend" }, { v: "growth", l: "🚀 Growth" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setResearchView(v)} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${researchView === v ? C.borderActive : C.border}`,
+                  background: researchView === v ? C.accentSoft : "transparent",
+                  color: researchView === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{l}</button>
+              ))}
+            </div>
+            {Object.keys(fundamentals).length <= 1 && (
+              <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
+                {FK ? "Loading fundamentals…" : "FMP API key not configured"}
+              </div>
+            )}
+            {/* Cards */}
+            {(() => {
+              const syms = researchView === "dividend" ? (sleeves.dividend?.symbols || []) : (sleeves.growth?.symbols || []);
+              const fmtV = (v, suffix = "", mult = 1) => v == null ? "—" : `${(v * mult).toFixed(1)}${suffix}`;
+              const fmtP = v => v == null ? "—" : `${(v * 100).toFixed(1)}%`;
+
+              const divCols = [
+                { l: "Avg Vol", fn: d => vol(d.avgVol) },
+                { l: "Last Qtr", fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => d.lastQtr > 0 ? C.up : d.lastQtr < 0 ? C.dn : C.t3 },
+                { l: "Yield FWD", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
+                { l: "Payout", fn: d => d.payoutRatio != null ? `${(d.payoutRatio * 100).toFixed(0)}%` : "—" },
+                { l: "P/E TTM", fn: d => fmtV(d.peTTM) },
+                { l: "P/E FWD", fn: d => fmtV(d.peFwd) },
+                { l: "Rev YoY", fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
+                { l: "Rev 5Y", fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
+                { l: "ROE", fn: d => fmtP(d.roe) },
+                { l: "D/E", fn: d => fmtV(d.de) },
+                { l: "D/FCF", fn: d => fmtV(d.debtToFCF) },
+                { l: "ROIC", fn: d => fmtP(d.roic) },
+              ];
+              const groCols = [
+                { l: "Avg Vol", fn: d => vol(d.avgVol) },
+                { l: "Last Qtr", fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => d.lastQtr > 0 ? C.up : d.lastQtr < 0 ? C.dn : C.t3 },
+                { l: "P/E TTM", fn: d => fmtV(d.peTTM) },
+                { l: "P/E FWD", fn: d => fmtV(d.peFwd) },
+                { l: "PEG TTM", fn: d => fmtV(d.pegTTM) },
+                { l: "Rev YoY", fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
+                { l: "Rev 5Y", fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
+                { l: "Margin", fn: d => fmtP(d.profitMargin) },
+                { l: "ROE", fn: d => fmtP(d.roe) },
+                { l: "D/E", fn: d => fmtV(d.de) },
+                { l: "D/FCF", fn: d => fmtV(d.debtToFCF) },
+                { l: "ROIC", fn: d => fmtP(d.roic) },
+              ];
+              const cols = researchView === "dividend" ? divCols : groCols;
+
+              return syms.map(s => {
+                const d = fundamentals[s] || {};
+                const c = chg(s);
+                const nm = names[s] || "";
+                return (
+                  <div key={s} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px", marginBottom: 10 }}>
+                    {/* Header */}
+                    <div onClick={() => setChartSymbol(s)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, cursor: "pointer" }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>{s}</span>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: c > 0 ? C.up : c < 0 ? C.dn : C.t3 }}>{pct(c)}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.t4, marginTop: 2 }}>{nm.length > 28 ? nm.slice(0,28)+"…" : nm}</div>
+                      </div>
+                      <div style={{ fontSize: 11, color: C.t4, textAlign: "right" }}>{d.industry || ""}</div>
+                    </div>
+                    {/* Metrics grid */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                      {cols.map(col => {
+                        const val = col.fn(d);
+                        const clr = col.color ? col.color(d) : C.t2;
+                        return (
+                          <div key={col.l} style={{ padding: "8px 6px", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}` }}>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 3 }}>{col.l}</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: clr, fontVariantNumeric: "tabular-nums" }}>{val}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        )}
+
+        {/* ━━━ SETTINGS ━━━ */}
         {tab === "settings" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Settings</div>
@@ -867,6 +1019,7 @@ export default function App() {
       }}>
         {[
           { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
+          { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
           { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
           { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
         ].map(t => (
