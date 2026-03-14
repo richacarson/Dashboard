@@ -162,6 +162,7 @@ export default function App() {
   const [showAddList, setShowAddList] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [newListIcon, setNewListIcon] = useState("📊");
+  const [sleeveSort, setSleeveSort] = useState({}); // { [key]: "alpha" | "chgUp" | "chgDn" }
   const iRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -461,19 +462,45 @@ export default function App() {
         {/* Expanded ticker list */}
         {isOpen && (
           <div style={{ paddingLeft: 4, paddingRight: 4, animation: "fadeIn 0.2s ease" }}>
-            {sleeve.symbols.map((s, i) => (
-              <div key={s}>
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  {editMode && (
-                    <div onClick={() => removeSymbol(k, s)} style={{ width: 24, height: 24, borderRadius: 12, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, cursor: "pointer", flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                    </div>
-                  )}
-                  <div style={{ flex: 1 }}><TickerRow s={s} /></div>
+            {/* Sort pills */}
+            <div style={{ display: "flex", gap: 6, paddingBottom: 8, overflowX: "auto" }}>
+              {[
+                { v: "alpha", l: "A–Z" },
+                { v: "chgDn", l: "% ↓" },
+                { v: "chgUp", l: "% ↑" },
+              ].map(({ v, l }) => {
+                const active = (sleeveSort[k] || "alpha") === v;
+                return (
+                  <button key={v} onClick={() => setSleeveSort(p => ({ ...p, [k]: v }))} style={{
+                    padding: "5px 12px", borderRadius: 8, border: `1px solid ${active ? C.borderActive : C.border}`,
+                    background: active ? C.accentSoft : "transparent",
+                    color: active ? C.t1 : C.t4, fontSize: 11, fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>{l}</button>
+                );
+              })}
+            </div>
+            {(() => {
+              const sortMode = sleeveSort[k] || "alpha";
+              const sorted = [...sleeve.symbols].sort((a, b) => {
+                if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
+                if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
+                return a.localeCompare(b);
+              });
+              return sorted.map((s, i) => (
+                <div key={s}>
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    {editMode && (
+                      <div onClick={() => removeSymbol(k, s)} style={{ width: 24, height: 24, borderRadius: 12, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 8, cursor: "pointer", flexShrink: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}><TickerRow s={s} /></div>
+                  </div>
+                  {i < sorted.length - 1 && <div style={{ height: 1, background: C.border }} />}
                 </div>
-                {i < sleeve.symbols.length - 1 && <div style={{ height: 1, background: C.border }} />}
-              </div>
-            ))}
+              ));
+            })()}
             {/* Add ticker row */}
             {editMode && (
               <div style={{ padding: "12px 0" }}>
