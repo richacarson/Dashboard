@@ -75,46 +75,6 @@ function Sparkline({ bar, chg, width = 56, height = 24 }) {
   );
 }
 
-/* ── Portfolio Hero Sparkline ── */
-function PortfolioSparkline({ quotes, bars, width = 320, height = 64 }) {
-  const pts = useMemo(() => {
-    const data = ALL.map(s => {
-      const b = bars[s];
-      if (!b?.o || !b?.c) return null;
-      return { o: b.o, c: b.c, pct: ((b.c - b.o) / b.o) * 100 };
-    }).filter(Boolean);
-    if (!data.length) return [];
-    const n = 24;
-    return Array.from({ length: n }, (_, i) => {
-      const t = i / (n - 1);
-      const base = data.reduce((sum, d) => sum + d.o, 0);
-      const target = data.reduce((sum, d) => sum + d.c, 0);
-      const progress = Math.sin(t * Math.PI * 0.5);
-      const noise = Math.sin(t * 7) * 0.002 + Math.sin(t * 13) * 0.001;
-      return base + (target - base) * progress + base * noise;
-    });
-  }, [bars]);
-
-  if (!pts.length) return null;
-  const mn = Math.min(...pts), mx = Math.max(...pts), rng = mx - mn || 1;
-  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${(i / (pts.length - 1)) * width},${height - ((p - mn) / rng) * height}`).join(" ");
-  const isUp = pts[pts.length - 1] >= pts[0];
-  const color = isUp ? C.up : C.dn;
-
-  return (
-    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ display: "block", opacity: 0.6 }}>
-      <defs>
-        <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.20" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={`${d} L${width},${height} L0,${height} Z`} fill="url(#heroGrad)" />
-      <path d={d} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /* ── TradingView Chart Overlay ── */
 function ChartOverlay({ symbol, onClose }) {
   const containerRef = useRef(null);
@@ -176,7 +136,7 @@ function ChartOverlay({ symbol, onClose }) {
           </svg>
         </button>
       </div>
-      <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
+      <div ref={containerRef} style={{ flex: 1, width: "100%", paddingBottom: "env(safe-area-inset-bottom, 0px)" }} className="tradingview-widget-container" />
     </div>
   );
 }
@@ -392,7 +352,6 @@ export default function App() {
 
   /* ━━━ MAIN DASHBOARD ━━━ */
   const allC = ALL.map(chg).filter(c => c !== null);
-  const avgC = allC.length ? allC.reduce((a, b) => a + b, 0) / allC.length : null;
   const fsyms = filtered();
 
   const Pill = ({ on, children, onClick, s: style }) => (
@@ -422,45 +381,36 @@ export default function App() {
   const Ticker = ({ s, idx }) => {
     const q = quotes[s], b = bars[s], c = chg(s), sl = sleeveOf(s), open = sel === s;
     return (
-      <div style={{
-        background: open ? C.cardHover : C.card,
-        border: `1px solid ${open ? C.borderActive : C.border}`,
-        borderRadius: 16, padding: "14px 16px", cursor: "pointer",
-        transition: "all 0.2s cubic-bezier(0.16,1,0.3,1)",
-        animation: `fadeSlideIn 0.3s cubic-bezier(0.16,1,0.3,1) ${Math.min(idx * 0.02, 0.3)}s both`,
-      }}>
-        <div onClick={() => setSel(open ? null : s)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: `linear-gradient(135deg, ${sl?.tag}18, ${sl?.tag}08)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 12, fontWeight: 800, color: C.t2, letterSpacing: 0.5,
-              border: `1px solid ${sl?.tag}22`, flexShrink: 0,
-            }}>{s.slice(0, 2)}</div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, letterSpacing: 0.5 }}>{s}</div>
-              <div style={{ fontSize: 11, color: C.t4, fontWeight: 500, marginTop: 1 }}>{sl?.name}</div>
-            </div>
+      <div
+        onClick={() => setSel(open ? null : s)}
+        style={{ cursor: "pointer", animation: `fadeSlideIn 0.3s cubic-bezier(0.16,1,0.3,1) ${Math.min(idx * 0.02, 0.3)}s both` }}
+      >
+        {/* Main row — Robinhood style: name | sparkline | change badge */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "14px 0",
+        }}>
+          <div style={{ minWidth: 0, flex: "0 0 auto", width: 90 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, letterSpacing: 0.3 }}>{s}</div>
+            <div style={{ fontSize: 12, color: C.t4, fontWeight: 500, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sl?.name}</div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Sparkline bar={b} chg={c || 0} />
-            <div style={{ textAlign: "right", minWidth: 80 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.t1, fontVariantNumeric: "tabular-nums" }}>${fmt(q?.p)}</div>
-              <div style={{
-                fontSize: 12, fontWeight: 600, marginTop: 2, fontVariantNumeric: "tabular-nums",
-                color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
-                background: c > 0 ? C.upSoft : c < 0 ? C.dnSoft : "transparent",
-                padding: "2px 7px", borderRadius: 6, display: "inline-block",
-              }}>{pct(c)}</div>
-            </div>
+          <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 12px" }}>
+            <Sparkline bar={b} chg={c || 0} width={80} height={28} />
           </div>
+          <div style={{
+            padding: "6px 12px", borderRadius: 8, minWidth: 78, textAlign: "center",
+            fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums",
+            color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
+            border: `1px solid ${c > 0 ? C.up + "44" : c < 0 ? C.dn + "44" : C.border}`,
+            background: c > 0 ? C.upSoft : c < 0 ? C.dnSoft : "transparent",
+          }}>{pct(c)}</div>
         </div>
+        {/* Expanded detail panel */}
         {open && (
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}`, animation: "fadeIn 0.25s ease" }}>
+          <div style={{ paddingBottom: 14, animation: "fadeIn 0.25s ease" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
               {[["Open", fmt(b?.o)], ["High", fmt(b?.h)], ["Low", fmt(b?.l)], ["Prev Cl", fmt(b?.pc)], ["VWAP", fmt(b?.vw)], ["Volume", vol(b?.v)]].map(([l, v]) => (
-                <div key={l} style={{ padding: "8px 10px", background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
+                <div key={l} style={{ padding: "8px 10px", background: C.card, borderRadius: 10, border: `1px solid ${C.border}` }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>{l}</div>
                   <div style={{ fontSize: 14, fontWeight: 500, color: C.t2, fontVariantNumeric: "tabular-nums" }}>{v}</div>
                 </div>
@@ -480,6 +430,8 @@ export default function App() {
             </button>
           </div>
         )}
+        {/* Divider line */}
+        {!open && <div style={{ height: 1, background: C.border }} />}
       </div>
     );
   };
@@ -524,35 +476,6 @@ export default function App() {
 
         {/* ━━━ HOME ━━━ */}
         {tab === "home" && (<div style={{ animation: "fadeIn 0.35s ease" }}>
-          {/* Hero Card */}
-          <div style={{
-            background: C.card, border: `1px solid ${C.border}`, borderRadius: 22,
-            padding: "28px 24px 0", marginBottom: 24, position: "relative", overflow: "hidden",
-          }}>
-            <div style={{
-              position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%",
-              background: avgC > 0 ? `radial-gradient(circle, ${C.upGlow} 0%, transparent 70%)` : avgC < 0 ? `radial-gradient(circle, ${C.dnGlow} 0%, transparent 70%)` : "none",
-              filter: "blur(40px)", pointerEvents: "none",
-            }} />
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" }}>Portfolio Performance</div>
-              <div style={{ fontSize: 44, fontWeight: 800, letterSpacing: -2, lineHeight: 1, color: avgC > 0 ? C.up : avgC < 0 ? C.dn : C.t1 }}>{pct(avgC)}</div>
-              <div style={{ display: "flex", gap: 20, marginTop: 16, fontSize: 13 }}>
-                <span style={{ color: C.t3, fontWeight: 500 }}>{ALL.length} holdings</span>
-                <span style={{ color: C.up, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                  <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,1 9,8 1,8" fill={C.up} /></svg>
-                  {allC.filter(c => c > 0).length}
-                </span>
-                <span style={{ color: C.dn, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                  <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="5,9 9,2 1,2" fill={C.dn} /></svg>
-                  {allC.filter(c => c < 0).length}
-                </span>
-              </div>
-            </div>
-            <div style={{ marginTop: 20, marginLeft: -24, marginRight: -24, position: "relative" }}>
-              <PortfolioSparkline quotes={quotes} bars={bars} />
-            </div>
-          </div>
 
           {/* Strategies */}
           <Section title="Strategies" right={
@@ -630,7 +553,7 @@ export default function App() {
                 </Pill>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 8 }}>
+            <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: "0 16px" }}>
               {fsyms.map((s, i) => <Ticker key={s} s={s} idx={i} />)}
             </div>
           </Section>
@@ -785,7 +708,7 @@ function GlobalStyles() {
       @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
       @keyframes slideUp { from { opacity: 0; transform: translateY(40px) } to { opacity: 1; transform: translateY(0) } }
       @keyframes shake { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-6px) } 40%, 80% { transform: translateX(6px) } }
-      * { -webkit-tap-highlight-color: transparent; }
+      * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
       input::placeholder { color: ${C.t4} !important; }
       input:focus { border-color: ${C.borderActive} !important; }
       ::-webkit-scrollbar { width: 4px; height: 4px; }
