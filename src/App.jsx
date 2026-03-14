@@ -143,30 +143,44 @@ function ChartOverlay({ symbol, onClose }) {
 
 /* ── Pull to Refresh ── */
 function usePullToRefresh(onRefresh, enabled) {
-  const [pulling, setPulling] = useState(false);
   const [pullY, setPullY] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef(0);
+  const canPull = useRef(false);
   const scrollRef = useRef(null);
   const threshold = 80;
 
   const onTouchStart = useCallback((e) => {
-    if (!enabled) return;
+    if (!enabled || refreshing) return;
     const el = scrollRef.current;
-    if (el && el.scrollTop <= 0) { startY.current = e.touches[0].clientY; setPulling(true); }
-  }, [enabled]);
+    if (el && el.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY;
+      canPull.current = true;
+    } else {
+      canPull.current = false;
+    }
+  }, [enabled, refreshing]);
 
   const onTouchMove = useCallback((e) => {
-    if (!pulling || refreshing) return;
+    if (!canPull.current || refreshing) return;
     const delta = e.touches[0].clientY - startY.current;
-    if (delta > 0) setPullY(Math.min(delta * 0.5, 120));
-  }, [pulling, refreshing]);
+    if (delta > 5) {
+      setPullY(Math.min(delta * 0.5, 120));
+    }
+  }, [refreshing]);
 
   const onTouchEnd = useCallback(async () => {
-    if (!pulling) return;
-    if (pullY >= threshold && !refreshing) { setRefreshing(true); await onRefresh(); setRefreshing(false); }
-    setPulling(false); setPullY(0);
-  }, [pulling, pullY, refreshing, onRefresh]);
+    if (!canPull.current) return;
+    canPull.current = false;
+    if (pullY >= threshold && !refreshing) {
+      setRefreshing(true);
+      setPullY(0);
+      await onRefresh();
+      setRefreshing(false);
+    } else {
+      setPullY(0);
+    }
+  }, [pullY, refreshing, onRefresh]);
 
   return { pullY, refreshing, scrollRef, onTouchStart, onTouchMove, onTouchEnd };
 }
