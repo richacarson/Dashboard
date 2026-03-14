@@ -27,6 +27,23 @@ const pct = n => (n == null || isNaN(n)) ? "—" : `${n >= 0 ? "+" : ""}${n.toFi
 const vol = n => !n ? "—" : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`;
 const ago = d => { const s = (Date.now() - new Date(d)) / 1000; if (s < 60) return "just now"; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
 
+/* ── Market hours helper (all times ET) ── */
+function getMarketStatus() {
+  const now = new Date();
+  // Convert to ET
+  const et = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const day = et.getDay(); // 0=Sun, 6=Sat
+  const h = et.getHours(), m = et.getMinutes();
+  const mins = h * 60 + m;
+
+  if (day === 0 || day === 6) return { status: "closed", label: "Weekend", color: "#F87171" };
+  if (mins < 240) return { status: "closed", label: "Closed", color: "#F87171" }; // before 4am
+  if (mins < 570) return { status: "premarket", label: "Pre-Market", color: "#FBBF24" }; // 4am-9:30am
+  if (mins < 960) return { status: "open", label: "Open", color: "#34D399" }; // 9:30am-4pm
+  if (mins < 1200) return { status: "afterhours", label: "After Hours", color: "#FBBF24" }; // 4pm-8pm
+  return { status: "closed", label: "Closed", color: "#F87171" }; // after 8pm
+}
+
 const C = {
   bg: "#080B05", surface: "#0E120A", card: "#141A0F", cardHover: "#1B2315", elevated: "#1F2918",
   border: "rgba(120,140,88,0.07)", borderHover: "rgba(120,140,88,0.18)", borderActive: "rgba(120,140,88,0.30)",
@@ -112,6 +129,7 @@ export default function App() {
   const [refresh, setRefresh] = useState(30);
   const [mounted, setMounted] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [marketStatus, setMarketStatus] = useState(getMarketStatus);
   const [addTickerFor, setAddTickerFor] = useState(null); // sleeve key
   const [tickerInput, setTickerInput] = useState("");
   const [showAddList, setShowAddList] = useState(false);
@@ -147,6 +165,10 @@ export default function App() {
   };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
+  useEffect(() => {
+    const t = setInterval(() => setMarketStatus(getMarketStatus()), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   const hdrs = useMemo(() => ({ "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret }), [apiKey, apiSecret]);
 
@@ -438,8 +460,15 @@ export default function App() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2.5, color: C.t1 }}>IOWN</span>
+          {/* Market status pill */}
+          <div style={{
+            padding: "3px 8px", borderRadius: 6,
+            fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+            color: marketStatus.color,
+            border: `1px solid ${marketStatus.color}44`,
+            background: marketStatus.color + "12",
+          }}>{marketStatus.label}</div>
           {loading && <div style={{ width: 6, height: 6, borderRadius: 3, background: C.up, boxShadow: `0 0 8px ${C.upGlow}`, animation: "pulse 1.2s ease-in-out infinite" }} />}
-          {wsRef.current?.readyState === 1 && <div style={{ width: 6, height: 6, borderRadius: 3, background: "#34D399", boxShadow: "0 0 6px #34D39966" }} title="Live" />}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {lastUp && <span style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -455,6 +484,22 @@ export default function App() {
       </div>
 
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 18px" }}>
+
+        {/* Stale data banner when market is not open */}
+        {marketStatus.status !== "open" && Object.keys(quotes).length > 0 && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", marginTop: 12,
+            background: marketStatus.color + "08", border: `1px solid ${marketStatus.color}22`,
+            borderRadius: 12,
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, flexShrink: 0 }} />
+            <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.4 }}>
+              {marketStatus.status === "premarket" && "Pre-market hours — prices shown are from yesterday's close. Upgrade to SIP feed for live pre-market data."}
+              {marketStatus.status === "afterhours" && "After-hours trading — prices shown are from today's close. Upgrade to SIP feed for live after-hours data."}
+              {marketStatus.status === "closed" && "Market is closed — prices shown are from the last trading session."}
+            </div>
+          </div>
+        )}
 
         {/* ━━━ HOME — Robinhood Lists Style ━━━ */}
         {tab === "home" && (
