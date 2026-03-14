@@ -116,7 +116,9 @@ function ChartOverlay({ symbol, onClose }) {
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function App() {
-  const [unlocked, setUnlocked] = useState(false);
+  const [unlocked, setUnlocked] = useState(() => {
+    try { return localStorage.getItem("iown_remembered") === "true"; } catch { return false; }
+  });
   const [code, setCode] = useState("");
   const [codeErr, setCodeErr] = useState(false);
   const [codeFocused, setCodeFocused] = useState(false);
@@ -309,18 +311,23 @@ export default function App() {
 
   /* ━━━ PASSWORD GATE ━━━ */
   if (!unlocked) {
+    const handleUnlock = () => {
+      if (code === ACCESS_CODE) {
+        setUnlocked(true);
+        try { localStorage.setItem("iown_remembered", "true"); } catch {}
+      } else { setCodeErr(true); }
+    };
+
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, paddingTop: "env(safe-area-inset-top, 24px)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
-          <div style={{ width: 80, height: 80, borderRadius: 24, margin: "0 auto 32px", background: `linear-gradient(160deg, ${C.card} 0%, ${C.elevated} 100%)`, border: `1px solid ${C.borderHover}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)" }}>
-            <span style={{ fontSize: 28, fontWeight: 900, letterSpacing: 2, color: C.t3 }}>I</span>
-          </div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: C.t1, marginBottom: 8, letterSpacing: -0.5 }}>Welcome to IOWN</h1>
-          <p style={{ fontSize: 14, color: C.t3, marginBottom: 40 }}>Enter your access code to continue</p>
+          {/* Logo from public folder */}
+          <img src="icon-512x512.png" alt="IOWN" style={{ width: 100, height: 100, borderRadius: 28, margin: "0 auto 28px", display: "block", boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }} />
+          <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
-            <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") { if (code === ACCESS_CODE) setUnlocked(true); else setCodeErr(true); } }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
-            <button onClick={() => { if (code === ACCESS_CODE) setUnlocked(true); else setCodeErr(true); }} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(74,107,37,0.3)" }}>Continue</button>
+            <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
+            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(74,107,37,0.3)" }}>Continue</button>
             {codeErr && <div style={{ marginTop: 16, color: C.dn, fontSize: 13, fontWeight: 500, animation: "shake 0.4s" }}>Incorrect access code</div>}
           </div>
           <div style={{ marginTop: 40, fontSize: 12, color: C.t4 }}>Authorized IOWN team members only</div>
@@ -495,12 +502,11 @@ export default function App() {
         background: "rgba(8,11,5,0.88)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2.5, color: C.t1 }}>IOWN</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {/* Market status pill */}
           <div style={{
-            padding: "3px 8px", borderRadius: 6,
-            fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+            padding: "4px 10px", borderRadius: 8,
+            fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
             color: marketStatus.color,
             border: `1px solid ${marketStatus.color}44`,
             background: marketStatus.color + "12",
@@ -720,11 +726,25 @@ export default function App() {
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
               </div>
             </div>
+            {/* Lock / Reset */}
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Security</div>
+              <button onClick={() => {
+                try { localStorage.removeItem("iown_remembered"); } catch {}
+                setUnlocked(false); setAuthed(false); setCode("");
+              }} style={{
+                width: "100%", padding: "14px 0", background: "transparent",
+                border: `1px solid ${C.dn}44`, borderRadius: 12,
+                color: C.dn, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                Lock App
+              </button>
+              <div style={{ fontSize: 11, color: C.t4, marginTop: 8, textAlign: "center" }}>Locks the app and requires the access code to re-enter</div>
+            </div>
             <div style={{ marginTop: 40, textAlign: "center", paddingBottom: 20 }}>
-              <div style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 16px", background: C.card, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 18, fontWeight: 900, color: C.t3, letterSpacing: 2 }}>I</span>
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: C.t3, letterSpacing: 3, marginBottom: 6 }}>IOWN</div>
+              <img src="icon-192x192.png" alt="IOWN" style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 16px", display: "block" }} />
               <div style={{ fontSize: 13, color: C.t4 }}>Intentional Ownership</div>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>A Registered Investment Advisor under Paradiem</div>
             </div>
