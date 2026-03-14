@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 const SLEEVES = {
-  dividend: { name: "Dividend", short: "DIV", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], tag: "#2D5016", icon: "💎" },
-  growth: { name: "Growth Hybrid", short: "GRO", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], tag: "#1E4A2E", icon: "🚀" },
-  digital: { name: "Digital Assets", short: "ETF", symbols: ["IBIT","ETHA"], tag: "#1A3D3D", icon: "₿" },
+  dividend: { name: "Dividend", short: "DIV", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], tag: "#2D5016", icon: "\uD83D\uDC8E" },
+  growth: { name: "Growth Hybrid", short: "GRO", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], tag: "#1E4A2E", icon: "\uD83D\uDE80" },
+  digital: { name: "Digital Assets", short: "ETF", symbols: ["IBIT","ETHA"], tag: "#1A3D3D", icon: "\u20BF" },
 };
 const ALL = [...SLEEVES.dividend.symbols, ...SLEEVES.growth.symbols, ...SLEEVES.digital.symbols];
 const DIMS = [
-  { k: "innovation", l: "Innovation", i: "💡" }, { k: "inspiration", l: "Inspiration", i: "✨" },
-  { k: "infrastructure", l: "Infrastructure", i: "🏗️" }, { k: "aiResilience", l: "AI Resilience", i: "🤖" },
-  { k: "moatStrength", l: "Moat Strength", i: "🏰" }, { k: "erosionProtection", l: "Erosion Prot.", i: "🛡️" },
-  { k: "socialArbitrage", l: "Social Arb.", i: "📡" }, { k: "dividendSafety", l: "Div. Safety", i: "💰" },
+  { k: "innovation", l: "Innovation", i: "\uD83D\uDCA1" }, { k: "inspiration", l: "Inspiration", i: "\u2728" },
+  { k: "infrastructure", l: "Infrastructure", i: "\uD83C\uDFD7\uFE0F" }, { k: "aiResilience", l: "AI Resilience", i: "\uD83E\uDD16" },
+  { k: "moatStrength", l: "Moat Strength", i: "\uD83C\uDFF0" }, { k: "erosionProtection", l: "Erosion Prot.", i: "\uD83D\uDEE1\uFE0F" },
+  { k: "socialArbitrage", l: "Social Arb.", i: "\uD83D\uDCE1" }, { k: "dividendSafety", l: "Div. Safety", i: "\uD83D\uDCB0" },
 ];
 const GAME = { k: "gameType", l: "Infinite vs Finite" };
 const BASE = "https://data.alpaca.markets";
@@ -30,37 +30,118 @@ const C = {
   bg: "#0A0E06", surface: "#131A0D", card: "#1A2212", cardHover: "#1F2918",
   border: "rgba(122,143,90,0.08)", borderActive: "rgba(122,143,90,0.25)",
   t1: "#F0F4E8", t2: "#C5D4A8", t3: "#7A8F5A", t4: "#3D4D2D",
-  up: "#4ADE80", upBg: "rgba(74,222,128,0.08)", upBorder: "rgba(74,222,128,0.15)",
-  dn: "#F87171", dnBg: "rgba(248,113,113,0.08)", dnBorder: "rgba(248,113,113,0.15)",
+  up: "#4ADE80", upBg: "rgba(74,222,128,0.08)",
+  dn: "#F87171", dnBg: "rgba(248,113,113,0.08)",
   accent: "#7A8F5A", accentBg: "rgba(122,143,90,0.1)",
   gold: "#D4A857",
 };
 
-/* SVG Icons */
 const TabIcon = ({ id, active }) => {
   const color = active ? C.t1 : C.t4;
   const fill = active ? C.accent + "33" : "none";
-  if (id === "home") return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" fill={fill} /><polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-  if (id === "list") return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
-    </svg>
-  );
-  if (id === "screen") return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8" fill={fill} /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  );
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-    </svg>
-  );
+  if (id === "home") return (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" fill={fill} /><polyline points="9 22 9 12 15 12 15 22" /></svg>);
+  if (id === "list") return (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" /></svg>);
+  if (id === "screen") return (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" fill={fill} /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>);
+  return (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>);
 };
+
+/* ── TradingView Chart Overlay ── */
+function ChartOverlay({ symbol, onClose }) {
+  const containerRef = useRef(null);
+  useEffect(() => {
+    if (!containerRef.current) return;
+    containerRef.current.innerHTML = "";
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: symbol,
+      interval: "D",
+      timezone: "Etc/UTC",
+      theme: "dark",
+      style: "1",
+      locale: "en",
+      backgroundColor: C.bg,
+      gridColor: "rgba(122,143,90,0.06)",
+      allow_symbol_change: true,
+      hide_volume: false,
+      support_host: "https://www.tradingview.com",
+    });
+    containerRef.current.appendChild(script);
+  }, [symbol]);
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 1000, background: C.bg,
+      display: "flex", flexDirection: "column",
+      paddingTop: "env(safe-area-inset-top, 0px)",
+    }}>
+      {/* Chart header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 18px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18, fontWeight: 800, fontFamily: mono, color: C.t1 }}>{symbol}</span>
+        </div>
+        <button onClick={onClose} style={{
+          width: 36, height: 36, borderRadius: 10, background: C.surface,
+          border: `1px solid ${C.border}`, display: "flex", alignItems: "center",
+          justifyContent: "center", cursor: "pointer",
+        }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      {/* Chart container */}
+      <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
+    </div>
+  );
+}
+
+/* ── Pull to Refresh Hook ── */
+function usePullToRefresh(onRefresh, enabled) {
+  const [pulling, setPulling] = useState(false);
+  const [pullY, setPullY] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const startY = useRef(0);
+  const scrollRef = useRef(null);
+
+  const threshold = 80;
+
+  const onTouchStart = useCallback((e) => {
+    if (!enabled) return;
+    const el = scrollRef.current;
+    if (el && el.scrollTop <= 0) {
+      startY.current = e.touches[0].clientY;
+      setPulling(true);
+    }
+  }, [enabled]);
+
+  const onTouchMove = useCallback((e) => {
+    if (!pulling || refreshing) return;
+    const delta = e.touches[0].clientY - startY.current;
+    if (delta > 0) {
+      setPullY(Math.min(delta * 0.5, 120));
+    }
+  }, [pulling, refreshing]);
+
+  const onTouchEnd = useCallback(async () => {
+    if (!pulling) return;
+    if (pullY >= threshold && !refreshing) {
+      setRefreshing(true);
+      await onRefresh();
+      setRefreshing(false);
+    }
+    setPulling(false);
+    setPullY(0);
+  }, [pulling, pullY, refreshing, onRefresh]);
+
+  return { pullY, refreshing, scrollRef, onTouchStart, onTouchMove, onTouchEnd };
+}
 
 export default function App() {
   const [unlocked, setUnlocked] = useState(false);
@@ -81,6 +162,7 @@ export default function App() {
   const [scores, setScores] = useState({});
   const [sel, setSel] = useState(null);
   const [refresh, setRefresh] = useState(30);
+  const [chartSymbol, setChartSymbol] = useState(null);
   const iRef = useRef(null);
 
   const hdrs = useMemo(() => ({ "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret }), [apiKey, apiSecret]);
@@ -116,6 +198,8 @@ export default function App() {
     if (authed && refresh) { iRef.current = setInterval(fetchData, refresh * 1000); return () => clearInterval(iRef.current); }
   }, [authed, refresh, fetchData]);
 
+  const { pullY, refreshing, scrollRef, onTouchStart, onTouchMove, onTouchEnd } = usePullToRefresh(fetchData, authed);
+
   const chg = s => { const q = quotes[s], b = bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const sleeveOf = s => { for (const [k, v] of Object.entries(SLEEVES)) if (v.symbols.includes(s)) return { k, ...v }; return null; };
   const sleeveStats = k => {
@@ -141,12 +225,10 @@ export default function App() {
 
   const toggleSort = f => setSort(prev => prev.f === f ? { f, d: prev.d === "asc" ? "desc" : "asc" } : { f, d: f === "change" ? "desc" : "asc" });
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // PASSWORD GATE
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ PASSWORD GATE ━━━
   if (!unlocked) {
     return (
-      <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: sans }}>
+      <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: sans, paddingTop: "env(safe-area-inset-top, 24px)" }}>
         <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
           <div style={{
             width: 72, height: 72, borderRadius: 20,
@@ -161,25 +243,14 @@ export default function App() {
           <div style={{ fontSize: 24, fontWeight: 700, color: C.t1, marginBottom: 6, letterSpacing: -0.5 }}>Welcome to IOWN</div>
           <div style={{ fontSize: 14, color: C.t3, marginBottom: 36 }}>Enter your access code to continue</div>
           <div style={{ background: C.surface, borderRadius: 16, padding: 24, border: `1px solid ${C.border}` }}>
-            <input
-              type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }}
+            <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }}
               onKeyDown={e => { if (e.key === "Enter") { if (code === ACCESS_CODE) setUnlocked(true); else setCodeErr(true); } }}
               placeholder="Access code"
-              style={{
-                width: "100%", padding: "16px 18px", background: C.bg,
-                border: `1px solid ${codeErr ? C.dn + "66" : C.border}`,
-                borderRadius: 12, color: C.t1, fontSize: 16, fontFamily: sans, outline: "none",
-                boxSizing: "border-box", textAlign: "center", letterSpacing: 3,
-              }}
-            />
+              style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${codeErr ? C.dn + "66" : C.border}`, borderRadius: 12, color: C.t1, fontSize: 16, fontFamily: sans, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 3 }} />
             <button onClick={() => { if (code === ACCESS_CODE) setUnlocked(true); else setCodeErr(true); }}
-              style={{
-                width: "100%", padding: 16, marginTop: 14,
-                background: "linear-gradient(135deg, #4A6B25, #2D4A12)",
-                border: "none", borderRadius: 12, color: "#fff", fontSize: 15,
-                fontWeight: 600, fontFamily: sans, cursor: "pointer", letterSpacing: 0.5,
-                boxShadow: "0 4px 20px rgba(74,107,37,0.25)",
-              }}>Continue</button>
+              style={{ width: "100%", padding: 16, marginTop: 14, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 600, fontFamily: sans, cursor: "pointer", letterSpacing: 0.5, boxShadow: "0 4px 20px rgba(74,107,37,0.25)" }}>
+              Continue
+            </button>
             {codeErr && <div style={{ marginTop: 14, color: C.dn, fontSize: 13, fontWeight: 500 }}>Incorrect access code</div>}
           </div>
           <div style={{ marginTop: 32, fontSize: 12, color: C.t4 }}>Authorized IOWN team members only</div>
@@ -188,12 +259,10 @@ export default function App() {
     );
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // API KEY SCREEN
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ API KEY SCREEN ━━━
   if (!authed) {
     return (
-      <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: sans }}>
+      <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: sans, paddingTop: "env(safe-area-inset-top, 24px)" }}>
         <div style={{ width: "100%", maxWidth: 400, textAlign: "center" }}>
           <div style={{ fontSize: 24, fontWeight: 700, color: C.t1, marginBottom: 6, letterSpacing: -0.5 }}>Connect Market Data</div>
           <div style={{ fontSize: 14, color: C.t3, marginBottom: 32 }}>Link your Alpaca API keys to get started</div>
@@ -204,11 +273,7 @@ export default function App() {
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: C.t3, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Secret Key</label>
             <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="APCA-API-SECRET-KEY"
               style={{ width: "100%", padding: "14px 16px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, fontFamily: mono, outline: "none", boxSizing: "border-box", marginBottom: 24 }} />
-            <button onClick={auth} style={{
-              width: "100%", padding: 16, background: "linear-gradient(135deg, #4A6B25, #2D4A12)",
-              border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 600,
-              fontFamily: sans, cursor: "pointer", boxShadow: "0 4px 20px rgba(74,107,37,0.25)",
-            }}>Connect</button>
+            <button onClick={auth} style={{ width: "100%", padding: 16, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 600, fontFamily: sans, cursor: "pointer", boxShadow: "0 4px 20px rgba(74,107,37,0.25)" }}>Connect</button>
             {authErr && <div style={{ marginTop: 12, color: C.dn, fontSize: 13, fontWeight: 500, textAlign: "center" }}>{authErr}</div>}
           </div>
         </div>
@@ -216,13 +281,9 @@ export default function App() {
     );
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // MAIN DASHBOARD
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━ MAIN DASHBOARD ━━━
   const allC = ALL.map(chg).filter(c => c !== null);
   const avgC = allC.length ? allC.reduce((a, b) => a + b, 0) / allC.length : null;
-  const gainers = ALL.filter(s => chg(s) !== null).sort((a, b) => chg(b) - chg(a)).slice(0, 5);
-  const losers = ALL.filter(s => chg(s) !== null).sort((a, b) => chg(a) - chg(b)).slice(0, 5);
   const fsyms = filtered();
 
   const Pill = ({ on, children, onClick, s: style }) => (
@@ -250,12 +311,12 @@ export default function App() {
   const Ticker = ({ s }) => {
     const q = quotes[s], b = bars[s], c = chg(s), sl = sleeveOf(s), open = sel === s;
     return (
-      <div onClick={() => setSel(open ? null : s)} style={{
+      <div style={{
         background: open ? C.cardHover : C.card,
         border: `1px solid ${open ? C.borderActive : C.border}`,
         borderRadius: 14, padding: "14px 16px", cursor: "pointer", transition: "all 0.15s",
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div onClick={() => setSel(open ? null : s)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{
               width: 42, height: 42, borderRadius: 12, background: sl?.tag + "22",
@@ -279,45 +340,68 @@ export default function App() {
           </div>
         </div>
         {open && (
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}`, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-            {[["Open", fmt(b?.o)], ["High", fmt(b?.h)], ["Low", fmt(b?.l)], ["Prev Cl", fmt(b?.pc)], ["VWAP", fmt(b?.vw)], ["Volume", vol(b?.v)]].map(([l, v]) => (
-              <div key={l}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase" }}>{l}</div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: C.t2, fontFamily: mono, marginTop: 3 }}>{v}</div>
-              </div>
-            ))}
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+            {/* Stats grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+              {[["Open", fmt(b?.o)], ["High", fmt(b?.h)], ["Low", fmt(b?.l)], ["Prev Cl", fmt(b?.pc)], ["VWAP", fmt(b?.vw)], ["Volume", vol(b?.v)]].map(([l, v]) => (
+                <div key={l}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase" }}>{l}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: C.t2, fontFamily: mono, marginTop: 3 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            {/* Chart button */}
+            <button onClick={(e) => { e.stopPropagation(); setChartSymbol(s); }} style={{
+              width: "100%", padding: "12px 0", background: C.accentBg,
+              border: `1px solid ${C.borderActive}`, borderRadius: 10,
+              color: C.t1, fontSize: 13, fontWeight: 600, fontFamily: sans,
+              cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "center", gap: 8, transition: "all 0.15s",
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              Open Chart
+            </button>
           </div>
         )}
       </div>
     );
   };
 
-  const MoverRow = ({ s, rank }) => {
-    const q = quotes[s], c = chg(s);
-    return (
-      <div onClick={() => { setSel(s); setTab("list"); }} style={{
-        display: "flex", alignItems: "center", padding: "12px 0",
-        borderBottom: `1px solid ${C.border}`, cursor: "pointer",
-      }}>
-        <span style={{ fontSize: 11, color: C.t4, fontFamily: mono, width: 20 }}>{rank}</span>
-        <span style={{ fontSize: 14, fontWeight: 700, color: C.t1, fontFamily: mono, flex: 1 }}>{s}</span>
-        <span style={{ fontSize: 14, fontWeight: 500, color: C.t3, fontFamily: mono, marginRight: 12 }}>${fmt(q?.p)}</span>
-        <span style={{
-          fontSize: 13, fontWeight: 700, fontFamily: mono,
-          color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
-          background: c > 0 ? C.upBg : c < 0 ? C.dnBg : "transparent",
-          padding: "3px 8px", borderRadius: 6, minWidth: 72, textAlign: "right",
-        }}>{pct(c)}</span>
-      </div>
-    );
-  };
-
   return (
-    <div style={{ minHeight: "100dvh", background: C.bg, fontFamily: sans, color: C.t1, paddingBottom: 84 }}>
+    <div
+      ref={scrollRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{
+        minHeight: "100dvh", background: C.bg, fontFamily: sans, color: C.t1,
+        paddingBottom: 84, overflowY: "auto",
+      }}
+    >
+      {/* Pull to refresh indicator */}
+      {(pullY > 0 || refreshing) && (
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          height: pullY > 0 ? pullY : 50, overflow: "hidden",
+          transition: pullY > 0 ? "none" : "height 0.3s ease",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 14, border: `2px solid ${C.t4}`,
+            borderTopColor: refreshing ? C.up : (pullY >= 80 ? C.up : C.t4),
+            animation: refreshing ? "spin 0.8s linear infinite" : "none",
+            transition: "border-color 0.2s",
+          }} />
+        </div>
+      )}
 
       {/* HEADER */}
       <div style={{
-        padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "14px 18px",
+        paddingTop: "calc(env(safe-area-inset-top, 14px) + 14px)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`, background: "rgba(10,14,6,0.94)",
         backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
         position: "sticky", top: 0, zIndex: 100,
@@ -339,7 +423,8 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "16px 16px" }}>
+      {/* Desktop-aware content container */}
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "16px 16px" }}>
 
         {/* ━━━ HOME ━━━ */}
         {tab === "home" && (<div>
@@ -360,7 +445,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Strategies — horizontal scroll */}
+          {/* Strategies */}
           <Section title="Strategies" right={
             <span onClick={() => setTab("list")} style={{ fontSize: 13, color: C.t3, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
               View all <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -392,65 +477,17 @@ export default function App() {
             </div>
           </Section>
 
-          {/* Heat Map */}
-          <Section title="Heat Map" sub="Color intensity = magnitude of change">
-            {Object.entries(SLEEVES).map(([key, sl]) => (
-              <div key={key} style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 12, color: C.t3, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span>{sl.icon}</span> {sl.name}
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {sl.symbols.map(s => {
-                    const c = chg(s), intensity = c ? Math.min(Math.abs(c) / 3, 1) : 0;
-                    const bg = c > 0 ? `rgba(74,222,128,${0.08 + intensity * 0.3})` : c < 0 ? `rgba(248,113,113,${0.08 + intensity * 0.3})` : "rgba(122,143,90,0.04)";
-                    const bc = c > 0 ? `rgba(74,222,128,${0.1 + intensity * 0.2})` : c < 0 ? `rgba(248,113,113,${0.1 + intensity * 0.2})` : C.border;
-                    return (
-                      <div key={s} onClick={() => { setSel(s); setTab("list"); }} style={{
-                        padding: "6px 8px", background: bg, borderRadius: 8, cursor: "pointer",
-                        minWidth: 52, textAlign: "center", border: `1px solid ${bc}`,
-                      }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: C.t1, fontFamily: mono }}>{s}</div>
-                        <div style={{ fontSize: 10, fontFamily: mono, color: c > 0 ? C.up : c < 0 ? C.dn : C.t4, marginTop: 2 }}>{pct(c)}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </Section>
-
-          {/* Top Movers */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 16px" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.up, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u25B2"}</span> Top Gainers
-              </div>
-              {gainers.map((s, i) => <MoverRow key={s} s={s} rank={i + 1} />)}
-            </div>
-            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 16px" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.dn, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 16 }}>{"\u25BC"}</span> Top Decliners
-              </div>
-              {losers.map((s, i) => <MoverRow key={s} s={s} rank={i + 1} />)}
-            </div>
-          </div>
-
         </div>)}
 
         {/* ━━━ HOLDINGS ━━━ */}
         {tab === "list" && (<div>
           <Section title="Holdings" sub={`${fsyms.length} positions`}>
-            {/* Search */}
             <div style={{ position: "relative", marginBottom: 12 }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }}>
                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
               <input type="text" placeholder="Search ticker..." value={search} onChange={e => setSearch(e.target.value)}
-                style={{
-                  width: "100%", padding: "12px 14px 12px 40px", background: C.surface,
-                  border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14,
-                  fontFamily: sans, fontWeight: 500, outline: "none", boxSizing: "border-box",
-                }} />
+                style={{ width: "100%", padding: "12px 14px 12px 40px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, fontFamily: sans, fontWeight: 500, outline: "none", boxSizing: "border-box" }} />
             </div>
             <div style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 10, paddingBottom: 4 }}>
               <Pill on={sleeve === "all"} onClick={() => setSleeve("all")}>All {ALL.length}</Pill>
@@ -463,7 +500,8 @@ export default function App() {
                 </Pill>
               ))}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Desktop: 2-column grid, Mobile: single column */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 8 }}>
               {fsyms.map(s => <Ticker key={s} s={s} />)}
             </div>
           </Section>
@@ -476,7 +514,7 @@ export default function App() {
               <Pill on={sleeve === "all"} onClick={() => setSleeve("all")}>All</Pill>
               {Object.entries(SLEEVES).map(([k, s]) => <Pill key={k} on={sleeve === k} onClick={() => setSleeve(k)}>{s.icon} {s.short}</Pill>)}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 8 }}>
               {(sleeve === "all" ? ALL : SLEEVES[sleeve]?.symbols || []).map(s => {
                 const sc = scores[s] || {}, comp = composite(s), open = sel === s;
                 const filled = DIMS.filter(d => sc[d.k] != null).length;
@@ -492,18 +530,12 @@ export default function App() {
                         <span style={{ fontSize: 10, fontWeight: 600, color: C.t3, background: sleeveOf(s)?.tag + "33", padding: "3px 7px", borderRadius: 6 }}>{sleeveOf(s)?.short}</span>
                         <span style={{ fontSize: 11, color: C.t4, fontFamily: mono }}>{filled}/8</span>
                       </div>
-                      <div style={{
-                        fontSize: 18, fontWeight: 800, fontFamily: mono,
-                        color: comp ? (comp >= 7 ? C.up : comp >= 5 ? C.gold : C.dn) : C.t4,
-                      }}>{comp ? comp.toFixed(1) : "\u2014"}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, fontFamily: mono, color: comp ? (comp >= 7 ? C.up : comp >= 5 ? C.gold : C.dn) : C.t4 }}>
+                        {comp ? comp.toFixed(1) : "\u2014"}
+                      </div>
                     </div>
                     <div style={{ display: "flex", gap: 3, marginTop: 10 }}>
-                      {DIMS.map(d => (
-                        <div key={d.k} style={{
-                          flex: 1, height: 4, borderRadius: 2,
-                          background: sc[d.k] ? `rgba(74,222,128,${sc[d.k] / 10})` : "rgba(122,143,90,0.05)",
-                        }} />
-                      ))}
+                      {DIMS.map(d => (<div key={d.k} style={{ flex: 1, height: 4, borderRadius: 2, background: sc[d.k] ? `rgba(74,222,128,${sc[d.k] / 10})` : "rgba(122,143,90,0.05)" }} />))}
                     </div>
                     {open && (
                       <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }} onClick={e => e.stopPropagation()}>
@@ -517,13 +549,7 @@ export default function App() {
                                 if (v >= 1 && v <= 10) setScores(p => ({ ...p, [s]: { ...(p[s] || {}), [d.k]: v } }));
                                 else if (!e.target.value) setScores(p => ({ ...p, [s]: { ...(p[s] || {}), [d.k]: undefined } }));
                               }}
-                                style={{
-                                  width: 42, padding: "6px 4px",
-                                  background: sc[d.k] ? "rgba(74,222,128,0.08)" : C.bg,
-                                  border: `1px solid ${sc[d.k] ? C.up + "33" : C.border}`,
-                                  borderRadius: 8, color: C.t1, fontSize: 15, fontFamily: mono,
-                                  textAlign: "center", outline: "none",
-                                }} />
+                                style={{ width: 42, padding: "6px 4px", background: sc[d.k] ? "rgba(74,222,128,0.08)" : C.bg, border: `1px solid ${sc[d.k] ? C.up + "33" : C.border}`, borderRadius: 8, color: C.t1, fontSize: 15, fontFamily: mono, textAlign: "center", outline: "none" }} />
                             </div>
                           ))}
                         </div>
@@ -532,16 +558,22 @@ export default function App() {
                           <div style={{ display: "flex", gap: 4 }}>
                             {[{ v: "infinite", l: "\u267E\uFE0F" }, { v: "finite", l: "\u231B" }, { v: "mixed", l: "\uD83D\uDD04" }].map(({ v, l }) => (
                               <button key={v} onClick={() => setScores(p => ({ ...p, [s]: { ...(p[s] || {}), [GAME.k]: sc[GAME.k] === v ? undefined : v } }))}
-                                style={{
-                                  padding: "5px 10px",
-                                  background: sc[GAME.k] === v ? C.accentBg : "transparent",
-                                  border: `1px solid ${sc[GAME.k] === v ? C.borderActive : C.border}`,
-                                  borderRadius: 8, color: sc[GAME.k] === v ? C.t1 : C.t4,
-                                  fontSize: 14, cursor: "pointer",
-                                }}>{l}</button>
+                                style={{ padding: "5px 10px", background: sc[GAME.k] === v ? C.accentBg : "transparent", border: `1px solid ${sc[GAME.k] === v ? C.borderActive : C.border}`, borderRadius: 8, color: sc[GAME.k] === v ? C.t1 : C.t4, fontSize: 14, cursor: "pointer" }}>{l}</button>
                             ))}
                           </div>
                         </div>
+                        {/* Chart button in screener too */}
+                        <button onClick={(e) => { e.stopPropagation(); setChartSymbol(s); }} style={{
+                          width: "100%", padding: "12px 0", marginTop: 12, background: C.accentBg,
+                          border: `1px solid ${C.borderActive}`, borderRadius: 10,
+                          color: C.t1, fontSize: 13, fontWeight: 600, fontFamily: sans,
+                          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                        }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                          </svg>
+                          Open Chart
+                        </button>
                       </div>
                     )}
                   </div>
@@ -586,7 +618,7 @@ export default function App() {
         background: "rgba(10,14,6,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)",
         borderTop: `1px solid ${C.border}`,
         display: "flex", justifyContent: "space-around",
-        padding: "6px 0 env(safe-area-inset-bottom, 8px)",
+        padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
         {[
           { id: "home", label: "Home" },
@@ -605,13 +637,20 @@ export default function App() {
         ))}
       </div>
 
+      {/* TradingView Chart Overlay */}
+      {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} />}
+
       <style>{`
         @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
+        @keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }
         * { -webkit-tap-highlight-color: transparent; }
         input::placeholder { color: ${C.t4}; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(122,143,90,0.2); border-radius: 4px; }
+        @media (min-width: 768px) {
+          .tradingview-widget-container { min-height: 500px; }
+        }
       `}</style>
     </div>
   );
