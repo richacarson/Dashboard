@@ -17,6 +17,15 @@ const DEFAULT_SLEEVES = {
 const loadSleeves = () => { try { const s = localStorage.getItem("iown_sleeves"); return s ? JSON.parse(s) : DEFAULT_SLEEVES; } catch { return DEFAULT_SLEEVES; } };
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
+const BENCHMARKS = [
+  { sym: "SPY", name: "S&P 500" },
+  { sym: "QQQ", name: "Nasdaq 100" },
+  { sym: "DIA", name: "Dow Jones" },
+  { sym: "IUSG", name: "Growth BM" },
+  { sym: "DVY", name: "Dividend BM" },
+  { sym: "IWS", name: "Mid-Val BM" },
+];
+const BM_SYMS = BENCHMARKS.map(b => b.sym);
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
@@ -117,6 +126,8 @@ export default function App() {
   const [authErr, setAuthErr] = useState("");
   const [quotes, setQuotes] = useState({});
   const [bars, setBars] = useState({});
+  const [bmQuotes, setBmQuotes] = useState({});
+  const [bmBars, setBmBars] = useState({});
   const [intradayPts, setIntradayPts] = useState({});
   const [names, setNames] = useState({});
   const [sleeves, setSleeves] = useState(loadSleeves);
@@ -129,6 +140,8 @@ export default function App() {
   const [refresh, setRefresh] = useState(30);
   const [mounted, setMounted] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [editIconFor, setEditIconFor] = useState(null);
+  const [iconInput, setIconInput] = useState("");
   const [marketStatus, setMarketStatus] = useState(getMarketStatus);
   const [addTickerFor, setAddTickerFor] = useState(null); // sleeve key
   const [tickerInput, setTickerInput] = useState("");
@@ -163,6 +176,11 @@ export default function App() {
   const removeSymbol = (k, sym) => {
     setSleeves(p => ({ ...p, [k]: { ...p[k], symbols: p[k].symbols.filter(s => s !== sym) } }));
   };
+  const updateIcon = (k, icon) => {
+    if (!icon) return;
+    setSleeves(p => ({ ...p, [k]: { ...p[k], icon } }));
+    setEditIconFor(null); setIconInput("");
+  };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
   useEffect(() => {
@@ -191,18 +209,23 @@ export default function App() {
     if (!apiKey || !apiSecret) return;
     setLoading(true);
     try {
-      const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${ALL.join(",")}&feed=iex`, { headers: hdrs });
+      // Fetch portfolio + benchmark snapshots in parallel
+      const allSyms = [...ALL, ...BM_SYMS];
+      const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${allSyms.join(",")}&feed=iex`, { headers: hdrs });
       if (!r.ok) throw new Error("fail");
       const d = await r.json();
-      const nq = {}, nb = {};
+      const nq = {}, nb = {}, bq = {}, bb = {};
       for (const [s, snap] of Object.entries(d)) {
-        if (snap.latestTrade) nq[s] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
-        if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
-        if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
+        const isBM = BM_SYMS.includes(s);
+        const tq = isBM ? bq : nq;
+        const tb = isBM ? bb : nb;
+        if (snap.latestTrade) tq[s] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
+        if (snap.dailyBar) tb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
+        if (snap.prevDailyBar) { if (!tb[s]) tb[s] = {}; tb[s].pc = snap.prevDailyBar.c; }
       }
-      setQuotes(nq); setBars(nb); setLastUp(new Date());
+      setQuotes(nq); setBars(nb); setBmQuotes(bq); setBmBars(bb); setLastUp(new Date());
     } catch (e) { console.error(e); } finally { setLoading(false); }
-  }, [apiKey, apiSecret, hdrs]);
+  }, [apiKey, apiSecret, hdrs, ALL]);
 
   /* ── Fetch intraday bars for sparklines ── */
   const fetchIntraday = useCallback(async () => {
@@ -280,6 +303,7 @@ export default function App() {
   }, [authed, refresh, fetchData, fetchNews]);
 
   const chg = s => { const q = quotes[s], b = bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+  const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
 
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
 
@@ -376,12 +400,25 @@ export default function App() {
             </div>
           )}
           <div onClick={() => toggleSleeve(k)} style={{ display: "flex", alignItems: "center", flex: 1, cursor: "pointer" }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 14, marginRight: 16,
-              background: C.card, border: `1px solid ${C.border}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 26, flexShrink: 0,
-            }}>{sleeve.icon}</div>
+            {/* Icon — tappable in edit mode to change */}
+            {editMode && editIconFor === k ? (
+              <div style={{ marginRight: 16, display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+                <input type="text" value={iconInput} onChange={e => setIconInput(e.target.value)} autoFocus
+                  onKeyDown={e => { if (e.key === "Enter") updateIcon(k, iconInput); if (e.key === "Escape") setEditIconFor(null); }}
+                  placeholder="😀" style={{ width: 50, height: 50, padding: 0, background: C.card, border: `1px solid ${C.borderActive}`, borderRadius: 14, color: C.t1, fontSize: 26, textAlign: "center", outline: "none", fontFamily: "inherit" }} />
+                <button onClick={(e) => { e.stopPropagation(); updateIcon(k, iconInput); }} style={{ padding: "8px 10px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, color: C.t1, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Set</button>
+              </div>
+            ) : (
+              <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
+                width: 56, height: 56, borderRadius: 14, marginRight: 16,
+                background: C.card, border: `1px solid ${editMode ? C.borderActive : C.border}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 26, flexShrink: 0, position: "relative",
+              }}>
+                {sleeve.icon}
+                {editMode && <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></div>}
+              </div>
+            )}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 17, fontWeight: 700, color: C.t1 }}>{sleeve.name}</div>
               <div style={{ fontSize: 13, color: C.t4, marginTop: 2 }}>{sleeve.symbols.length} items</div>
@@ -504,6 +541,38 @@ export default function App() {
         {/* ━━━ HOME — Robinhood Lists Style ━━━ */}
         {tab === "home" && (
           <div style={{ animation: "fadeIn 0.3s ease" }}>
+
+            {/* Benchmark Banner */}
+            {Object.keys(bmQuotes).length > 0 && (
+              <div style={{ margin: "16px -18px 0", padding: "0 18px", overflow: "hidden" }}>
+                <div style={{
+                  display: "flex", gap: 0, overflowX: "auto", paddingBottom: 6,
+                  WebkitOverflowScrolling: "touch", scrollbarWidth: "none",
+                }}>
+                  {BENCHMARKS.map((bm, i) => {
+                    const c = bmChg(bm.sym);
+                    const q = bmQuotes[bm.sym];
+                    return (
+                      <div key={bm.sym} onClick={() => setChartSymbol(bm.sym)} style={{
+                        flex: "0 0 auto", padding: "12px 16px", cursor: "pointer",
+                        borderRight: i < BENCHMARKS.length - 1 ? `1px solid ${C.border}` : "none",
+                        minWidth: 100,
+                      }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 4, whiteSpace: "nowrap" }}>{bm.name}</div>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                          {q && <span style={{ fontSize: 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q.p.toFixed(2)}</span>}
+                          <span style={{
+                            fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
+                            color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
+                          }}>{pct(c)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ height: 1, background: C.border }} />
+              </div>
+            )}
             {/* Lists header with edit toggle */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 0 8px" }}>
               <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Lists</div>
