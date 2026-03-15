@@ -12,20 +12,56 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch this week's calendar
+      - name: Fetch calendar data
         run: |
-          echo "Fetching this week..."
-          curl -sL -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' \
-            'https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json' -o /tmp/thisweek.json || echo "[]" > /tmp/thisweek.json
-          echo "This week size: $(wc -c < /tmp/thisweek.json) bytes"
-          echo "This week first 200 chars: $(head -c 200 /tmp/thisweek.json)"
-          
-          echo "Fetching next week..."
-          curl -sL -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' \
-            'https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json' -o /tmp/nextweek.json || echo "[]" > /tmp/nextweek.json
-          echo "Next week size: $(wc -c < /tmp/nextweek.json) bytes"
+          # Try multiple URL variants - FairEconomy changes URLs periodically
+          URLS_THIS=(
+            "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
+            "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json"
+          )
+          URLS_NEXT=(
+            "https://nfs.faireconomy.media/ff_calendar_nextweek.json"
+            "https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json"
+          )
 
-      - name: Merge, filter US high/medium impact, write to public/
+          echo "[]" > /tmp/thisweek.json
+          echo "[]" > /tmp/nextweek.json
+
+          for url in "${URLS_THIS[@]}"; do
+            echo "Trying: $url"
+            HTTP_CODE=$(curl -sL -o /tmp/try.json -w "%{http_code}" \
+              -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
+              -H 'Accept: application/json' \
+              "$url" 2>/dev/null || echo "000")
+            SIZE=$(wc -c < /tmp/try.json 2>/dev/null || echo "0")
+            echo "  HTTP $HTTP_CODE, $SIZE bytes"
+            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
+              cp /tmp/try.json /tmp/thisweek.json
+              echo "  Success! Using this source."
+              break
+            fi
+          done
+
+          for url in "${URLS_NEXT[@]}"; do
+            echo "Trying: $url"
+            HTTP_CODE=$(curl -sL -o /tmp/try.json -w "%{http_code}" \
+              -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
+              -H 'Accept: application/json' \
+              "$url" 2>/dev/null || echo "000")
+            SIZE=$(wc -c < /tmp/try.json 2>/dev/null || echo "0")
+            echo "  HTTP $HTTP_CODE, $SIZE bytes"
+            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
+              cp /tmp/try.json /tmp/nextweek.json
+              echo "  Success! Using this source."
+              break
+            fi
+          done
+
+          echo "Final this week: $(wc -c < /tmp/thisweek.json) bytes"
+          echo "Final next week: $(wc -c < /tmp/nextweek.json) bytes"
+          echo "This week preview: $(head -c 300 /tmp/thisweek.json)"
+
+      - name: Process and write calendar
         run: |
           python3 << 'PY'
           import json
@@ -35,7 +71,7 @@ jobs:
               try:
                   with open(f) as fh:
                       raw = fh.read().strip()
-                      if raw:
+                      if raw and raw != '[]':
                           data = json.loads(raw)
                           if isinstance(data, list):
                               events.extend(data)
@@ -43,7 +79,7 @@ jobs:
                           else:
                               print(f"{f}: not a list, got {type(data).__name__}")
                       else:
-                          print(f"{f}: empty response")
+                          print(f"{f}: empty")
               except Exception as e:
                   print(f"{f}: error: {e}")
 
@@ -52,24 +88,22 @@ jobs:
               print(f"Sample keys: {list(events[0].keys())}")
               countries = set(e.get('country') for e in events)
               impacts = set(e.get('impact') for e in events)
-              print(f"All countries: {countries}")
-              print(f"All impacts: {impacts}")
+              print(f"Countries: {countries}")
+              print(f"Impacts: {impacts}")
 
-          # Filter: US only, High or Medium impact
           filtered = [
               e for e in events
               if e.get('country') == 'USD'
               and e.get('impact') in ('High', 'Medium')
           ]
 
-          print(f"Filtered US High/Medium: {len(filtered)} events")
-
+          print(f"US High/Medium: {len(filtered)} events")
           filtered.sort(key=lambda e: e.get('date', ''))
 
           with open('public/economic-calendar.json', 'w') as f:
               json.dump(filtered, f, indent=2)
 
-          print(f"Wrote to public/economic-calendar.json")
+          print(f"Written to public/economic-calendar.json")
           PY
 
       - name: Commit and push if changed
@@ -78,4 +112,3 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/economic-calendar.json
           git diff --cached --quiet || (git commit -m "Auto-update economic calendar $(date +%Y-%m-%d)" && git push)
-          echo "Done!"

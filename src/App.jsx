@@ -503,16 +503,22 @@ export default function App() {
         const data = await staticR.json();
         if (Array.isArray(data) && data.length > 0) events = data;
       }
-      // Fallback: fetch live from FairEconomy (ForexFactory data)
+      // Fallback: fetch live from FairEconomy (ForexFactory data) - try multiple URLs
       if (!events.length) {
-        const [thisR, nextR] = await Promise.all([
-          fetch("https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json").catch(() => null),
-          fetch("https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json").catch(() => null),
-        ]);
-        const thisW = thisR?.ok ? await thisR.json() : [];
-        const nextW = nextR?.ok ? await nextR.json() : [];
-        events = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
-        events = events.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
+        const urls = [
+          ["https://nfs.faireconomy.media/ff_calendar_thisweek.json", "https://nfs.faireconomy.media/ff_calendar_nextweek.json"],
+          ["https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json", "https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json"],
+        ];
+        for (const [thisUrl, nextUrl] of urls) {
+          try {
+            const [thisR, nextR] = await Promise.all([fetch(thisUrl).catch(() => null), fetch(nextUrl).catch(() => null)]);
+            const thisW = thisR?.ok ? await thisR.json() : [];
+            const nextW = nextR?.ok ? await nextR.json() : [];
+            const combined = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
+            const filtered = combined.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
+            if (filtered.length > 0) { events = filtered; break; }
+          } catch {}
+        }
       }
       events.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       setEconCalendar(events);
