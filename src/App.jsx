@@ -1559,7 +1559,7 @@ export default function App() {
                   // Export to CSV (universally opens in Excel)
                   const syms = sleeves[researchView]?.symbols || [];
                   const isDivView = researchView === "dividend";
-                  const headers = ["Symbol", "Company", "Sector", "Industry", "Last Qtr %", "This Qtr %", "YTD %"];
+                  const headers = ["Symbol", "Company", "Industry", "Last Qtr %", "This Qtr %", "YTD %"];
                   if (isDivView) headers.push("Yield FWD %", "Payout %");
                   headers.push("P/E TTM", "P/E FWD", "PEG");
                   if (!isDivView) headers.push("Margin %");
@@ -1567,7 +1567,7 @@ export default function App() {
 
                   const rows = [...syms].sort((a, b) => a.localeCompare(b)).map(s => {
                     const d = fundamentals[s] || {};
-                    const row = [s, (names[s] || "").replace(/,/g, ""), (d.sector || "").replace(/,/g, ""), (d.industry || "").replace(/,/g, ""), d.lastQtr, d.thisQtr, d.ytd];
+                    const row = [s, (names[s] || "").replace(/,/g, ""), (d.industry || "").replace(/,/g, ""), d.lastQtr, d.thisQtr, d.ytd];
                     if (isDivView) row.push(d.yieldFwd, d.payoutRatio);
                     row.push(d.peTTM, d.peFwd, d.pegTTM);
                     if (!isDivView) row.push(d.profitMargin);
@@ -1576,10 +1576,10 @@ export default function App() {
                   });
 
                   // Add averages row
-                  const avgRow = ["Average", "", "", ""];
-                  const dataColCount = headers.length - 4; // minus Symbol, Company, Sector, Industry
+                  const avgRow = ["Average", "", ""];
+                  const dataColCount = headers.length - 3; // minus Symbol, Company, Industry
                   for (let ci = 0; ci < dataColCount; ci++) {
-                    const vals = rows.map(r => r[ci + 4]).filter(v => v !== "" && !isNaN(v));
+                    const vals = rows.map(r => r[ci + 3]).filter(v => v !== "" && !isNaN(v));
                     avgRow.push(vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2)) : "");
                   }
                   rows.push(avgRow);
@@ -1641,7 +1641,6 @@ export default function App() {
               });
 
               const divCols = [
-                textCol("Sector", "sector", 85),
                 textCol("Industry", "industry", 110),
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
                 pctCol("Last Qtr", "lastQtr"),
@@ -1658,7 +1657,6 @@ export default function App() {
                 { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
               ];
               const groCols = [
-                textCol("Sector", "sector", 85),
                 textCol("Industry", "industry", 110),
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
                 pctCol("Last Qtr", "lastQtr"),
