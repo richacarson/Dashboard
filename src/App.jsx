@@ -371,27 +371,23 @@ export default function App() {
 
         results[sym] = {
           industry: null,
-          avgVol: m["10DayAverageTradingVolume"] ? m["10DayAverageTradingVolume"] * 1e6 : null,
+          avgVol: m["3MonthAverageTradingVolume"] ? m["3MonthAverageTradingVolume"] * 1e6 : null,
           peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null,
           peFwd: m.peAnnual ?? null,
           pegTTM: m.pegTTM ?? null,
           yieldFwd: m.dividendYieldIndicatedAnnual ?? null,
           payoutRatio: m.payoutRatioTTM ?? m.payoutRatioAnnual ?? null,
-          revenueYoY: m.revenueGrowthTTMYoy ?? null,
+          revenueYoY: m.revenueGrowthQuarterlyYoy ?? m.revenueGrowthTTMYoy ?? null,
           revenue5Y: m.revenueGrowth5Y ?? null,
           profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
           roe: m.roeTTM ?? m.roeAnnual ?? null,
-          de: m["totalDebt/totalEquityQuarterly"] ?? m["totalDebt/totalEquityAnnual"] ?? null,
+          de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
           debtToFCF: null,
           roic: m.roicTTM ?? m.roicAnnual ?? null,
-          lastQtr: m["3MonthPriceReturnDaily"] ?? m["3MonthPriceReturn"] ?? m.priceReturn3M ?? null,
+          lastQtr: m["13WeekPriceReturnDaily"] ?? null,
         };
         if (results[sym].peTTM != null) success++;
-        if (i === 0) {
-          const retKeys = Object.keys(m).filter(k => k.match(/month|Month|3M|price|Return|return|Quarter|quarter/i));
-          setFmpStatus(`Return keys: ${retKeys.join(", ") || "none found"}`);
-          await new Promise(r => setTimeout(r, 2000)); // show for 2 seconds
-        }
+        if (i === 0) setFmpStatus(`Fetching… keys ok`);
       } catch (e) { console.warn("Finnhub", sym, e.message); }
     }
 
