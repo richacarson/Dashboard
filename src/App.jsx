@@ -360,17 +360,67 @@ export default function App() {
     const results = {};
     let success = 0;
 
+    // Calculate quarter date boundaries
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+    const curQtr = Math.floor(month / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
+    // Current quarter start
+    const curQtrStart = new Date(year, curQtr * 3, 1);
+    // Previous quarter: start and end
+    const prevQtrEnd = new Date(curQtrStart.getTime() - 86400000); // day before current quarter
+    const prevQtrYear = curQtr === 0 ? year - 1 : year;
+    const prevQtrMonth = curQtr === 0 ? 9 : (curQtr - 1) * 3; // Oct for Q4, else prev quarter start month
+    const prevQtrStart = new Date(prevQtrYear, prevQtrMonth, 1);
+    // YTD start
+    const ytdStart = new Date(year, 0, 1);
+
+    // Unix timestamps
+    const ts = d => Math.floor(d.getTime() / 1000);
+    const prevQtrStartTs = ts(prevQtrStart);
+    const prevQtrEndTs = ts(prevQtrEnd);
+    const curQtrStartTs = ts(curQtrStart);
+    const ytdStartTs = ts(ytdStart);
+    const nowTs = ts(now);
+
     for (let i = 0; i < coreSyms.length; i++) {
       const sym = coreSyms[i];
       if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
-        const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`);
-        if (!r.ok) {
-          if (r.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
+        // Fetch metrics + candle data for quarter performance
+        const [metR, candleR] = await Promise.all([
+          fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`),
+          fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=D&from=${prevQtrStartTs}&to=${nowTs}&token=${key}`),
+        ]);
+        if (!metR.ok) {
+          if (metR.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
           continue;
         }
-        const d = await r.json();
+        const d = await metR.json();
         const m = d?.metric || {};
+        const candle = candleR.ok ? await candleR.json() : {};
+
+        // Calculate returns from candle data
+        let prevQtrReturn = null, thisQtrReturn = null, ytdReturn = null;
+        if (candle.c && candle.t && candle.c.length > 1) {
+          // Find prices at specific dates
+          const findClose = (targetTs) => {
+            let best = -1;
+            for (let j = 0; j < candle.t.length; j++) {
+              if (candle.t[j] <= targetTs) best = j;
+            }
+            return best >= 0 ? candle.c[best] : null;
+          };
+          const pPrevStart = findClose(prevQtrStartTs);
+          const pPrevEnd = findClose(prevQtrEndTs);
+          const pCurStart = findClose(curQtrStartTs);
+          const pYtdStart = findClose(ytdStartTs);
+          const pNow = candle.c[candle.c.length - 1];
+
+          if (pPrevStart && pPrevEnd) prevQtrReturn = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
+          if (pCurStart && pNow) thisQtrReturn = ((pNow - pCurStart) / pCurStart) * 100;
+          if (pYtdStart && pNow) ytdReturn = ((pNow - pYtdStart) / pYtdStart) * 100;
+        }
 
         results[sym] = {
           industry: null,
@@ -385,9 +435,9 @@ export default function App() {
           profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
           roe: m.roeTTM ?? m.roeAnnual ?? null,
           de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
-          debtToFCF: null,
-          roic: m.roicTTM ?? m.roicAnnual ?? null,
-          lastQtr: m["13WeekPriceReturnDaily"] ?? null,
+          lastQtr: prevQtrReturn,
+          thisQtr: thisQtrReturn,
+          ytd: ytdReturn,
         };
         if (results[sym].peTTM != null) success++;
         if (i === 0) setFmpStatus(`Fetching… keys ok`);
@@ -922,9 +972,17 @@ export default function App() {
               const fmtV = v => v == null ? "—" : Number(v).toFixed(1);
               const fmtP = v => v == null ? "—" : `${Number(v).toFixed(1)}%`;
 
+              const pctCol = (label, key, w = 72) => ({
+                l: label, w, k: key,
+                fn: d => d[key] != null ? `${d[key] >= 0 ? "+" : ""}${d[key].toFixed(1)}%` : "—",
+                color: d => (d[key]||0) > 0 ? C.up : (d[key]||0) < 0 ? C.dn : C.t3,
+              });
+
               const divCols = [
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
-                { l: "Last Qtr", w: 72, k: "lastQtr", fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
+                pctCol("Last Qtr", "lastQtr"),
+                pctCol("This Qtr", "thisQtr"),
+                pctCol("YTD", "ytd", 60),
                 { l: "Yield FWD", w: 72, k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
                 { l: "Payout", w: 62, k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
                 { l: "P/E TTM", w: 62, k: "peTTM", fn: d => fmtV(d.peTTM) },
@@ -937,7 +995,9 @@ export default function App() {
               ];
               const groCols = [
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
-                { l: "Last Qtr", w: 72, k: "lastQtr", fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
+                pctCol("Last Qtr", "lastQtr"),
+                pctCol("This Qtr", "thisQtr"),
+                pctCol("YTD", "ytd", 60),
                 { l: "P/E TTM", w: 62, k: "peTTM", fn: d => fmtV(d.peTTM) },
                 { l: "P/E FWD", w: 62, k: "peFwd", fn: d => fmtV(d.peFwd) },
                 { l: "PEG", w: 50, k: "pegTTM", fn: d => fmtV(d.pegTTM) },
