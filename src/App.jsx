@@ -1555,41 +1555,139 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => {
-                  // Export to CSV (universally opens in Excel)
+                <button onClick={async () => {
+                  // Export to styled XLSX
                   const syms = sleeves[researchView]?.symbols || [];
                   const isDivView = researchView === "dividend";
-                  const headers = ["Symbol", "Company", "Industry", "Last Qtr %", "This Qtr %", "YTD %"];
-                  if (isDivView) headers.push("Yield FWD %", "Payout %");
-                  headers.push("P/E TTM", "P/E FWD", "PEG");
-                  if (!isDivView) headers.push("Margin %");
-                  headers.push("Rev YoY %", "Rev 5Y %", "ROE %", "D/E", "Avg Vol");
+                  const slName = sleeves[researchView]?.name || researchView;
+                  const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
-                  const rows = [...syms].sort((a, b) => a.localeCompare(b)).map(s => {
-                    const d = fundamentals[s] || {};
-                    const row = [s, (names[s] || "").replace(/,/g, ""), (d.industry || "").replace(/,/g, ""), d.lastQtr, d.thisQtr, d.ytd];
-                    if (isDivView) row.push(d.yieldFwd, d.payoutRatio);
-                    row.push(d.peTTM, d.peFwd, d.pegTTM);
-                    if (!isDivView) row.push(d.profitMargin);
-                    row.push(d.revenueYoY, d.revenue5Y, d.roe, d.de, d.avgVol ? Math.round(d.avgVol) : null);
-                    return row.map(v => v == null ? "" : typeof v === "number" ? Number(v.toFixed(2)) : v);
+                  // Load ExcelJS from CDN if not already loaded
+                  if (!window.ExcelJS) {
+                    const s = document.createElement("script");
+                    s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+                    document.head.appendChild(s);
+                    await new Promise(r => { s.onload = r; s.onerror = r; });
+                  }
+                  if (!window.ExcelJS) { alert("Could not load Excel library"); return; }
+
+                  const wb = new window.ExcelJS.Workbook();
+                  wb.creator = "IOWN Portfolio Dashboard";
+                  const ws = wb.addWorksheet(slName);
+
+                  // Brand colors
+                  const brandGreen = "4A6B25";
+                  const headerBg = "1A2010";
+                  const headerText = "EBF0E1";
+                  const altRowBg = "F5F5F0";
+                  const greenText = "16A34A";
+                  const redText = "DC2626";
+                  const borderColor = "D0D5C8";
+                  const avgBg = "E8EDE0";
+
+                  // Title rows
+                  ws.mergeCells("A1:F1");
+                  const titleCell = ws.getCell("A1");
+                  titleCell.value = `IOWN — ${slName}`;
+                  titleCell.font = { name: "Arial", size: 16, bold: true, color: { argb: headerBg } };
+                  titleCell.alignment = { vertical: "middle" };
+                  ws.getRow(1).height = 32;
+
+                  ws.mergeCells("A2:F2");
+                  const dateCell = ws.getCell("A2");
+                  dateCell.value = `Generated ${dateStr}`;
+                  dateCell.font = { name: "Arial", size: 10, color: { argb: "888888" } };
+                  ws.getRow(2).height = 18;
+
+                  // Empty spacer row
+                  ws.getRow(3).height = 8;
+
+                  // Build headers
+                  const headers = ["Symbol", "Company", "Industry", "Last Qtr", "This Qtr", "YTD"];
+                  if (isDivView) headers.push("Yield FWD", "Payout");
+                  headers.push("P/E TTM", "P/E FWD", "PEG");
+                  if (!isDivView) headers.push("Margin");
+                  headers.push("Rev YoY", "Rev 5Y", "ROE", "D/E", "Avg Vol");
+
+                  // Header row (row 4)
+                  const headerRow = ws.addRow(headers);
+                  headerRow.height = 24;
+                  headerRow.eachCell((cell, colNum) => {
+                    cell.font = { name: "Arial", size: 10, bold: true, color: { argb: headerText } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBg } };
+                    cell.alignment = { horizontal: colNum <= 3 ? "left" : "center", vertical: "middle" };
+                    cell.border = { bottom: { style: "medium", color: { argb: brandGreen } } };
                   });
 
-                  // Add averages row
-                  const avgRow = ["Average", "", ""];
-                  const dataColCount = headers.length - 3; // minus Symbol, Company, Industry
-                  for (let ci = 0; ci < dataColCount; ci++) {
-                    const vals = rows.map(r => r[ci + 3]).filter(v => v !== "" && !isNaN(v));
-                    avgRow.push(vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2)) : "");
-                  }
-                  rows.push(avgRow);
+                  // Data rows
+                  const sortedSyms = [...syms].sort((a, b) => a.localeCompare(b));
+                  sortedSyms.forEach((s, idx) => {
+                    const d = fundamentals[s] || {};
+                    const vals = [s, names[s] || "", d.industry || "", d.lastQtr, d.thisQtr, d.ytd];
+                    if (isDivView) vals.push(d.yieldFwd, d.payoutRatio);
+                    vals.push(d.peTTM, d.peFwd, d.pegTTM);
+                    if (!isDivView) vals.push(d.profitMargin);
+                    vals.push(d.revenueYoY, d.revenue5Y, d.roe, d.de, d.avgVol ? Math.round(d.avgVol) : null);
 
-                  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
-                  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                    const row = ws.addRow(vals.map(v => v == null ? "" : typeof v === "number" ? Number(v.toFixed(2)) : v));
+                    row.height = 22;
+                    const isAlt = idx % 2 === 1;
+                    row.eachCell({ includeEmpty: true }, (cell, colNum) => {
+                      cell.font = { name: "Arial", size: 10, color: { argb: "333333" } };
+                      if (isAlt) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: altRowBg } };
+                      cell.alignment = { horizontal: colNum <= 3 ? "left" : "center", vertical: "middle" };
+                      cell.border = { bottom: { style: "thin", color: { argb: borderColor } } };
+                      // Color % columns green/red
+                      const v = cell.value;
+                      if (typeof v === "number" && colNum >= 4) {
+                        const isPerf = colNum <= 6 + (isDivView ? 0 : 0); // performance cols
+                        if (v > 0) cell.font = { name: "Arial", size: 10, color: { argb: greenText } };
+                        else if (v < 0) cell.font = { name: "Arial", size: 10, color: { argb: redText } };
+                      }
+                      // Bold the ticker
+                      if (colNum === 1) cell.font = { name: "Arial", size: 10, bold: true, color: { argb: brandGreen } };
+                    });
+                  });
+
+                  // Averages row
+                  const avgVals = ["AVERAGE", "", ""];
+                  for (let ci = 3; ci < headers.length; ci++) {
+                    const startRow = 5;
+                    const endRow = 4 + sortedSyms.length;
+                    const col = String.fromCharCode(65 + ci > 90 ? 65 : 65 + ci); // Simple A-Z
+                    // Use Excel column letter
+                    const colLetter = ci < 26 ? String.fromCharCode(65 + ci) : "A" + String.fromCharCode(65 + ci - 26);
+                    avgVals.push({ formula: `AVERAGE(${colLetter}${startRow}:${colLetter}${endRow})` });
+                  }
+                  const avgRow = ws.addRow(avgVals);
+                  avgRow.height = 26;
+                  avgRow.eachCell({ includeEmpty: true }, (cell, colNum) => {
+                    cell.font = { name: "Arial", size: 10, bold: true, color: { argb: headerBg } };
+                    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: avgBg } };
+                    cell.alignment = { horizontal: colNum <= 3 ? "left" : "center", vertical: "middle" };
+                    cell.border = { top: { style: "medium", color: { argb: brandGreen } }, bottom: { style: "medium", color: { argb: brandGreen } } };
+                    if (typeof cell.value === "number") cell.numFmt = "0.00";
+                  });
+
+                  // Column widths
+                  ws.getColumn(1).width = 10;  // Symbol
+                  ws.getColumn(2).width = 22;  // Company
+                  ws.getColumn(3).width = 20;  // Industry
+                  for (let i = 4; i <= headers.length; i++) ws.getColumn(i).width = 12;
+
+                  // Freeze header row
+                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1 }];
+
+                  // Auto-filter
+                  ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + sortedSyms.length, column: headers.length } };
+
+                  // Download
+                  const buf = await wb.xlsx.writeBuffer();
+                  const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
-                  a.download = `IOWN_${sleeves[researchView]?.name || researchView}_Metrics_${new Date().toISOString().slice(0,10)}.csv`;
+                  a.download = `IOWN_${slName}_Metrics_${new Date().toISOString().slice(0,10)}.xlsx`;
                   a.click();
                   URL.revokeObjectURL(url);
                 }} style={{
