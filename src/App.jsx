@@ -368,9 +368,7 @@ export default function App() {
 
     /* ── Fetch fundamentals via Finnhub (1 call/symbol, 60/min free) ── */
   const [fmpStatus, setFmpStatus] = useState("");
-  const [econCalendar, setEconCalendar] = useState([]);
   const [earningsCalendar, setEarningsCalendar] = useState([]);
-  const [calendarDebug, setCalendarDebug] = useState("");
   const [calendarView, setCalendarView] = useState("economic");
   const fetchFundamentals = useCallback(async (force = false) => {
     const key = FH || FK;
@@ -491,48 +489,27 @@ export default function App() {
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms, apiKey, apiSecret, hdrs]);
 
-  /* ── Fetch economic + earnings calendar via Finnhub ── */
+  /* ── Fetch earnings calendar for holdings via Alpaca news ── */
   const fetchCalendar = useCallback(async () => {
+    // Earnings: use Finnhub earnings calendar (this one is free)
     const key = FH || FK;
     if (!key) return;
     const today = new Date();
     const from = new Date(today); from.setDate(from.getDate() - 3);
-    const to = new Date(today); to.setDate(to.getDate() + 14);
+    const to = new Date(today); to.setDate(to.getDate() + 30);
     const fmt = d => d.toISOString().slice(0, 10);
-
     try {
-      const [econR, earnR] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/calendar/economic?from=${fmt(from)}&to=${fmt(to)}&token=${key}`),
-        fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${fmt(from)}&to=${fmt(to)}&token=${key}`),
-      ]);
-      if (econR.ok) {
-        const data = await econR.json();
-        const rawStr = JSON.stringify(data).slice(0, 300);
-        setCalendarDebug(`HTTP ${econR.status}: ${rawStr}`);
-        // Finnhub returns { economicCalendar: [...] } or { result: [...] }
-        const raw = data.economicCalendar || data.result || data.data || [];
-        // Could also be nested: data.economicCalendar.result
-        const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
-        const events = list
-          .filter(e => (e.country || e.unit || "").toUpperCase().includes("US") || e.country === "US" || !e.country)
-          .sort((a, b) => (a.time || a.date || "").localeCompare(b.time || b.date || ""));
-        setEconCalendar(events);
-      } else {
-        const txt = await econR.text().catch(() => "");
-        setCalendarDebug(`HTTP ${econR.status}: ${txt.slice(0, 200)}`);
-      }
-      if (earnR.ok) {
-        const data = await earnR.json();
-        console.log("Earnings calendar raw:", JSON.stringify(data).slice(0, 500));
+      const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${fmt(from)}&to=${fmt(to)}&token=${key}`);
+      if (r.ok) {
+        const data = await r.json();
         const raw = data.earningsCalendar || data.result || data.data || [];
         const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
         const earnings = list
           .filter(e => coreSyms.includes(e.symbol))
           .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
         setEarningsCalendar(earnings);
-        console.log("Earnings for holdings:", earnings.length);
       }
-    } catch (e) { console.warn("Calendar fetch failed:", e.message); }
+    } catch (e) { console.warn("Earnings fetch failed:", e.message); }
   }, [coreSyms]);
 
   /* ── WebSocket streaming ── */
@@ -1114,17 +1091,7 @@ export default function App() {
         {/* ━━━ CALENDAR ━━━ */}
         {tab === "calendar" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Calendar</div>
-              <button onClick={fetchCalendar} style={{
-                padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
-                background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" /></svg>
-                Refresh
-              </button>
-            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Calendar</div>
             {/* Toggle: Economic / Earnings */}
             <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
               {[{ v: "economic", l: "📊 Economic" }, { v: "earnings", l: "💰 Earnings" }].map(({ v, l }) => (
@@ -1137,48 +1104,38 @@ export default function App() {
               ))}
             </div>
 
-            {calendarView === "economic" && (() => {
-              if (!econCalendar.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>{FH ? "No economic events loaded. Tap Refresh." : "Add FINNHUB_KEY to enable calendar."}{calendarDebug && <div style={{ marginTop: 12, fontSize: 10, color: C.t4, wordBreak: "break-all", textAlign: "left", padding: "8px 12px", background: C.bg, borderRadius: 8, maxHeight: 120, overflow: "auto" }}>{calendarDebug}</div>}</div>;
-              // Group by date
-              const grouped = {};
-              econCalendar.forEach(e => {
-                const date = e.time?.slice(0, 10) || e.date || "Unknown";
-                if (!grouped[date]) grouped[date] = [];
-                grouped[date].push(e);
-              });
-              return Object.entries(grouped).map(([date, events]) => (
-                <div key={date} style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.t3, marginBottom: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}`, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    {new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-                    {date === new Date().toISOString().slice(0, 10) && <span style={{ marginLeft: 8, fontSize: 11, color: C.up, fontWeight: 700 }}>TODAY</span>}
-                  </div>
-                  {events.map((evt, i) => {
-                    const impact = (evt.impact || "").toLowerCase();
-                    const impactColor = impact === "high" ? C.dn : impact === "medium" ? "#F59E0B" : C.t4;
-                    return (
-                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                        <div style={{ width: 4, height: 4, borderRadius: 2, background: impactColor, marginTop: 8, flexShrink: 0, boxShadow: `0 0 6px ${impactColor}66` }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, marginBottom: 4 }}>{evt.event}</div>
-                          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12 }}>
-                            {evt.time && <span style={{ color: C.t4 }}>{evt.time.slice(11, 16)}</span>}
-                            {evt.impact && <span style={{ color: impactColor, fontWeight: 600 }}>{evt.impact}</span>}
-                            {evt.prev != null && <span style={{ color: C.t4 }}>Prev: <span style={{ color: C.t2 }}>{evt.prev}</span></span>}
-                            {evt.estimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{evt.estimate}</span></span>}
-                            {evt.actual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: C.up, fontWeight: 700 }}>{evt.actual}</span></span>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ));
-            })()}
+            {calendarView === "economic" && (
+              <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                <iframe
+                  src={`https://www.tradingecon.com/calendar?embed=true`}
+                  style={{ display: "none" }}
+                />
+                {/* TradingView Economic Calendar Widget */}
+                <div ref={el => {
+                  if (!el || el.dataset.loaded) return;
+                  el.dataset.loaded = "1";
+                  const script = document.createElement("script");
+                  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-events.js";
+                  script.async = true;
+                  script.innerHTML = JSON.stringify({
+                    colorTheme: theme === "dark" ? "dark" : "light",
+                    isTransparent: true,
+                    width: "100%",
+                    height: "600",
+                    locale: "en",
+                    importanceFilter: "-1,0,1",
+                    countryFilter: "us",
+                  });
+                  el.appendChild(script);
+                }} />
+              </div>
+            )}
 
             {calendarView === "earnings" && (() => {
               if (!earningsCalendar.length) return (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                  {FH ? "No upcoming earnings for your holdings. Tap Refresh." : "Add FINNHUB_KEY to enable calendar."}
+                  {FH ? "No upcoming earnings for your holdings." : "Add FINNHUB_KEY to enable earnings calendar."}
+                  <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Earnings</button>
                 </div>
               );
               const grouped = {};
@@ -1212,7 +1169,6 @@ export default function App() {
                         {evt.epsEstimate != null && <span style={{ color: C.t4 }}>EPS Est: <span style={{ color: C.t2 }}>${evt.epsEstimate}</span></span>}
                         {evt.epsActual != null && <span style={{ color: C.t4 }}>EPS: <span style={{ color: evt.epsActual >= (evt.epsEstimate || 0) ? C.up : C.dn, fontWeight: 700 }}>${evt.epsActual}</span></span>}
                         {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Rev Est: <span style={{ color: C.t2 }}>{vol(evt.revenueEstimate)}</span></span>}
-                        {evt.revenueActual != null && <span style={{ color: C.t4 }}>Rev: <span style={{ color: C.t2, fontWeight: 700 }}>{vol(evt.revenueActual)}</span></span>}
                       </div>
                     </div>
                   ))}
