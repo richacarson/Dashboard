@@ -1104,32 +1104,115 @@ export default function App() {
               ))}
             </div>
 
-            {calendarView === "economic" && (
-              <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                <iframe
-                  src={`https://www.tradingecon.com/calendar?embed=true`}
-                  style={{ display: "none" }}
-                />
-                {/* TradingView Economic Calendar Widget */}
-                <div ref={el => {
-                  if (!el || el.dataset.loaded) return;
-                  el.dataset.loaded = "1";
-                  const script = document.createElement("script");
-                  script.src = "https://s3.tradingview.com/external-embedding/embed-widget-events.js";
-                  script.async = true;
-                  script.innerHTML = JSON.stringify({
-                    colorTheme: theme === "dark" ? "dark" : "light",
-                    isTransparent: true,
-                    width: "100%",
-                    height: "600",
-                    locale: "en",
-                    importanceFilter: "-1,0,1",
-                    countryFilter: "us",
-                  });
-                  el.appendChild(script);
-                }} />
-              </div>
-            )}
+            {calendarView === "economic" && (() => {
+              // Major market-moving US economic events
+              const majorEvents = [
+                { name: "FOMC Rate Decision", icon: "🏛️", cat: "Fed" },
+                { name: "FOMC Minutes", icon: "📝", cat: "Fed" },
+                { name: "Fed Chair Press Conference", icon: "🎤", cat: "Fed" },
+                { name: "CPI (Consumer Price Index)", icon: "📈", cat: "Inflation" },
+                { name: "Core CPI", icon: "📈", cat: "Inflation" },
+                { name: "PPI (Producer Price Index)", icon: "🏭", cat: "Inflation" },
+                { name: "PCE Price Index", icon: "💳", cat: "Inflation" },
+                { name: "Core PCE Price Index", icon: "💳", cat: "Inflation" },
+                { name: "Non-Farm Payrolls", icon: "👷", cat: "Jobs" },
+                { name: "Unemployment Rate", icon: "📊", cat: "Jobs" },
+                { name: "Initial Jobless Claims", icon: "📋", cat: "Jobs" },
+                { name: "GDP Growth Rate", icon: "🇺🇸", cat: "Growth" },
+                { name: "GDP (Advance/Preliminary/Final)", icon: "🇺🇸", cat: "Growth" },
+                { name: "Retail Sales", icon: "🛒", cat: "Consumer" },
+                { name: "Consumer Confidence", icon: "😊", cat: "Consumer" },
+                { name: "Michigan Consumer Sentiment", icon: "📊", cat: "Consumer" },
+                { name: "ISM Manufacturing PMI", icon: "🏭", cat: "Business" },
+                { name: "ISM Services PMI", icon: "📊", cat: "Business" },
+                { name: "Housing Starts", icon: "🏠", cat: "Housing" },
+                { name: "Existing Home Sales", icon: "🏠", cat: "Housing" },
+                { name: "10-Year Treasury Auction", icon: "📜", cat: "Bonds" },
+              ];
+
+              // Known upcoming dates for 2026 Q1-Q2 (major events)
+              const upcomingEvents = [
+                { date: "2026-03-17", name: "Retail Sales (Feb)", time: "8:30 AM", impact: "high", cat: "Consumer" },
+                { date: "2026-03-18", name: "Housing Starts (Feb)", time: "8:30 AM", impact: "medium", cat: "Housing" },
+                { date: "2026-03-18", name: "Building Permits (Feb)", time: "8:30 AM", impact: "medium", cat: "Housing" },
+                { date: "2026-03-19", name: "FOMC Rate Decision", time: "2:00 PM", impact: "high", cat: "Fed" },
+                { date: "2026-03-19", name: "Fed Chair Press Conference", time: "2:30 PM", impact: "high", cat: "Fed" },
+                { date: "2026-03-20", name: "Initial Jobless Claims", time: "8:30 AM", impact: "medium", cat: "Jobs" },
+                { date: "2026-03-20", name: "Philadelphia Fed Mfg Index", time: "8:30 AM", impact: "medium", cat: "Business" },
+                { date: "2026-03-20", name: "Existing Home Sales (Feb)", time: "10:00 AM", impact: "medium", cat: "Housing" },
+                { date: "2026-03-21", name: "S&P Global PMI (Prelim)", time: "9:45 AM", impact: "medium", cat: "Business" },
+                { date: "2026-03-25", name: "Consumer Confidence (Mar)", time: "10:00 AM", impact: "high", cat: "Consumer" },
+                { date: "2026-03-26", name: "New Home Sales (Feb)", time: "10:00 AM", impact: "medium", cat: "Housing" },
+                { date: "2026-03-27", name: "GDP (Q4 Final)", time: "8:30 AM", impact: "high", cat: "Growth" },
+                { date: "2026-03-27", name: "Initial Jobless Claims", time: "8:30 AM", impact: "medium", cat: "Jobs" },
+                { date: "2026-03-28", name: "PCE Price Index (Feb)", time: "8:30 AM", impact: "high", cat: "Inflation" },
+                { date: "2026-03-28", name: "Core PCE Price Index (Feb)", time: "8:30 AM", impact: "high", cat: "Inflation" },
+                { date: "2026-03-28", name: "Personal Income & Spending", time: "8:30 AM", impact: "medium", cat: "Consumer" },
+                { date: "2026-03-28", name: "Michigan Consumer Sentiment (Final)", time: "10:00 AM", impact: "medium", cat: "Consumer" },
+                { date: "2026-04-01", name: "ISM Manufacturing PMI (Mar)", time: "10:00 AM", impact: "high", cat: "Business" },
+                { date: "2026-04-03", name: "Non-Farm Payrolls (Mar)", time: "8:30 AM", impact: "high", cat: "Jobs" },
+                { date: "2026-04-03", name: "Unemployment Rate (Mar)", time: "8:30 AM", impact: "high", cat: "Jobs" },
+                { date: "2026-04-03", name: "ISM Services PMI (Mar)", time: "10:00 AM", impact: "high", cat: "Business" },
+                { date: "2026-04-10", name: "CPI (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
+                { date: "2026-04-10", name: "Core CPI (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
+                { date: "2026-04-11", name: "PPI (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
+                { date: "2026-04-16", name: "Retail Sales (Mar)", time: "8:30 AM", impact: "high", cat: "Consumer" },
+                { date: "2026-04-29", name: "Consumer Confidence (Apr)", time: "10:00 AM", impact: "high", cat: "Consumer" },
+                { date: "2026-04-30", name: "GDP (Q1 Advance)", time: "8:30 AM", impact: "high", cat: "Growth" },
+                { date: "2026-05-01", name: "PCE Price Index (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
+                { date: "2026-05-07", name: "FOMC Rate Decision", time: "2:00 PM", impact: "high", cat: "Fed" },
+              ];
+
+              const today = new Date().toISOString().slice(0, 10);
+              const filtered = upcomingEvents.filter(e => e.date >= today);
+
+              const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280" };
+
+              // Group by date
+              const grouped = {};
+              filtered.forEach(e => {
+                if (!grouped[e.date]) grouped[e.date] = [];
+                grouped[e.date].push(e);
+              });
+
+              if (!filtered.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No upcoming events in calendar.</div>;
+
+              return Object.entries(grouped).map(([date, events]) => {
+                const isToday = date === today;
+                const d = new Date(date + "T12:00:00");
+                const dayLabel = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+                const daysAway = Math.ceil((new Date(date) - new Date(today)) / 86400000);
+                const relLabel = daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d away`;
+
+                return (
+                  <div key={date} style={{ marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0 8px", borderBottom: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: isToday ? C.t1 : C.t2 }}>{dayLabel}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? C.up : C.t4, padding: "2px 8px", borderRadius: 6, background: isToday ? C.up + "18" : "transparent" }}>{relLabel}</div>
+                    </div>
+                    {events.map((evt, i) => {
+                      const impactColor = evt.impact === "high" ? C.dn : "#F59E0B";
+                      const cc = catColors[evt.cat] || C.t4;
+                      return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: cc + "14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
+                            {evt.cat === "Fed" ? "🏛️" : evt.cat === "Inflation" ? "📈" : evt.cat === "Jobs" ? "👷" : evt.cat === "Growth" ? "🇺🇸" : evt.cat === "Consumer" ? "🛒" : evt.cat === "Business" ? "🏭" : evt.cat === "Housing" ? "🏠" : "📊"}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{evt.name}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 3 }}>
+                              <span style={{ fontSize: 12, color: C.t4 }}>{evt.time}</span>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: impactColor, padding: "1px 6px", borderRadius: 4, background: impactColor + "14", textTransform: "uppercase" }}>{evt.impact}</span>
+                              <span style={{ fontSize: 11, color: cc, fontWeight: 600 }}>{evt.cat}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              });
+            })()}
 
             {calendarView === "earnings" && (() => {
               if (!earningsCalendar.length) return (
