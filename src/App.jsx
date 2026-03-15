@@ -226,7 +226,10 @@ export default function App() {
   const [newListName, setNewListName] = useState("");
   const [newListIcon, setNewListIcon] = useState("📊");
   const [sleeveSort, setSleeveSort] = useState({}); // { [key]: "alpha" | "chgUp" | "chgDn" }
-  const [researchView, setResearchView] = useState("dividend"); // "dividend" | "growth"
+  const [researchView, setResearchView] = useState("dividend"); // sleeve key
+  const [metricSort, setMetricSort] = useState({ col: null, dir: "desc" }); // { col: "peTTM", dir: "asc"|"desc" }
+  const [metricsEditMode, setMetricsEditMode] = useState(false);
+  const [metricsTickerInput, setMetricsTickerInput] = useState("");
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   const iRef = useRef(null);
@@ -878,21 +881,39 @@ export default function App() {
         {tab === "research" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Metrics</div>
-            {/* Toggle dividend / growth */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
-              {[{ v: "dividend", l: "💰 Dividend" }, { v: "growth", l: "🚀 Growth" }].map(({ v, l }) => (
-                <button key={v} onClick={() => setResearchView(v)} style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${researchView === v ? C.borderActive : C.border}`,
-                  background: researchView === v ? C.accentSoft : "transparent",
-                  color: researchView === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "inherit",
-                }}>{l}</button>
+            {/* Portfolio selector — all sleeves */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
+              {Object.entries(sleeves).map(([k, sl]) => (
+                <button key={k} onClick={() => { setResearchView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
+                  flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${researchView === k ? C.borderActive : C.border}`,
+                  background: researchView === k ? C.accentSoft : "transparent",
+                  color: researchView === k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                }}>{sl.icon} {sl.name}</button>
               ))}
             </div>
+            {/* Edit toggle + add ticker */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
+              <button onClick={() => setMetricsEditMode(!metricsEditMode)} style={{
+                padding: "6px 14px", borderRadius: 8, border: `1px solid ${metricsEditMode ? C.borderActive : C.border}`,
+                background: metricsEditMode ? C.accentSoft : "transparent",
+                color: metricsEditMode ? C.t1 : C.t3, fontSize: 12, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>{metricsEditMode ? "Done" : "Edit"}</button>
+            </div>
+            {metricsEditMode && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                <input type="text" value={metricsTickerInput} onChange={e => setMetricsTickerInput(e.target.value.toUpperCase())}
+                  onKeyDown={e => { if (e.key === "Enter" && metricsTickerInput) { addSymbol(researchView, metricsTickerInput); setMetricsTickerInput(""); } }}
+                  placeholder="Add ticker…" style={{ flex: 1, padding: "10px 14px", background: C.bg, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 14, fontWeight: 600, outline: "none", fontFamily: "inherit", letterSpacing: 1 }} />
+                <button onClick={() => { if (metricsTickerInput) { addSymbol(researchView, metricsTickerInput); setMetricsTickerInput(""); } }} style={{ padding: "10px 16px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Add</button>
+              </div>
+            )}
             {Object.keys(fundamentals).length <= 1 && (
               <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                {FK ? (fmpStatus || "Tap 'Fetch Metrics' in Settings") : "FMP API key not configured. Add VITE_FMP_KEY to your environment."}
-                {FK && <button onClick={() => fetchFundamentals(true)} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Now</button>}
+                {(FH || FK) ? (fmpStatus || "Tap 'Fetch Metrics' in Settings") : "Add FINNHUB_KEY secret to enable metrics."}
+                {(FH || FK) && <button onClick={() => fetchFundamentals(true)} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Now</button>}
               </div>
             )}
             {fmpStatus && Object.keys(fundamentals).length > 1 && (
@@ -900,60 +921,87 @@ export default function App() {
             )}
             {/* Seeking Alpha-style scrollable table */}
             {(() => {
-              const syms = researchView === "dividend" ? (sleeves.dividend?.symbols || []) : (sleeves.growth?.symbols || []);
+              const syms = sleeves[researchView]?.symbols || [];
               const fmtV = v => v == null ? "—" : Number(v).toFixed(1);
               const fmtP = v => v == null ? "—" : `${Number(v).toFixed(1)}%`;
 
               const divCols = [
-                { l: "Avg Vol", w: 70, fn: d => vol(d.avgVol) },
-                { l: "Last Qtr", w: 72, fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
-                { l: "Yield FWD", w: 72, fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
-                { l: "Payout", w: 62, fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
-                { l: "P/E TTM", w: 62, fn: d => fmtV(d.peTTM) },
-                { l: "P/E FWD", w: 62, fn: d => fmtV(d.peFwd) },
-                { l: "Rev YoY", w: 68, fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
-                { l: "Rev 5Y", w: 62, fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
-                { l: "ROE", w: 58, fn: d => fmtP(d.roe) },
-                { l: "D/E", w: 50, fn: d => fmtV(d.de) },
+                { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
+                { l: "Last Qtr", w: 72, k: "lastQtr", fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
+                { l: "Yield FWD", w: 72, k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
+                { l: "Payout", w: 62, k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
+                { l: "P/E TTM", w: 62, k: "peTTM", fn: d => fmtV(d.peTTM) },
+                { l: "P/E FWD", w: 62, k: "peFwd", fn: d => fmtV(d.peFwd) },
+                { l: "PEG", w: 50, k: "pegTTM", fn: d => fmtV(d.pegTTM) },
+                { l: "Rev YoY", w: 68, k: "revenueYoY", fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
+                { l: "Rev 5Y", w: 62, k: "revenue5Y", fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
+                { l: "ROE", w: 58, k: "roe", fn: d => fmtP(d.roe) },
+                { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
               ];
               const groCols = [
-                { l: "Avg Vol", w: 70, fn: d => vol(d.avgVol) },
-                { l: "Last Qtr", w: 72, fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
-                { l: "P/E TTM", w: 62, fn: d => fmtV(d.peTTM) },
-                { l: "P/E FWD", w: 62, fn: d => fmtV(d.peFwd) },
-                { l: "PEG", w: 50, fn: d => fmtV(d.pegTTM) },
-                { l: "Rev YoY", w: 68, fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
-                { l: "Rev 5Y", w: 62, fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
-                { l: "Margin", w: 62, fn: d => fmtP(d.profitMargin) },
-                { l: "ROE", w: 58, fn: d => fmtP(d.roe) },
-                { l: "D/E", w: 50, fn: d => fmtV(d.de) },
+                { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
+                { l: "Last Qtr", w: 72, k: "lastQtr", fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
+                { l: "P/E TTM", w: 62, k: "peTTM", fn: d => fmtV(d.peTTM) },
+                { l: "P/E FWD", w: 62, k: "peFwd", fn: d => fmtV(d.peFwd) },
+                { l: "PEG", w: 50, k: "pegTTM", fn: d => fmtV(d.pegTTM) },
+                { l: "Rev YoY", w: 68, k: "revenueYoY", fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
+                { l: "Rev 5Y", w: 62, k: "revenue5Y", fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
+                { l: "Margin", w: 62, k: "profitMargin", fn: d => fmtP(d.profitMargin) },
+                { l: "ROE", w: 58, k: "roe", fn: d => fmtP(d.roe) },
+                { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
               ];
-              const cols = researchView === "dividend" ? divCols : groCols;
-              const sortedSyms = [...syms].sort((a, b) => a.localeCompare(b));
+              const cols = (researchView === "dividend") ? divCols : groCols;
+
+              // Sort
+              const sorted = [...syms].sort((a, b) => {
+                if (!metricSort.col) return a.localeCompare(b);
+                const av = fundamentals[a]?.[metricSort.col] ?? null;
+                const bv = fundamentals[b]?.[metricSort.col] ?? null;
+                if (av == null && bv == null) return 0;
+                if (av == null) return 1;
+                if (bv == null) return -1;
+                return metricSort.dir === "asc" ? av - bv : bv - av;
+              });
+
+              const toggleSort = (k) => {
+                if (metricSort.col === k) setMetricSort({ col: k, dir: metricSort.dir === "desc" ? "asc" : "desc" });
+                else setMetricSort({ col: k, dir: "desc" });
+              };
 
               return (
                 <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                   <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-                    <table style={{ borderCollapse: "collapse", minWidth: 140 + cols.reduce((s, c) => s + c.w, 0) }}>
+                    <table style={{ borderCollapse: "collapse", minWidth: (metricsEditMode ? 180 : 140) + cols.reduce((s, c) => s + c.w, 0) }}>
                       {/* Header */}
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                          <th style={{ position: "sticky", left: 0, zIndex: 2, background: C.card, padding: "12px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 0.3, minWidth: 140, borderRight: `1px solid ${C.border}` }}>Symbol</th>
+                          <th style={{ position: "sticky", left: 0, zIndex: 2, background: C.card, padding: "12px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 0.3, minWidth: metricsEditMode ? 180 : 140, borderRight: `1px solid ${C.border}` }}>Symbol</th>
                           {cols.map(col => (
-                            <th key={col.l} style={{ padding: "12px 8px", textAlign: "right", fontSize: 10, fontWeight: 700, color: C.t4, letterSpacing: 0.3, whiteSpace: "nowrap", minWidth: col.w }}>{col.l}</th>
+                            <th key={col.l} onClick={() => toggleSort(col.k)} style={{ padding: "12px 8px", textAlign: "right", fontSize: 10, fontWeight: 700, color: metricSort.col === col.k ? C.t1 : C.t4, letterSpacing: 0.3, whiteSpace: "nowrap", minWidth: col.w, cursor: "pointer", userSelect: "none" }}>
+                              {col.l} {metricSort.col === col.k ? (metricSort.dir === "desc" ? "↓" : "↑") : ""}
+                            </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {sortedSyms.map((s, ri) => {
+                        {sorted.map((s, ri) => {
                           const d = fundamentals[s] || {};
                           const nm = names[s] || "";
                           const shortNm = nm.length > 16 ? nm.slice(0, 16) + "…" : nm;
                           return (
-                            <tr key={s} onClick={() => setChartSymbol(s)} style={{ borderBottom: ri < sortedSyms.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}>
+                            <tr key={s} style={{ borderBottom: ri < sorted.length - 1 ? `1px solid ${C.border}` : "none" }}>
                               <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.card, padding: "10px 12px", borderRight: `1px solid ${C.border}` }}>
-                                <div style={{ fontSize: 14, fontWeight: 800, color: C.accent }}>{s}</div>
-                                <div style={{ fontSize: 11, color: C.t4, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{shortNm}</div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  {metricsEditMode && (
+                                    <div onClick={() => removeSymbol(researchView, s)} style={{ width: 22, height: 22, borderRadius: 11, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                    </div>
+                                  )}
+                                  <div onClick={() => setChartSymbol(s)} style={{ cursor: "pointer" }}>
+                                    <div style={{ fontSize: 14, fontWeight: 800, color: C.accent }}>{s}</div>
+                                    <div style={{ fontSize: 11, color: C.t4, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{shortNm}</div>
+                                  </div>
+                                </div>
                               </td>
                               {cols.map(col => {
                                 const val = col.fn(d);
