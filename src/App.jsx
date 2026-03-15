@@ -358,6 +358,18 @@ export default function App() {
     for (let i = 0; i < coreSyms.length; i++) {
       const sym = coreSyms[i];
       try {
+        // For first symbol, do a standalone test to see raw response
+        if (i === 0) {
+          const testUrl = `https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`;
+          const testR = await fetch(testUrl);
+          const testText = await testR.text();
+          const msg = `HTTP ${testR.status} | ${testText.slice(0, 150)}`;
+          console.log("FMP RAW TEST:", msg);
+          setFmpStatus(msg);
+          // Small delay so user can see the status
+          await new Promise(r => setTimeout(r, 500));
+        }
+
         const [profR, ratR, metR, growR, chgR] = await Promise.all([
           fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`),
           fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`),
