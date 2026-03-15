@@ -370,7 +370,8 @@ export default function App() {
   const [fmpStatus, setFmpStatus] = useState("");
   const [econCalendar, setEconCalendar] = useState([]);
   const [earningsCalendar, setEarningsCalendar] = useState([]);
-  const [calendarView, setCalendarView] = useState("economic"); // "economic" | "earnings"
+  const [calendarDebug, setCalendarDebug] = useState("");
+  const [calendarView, setCalendarView] = useState("economic");
   const fetchFundamentals = useCallback(async (force = false) => {
     const key = FH || FK;
     if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
@@ -506,17 +507,30 @@ export default function App() {
       ]);
       if (econR.ok) {
         const data = await econR.json();
-        const events = (data.economicCalendar || data.result || [])
-          .filter(e => e.country === "US" || e.country === "us")
+        const rawStr = JSON.stringify(data).slice(0, 300);
+        setCalendarDebug(`HTTP ${econR.status}: ${rawStr}`);
+        // Finnhub returns { economicCalendar: [...] } or { result: [...] }
+        const raw = data.economicCalendar || data.result || data.data || [];
+        // Could also be nested: data.economicCalendar.result
+        const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
+        const events = list
+          .filter(e => (e.country || e.unit || "").toUpperCase().includes("US") || e.country === "US" || !e.country)
           .sort((a, b) => (a.time || a.date || "").localeCompare(b.time || b.date || ""));
         setEconCalendar(events);
+      } else {
+        const txt = await econR.text().catch(() => "");
+        setCalendarDebug(`HTTP ${econR.status}: ${txt.slice(0, 200)}`);
       }
       if (earnR.ok) {
         const data = await earnR.json();
-        const earnings = (data.earningsCalendar || data.result || [])
+        console.log("Earnings calendar raw:", JSON.stringify(data).slice(0, 500));
+        const raw = data.earningsCalendar || data.result || data.data || [];
+        const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
+        const earnings = list
           .filter(e => coreSyms.includes(e.symbol))
           .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
         setEarningsCalendar(earnings);
+        console.log("Earnings for holdings:", earnings.length);
       }
     } catch (e) { console.warn("Calendar fetch failed:", e.message); }
   }, [coreSyms]);
@@ -1124,7 +1138,7 @@ export default function App() {
             </div>
 
             {calendarView === "economic" && (() => {
-              if (!econCalendar.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>{FH ? "No economic events loaded. Tap Refresh." : "Add FINNHUB_KEY to enable calendar."}</div>;
+              if (!econCalendar.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>{FH ? "No economic events loaded. Tap Refresh." : "Add FINNHUB_KEY to enable calendar."}{calendarDebug && <div style={{ marginTop: 12, fontSize: 10, color: C.t4, wordBreak: "break-all", textAlign: "left", padding: "8px 12px", background: C.bg, borderRadius: 8, maxHeight: 120, overflow: "auto" }}>{calendarDebug}</div>}</div>;
               // Group by date
               const grouped = {};
               econCalendar.forEach(e => {
