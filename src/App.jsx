@@ -407,9 +407,14 @@ export default function App() {
         const m = d?.metric || {};
         const candle = candleR.ok ? await candleR.json() : {};
 
+        // Debug first symbol's candle response
+        if (i === 0) {
+          console.log("Finnhub candle status:", candle.s, "points:", candle.c?.length || 0, "from:", new Date(prevQtrStartTs * 1000).toISOString().slice(0,10), "to:", new Date(nowTs * 1000).toISOString().slice(0,10));
+        }
+
         // Calculate returns from candle data
         let prevQtrReturn = null, thisQtrReturn = null, ytdReturn = null;
-        if (candle.c && candle.t && candle.c.length > 1) {
+        if (candle.s === "ok" && candle.c && candle.t && candle.c.length > 1) {
           // Find prices at specific dates
           const findClose = (targetTs) => {
             let best = -1;
@@ -442,9 +447,9 @@ export default function App() {
           profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
           roe: m.roeTTM ?? m.roeAnnual ?? null,
           de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
-          lastQtr: prevQtrReturn,
-          thisQtr: thisQtrReturn,
-          ytd: ytdReturn,
+          lastQtr: prevQtrReturn ?? m["13WeekPriceReturnDaily"] ?? null,
+          thisQtr: thisQtrReturn ?? (curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null),
+          ytd: ytdReturn ?? m["yearToDatePriceReturnDaily"] ?? null,
         };
         if (results[sym].peTTM != null) success++;
         if (i === 0) setFmpStatus(`Fetching… keys ok`);
