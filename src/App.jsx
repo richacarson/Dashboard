@@ -360,7 +360,7 @@ export default function App() {
       try {
         // For first symbol, do a standalone test to see raw response
         if (i === 0) {
-          const testUrl = `https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`;
+          const testUrl = `https://financialmodelingprep.com/stable/profile?symbol=${sym}&apikey=${FK}`;
           const testR = await fetch(testUrl);
           const testText = await testR.text();
           const msg = `HTTP ${testR.status} | ${testText.slice(0, 150)}`;
@@ -371,11 +371,11 @@ export default function App() {
         }
 
         const [profR, ratR, metR, growR, chgR] = await Promise.all([
-          fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`),
-          fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`),
-          fetch(`https://financialmodelingprep.com/api/v3/key-metrics-ttm/${sym}?apikey=${FK}`),
-          fetch(`https://financialmodelingprep.com/api/v3/financial-growth/${sym}?limit=5&apikey=${FK}`),
-          fetch(`https://financialmodelingprep.com/api/v3/stock-price-change/${sym}?apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/stable/profile?symbol=${sym}&apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${sym}&apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/stable/key-metrics-ttm?symbol=${sym}&apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/stable/financial-growth?symbol=${sym}&limit=5&apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/stable/stock-price-change?symbol=${sym}&apikey=${FK}`),
         ]);
 
         // Parse responses - handle both array and object formats
