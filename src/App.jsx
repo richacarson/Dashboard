@@ -368,23 +368,38 @@ export default function App() {
     let success = 0;
     const curQtr = Math.floor(new Date().getMonth() / 3);
 
-    // Quarter date boundaries for performance calcs
+    // Quarter date boundaries
     const now = new Date();
     const year = now.getFullYear();
     const curQtrStart = new Date(year, curQtr * 3, 1);
-    const prevQtrStart = curQtr === 0 ? new Date(year - 1, 9, 1) : new Date(year, (curQtr - 1) * 3, 1);
-    const prevQtrEnd = new Date(curQtrStart.getTime() - 86400000);
-    const ytdStart = new Date(year, 0, 1);
+    const prevQtrStartDate = curQtr === 0 ? new Date(year - 1, 9, 1) : new Date(year, (curQtr - 1) * 3, 1);
+    const ytdStartDate = new Date(year, 0, 1);
+    const fmtDate = d => d.toISOString().slice(0, 10);
+
+    // Fetch Alpaca daily bars for all core symbols covering prev quarter through now
+    let alpacaBars = {};
+    if (apiKey && apiSecret) {
+      try {
+        const startDate = fmtDate(prevQtrStartDate);
+        // Alpaca allows max 200 symbols per request, batch if needed
+        for (let batch = 0; batch < coreSyms.length; batch += 50) {
+          const chunk = coreSyms.slice(batch, batch + 50);
+          const url = `${BASE}/v2/stocks/bars?symbols=${chunk.join(",")}&timeframe=1Day&start=${startDate}&feed=iex&limit=10000&adjustment=split`;
+          const r = await fetch(url, { headers: hdrs });
+          if (r.ok) {
+            const data = await r.json();
+            if (data.bars) Object.assign(alpacaBars, data.bars);
+          }
+        }
+        if (Object.keys(alpacaBars).length > 0) setFmpStatus(`Alpaca bars: ${Object.keys(alpacaBars).length} symbols loaded`);
+      } catch (e) { console.warn("Alpaca bars fetch failed:", e.message); }
+    }
 
     for (let i = 0; i < coreSyms.length; i++) {
       const sym = coreSyms[i];
       if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
-        // Fetch Finnhub metrics + Yahoo chart in parallel
-        const [metR, yahooR] = await Promise.all([
-          fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`),
-          fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1y&interval=1d`).catch(() => null),
-        ]);
+        const metR = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`);
         if (!metR.ok) {
           if (metR.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
           continue;
@@ -392,43 +407,41 @@ export default function App() {
         const d = await metR.json();
         const m = d?.metric || {};
 
-        // Parse Yahoo chart for exact quarter returns
+        // Calculate quarter returns from Alpaca daily bars
         let lastQtrCalc = null, thisQtrCalc = null, ytdCalc = null;
-        try {
-          const yahoo = yahooR && yahooR.ok ? await yahooR.json() : null;
-          const result = yahoo?.chart?.result?.[0];
-          if (result?.timestamp && result?.indicators?.quote?.[0]?.close) {
-            const timestamps = result.timestamp;
-            const closes = result.indicators.quote[0].close;
-
-            const findPrice = (targetDate) => {
-              const targetTs = Math.floor(targetDate.getTime() / 1000);
-              let bestIdx = -1, bestDiff = Infinity;
-              for (let j = 0; j < timestamps.length; j++) {
-                const diff = Math.abs(timestamps[j] - targetTs);
-                if (diff < bestDiff && closes[j] != null) { bestDiff = diff; bestIdx = j; }
-              }
-              // Only use if within 5 days of target
-              return bestIdx >= 0 && bestDiff < 5 * 86400 ? closes[bestIdx] : null;
-            };
-
-            const pPrevStart = findPrice(prevQtrStart);
-            const pPrevEnd = findPrice(prevQtrEnd);
-            const pCurStart = findPrice(curQtrStart);
-            const pYtdStart = findPrice(ytdStart);
-            const pNow = closes[closes.length - 1];
-
-            if (pPrevStart && pPrevEnd) lastQtrCalc = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
-            if (pCurStart && pNow) thisQtrCalc = ((pNow - pCurStart) / pCurStart) * 100;
-            if (pYtdStart && pNow) ytdCalc = ((pNow - pYtdStart) / pYtdStart) * 100;
-
-            if (i === 0) {
-              console.log("Yahoo prices:", sym, { pPrevStart, pPrevEnd, pCurStart, pYtdStart, pNow, lastQtrCalc, thisQtrCalc, ytdCalc });
-              setFmpStatus(`Yahoo ${sym}: prevStart=${pPrevStart?.toFixed(1)||"null"} prevEnd=${pPrevEnd?.toFixed(1)||"null"} range=${new Date(timestamps[0]*1000).toISOString().slice(0,10)}→${new Date(timestamps[timestamps.length-1]*1000).toISOString().slice(0,10)}`);
-              await new Promise(r => setTimeout(r, 2000));
+        const bars = alpacaBars[sym];
+        if (bars && bars.length > 1) {
+          // bars are sorted chronologically, each has { t: "2025-10-01T...", c: 123.45, ... }
+          const findPrice = (targetDate) => {
+            const target = fmtDate(targetDate);
+            // Find closest bar on or before the target date
+            let best = null;
+            for (const bar of bars) {
+              const barDate = bar.t.slice(0, 10);
+              if (barDate <= target) best = bar.c;
             }
-          }
-        } catch (e) { /* Yahoo blocked or CORS — fall back to Finnhub metrics */ }
+            return best;
+          };
+          // Find closest bar on or after for start-of-period prices
+          const findPriceAfter = (targetDate) => {
+            const target = fmtDate(targetDate);
+            for (const bar of bars) {
+              const barDate = bar.t.slice(0, 10);
+              if (barDate >= target) return bar.c;
+            }
+            return null;
+          };
+
+          const pPrevStart = findPriceAfter(prevQtrStartDate); // first trading day on/after Oct 1
+          const pPrevEnd = findPrice(curQtrStart);               // last trading day before Jan 1
+          const pCurStart = findPriceAfter(curQtrStart);         // first trading day on/after Jan 1
+          const pYtdStart = findPriceAfter(ytdStartDate);        // first trading day on/after Jan 1
+          const pNow = bars[bars.length - 1].c;                  // latest close
+
+          if (pPrevStart && pPrevEnd) lastQtrCalc = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
+          if (pCurStart && pNow) thisQtrCalc = ((pNow - pCurStart) / pCurStart) * 100;
+          if (pYtdStart && pNow) ytdCalc = ((pNow - pYtdStart) / pYtdStart) * 100;
+        }
 
         results[sym] = {
           industry: null,
@@ -456,7 +469,7 @@ export default function App() {
     setFmpStatus(`Done: ${success}/${coreSyms.length} via Finnhub`);
     setFundamentals(results);
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
-  }, [coreSyms]);
+  }, [coreSyms, apiKey, apiSecret, hdrs]);
 
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
