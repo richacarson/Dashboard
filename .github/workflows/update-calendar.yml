@@ -2,8 +2,13 @@ name: Update Economic Calendar
 
 on:
   schedule:
-    - cron: '0 5 * * *'
-    - cron: '0 12 * * 0'
+    - cron: '0 5 * * 1-5'    # Midnight EST, weekdays
+    - cron: '30 12 * * 1-5'  # 8:30 AM EST - when most data drops (CPI, PPI, NFP, GDP, jobless claims)
+    - cron: '0 13 * * 1-5'   # 9:00 AM EST - catch stragglers
+    - cron: '0 14 * * 1-5'   # 10:00 AM EST - consumer confidence, ISM, home sales
+    - cron: '0 18 * * 1-5'   # 2:00 PM EST - FOMC decisions
+    - cron: '0 19 * * 1-5'   # 3:00 PM EST - post-FOMC press conference
+    - cron: '0 12 * * 0'     # Sunday noon - get next week's schedule
   workflow_dispatch:
 
 jobs:
@@ -14,7 +19,6 @@ jobs:
 
       - name: Fetch calendar data
         run: |
-          # Try multiple URL variants - FairEconomy changes URLs periodically
           URLS_THIS=(
             "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
             "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json"
@@ -28,38 +32,28 @@ jobs:
           echo "[]" > /tmp/nextweek.json
 
           for url in "${URLS_THIS[@]}"; do
-            echo "Trying: $url"
             HTTP_CODE=$(curl -sL -o /tmp/try.json -w "%{http_code}" \
               -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
-              -H 'Accept: application/json' \
               "$url" 2>/dev/null || echo "000")
             SIZE=$(wc -c < /tmp/try.json 2>/dev/null || echo "0")
-            echo "  HTTP $HTTP_CODE, $SIZE bytes"
+            echo "This week: $url -> HTTP $HTTP_CODE, $SIZE bytes"
             if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
               cp /tmp/try.json /tmp/thisweek.json
-              echo "  Success! Using this source."
               break
             fi
           done
 
           for url in "${URLS_NEXT[@]}"; do
-            echo "Trying: $url"
             HTTP_CODE=$(curl -sL -o /tmp/try.json -w "%{http_code}" \
               -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' \
-              -H 'Accept: application/json' \
               "$url" 2>/dev/null || echo "000")
             SIZE=$(wc -c < /tmp/try.json 2>/dev/null || echo "0")
-            echo "  HTTP $HTTP_CODE, $SIZE bytes"
+            echo "Next week: $url -> HTTP $HTTP_CODE, $SIZE bytes"
             if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
               cp /tmp/try.json /tmp/nextweek.json
-              echo "  Success! Using this source."
               break
             fi
           done
-
-          echo "Final this week: $(wc -c < /tmp/thisweek.json) bytes"
-          echo "Final next week: $(wc -c < /tmp/nextweek.json) bytes"
-          echo "This week preview: $(head -c 300 /tmp/thisweek.json)"
 
       - name: Process and write calendar
         run: |
@@ -76,20 +70,8 @@ jobs:
                           if isinstance(data, list):
                               events.extend(data)
                               print(f"{f}: {len(data)} events")
-                          else:
-                              print(f"{f}: not a list, got {type(data).__name__}")
-                      else:
-                          print(f"{f}: empty")
               except Exception as e:
                   print(f"{f}: error: {e}")
-
-          print(f"Total raw events: {len(events)}")
-          if events:
-              print(f"Sample keys: {list(events[0].keys())}")
-              countries = set(e.get('country') for e in events)
-              impacts = set(e.get('impact') for e in events)
-              print(f"Countries: {countries}")
-              print(f"Impacts: {impacts}")
 
           filtered = [
               e for e in events
@@ -97,13 +79,15 @@ jobs:
               and e.get('impact') in ('High', 'Medium')
           ]
 
-          print(f"US High/Medium: {len(filtered)} events")
           filtered.sort(key=lambda e: e.get('date', ''))
+          print(f"US High/Medium: {len(filtered)} events")
+
+          # Show which have actuals
+          with_actuals = [e for e in filtered if e.get('actual')]
+          print(f"With actual values: {len(with_actuals)}")
 
           with open('public/economic-calendar.json', 'w') as f:
               json.dump(filtered, f, indent=2)
-
-          print(f"Written to public/economic-calendar.json")
           PY
 
       - name: Commit and push if changed
@@ -111,4 +95,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/economic-calendar.json
-          git diff --cached --quiet || (git commit -m "Auto-update economic calendar $(date +%Y-%m-%d)" && git push)
+          git diff --cached --quiet || (git commit -m "Auto-update economic calendar $(date -u +%Y-%m-%d\ %H:%M) UTC" && git push)
