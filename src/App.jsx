@@ -1596,7 +1596,6 @@ export default function App() {
                   // fmt: "pct" = percentage (stored as decimal, displayed 0.0%), "ratio" = 0.0, "vol" = #,##0, "text" = string
                   const colDefs = [
                     { h: "Symbol", k: "sym", fmt: "text", w: 9 },
-                    { h: "Company", k: "name", fmt: "text", w: 22 },
                     { h: "Industry", k: "industry", fmt: "text", w: 20 },
                     { h: "Last Qtr", k: "lastQtr", fmt: "pct", w: 11 },
                     { h: "This Qtr", k: "thisQtr", fmt: "pct", w: 11 },
@@ -1621,7 +1620,7 @@ export default function App() {
                   );
 
                   const numFmts = { pct: "0.0%", ratio: "0.0", vol: "#,##0" };
-                  const isTextCol = (ci) => ci <= 3;
+                  const isTextCol = (ci) => ci <= 2;
 
                   // Header row (row 1)
                   const hRow = ws.addRow(colDefs.map(c => c.h));
@@ -1639,7 +1638,6 @@ export default function App() {
                     const d = fundamentals[s] || {};
                     const rowVals = colDefs.map(col => {
                       if (col.k === "sym") return s;
-                      if (col.k === "name") return names[s] || d.companyName || "";
                       if (col.fmt === "text") return d[col.k] || "";
                       const raw = d[col.k];
                       if (raw == null || raw === "" || isNaN(raw) || !isFinite(raw)) return "";
