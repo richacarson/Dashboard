@@ -388,8 +388,9 @@ export default function App() {
         };
         if (results[sym].peTTM != null) success++;
         if (i === 0) {
-          const numKeys = Object.keys(m).filter(k => k.match(/month|Month|3M|price.*return|Return/i));
-          console.log("Finnhub price-return keys:", numKeys, "all keys count:", Object.keys(m).length);
+          const retKeys = Object.keys(m).filter(k => k.match(/month|Month|3M|price|Return|return|Quarter|quarter/i));
+          setFmpStatus(`Return keys: ${retKeys.join(", ") || "none found"}`);
+          await new Promise(r => setTimeout(r, 2000)); // show for 2 seconds
         }
       } catch (e) { console.warn("Finnhub", sym, e.message); }
     }
