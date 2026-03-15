@@ -421,6 +421,12 @@ export default function App() {
             if (pPrevStart && pPrevEnd) lastQtrCalc = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
             if (pCurStart && pNow) thisQtrCalc = ((pNow - pCurStart) / pCurStart) * 100;
             if (pYtdStart && pNow) ytdCalc = ((pNow - pYtdStart) / pYtdStart) * 100;
+
+            if (i === 0) {
+              console.log("Yahoo prices:", sym, { pPrevStart, pPrevEnd, pCurStart, pYtdStart, pNow, lastQtrCalc, thisQtrCalc, ytdCalc });
+              setFmpStatus(`Yahoo ${sym}: prevStart=${pPrevStart?.toFixed(1)||"null"} prevEnd=${pPrevEnd?.toFixed(1)||"null"} range=${new Date(timestamps[0]*1000).toISOString().slice(0,10)}→${new Date(timestamps[timestamps.length-1]*1000).toISOString().slice(0,10)}`);
+              await new Promise(r => setTimeout(r, 2000));
+            }
           }
         } catch (e) { /* Yahoo blocked or CORS — fall back to Finnhub metrics */ }
 
