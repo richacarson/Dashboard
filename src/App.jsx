@@ -368,6 +368,9 @@ export default function App() {
 
     /* ── Fetch fundamentals via Finnhub (1 call/symbol, 60/min free) ── */
   const [fmpStatus, setFmpStatus] = useState("");
+  const [econCalendar, setEconCalendar] = useState([]);
+  const [earningsCalendar, setEarningsCalendar] = useState([]);
+  const [calendarView, setCalendarView] = useState("economic"); // "economic" | "earnings"
   const fetchFundamentals = useCallback(async (force = false) => {
     const key = FH || FK;
     if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
@@ -487,6 +490,37 @@ export default function App() {
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms, apiKey, apiSecret, hdrs]);
 
+  /* ── Fetch economic + earnings calendar via Finnhub ── */
+  const fetchCalendar = useCallback(async () => {
+    const key = FH || FK;
+    if (!key) return;
+    const today = new Date();
+    const from = new Date(today); from.setDate(from.getDate() - 3);
+    const to = new Date(today); to.setDate(to.getDate() + 14);
+    const fmt = d => d.toISOString().slice(0, 10);
+
+    try {
+      const [econR, earnR] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/calendar/economic?from=${fmt(from)}&to=${fmt(to)}&token=${key}`),
+        fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${fmt(from)}&to=${fmt(to)}&token=${key}`),
+      ]);
+      if (econR.ok) {
+        const data = await econR.json();
+        const events = (data.economicCalendar || data.result || [])
+          .filter(e => e.country === "US" || e.country === "us")
+          .sort((a, b) => (a.time || a.date || "").localeCompare(b.time || b.date || ""));
+        setEconCalendar(events);
+      }
+      if (earnR.ok) {
+        const data = await earnR.json();
+        const earnings = (data.earningsCalendar || data.result || [])
+          .filter(e => coreSyms.includes(e.symbol))
+          .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+        setEarningsCalendar(earnings);
+      }
+    } catch (e) { console.warn("Calendar fetch failed:", e.message); }
+  }, [coreSyms]);
+
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
     if (!apiKey || !apiSecret) return;
@@ -522,6 +556,7 @@ export default function App() {
       fetchNames();
       fetchNews();
       fetchFundamentals();
+      fetchCalendar();
       connectWS();
     } catch { setAuthErr("Invalid API keys."); }
   };
@@ -750,6 +785,7 @@ export default function App() {
   const navItems = [
     { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
     { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
+    { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
@@ -836,7 +872,7 @@ export default function App() {
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "news" ? "News" : "Settings"}
+            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -1057,6 +1093,118 @@ export default function App() {
                 </div>
               ))}
               </div>);
+            })()}
+          </div>
+        )}
+
+        {/* ━━━ CALENDAR ━━━ */}
+        {tab === "calendar" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Calendar</div>
+              <button onClick={fetchCalendar} style={{
+                padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+                background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" /></svg>
+                Refresh
+              </button>
+            </div>
+            {/* Toggle: Economic / Earnings */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+              {[{ v: "economic", l: "📊 Economic" }, { v: "earnings", l: "💰 Earnings" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setCalendarView(v)} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${calendarView === v ? C.borderActive : C.border}`,
+                  background: calendarView === v ? C.accentSoft : "transparent",
+                  color: calendarView === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{l}</button>
+              ))}
+            </div>
+
+            {calendarView === "economic" && (() => {
+              if (!econCalendar.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>{FH ? "No economic events loaded. Tap Refresh." : "Add FINNHUB_KEY to enable calendar."}</div>;
+              // Group by date
+              const grouped = {};
+              econCalendar.forEach(e => {
+                const date = e.time?.slice(0, 10) || e.date || "Unknown";
+                if (!grouped[date]) grouped[date] = [];
+                grouped[date].push(e);
+              });
+              return Object.entries(grouped).map(([date, events]) => (
+                <div key={date} style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.t3, marginBottom: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}`, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    {new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                    {date === new Date().toISOString().slice(0, 10) && <span style={{ marginLeft: 8, fontSize: 11, color: C.up, fontWeight: 700 }}>TODAY</span>}
+                  </div>
+                  {events.map((evt, i) => {
+                    const impact = (evt.impact || "").toLowerCase();
+                    const impactColor = impact === "high" ? C.dn : impact === "medium" ? "#F59E0B" : C.t4;
+                    return (
+                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                        <div style={{ width: 4, height: 4, borderRadius: 2, background: impactColor, marginTop: 8, flexShrink: 0, boxShadow: `0 0 6px ${impactColor}66` }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, marginBottom: 4 }}>{evt.event}</div>
+                          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12 }}>
+                            {evt.time && <span style={{ color: C.t4 }}>{evt.time.slice(11, 16)}</span>}
+                            {evt.impact && <span style={{ color: impactColor, fontWeight: 600 }}>{evt.impact}</span>}
+                            {evt.prev != null && <span style={{ color: C.t4 }}>Prev: <span style={{ color: C.t2 }}>{evt.prev}</span></span>}
+                            {evt.estimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{evt.estimate}</span></span>}
+                            {evt.actual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: C.up, fontWeight: 700 }}>{evt.actual}</span></span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ));
+            })()}
+
+            {calendarView === "earnings" && (() => {
+              if (!earningsCalendar.length) return (
+                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
+                  {FH ? "No upcoming earnings for your holdings. Tap Refresh." : "Add FINNHUB_KEY to enable calendar."}
+                </div>
+              );
+              const grouped = {};
+              earningsCalendar.forEach(e => {
+                const date = e.date || "Unknown";
+                if (!grouped[date]) grouped[date] = [];
+                grouped[date].push(e);
+              });
+              return Object.entries(grouped).map(([date, events]) => (
+                <div key={date} style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.t3, marginBottom: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}`, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    {new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                    {date === new Date().toISOString().slice(0, 10) && <span style={{ marginLeft: 8, fontSize: 11, color: C.up, fontWeight: 700 }}>TODAY</span>}
+                  </div>
+                  <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "repeat(2, 1fr)" : undefined, gap: isDesktop ? 12 : 0 }}>
+                  {events.map((evt, i) => (
+                    <div key={i} onClick={() => setChartSymbol(evt.symbol)} style={{
+                      padding: isDesktop ? "16px" : "14px 0",
+                      borderBottom: isDesktop ? "none" : `1px solid ${C.border}`,
+                      background: isDesktop ? C.card : "transparent",
+                      border: isDesktop ? `1px solid ${C.border}` : "none",
+                      borderRadius: isDesktop ? 12 : 0,
+                      cursor: "pointer",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{evt.symbol}</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase" }}>{evt.hour === "bmo" ? "Before Open" : evt.hour === "amc" ? "After Close" : evt.hour || ""}</div>
+                      </div>
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 6 }}>{names[evt.symbol] || ""}</div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
+                        {evt.epsEstimate != null && <span style={{ color: C.t4 }}>EPS Est: <span style={{ color: C.t2 }}>${evt.epsEstimate}</span></span>}
+                        {evt.epsActual != null && <span style={{ color: C.t4 }}>EPS: <span style={{ color: evt.epsActual >= (evt.epsEstimate || 0) ? C.up : C.dn, fontWeight: 700 }}>${evt.epsActual}</span></span>}
+                        {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Rev Est: <span style={{ color: C.t2 }}>{vol(evt.revenueEstimate)}</span></span>}
+                        {evt.revenueActual != null && <span style={{ color: C.t4 }}>Rev: <span style={{ color: C.t2, fontWeight: 700 }}>{vol(evt.revenueActual)}</span></span>}
+                      </div>
+                    </div>
+                  ))}
+                  </div>
+                </div>
+              ));
             })()}
           </div>
         )}
