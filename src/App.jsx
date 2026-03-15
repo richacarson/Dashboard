@@ -637,13 +637,38 @@ export default function App() {
       const sym = coreSyms[i];
       if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
-        const metR = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`);
+        // Fetch metrics + company profile in parallel
+        const [metR, profR] = await Promise.all([
+          fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`),
+          fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${key}`).catch(() => null),
+        ]);
         if (!metR.ok) {
           if (metR.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
           continue;
         }
         const d = await metR.json();
         const m = d?.metric || {};
+        // Profile: industry from Finnhub
+        let profileIndustry = null, profileSector = null;
+        if (profR?.ok) {
+          const prof = await profR.json();
+          profileIndustry = prof?.finnhubIndustry || null;
+          // Map Finnhub industries to broader sectors
+          const ind = (profileIndustry || "").toLowerCase();
+          if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) profileSector = "Technology";
+          else if (ind.includes("bank") || ind.includes("financ") || ind.includes("insurance") || ind.includes("capital") || ind.includes("invest")) profileSector = "Financials";
+          else if (ind.includes("pharma") || ind.includes("biotech") || ind.includes("health") || ind.includes("medical")) profileSector = "Healthcare";
+          else if (ind.includes("oil") || ind.includes("gas") || ind.includes("energy") || ind.includes("coal") || ind.includes("solar")) profileSector = "Energy";
+          else if (ind.includes("retail") || ind.includes("consumer") || ind.includes("apparel") || ind.includes("auto") || ind.includes("restaurant") || ind.includes("entertainment") || ind.includes("media")) profileSector = "Consumer";
+          else if (ind.includes("industr") || ind.includes("aerospace") || ind.includes("defense") || ind.includes("machin") || ind.includes("construct")) profileSector = "Industrials";
+          else if (ind.includes("real estate") || ind.includes("reit")) profileSector = "Real Estate";
+          else if (ind.includes("metal") || ind.includes("mining") || ind.includes("steel") || ind.includes("chemical") || ind.includes("material")) profileSector = "Materials";
+          else if (ind.includes("telecom") || ind.includes("communication")) profileSector = "Communication";
+          else if (ind.includes("utilit") || ind.includes("electric") || ind.includes("water") || ind.includes("power")) profileSector = "Utilities";
+          else if (ind.includes("food") || ind.includes("beverage") || ind.includes("household") || ind.includes("tobacco")) profileSector = "Staples";
+          else if (ind.includes("crypto") || ind.includes("digital") || ind.includes("blockchain")) profileSector = "Digital Assets";
+          else profileSector = profileIndustry ? "Other" : null;
+        }
 
         // Calculate quarter returns from Alpaca daily bars
         let lastQtrCalc = null, thisQtrCalc = null, ytdCalc = null;
@@ -682,7 +707,8 @@ export default function App() {
         }
 
         results[sym] = {
-          industry: null,
+          sector: profileSector,
+          industry: profileIndustry,
           avgVol: m["3MonthAverageTradingVolume"] ? m["3MonthAverageTradingVolume"] * 1e6 : null,
           peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null,
           peFwd: m.peAnnual ?? null,
@@ -1523,7 +1549,7 @@ export default function App() {
                   // Export to CSV (universally opens in Excel)
                   const syms = sleeves[researchView]?.symbols || [];
                   const isDivView = researchView === "dividend";
-                  const headers = ["Symbol", "Company", "Last Qtr %", "This Qtr %", "YTD %"];
+                  const headers = ["Symbol", "Company", "Sector", "Industry", "Last Qtr %", "This Qtr %", "YTD %"];
                   if (isDivView) headers.push("Yield FWD %", "Payout %");
                   headers.push("P/E TTM", "P/E FWD", "PEG");
                   if (!isDivView) headers.push("Margin %");
@@ -1531,7 +1557,7 @@ export default function App() {
 
                   const rows = [...syms].sort((a, b) => a.localeCompare(b)).map(s => {
                     const d = fundamentals[s] || {};
-                    const row = [s, (names[s] || "").replace(/,/g, ""), d.lastQtr, d.thisQtr, d.ytd];
+                    const row = [s, (names[s] || "").replace(/,/g, ""), (d.sector || "").replace(/,/g, ""), (d.industry || "").replace(/,/g, ""), d.lastQtr, d.thisQtr, d.ytd];
                     if (isDivView) row.push(d.yieldFwd, d.payoutRatio);
                     row.push(d.peTTM, d.peFwd, d.pegTTM);
                     if (!isDivView) row.push(d.profitMargin);
@@ -1540,10 +1566,10 @@ export default function App() {
                   });
 
                   // Add averages row
-                  const avgRow = ["Average", ""];
-                  const dataColCount = headers.length - 2; // minus Symbol and Company
+                  const avgRow = ["Average", "", "", ""];
+                  const dataColCount = headers.length - 4; // minus Symbol, Company, Sector, Industry
                   for (let ci = 0; ci < dataColCount; ci++) {
-                    const vals = rows.map(r => r[ci + 2]).filter(v => v !== "" && !isNaN(v));
+                    const vals = rows.map(r => r[ci + 4]).filter(v => v !== "" && !isNaN(v));
                     avgRow.push(vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2)) : "");
                   }
                   rows.push(avgRow);
@@ -1598,7 +1624,15 @@ export default function App() {
                 color: d => (d[key]||0) > 0 ? C.up : (d[key]||0) < 0 ? C.dn : C.t3,
               });
 
+              const textCol = (label, key, w = 80) => ({
+                l: label, w, k: key,
+                fn: d => d[key] || "—",
+                noAvg: true, // skip in averages
+              });
+
               const divCols = [
+                textCol("Sector", "sector", 85),
+                textCol("Industry", "industry", 110),
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
                 pctCol("Last Qtr", "lastQtr"),
                 pctCol("This Qtr", "thisQtr"),
@@ -1614,6 +1648,8 @@ export default function App() {
                 { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
               ];
               const groCols = [
+                textCol("Sector", "sector", 85),
+                textCol("Industry", "industry", 110),
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
                 pctCol("Last Qtr", "lastQtr"),
                 pctCol("This Qtr", "thisQtr"),
@@ -1637,6 +1673,8 @@ export default function App() {
                 if (av == null && bv == null) return 0;
                 if (av == null) return 1;
                 if (bv == null) return -1;
+                // String comparison for text columns
+                if (typeof av === "string" && typeof bv === "string") return metricSort.dir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
                 return metricSort.dir === "asc" ? av - bv : bv - av;
               });
 
@@ -1696,6 +1734,7 @@ export default function App() {
                         <tr style={{ borderTop: `2px solid ${C.accent}` }}>
                           <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "10px 12px", borderRight: `1px solid ${C.border}`, fontSize: 12, fontWeight: 800, color: C.t1 }}>Avg</td>
                           {cols.map(col => {
+                            if (col.noAvg) return <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, color: C.t4, background: C.surface }}>—</td>;
                             const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
                             const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
                             const avgD = { [col.k]: avg };
