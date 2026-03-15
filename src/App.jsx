@@ -659,10 +659,11 @@ export default function App() {
         const d = await metR.json();
         const m = d?.metric || {};
         // Profile: industry from Finnhub
-        let profileIndustry = null, profileSector = null;
+        let profileIndustry = null, profileSector = null, profileName = null;
         if (profR?.ok) {
           const prof = await profR.json();
           profileIndustry = prof?.finnhubIndustry || null;
+          profileName = prof?.name || null;
           // Map Finnhub industries to broader sectors
           const ind = (profileIndustry || "").toLowerCase();
           if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) profileSector = "Technology";
@@ -717,6 +718,7 @@ export default function App() {
         }
 
         results[sym] = {
+          companyName: profileName,
           sector: profileSector,
           industry: profileIndustry,
           avgVol: m["3MonthAverageTradingVolume"] ? m["3MonthAverageTradingVolume"] * 1e6 : null,
@@ -1651,7 +1653,7 @@ export default function App() {
                     const d = fundamentals[s] || {};
                     const rowVals = colDefs.map(col => {
                       if (col.k === "sym") return s;
-                      if (col.k === "name") return names[s] || "";
+                      if (col.k === "name") return names[s] || d.companyName || "";
                       if (col.fmt === "text") return d[col.k] || "";
                       const raw = d[col.k];
                       if (raw == null || raw === "" || isNaN(raw) || !isFinite(raw)) return "";
@@ -1718,7 +1720,7 @@ export default function App() {
                   colDefs.forEach((c, i) => { ws.getColumn(i + 1).width = c.w; });
 
                   // Grid lines off, freeze panes, auto-filter
-                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1, showGridLines: false }];
+                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 0, showGridLines: false }];
                   ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: endRow, column: colDefs.length } };
 
                   // Download — mobile-friendly approach
