@@ -1556,13 +1556,11 @@ export default function App() {
               <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={async () => {
-                  // Export to styled XLSX
                   const syms = sleeves[researchView]?.symbols || [];
                   const isDivView = researchView === "dividend";
                   const slName = sleeves[researchView]?.name || researchView;
                   const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
-                  // Load ExcelJS from CDN if not already loaded
                   if (!window.ExcelJS) {
                     const s = document.createElement("script");
                     s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
@@ -1575,47 +1573,71 @@ export default function App() {
                   wb.creator = "IOWN Portfolio Dashboard";
                   const ws = wb.addWorksheet(slName);
 
-                  // Brand colors
+                  // Colors (Template A: Dark Executive)
                   const brandGreen = "4A6B25";
-                  const headerBg = "1A2010";
-                  const headerText = "EBF0E1";
-                  const altRowBg = "F5F5F0";
+                  const headerBg = "1B2A12";
+                  const headerText = "FFFFFF";
+                  const altRowBg = "F7F9F4";
                   const greenText = "16A34A";
                   const redText = "DC2626";
-                  const borderColor = "D0D5C8";
+                  const borderColor = "E0E5D8";
                   const avgBg = "E8EDE0";
+                  const darkText = "333333";
 
-                  // Title rows
-                  ws.mergeCells("A1:F1");
-                  const titleCell = ws.getCell("A1");
-                  titleCell.value = `IOWN — ${slName}`;
-                  titleCell.font = { name: "Arial", size: 16, bold: true, color: { argb: headerBg } };
-                  titleCell.alignment = { vertical: "middle" };
-                  ws.getRow(1).height = 32;
+                  // Column definitions with format types
+                  // fmt: "pct" = percentage (stored as decimal, displayed 0.0%), "ratio" = 0.0, "vol" = #,##0, "text" = string
+                  const colDefs = [
+                    { h: "Symbol", k: "sym", fmt: "text", w: 9 },
+                    { h: "Company", k: "name", fmt: "text", w: 22 },
+                    { h: "Industry", k: "industry", fmt: "text", w: 20 },
+                    { h: "Last Qtr", k: "lastQtr", fmt: "pct", w: 11 },
+                    { h: "This Qtr", k: "thisQtr", fmt: "pct", w: 11 },
+                    { h: "YTD", k: "ytd", fmt: "pct", w: 10 },
+                  ];
+                  if (isDivView) {
+                    colDefs.push({ h: "Yield FWD", k: "yieldFwd", fmt: "pct", w: 11 });
+                    colDefs.push({ h: "Payout", k: "payoutRatio", fmt: "pct", w: 10 });
+                  }
+                  colDefs.push(
+                    { h: "P/E TTM", k: "peTTM", fmt: "ratio", w: 10 },
+                    { h: "P/E FWD", k: "peFwd", fmt: "ratio", w: 10 },
+                    { h: "PEG", k: "pegTTM", fmt: "ratio", w: 8 },
+                  );
+                  if (!isDivView) colDefs.push({ h: "Margin", k: "profitMargin", fmt: "pct", w: 10 });
+                  colDefs.push(
+                    { h: "Rev YoY", k: "revenueYoY", fmt: "pct", w: 10 },
+                    { h: "Rev 5Y", k: "revenue5Y", fmt: "pct", w: 10 },
+                    { h: "ROE", k: "roe", fmt: "pct", w: 9 },
+                    { h: "D/E", k: "de", fmt: "ratio", w: 8 },
+                    { h: "Avg Vol", k: "avgVol", fmt: "vol", w: 13 },
+                  );
 
-                  ws.mergeCells("A2:F2");
-                  const dateCell = ws.getCell("A2");
-                  dateCell.value = `Generated ${dateStr}`;
-                  dateCell.font = { name: "Arial", size: 10, color: { argb: "888888" } };
-                  ws.getRow(2).height = 18;
+                  const numFmts = { pct: "0.0%", ratio: "0.0", vol: "#,##0" };
+                  const isTextCol = (ci) => ci <= 3;
+                  const isPctCol = (ci) => colDefs[ci - 1]?.fmt === "pct";
 
-                  // Empty spacer row
-                  ws.getRow(3).height = 8;
+                  // Title
+                  ws.mergeCells("A1:H1");
+                  const tc = ws.getCell("A1");
+                  tc.value = `IOWN  ·  ${slName}`;
+                  tc.font = { name: "Calibri", size: 18, bold: true, color: { argb: headerBg } };
+                  tc.alignment = { vertical: "middle" };
+                  ws.getRow(1).height = 38;
 
-                  // Build headers
-                  const headers = ["Symbol", "Company", "Industry", "Last Qtr", "This Qtr", "YTD"];
-                  if (isDivView) headers.push("Yield FWD", "Payout");
-                  headers.push("P/E TTM", "P/E FWD", "PEG");
-                  if (!isDivView) headers.push("Margin");
-                  headers.push("Rev YoY", "Rev 5Y", "ROE", "D/E", "Avg Vol");
+                  ws.mergeCells("A2:H2");
+                  const dc = ws.getCell("A2");
+                  dc.value = `Portfolio Metrics Report  ·  ${dateStr}`;
+                  dc.font = { name: "Calibri", size: 10, color: { argb: "888888" } };
+                  ws.getRow(2).height = 20;
+                  ws.getRow(3).height = 6;
 
                   // Header row (row 4)
-                  const headerRow = ws.addRow(headers);
-                  headerRow.height = 24;
-                  headerRow.eachCell((cell, colNum) => {
-                    cell.font = { name: "Arial", size: 10, bold: true, color: { argb: headerText } };
+                  const hRow = ws.addRow(colDefs.map(c => c.h));
+                  hRow.height = 28;
+                  hRow.eachCell((cell, ci) => {
+                    cell.font = { name: "Calibri", size: 10, bold: true, color: { argb: headerText } };
                     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBg } };
-                    cell.alignment = { horizontal: colNum <= 3 ? "left" : "center", vertical: "middle" };
+                    cell.alignment = { horizontal: isTextCol(ci) ? "left" : "center", vertical: "middle" };
                     cell.border = { bottom: { style: "medium", color: { argb: brandGreen } } };
                   });
 
@@ -1623,63 +1645,67 @@ export default function App() {
                   const sortedSyms = [...syms].sort((a, b) => a.localeCompare(b));
                   sortedSyms.forEach((s, idx) => {
                     const d = fundamentals[s] || {};
-                    const vals = [s, names[s] || "", d.industry || "", d.lastQtr, d.thisQtr, d.ytd];
-                    if (isDivView) vals.push(d.yieldFwd, d.payoutRatio);
-                    vals.push(d.peTTM, d.peFwd, d.pegTTM);
-                    if (!isDivView) vals.push(d.profitMargin);
-                    vals.push(d.revenueYoY, d.revenue5Y, d.roe, d.de, d.avgVol ? Math.round(d.avgVol) : null);
+                    const rowVals = colDefs.map(col => {
+                      if (col.k === "sym") return s;
+                      if (col.k === "name") return names[s] || "";
+                      const raw = d[col.k];
+                      if (raw == null) return "";
+                      if (col.fmt === "pct") return raw / 100; // Store as decimal for Excel % format
+                      if (col.fmt === "vol") return Math.round(raw);
+                      return Number(raw.toFixed(2));
+                    });
 
-                    const row = ws.addRow(vals.map(v => v == null ? "" : typeof v === "number" ? Number(v.toFixed(2)) : v));
-                    row.height = 22;
+                    const row = ws.addRow(rowVals);
+                    row.height = 24;
                     const isAlt = idx % 2 === 1;
-                    row.eachCell({ includeEmpty: true }, (cell, colNum) => {
-                      cell.font = { name: "Arial", size: 10, color: { argb: "333333" } };
+                    row.eachCell({ includeEmpty: true }, (cell, ci) => {
+                      const def = colDefs[ci - 1];
+                      cell.font = { name: "Calibri", size: 10, color: { argb: darkText } };
                       if (isAlt) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: altRowBg } };
-                      cell.alignment = { horizontal: colNum <= 3 ? "left" : "center", vertical: "middle" };
-                      cell.border = { bottom: { style: "thin", color: { argb: borderColor } } };
-                      // Color % columns green/red
+                      cell.alignment = { horizontal: isTextCol(ci) ? "left" : "center", vertical: "middle" };
+                      cell.border = { bottom: { style: "hair", color: { argb: borderColor } } };
+
+                      // Number format
+                      if (def && numFmts[def.fmt]) cell.numFmt = numFmts[def.fmt];
+
+                      // Green/red for numeric values
                       const v = cell.value;
-                      if (typeof v === "number" && colNum >= 4) {
-                        const isPerf = colNum <= 6 + (isDivView ? 0 : 0); // performance cols
-                        if (v > 0) cell.font = { name: "Arial", size: 10, color: { argb: greenText } };
-                        else if (v < 0) cell.font = { name: "Arial", size: 10, color: { argb: redText } };
+                      if (typeof v === "number" && !isTextCol(ci)) {
+                        if (v > 0) cell.font = { name: "Calibri", size: 10, color: { argb: greenText } };
+                        else if (v < 0) cell.font = { name: "Calibri", size: 10, color: { argb: redText } };
                       }
-                      // Bold the ticker
-                      if (colNum === 1) cell.font = { name: "Arial", size: 10, bold: true, color: { argb: brandGreen } };
+                      // Ticker bold green
+                      if (ci === 1) cell.font = { name: "Calibri", size: 10, bold: true, color: { argb: brandGreen } };
+                      // Industry italic gray
+                      if (ci === 3) cell.font = { name: "Calibri", size: 10, color: { argb: "777777" } };
                     });
                   });
 
                   // Averages row
                   const avgVals = ["AVERAGE", "", ""];
-                  for (let ci = 3; ci < headers.length; ci++) {
-                    const startRow = 5;
-                    const endRow = 4 + sortedSyms.length;
-                    const col = String.fromCharCode(65 + ci > 90 ? 65 : 65 + ci); // Simple A-Z
-                    // Use Excel column letter
+                  const startRow = 5, endRow = 4 + sortedSyms.length;
+                  for (let ci = 3; ci < colDefs.length; ci++) {
                     const colLetter = ci < 26 ? String.fromCharCode(65 + ci) : "A" + String.fromCharCode(65 + ci - 26);
+                    if (colDefs[ci].fmt === "text") { avgVals.push(""); continue; }
                     avgVals.push({ formula: `AVERAGE(${colLetter}${startRow}:${colLetter}${endRow})` });
                   }
-                  const avgRow = ws.addRow(avgVals);
-                  avgRow.height = 26;
-                  avgRow.eachCell({ includeEmpty: true }, (cell, colNum) => {
-                    cell.font = { name: "Arial", size: 10, bold: true, color: { argb: headerBg } };
+                  const aRow = ws.addRow(avgVals);
+                  aRow.height = 28;
+                  aRow.eachCell({ includeEmpty: true }, (cell, ci) => {
+                    const def = colDefs[ci - 1];
+                    cell.font = { name: "Calibri", size: 10, bold: true, color: { argb: headerBg } };
                     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: avgBg } };
-                    cell.alignment = { horizontal: colNum <= 3 ? "left" : "center", vertical: "middle" };
+                    cell.alignment = { horizontal: isTextCol(ci) ? "left" : "center", vertical: "middle" };
                     cell.border = { top: { style: "medium", color: { argb: brandGreen } }, bottom: { style: "medium", color: { argb: brandGreen } } };
-                    if (typeof cell.value === "number") cell.numFmt = "0.00";
+                    if (def && numFmts[def.fmt]) cell.numFmt = numFmts[def.fmt];
                   });
 
                   // Column widths
-                  ws.getColumn(1).width = 10;  // Symbol
-                  ws.getColumn(2).width = 22;  // Company
-                  ws.getColumn(3).width = 20;  // Industry
-                  for (let i = 4; i <= headers.length; i++) ws.getColumn(i).width = 12;
+                  colDefs.forEach((c, i) => { ws.getColumn(i + 1).width = c.w; });
 
-                  // Freeze header row
-                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1 }];
-
-                  // Auto-filter
-                  ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + sortedSyms.length, column: headers.length } };
+                  // Grid lines off, freeze panes, auto-filter
+                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1, showGridLines: false }];
+                  ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: endRow, column: colDefs.length } };
 
                   // Download
                   const buf = await wb.xlsx.writeBuffer();
