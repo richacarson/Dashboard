@@ -355,18 +355,30 @@ export default function App() {
     const results = {};
     let success = 0;
 
-    // Test first symbol to verify API works
+    // Test first symbol to see exact field names from both endpoints
     const testSym = coreSyms[0];
-    setFmpStatus(`Testing API with ${testSym}…`);
+    setFmpStatus(`Testing ${testSym}…`);
     try {
-      const testR = await fetch(`https://financialmodelingprep.com/stable/profile?symbol=${testSym}&apikey=${FK}`);
-      const testJ = await testR.json();
-      const first = Array.isArray(testJ) ? testJ[0] : testJ;
-      if (!first || !first.symbol) {
-        setFmpStatus(`API returned unexpected format: ${JSON.stringify(testJ).slice(0, 120)}`);
-        return;
-      }
-      setFmpStatus(`API working! Keys: ${Object.keys(first).slice(0, 10).join(", ")}…`);
+      const [pR, rR] = await Promise.all([
+        fetch(`https://financialmodelingprep.com/stable/profile?symbol=${testSym}&apikey=${FK}`).then(r => r.json()),
+        fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${testSym}&apikey=${FK}`).then(r => r.json()),
+      ]);
+      const p = Array.isArray(pR) ? pR[0] : pR;
+      const r = Array.isArray(rR) ? rR[0] : rR;
+      // Store field names for display
+      const pKeys = p ? Object.keys(p) : [];
+      const rKeys = r ? Object.keys(r) : [];
+      // Find PE-like fields
+      const peFields = [...pKeys, ...rKeys].filter(k => k.toLowerCase().includes("pe") || k.toLowerCase().includes("earning") || k.toLowerCase().includes("ratio"));
+      const roeFields = [...pKeys, ...rKeys].filter(k => k.toLowerCase().includes("return") || k.toLowerCase().includes("roe") || k.toLowerCase().includes("equity"));
+      
+      console.log("FMP PROFILE ALL KEYS:", pKeys);
+      console.log("FMP RATIOS ALL KEYS:", rKeys);
+      console.log("FMP PE value from profile:", p?.pe, "| from ratios:", r?.peRatioTTM);
+      
+      setFmpStatus(`PROFILE (${pKeys.length} keys): ${pKeys.join(", ")} |||| RATIOS (${rKeys.length} keys): ${rKeys.join(", ")}`);
+      
+      // Don't stop — continue with fetch using what we found
     } catch (e) {
       setFmpStatus(`API test failed: ${e.message}`);
       return;
