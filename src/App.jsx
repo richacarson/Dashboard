@@ -366,18 +366,24 @@ export default function App() {
           fetch(`https://financialmodelingprep.com/api/v3/stock-price-change/${sym}?apikey=${FK}`),
         ]);
 
-        // Log first symbol's raw response for debugging
-        if (i === 0) {
-          const rawText = await profR.clone().text();
-          console.log("FMP raw response for", sym, "status:", profR.status, "body:", rawText.slice(0, 200));
-          setFmpStatus(`First response (${sym}): HTTP ${profR.status}`);
-        }
+        // Parse responses - handle both array and object formats
+        const profJ = profR.ok ? await profR.json() : [];
+        const ratJ = ratR.ok ? await ratR.json() : [];
+        const metJ = metR.ok ? await metR.json() : [];
+        const grow = growR.ok ? await growR.json() : [];
+        const priceChgJ = chgR.ok ? await chgR.json() : [];
 
-        const prof = profR.ok ? (await profR.json())?.[0] || {} : {};
-        const rat = ratR.ok ? (await ratR.json())?.[0] || {} : {};
-        const met = metR.ok ? (await metR.json())?.[0] || {} : {};
-        const grow = growR.ok ? (await growR.json()) || [] : [];
-        const priceChg = chgR.ok ? (await chgR.json())?.[0] || {} : {};
+        const prof = Array.isArray(profJ) ? (profJ[0] || {}) : (profJ || {});
+        const rat = Array.isArray(ratJ) ? (ratJ[0] || {}) : (ratJ || {});
+        const met = Array.isArray(metJ) ? (metJ[0] || {}) : (metJ || {});
+        const priceChg = Array.isArray(priceChgJ) ? (priceChgJ[0] || {}) : (priceChgJ || {});
+
+        // Debug first symbol
+        if (i === 0) {
+          console.log("FMP PROFILE:", JSON.stringify(prof).slice(0, 300));
+          console.log("FMP RATIOS:", JSON.stringify(rat).slice(0, 300));
+          setFmpStatus(`Profile: ${Object.keys(prof).length} fields, pe=${prof.pe}, volAvg=${prof.volAvg} | Ratios: ${Object.keys(rat).length} fields`);
+        }
 
         const rev5y = grow.length >= 5 ? grow.slice(0, 5).reduce((s, g) => s + (g.revenueGrowth || 0), 0) / Math.min(grow.length, 5) : (grow[0]?.revenueGrowth ?? null);
 
