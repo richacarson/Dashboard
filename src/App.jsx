@@ -163,12 +163,43 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
 /* ── Stock Logo with fallback ── */
 function StockLogo({ symbol, size = 32 }) {
   const [errCount, setErrCount] = useState(0);
+  // Map tickers to company domains for logo lookup
+  const domainMap = {
+    AAPL:"apple.com",MSFT:"microsoft.com",GOOGL:"google.com",GOOG:"google.com",AMZN:"amazon.com",
+    META:"meta.com",NVDA:"nvidia.com",TSLA:"tesla.com",JPM:"jpmorganchase.com",V:"visa.com",
+    JNJ:"jnj.com",WMT:"walmart.com",PG:"pg.com",MA:"mastercard.com",HD:"homedepot.com",
+    DIS:"disney.com",NFLX:"netflix.com",ADBE:"adobe.com",CRM:"salesforce.com",PYPL:"paypal.com",
+    INTC:"intel.com",VZ:"verizon.com",KO:"coca-cola.com",PEP:"pepsico.com",ABT:"abbott.com",
+    MRK:"merck.com",TMO:"thermofisher.com",COST:"costco.com",NKE:"nike.com",LLY:"lilly.com",
+    AVGO:"broadcom.com",TXN:"ti.com",QCOM:"qualcomm.com",LOW:"lowes.com",SBUX:"starbucks.com",
+    AMD:"amd.com",AMAT:"appliedmaterials.com",CAT:"caterpillar.com",GS:"goldmansachs.com",
+    BLK:"blackrock.com",AXP:"americanexpress.com",BA:"boeing.com",MMM:"3m.com",IBM:"ibm.com",
+    GE:"ge.com",F:"ford.com",GM:"gm.com",UBER:"uber.com",SQ:"squareup.com",SNAP:"snap.com",
+    SPOT:"spotify.com",ABNB:"airbnb.com",COIN:"coinbase.com",HOOD:"robinhood.com",
+    PLTR:"palantir.com",RBLX:"roblox.com",SHOP:"shopify.com",NET:"cloudflare.com",
+    ZM:"zoom.us",DOCU:"docusign.com",OKTA:"okta.com",SNOW:"snowflake.com",DDOG:"datadoghq.com",
+    CRWD:"crowdstrike.com",ZS:"zscaler.com",MDB:"mongodb.com",U:"unity.com",
+    // Dividend / Value tickers
+    O:"realtyincome.com",STLD:"steeldynamics.com",VLO:"valero.com",CNX:"cnx.com",
+    BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
+    SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atni.com",
+    DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",QQQ:"invesco.com",DIA:"ssga.com",
+    IBIT:"ishares.com",ETHA:"ishares.com",
+    // More
+    PFE:"pfizer.com",ABBV:"abbvie.com",UNH:"unitedhealthgroup.com",CVX:"chevron.com",
+    XOM:"exxonmobil.com",T:"att.com",MCD:"mcdonalds.com",WFC:"wellsfargo.com",C:"citigroup.com",
+    BAC:"bankofamerica.com",MS:"morganstanley.com",SCHW:"schwab.com",USB:"usbank.com",
+    PNC:"pnc.com",TFC:"truist.com",COF:"capitalone.com",ADP:"adp.com",FIS:"fisglobal.com",
+    FISV:"fiserv.com",ICE:"ice.com",CME:"cmegroup.com",SPGI:"spglobal.com",MCO:"moodys.com",
+    AON:"aon.com",MMC:"mmc.com",TRV:"travelers.com",CB:"chubb.com",AFL:"aflac.com",
+  };
+  const domain = domainMap[symbol];
   const srcs = [
+    ...(domain ? [`https://logo.clearbit.com/${domain}`, `https://www.google.com/s2/favicons?sz=128&domain=${domain}`] : []),
     `https://logo.synthfinance.com/ticker/${symbol}`,
     `https://eodhd.com/img/logos/US/${symbol}.png`,
   ];
   if (errCount >= srcs.length) {
-    // Fallback: colored circle with initials
     const colors = ["#4A6B25","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
     const bg = colors[symbol.charCodeAt(0) % colors.length];
     return (
@@ -189,17 +220,17 @@ function StockLogo({ symbol, size = 32 }) {
 function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
-  const [intv, setIntv] = useState("D");
+  const [intv, setIntv] = useState("W");
   const [chartMode, setChartMode] = useState("native");
   const [chartData, setChartData] = useState(null);
-  const [range, setRange] = useState("3M");
+  const [range, setRange] = useState("1D");
 
   useEffect(() => {
     if (chartMode !== "native" || !hdrs) return;
-    const ranges = { "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
-    const days = ranges[range] || 90;
+    const ranges = { "1D": 1, "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
+    const days = ranges[range] || 1;
     const start = new Date(); start.setDate(start.getDate() - days);
-    const tf = days <= 30 ? "1Hour" : "1Day";
+    const tf = days <= 1 ? "5Min" : days <= 7 ? "30Min" : days <= 30 ? "1Hour" : "1Day";
     fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
       .then(r => r.json()).then(data => { const bars = data.bars?.[symbol] || []; if (bars.length) setChartData(bars); }).catch(() => {});
   }, [symbol, range, chartMode, hdrs]);
@@ -220,11 +251,9 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
     ctx.clearRect(0, 0, W, H);
     const last = closes[closes.length - 1], isUp = last >= closes[0];
     const lineColor = isUp ? C.up : C.dn;
-    ctx.strokeStyle = theme === "dark" ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.08)";
-    ctx.lineWidth = 1; ctx.fillStyle = C.t4; ctx.font = "11px DM Sans,sans-serif"; ctx.textAlign = "right";
+    ctx.fillStyle = C.t4; ctx.font = "11px DM Sans,sans-serif"; ctx.textAlign = "right";
     for (let i = 0; i <= 4; i++) {
       const y = pad.top + (cH * i) / 4;
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
       ctx.fillText((mx - (rng * i) / 4).toFixed(2), W - 8, y + 4);
     }
     ctx.beginPath(); ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = "round";
@@ -292,7 +321,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
         </div>
         <div style={{ display: "flex", gap: 3 }}>
           {chartMode === "native" ? (
-            ["1W","1M","3M","6M","1Y","5Y"].map(r => (
+            ["1D","1W","1M","3M","6M","1Y","5Y"].map(r => (
               <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: range === r ? C.accentSoft : "transparent", color: range === r ? C.t1 : C.t4, fontFamily: "inherit" }}>{r}</button>
             ))
           ) : (
