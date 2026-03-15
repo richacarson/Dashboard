@@ -69,14 +69,25 @@ function getMarketStatus() {
   return { status: "closed", label: "Closed", color: "#F87171" }; // after 8pm
 }
 
-const C = {
+const DARK = {
   bg: "#080B05", surface: "#0E120A", card: "#141A0F", cardHover: "#1B2315", elevated: "#1F2918",
   border: "rgba(120,140,88,0.07)", borderHover: "rgba(120,140,88,0.18)", borderActive: "rgba(120,140,88,0.30)",
   t1: "#EBF0E1", t2: "#B8C9A0", t3: "#6E8450", t4: "#3A4A28",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
   accent: "#6E8450", accentSoft: "rgba(110,132,80,0.10)", accentGlow: "rgba(110,132,80,0.30)",
+  shadow: "none",
 };
+const LIGHT = {
+  bg: "#F5F5F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#F0F2EC", elevated: "#FFFFFF",
+  border: "rgba(80,100,60,0.12)", borderHover: "rgba(80,100,60,0.22)", borderActive: "rgba(80,100,60,0.40)",
+  t1: "#1A2010", t2: "#3A4A28", t3: "#6E8450", t4: "#9DAF88",
+  up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
+  dn: "#DC2626", dnSoft: "#DC262618", dnGlow: "#DC262630",
+  accent: "#4A6B25", accentSoft: "rgba(74,107,37,0.08)", accentGlow: "rgba(74,107,37,0.20)",
+  shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+};
+let C = DARK;
 
 /* ── Sparkline from intraday bars array ── */
 function Sparkline({ points, chg, width = 90, height = 32 }) {
@@ -216,6 +227,11 @@ export default function App() {
   const [chartSymbol, setChartSymbol] = useState(null);
   const [refresh, setRefresh] = useState(30);
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem("iown_theme") || "dark"; } catch { return "dark"; }
+  });
+  C = theme === "light" ? LIGHT : DARK;
+  const toggleTheme = (t) => { setTheme(t); try { localStorage.setItem("iown_theme", t); } catch {} };
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -547,7 +563,7 @@ export default function App() {
           </div>
           <div style={{ marginTop: 40, fontSize: 12, color: C.t4 }}>Authorized IOWN team members only</div>
         </div>
-        <GS />
+        <GS theme={theme} />
       </div>
     );
   }
@@ -568,7 +584,7 @@ export default function App() {
             {authErr && <div style={{ marginTop: 14, color: C.dn, fontSize: 13, fontWeight: 500, textAlign: "center" }}>{authErr}</div>}
           </div>
         </div>
-        <GS />
+        <GS theme={theme} />
       </div>
     );
   }
@@ -785,7 +801,7 @@ export default function App() {
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: "rgba(8,11,5,0.88)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme === "dark" ? "rgba(8,11,5,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1219,6 +1235,20 @@ export default function App() {
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Settings</div>}
             <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined, gap: isDesktop ? 16 : 0 }}>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Appearance</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[{ v: "dark", l: "🌙 Dark" }, { v: "light", l: "☀️ Light" }].map(({ v, l }) => (
+                  <button key={v} onClick={() => toggleTheme(v)} style={{
+                    flex: 1, padding: "10px 0", borderRadius: 10,
+                    border: `1px solid ${theme === v ? C.borderActive : C.border}`,
+                    background: theme === v ? C.accentSoft : "transparent",
+                    color: theme === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Auto-Refresh Interval</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {[{ v: null, l: "Off" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }, { v: 60, l: "60s" }].map(({ v, l }) => (
@@ -1293,7 +1323,7 @@ export default function App() {
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: "rgba(8,11,5,0.88)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+        background: theme === "dark" ? "rgba(8,11,5,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
@@ -1311,12 +1341,13 @@ export default function App() {
       )}
 
       {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} />}
-      <GS />
+      <GS theme={theme} />
     </div>
   );
 }
 
-function GS() {
+function GS({ theme }) {
+  const isDark = theme === "dark";
   return (
     <style>{`
       @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
@@ -1325,15 +1356,16 @@ function GS() {
       @keyframes slideUp { from { opacity: 0; transform: translateY(40px) } to { opacity: 1; transform: translateY(0) } }
       @keyframes shake { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-6px) } 40%, 80% { transform: translateX(6px) } }
       * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-      input::placeholder { color: #3A4A28 !important; }
-      input:focus { border-color: rgba(120,140,88,0.30) !important; }
+      input::placeholder { color: ${isDark ? "#3A4A28" : "#9DAF88"} !important; }
+      input:focus { border-color: rgba(${isDark ? "120,140,88" : "74,107,37"},0.30) !important; }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(110,132,80,0.2); border-radius: 6px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(110,132,80,0.35); }
+      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.2" : "80,100,60,0.2"}); border-radius: 6px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.35" : "80,100,60,0.35"}); }
+      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; }
       @media (min-width: 768px) {
         .tradingview-widget-container { min-height: 500px; }
-        tr:hover td { background: rgba(110,132,80,0.04) !important; }
+        tr:hover td { background: rgba(${isDark ? "110,132,80,0.04" : "74,107,37,0.06"}) !important; }
         button:hover { opacity: 0.85; }
       }
     `}</style>
