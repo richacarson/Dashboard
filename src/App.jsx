@@ -366,13 +366,25 @@ export default function App() {
 
     const results = {};
     let success = 0;
-    const curQtr = Math.floor(new Date().getMonth() / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
+    const curQtr = Math.floor(new Date().getMonth() / 3);
+
+    // Quarter date boundaries for performance calcs
+    const now = new Date();
+    const year = now.getFullYear();
+    const curQtrStart = new Date(year, curQtr * 3, 1);
+    const prevQtrStart = curQtr === 0 ? new Date(year - 1, 9, 1) : new Date(year, (curQtr - 1) * 3, 1);
+    const prevQtrEnd = new Date(curQtrStart.getTime() - 86400000);
+    const ytdStart = new Date(year, 0, 1);
 
     for (let i = 0; i < coreSyms.length; i++) {
       const sym = coreSyms[i];
       if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
-        const metR = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`);
+        // Fetch Finnhub metrics + Yahoo chart in parallel
+        const [metR, yahooR] = await Promise.all([
+          fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`),
+          fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1y&interval=1d`).catch(() => null),
+        ]);
         if (!metR.ok) {
           if (metR.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
           continue;
@@ -380,16 +392,37 @@ export default function App() {
         const d = await metR.json();
         const m = d?.metric || {};
 
-        // Calculate Last Qtr from 26-week and YTD returns
-        // 26-week ≈ 6 months back, YTD = Jan 1 to now
-        // Last Qtr ≈ (1 + 26wk/100) / (1 + YTD/100) - 1 (isolates the pre-YTD portion of the 6-month window)
-        // This approximates Q4 when we're early in Q1
-        const wk26 = m["26WeekPriceReturnDaily"];
-        const ytdM = m["yearToDatePriceReturnDaily"];
-        let lastQtrCalc = null;
-        if (wk26 != null && ytdM != null && ytdM !== -100) {
-          lastQtrCalc = ((1 + wk26 / 100) / (1 + ytdM / 100) - 1) * 100;
-        }
+        // Parse Yahoo chart for exact quarter returns
+        let lastQtrCalc = null, thisQtrCalc = null, ytdCalc = null;
+        try {
+          const yahoo = yahooR && yahooR.ok ? await yahooR.json() : null;
+          const result = yahoo?.chart?.result?.[0];
+          if (result?.timestamp && result?.indicators?.quote?.[0]?.close) {
+            const timestamps = result.timestamp;
+            const closes = result.indicators.quote[0].close;
+
+            const findPrice = (targetDate) => {
+              const targetTs = Math.floor(targetDate.getTime() / 1000);
+              let bestIdx = -1, bestDiff = Infinity;
+              for (let j = 0; j < timestamps.length; j++) {
+                const diff = Math.abs(timestamps[j] - targetTs);
+                if (diff < bestDiff && closes[j] != null) { bestDiff = diff; bestIdx = j; }
+              }
+              // Only use if within 5 days of target
+              return bestIdx >= 0 && bestDiff < 5 * 86400 ? closes[bestIdx] : null;
+            };
+
+            const pPrevStart = findPrice(prevQtrStart);
+            const pPrevEnd = findPrice(prevQtrEnd);
+            const pCurStart = findPrice(curQtrStart);
+            const pYtdStart = findPrice(ytdStart);
+            const pNow = closes[closes.length - 1];
+
+            if (pPrevStart && pPrevEnd) lastQtrCalc = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
+            if (pCurStart && pNow) thisQtrCalc = ((pNow - pCurStart) / pCurStart) * 100;
+            if (pYtdStart && pNow) ytdCalc = ((pNow - pYtdStart) / pYtdStart) * 100;
+          }
+        } catch (e) { /* Yahoo blocked or CORS — fall back to Finnhub metrics */ }
 
         results[sym] = {
           industry: null,
@@ -405,8 +438,8 @@ export default function App() {
           roe: m.roeTTM ?? m.roeAnnual ?? null,
           de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
           lastQtr: lastQtrCalc,
-          thisQtr: curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null,
-          ytd: m["yearToDatePriceReturnDaily"] ?? null,
+          thisQtr: thisQtrCalc ?? (curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null),
+          ytd: ytdCalc ?? m["yearToDatePriceReturnDaily"] ?? null,
         };
         if (results[sym].peTTM != null) success++;
         if (i === 0) setFmpStatus(`Fetching… keys ok`);
