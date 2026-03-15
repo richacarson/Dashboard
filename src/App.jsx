@@ -735,9 +735,8 @@ export default function App() {
           background: C.surface, borderRight: `1px solid ${C.border}`,
           display: "flex", flexDirection: "column",
         }}>
-          <div style={{ padding: "28px 24px 24px", borderBottom: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: C.t1, letterSpacing: -0.5 }}>IOWN</div>
-            <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Portfolio Dashboard</div>
+          <div style={{ padding: "24px 24px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="shield.png" alt="IOWN" style={{ height: 44, width: "auto" }} />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
