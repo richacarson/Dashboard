@@ -1076,15 +1076,62 @@ export default function App() {
                 }}>{sl.icon} {sl.name}</button>
               ))}
             </div>
-            {/* Edit toggle + add ticker */}
+            {/* Edit toggle + download + add ticker */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
-              <button onClick={() => setMetricsEditMode(!metricsEditMode)} style={{
-                padding: "6px 14px", borderRadius: 8, border: `1px solid ${metricsEditMode ? C.borderActive : C.border}`,
-                background: metricsEditMode ? C.accentSoft : "transparent",
-                color: metricsEditMode ? C.t1 : C.t3, fontSize: 12, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit",
-              }}>{metricsEditMode ? "Done" : "Edit"}</button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => {
+                  // Export to CSV (universally opens in Excel)
+                  const syms = sleeves[researchView]?.symbols || [];
+                  const isDivView = researchView === "dividend";
+                  const headers = ["Symbol", "Company", "Last Qtr %", "This Qtr %", "YTD %"];
+                  if (isDivView) headers.push("Yield FWD %", "Payout %");
+                  headers.push("P/E TTM", "P/E FWD", "PEG");
+                  if (!isDivView) headers.push("Margin %");
+                  headers.push("Rev YoY %", "Rev 5Y %", "ROE %", "D/E", "Avg Vol");
+
+                  const rows = [...syms].sort((a, b) => a.localeCompare(b)).map(s => {
+                    const d = fundamentals[s] || {};
+                    const row = [s, (names[s] || "").replace(/,/g, ""), d.lastQtr, d.thisQtr, d.ytd];
+                    if (isDivView) row.push(d.yieldFwd, d.payoutRatio);
+                    row.push(d.peTTM, d.peFwd, d.pegTTM);
+                    if (!isDivView) row.push(d.profitMargin);
+                    row.push(d.revenueYoY, d.revenue5Y, d.roe, d.de, d.avgVol ? Math.round(d.avgVol) : null);
+                    return row.map(v => v == null ? "" : typeof v === "number" ? Number(v.toFixed(2)) : v);
+                  });
+
+                  // Add averages row
+                  const avgRow = ["Average", ""];
+                  const dataColCount = headers.length - 2; // minus Symbol and Company
+                  for (let ci = 0; ci < dataColCount; ci++) {
+                    const vals = rows.map(r => r[ci + 2]).filter(v => v !== "" && !isNaN(v));
+                    avgRow.push(vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2)) : "");
+                  }
+                  rows.push(avgRow);
+
+                  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+                  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `IOWN_${sleeves[researchView]?.name || researchView}_Metrics_${new Date().toISOString().slice(0,10)}.csv`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }} style={{
+                  padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+                  background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                  Export
+                </button>
+                <button onClick={() => setMetricsEditMode(!metricsEditMode)} style={{
+                  padding: "6px 14px", borderRadius: 8, border: `1px solid ${metricsEditMode ? C.borderActive : C.border}`,
+                  background: metricsEditMode ? C.accentSoft : "transparent",
+                  color: metricsEditMode ? C.t1 : C.t3, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{metricsEditMode ? "Done" : "Edit"}</button>
+              </div>
             </div>
             {metricsEditMode && (
               <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
