@@ -1105,66 +1105,127 @@ export default function App() {
             </div>
 
             {calendarView === "economic" && (() => {
-              // Major market-moving US economic events
-              const majorEvents = [
-                { name: "FOMC Rate Decision", icon: "🏛️", cat: "Fed" },
-                { name: "FOMC Minutes", icon: "📝", cat: "Fed" },
-                { name: "Fed Chair Press Conference", icon: "🎤", cat: "Fed" },
-                { name: "CPI (Consumer Price Index)", icon: "📈", cat: "Inflation" },
-                { name: "Core CPI", icon: "📈", cat: "Inflation" },
-                { name: "PPI (Producer Price Index)", icon: "🏭", cat: "Inflation" },
-                { name: "PCE Price Index", icon: "💳", cat: "Inflation" },
-                { name: "Core PCE Price Index", icon: "💳", cat: "Inflation" },
-                { name: "Non-Farm Payrolls", icon: "👷", cat: "Jobs" },
-                { name: "Unemployment Rate", icon: "📊", cat: "Jobs" },
-                { name: "Initial Jobless Claims", icon: "📋", cat: "Jobs" },
-                { name: "GDP Growth Rate", icon: "🇺🇸", cat: "Growth" },
-                { name: "GDP (Advance/Preliminary/Final)", icon: "🇺🇸", cat: "Growth" },
-                { name: "Retail Sales", icon: "🛒", cat: "Consumer" },
-                { name: "Consumer Confidence", icon: "😊", cat: "Consumer" },
-                { name: "Michigan Consumer Sentiment", icon: "📊", cat: "Consumer" },
-                { name: "ISM Manufacturing PMI", icon: "🏭", cat: "Business" },
-                { name: "ISM Services PMI", icon: "📊", cat: "Business" },
-                { name: "Housing Starts", icon: "🏠", cat: "Housing" },
-                { name: "Existing Home Sales", icon: "🏠", cat: "Housing" },
-                { name: "10-Year Treasury Auction", icon: "📜", cat: "Bonds" },
-              ];
+              // Auto-generate major US economic events for the next 60 days
+              const today = new Date();
+              const fmt = d => d.toISOString().slice(0, 10);
+              const events = [];
 
-              // Known upcoming dates for 2026 Q1-Q2 (major events)
-              const upcomingEvents = [
-                { date: "2026-03-17", name: "Retail Sales (Feb)", time: "8:30 AM", impact: "high", cat: "Consumer" },
-                { date: "2026-03-18", name: "Housing Starts (Feb)", time: "8:30 AM", impact: "medium", cat: "Housing" },
-                { date: "2026-03-18", name: "Building Permits (Feb)", time: "8:30 AM", impact: "medium", cat: "Housing" },
-                { date: "2026-03-19", name: "FOMC Rate Decision", time: "2:00 PM", impact: "high", cat: "Fed" },
-                { date: "2026-03-19", name: "Fed Chair Press Conference", time: "2:30 PM", impact: "high", cat: "Fed" },
-                { date: "2026-03-20", name: "Initial Jobless Claims", time: "8:30 AM", impact: "medium", cat: "Jobs" },
-                { date: "2026-03-20", name: "Philadelphia Fed Mfg Index", time: "8:30 AM", impact: "medium", cat: "Business" },
-                { date: "2026-03-20", name: "Existing Home Sales (Feb)", time: "10:00 AM", impact: "medium", cat: "Housing" },
-                { date: "2026-03-21", name: "S&P Global PMI (Prelim)", time: "9:45 AM", impact: "medium", cat: "Business" },
-                { date: "2026-03-25", name: "Consumer Confidence (Mar)", time: "10:00 AM", impact: "high", cat: "Consumer" },
-                { date: "2026-03-26", name: "New Home Sales (Feb)", time: "10:00 AM", impact: "medium", cat: "Housing" },
-                { date: "2026-03-27", name: "GDP (Q4 Final)", time: "8:30 AM", impact: "high", cat: "Growth" },
-                { date: "2026-03-27", name: "Initial Jobless Claims", time: "8:30 AM", impact: "medium", cat: "Jobs" },
-                { date: "2026-03-28", name: "PCE Price Index (Feb)", time: "8:30 AM", impact: "high", cat: "Inflation" },
-                { date: "2026-03-28", name: "Core PCE Price Index (Feb)", time: "8:30 AM", impact: "high", cat: "Inflation" },
-                { date: "2026-03-28", name: "Personal Income & Spending", time: "8:30 AM", impact: "medium", cat: "Consumer" },
-                { date: "2026-03-28", name: "Michigan Consumer Sentiment (Final)", time: "10:00 AM", impact: "medium", cat: "Consumer" },
-                { date: "2026-04-01", name: "ISM Manufacturing PMI (Mar)", time: "10:00 AM", impact: "high", cat: "Business" },
-                { date: "2026-04-03", name: "Non-Farm Payrolls (Mar)", time: "8:30 AM", impact: "high", cat: "Jobs" },
-                { date: "2026-04-03", name: "Unemployment Rate (Mar)", time: "8:30 AM", impact: "high", cat: "Jobs" },
-                { date: "2026-04-03", name: "ISM Services PMI (Mar)", time: "10:00 AM", impact: "high", cat: "Business" },
-                { date: "2026-04-10", name: "CPI (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
-                { date: "2026-04-10", name: "Core CPI (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
-                { date: "2026-04-11", name: "PPI (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
-                { date: "2026-04-16", name: "Retail Sales (Mar)", time: "8:30 AM", impact: "high", cat: "Consumer" },
-                { date: "2026-04-29", name: "Consumer Confidence (Apr)", time: "10:00 AM", impact: "high", cat: "Consumer" },
-                { date: "2026-04-30", name: "GDP (Q1 Advance)", time: "8:30 AM", impact: "high", cat: "Growth" },
-                { date: "2026-05-01", name: "PCE Price Index (Mar)", time: "8:30 AM", impact: "high", cat: "Inflation" },
-                { date: "2026-05-07", name: "FOMC Rate Decision", time: "2:00 PM", impact: "high", cat: "Fed" },
-              ];
+              // Helper: nth weekday of month (1=Mon..5=Fri, n=1 for first, -1 for last)
+              const nthWeekday = (year, month, weekday, n) => {
+                if (n > 0) {
+                  const first = new Date(year, month, 1);
+                  let d = 1 + ((weekday - first.getDay() + 7) % 7);
+                  d += (n - 1) * 7;
+                  return new Date(year, month, d);
+                } else {
+                  const last = new Date(year, month + 1, 0);
+                  let d = last.getDate() - ((last.getDay() - weekday + 7) % 7);
+                  return new Date(year, month, d);
+                }
+              };
 
-              const today = new Date().toISOString().slice(0, 10);
-              const filtered = upcomingEvents.filter(e => e.date >= today);
+              // Helper: next business day (skip weekends)
+              const bizDay = (d, offset = 0) => {
+                const r = new Date(d);
+                r.setDate(r.getDate() + offset);
+                while (r.getDay() === 0 || r.getDay() === 6) r.setDate(r.getDate() + 1);
+                return r;
+              };
+
+              const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+              const qtrNames = ["Q4","Q1","Q2","Q3"];
+
+              for (let offset = 0; offset <= 2; offset++) {
+                const m = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+                const y = m.getFullYear(), mo = m.getMonth();
+                const prevMo = mo === 0 ? "Dec" : months[mo - 1];
+                const curMo = months[mo];
+
+                // Non-Farm Payrolls + Unemployment — first Friday
+                const nfp = nthWeekday(y, mo, 5, 1);
+                events.push({ date: fmt(nfp), name: `Non-Farm Payrolls (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Jobs" });
+                events.push({ date: fmt(nfp), name: `Unemployment Rate (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Jobs" });
+
+                // ISM Manufacturing PMI — first business day
+                const ism = bizDay(new Date(y, mo, 1));
+                events.push({ date: fmt(ism), name: `ISM Manufacturing PMI (${prevMo})`, time: "10:00 AM", impact: "high", cat: "Business" });
+
+                // ISM Services PMI — third business day
+                const ismS = bizDay(new Date(y, mo, 1), 2);
+                events.push({ date: fmt(ismS), name: `ISM Services PMI (${prevMo})`, time: "10:00 AM", impact: "high", cat: "Business" });
+
+                // CPI + Core CPI — around 10th-13th of month (2nd week, typically Tuesday-Thursday)
+                const cpi = bizDay(new Date(y, mo, 10));
+                events.push({ date: fmt(cpi), name: `CPI (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
+                events.push({ date: fmt(cpi), name: `Core CPI (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
+
+                // PPI — day after CPI typically
+                const ppi = bizDay(cpi, 1);
+                events.push({ date: fmt(ppi), name: `PPI (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
+
+                // Retail Sales — around 15th-17th
+                const retail = bizDay(new Date(y, mo, 15));
+                events.push({ date: fmt(retail), name: `Retail Sales (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Consumer" });
+
+                // Consumer Confidence — last Tuesday
+                const cc = nthWeekday(y, mo, 2, -1);
+                events.push({ date: fmt(cc), name: `Consumer Confidence (${curMo})`, time: "10:00 AM", impact: "high", cat: "Consumer" });
+
+                // Michigan Consumer Sentiment — 2nd Friday (prelim) and 4th Friday (final)
+                const michP = nthWeekday(y, mo, 5, 2);
+                const michF = nthWeekday(y, mo, 5, 4);
+                events.push({ date: fmt(michP), name: `Michigan Sentiment Prelim (${curMo})`, time: "10:00 AM", impact: "medium", cat: "Consumer" });
+                events.push({ date: fmt(michF), name: `Michigan Sentiment Final (${curMo})`, time: "10:00 AM", impact: "medium", cat: "Consumer" });
+
+                // PCE / Core PCE — last Friday of month (or near end)
+                const pce = nthWeekday(y, mo, 5, -1);
+                events.push({ date: fmt(pce), name: `PCE Price Index (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
+                events.push({ date: fmt(pce), name: `Core PCE Price Index (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
+
+                // Jobless Claims — every Thursday
+                let thu = nthWeekday(y, mo, 4, 1);
+                while (thu.getMonth() === mo) {
+                  events.push({ date: fmt(thu), name: "Initial Jobless Claims", time: "8:30 AM", impact: "medium", cat: "Jobs" });
+                  thu = new Date(thu); thu.setDate(thu.getDate() + 7);
+                }
+
+                // GDP — end of month for Jan, Apr, Jul, Oct (quarterly)
+                if ([0, 3, 6, 9].includes(mo)) {
+                  const qtr = qtrNames[Math.floor(mo / 3)];
+                  const gdp = bizDay(new Date(y, mo, 27));
+                  events.push({ date: fmt(gdp), name: `GDP (${qtr} Advance)`, time: "8:30 AM", impact: "high", cat: "Growth" });
+                }
+                if ([1, 4, 7, 10].includes(mo)) {
+                  const qtr = qtrNames[Math.floor(((mo - 1) % 12) / 3)];
+                  const gdp = bizDay(new Date(y, mo, 27));
+                  events.push({ date: fmt(gdp), name: `GDP (${qtr} Second Est.)`, time: "8:30 AM", impact: "high", cat: "Growth" });
+                }
+                if ([2, 5, 8, 11].includes(mo)) {
+                  const qtr = qtrNames[Math.floor(((mo - 2) % 12) / 3)];
+                  const gdp = bizDay(new Date(y, mo, 27));
+                  events.push({ date: fmt(gdp), name: `GDP (${qtr} Final)`, time: "8:30 AM", impact: "high", cat: "Growth" });
+                }
+
+                // Housing Starts — around 17th
+                const housing = bizDay(new Date(y, mo, 17));
+                events.push({ date: fmt(housing), name: `Housing Starts (${prevMo})`, time: "8:30 AM", impact: "medium", cat: "Housing" });
+              }
+
+              // FOMC meetings — hardcode 2026 dates (announced annually, ~8/year)
+              const fomcDates = ["2026-01-28","2026-03-19","2026-05-07","2026-06-18","2026-07-30","2026-09-17","2026-11-05","2026-12-17"];
+              fomcDates.forEach(d => {
+                events.push({ date: d, name: "FOMC Rate Decision", time: "2:00 PM", impact: "high", cat: "Fed" });
+                events.push({ date: d, name: "Fed Chair Press Conference", time: "2:30 PM", impact: "high", cat: "Fed" });
+              });
+
+              // Dedupe by date+name, sort, filter to future only
+              const todayStr = fmt(today);
+              const endStr = fmt(new Date(today.getTime() + 60 * 86400000));
+              const seen = new Set();
+              const filtered = events
+                .filter(e => e.date >= todayStr && e.date <= endStr)
+                .filter(e => { const k = e.date + e.name; if (seen.has(k)) return false; seen.add(k); return true; })
+                .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
               const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280" };
 
