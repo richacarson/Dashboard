@@ -1005,7 +1005,13 @@ export default function App() {
                 <div style={{ fontSize: 12, color: C.t3 }}>Intraday charts: <span style={{ color: C.t2 }}>{Object.keys(intradayPts).length}/{ALL.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>News articles: <span style={{ color: C.t2 }}>{news.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>FMP metrics: <span style={{ color: Object.keys(fundamentals).length > 1 ? C.up : C.dn }}>{Math.max(0, Object.keys(fundamentals).length - 1)}/{coreSyms.length}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>FMP key: <span style={{ color: FK ? C.up : C.dn }}>{FK ? "configured" : "missing"}</span></div>
               </div>
+              {!FK && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FMP_API secret to GitHub repo, then re-deploy to enable metrics.</div>}
+              {FK && Object.keys(fundamentals).length <= 1 && (
+                <button onClick={fetchFundamentals} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Retry FMP Fetch</button>
+              )}
             </div>
             {/* Lock / Reset */}
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
