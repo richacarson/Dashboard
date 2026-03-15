@@ -844,6 +844,8 @@ export default function App() {
       fetchNews();
       fetchFundamentals();
       fetchCalendar();
+      // Preload ExcelJS for export
+      if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
     } catch { setAuthErr("Invalid API keys."); }
   };
@@ -1556,18 +1558,20 @@ export default function App() {
               <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={async () => {
+                  try {
                   const syms = sleeves[researchView]?.symbols || [];
                   const isDivView = researchView === "dividend";
                   const slName = sleeves[researchView]?.name || researchView;
                   const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
+                  // ExcelJS should be preloaded; if not, try loading now
                   if (!window.ExcelJS) {
                     const s = document.createElement("script");
                     s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
                     document.head.appendChild(s);
-                    await new Promise(r => { s.onload = r; s.onerror = r; });
+                    await new Promise((res, rej) => { s.onload = res; s.onerror = rej; setTimeout(rej, 5000); });
                   }
-                  if (!window.ExcelJS) { alert("Could not load Excel library"); return; }
+                  if (!window.ExcelJS) { alert("Could not load export library. Please try again."); return; }
 
                   const wb = new window.ExcelJS.Workbook();
                   wb.creator = "IOWN Portfolio Dashboard";
@@ -1707,15 +1711,29 @@ export default function App() {
                   ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1, showGridLines: false }];
                   ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: endRow, column: colDefs.length } };
 
-                  // Download
+                  // Download — mobile-friendly approach
                   const buf = await wb.xlsx.writeBuffer();
                   const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `IOWN_${slName}_Metrics_${new Date().toISOString().slice(0,10)}.xlsx`;
-                  a.click();
-                  URL.revokeObjectURL(url);
+                  const fileName = `IOWN_${slName}_Metrics_${new Date().toISOString().slice(0,10)}.xlsx`;
+                  // Use navigator.share on mobile if available, otherwise fallback to link click
+                  if (navigator.share && /mobile|iphone|ipad|android/i.test(navigator.userAgent)) {
+                    try {
+                      const file = new File([blob], fileName, { type: blob.type });
+                      await navigator.share({ files: [file], title: fileName });
+                    } catch {
+                      // Share cancelled or failed — fallback to download
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a"); a.href = url; a.download = fileName;
+                      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    }
+                  } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a"); a.href = url; a.download = fileName;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                  }
+                  } catch (e) { console.error("Export error:", e); alert("Export failed: " + e.message); }
                 }} style={{
                   padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
                   background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600,
