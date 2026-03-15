@@ -764,8 +764,8 @@ export default function App() {
           background: C.surface, borderRight: `1px solid ${C.border}`,
           display: "flex", flexDirection: "column",
         }}>
-          <div style={{ padding: "24px 24px 20px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src="shield.png" alt="IOWN" style={{ height: 44, width: "auto" }} />
+          <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="iown-logo.png" alt="IOWN" style={{ width: "80%", height: "auto" }} />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
