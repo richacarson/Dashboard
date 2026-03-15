@@ -523,7 +523,7 @@ export default function App() {
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
-          <img src="iown-logo.jpg" alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 28px", display: "block", borderRadius: 12 }} />
+          <img src="iown-logo.png" alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 28px", display: "block", borderRadius: 12 }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
@@ -735,7 +735,7 @@ export default function App() {
           display: "flex", flexDirection: "column", padding: "24px 0",
         }}>
           <div style={{ padding: "0 20px 28px", borderBottom: `1px solid ${C.border}` }}>
-            <img src="iown-logo.jpg" alt="IOWN" style={{ width: "100%", height: "auto", borderRadius: 8 }} />
+            <img src="iown-logo.png" alt="IOWN" style={{ width: "100%", height: "auto", borderRadius: 8 }} />
           </div>
           <nav style={{ flex: 1, padding: "16px 0" }}>
             {navItems.map(t => (
@@ -1230,7 +1230,7 @@ export default function App() {
               <div style={{ fontSize: 11, color: C.t4, marginTop: 8, textAlign: "center" }}>Locks the app and requires the access code to re-enter</div>
             </div>
             <div style={{ marginTop: 40, textAlign: "center", paddingBottom: 20 }}>
-              <img src="iown-logo.jpg" alt="IOWN" style={{ width: 120, height: "auto", borderRadius: 8, margin: "0 auto 16px", display: "block" }} />
+              <img src="iown-logo.png" alt="IOWN" style={{ width: 120, height: "auto", borderRadius: 8, margin: "0 auto 16px", display: "block" }} />
               <div style={{ fontSize: 13, color: C.t4 }}>Intentional Ownership</div>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>A Registered Investment Advisor under Paradiem</div>
             </div>
