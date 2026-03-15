@@ -224,6 +224,45 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   const [chartMode, setChartMode] = useState("native");
   const [chartData, setChartData] = useState(null);
   const [range, setRange] = useState("3M");
+  // Swipe/drag to dismiss
+  const [dragX, setDragX] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const touchStart = useRef(null);
+  const handleTouchStart = (e) => {
+    const t = e.touches[0];
+    // Only allow swipe from left 40px edge OR anywhere for pull-down
+    touchStart.current = { x: t.clientX, y: t.clientY, edge: t.clientX < 40 };
+  };
+  const handleTouchMove = (e) => {
+    if (!touchStart.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStart.current.x;
+    const dy = t.clientY - touchStart.current.y;
+    // Swipe right from edge
+    if (touchStart.current.edge && dx > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      setDragging(true); setDragX(Math.max(0, dx)); e.preventDefault();
+    }
+    // Pull down from top
+    if (!touchStart.current.edge && dy > 10 && touchStart.current.y < 100 && Math.abs(dy) > Math.abs(dx) * 1.5) {
+      setDragging(true); setDragY(Math.max(0, dy)); e.preventDefault();
+    }
+  };
+  const handleTouchEnd = () => {
+    if (dragX > 120 || dragY > 150) { onClose(); }
+    setDragX(0); setDragY(0); setDragging(false); touchStart.current = null;
+  };
+  const dismissProgress = Math.max(dragX / 300, dragY / 400);
+  const overlayStyle = {
+    position: "fixed", inset: 0, zIndex: 1000, background: C.bg,
+    display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)",
+    animation: dragging ? "none" : "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)",
+    transform: dragX > 0 ? `translateX(${dragX}px) scale(${1 - dismissProgress * 0.05})` : dragY > 0 ? `translateY(${dragY}px) scale(${1 - dismissProgress * 0.05})` : "none",
+    opacity: 1 - dismissProgress * 0.3,
+    borderRadius: dismissProgress > 0 ? `${dismissProgress * 20}px` : 0,
+    transition: dragging ? "none" : "transform 0.3s, opacity 0.3s, border-radius 0.3s",
+    overflow: "hidden",
+  };
 
   useEffect(() => {
     if (chartMode !== "native" || !hdrs) return;
@@ -302,8 +341,10 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   const priceNow = chartData?.length ? chartData[chartData.length - 1].c : null;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+    <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={overlayStyle}>
+      {/* Pull-down indicator */}
+      <div style={{ width: 36, height: 4, borderRadius: 2, background: C.t4, margin: "8px auto 0", opacity: 0.5 }} />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <StockLogo symbol={symbol} size={36} />
           <div>
@@ -376,6 +417,31 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const [tab, setTab] = useState("home");
+  const contentRef = useRef(null);
+  const tabSwipeRef = useRef(null);
+  const tabIds = ["home", "research", "calendar", "news", "settings"];
+  // Swipe between tabs on mobile
+  const handleTabSwipeStart = (e) => { if (isDesktop) return; tabSwipeRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
+  const handleTabSwipeEnd = (e) => {
+    if (!tabSwipeRef.current || isDesktop) return;
+    const dx = e.changedTouches[0].clientX - tabSwipeRef.current.x;
+    const dy = e.changedTouches[0].clientY - tabSwipeRef.current.y;
+    tabSwipeRef.current = null;
+    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    const idx = tabIds.indexOf(tab);
+    if (dx < -80 && idx < tabIds.length - 1) setTab(tabIds[idx + 1]);
+    if (dx > 80 && idx > 0) setTab(tabIds[idx - 1]);
+  };
+  // Double-tap tab bar to scroll to top
+  const lastTabTap = useRef({});
+  const handleTabTap = (id) => {
+    const now = Date.now();
+    if (id === tab && now - (lastTabTap.current[id] || 0) < 400) {
+      contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    lastTabTap.current[id] = now;
+    setTab(id);
+  };
   const [openSleeves, setOpenSleeves] = useState({});
   const [chartSymbol, setChartSymbol] = useState(null);
   const [refresh, setRefresh] = useState(30);
@@ -816,8 +882,16 @@ export default function App() {
     const nm = names[s] || "";
     const pts = intradayPts[s];
     const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
+    const [pressed, setPressed] = useState(false);
     return (
-      <div onClick={() => setChartSymbol(s)} style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
+      <div onClick={() => setChartSymbol(s)}
+        onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)} onTouchCancel={() => setPressed(false)}
+        style={{
+          display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer",
+          transform: pressed ? "scale(0.97)" : "scale(1)",
+          opacity: pressed ? 0.85 : 1,
+          transition: "transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s",
+        }}>
         {/* Logo */}
         <div style={{ marginRight: 10, flexShrink: 0 }}>
           <StockLogo symbol={s} size={34} />
@@ -980,7 +1054,7 @@ export default function App() {
   ];
 
   return (
-    <div style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto" }}>
+    <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto" }}>
 
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
@@ -1738,7 +1812,7 @@ export default function App() {
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
         {navItems.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} style={{
+          <button key={t.id} onClick={() => handleTabTap(t.id)} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 24px", background: "transparent", border: "none", cursor: "pointer",
           }}>
@@ -1762,17 +1836,19 @@ function GS({ theme }) {
     <style>{`
       @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
       @keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }
-      @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-      @keyframes slideUp { from { opacity: 0; transform: translateY(40px) } to { opacity: 1; transform: translateY(0) } }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(100%) } to { opacity: 1; transform: translateY(0) } }
       @keyframes shake { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-6px) } 40%, 80% { transform: translateX(6px) } }
-      * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+      @keyframes slideInRight { from { opacity: 0; transform: translateX(30px) } to { opacity: 1; transform: translateX(0) } }
+      @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px) } to { opacity: 1; transform: translateX(0) } }
+      * { -webkit-tap-highlight-color: transparent; }
       input::placeholder { color: ${isDark ? "#3A4A28" : "#9DAF88"} !important; }
       input:focus { border-color: rgba(${isDark ? "120,140,88" : "74,107,37"},0.30) !important; }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.2" : "80,100,60,0.2"}); border-radius: 6px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.35" : "80,100,60,0.35"}); }
-      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; }
+      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; }
       @media (min-width: 768px) {
         .tradingview-widget-container { min-height: 500px; }
         tr:hover td { background: rgba(${isDark ? "110,132,80,0.04" : "74,107,37,0.06"}) !important; }
