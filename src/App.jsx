@@ -496,7 +496,9 @@ export default function App() {
     // Falls back to FairEconomy live endpoint if static file is empty
     try {
       let events = [];
-      const staticR = await fetch("economic-calendar.json").catch(() => null);
+      // Try static JSON first (updated by GitHub Action)
+      const base = import.meta.env.BASE_URL || "/";
+      const staticR = await fetch(`${base}economic-calendar.json`).catch(() => null);
       if (staticR?.ok) {
         const data = await staticR.json();
         if (Array.isArray(data) && data.length > 0) events = data;
@@ -514,6 +516,7 @@ export default function App() {
       }
       events.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       setEconCalendar(events);
+      if (events.length === 0) console.log("Econ calendar: 0 events after fetch");
     } catch (e) { console.warn("Econ calendar fetch failed:", e.message); }
 
     // Earnings: Finnhub (free endpoint)
@@ -1134,6 +1137,7 @@ export default function App() {
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
                   No economic events loaded.
                   <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Load Calendar</button>
+                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4 }}>Calendar data is fetched from a live source and cached daily via GitHub Actions. If empty, the data source may be temporarily unavailable.</div>
                 </div>
               );
 

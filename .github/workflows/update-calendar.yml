@@ -2,9 +2,9 @@ name: Update Economic Calendar
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # Daily at midnight EST (5 AM UTC)
-    - cron: '0 12 * * 0' # Also Sunday noon UTC to get next week
-  workflow_dispatch: # Manual trigger
+    - cron: '0 5 * * *'
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
 
 jobs:
   update-calendar:
@@ -14,23 +14,46 @@ jobs:
 
       - name: Fetch this week's calendar
         run: |
-          curl -sf 'https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json' -o /tmp/thisweek.json || echo "[]" > /tmp/thisweek.json
-          curl -sf 'https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json' -o /tmp/nextweek.json || echo "[]" > /tmp/nextweek.json
+          echo "Fetching this week..."
+          curl -sL -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' \
+            'https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json' -o /tmp/thisweek.json || echo "[]" > /tmp/thisweek.json
+          echo "This week size: $(wc -c < /tmp/thisweek.json) bytes"
+          echo "This week first 200 chars: $(head -c 200 /tmp/thisweek.json)"
+          
+          echo "Fetching next week..."
+          curl -sL -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' \
+            'https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json' -o /tmp/nextweek.json || echo "[]" > /tmp/nextweek.json
+          echo "Next week size: $(wc -c < /tmp/nextweek.json) bytes"
 
       - name: Merge, filter US high/medium impact, write to public/
         run: |
-          python3 - << 'PY'
-          import json, datetime
+          python3 << 'PY'
+          import json
 
           events = []
           for f in ['/tmp/thisweek.json', '/tmp/nextweek.json']:
               try:
                   with open(f) as fh:
-                      data = json.load(fh)
-                      if isinstance(data, list):
-                          events.extend(data)
-              except:
-                  pass
+                      raw = fh.read().strip()
+                      if raw:
+                          data = json.loads(raw)
+                          if isinstance(data, list):
+                              events.extend(data)
+                              print(f"{f}: {len(data)} events")
+                          else:
+                              print(f"{f}: not a list, got {type(data).__name__}")
+                      else:
+                          print(f"{f}: empty response")
+              except Exception as e:
+                  print(f"{f}: error: {e}")
+
+          print(f"Total raw events: {len(events)}")
+          if events:
+              print(f"Sample keys: {list(events[0].keys())}")
+              countries = set(e.get('country') for e in events)
+              impacts = set(e.get('impact') for e in events)
+              print(f"All countries: {countries}")
+              print(f"All impacts: {impacts}")
 
           # Filter: US only, High or Medium impact
           filtered = [
@@ -39,14 +62,14 @@ jobs:
               and e.get('impact') in ('High', 'Medium')
           ]
 
-          # Sort by date
+          print(f"Filtered US High/Medium: {len(filtered)} events")
+
           filtered.sort(key=lambda e: e.get('date', ''))
 
-          # Write
           with open('public/economic-calendar.json', 'w') as f:
               json.dump(filtered, f, indent=2)
 
-          print(f"Wrote {len(filtered)} events to public/economic-calendar.json")
+          print(f"Wrote to public/economic-calendar.json")
           PY
 
       - name: Commit and push if changed
@@ -55,3 +78,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/economic-calendar.json
           git diff --cached --quiet || (git commit -m "Auto-update economic calendar $(date +%Y-%m-%d)" && git push)
+          echo "Done!"
