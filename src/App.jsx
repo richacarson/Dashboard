@@ -340,34 +340,44 @@ export default function App() {
   }, [apiKey, apiSecret, hdrs, coreSyms]);
 
   /* ── Fetch fundamentals from FMP ── */
+  const [fmpStatus, setFmpStatus] = useState("");
   const fetchFundamentals = useCallback(async (force = false) => {
-    if (!FK) { console.log("FMP: No API key (VITE_FMP_KEY)"); return; }
+    if (!FK) { console.log("FMP: No API key (VITE_FMP_KEY)"); setFmpStatus("No API key"); return; }
     if (!force) {
       try {
         const old = JSON.parse(localStorage.getItem("iown_fmp_cache") || "{}");
         const age = Date.now() - (old._ts || 0);
-        // Validate cache has actual data, not just empty objects
         const hasData = Object.entries(old).some(([k, v]) => k !== "_ts" && v?.peTTM != null);
-        if (age < 6 * 3600000 && hasData) { setFundamentals(old); console.log("FMP: Using cached data"); return; }
+        if (age < 6 * 3600000 && hasData) { setFundamentals(old); setFmpStatus("Loaded from cache"); return; }
       } catch {}
     }
 
-    console.log("FMP: Fetching fundamentals for", coreSyms.length, "symbols (force=" + force + ")");
+    setFmpStatus("Fetching… 0/" + coreSyms.length);
     const results = {};
-    for (const sym of coreSyms) {
+    let success = 0, fail = 0;
+    for (let i = 0; i < coreSyms.length; i++) {
+      const sym = coreSyms[i];
       try {
         const [profR, ratR, metR, growR, chgR] = await Promise.all([
-          fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : []),
-          fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : []),
-          fetch(`https://financialmodelingprep.com/api/v3/key-metrics-ttm/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : []),
-          fetch(`https://financialmodelingprep.com/api/v3/financial-growth/${sym}?limit=5&apikey=${FK}`).then(r => r.ok ? r.json() : []),
-          fetch(`https://financialmodelingprep.com/api/v3/stock-price-change/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : []),
+          fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/api/v3/key-metrics-ttm/${sym}?apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/api/v3/financial-growth/${sym}?limit=5&apikey=${FK}`),
+          fetch(`https://financialmodelingprep.com/api/v3/stock-price-change/${sym}?apikey=${FK}`),
         ]);
-        const prof = profR?.[0] || {};
-        const rat = ratR?.[0] || {};
-        const met = metR?.[0] || {};
-        const grow = growR || [];
-        const priceChg = chgR?.[0] || {};
+
+        // Log first symbol's raw response for debugging
+        if (i === 0) {
+          const rawText = await profR.clone().text();
+          console.log("FMP raw response for", sym, "status:", profR.status, "body:", rawText.slice(0, 200));
+          setFmpStatus(`First response (${sym}): HTTP ${profR.status}`);
+        }
+
+        const prof = profR.ok ? (await profR.json())?.[0] || {} : {};
+        const rat = ratR.ok ? (await ratR.json())?.[0] || {} : {};
+        const met = metR.ok ? (await metR.json())?.[0] || {} : {};
+        const grow = growR.ok ? (await growR.json()) || [] : [];
+        const priceChg = chgR.ok ? (await chgR.json())?.[0] || {} : {};
 
         const rev5y = grow.length >= 5 ? grow.slice(0, 5).reduce((s, g) => s + (g.revenueGrowth || 0), 0) / Math.min(grow.length, 5) : (grow[0]?.revenueGrowth ?? null);
 
@@ -388,12 +398,16 @@ export default function App() {
           roic: met.roicTTM ?? null,
           lastQtr: priceChg["3M"] ?? null,
         };
-        console.log("FMP:", sym, "peTTM=", results[sym].peTTM, "roe=", results[sym].roe);
-      } catch (e) { console.warn("FMP error for", sym, e); }
+        if (results[sym].peTTM != null) success++; else fail++;
+      } catch (e) {
+        console.warn("FMP error for", sym, e.message);
+        fail++;
+      }
+      if (i % 5 === 0) setFmpStatus(`Fetching… ${i + 1}/${coreSyms.length} (${success} ok, ${fail} empty)`);
     }
     results._ts = Date.now();
-    const loaded = Object.entries(results).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length;
-    console.log("FMP: Loaded", loaded, "/", coreSyms.length, "with real data");
+    setFmpStatus(`Done: ${success} loaded, ${fail} empty`);
+    console.log("FMP: Done -", success, "loaded,", fail, "empty");
     setFundamentals(results);
     try { localStorage.setItem("iown_fmp_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms]);
@@ -892,8 +906,12 @@ export default function App() {
             </div>
             {Object.keys(fundamentals).length <= 1 && (
               <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                {FK ? "Loading metrics data…" : "FMP API key not configured. Add VITE_FMP_KEY to your environment."}
+                {FK ? (fmpStatus || "Tap 'Fetch Metrics' in Settings") : "FMP API key not configured. Add VITE_FMP_KEY to your environment."}
+                {FK && <button onClick={() => fetchFundamentals(true)} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Now</button>}
               </div>
+            )}
+            {fmpStatus && Object.keys(fundamentals).length > 1 && (
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 12, textAlign: "center" }}>{fmpStatus}</div>
             )}
             {/* Seeking Alpha-style scrollable table */}
             {(() => {
@@ -1014,6 +1032,7 @@ export default function App() {
                 <div style={{ fontSize: 12, color: C.t3 }}>FMP metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>FMP key: <span style={{ color: FK ? C.up : C.dn }}>{FK ? "configured" : "missing"}</span></div>
               </div>
+              {fmpStatus && <div style={{ fontSize: 11, color: C.t2, marginTop: 8, padding: "6px 8px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
               {!FK && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FMP_API secret to GitHub repo, then re-deploy to enable metrics.</div>}
               {FK && (
                 <button onClick={() => { try { localStorage.removeItem("iown_fmp_cache"); } catch {} setFundamentals({}); fetchFundamentals(true); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
