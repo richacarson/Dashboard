@@ -951,14 +951,14 @@ export default function App() {
             </div>
 
             {/* Heatmap */}
+              </div> {/* end right column */}
+            </div> {/* end desktop grid */}
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
                 <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => setChartSymbol(s)} />
               </div>
             )}
-              </div> {/* end right column */}
-            </div> {/* end desktop grid */}
           </div>
         )}
 
