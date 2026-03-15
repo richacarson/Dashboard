@@ -160,41 +160,155 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
   );
 }
 
-/* ── TradingView Chart Overlay ── */
-function ChartOverlay({ symbol, onClose }) {
+/* ── Stock Logo with fallback ── */
+function StockLogo({ symbol, size = 32 }) {
+  const [errCount, setErrCount] = useState(0);
+  const srcs = [
+    `https://logo.synthfinance.com/ticker/${symbol}`,
+    `https://eodhd.com/img/logos/US/${symbol}.png`,
+  ];
+  if (errCount >= srcs.length) {
+    // Fallback: colored circle with initials
+    const colors = ["#4A6B25","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
+    const bg = colors[symbol.charCodeAt(0) % colors.length];
+    return (
+      <div style={{ width: size, height: size, borderRadius: size / 2, background: bg + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <span style={{ fontSize: size * 0.4, fontWeight: 800, color: bg }}>{symbol.slice(0, 2)}</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={srcs[errCount]}
+      alt={symbol}
+      onError={() => setErrCount(n => n + 1)}
+      style={{ width: size, height: size, borderRadius: size / 2, objectFit: "contain", background: C.surface, flexShrink: 0 }}
+    />
+  );
+}
+function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   const containerRef = useRef(null);
+  const canvasRef = useRef(null);
   const [intv, setIntv] = useState("D");
+  const [chartMode, setChartMode] = useState("native");
+  const [chartData, setChartData] = useState(null);
+  const [range, setRange] = useState("3M");
+
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (chartMode !== "native" || !hdrs) return;
+    const ranges = { "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
+    const days = ranges[range] || 90;
+    const start = new Date(); start.setDate(start.getDate() - days);
+    const tf = days <= 30 ? "1Hour" : "1Day";
+    fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
+      .then(r => r.json()).then(data => { const bars = data.bars?.[symbol] || []; if (bars.length) setChartData(bars); }).catch(() => {});
+  }, [symbol, range, chartMode, hdrs]);
+
+  useEffect(() => {
+    if (!chartData || !canvasRef.current || chartMode !== "native") return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+    const closes = chartData.map(b => b.c);
+    const mn = Math.min(...closes), mx = Math.max(...closes), rng = mx - mn || 1;
+    const pad = { top: 30, bottom: 40, left: 12, right: 65 };
+    const cW = W - pad.left - pad.right, cH = H - pad.top - pad.bottom;
+    ctx.clearRect(0, 0, W, H);
+    const last = closes[closes.length - 1], isUp = last >= closes[0];
+    const lineColor = isUp ? C.up : C.dn;
+    ctx.strokeStyle = theme === "dark" ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.08)";
+    ctx.lineWidth = 1; ctx.fillStyle = C.t4; ctx.font = "11px DM Sans,sans-serif"; ctx.textAlign = "right";
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.top + (cH * i) / 4;
+      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+      ctx.fillText((mx - (rng * i) / 4).toFixed(2), W - 8, y + 4);
+    }
+    ctx.beginPath(); ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = "round";
+    closes.forEach((c, i) => { const x = pad.left + (i / (closes.length - 1)) * cW; const y = pad.top + ((mx - c) / rng) * cH; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+    ctx.stroke();
+    ctx.lineTo(pad.left + cW, pad.top + cH); ctx.lineTo(pad.left, pad.top + cH); ctx.closePath();
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, lineColor + "30"); grad.addColorStop(1, lineColor + "02");
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.fillStyle = C.t4; ctx.font = "10px DM Sans,sans-serif"; ctx.textAlign = "center";
+    const step = Math.max(1, Math.floor(chartData.length / 5));
+    for (let i = 0; i < chartData.length; i += step) {
+      const x = pad.left + (i / (closes.length - 1)) * cW;
+      ctx.fillText(new Date(chartData[i].t).toLocaleDateString("en-US", { month: "short", day: "numeric" }), x, H - 10);
+    }
+    const lastY = pad.top + ((mx - last) / rng) * cH;
+    ctx.fillStyle = lineColor; ctx.font = "bold 13px DM Sans,sans-serif"; ctx.textAlign = "right";
+    ctx.fillText(`$${last.toFixed(2)}`, W - 8, lastY - 8);
+  }, [chartData, chartMode, theme]);
+
+  useEffect(() => {
+    if (chartMode !== "tv" || !containerRef.current) return;
     containerRef.current.innerHTML = "";
     const script = document.createElement("script");
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.type = "text/javascript"; script.async = true;
     script.innerHTML = JSON.stringify({
-      autosize: true, symbol, interval: intv, timezone: "Etc/UTC", theme: "dark",
-      style: "1", locale: "en", backgroundColor: C.bg,
-      gridColor: "rgba(110,132,80,0.05)", allow_symbol_change: true,
-      hide_volume: false, support_host: "https://www.tradingview.com",
+      autosize: true, symbol, interval: intv, timezone: "Etc/UTC", theme: theme === "dark" ? "dark" : "light",
+      style: "1", locale: "en", backgroundColor: C.bg, gridColor: "rgba(110,132,80,0.05)",
+      allow_symbol_change: true, hide_volume: false, support_host: "https://www.tradingview.com",
     });
     containerRef.current.appendChild(script);
-  }, [symbol, intv]);
+  }, [symbol, intv, chartMode, theme]);
+
+  const pctChg = chartData?.length > 1 ? ((chartData[chartData.length-1].c - chartData[0].c) / chartData[0].c * 100) : null;
+  const priceNow = chartData?.length ? chartData[chartData.length - 1].c : null;
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)", animation: "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 18px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: 1, color: C.t1 }}>{symbol}</span>
-          <div style={{ display: "flex", gap: 4 }}>
-            {[["1","1m"],["5","5m"],["15","15m"],["D","1D"],["W","1W"],["M","1M"]].map(([v,l]) => (
-              <button key={v} onClick={() => setIntv(v)} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: intv === v ? C.accentSoft : "transparent", color: intv === v ? C.t1 : C.t4 }}>{l}</button>
-            ))}
+          <StockLogo symbol={symbol} size={36} />
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{symbol}</span>
+              {priceNow && <span style={{ fontSize: 16, fontWeight: 700, color: C.t2 }}>${priceNow.toFixed(2)}</span>}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, color: C.t4 }}>{names?.[symbol] || ""}</span>
+              {pctChg != null && chartMode === "native" && (
+                <span style={{ fontSize: 12, fontWeight: 700, color: pctChg >= 0 ? C.up : C.dn }}>{pctChg >= 0 ? "+" : ""}{pctChg.toFixed(2)}% ({range})</span>
+              )}
+            </div>
           </div>
         </div>
         <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 10, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
       </div>
-      <div ref={containerRef} style={{ flex: 1, width: "100%", paddingBottom: "env(safe-area-inset-bottom, 0px)" }} className="tradingview-widget-container" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", gap: 4 }}>
+          {[["native","Chart"],["tv","TradingView"]].map(([v,l]) => (
+            <button key={v} onClick={() => setChartMode(v)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: chartMode === v ? C.accentSoft : "transparent", color: chartMode === v ? C.t1 : C.t4, fontFamily: "inherit" }}>{l}</button>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 3 }}>
+          {chartMode === "native" ? (
+            ["1W","1M","3M","6M","1Y","5Y"].map(r => (
+              <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: range === r ? C.accentSoft : "transparent", color: range === r ? C.t1 : C.t4, fontFamily: "inherit" }}>{r}</button>
+            ))
+          ) : (
+            [["1","1m"],["5","5m"],["15","15m"],["D","1D"],["W","1W"],["M","1M"]].map(([v,l]) => (
+              <button key={v} onClick={() => setIntv(v)} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: intv === v ? C.accentSoft : "transparent", color: intv === v ? C.t1 : C.t4, fontFamily: "inherit" }}>{l}</button>
+            ))
+          )}
+        </div>
+      </div>
+      {chartMode === "native" ? (
+        <div style={{ flex: 1, padding: "8px 0" }}>
+          {chartData ? <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: C.t4 }}>Loading…</div>}
+        </div>
+      ) : (
+        <div ref={containerRef} style={{ flex: 1, width: "100%", paddingBottom: "env(safe-area-inset-bottom, 0px)" }} className="tradingview-widget-container" />
+      )}
     </div>
   );
 }
@@ -665,10 +779,14 @@ export default function App() {
     const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
     return (
       <div onClick={() => setChartSymbol(s)} style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
+        {/* Logo */}
+        <div style={{ marginRight: 10, flexShrink: 0 }}>
+          <StockLogo symbol={s} size={34} />
+        </div>
         {/* Left: ticker + company name */}
-        <div style={{ flex: "0 0 auto", width: 100, minWidth: 0 }}>
+        <div style={{ flex: "0 0 auto", width: 90, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{s}</div>
-          <div style={{ fontSize: 12, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortName}</div>
+          <div style={{ fontSize: 11, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortName}</div>
         </div>
         {/* Center: sparkline */}
         <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 8px" }}>
@@ -1593,7 +1711,7 @@ export default function App() {
       </div>
       )}
 
-      {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} />}
+      {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} hdrs={hdrs} names={names} theme={theme} />}
       <GS theme={theme} />
     </div>
   );
