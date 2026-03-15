@@ -35,6 +35,7 @@ jobs:
           VITE_ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
           VITE_ALPACA_SECRET: ${{ secrets.ALPACA_API_SECRET }}
           VITE_FMP_KEY: ${{ secrets.FMP_API }}
+          VITE_FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

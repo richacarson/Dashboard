@@ -45,6 +45,7 @@ const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
 const ES = import.meta.env.VITE_ALPACA_SECRET || "";
 const FK = import.meta.env.VITE_FMP_KEY || "";
+const FH = import.meta.env.VITE_FINNHUB_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
 const pct = n => (n == null || isNaN(n)) ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -339,13 +340,14 @@ export default function App() {
     } catch {}
   }, [apiKey, apiSecret, hdrs, coreSyms]);
 
-  /* ── Fetch fundamentals from FMP (per-symbol, 2 endpoints each ≈ 102 calls) ── */
+    /* ── Fetch fundamentals via Finnhub (1 call/symbol, 60/min free) ── */
   const [fmpStatus, setFmpStatus] = useState("");
   const fetchFundamentals = useCallback(async (force = false) => {
-    if (!FK) { setFmpStatus("No API key"); return; }
+    const key = FH || FK;
+    if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
     if (!force) {
       try {
-        const old = JSON.parse(localStorage.getItem("iown_fmp_cache") || "{}");
+        const old = JSON.parse(localStorage.getItem("iown_metrics_cache") || "{}");
         const age = Date.now() - (old._ts || 0);
         const hasData = Object.entries(old).some(([k, v]) => k !== "_ts" && v?.peTTM != null);
         if (age < 6 * 3600000 && hasData) { setFundamentals(old); setFmpStatus("Loaded from cache"); return; }
@@ -355,78 +357,44 @@ export default function App() {
     const results = {};
     let success = 0;
 
-    // Test first symbol to see exact field names from both endpoints
-    const testSym = coreSyms[0];
-    setFmpStatus(`Testing ${testSym}…`);
-    try {
-      const [pR, rR] = await Promise.all([
-        fetch(`https://financialmodelingprep.com/api/v3/profile/${testSym}?apikey=${FK}`).then(r => r.json()),
-        fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${testSym}?apikey=${FK}`).then(r => r.json()),
-      ]);
-      const p = Array.isArray(pR) ? pR[0] : pR;
-      const r = Array.isArray(rR) ? rR[0] : rR;
-      const pKeys = p ? Object.keys(p) : [];
-      const rKeys = r ? Object.keys(r) : [];
-
-      // Save debug info that won't be overwritten
-      const debugInfo = `P:${pKeys.join(",")} ||| R:${rKeys.join(",")}`;
-      try { localStorage.setItem("iown_fmp_debug", debugInfo); } catch {}
-
-      // Check if response is an error or has data
-      const hasError = p?.["Error Message"] || r?.["Error Message"];
-      if (hasError) {
-        setFmpStatus(`FMP Error: ${p?.["Error Message"] || r?.["Error Message"]}`);
-        return;
-      }
-      const hasPE = p?.pe != null || r?.peRatioTTM != null || r?.peRatio != null;
-      if (!hasPE && pKeys.length < 3) {
-        // Fields don't match — stop and show all keys
-        setFmpStatus(`FIELD NAMES (saved to storage) — Profile: ${pKeys.join(", ")} — Ratios: ${rKeys.join(", ")}`);
-        return; // STOP here so user can read
-      }
-    } catch (e) {
-      setFmpStatus(`API test failed: ${e.message}`);
-      return;
-    }
-
-    // Fetch all symbols: profile + ratios-ttm per symbol (2 calls each)
     for (let i = 0; i < coreSyms.length; i++) {
       const sym = coreSyms[i];
-      if (i % 5 === 0) setFmpStatus(`Fetching ${i + 1}/${coreSyms.length}… (${success} ok)`);
+      if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
-        const [profR, ratR] = await Promise.all([
-          fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : null),
-          fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : null),
-        ]);
-
-        const prof = Array.isArray(profR) ? profR[0] || {} : profR || {};
-        const rat = Array.isArray(ratR) ? ratR[0] || {} : ratR || {};
+        const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`);
+        if (!r.ok) {
+          if (r.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
+          continue;
+        }
+        const d = await r.json();
+        const m = d?.metric || {};
 
         results[sym] = {
-          industry: prof.industry || "—",
-          avgVol: prof.volAvg || null,
-          peTTM: rat.peRatioTTM ?? prof.pe ?? null,
-          peFwd: prof.peForward ?? null,
-          pegTTM: rat.pegRatioTTM ?? null,
-          yieldFwd: prof.lastDiv ? ((prof.lastDiv * 4) / (prof.price || 1) * 100) : null,
-          payoutRatio: rat.payoutRatioTTM ?? null,
-          revenueYoY: rat.revenueGrowthTTM ?? null,
-          revenue5Y: null,
-          profitMargin: rat.netProfitMarginTTM ?? null,
-          roe: rat.returnOnEquityTTM ?? null,
-          de: rat.debtEquityRatioTTM ?? null,
-          debtToFCF: rat.freeCashFlowPerShareTTM ? null : null, // not in ratios
-          roic: rat.returnOnCapitalEmployedTTM ?? null,
-          lastQtr: null,
+          industry: null,
+          avgVol: m["10DayAverageTradingVolume"] ? m["10DayAverageTradingVolume"] * 1e6 : null,
+          peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null,
+          peFwd: m.peAnnual ?? null,
+          pegTTM: m.pegTTM ?? null,
+          yieldFwd: m.dividendYieldIndicatedAnnual ?? null,
+          payoutRatio: m.payoutRatioTTM ?? m.payoutRatioAnnual ?? null,
+          revenueYoY: m.revenueGrowthTTMYoy ?? null,
+          revenue5Y: m.revenueGrowth5Y ?? null,
+          profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
+          roe: m.roeTTM ?? m.roeAnnual ?? null,
+          de: m["totalDebt/totalEquityQuarterly"] ?? m["totalDebt/totalEquityAnnual"] ?? null,
+          debtToFCF: null,
+          roic: m.roicTTM ?? m.roicAnnual ?? null,
+          lastQtr: m["3MonthPriceReturnDaily"] ?? null,
         };
         if (results[sym].peTTM != null) success++;
-      } catch (e) { console.warn("FMP", sym, e.message); }
+        if (i === 0) console.log("Finnhub keys:", Object.keys(m).slice(0, 20), "PE:", m.peTTM);
+      } catch (e) { console.warn("Finnhub", sym, e.message); }
     }
 
     results._ts = Date.now();
-    setFmpStatus(`Done: ${success}/${coreSyms.length} loaded (${coreSyms.length * 2} API calls)`);
+    setFmpStatus(`Done: ${success}/${coreSyms.length} via Finnhub`);
     setFundamentals(results);
-    try { localStorage.setItem("iown_fmp_cache", JSON.stringify(results)); } catch {}
+    try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms]);
 
   /* ── WebSocket streaming ── */
@@ -1046,12 +1014,12 @@ export default function App() {
                 <div style={{ fontSize: 12, color: C.t3 }}>Intraday charts: <span style={{ color: C.t2 }}>{Object.keys(intradayPts).length}/{ALL.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>News articles: <span style={{ color: C.t2 }}>{news.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
-                <div style={{ fontSize: 12, color: C.t3 }}>FMP metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
-                <div style={{ fontSize: 12, color: C.t3 }}>FMP key: <span style={{ color: FK ? C.up : C.dn }}>{FK ? "configured" : "missing"}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>Metrics key: <span style={{ color: (FH || FK) ? C.up : C.dn }}>{FH ? "Finnhub" : FK ? "FMP" : "missing"}</span></div>
               </div>
               {fmpStatus && <div style={{ fontSize: 11, color: C.t2, marginTop: 8, padding: "6px 8px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
-              {!FK && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FMP_API secret to GitHub repo, then re-deploy to enable metrics.</div>}
-              {FK && (
+              {!(FH || FK) && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FMP_API secret to GitHub repo, then re-deploy to enable metrics.</div>}
+              {((FH || FK) && (
                 <button onClick={() => { try { localStorage.removeItem("iown_fmp_cache"); } catch {} setFundamentals({}); fetchFundamentals(true); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
                 </button>
