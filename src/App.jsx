@@ -421,16 +421,26 @@ export default function App() {
   const tabSwipeRef = useRef(null);
   const tabIds = ["home", "research", "calendar", "news", "settings"];
   // Swipe between tabs on mobile
-  const handleTabSwipeStart = (e) => { if (isDesktop) return; tabSwipeRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
+  const handleTabSwipeStart = (e) => {
+    if (isDesktop) return;
+    const x = e.touches[0].clientX;
+    const w = window.innerWidth;
+    // Only activate from left or right 30px edge
+    if (x > 30 && x < w - 30) return;
+    tabSwipeRef.current = { x, y: e.touches[0].clientY, edge: x <= 30 ? "left" : "right" };
+  };
   const handleTabSwipeEnd = (e) => {
     if (!tabSwipeRef.current || isDesktop) return;
     const dx = e.changedTouches[0].clientX - tabSwipeRef.current.x;
     const dy = e.changedTouches[0].clientY - tabSwipeRef.current.y;
+    const edge = tabSwipeRef.current.edge;
     tabSwipeRef.current = null;
-    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
     const idx = tabIds.indexOf(tab);
-    if (dx < -80 && idx < tabIds.length - 1) setTab(tabIds[idx + 1]);
-    if (dx > 80 && idx > 0) setTab(tabIds[idx - 1]);
+    // Swipe right from left edge → previous tab
+    if (edge === "left" && dx > 60 && idx > 0) setTab(tabIds[idx - 1]);
+    // Swipe left from right edge → next tab
+    if (edge === "right" && dx < -60 && idx < tabIds.length - 1) setTab(tabIds[idx + 1]);
   };
   // Double-tap tab bar to scroll to top
   const lastTabTap = useRef({});
