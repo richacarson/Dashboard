@@ -360,8 +360,8 @@ export default function App() {
     setFmpStatus(`Testing ${testSym}…`);
     try {
       const [pR, rR] = await Promise.all([
-        fetch(`https://financialmodelingprep.com/stable/profile?symbol=${testSym}&apikey=${FK}`).then(r => r.json()),
-        fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${testSym}&apikey=${FK}`).then(r => r.json()),
+        fetch(`https://financialmodelingprep.com/api/v3/profile/${testSym}?apikey=${FK}`).then(r => r.json()),
+        fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${testSym}?apikey=${FK}`).then(r => r.json()),
       ]);
       const p = Array.isArray(pR) ? pR[0] : pR;
       const r = Array.isArray(rR) ? rR[0] : rR;
@@ -372,9 +372,14 @@ export default function App() {
       const debugInfo = `P:${pKeys.join(",")} ||| R:${rKeys.join(",")}`;
       try { localStorage.setItem("iown_fmp_debug", debugInfo); } catch {}
 
-      // Check if we already know the field names work
+      // Check if response is an error or has data
+      const hasError = p?.["Error Message"] || r?.["Error Message"];
+      if (hasError) {
+        setFmpStatus(`FMP Error: ${p?.["Error Message"] || r?.["Error Message"]}`);
+        return;
+      }
       const hasPE = p?.pe != null || r?.peRatioTTM != null || r?.peRatio != null;
-      if (!hasPE) {
+      if (!hasPE && pKeys.length < 3) {
         // Fields don't match — stop and show all keys
         setFmpStatus(`FIELD NAMES (saved to storage) — Profile: ${pKeys.join(", ")} — Ratios: ${rKeys.join(", ")}`);
         return; // STOP here so user can read
@@ -390,8 +395,8 @@ export default function App() {
       if (i % 5 === 0) setFmpStatus(`Fetching ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
         const [profR, ratR] = await Promise.all([
-          fetch(`https://financialmodelingprep.com/stable/profile?symbol=${sym}&apikey=${FK}`).then(r => r.ok ? r.json() : null),
-          fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${sym}&apikey=${FK}`).then(r => r.ok ? r.json() : null),
+          fetch(`https://financialmodelingprep.com/api/v3/profile/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : null),
+          fetch(`https://financialmodelingprep.com/api/v3/ratios-ttm/${sym}?apikey=${FK}`).then(r => r.ok ? r.json() : null),
         ]);
 
         const prof = Array.isArray(profR) ? profR[0] || {} : profR || {};
