@@ -340,15 +340,19 @@ export default function App() {
   }, [apiKey, apiSecret, hdrs, coreSyms]);
 
   /* ── Fetch fundamentals from FMP ── */
-  const fetchFundamentals = useCallback(async () => {
+  const fetchFundamentals = useCallback(async (force = false) => {
     if (!FK) { console.log("FMP: No API key (VITE_FMP_KEY)"); return; }
-    try {
-      const old = JSON.parse(localStorage.getItem("iown_fmp_cache") || "{}");
-      const age = Date.now() - (old._ts || 0);
-      if (age < 6 * 3600000 && Object.keys(old).length > 2) { setFundamentals(old); return; }
-    } catch {}
+    if (!force) {
+      try {
+        const old = JSON.parse(localStorage.getItem("iown_fmp_cache") || "{}");
+        const age = Date.now() - (old._ts || 0);
+        // Validate cache has actual data, not just empty objects
+        const hasData = Object.entries(old).some(([k, v]) => k !== "_ts" && v?.peTTM != null);
+        if (age < 6 * 3600000 && hasData) { setFundamentals(old); console.log("FMP: Using cached data"); return; }
+      } catch {}
+    }
 
-    console.log("FMP: Fetching fundamentals for", coreSyms.length, "symbols");
+    console.log("FMP: Fetching fundamentals for", coreSyms.length, "symbols (force=" + force + ")");
     const results = {};
     for (const sym of coreSyms) {
       try {
@@ -384,10 +388,12 @@ export default function App() {
           roic: met.roicTTM ?? null,
           lastQtr: priceChg["3M"] ?? null,
         };
+        console.log("FMP:", sym, "peTTM=", results[sym].peTTM, "roe=", results[sym].roe);
       } catch (e) { console.warn("FMP error for", sym, e); }
     }
     results._ts = Date.now();
-    console.log("FMP: Loaded", Object.keys(results).length - 1, "symbols");
+    const loaded = Object.entries(results).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length;
+    console.log("FMP: Loaded", loaded, "/", coreSyms.length, "with real data");
     setFundamentals(results);
     try { localStorage.setItem("iown_fmp_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms]);
@@ -1005,12 +1011,14 @@ export default function App() {
                 <div style={{ fontSize: 12, color: C.t3 }}>Intraday charts: <span style={{ color: C.t2 }}>{Object.keys(intradayPts).length}/{ALL.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>News articles: <span style={{ color: C.t2 }}>{news.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
-                <div style={{ fontSize: 12, color: C.t3 }}>FMP metrics: <span style={{ color: Object.keys(fundamentals).length > 1 ? C.up : C.dn }}>{Math.max(0, Object.keys(fundamentals).length - 1)}/{coreSyms.length}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>FMP metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>FMP key: <span style={{ color: FK ? C.up : C.dn }}>{FK ? "configured" : "missing"}</span></div>
               </div>
               {!FK && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FMP_API secret to GitHub repo, then re-deploy to enable metrics.</div>}
-              {FK && Object.keys(fundamentals).length <= 1 && (
-                <button onClick={fetchFundamentals} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Retry FMP Fetch</button>
+              {FK && (
+                <button onClick={() => { try { localStorage.removeItem("iown_fmp_cache"); } catch {} setFundamentals({}); fetchFundamentals(true); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                  {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
+                </button>
               )}
             </div>
             {/* Lock / Reset */}
