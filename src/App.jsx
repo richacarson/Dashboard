@@ -384,10 +384,13 @@ export default function App() {
           de: m["totalDebt/totalEquityQuarterly"] ?? m["totalDebt/totalEquityAnnual"] ?? null,
           debtToFCF: null,
           roic: m.roicTTM ?? m.roicAnnual ?? null,
-          lastQtr: m["3MonthPriceReturnDaily"] ?? null,
+          lastQtr: m["3MonthPriceReturnDaily"] ?? m["3MonthPriceReturn"] ?? m.priceReturn3M ?? null,
         };
         if (results[sym].peTTM != null) success++;
-        if (i === 0) console.log("Finnhub keys:", Object.keys(m).slice(0, 20), "PE:", m.peTTM);
+        if (i === 0) {
+          const numKeys = Object.keys(m).filter(k => k.match(/month|Month|3M|price.*return|Return/i));
+          console.log("Finnhub price-return keys:", numKeys, "all keys count:", Object.keys(m).length);
+        }
       } catch (e) { console.warn("Finnhub", sym, e.message); }
     }
 
@@ -902,13 +905,13 @@ export default function App() {
             {(() => {
               const syms = researchView === "dividend" ? (sleeves.dividend?.symbols || []) : (sleeves.growth?.symbols || []);
               const fmtV = v => v == null ? "—" : Number(v).toFixed(1);
-              const fmtP = v => v == null ? "—" : `${(v * 100).toFixed(1)}%`;
+              const fmtP = v => v == null ? "—" : `${Number(v).toFixed(1)}%`;
 
               const divCols = [
                 { l: "Avg Vol", w: 70, fn: d => vol(d.avgVol) },
                 { l: "Last Qtr", w: 72, fn: d => d.lastQtr != null ? `${d.lastQtr >= 0 ? "+" : ""}${d.lastQtr.toFixed(1)}%` : "—", color: d => (d.lastQtr||0) > 0 ? C.up : (d.lastQtr||0) < 0 ? C.dn : C.t3 },
                 { l: "Yield FWD", w: 72, fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
-                { l: "Payout", w: 62, fn: d => d.payoutRatio != null ? `${(d.payoutRatio * 100).toFixed(0)}%` : "—" },
+                { l: "Payout", w: 62, fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
                 { l: "P/E TTM", w: 62, fn: d => fmtV(d.peTTM) },
                 { l: "P/E FWD", w: 62, fn: d => fmtV(d.peFwd) },
                 { l: "Rev YoY", w: 68, fn: d => fmtP(d.revenueYoY), color: d => (d.revenueYoY||0) > 0 ? C.up : C.dn },
