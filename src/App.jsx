@@ -370,6 +370,7 @@ export default function App() {
   const [fmpStatus, setFmpStatus] = useState("");
   const [earningsCalendar, setEarningsCalendar] = useState([]);
   const [calendarView, setCalendarView] = useState("economic");
+  const [calMode, setCalMode] = useState("live");
   const fetchFundamentals = useCallback(async (force = false) => {
     const key = FH || FK;
     if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
@@ -1105,6 +1106,42 @@ export default function App() {
             </div>
 
             {calendarView === "economic" && (() => {
+
+              return (<div>
+                <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                  {[{ v: "live", l: "Live Calendar" }, { v: "estimated", l: "Estimated Schedule" }].map(({ v, l }) => (
+                    <button key={v} onClick={() => setCalMode(v)} style={{
+                      flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                      border: `1px solid ${calMode === v ? C.borderActive : C.border}`,
+                      background: calMode === v ? C.accentSoft : "transparent",
+                      color: calMode === v ? C.t1 : C.t4, cursor: "pointer", fontFamily: "inherit",
+                    }}>{l}</button>
+                  ))}
+                </div>
+
+                {calMode === "live" && (
+                  <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                    <div key={theme} ref={el => {
+                      if (!el || el.dataset.loaded) return;
+                      el.dataset.loaded = "1";
+                      const script = document.createElement("script");
+                      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-events.js";
+                      script.async = true;
+                      script.innerHTML = JSON.stringify({
+                        colorTheme: theme === "dark" ? "dark" : "light",
+                        isTransparent: true,
+                        width: "100%",
+                        height: isDesktop ? "700" : "550",
+                        locale: "en",
+                        importanceFilter: "0,1",
+                        countryFilter: "us",
+                      });
+                      el.appendChild(script);
+                    }} />
+                  </div>
+                )}
+
+                {calMode === "estimated" && (() => {
               // Auto-generate major US economic events for the next 60 days
               const today = new Date();
               const fmt = d => d.toISOString().slice(0, 10);
@@ -1273,6 +1310,13 @@ export default function App() {
                   </div>
                 );
               });
+                })()}
+                {calMode === "estimated" && (
+                  <div style={{ fontSize: 11, color: C.t4, textAlign: "center", marginTop: 12, fontStyle: "italic" }}>
+                    Dates are estimated from typical release schedules. Actual dates may shift due to holidays, government shutdowns, or scheduling changes. Use "Live Calendar" for confirmed dates.
+                  </div>
+                )}
+              </div>);
             })()}
 
             {calendarView === "earnings" && (() => {
