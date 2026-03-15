@@ -912,12 +912,9 @@ export default function App() {
             )}
             {Object.keys(fundamentals).length <= 1 && (
               <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                {(FH || FK) ? (fmpStatus || "Tap 'Fetch Metrics' in Settings") : "Add FINNHUB_KEY secret to enable metrics."}
+                {(FH || FK) ? "Loading metrics…" : "Add FINNHUB_KEY secret to enable metrics."}
                 {(FH || FK) && <button onClick={() => fetchFundamentals(true)} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Now</button>}
               </div>
-            )}
-            {fmpStatus && Object.keys(fundamentals).length > 1 && (
-              <div style={{ fontSize: 11, color: C.t4, marginBottom: 12, textAlign: "center" }}>{fmpStatus}</div>
             )}
             {/* Seeking Alpha-style scrollable table */}
             {(() => {
@@ -970,14 +967,14 @@ export default function App() {
 
               return (
                 <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                  <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                  <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 280px)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
                     <table style={{ borderCollapse: "collapse", minWidth: (metricsEditMode ? 180 : 140) + cols.reduce((s, c) => s + c.w, 0) }}>
-                      {/* Header */}
-                      <thead>
+                      {/* Header — sticky top + left */}
+                      <thead style={{ position: "sticky", top: 0, zIndex: 3 }}>
                         <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                          <th style={{ position: "sticky", left: 0, zIndex: 2, background: C.card, padding: "12px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 0.3, minWidth: metricsEditMode ? 180 : 140, borderRight: `1px solid ${C.border}` }}>Symbol</th>
+                          <th style={{ position: "sticky", left: 0, zIndex: 4, background: C.card, padding: "12px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 0.3, minWidth: metricsEditMode ? 180 : 140, borderRight: `1px solid ${C.border}` }}>Symbol</th>
                           {cols.map(col => (
-                            <th key={col.l} onClick={() => toggleSort(col.k)} style={{ padding: "12px 8px", textAlign: "right", fontSize: 10, fontWeight: 700, color: metricSort.col === col.k ? C.t1 : C.t4, letterSpacing: 0.3, whiteSpace: "nowrap", minWidth: col.w, cursor: "pointer", userSelect: "none" }}>
+                            <th key={col.l} onClick={() => toggleSort(col.k)} style={{ padding: "12px 8px", textAlign: "right", fontSize: 10, fontWeight: 700, background: C.card, color: metricSort.col === col.k ? C.t1 : C.t4, letterSpacing: 0.3, whiteSpace: "nowrap", minWidth: col.w, cursor: "pointer", userSelect: "none" }}>
                               {col.l} {metricSort.col === col.k ? (metricSort.dir === "desc" ? "↓" : "↑") : ""}
                             </th>
                           ))}
@@ -989,7 +986,7 @@ export default function App() {
                           const nm = names[s] || "";
                           const shortNm = nm.length > 16 ? nm.slice(0, 16) + "…" : nm;
                           return (
-                            <tr key={s} style={{ borderBottom: ri < sorted.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                            <tr key={s} style={{ borderBottom: `1px solid ${C.border}` }}>
                               <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.card, padding: "10px 12px", borderRight: `1px solid ${C.border}` }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                   {metricsEditMode && (
@@ -1014,6 +1011,21 @@ export default function App() {
                           );
                         })}
                       </tbody>
+                      {/* Averages footer */}
+                      <tfoot style={{ position: "sticky", bottom: 0, zIndex: 3 }}>
+                        <tr style={{ borderTop: `2px solid ${C.accent}` }}>
+                          <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "10px 12px", borderRight: `1px solid ${C.border}`, fontSize: 12, fontWeight: 800, color: C.t1 }}>Avg</td>
+                          {cols.map(col => {
+                            const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
+                            const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                            const avgD = { [col.k]: avg };
+                            const val = avg != null ? col.fn(avgD) : "—";
+                            return (
+                              <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, fontWeight: 800, color: C.t1, background: C.surface, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{val}</td>
+                            );
+                          })}
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
