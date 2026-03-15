@@ -339,7 +339,7 @@ export default function App() {
     } catch {}
   }, [apiKey, apiSecret, hdrs, coreSyms]);
 
-  /* ── Fetch fundamentals from FMP (batched — ~3 API calls total) ── */
+  /* ── Fetch fundamentals from FMP (per-symbol, 2 endpoints each ≈ 102 calls) ── */
   const [fmpStatus, setFmpStatus] = useState("");
   const fetchFundamentals = useCallback(async (force = false) => {
     if (!FK) { setFmpStatus("No API key"); return; }
@@ -352,57 +352,38 @@ export default function App() {
       } catch {}
     }
 
-    setFmpStatus("Fetching batch data…");
-    const syms = coreSyms.join(",");
     const results = {};
+    let success = 0;
 
+    // Test first symbol to verify API works
+    const testSym = coreSyms[0];
+    setFmpStatus(`Testing API with ${testSym}…`);
     try {
-      // Batch 1: profiles (gives pe, volAvg, industry, lastDiv, price, etc.)
-      setFmpStatus("Fetching profiles…");
-      const profR = await fetch(`https://financialmodelingprep.com/stable/profile?symbol=${syms}&apikey=${FK}`);
-      if (!profR.ok) { const t = await profR.text(); setFmpStatus(`Profile error: HTTP ${profR.status} — ${t.slice(0, 100)}`); return; }
-      const profiles = await profR.json();
-      // Debug: show raw structure
-      const firstProf = Array.isArray(profiles) ? profiles[0] : profiles;
-      const profKeys = firstProf ? Object.keys(firstProf).slice(0, 15).join(", ") : "EMPTY";
-      console.log("FMP PROFILE RAW:", JSON.stringify(firstProf).slice(0, 400));
-      setFmpStatus(`Profile[0] keys: ${profKeys}`);
-      await new Promise(r => setTimeout(r, 800));
+      const testR = await fetch(`https://financialmodelingprep.com/stable/profile?symbol=${testSym}&apikey=${FK}`);
+      const testJ = await testR.json();
+      const first = Array.isArray(testJ) ? testJ[0] : testJ;
+      if (!first || !first.symbol) {
+        setFmpStatus(`API returned unexpected format: ${JSON.stringify(testJ).slice(0, 120)}`);
+        return;
+      }
+      setFmpStatus(`API working! Keys: ${Object.keys(first).slice(0, 10).join(", ")}…`);
+    } catch (e) {
+      setFmpStatus(`API test failed: ${e.message}`);
+      return;
+    }
 
-      const profMap = {};
-      (Array.isArray(profiles) ? profiles : [profiles]).forEach(p => { if (p?.symbol) profMap[p.symbol] = p; });
-      setFmpStatus(`Profiles mapped: ${Object.keys(profMap).length}. Fetching ratios…`);
+    // Fetch all symbols: profile + ratios-ttm per symbol (2 calls each)
+    for (let i = 0; i < coreSyms.length; i++) {
+      const sym = coreSyms[i];
+      if (i % 5 === 0) setFmpStatus(`Fetching ${i + 1}/${coreSyms.length}… (${success} ok)`);
+      try {
+        const [profR, ratR] = await Promise.all([
+          fetch(`https://financialmodelingprep.com/stable/profile?symbol=${sym}&apikey=${FK}`).then(r => r.ok ? r.json() : null),
+          fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${sym}&apikey=${FK}`).then(r => r.ok ? r.json() : null),
+        ]);
 
-      // Small delay to avoid burst
-      await new Promise(r => setTimeout(r, 1000));
-
-      // Batch 2: ratios-ttm (gives ROE, D/E, payout, PEG, margins, PE ratio)
-      const ratR = await fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${syms}&apikey=${FK}`);
-      const ratios = ratR.ok ? await ratR.json() : [];
-      const firstRat = Array.isArray(ratios) ? ratios[0] : ratios;
-      const ratKeys = firstRat ? Object.keys(firstRat).slice(0, 15).join(", ") : "EMPTY";
-      console.log("FMP RATIOS RAW:", JSON.stringify(firstRat).slice(0, 400));
-      setFmpStatus(`Ratio[0] keys: ${ratKeys}`);
-      await new Promise(r => setTimeout(r, 800));
-
-      const ratMap = {};
-      (Array.isArray(ratios) ? ratios : [ratios]).forEach(r => { if (r?.symbol) ratMap[r.symbol] = r; });
-      setFmpStatus(`Ratios mapped: ${Object.keys(ratMap).length}. Fetching key metrics…`);
-
-      await new Promise(r => setTimeout(r, 1000));
-
-      // Batch 3: key-metrics-ttm (gives ROIC, debtToFCF)
-      const metR = await fetch(`https://financialmodelingprep.com/stable/key-metrics-ttm?symbol=${syms}&apikey=${FK}`);
-      const metrics = metR.ok ? await metR.json() : [];
-      const metMap = {};
-      (Array.isArray(metrics) ? metrics : [metrics]).forEach(m => { if (m?.symbol) metMap[m.symbol] = m; });
-
-      // Build results
-      let success = 0;
-      for (const sym of coreSyms) {
-        const prof = profMap[sym] || {};
-        const rat = ratMap[sym] || {};
-        const met = metMap[sym] || {};
+        const prof = Array.isArray(profR) ? profR[0] || {} : profR || {};
+        const rat = Array.isArray(ratR) ? ratR[0] || {} : ratR || {};
 
         results[sym] = {
           industry: prof.industry || "—",
@@ -413,25 +394,22 @@ export default function App() {
           yieldFwd: prof.lastDiv ? ((prof.lastDiv * 4) / (prof.price || 1) * 100) : null,
           payoutRatio: rat.payoutRatioTTM ?? null,
           revenueYoY: rat.revenueGrowthTTM ?? null,
-          revenue5Y: null, // would need financial-growth per-symbol
+          revenue5Y: null,
           profitMargin: rat.netProfitMarginTTM ?? null,
           roe: rat.returnOnEquityTTM ?? null,
           de: rat.debtEquityRatioTTM ?? null,
-          debtToFCF: met.debtToFreeCashFlowTTM ?? null,
-          roic: met.roicTTM ?? null,
-          lastQtr: prof.priceChange3M ?? null,
+          debtToFCF: rat.freeCashFlowPerShareTTM ? null : null, // not in ratios
+          roic: rat.returnOnCapitalEmployedTTM ?? null,
+          lastQtr: null,
         };
         if (results[sym].peTTM != null) success++;
-      }
-
-      results._ts = Date.now();
-      setFmpStatus(`Done: ${success}/${coreSyms.length} loaded (3 API calls used)`);
-      setFundamentals(results);
-      try { localStorage.setItem("iown_fmp_cache", JSON.stringify(results)); } catch {}
-    } catch (e) {
-      setFmpStatus(`Error: ${e.message}`);
-      console.error("FMP batch error:", e);
+      } catch (e) { console.warn("FMP", sym, e.message); }
     }
+
+    results._ts = Date.now();
+    setFmpStatus(`Done: ${success}/${coreSyms.length} loaded (${coreSyms.length * 2} API calls)`);
+    setFundamentals(results);
+    try { localStorage.setItem("iown_fmp_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms]);
 
   /* ── WebSocket streaming ── */
