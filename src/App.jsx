@@ -362,9 +362,16 @@ export default function App() {
       const profR = await fetch(`https://financialmodelingprep.com/stable/profile?symbol=${syms}&apikey=${FK}`);
       if (!profR.ok) { const t = await profR.text(); setFmpStatus(`Profile error: HTTP ${profR.status} — ${t.slice(0, 100)}`); return; }
       const profiles = await profR.json();
+      // Debug: show raw structure
+      const firstProf = Array.isArray(profiles) ? profiles[0] : profiles;
+      const profKeys = firstProf ? Object.keys(firstProf).slice(0, 15).join(", ") : "EMPTY";
+      console.log("FMP PROFILE RAW:", JSON.stringify(firstProf).slice(0, 400));
+      setFmpStatus(`Profile[0] keys: ${profKeys}`);
+      await new Promise(r => setTimeout(r, 800));
+
       const profMap = {};
       (Array.isArray(profiles) ? profiles : [profiles]).forEach(p => { if (p?.symbol) profMap[p.symbol] = p; });
-      setFmpStatus(`Profiles: ${Object.keys(profMap).length} loaded. Fetching ratios…`);
+      setFmpStatus(`Profiles mapped: ${Object.keys(profMap).length}. Fetching ratios…`);
 
       // Small delay to avoid burst
       await new Promise(r => setTimeout(r, 1000));
@@ -372,9 +379,15 @@ export default function App() {
       // Batch 2: ratios-ttm (gives ROE, D/E, payout, PEG, margins, PE ratio)
       const ratR = await fetch(`https://financialmodelingprep.com/stable/ratios-ttm?symbol=${syms}&apikey=${FK}`);
       const ratios = ratR.ok ? await ratR.json() : [];
+      const firstRat = Array.isArray(ratios) ? ratios[0] : ratios;
+      const ratKeys = firstRat ? Object.keys(firstRat).slice(0, 15).join(", ") : "EMPTY";
+      console.log("FMP RATIOS RAW:", JSON.stringify(firstRat).slice(0, 400));
+      setFmpStatus(`Ratio[0] keys: ${ratKeys}`);
+      await new Promise(r => setTimeout(r, 800));
+
       const ratMap = {};
       (Array.isArray(ratios) ? ratios : [ratios]).forEach(r => { if (r?.symbol) ratMap[r.symbol] = r; });
-      setFmpStatus(`Ratios: ${Object.keys(ratMap).length} loaded. Fetching key metrics…`);
+      setFmpStatus(`Ratios mapped: ${Object.keys(ratMap).length}. Fetching key metrics…`);
 
       await new Promise(r => setTimeout(r, 1000));
 
