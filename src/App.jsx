@@ -497,11 +497,19 @@ export default function App() {
     try {
       let events = [];
       // Try static JSON first (updated by GitHub Action)
-      const base = import.meta.env.BASE_URL || "/";
-      const staticR = await fetch(`${base}economic-calendar.json`).catch(() => null);
-      if (staticR?.ok) {
-        const data = await staticR.json();
-        if (Array.isArray(data) && data.length > 0) events = data;
+      const staticUrls = [
+        `${import.meta.env.BASE_URL || "/"}economic-calendar.json`,
+        "./economic-calendar.json",
+        "https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json",
+      ];
+      for (const url of staticUrls) {
+        try {
+          const r = await fetch(url).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            if (Array.isArray(data) && data.length > 0) { events = data; break; }
+          }
+        } catch {}
       }
       // Fallback: fetch live from FairEconomy (ForexFactory data) - try multiple URLs
       if (!events.length) {
@@ -522,7 +530,6 @@ export default function App() {
       }
       events.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       setEconCalendar(events);
-      if (events.length === 0) console.log("Econ calendar: 0 events after fetch");
     } catch (e) { console.warn("Econ calendar fetch failed:", e.message); }
 
     // Earnings: Finnhub (free endpoint)
