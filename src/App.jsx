@@ -737,6 +737,8 @@ export default function App() {
           ytd: ytdCalc ?? m["yearToDatePriceReturnDaily"] ?? null,
         };
         if (results[sym].peTTM != null) success++;
+        // Also set company name from Finnhub profile
+        if (profileName) setNames(prev => prev[sym] ? prev : { ...prev, [sym]: profileName });
         if (i === 0) setFmpStatus(`Fetching… keys ok`);
       } catch (e) { console.warn("Finnhub", sym, e.message); }
     }
@@ -1720,7 +1722,7 @@ export default function App() {
                   colDefs.forEach((c, i) => { ws.getColumn(i + 1).width = c.w; });
 
                   // Grid lines off, freeze panes, auto-filter
-                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 0, showGridLines: false }];
+                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1, showGridLines: false }];
                   ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: endRow, column: colDefs.length } };
 
                   // Download — mobile-friendly approach
