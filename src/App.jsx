@@ -1652,11 +1652,13 @@ export default function App() {
                     const rowVals = colDefs.map(col => {
                       if (col.k === "sym") return s;
                       if (col.k === "name") return names[s] || "";
+                      if (col.fmt === "text") return d[col.k] || "";
                       const raw = d[col.k];
-                      if (raw == null) return "";
-                      if (col.fmt === "pct") return raw / 100; // Store as decimal for Excel % format
-                      if (col.fmt === "vol") return Math.round(raw);
-                      return Number(raw.toFixed(2));
+                      if (raw == null || raw === "" || isNaN(raw) || !isFinite(raw)) return "";
+                      const num = Number(raw);
+                      if (col.fmt === "pct") return num / 100;
+                      if (col.fmt === "vol") return Math.round(num);
+                      return Math.round(num * 100) / 100;
                     });
 
                     const row = ws.addRow(rowVals);
