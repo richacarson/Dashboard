@@ -409,7 +409,10 @@ export default function App() {
 
         // Debug first symbol's candle response
         if (i === 0) {
-          console.log("Finnhub candle status:", candle.s, "points:", candle.c?.length || 0, "from:", new Date(prevQtrStartTs * 1000).toISOString().slice(0,10), "to:", new Date(nowTs * 1000).toISOString().slice(0,10));
+          const cInfo = `candle s=${candle.s} pts=${candle.c?.length||0} t0=${candle.t?.[0] ? new Date(candle.t[0]*1000).toISOString().slice(0,10) : "?"} tN=${candle.t?.length ? new Date(candle.t[candle.t.length-1]*1000).toISOString().slice(0,10) : "?"}`;
+          console.log("Finnhub candle:", cInfo);
+          setFmpStatus(cInfo);
+          await new Promise(r => setTimeout(r, 1500));
         }
 
         // Calculate returns from candle data
