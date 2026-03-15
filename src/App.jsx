@@ -216,6 +216,13 @@ export default function App() {
   const [chartSymbol, setChartSymbol] = useState(null);
   const [refresh, setRefresh] = useState(30);
   const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handler = e => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
   const [editMode, setEditMode] = useState(false);
   const [editIconFor, setEditIconFor] = useState(null);
   const [iconInput, setIconInput] = useState("");
@@ -516,7 +523,7 @@ export default function App() {
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
-          <img src="icon-512x512.png" alt="IOWN" style={{ width: 100, height: 100, borderRadius: 28, margin: "0 auto 28px", display: "block", boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }} />
+          <img src="iown-logo.jpg" alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 28px", display: "block", borderRadius: 12 }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
@@ -710,10 +717,54 @@ export default function App() {
     );
   };
 
-  return (
-    <div style={{ minHeight: "100dvh", background: C.bg, color: C.t1, paddingBottom: 90, overflowY: "auto" }}>
+  const navItems = [
+    { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
+    { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
+    { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
+    { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
+  ];
 
-      {/* HEADER */}
+  return (
+    <div style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto" }}>
+
+      {/* DESKTOP SIDEBAR */}
+      {isDesktop && (
+        <div style={{
+          width: 220, flexShrink: 0, position: "sticky", top: 0, height: "100dvh",
+          background: C.surface, borderRight: `1px solid ${C.border}`,
+          display: "flex", flexDirection: "column", padding: "24px 0",
+        }}>
+          <div style={{ padding: "0 20px 28px", borderBottom: `1px solid ${C.border}` }}>
+            <img src="iown-logo.jpg" alt="IOWN" style={{ width: "100%", height: "auto", borderRadius: 8 }} />
+          </div>
+          <nav style={{ flex: 1, padding: "16px 0" }}>
+            {navItems.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{
+                display: "flex", alignItems: "center", gap: 12, width: "100%",
+                padding: "12px 20px", background: tab === t.id ? C.accentSoft : "transparent",
+                border: "none", borderLeft: tab === t.id ? `3px solid ${C.accent}` : "3px solid transparent",
+                cursor: "pointer", transition: "all 0.15s",
+              }}>
+                {t.icon(tab === t.id)}
+                <span style={{ fontSize: 14, fontWeight: 600, color: tab === t.id ? C.t1 : C.t4 }}>{t.label}</span>
+              </button>
+            ))}
+          </nav>
+          <div style={{ padding: "16px 20px", borderTop: `1px solid ${C.border}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ padding: "4px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, color: marketStatus.color, border: `1px solid ${marketStatus.color}44`, background: marketStatus.color + "12" }}>{marketStatus.label}</div>
+              {loading && <div style={{ width: 6, height: 6, borderRadius: 3, background: C.up, animation: "pulse 1.2s ease-in-out infinite" }} />}
+            </div>
+            {lastUp && <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>Updated {lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+          </div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT AREA */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+
+      {/* MOBILE HEADER — hidden on desktop */}
+      {!isDesktop && (
       <div style={{
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -744,8 +795,28 @@ export default function App() {
           </button>
         </div>
       </div>
+      )}
 
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "0 18px" }}>
+      {/* Desktop header bar */}
+      {isDesktop && (
+        <div style={{
+          padding: "12px 32px", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12,
+          borderBottom: `1px solid ${C.border}`, background: "rgba(8,11,5,0.88)",
+          position: "sticky", top: 0, zIndex: 100,
+        }}>
+          {lastUp && <span style={{ fontSize: 12, color: C.t4 }}>Last updated {lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
+          <button onClick={() => { fetchData(); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
+            width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: loading ? "spin 1s linear infinite" : "none" }}>
+              <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div style={{ maxWidth: isDesktop ? 1200 : 960, margin: "0 auto", padding: isDesktop ? "0 32px" : "0 18px" }}>
 
         {/* Stale data banner when market is not open */}
         {marketStatus.status !== "open" && Object.keys(quotes).length > 0 && (
@@ -1159,27 +1230,24 @@ export default function App() {
               <div style={{ fontSize: 11, color: C.t4, marginTop: 8, textAlign: "center" }}>Locks the app and requires the access code to re-enter</div>
             </div>
             <div style={{ marginTop: 40, textAlign: "center", paddingBottom: 20 }}>
-              <img src="icon-192x192.png" alt="IOWN" style={{ width: 48, height: 48, borderRadius: 14, margin: "0 auto 16px", display: "block" }} />
+              <img src="iown-logo.jpg" alt="IOWN" style={{ width: 120, height: "auto", borderRadius: 8, margin: "0 auto 16px", display: "block" }} />
               <div style={{ fontSize: 13, color: C.t4 }}>Intentional Ownership</div>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>A Registered Investment Advisor under Paradiem</div>
             </div>
           </div>
         )}
-      </div>
+      </div> {/* end maxWidth content */}
+      </div> {/* end main content area */}
 
-      {/* BOTTOM TAB BAR */}
+      {/* MOBILE BOTTOM TAB BAR — hidden on desktop */}
+      {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
         background: "rgba(8,11,5,0.88)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {[
-          { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
-          { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
-          { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
-          { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
-        ].map(t => (
+        {navItems.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 24px", background: "transparent", border: "none", cursor: "pointer",
@@ -1190,6 +1258,7 @@ export default function App() {
           </button>
         ))}
       </div>
+      )}
 
       {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} />}
       <GS />
