@@ -915,8 +915,6 @@ export default function App() {
                 { l: "Rev 5Y", w: 62, fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
                 { l: "ROE", w: 58, fn: d => fmtP(d.roe) },
                 { l: "D/E", w: 50, fn: d => fmtV(d.de) },
-                { l: "D/FCF", w: 55, fn: d => fmtV(d.debtToFCF) },
-                { l: "ROIC", w: 58, fn: d => fmtP(d.roic) },
               ];
               const groCols = [
                 { l: "Avg Vol", w: 70, fn: d => vol(d.avgVol) },
@@ -929,8 +927,6 @@ export default function App() {
                 { l: "Margin", w: 62, fn: d => fmtP(d.profitMargin) },
                 { l: "ROE", w: 58, fn: d => fmtP(d.roe) },
                 { l: "D/E", w: 50, fn: d => fmtV(d.de) },
-                { l: "D/FCF", w: 55, fn: d => fmtV(d.debtToFCF) },
-                { l: "ROIC", w: 58, fn: d => fmtP(d.roic) },
               ];
               const cols = researchView === "dividend" ? divCols : groCols;
               const sortedSyms = [...syms].sort((a, b) => a.localeCompare(b));
