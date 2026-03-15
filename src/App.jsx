@@ -523,7 +523,8 @@ export default function App() {
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
-          <img src="iown-logo.png" alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 28px", display: "block", borderRadius: 12 }} />
+          <div style={{ fontSize: 42, fontWeight: 800, color: C.t1, letterSpacing: 2, marginBottom: 8 }}>IOWN</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.t4, letterSpacing: 3, textTransform: "uppercase", marginBottom: 8 }}>Paradiem</div>
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
@@ -730,32 +731,34 @@ export default function App() {
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
         <div style={{
-          width: 220, flexShrink: 0, position: "sticky", top: 0, height: "100dvh",
+          width: 240, flexShrink: 0, position: "sticky", top: 0, height: "100dvh",
           background: C.surface, borderRight: `1px solid ${C.border}`,
-          display: "flex", flexDirection: "column", padding: "24px 0",
+          display: "flex", flexDirection: "column",
         }}>
-          <div style={{ padding: "0 20px 28px", borderBottom: `1px solid ${C.border}` }}>
-            <img src="iown-logo.png" alt="IOWN" style={{ width: "100%", height: "auto", borderRadius: 8 }} />
+          <div style={{ padding: "28px 24px 24px", borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: C.t1, letterSpacing: -0.5 }}>IOWN</div>
+            <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Portfolio Dashboard</div>
           </div>
-          <nav style={{ flex: 1, padding: "16px 0" }}>
+          <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
-                display: "flex", alignItems: "center", gap: 12, width: "100%",
-                padding: "12px 20px", background: tab === t.id ? C.accentSoft : "transparent",
+                display: "flex", alignItems: "center", gap: 14, width: "100%",
+                padding: "14px 24px", background: tab === t.id ? C.accentSoft : "transparent",
                 border: "none", borderLeft: tab === t.id ? `3px solid ${C.accent}` : "3px solid transparent",
                 cursor: "pointer", transition: "all 0.15s",
               }}>
                 {t.icon(tab === t.id)}
-                <span style={{ fontSize: 14, fontWeight: 600, color: tab === t.id ? C.t1 : C.t4 }}>{t.label}</span>
+                <span style={{ fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.t1 : C.t3 }}>{t.label}</span>
               </button>
             ))}
           </nav>
-          <div style={{ padding: "16px 20px", borderTop: `1px solid ${C.border}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ padding: "4px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, color: marketStatus.color, border: `1px solid ${marketStatus.color}44`, background: marketStatus.color + "12" }}>{marketStatus.label}</div>
-              {loading && <div style={{ width: 6, height: 6, borderRadius: 3, background: C.up, animation: "pulse 1.2s ease-in-out infinite" }} />}
+          <div style={{ padding: "20px 24px", borderTop: `1px solid ${C.border}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}66` }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{marketStatus.label}</span>
             </div>
-            {lastUp && <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>Updated {lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+            {lastUp && <div style={{ fontSize: 11, color: C.t4 }}>Updated {lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+            {loading && <div style={{ fontSize: 11, color: C.t3, marginTop: 4 }}>Refreshing…</div>}
           </div>
         </div>
       )}
@@ -800,23 +803,29 @@ export default function App() {
       {/* Desktop header bar */}
       {isDesktop && (
         <div style={{
-          padding: "12px 32px", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12,
-          borderBottom: `1px solid ${C.border}`, background: "rgba(8,11,5,0.88)",
+          padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          borderBottom: `1px solid ${C.border}`, background: C.bg,
           position: "sticky", top: 0, zIndex: 100,
         }}>
-          {lastUp && <span style={{ fontSize: 12, color: C.t4 }}>Last updated {lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-          <button onClick={() => { fetchData(); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
-            width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
-            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: loading ? "spin 1s linear infinite" : "none" }}>
-              <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-            </svg>
-          </button>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
+            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "news" ? "News" : "Settings"}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {lastUp && <span style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
+            <button onClick={() => { fetchData(); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
+              padding: "8px 16px", display: "flex", alignItems: "center", gap: 8,
+              background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: loading ? "spin 1s linear infinite" : "none" }}>
+                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+              </svg>
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>Refresh</span>
+            </button>
+          </div>
         </div>
       )}
 
-      <div style={{ maxWidth: isDesktop ? 1200 : 960, margin: "0 auto", padding: isDesktop ? "0 32px" : "0 18px" }}>
+      <div style={{ maxWidth: isDesktop ? 1400 : 960, margin: "0 auto", padding: isDesktop ? "0 40px" : "0 18px" }}>
 
         {/* Stale data banner when market is not open */}
         {marketStatus.status !== "open" && Object.keys(quotes).length > 0 && (
@@ -838,11 +847,14 @@ export default function App() {
         {tab === "home" && (
           <div style={{ animation: "fadeIn 0.3s ease" }}>
 
-            {/* Benchmark Banner */}
+            {/* Benchmark Banner — card grid on desktop */}
             {Object.keys(bmQuotes).length > 0 && (
-              <div style={{ margin: "16px -18px 0", padding: "0 18px", overflow: "hidden" }}>
+              <div style={{ margin: isDesktop ? "24px 0 0" : "16px -18px 0", padding: isDesktop ? 0 : "0 18px", overflow: "hidden" }}>
                 <div style={{
-                  display: "flex", gap: 0, overflowX: "auto", paddingBottom: 6,
+                  display: isDesktop ? "grid" : "flex",
+                  gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : undefined,
+                  gap: isDesktop ? 12 : 0,
+                  overflowX: isDesktop ? "visible" : "auto", paddingBottom: isDesktop ? 0 : 6,
                   WebkitOverflowScrolling: "touch", scrollbarWidth: "none",
                 }}>
                   {BENCHMARKS.map((bm, i) => {
@@ -850,13 +862,19 @@ export default function App() {
                     const q = bmQuotes[bm.sym];
                     return (
                       <div key={bm.sym} onClick={() => setChartSymbol(bm.sym)} style={{
-                        flex: "0 0 auto", padding: "12px 16px", cursor: "pointer",
-                        borderRight: i < BENCHMARKS.length - 1 ? `1px solid ${C.border}` : "none",
-                        minWidth: 100,
+                        flex: isDesktop ? undefined : "0 0 auto",
+                        padding: isDesktop ? "16px" : "12px 16px",
+                        cursor: "pointer",
+                        borderRight: !isDesktop && i < BENCHMARKS.length - 1 ? `1px solid ${C.border}` : "none",
+                        minWidth: isDesktop ? undefined : 100,
+                        background: isDesktop ? C.card : "transparent",
+                        border: isDesktop ? `1px solid ${C.border}` : "none",
+                        borderRadius: isDesktop ? 14 : 0,
+                        transition: "border-color 0.15s",
                       }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 4, whiteSpace: "nowrap" }}>{bm.name}</div>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                          {q && <span style={{ fontSize: 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q.p.toFixed(2)}</span>}
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>{bm.name}</div>
+                        <div style={{ display: "flex", alignItems: isDesktop ? "center" : "baseline", gap: 8, flexWrap: isDesktop ? "wrap" : "nowrap" }}>
+                          {q && <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q.p.toFixed(2)}</span>}
                           <span style={{
                             fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
                             color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
@@ -866,9 +884,13 @@ export default function App() {
                     );
                   })}
                 </div>
-                <div style={{ height: 1, background: C.border }} />
+                {!isDesktop && <div style={{ height: 1, background: C.border }} />}
               </div>
             )}
+            {/* Desktop: 2-column layout for Lists + Right panel */}
+            <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 380px" : undefined, gap: isDesktop ? 32 : 0, marginTop: isDesktop ? 8 : 0 }}>
+              {/* Left column: Lists */}
+              <div>
             {/* Lists header with edit toggle */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 0 8px" }}>
               <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Lists</div>
@@ -911,6 +933,10 @@ export default function App() {
             {Object.entries(sleeves).map(([k, sleeve]) => (
               <SleeveSection key={k} k={k} sleeve={sleeve} />
             ))}
+              </div> {/* end left column */}
+
+              {/* Right column: Top Movers + Heatmap */}
+              <div style={{ position: isDesktop ? "sticky" : "static", top: isDesktop ? 80 : "auto", alignSelf: "start" }}>
 
             {/* Top Movers */}
             <div style={{ paddingTop: 28 }}>
@@ -932,6 +958,8 @@ export default function App() {
                 <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => setChartSymbol(s)} />
               </div>
             )}
+              </div> {/* end right column */}
+            </div> {/* end desktop grid */}
           </div>
         )}
 
@@ -959,11 +987,17 @@ export default function App() {
                   {loading ? "Loading news…" : "No news available"}
                 </div>
               );
-              return articles.map((article, i) => (
+              return (<div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "repeat(2, 1fr)" : undefined, gap: isDesktop ? 16 : 0 }}>
+              {articles.map((article, i) => (
                 <div key={article.id || i} onClick={() => article.url && window.open(article.url, "_blank")}
                   style={{
-                    padding: "16px 0", borderBottom: `1px solid ${C.border}`,
+                    padding: isDesktop ? "20px" : "16px 0",
+                    borderBottom: isDesktop ? "none" : `1px solid ${C.border}`,
+                    background: isDesktop ? C.card : "transparent",
+                    border: isDesktop ? `1px solid ${C.border}` : "none",
+                    borderRadius: isDesktop ? 14 : 0,
                     cursor: article.url ? "pointer" : "default",
+                    transition: "border-color 0.15s",
                   }}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                     {article.images?.[0]?.url && (
@@ -993,7 +1027,8 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-              ));
+              ))}
+              </div>);
             })()}
           </div>
         )}
@@ -1168,7 +1203,8 @@ export default function App() {
         {/* ━━━ SETTINGS ━━━ */}
         {tab === "settings" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Settings</div>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Settings</div>}
+            <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined, gap: isDesktop ? 16 : 0 }}>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Auto-Refresh Interval</div>
               <div style={{ display: "flex", gap: 6 }}>
@@ -1229,9 +1265,10 @@ export default function App() {
               </button>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 8, textAlign: "center" }}>Locks the app and requires the access code to re-enter</div>
             </div>
+            </div> {/* end settings grid */}
             <div style={{ marginTop: 40, textAlign: "center", paddingBottom: 20 }}>
-              <img src="iown-logo.png" alt="IOWN" style={{ width: 120, height: "auto", borderRadius: 8, margin: "0 auto 16px", display: "block" }} />
-              <div style={{ fontSize: 13, color: C.t4 }}>Intentional Ownership</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: C.t3, letterSpacing: 1 }}>IOWN</div>
+              <div style={{ fontSize: 13, color: C.t4, marginTop: 4 }}>Intentional Ownership</div>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>A Registered Investment Advisor under Paradiem</div>
             </div>
           </div>
@@ -1277,10 +1314,15 @@ function GS() {
       * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
       input::placeholder { color: #3A4A28 !important; }
       input:focus { border-color: rgba(120,140,88,0.30) !important; }
-      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(110,132,80,0.15); border-radius: 4px; }
-      @media (min-width: 768px) { .tradingview-widget-container { min-height: 500px; } }
+      ::-webkit-scrollbar-thumb { background: rgba(110,132,80,0.2); border-radius: 6px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(110,132,80,0.35); }
+      @media (min-width: 768px) {
+        .tradingview-widget-container { min-height: 500px; }
+        tr:hover td { background: rgba(110,132,80,0.04) !important; }
+        button:hover { opacity: 0.85; }
+      }
     `}</style>
   );
 }
