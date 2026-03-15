@@ -365,20 +365,20 @@ export default function App() {
       ]);
       const p = Array.isArray(pR) ? pR[0] : pR;
       const r = Array.isArray(rR) ? rR[0] : rR;
-      // Store field names for display
       const pKeys = p ? Object.keys(p) : [];
       const rKeys = r ? Object.keys(r) : [];
-      // Find PE-like fields
-      const peFields = [...pKeys, ...rKeys].filter(k => k.toLowerCase().includes("pe") || k.toLowerCase().includes("earning") || k.toLowerCase().includes("ratio"));
-      const roeFields = [...pKeys, ...rKeys].filter(k => k.toLowerCase().includes("return") || k.toLowerCase().includes("roe") || k.toLowerCase().includes("equity"));
-      
-      console.log("FMP PROFILE ALL KEYS:", pKeys);
-      console.log("FMP RATIOS ALL KEYS:", rKeys);
-      console.log("FMP PE value from profile:", p?.pe, "| from ratios:", r?.peRatioTTM);
-      
-      setFmpStatus(`PROFILE (${pKeys.length} keys): ${pKeys.join(", ")} |||| RATIOS (${rKeys.length} keys): ${rKeys.join(", ")}`);
-      
-      // Don't stop — continue with fetch using what we found
+
+      // Save debug info that won't be overwritten
+      const debugInfo = `P:${pKeys.join(",")} ||| R:${rKeys.join(",")}`;
+      try { localStorage.setItem("iown_fmp_debug", debugInfo); } catch {}
+
+      // Check if we already know the field names work
+      const hasPE = p?.pe != null || r?.peRatioTTM != null || r?.peRatio != null;
+      if (!hasPE) {
+        // Fields don't match — stop and show all keys
+        setFmpStatus(`FIELD NAMES (saved to storage) — Profile: ${pKeys.join(", ")} — Ratios: ${rKeys.join(", ")}`);
+        return; // STOP here so user can read
+      }
     } catch (e) {
       setFmpStatus(`API test failed: ${e.message}`);
       return;
