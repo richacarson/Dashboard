@@ -1622,24 +1622,8 @@ export default function App() {
 
                   const numFmts = { pct: "0.0%", ratio: "0.0", vol: "#,##0" };
                   const isTextCol = (ci) => ci <= 3;
-                  const isPctCol = (ci) => colDefs[ci - 1]?.fmt === "pct";
 
-                  // Title
-                  ws.mergeCells("A1:H1");
-                  const tc = ws.getCell("A1");
-                  tc.value = `IOWN  ·  ${slName}`;
-                  tc.font = { name: "Calibri", size: 18, bold: true, color: { argb: headerBg } };
-                  tc.alignment = { vertical: "middle" };
-                  ws.getRow(1).height = 38;
-
-                  ws.mergeCells("A2:H2");
-                  const dc = ws.getCell("A2");
-                  dc.value = `Portfolio Metrics Report  ·  ${dateStr}`;
-                  dc.font = { name: "Calibri", size: 10, color: { argb: "888888" } };
-                  ws.getRow(2).height = 20;
-                  ws.getRow(3).height = 6;
-
-                  // Header row (row 4)
+                  // Header row (row 1)
                   const hRow = ws.addRow(colDefs.map(c => c.h));
                   hRow.height = 28;
                   hRow.eachCell((cell, ci) => {
@@ -1649,7 +1633,7 @@ export default function App() {
                     cell.border = { bottom: { style: "medium", color: { argb: brandGreen } } };
                   });
 
-                  // Data rows
+                  // Data rows (starting row 2)
                   const sortedSyms = [...syms].sort((a, b) => a.localeCompare(b));
                   sortedSyms.forEach((s, idx) => {
                     const d = fundamentals[s] || {};
@@ -1691,16 +1675,15 @@ export default function App() {
                     });
                   });
 
-                  // Averages row
+                  // Averages row — after a spacer so it's excluded from auto-filter sort
                   const getColLetter = (n) => {
-                    // n is 0-based: 0=A, 1=B, ..., 25=Z, 26=AA
-                    let s = "";
-                    n++;
+                    let s = ""; n++;
                     while (n > 0) { n--; s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26); }
                     return s;
                   };
+                  ws.addRow([]); // spacer row between data and averages
                   const avgVals = [];
-                  const startRow = 5, endRow = 4 + sortedSyms.length;
+                  const startRow = 2, endRow = 1 + sortedSyms.length;
                   for (let ci = 0; ci < colDefs.length; ci++) {
                     if (ci === 0) { avgVals.push("AVERAGE"); continue; }
                     if (colDefs[ci].fmt === "text") { avgVals.push(""); continue; }
@@ -1721,9 +1704,9 @@ export default function App() {
                   // Column widths
                   colDefs.forEach((c, i) => { ws.getColumn(i + 1).width = c.w; });
 
-                  // Grid lines off, freeze panes, auto-filter
-                  ws.views = [{ state: "frozen", ySplit: 4, xSplit: 1, showGridLines: false }];
-                  ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: endRow, column: colDefs.length } };
+                  // Grid lines off, freeze panes, auto-filter (excludes averages row)
+                  ws.views = [{ state: "frozen", ySplit: 1, xSplit: 1, showGridLines: false }];
+                  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: endRow, column: colDefs.length } };
 
                   // Download — mobile-friendly approach
                   const buf = await wb.xlsx.writeBuffer();
