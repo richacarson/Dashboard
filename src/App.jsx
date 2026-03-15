@@ -223,16 +223,26 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   const [intv, setIntv] = useState("W");
   const [chartMode, setChartMode] = useState("native");
   const [chartData, setChartData] = useState(null);
-  const [range, setRange] = useState("1D");
+  const [range, setRange] = useState("3M");
 
   useEffect(() => {
     if (chartMode !== "native" || !hdrs) return;
+    setChartData(null);
     const ranges = { "1D": 1, "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
     const days = ranges[range] || 1;
-    const start = new Date(); start.setDate(start.getDate() - days);
+    const start = new Date(); start.setDate(start.getDate() - Math.max(days, 3)); // min 3 days to ensure data
     const tf = days <= 1 ? "5Min" : days <= 7 ? "30Min" : days <= 30 ? "1Hour" : "1Day";
-    fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
-      .then(r => r.json()).then(data => { const bars = data.bars?.[symbol] || []; if (bars.length) setChartData(bars); }).catch(() => {});
+    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
+    fetch(url, { headers: hdrs }).then(r => r.json()).then(data => {
+      const bars = data.bars?.[symbol] || [];
+      if (bars.length > 1) { setChartData(bars); return; }
+      // Fallback: if intraday returned empty (weekend/holiday), fetch daily bars instead
+      if (days <= 7) {
+        const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 30);
+        fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=1Day&start=${fallbackStart.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
+          .then(r => r.json()).then(d2 => { const b2 = d2.bars?.[symbol] || []; if (b2.length) setChartData(b2); }).catch(() => {});
+      }
+    }).catch(() => {});
   }, [symbol, range, chartMode, hdrs]);
 
   useEffect(() => {
