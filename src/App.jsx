@@ -1309,7 +1309,6 @@ export default function App() {
             </div>
             </div> {/* end settings grid */}
             <div style={{ marginTop: 40, textAlign: "center", paddingBottom: 20 }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: C.t3, letterSpacing: 1 }}>IOWN</div>
               <div style={{ fontSize: 13, color: C.t4, marginTop: 4 }}>Intentional Ownership</div>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>A Registered Investment Advisor under Paradiem</div>
             </div>
