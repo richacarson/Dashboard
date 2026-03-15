@@ -1,0 +1,57 @@
+name: Update Economic Calendar
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # Daily at midnight EST (5 AM UTC)
+    - cron: '0 12 * * 0' # Also Sunday noon UTC to get next week
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  update-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch this week's calendar
+        run: |
+          curl -sf 'https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json' -o /tmp/thisweek.json || echo "[]" > /tmp/thisweek.json
+          curl -sf 'https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json' -o /tmp/nextweek.json || echo "[]" > /tmp/nextweek.json
+
+      - name: Merge, filter US high/medium impact, write to public/
+        run: |
+          python3 - << 'PY'
+          import json, datetime
+
+          events = []
+          for f in ['/tmp/thisweek.json', '/tmp/nextweek.json']:
+              try:
+                  with open(f) as fh:
+                      data = json.load(fh)
+                      if isinstance(data, list):
+                          events.extend(data)
+              except:
+                  pass
+
+          # Filter: US only, High or Medium impact
+          filtered = [
+              e for e in events
+              if e.get('country') == 'USD'
+              and e.get('impact') in ('High', 'Medium')
+          ]
+
+          # Sort by date
+          filtered.sort(key=lambda e: e.get('date', ''))
+
+          # Write
+          with open('public/economic-calendar.json', 'w') as f:
+              json.dump(filtered, f, indent=2)
+
+          print(f"Wrote {len(filtered)} events to public/economic-calendar.json")
+          PY
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/economic-calendar.json
+          git diff --cached --quiet || (git commit -m "Auto-update economic calendar $(date +%Y-%m-%d)" && git push)

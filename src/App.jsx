@@ -369,8 +369,8 @@ export default function App() {
     /* ── Fetch fundamentals via Finnhub (1 call/symbol, 60/min free) ── */
   const [fmpStatus, setFmpStatus] = useState("");
   const [earningsCalendar, setEarningsCalendar] = useState([]);
+  const [econCalendar, setEconCalendar] = useState([]);
   const [calendarView, setCalendarView] = useState("economic");
-  const [calMode, setCalMode] = useState("live");
   const fetchFundamentals = useCallback(async (force = false) => {
     const key = FH || FK;
     if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
@@ -490,9 +490,33 @@ export default function App() {
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms, apiKey, apiSecret, hdrs]);
 
-  /* ── Fetch earnings calendar for holdings via Alpaca news ── */
+  /* ── Fetch economic + earnings calendar ── */
   const fetchCalendar = useCallback(async () => {
-    // Earnings: use Finnhub earnings calendar (this one is free)
+    // Economic: fetch from our static JSON (updated daily by GitHub Action)
+    // Falls back to FairEconomy live endpoint if static file is empty
+    try {
+      let events = [];
+      const staticR = await fetch("economic-calendar.json").catch(() => null);
+      if (staticR?.ok) {
+        const data = await staticR.json();
+        if (Array.isArray(data) && data.length > 0) events = data;
+      }
+      // Fallback: fetch live from FairEconomy (ForexFactory data)
+      if (!events.length) {
+        const [thisR, nextR] = await Promise.all([
+          fetch("https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json").catch(() => null),
+          fetch("https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json").catch(() => null),
+        ]);
+        const thisW = thisR?.ok ? await thisR.json() : [];
+        const nextW = nextR?.ok ? await nextR.json() : [];
+        events = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
+        events = events.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
+      }
+      events.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+      setEconCalendar(events);
+    } catch (e) { console.warn("Econ calendar fetch failed:", e.message); }
+
+    // Earnings: Finnhub (free endpoint)
     const key = FH || FK;
     if (!key) return;
     const today = new Date();
@@ -1106,181 +1130,43 @@ export default function App() {
             </div>
 
             {calendarView === "economic" && (() => {
-
-              return (<div>
-                <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-                  {[{ v: "live", l: "Live Calendar" }, { v: "estimated", l: "Estimated Schedule" }].map(({ v, l }) => (
-                    <button key={v} onClick={() => setCalMode(v)} style={{
-                      flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                      border: `1px solid ${calMode === v ? C.borderActive : C.border}`,
-                      background: calMode === v ? C.accentSoft : "transparent",
-                      color: calMode === v ? C.t1 : C.t4, cursor: "pointer", fontFamily: "inherit",
-                    }}>{l}</button>
-                  ))}
+              if (!econCalendar.length) return (
+                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
+                  No economic events loaded.
+                  <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Load Calendar</button>
                 </div>
+              );
 
-                {calMode === "live" && (
-                  <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                    <div key={theme} ref={el => {
-                      if (!el || el.dataset.loaded) return;
-                      el.dataset.loaded = "1";
-                      const script = document.createElement("script");
-                      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-events.js";
-                      script.async = true;
-                      script.innerHTML = JSON.stringify({
-                        colorTheme: theme === "dark" ? "dark" : "light",
-                        isTransparent: true,
-                        width: "100%",
-                        height: isDesktop ? "700" : "550",
-                        locale: "en",
-                        importanceFilter: "0,1",
-                        countryFilter: "us",
-                      });
-                      el.appendChild(script);
-                    }} />
-                  </div>
-                )}
-
-                {calMode === "estimated" && (() => {
-              // Auto-generate major US economic events for the next 60 days
-              const today = new Date();
-              const fmt = d => d.toISOString().slice(0, 10);
-              const events = [];
-
-              // Helper: nth weekday of month (1=Mon..5=Fri, n=1 for first, -1 for last)
-              const nthWeekday = (year, month, weekday, n) => {
-                if (n > 0) {
-                  const first = new Date(year, month, 1);
-                  let d = 1 + ((weekday - first.getDay() + 7) % 7);
-                  d += (n - 1) * 7;
-                  return new Date(year, month, d);
-                } else {
-                  const last = new Date(year, month + 1, 0);
-                  let d = last.getDate() - ((last.getDay() - weekday + 7) % 7);
-                  return new Date(year, month, d);
-                }
+              const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316" };
+              const categorize = (title) => {
+                const t = (title || "").toLowerCase();
+                if (t.includes("fomc") || t.includes("fed") || t.includes("interest rate")) return "Fed";
+                if (t.includes("cpi") || t.includes("ppi") || t.includes("pce") || t.includes("inflation")) return "Inflation";
+                if (t.includes("payroll") || t.includes("employment") || t.includes("unemployment") || t.includes("jobless") || t.includes("nonfarm") || t.includes("non-farm")) return "Jobs";
+                if (t.includes("gdp")) return "Growth";
+                if (t.includes("retail") || t.includes("consumer") || t.includes("confidence") || t.includes("michigan") || t.includes("sentiment") || t.includes("spending")) return "Consumer";
+                if (t.includes("ism") || t.includes("pmi") || t.includes("manufacturing") || t.includes("services")) return "Business";
+                if (t.includes("housing") || t.includes("home") || t.includes("building")) return "Housing";
+                return null;
               };
+              const catIcon = (cat) => ({ Fed: "🏛️", Inflation: "📈", Jobs: "👷", Growth: "🇺🇸", Consumer: "🛒", Business: "🏭", Housing: "🏠" }[cat] || "📊");
 
-              // Helper: next business day (skip weekends)
-              const bizDay = (d, offset = 0) => {
-                const r = new Date(d);
-                r.setDate(r.getDate() + offset);
-                while (r.getDay() === 0 || r.getDay() === 6) r.setDate(r.getDate() + 1);
-                return r;
-              };
+              const todayStr = new Date().toISOString().slice(0, 10);
 
-              const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-              const qtrNames = ["Q4","Q1","Q2","Q3"];
-
-              for (let offset = 0; offset <= 2; offset++) {
-                const m = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-                const y = m.getFullYear(), mo = m.getMonth();
-                const prevMo = mo === 0 ? "Dec" : months[mo - 1];
-                const curMo = months[mo];
-
-                // Non-Farm Payrolls + Unemployment — first Friday
-                const nfp = nthWeekday(y, mo, 5, 1);
-                events.push({ date: fmt(nfp), name: `Non-Farm Payrolls (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Jobs" });
-                events.push({ date: fmt(nfp), name: `Unemployment Rate (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Jobs" });
-
-                // ISM Manufacturing PMI — first business day
-                const ism = bizDay(new Date(y, mo, 1));
-                events.push({ date: fmt(ism), name: `ISM Manufacturing PMI (${prevMo})`, time: "10:00 AM", impact: "high", cat: "Business" });
-
-                // ISM Services PMI — third business day
-                const ismS = bizDay(new Date(y, mo, 1), 2);
-                events.push({ date: fmt(ismS), name: `ISM Services PMI (${prevMo})`, time: "10:00 AM", impact: "high", cat: "Business" });
-
-                // CPI + Core CPI — around 10th-13th of month (2nd week, typically Tuesday-Thursday)
-                const cpi = bizDay(new Date(y, mo, 10));
-                events.push({ date: fmt(cpi), name: `CPI (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
-                events.push({ date: fmt(cpi), name: `Core CPI (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
-
-                // PPI — day after CPI typically
-                const ppi = bizDay(cpi, 1);
-                events.push({ date: fmt(ppi), name: `PPI (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
-
-                // Retail Sales — around 15th-17th
-                const retail = bizDay(new Date(y, mo, 15));
-                events.push({ date: fmt(retail), name: `Retail Sales (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Consumer" });
-
-                // Consumer Confidence — last Tuesday
-                const cc = nthWeekday(y, mo, 2, -1);
-                events.push({ date: fmt(cc), name: `Consumer Confidence (${curMo})`, time: "10:00 AM", impact: "high", cat: "Consumer" });
-
-                // Michigan Consumer Sentiment — 2nd Friday (prelim) and 4th Friday (final)
-                const michP = nthWeekday(y, mo, 5, 2);
-                const michF = nthWeekday(y, mo, 5, 4);
-                events.push({ date: fmt(michP), name: `Michigan Sentiment Prelim (${curMo})`, time: "10:00 AM", impact: "medium", cat: "Consumer" });
-                events.push({ date: fmt(michF), name: `Michigan Sentiment Final (${curMo})`, time: "10:00 AM", impact: "medium", cat: "Consumer" });
-
-                // PCE / Core PCE — last Friday of month (or near end)
-                const pce = nthWeekday(y, mo, 5, -1);
-                events.push({ date: fmt(pce), name: `PCE Price Index (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
-                events.push({ date: fmt(pce), name: `Core PCE Price Index (${prevMo})`, time: "8:30 AM", impact: "high", cat: "Inflation" });
-
-                // Jobless Claims — every Thursday
-                let thu = nthWeekday(y, mo, 4, 1);
-                while (thu.getMonth() === mo) {
-                  events.push({ date: fmt(thu), name: "Initial Jobless Claims", time: "8:30 AM", impact: "medium", cat: "Jobs" });
-                  thu = new Date(thu); thu.setDate(thu.getDate() + 7);
-                }
-
-                // GDP — end of month for Jan, Apr, Jul, Oct (quarterly)
-                if ([0, 3, 6, 9].includes(mo)) {
-                  const qtr = qtrNames[Math.floor(mo / 3)];
-                  const gdp = bizDay(new Date(y, mo, 27));
-                  events.push({ date: fmt(gdp), name: `GDP (${qtr} Advance)`, time: "8:30 AM", impact: "high", cat: "Growth" });
-                }
-                if ([1, 4, 7, 10].includes(mo)) {
-                  const qtr = qtrNames[Math.floor(((mo - 1) % 12) / 3)];
-                  const gdp = bizDay(new Date(y, mo, 27));
-                  events.push({ date: fmt(gdp), name: `GDP (${qtr} Second Est.)`, time: "8:30 AM", impact: "high", cat: "Growth" });
-                }
-                if ([2, 5, 8, 11].includes(mo)) {
-                  const qtr = qtrNames[Math.floor(((mo - 2) % 12) / 3)];
-                  const gdp = bizDay(new Date(y, mo, 27));
-                  events.push({ date: fmt(gdp), name: `GDP (${qtr} Final)`, time: "8:30 AM", impact: "high", cat: "Growth" });
-                }
-
-                // Housing Starts — around 17th
-                const housing = bizDay(new Date(y, mo, 17));
-                events.push({ date: fmt(housing), name: `Housing Starts (${prevMo})`, time: "8:30 AM", impact: "medium", cat: "Housing" });
-              }
-
-              // FOMC meetings — hardcode 2026 dates (announced annually, ~8/year)
-              const fomcDates = ["2026-01-28","2026-03-19","2026-05-07","2026-06-18","2026-07-30","2026-09-17","2026-11-05","2026-12-17"];
-              fomcDates.forEach(d => {
-                events.push({ date: d, name: "FOMC Rate Decision", time: "2:00 PM", impact: "high", cat: "Fed" });
-                events.push({ date: d, name: "Fed Chair Press Conference", time: "2:30 PM", impact: "high", cat: "Fed" });
-              });
-
-              // Dedupe by date+name, sort, filter to future only
-              const todayStr = fmt(today);
-              const endStr = fmt(new Date(today.getTime() + 60 * 86400000));
-              const seen = new Set();
-              const filtered = events
-                .filter(e => e.date >= todayStr && e.date <= endStr)
-                .filter(e => { const k = e.date + e.name; if (seen.has(k)) return false; seen.add(k); return true; })
-                .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
-
-              const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280" };
-
-              // Group by date
+              // Group by date — FF uses ISO date strings in the "date" field
               const grouped = {};
-              filtered.forEach(e => {
-                if (!grouped[e.date]) grouped[e.date] = [];
-                grouped[e.date].push(e);
+              econCalendar.forEach(e => {
+                const date = (e.date || "").slice(0, 10);
+                if (!date || date < todayStr) return;
+                if (!grouped[date]) grouped[date] = [];
+                grouped[date].push(e);
               });
 
-              if (!filtered.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No upcoming events in calendar.</div>;
-
-              return Object.entries(grouped).map(([date, events]) => {
-                const isToday = date === today;
-                const d = new Date(date + "T12:00:00");
-                const dayLabel = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-                const daysAway = Math.ceil((new Date(date) - new Date(today)) / 86400000);
+              return Object.entries(grouped).slice(0, 14).map(([date, events]) => {
+                const isToday = date === todayStr;
+                const daysAway = Math.ceil((new Date(date) - new Date(todayStr)) / 86400000);
                 const relLabel = daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d away`;
+                const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
                 return (
                   <div key={date} style={{ marginBottom: 16 }}>
@@ -1289,19 +1175,26 @@ export default function App() {
                       <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? C.up : C.t4, padding: "2px 8px", borderRadius: 6, background: isToday ? C.up + "18" : "transparent" }}>{relLabel}</div>
                     </div>
                     {events.map((evt, i) => {
-                      const impactColor = evt.impact === "high" ? C.dn : "#F59E0B";
-                      const cc = catColors[evt.cat] || C.t4;
+                      const cat = categorize(evt.title);
+                      const cc = catColors[cat] || C.t4;
+                      const impactColor = evt.impact === "High" ? C.dn : "#F59E0B";
+                      const time = (evt.date || "").slice(11, 16);
                       return (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
                           <div style={{ width: 36, height: 36, borderRadius: 10, background: cc + "14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
-                            {evt.cat === "Fed" ? "🏛️" : evt.cat === "Inflation" ? "📈" : evt.cat === "Jobs" ? "👷" : evt.cat === "Growth" ? "🇺🇸" : evt.cat === "Consumer" ? "🛒" : evt.cat === "Business" ? "🏭" : evt.cat === "Housing" ? "🏠" : "📊"}
+                            {catIcon(cat)}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{evt.name}</div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 3 }}>
-                              <span style={{ fontSize: 12, color: C.t4 }}>{evt.time}</span>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{evt.title}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 3, flexWrap: "wrap" }}>
+                              {time && <span style={{ fontSize: 12, color: C.t4 }}>{time} ET</span>}
                               <span style={{ fontSize: 10, fontWeight: 700, color: impactColor, padding: "1px 6px", borderRadius: 4, background: impactColor + "14", textTransform: "uppercase" }}>{evt.impact}</span>
-                              <span style={{ fontSize: 11, color: cc, fontWeight: 600 }}>{evt.cat}</span>
+                              {cat && <span style={{ fontSize: 11, color: cc, fontWeight: 600 }}>{cat}</span>}
+                            </div>
+                            <div style={{ display: "flex", gap: 14, marginTop: 5, fontSize: 12 }}>
+                              {evt.previous != null && evt.previous !== "" && <span style={{ color: C.t4 }}>Prev: <span style={{ color: C.t2 }}>{evt.previous}</span></span>}
+                              {evt.forecast != null && evt.forecast !== "" && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{evt.forecast}</span></span>}
+                              {evt.actual != null && evt.actual !== "" && <span style={{ color: C.t4 }}>Act: <span style={{ color: C.up, fontWeight: 700 }}>{evt.actual}</span></span>}
                             </div>
                           </div>
                         </div>
@@ -1310,15 +1203,7 @@ export default function App() {
                   </div>
                 );
               });
-                })()}
-                {calMode === "estimated" && (
-                  <div style={{ fontSize: 11, color: C.t4, textAlign: "center", marginTop: 12, fontStyle: "italic" }}>
-                    Dates are estimated from typical release schedules. Actual dates may shift due to holidays, government shutdowns, or scheduling changes. Use "Live Calendar" for confirmed dates.
-                  </div>
-                )}
-              </div>);
             })()}
-
             {calendarView === "earnings" && (() => {
               if (!earningsCalendar.length) return (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
