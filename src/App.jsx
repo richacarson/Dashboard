@@ -481,6 +481,8 @@ export default function App() {
   const [researchView, setResearchView] = useState("dividend"); // sleeve key
   const [metricSort, setMetricSort] = useState({ col: null, dir: "desc" }); // { col: "peTTM", dir: "asc"|"desc" }
   const [metricsEditMode, setMetricsEditMode] = useState(false);
+  const [peerSymbol, setPeerSymbol] = useState(null); // for peer comparison overlay
+  const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers"
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
@@ -1557,6 +1559,206 @@ export default function App() {
                 }}>{sl.icon} {sl.name}</button>
               ))}
             </div>
+            {/* Sub-view toggle */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setMetricsSubView(v)} style={{
+                  flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
+                  background: metricsSubView === v ? C.accentSoft : "transparent",
+                  color: metricsSubView === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{l}</button>
+              ))}
+            </div>
+
+            {/* ── PERFORMANCE ATTRIBUTION ── */}
+            {metricsSubView === "attribution" && (() => {
+              const syms = sleeves[researchView]?.symbols || [];
+              const contributions = syms
+                .map(s => {
+                  const d = fundamentals[s] || {};
+                  const qtd = d.thisQtr ?? d.ytd ?? null;
+                  return { sym: s, qtd, name: names[s] || d.companyName || s };
+                })
+                .filter(c => c.qtd != null)
+                .sort((a, b) => b.qtd - a.qtd);
+
+              if (!contributions.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No performance data available. Refresh metrics first.</div>;
+
+              const maxAbs = Math.max(...contributions.map(c => Math.abs(c.qtd)), 1);
+              const avgReturn = contributions.reduce((s, c) => s + c.qtd, 0) / contributions.length;
+
+              return (
+                <div>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>Quarter-to-Date Attribution</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: avgReturn >= 0 ? C.up : C.dn }}>{avgReturn >= 0 ? "+" : ""}{avgReturn.toFixed(1)}% avg</div>
+                  </div>
+                  {contributions.map((c, i) => {
+                    const barWidth = Math.abs(c.qtd) / maxAbs * 100;
+                    const isPos = c.qtd >= 0;
+                    return (
+                      <div key={c.sym} onClick={() => setChartSymbol(c.sym)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", borderBottom: i < contributions.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                        <div style={{ width: 48, fontSize: 13, fontWeight: 700, color: C.accent, flexShrink: 0 }}>{c.sym}</div>
+                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 0 }}>
+                          {/* Left side (negative) */}
+                          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+                            {!isPos && <div style={{ height: 20, borderRadius: 4, background: C.dn + "30", border: `1px solid ${C.dn}55`, width: `${barWidth}%`, minWidth: 4, transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)" }} />}
+                          </div>
+                          {/* Center line */}
+                          <div style={{ width: 2, height: 24, background: C.t4 + "40", flexShrink: 0, margin: "0 2px" }} />
+                          {/* Right side (positive) */}
+                          <div style={{ flex: 1 }}>
+                            {isPos && <div style={{ height: 20, borderRadius: 4, background: C.up + "30", border: `1px solid ${C.up}55`, width: `${barWidth}%`, minWidth: 4, transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)" }} />}
+                          </div>
+                        </div>
+                        <div style={{ width: 58, textAlign: "right", fontSize: 13, fontWeight: 700, color: isPos ? C.up : C.dn, flexShrink: 0 }}>
+                          {isPos ? "+" : ""}{c.qtd.toFixed(1)}%
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div style={{ marginTop: 16, padding: "14px 0", borderTop: `2px solid ${C.accent}`, display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>Portfolio Average</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: avgReturn >= 0 ? C.up : C.dn }}>{avgReturn >= 0 ? "+" : ""}{avgReturn.toFixed(2)}%</span>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: 11, color: C.t4 }}>
+                    Top: {contributions[0]?.sym} ({contributions[0]?.qtd >= 0 ? "+" : ""}{contributions[0]?.qtd.toFixed(1)}%) · Bottom: {contributions[contributions.length - 1]?.sym} ({contributions[contributions.length - 1]?.qtd >= 0 ? "+" : ""}{contributions[contributions.length - 1]?.qtd.toFixed(1)}%)
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── PEER COMPARISON ── */}
+            {metricsSubView === "peers" && (() => {
+              const syms = sleeves[researchView]?.symbols || [];
+              // If no peer selected, show selector
+              if (!peerSymbol || !syms.includes(peerSymbol)) {
+                return (
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Select a stock to compare</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {[...syms].sort().map(s => (
+                        <button key={s} onClick={() => setPeerSymbol(s)} style={{
+                          padding: "10px 16px", borderRadius: 10, border: `1px solid ${C.border}`,
+                          background: C.card, cursor: "pointer", fontFamily: "inherit",
+                          display: "flex", alignItems: "center", gap: 8,
+                        }}>
+                          <StockLogo symbol={s} size={22} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{s}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Find peers: same industry
+              const d = fundamentals[peerSymbol] || {};
+              const industry = d.industry;
+              const allSymsInSleeve = syms;
+              let peers = industry
+                ? allSymsInSleeve.filter(s => s !== peerSymbol && fundamentals[s]?.industry === industry)
+                : [];
+              // If not enough peers in same industry, grab closest by sector
+              if (peers.length < 2) {
+                const sector = d.sector;
+                peers = allSymsInSleeve.filter(s => s !== peerSymbol && fundamentals[s]?.sector === sector).slice(0, 5);
+              }
+              // Still not enough? Just use top 5 alphabetically (excluding self)
+              if (peers.length === 0) peers = allSymsInSleeve.filter(s => s !== peerSymbol).slice(0, 5);
+
+              const compareSyms = [peerSymbol, ...peers.slice(0, 5)];
+              const metrics = [
+                { l: "This Qtr", k: "thisQtr", fmt: v => v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "—", colorize: true },
+                { l: "YTD", k: "ytd", fmt: v => v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "—", colorize: true },
+                { l: "P/E TTM", k: "peTTM", fmt: v => v != null ? v.toFixed(1) : "—", lower: true },
+                { l: "P/E FWD", k: "peFwd", fmt: v => v != null ? v.toFixed(1) : "—", lower: true },
+                { l: "PEG", k: "pegTTM", fmt: v => v != null ? v.toFixed(1) : "—", lower: true },
+                { l: "Rev YoY", k: "revenueYoY", fmt: v => v != null ? `${v.toFixed(1)}%` : "—", colorize: true },
+                { l: "ROE", k: "roe", fmt: v => v != null ? `${v.toFixed(1)}%` : "—" },
+                { l: "D/E", k: "de", fmt: v => v != null ? v.toFixed(1) : "—", lower: true },
+              ];
+              if (researchView === "dividend") {
+                metrics.splice(2, 0, { l: "Yield", k: "yieldFwd", fmt: v => v != null ? `${v.toFixed(2)}%` : "—" });
+                metrics.splice(3, 0, { l: "Payout", k: "payoutRatio", fmt: v => v != null ? `${v.toFixed(0)}%` : "—" });
+              }
+
+              // Find best value per metric
+              const bestIdx = metrics.map(m => {
+                const vals = compareSyms.map(s => fundamentals[s]?.[m.k] ?? null);
+                const valid = vals.map((v, i) => [v, i]).filter(([v]) => v != null && isFinite(v));
+                if (!valid.length) return -1;
+                if (m.lower) return valid.reduce((best, [v, i]) => v < best[0] ? [v, i] : best, [Infinity, -1])[1];
+                return valid.reduce((best, [v, i]) => v > best[0] ? [v, i] : best, [-Infinity, -1])[1];
+              });
+
+              return (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <StockLogo symbol={peerSymbol} size={32} />
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>{peerSymbol}</div>
+                        <div style={{ fontSize: 12, color: C.t4 }}>{d.industry || "No industry"} · vs {peers.length} peer{peers.length !== 1 ? "s" : ""}</div>
+                      </div>
+                    </div>
+                    <button onClick={() => setPeerSymbol(null)} style={{
+                      padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`,
+                      background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>Change</button>
+                  </div>
+
+                  {/* Comparison table */}
+                  <div style={{ overflowX: "auto", borderRadius: 14, border: `1px solid ${C.border}` }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                      <thead>
+                        <tr>
+                          <th style={{ padding: "12px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: C.t4, background: C.surface, position: "sticky", left: 0, zIndex: 2, borderBottom: `2px solid ${C.accent}` }}>Metric</th>
+                          {compareSyms.map((s, i) => (
+                            <th key={s} onClick={() => setChartSymbol(s)} style={{
+                              padding: "12px 10px", textAlign: "center", fontWeight: 700, cursor: "pointer",
+                              color: i === 0 ? C.accent : C.t2, fontSize: i === 0 ? 14 : 12,
+                              background: i === 0 ? C.accentSoft : C.surface,
+                              borderBottom: `2px solid ${C.accent}`, whiteSpace: "nowrap",
+                            }}>{s}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {metrics.map((m, mi) => (
+                          <tr key={m.k}>
+                            <td style={{ padding: "10px 10px", fontSize: 12, fontWeight: 600, color: C.t3, background: C.surface, position: "sticky", left: 0, zIndex: 1, borderBottom: `1px solid ${C.border}` }}>{m.l}</td>
+                            {compareSyms.map((s, si) => {
+                              const val = fundamentals[s]?.[m.k] ?? null;
+                              const isBest = bestIdx[mi] === si;
+                              let color = C.t1;
+                              if (m.colorize && val != null) color = val > 0 ? C.up : val < 0 ? C.dn : C.t3;
+                              return (
+                                <td key={s} style={{
+                                  padding: "10px 10px", textAlign: "center", fontVariantNumeric: "tabular-nums",
+                                  fontWeight: isBest ? 800 : 500, color,
+                                  background: si === 0 ? C.accentSoft : (isBest ? (C.up + "10") : "transparent"),
+                                  borderBottom: `1px solid ${C.border}`,
+                                }}>
+                                  {m.fmt(val)}
+                                  {isBest && <span style={{ fontSize: 9, marginLeft: 3, color: C.up }}>★</span>}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 11, color: C.t4 }}>★ = best in group{metrics.some(m => m.lower) ? " (lower is better for P/E, PEG, D/E)" : ""}</div>
+                </div>
+              );
+            })()}
+
+            {/* ── TABLE VIEW (existing metrics table) ── */}
+            {metricsSubView === "table" && (<>
             {/* Edit toggle + download + add ticker */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
@@ -1895,6 +2097,7 @@ export default function App() {
                 </div>
               );
             })()}
+            </>)}
           </div>
         )}
 
