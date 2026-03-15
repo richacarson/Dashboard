@@ -1688,11 +1688,19 @@ export default function App() {
                   });
 
                   // Averages row
-                  const avgVals = ["AVERAGE", "", ""];
+                  const getColLetter = (n) => {
+                    // n is 0-based: 0=A, 1=B, ..., 25=Z, 26=AA
+                    let s = "";
+                    n++;
+                    while (n > 0) { n--; s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26); }
+                    return s;
+                  };
+                  const avgVals = [];
                   const startRow = 5, endRow = 4 + sortedSyms.length;
-                  for (let ci = 3; ci < colDefs.length; ci++) {
-                    const colLetter = ci < 26 ? String.fromCharCode(65 + ci) : "A" + String.fromCharCode(65 + ci - 26);
+                  for (let ci = 0; ci < colDefs.length; ci++) {
+                    if (ci === 0) { avgVals.push("AVERAGE"); continue; }
                     if (colDefs[ci].fmt === "text") { avgVals.push(""); continue; }
+                    const colLetter = getColLetter(ci);
                     avgVals.push({ formula: `AVERAGE(${colLetter}${startRow}:${colLetter}${endRow})` });
                   }
                   const aRow = ws.addRow(avgVals);
