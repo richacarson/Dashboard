@@ -366,75 +366,29 @@ export default function App() {
 
     const results = {};
     let success = 0;
-
-    // Calculate quarter date boundaries
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-indexed
-    const curQtr = Math.floor(month / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
-    // Current quarter start
-    const curQtrStart = new Date(year, curQtr * 3, 1);
-    // Previous quarter: start and end
-    const prevQtrEnd = new Date(curQtrStart.getTime() - 86400000); // day before current quarter
-    const prevQtrYear = curQtr === 0 ? year - 1 : year;
-    const prevQtrMonth = curQtr === 0 ? 9 : (curQtr - 1) * 3; // Oct for Q4, else prev quarter start month
-    const prevQtrStart = new Date(prevQtrYear, prevQtrMonth, 1);
-    // YTD start
-    const ytdStart = new Date(year, 0, 1);
-
-    // Unix timestamps
-    const ts = d => Math.floor(d.getTime() / 1000);
-    const prevQtrStartTs = ts(prevQtrStart);
-    const prevQtrEndTs = ts(prevQtrEnd);
-    const curQtrStartTs = ts(curQtrStart);
-    const ytdStartTs = ts(ytdStart);
-    const nowTs = ts(now);
+    const curQtr = Math.floor(new Date().getMonth() / 3); // 0=Q1, 1=Q2, 2=Q3, 3=Q4
 
     for (let i = 0; i < coreSyms.length; i++) {
       const sym = coreSyms[i];
       if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
       try {
-        // Fetch metrics + candle data for quarter performance
-        const [metR, candleR] = await Promise.all([
-          fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`),
-          fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=D&from=${prevQtrStartTs}&to=${nowTs}&token=${key}`),
-        ]);
+        const metR = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`);
         if (!metR.ok) {
           if (metR.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
           continue;
         }
         const d = await metR.json();
         const m = d?.metric || {};
-        const candle = candleR.ok ? await candleR.json() : {};
 
-        // Debug first symbol's candle response
-        if (i === 0) {
-          const cInfo = `candle s=${candle.s} pts=${candle.c?.length||0} t0=${candle.t?.[0] ? new Date(candle.t[0]*1000).toISOString().slice(0,10) : "?"} tN=${candle.t?.length ? new Date(candle.t[candle.t.length-1]*1000).toISOString().slice(0,10) : "?"}`;
-          console.log("Finnhub candle:", cInfo);
-          setFmpStatus(cInfo);
-          await new Promise(r => setTimeout(r, 1500));
-        }
-
-        // Calculate returns from candle data
-        let prevQtrReturn = null, thisQtrReturn = null, ytdReturn = null;
-        if (candle.s === "ok" && candle.c && candle.t && candle.c.length > 1) {
-          // Find prices at specific dates
-          const findClose = (targetTs) => {
-            let best = -1;
-            for (let j = 0; j < candle.t.length; j++) {
-              if (candle.t[j] <= targetTs) best = j;
-            }
-            return best >= 0 ? candle.c[best] : null;
-          };
-          const pPrevStart = findClose(prevQtrStartTs);
-          const pPrevEnd = findClose(prevQtrEndTs);
-          const pCurStart = findClose(curQtrStartTs);
-          const pYtdStart = findClose(ytdStartTs);
-          const pNow = candle.c[candle.c.length - 1];
-
-          if (pPrevStart && pPrevEnd) prevQtrReturn = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
-          if (pCurStart && pNow) thisQtrReturn = ((pNow - pCurStart) / pCurStart) * 100;
-          if (pYtdStart && pNow) ytdReturn = ((pNow - pYtdStart) / pYtdStart) * 100;
+        // Calculate Last Qtr from 26-week and YTD returns
+        // 26-week ≈ 6 months back, YTD = Jan 1 to now
+        // Last Qtr ≈ (1 + 26wk/100) / (1 + YTD/100) - 1 (isolates the pre-YTD portion of the 6-month window)
+        // This approximates Q4 when we're early in Q1
+        const wk26 = m["26WeekPriceReturnDaily"];
+        const ytdM = m["yearToDatePriceReturnDaily"];
+        let lastQtrCalc = null;
+        if (wk26 != null && ytdM != null && ytdM !== -100) {
+          lastQtrCalc = ((1 + wk26 / 100) / (1 + ytdM / 100) - 1) * 100;
         }
 
         results[sym] = {
@@ -450,9 +404,9 @@ export default function App() {
           profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
           roe: m.roeTTM ?? m.roeAnnual ?? null,
           de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
-          lastQtr: prevQtrReturn ?? m["13WeekPriceReturnDaily"] ?? null,
-          thisQtr: thisQtrReturn ?? (curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null),
-          ytd: ytdReturn ?? m["yearToDatePriceReturnDaily"] ?? null,
+          lastQtr: lastQtrCalc,
+          thisQtr: curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null,
+          ytd: m["yearToDatePriceReturnDaily"] ?? null,
         };
         if (results[sym].peTTM != null) success++;
         if (i === 0) setFmpStatus(`Fetching… keys ok`);
