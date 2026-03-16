@@ -362,13 +362,32 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   useEffect(() => {
     if (chartMode !== "tv" || !containerRef.current) return;
     containerRef.current.innerHTML = "";
+    // Create proper TradingView widget container
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    widgetDiv.style.height = "100%";
+    widgetDiv.style.width = "100%";
+    containerRef.current.appendChild(widgetDiv);
     const script = document.createElement("script");
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.type = "text/javascript"; script.async = true;
     script.innerHTML = JSON.stringify({
-      autosize: true, symbol, interval: intv, timezone: "Etc/UTC", theme: theme === "dark" ? "dark" : "light",
-      style: "1", locale: "en", backgroundColor: C.bg, gridColor: "rgba(110,132,80,0.05)",
-      allow_symbol_change: true, hide_volume: false, support_host: "https://www.tradingview.com",
+      autosize: true,
+      symbol: symbol,
+      interval: intv,
+      timezone: "America/New_York",
+      theme: theme === "dark" ? "dark" : "light",
+      style: "1",
+      locale: "en",
+      backgroundColor: "rgba(0,0,0,0)",
+      gridColor: "rgba(110,132,80,0.05)",
+      allow_symbol_change: true,
+      hide_volume: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      calendar: false,
+      support_host: "https://www.tradingview.com",
     });
     containerRef.current.appendChild(script);
   }, [symbol, intv, chartMode, theme]);
@@ -423,7 +442,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
           {chartData ? <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block" }} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: C.t4 }}>Loading…</div>}
         </div>
       ) : (
-        <div ref={containerRef} style={{ flex: 1, width: "100%", paddingBottom: "env(safe-area-inset-bottom, 0px)" }} className="tradingview-widget-container" />
+        <div ref={containerRef} style={{ flex: 1, width: "100%", minHeight: 400, paddingBottom: "env(safe-area-inset-bottom, 0px)" }} className="tradingview-widget-container" />
       )}
     </div>
   );
