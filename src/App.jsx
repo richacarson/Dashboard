@@ -410,6 +410,7 @@ export default function App() {
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
   const [tab, setTab] = useState("home");
+  const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
   const tabIds = ["home", "research", "calendar", "news", "settings"];
@@ -2332,64 +2333,78 @@ export default function App() {
         )}
 
         {/* ━━━ BRIEFS ━━━ */}
-        {tab === "briefs" && (
-          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
-            <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
-              {[
-                {
-                  title: "Morning Brief",
-                  desc: "Daily pre-market analysis and key levels to watch",
-                  icon: "☀️",
-                  url: "https://iownresearch.substack.com/s/iown-morning-brief",
-                  color: isDark ? "#F59E0B" : "#D97706",
-                },
-                {
-                  title: "Market Commentary",
-                  desc: "In-depth market outlook and portfolio strategy",
-                  icon: "📊",
-                  url: "https://iownresearch.substack.com/s/iown-market-commentary",
-                  color: isDark ? "#34D399" : "#16A34A",
-                },
-                {
-                  title: "The Rich Report",
-                  desc: "Macro insights and long-term investment thesis",
-                  icon: "📰",
-                  url: "https://iownresearch.substack.com/p/the-rich-report-march-16-2026",
-                  color: isDark ? "#6366F1" : "#4F46E5",
-                },
-              ].map((brief, i) => (
-                <a key={i} href={brief.url} target="_blank" rel="noopener noreferrer" style={{
-                  textDecoration: "none", display: "block",
-                  background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
-                  padding: isDesktop ? "28px 24px" : "20px 18px",
-                  cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
-                  position: "relative", overflow: "hidden",
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = brief.color + "66"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
-                >
-                  {/* Accent top bar */}
-                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${brief.color}, ${brief.color}44)` }} />
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 14,
-                      background: brief.color + "15", display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 24, flexShrink: 0,
-                    }}>{brief.icon}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{brief.title}</div>
-                      <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{brief.desc}</div>
+        {tab === "briefs" && (() => {
+          const BRIEFS = [
+            { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: isDark ? "#F59E0B" : "#D97706" },
+            { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: isDark ? "#34D399" : "#16A34A" },
+            { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The-Rich-Report.html", color: isDark ? "#6366F1" : "#4F46E5" },
+          ];
+          const active = BRIEFS.find(b => b.id === briefView);
+
+          return (
+            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, display: "flex", flexDirection: "column", height: briefView ? "calc(100dvh - 140px)" : "auto" }}>
+              {!isDesktop && !briefView && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
+              
+              {/* Toggle pills — always visible */}
+              <div style={{ display: "flex", gap: 6, marginBottom: briefView ? 0 : 16, flexShrink: 0, overflowX: "auto", paddingBottom: 4 }}>
+                {BRIEFS.map(b => (
+                  <button key={b.id} onClick={() => setBriefView(briefView === b.id ? null : b.id)} style={{
+                    flex: "0 0 auto", padding: "10px 16px", borderRadius: 12,
+                    border: `1px solid ${briefView === b.id ? b.color + "66" : C.border}`,
+                    background: briefView === b.id ? b.color + "15" : C.card,
+                    cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8,
+                    transition: "all 0.2s",
+                  }}>
+                    <span style={{ fontSize: 18 }}>{b.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: briefView === b.id ? C.t1 : C.t3 }}>{b.title}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Content: cards or embedded iframe */}
+              {!briefView ? (
+                <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
+                  {BRIEFS.map(b => (
+                    <div key={b.id} onClick={() => setBriefView(b.id)} style={{
+                      background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
+                      padding: isDesktop ? "28px 24px" : "20px 18px",
+                      cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
+                      position: "relative", overflow: "hidden",
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = b.color + "66"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+                    >
+                      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${b.color}, ${b.color}44)` }} />
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                        <div style={{
+                          width: 48, height: 48, borderRadius: 14,
+                          background: b.color + "15", display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 24, flexShrink: 0,
+                        }}>{b.icon}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{b.title}</div>
+                          <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{b.desc}</div>
+                        </div>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </div>
                     </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
-                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
-                  </div>
-                </a>
-              ))}
+                  ))}
+                </div>
+              ) : (
+                <div style={{ flex: 1, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, marginTop: 12, background: "#fff" }}>
+                  <iframe
+                    src={active.url}
+                    title={active.title}
+                    style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ━━━ SETTINGS ━━━ */}
         {tab === "settings" && (
