@@ -345,6 +345,8 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
       background: C.bg, display: "flex", flexDirection: "column",
+      paddingTop: "env(safe-area-inset-top, 0px)",
+      paddingBottom: "env(safe-area-inset-bottom, 0px)",
       transform: dragX > 0 ? `translateX(${dragX}px)` : "none",
       transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
       overflow: "hidden",
@@ -352,7 +354,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
       {/* Minimal header — compact, blends with chart */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "10px 16px 6px", flexShrink: 0,
+        padding: "6px 16px 6px", flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <StockLogo symbol={symbol} size={32} />
