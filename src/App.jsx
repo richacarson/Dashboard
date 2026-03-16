@@ -93,10 +93,12 @@ let C = DARK;
 function Sparkline({ points, chg, width = 100, height = 36 }) {
   if (!points || points.length < 2) return <div style={{ width, height }} />;
   const mn = Math.min(...points), mx = Math.max(...points), rng = mx - mn || 1;
-  const pad = 2;
+  const pad = 10; // enough room for the pulsing dot glow
+  const drawW = width - pad * 2;
+  const drawH = height - pad * 2;
   const pts = points.map((p, i) => [
-    (i / (points.length - 1)) * width,
-    pad + ((mx - p) / rng) * (height - pad * 2)
+    pad + (i / (points.length - 1)) * drawW,
+    pad + ((mx - p) / rng) * drawH
   ]);
   // Smooth curve using cardinal spline
   const tension = 0.3;
@@ -115,7 +117,7 @@ function Sparkline({ points, chg, width = 100, height = 36 }) {
   const color = (chg != null ? chg : 0) >= 0 ? C.up : C.dn;
   const id = `sp${Math.random().toString(36).slice(2, 8)}`;
   // Fill path: close to bottom
-  const fillD = pathD + ` L${width},${height} L0,${height} Z`;
+  const fillD = pathD + ` L${pts[pts.length-1][0]},${height - pad} L${pts[0][0]},${height - pad} Z`;
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block", flexShrink: 0 }}>
       <defs>
