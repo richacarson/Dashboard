@@ -448,6 +448,8 @@ export default function App() {
   const [intradayPts, setIntradayPts] = useState({});
   const [names, setNames] = useState({});
   const [sleeves, setSleeves] = useState(loadSleeves);
+  const sleevesRef = useRef(sleeves);
+  useEffect(() => { sleevesRef.current = sleeves; }, [sleeves]);
   const [news, setNews] = useState([]);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
   const [loading, setLoading] = useState(false);
@@ -664,6 +666,20 @@ export default function App() {
       // Store in refs (no re-render)
       quotesRef.current = nq;
       barsRef.current = { ...prevB, ...nb };
+
+      // Update sleeve average % changes via DOM
+      for (const [k, sleeve] of Object.entries(sleeves)) {
+        const changes = sleeve.symbols.map(s => {
+          const q = nq[s], pc = (nb[s]?.pc || barsRef.current[s]?.pc);
+          return (q?.p && pc) ? ((q.p - pc) / pc) * 100 : null;
+        }).filter(c => c !== null);
+        const avg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+        const el = document.querySelector(`[data-sleeve-chg="${k}"]`);
+        if (el && avg != null) {
+          el.textContent = `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`;
+          el.style.color = avg >= 0 ? C.up : C.dn;
+        }
+      }
 
       // Flash effect
       if (Object.keys(flashes).length) {
@@ -1001,6 +1017,17 @@ export default function App() {
               // Metrics Day column
               const metDay = document.querySelector(`[data-metric-day="${msg.S}"]`);
               if (metDay) { metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`; metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3; }
+              // Sleeve averages
+              for (const [k, sleeve] of Object.entries(sleevesRef.current)) {
+                if (!sleeve.symbols.includes(msg.S)) continue;
+                const changes = sleeve.symbols.map(s => {
+                  const q = quotesRef.current[s], pc = barsRef.current[s]?.pc;
+                  return (q?.p && pc) ? ((q.p - pc) / pc) * 100 : null;
+                }).filter(v => v !== null);
+                const avg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+                const el = document.querySelector(`[data-sleeve-chg="${k}"]`);
+                if (el && avg != null) { el.textContent = `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`; el.style.color = avg >= 0 ? C.up : C.dn; }
+              }
             }
           }
         }
@@ -1179,7 +1206,7 @@ export default function App() {
           {/* Right side: avg change + chevron */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {avgChg != null && (
-              <span style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: avgChg >= 0 ? C.up : C.dn }}>{pct(avgChg)}</span>
+              <span data-sleeve-chg={k} style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: avgChg >= 0 ? C.up : C.dn }}>{pct(avgChg)}</span>
             )}
             <div onClick={() => toggleSleeve(k)} style={{
               width: 40, height: 40, borderRadius: 20, border: `1px solid ${C.border}`,
