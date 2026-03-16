@@ -862,11 +862,12 @@ export default function App() {
   const fetchCalendar = useCallback(async () => {
     try {
       let events = [];
-      // Try static JSON first (updated by GitHub Action)
+      // Try static JSON first — add cache buster to avoid stale data
+      const cacheBust = `?t=${Math.floor(Date.now() / 60000)}`;
       const staticUrls = [
-        `${import.meta.env.BASE_URL || "/"}economic-calendar.json`,
-        "./economic-calendar.json",
-        "https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json",
+        `https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json${cacheBust}`,
+        `${import.meta.env.BASE_URL || "/"}economic-calendar.json${cacheBust}`,
+        `./economic-calendar.json${cacheBust}`,
       ];
       for (const url of staticUrls) {
         try {
