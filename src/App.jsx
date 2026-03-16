@@ -1731,7 +1731,11 @@ export default function App() {
                     {date === new Date().toISOString().slice(0, 10) && <span style={{ marginLeft: 8, fontSize: 11, color: C.up, fontWeight: 700 }}>TODAY</span>}
                   </div>
                   <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "repeat(2, 1fr)" : undefined, gap: isDesktop ? 12 : 0 }}>
-                  {events.map((evt, i) => (
+                  {events.map((evt, i) => {
+                    const hasBeat = evt.epsActual != null && evt.epsEstimate != null;
+                    const epsBeat = hasBeat ? evt.epsActual >= evt.epsEstimate : null;
+                    const hasReported = evt.epsActual != null;
+                    return (
                     <div key={i} onClick={() => setChartSymbol(evt.symbol)} style={{
                       padding: isDesktop ? "16px" : "14px 0",
                       borderBottom: isDesktop ? "none" : `1px solid ${C.border}`,
@@ -1741,17 +1745,44 @@ export default function App() {
                       cursor: "pointer",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{evt.symbol}</div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase" }}>{evt.hour === "bmo" ? "Before Open" : evt.hour === "amc" ? "After Close" : evt.hour || ""}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <StockLogo symbol={evt.symbol} size={28} />
+                          <div style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{evt.symbol}</div>
+                          {hasReported && (
+                            <span style={{
+                              fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 6,
+                              background: epsBeat ? C.up + "18" : C.dn + "18",
+                              color: epsBeat ? C.up : C.dn,
+                            }}>{epsBeat ? "BEAT" : "MISS"}</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase" }}>
+                          {hasReported ? "Reported" : evt.hour === "bmo" ? "Before Open" : evt.hour === "amc" ? "After Close" : evt.hour || ""}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 6 }}>{names[evt.symbol] || ""}</div>
-                      <div style={{ display: "flex", gap: 16, fontSize: 12 }}>
-                        {evt.epsEstimate != null && <span style={{ color: C.t4 }}>EPS Est: <span style={{ color: C.t2 }}>${evt.epsEstimate}</span></span>}
-                        {evt.epsActual != null && <span style={{ color: C.t4 }}>EPS: <span style={{ color: evt.epsActual >= (evt.epsEstimate || 0) ? C.up : C.dn, fontWeight: 700 }}>${evt.epsActual}</span></span>}
-                        {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Rev Est: <span style={{ color: C.t2 }}>{vol(evt.revenueEstimate)}</span></span>}
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 8 }}>{names[evt.symbol] || fundamentals[evt.symbol]?.companyName || ""}</div>
+                      <div style={{ display: "flex", gap: 12, fontSize: 12, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 10, color: C.t4, fontWeight: 600 }}>EPS</span>
+                          <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                            {evt.epsEstimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>${evt.epsEstimate}</span></span>}
+                            {evt.epsActual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>${evt.epsActual}</span></span>}
+                            {hasBeat && <span style={{ fontSize: 11, color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>({epsBeat ? "+" : ""}{((evt.epsActual - evt.epsEstimate) / Math.abs(evt.epsEstimate) * 100).toFixed(1)}%)</span>}
+                          </div>
+                        </div>
+                        {(evt.revenueEstimate != null || evt.revenueActual != null) && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                            <span style={{ fontSize: 10, color: C.t4, fontWeight: 600 }}>Revenue</span>
+                            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                              {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{vol(evt.revenueEstimate)}</span></span>}
+                              {evt.revenueActual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: C.t2, fontWeight: 700 }}>{vol(evt.revenueActual)}</span></span>}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   </div>
                 </div>
               ));
