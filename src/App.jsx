@@ -1080,7 +1080,9 @@ export default function App() {
       const newsTimer = setInterval(() => { fetchNews(); }, 60000);
       // Sparkline refresh every 30s (new 5min bar appears every 5min, but check frequently)
       const sparkTimer = setInterval(() => { fetchIntraday(); }, 30000);
-      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); };
+      // Calendar refresh every 5 min to pick up actuals from GitHub Action
+      const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
+      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); clearInterval(calTimer); };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
@@ -1547,7 +1549,7 @@ export default function App() {
         {/* ━━━ NEWS TAB ━━━ */}
         {tab === "news" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>News</div>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>News</div>}
             {/* Toggle: Holdings / Broad Market */}
             <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
               {[{ v: "holdings", l: "Holdings" }, { v: "broad", l: "Broad Market" }].map(({ v, l }) => (
@@ -1617,7 +1619,7 @@ export default function App() {
         {/* ━━━ CALENDAR ━━━ */}
         {tab === "calendar" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Calendar</div>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Calendar</div>}
             {/* Toggle: Economic / Earnings */}
             <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
               {[{ v: "economic", l: "📊 Economic" }, { v: "earnings", l: "💰 Earnings" }].map(({ v, l }) => (
@@ -1639,19 +1641,22 @@ export default function App() {
                 </div>
               );
 
-              const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316" };
               const categorize = (title) => {
                 const t = (title || "").toLowerCase();
-                if (t.includes("fomc") || t.includes("fed") || t.includes("interest rate")) return "Fed";
+                if (t.includes("fomc") || t.includes("fed chair") || t.includes("interest rate") || t.includes("fed speak")) return "Fed";
                 if (t.includes("cpi") || t.includes("ppi") || t.includes("pce") || t.includes("inflation")) return "Inflation";
                 if (t.includes("payroll") || t.includes("employment") || t.includes("unemployment") || t.includes("jobless") || t.includes("nonfarm") || t.includes("non-farm")) return "Jobs";
                 if (t.includes("gdp")) return "Growth";
                 if (t.includes("retail") || t.includes("consumer") || t.includes("confidence") || t.includes("michigan") || t.includes("sentiment") || t.includes("spending")) return "Consumer";
-                if (t.includes("ism") || t.includes("pmi") || t.includes("manufacturing") || t.includes("services")) return "Business";
+                if (t.includes("ism") || t.includes("pmi") || t.includes("manufacturing") || t.includes("services") || t.includes("empire state") || t.includes("philly fed")) return "Business";
                 if (t.includes("housing") || t.includes("home") || t.includes("building")) return "Housing";
+                if (t.includes("president") || t.includes("speaks") || t.includes("speech") || t.includes("testimony") || t.includes("press conference")) return "Policy";
+                if (t.includes("treasury") || t.includes("bond") || t.includes("auction") || t.includes("yield")) return "Bonds";
+                if (t.includes("trade") || t.includes("tariff") || t.includes("import") || t.includes("export")) return "Trade";
                 return null;
               };
-              const catIcon = (cat) => ({ Fed: "🏛️", Inflation: "📈", Jobs: "👷", Growth: "🇺🇸", Consumer: "🛒", Business: "🏭", Housing: "🏠" }[cat] || "📊");
+              const catIcon = (cat) => ({ Fed: "🏛️", Inflation: "📈", Jobs: "👷", Growth: "🇺🇸", Consumer: "🛒", Business: "🏭", Housing: "🏠", Policy: "🎤", Bonds: "📜", Trade: "🌐" }[cat] || "📊");
+              const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280", Policy: "#DC2626", Trade: "#0EA5E9" };
 
               const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -1757,7 +1762,7 @@ export default function App() {
         {/* ━━━ METRICS ━━━ */}
         {tab === "research" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Metrics</div>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Metrics</div>}
             {/* Portfolio selector — all sleeves */}
             <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
               {Object.entries(sleeves).map(([k, sl]) => (
