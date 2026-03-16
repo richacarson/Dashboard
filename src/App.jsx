@@ -126,7 +126,11 @@ function Sparkline({ points, chg, width = 100, height = 36 }) {
       </defs>
       <path d={fillD} fill={`url(#${id})`} />
       <path d={pathD} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Dot at last point */}
+      {/* Pulsing dot at last point */}
+      <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="5" fill={color} opacity="0.15">
+        <animate attributeName="r" values="3;7;3" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.2;0.05;0.2" dur="2s" repeatCount="indefinite" />
+      </circle>
       <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="2.5" fill={color} />
     </svg>
   );
@@ -690,6 +694,7 @@ export default function App() {
   }, [apiKey, apiSecret, hdrs, ALL]);
 
   /* ── Fetch intraday bars for sparklines ── */
+  const intradayRef = useRef({});
   const fetchIntraday = useCallback(async () => {
     if (!apiKey || !apiSecret) return;
     try {
@@ -703,7 +708,11 @@ export default function App() {
           pts[s] = barArr.map(b => b.c);
         }
       }
-      setIntradayPts(pts);
+      // Only update React state if the number of data points changed (new bar appeared)
+      const prev = intradayRef.current;
+      const changed = Object.keys(pts).some(s => (pts[s]?.length || 0) !== (prev[s]?.length || 0));
+      intradayRef.current = pts;
+      if (changed || Object.keys(prev).length === 0) setIntradayPts(pts);
     } catch {}
   }, [apiKey, apiSecret, hdrs]);
 
@@ -1030,7 +1039,9 @@ export default function App() {
       iRef.current = setInterval(() => { fetchData(); }, ms);
       // News polling — slow, separate timer
       const newsTimer = setInterval(() => { fetchNews(); }, 60000);
-      return () => { clearInterval(iRef.current); clearInterval(newsTimer); };
+      // Sparkline refresh every 30s (new 5min bar appears every 5min, but check frequently)
+      const sparkTimer = setInterval(() => { fetchIntraday(); }, 30000);
+      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
