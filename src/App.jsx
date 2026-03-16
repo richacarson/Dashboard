@@ -966,21 +966,19 @@ export default function App() {
 
   /* ━━━ MAIN DASHBOARD ━━━ */
 
-  /* ── Robinhood-style Ticker Row ── */
-  const TickerRow = ({ s }) => {
+  /* ── Robinhood-style Ticker Row — uses CSS for press, no useState to avoid remount issues ── */
+  const TickerRow = useCallback(({ s }) => {
     const q = quotes[s], b = bars[s], c = chg(s);
     const nm = names[s] || "";
     const pts = intradayPts[s];
     const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
-    const [pressed, setPressed] = useState(false);
+    const flash = priceFlash[s];
+    const flashBg = flash === "up" ? C.up + "30" : flash === "dn" ? C.dn + "30" : "transparent";
     return (
       <div onClick={() => setChartSymbol(s)}
-        onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)} onTouchCancel={() => setPressed(false)}
+        className="ticker-row"
         style={{
           display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer",
-          transform: pressed ? "scale(0.97)" : "scale(1)",
-          opacity: pressed ? 0.85 : 1,
-          transition: "transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s",
         }}>
         {/* Logo */}
         <div style={{ marginRight: 10, flexShrink: 0 }}>
@@ -996,23 +994,17 @@ export default function App() {
           <Sparkline points={pts} chg={c} />
         </div>
         {/* Right: change badge */}
-        {(() => {
-          const flash = priceFlash[s];
-          const flashBg = flash === "up" ? C.up + "30" : flash === "dn" ? C.dn + "30" : "transparent";
-          return (
-            <div style={{
-              padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
-              fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
-              color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
-              border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
-              background: flashBg,
-              transition: "background 0.6s ease-out",
-            }}>{pct(c)}</div>
-          );
-        })()}
+        <div style={{
+          padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
+          fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
+          color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
+          border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
+          background: flashBg,
+          transition: "background 0.6s ease-out",
+        }}>{pct(c)}</div>
       </div>
     );
-  };
+  }, [quotes, bars, names, intradayPts, priceFlash, chg, theme]);
 
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const SleeveSection = ({ k, sleeve }) => {
@@ -2291,6 +2283,8 @@ function GS({ theme }) {
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.2" : "80,100,60,0.2"}); border-radius: 6px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.35" : "80,100,60,0.35"}); }
       body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; }
+      .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
+      .ticker-row:active { transform: scale(0.97); opacity: 0.85; }
       @media (min-width: 768px) {
         .tradingview-widget-container { min-height: 500px; }
         tr:hover td { background: rgba(${isDark ? "110,132,80,0.04" : "74,107,37,0.06"}) !important; }
