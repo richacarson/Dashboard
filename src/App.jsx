@@ -524,7 +524,11 @@ export default function App() {
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
   useEffect(() => {
-    const t = setInterval(() => setMarketStatus(getMarketStatus()), 30000);
+    const t = setInterval(() => {
+      const ms = getMarketStatus();
+      // Only trigger re-render if status actually changed (open/closed transition)
+      setMarketStatus(prev => prev.status === ms.status ? prev : ms);
+    }, 30000);
     return () => clearInterval(t);
   }, []);
 
@@ -659,7 +663,7 @@ export default function App() {
     try {
       // Holdings news: only core portfolio symbols
       const holdingsR = await fetch(`${BASE}/v1beta1/news?symbols=${coreSyms.join(",")}&limit=30&sort=desc`, { headers: hdrs });
-      if (holdingsR.ok) { const d = await holdingsR.json(); setNews(d.news || []); }
+      if (holdingsR.ok) { const d = await holdingsR.json(); const newNews = d.news || []; setNews(prev => prev.length === newNews.length && prev[0]?.id === newNews[0]?.id ? prev : newNews); }
       // Broad market news: no symbol filter
       const broadR = await fetch(`${BASE}/v1beta1/news?limit=30&sort=desc`, { headers: hdrs });
       if (broadR.ok) { const d = await broadR.json(); setBroadNews(d.news || []); }
@@ -898,8 +902,34 @@ export default function App() {
           if (msg.T === "success" && msg.msg === "authenticated") {
             ws.send(JSON.stringify({ action: "subscribe", trades: ALL }));
           }
-          if (msg.T === "t") {
-            setQuotes(prev => ({ ...prev, [msg.S]: { p: msg.p, t: msg.t } }));
+          if (msg.T === "t" && msg.S && msg.p) {
+            // Update via DOM, not React state
+            const prev = quotesRef.current[msg.S];
+            quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
+            const bars = barsRef.current[msg.S];
+            if (bars?.pc) {
+              const c = ((msg.p - bars.pc) / bars.pc) * 100;
+              const el = document.querySelector(`[data-ticker-chg="${msg.S}"]`);
+              if (el) {
+                el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+                el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+                el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
+                // Flash
+                if (prev && prev.p !== msg.p) {
+                  const dir = msg.p > prev.p ? C.up : C.dn;
+                  el.style.background = dir + "30";
+                  setTimeout(() => { if (el) el.style.background = "transparent"; }, 600);
+                }
+              }
+              // Update benchmark if applicable
+              const bmEl = document.querySelector(`[data-bm-price="${msg.S}"]`);
+              if (bmEl) bmEl.textContent = msg.p.toFixed(2);
+              const bmChgEl = document.querySelector(`[data-bm-chg="${msg.S}"]`);
+              if (bmChgEl) {
+                bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+                bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+              }
+            }
           }
         }
       };
