@@ -901,7 +901,7 @@ export default function App() {
       if (refresh === 0) return null; // explicitly off
       if (refresh > 0) return refresh * 1000; // manual override
       // Smart: check market status
-      return marketStatus.status === "open" ? 1000 : null;
+      return marketStatus.status === "open" ? 5000 : null;
     };
     const ms = getInterval();
     if (ms) {
@@ -966,8 +966,8 @@ export default function App() {
 
   /* ━━━ MAIN DASHBOARD ━━━ */
 
-  /* ── Robinhood-style Ticker Row ── */
-  const TickerRow = ({ s }) => {
+  /* ── Ticker Row — renders from external stable component ── */
+  const renderTickerRow = (s) => {
     const q = quotes[s], b = bars[s], c = chg(s);
     const nm = names[s] || "";
     const pts = intradayPts[s];
@@ -975,9 +975,9 @@ export default function App() {
     const flash = priceFlash[s];
     const flashBg = flash === "up" ? C.up + "30" : flash === "dn" ? C.dn + "30" : "transparent";
     return (
-      <div onClick={() => setChartSymbol(s)} className="ticker-row"
+      <div key={s} onClick={() => setChartSymbol(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
-        <div style={{ marginRight: 10, flexShrink: 0 }}>
+        <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
           <StockLogo symbol={s} size={34} />
         </div>
         <div style={{ flex: "0 0 auto", width: 90, minWidth: 0 }}>
@@ -1092,7 +1092,7 @@ export default function App() {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                       </div>
                     )}
-                    <div style={{ flex: 1 }}><TickerRow s={s} /></div>
+                    <div style={{ flex: 1 }}>{ renderTickerRow(s) }</div>
                   </div>
                   {i < sorted.length - 1 && <div style={{ height: 1, background: C.border }} />}
                 </div>
@@ -1353,7 +1353,7 @@ export default function App() {
               <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: "0 16px" }}>
                 {coreSyms.filter(s => chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 6).map((s, i, arr) => (
                   <div key={s}>
-                    <TickerRow s={s} />
+                    { renderTickerRow(s) }
                     {i < arr.length - 1 && <div style={{ height: 1, background: C.border }} />}
                   </div>
                 ))}
@@ -2160,7 +2160,7 @@ export default function App() {
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Auto-Refresh</div>
-              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 1s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 5s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 1, l: "1s" }, { v: 5, l: "5s" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }].map(({ v, l }) => (
                   <button key={l} onClick={() => setRefresh(v)} style={{
