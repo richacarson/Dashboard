@@ -544,11 +544,12 @@ export default function App() {
   }, [hdrs, ALL]);
 
   /* ── Fetch snapshot data ── */
-  const fetchData = useCallback(async () => {
+  const [priceFlash, setPriceFlash] = useState({}); // { SYM: "up"|"dn", ... } for flash animation
+
+  const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
-      // Fetch portfolio + benchmark snapshots in parallel
       const allSyms = [...ALL, ...BM_SYMS];
       const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${allSyms.join(",")}&feed=iex`, { headers: hdrs });
       if (!r.ok) throw new Error("fail");
@@ -562,8 +563,25 @@ export default function App() {
         if (snap.dailyBar) tb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!tb[s]) tb[s] = {}; tb[s].pc = snap.prevDailyBar.c; }
       }
-      setQuotes(nq); setBars(nb); setBmQuotes(bq); setBmBars(bb); setLastUp(new Date());
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+      // Detect which prices changed for flash effect
+      setQuotes(prev => {
+        const flashes = {};
+        for (const s of Object.keys(nq)) {
+          if (prev[s] && nq[s] && prev[s].p !== nq[s].p) {
+            flashes[s] = nq[s].p > prev[s].p ? "up" : "dn";
+          }
+        }
+        if (Object.keys(flashes).length) {
+          setPriceFlash(flashes);
+          setTimeout(() => setPriceFlash({}), 800);
+        }
+        return nq;
+      });
+      setBars(nb);
+      setBmQuotes(prev => ({ ...prev, ...bq }));
+      setBmBars(prev => ({ ...prev, ...bb }));
+      setLastUp(new Date());
+    } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
   }, [apiKey, apiSecret, hdrs, ALL]);
 
   /* ── Fetch intraday bars for sparklines ── */
@@ -844,7 +862,7 @@ export default function App() {
       const r = await fetch(`${PAPER}/v2/account`, { headers: hdrs });
       if (!r.ok) throw new Error("fail");
       setAuthed(true);
-      fetchData();
+      fetchData(true);
       fetchIntraday();
       fetchNames();
       fetchNews();
@@ -864,7 +882,7 @@ export default function App() {
       if (refresh === 0) return null; // explicitly off
       if (refresh > 0) return refresh * 1000; // manual override
       // Smart: check market status
-      return marketStatus.status === "open" ? 15000 : null;
+      return marketStatus.status === "open" ? 1000 : null;
     };
     const ms = getInterval();
     if (ms) {
@@ -959,12 +977,20 @@ export default function App() {
           <Sparkline points={pts} chg={c} />
         </div>
         {/* Right: change badge */}
-        <div style={{
-          padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
-          fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
-          color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
-          border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
-        }}>{pct(c)}</div>
+        {(() => {
+          const flash = priceFlash[s];
+          const flashBg = flash === "up" ? C.up + "30" : flash === "dn" ? C.dn + "30" : "transparent";
+          return (
+            <div style={{
+              padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
+              fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
+              color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
+              border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
+              background: flashBg,
+              transition: "background 0.6s ease-out",
+            }}>{pct(c)}</div>
+          );
+        })()}
       </div>
     );
   };
@@ -1168,7 +1194,7 @@ export default function App() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {lastUp && <span style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-          <button onClick={() => { fetchData(); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
+          <button onClick={() => { fetchData(true); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
             width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
             background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
           }}>
@@ -1192,7 +1218,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-            <button onClick={() => { fetchData(); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
+            <button onClick={() => { fetchData(true); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
               padding: "8px 16px", display: "flex", alignItems: "center", gap: 8,
               background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
             }}>
@@ -2131,9 +2157,9 @@ export default function App() {
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Auto-Refresh</div>
-              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 15s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }, { v: 60, l: "60s" }].map(({ v, l }) => (
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 1s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 1, l: "1s" }, { v: 5, l: "5s" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }].map(({ v, l }) => (
                   <button key={l} onClick={() => setRefresh(v)} style={{
                     padding: "7px 14px", background: refresh === v ? C.accentSoft : "transparent",
                     border: `1px solid ${refresh === v ? C.borderActive : C.border}`,
