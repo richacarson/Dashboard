@@ -312,7 +312,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     const doFetch = () => {
       fetch(url, { headers: hdrs }).then(r => r.json()).then(data => {
         const bars = data.bars?.[symbol] || [];
-        if (bars.length > 1) { setChartData(bars); return; }
+        if (bars.length > 1) { setChartData([...bars]); return; }
         if (days <= 7) {
           const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 30);
           fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=1Day&start=${fallbackStart.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
@@ -329,13 +329,76 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
   }, [symbol, range, chartMode, hdrs]);
 
   // Interactive candlestick chart state
-  const [chartOffset, setChartOffset] = useState(0); // pan offset (number of bars scrolled)
-  const [chartZoom, setChartZoom] = useState(1); // zoom level
-  const [crosshair, setCrosshair] = useState(null); // { x, y, bar } for tooltip
+  const [chartOffset, setChartOffset] = useState(0);
+  const [chartZoom, setChartZoom] = useState(1);
+  const [crosshair, setCrosshair] = useState(null);
   const chartTouchRef = useRef(null);
-
-  // Reset pan/zoom when range or symbol changes
   useEffect(() => { setChartOffset(0); setChartZoom(1); setCrosshair(null); }, [range, symbol]);
+
+  // Native touch events on canvas for pan, zoom, crosshair (bypasses overlay swipe handlers)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || chartMode !== "native") return;
+    let touchState = null;
+
+    const onTouchStart = (e) => {
+      e.stopPropagation();
+      const t = e.touches[0];
+      touchState = {
+        x: t.clientX, y: t.clientY,
+        fingers: e.touches.length,
+        dist: e.touches.length === 2 ? Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY) : 0,
+        moved: false,
+      };
+    };
+
+    const onTouchMove = (e) => {
+      if (!touchState) return;
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (e.touches.length === 2 && touchState.fingers === 2) {
+        const newDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+        const scale = newDist / (touchState.dist || 1);
+        setChartZoom(z => Math.max(0.5, Math.min(10, z * (1 + (scale - 1) * 0.3))));
+        touchState.dist = newDist;
+        touchState.moved = true;
+      } else if (e.touches.length === 1) {
+        const dx = e.touches[0].clientX - touchState.x;
+        if (Math.abs(dx) > 3) {
+          const barsToScroll = Math.round(dx / 8);
+          if (barsToScroll !== 0) {
+            setChartOffset(o => Math.max(0, o + barsToScroll));
+            touchState.x = e.touches[0].clientX;
+          }
+          touchState.moved = true;
+        }
+        // Show crosshair
+        if (canvas._chartVisible) {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.touches[0].clientX - rect.left, y = e.touches[0].clientY - rect.top;
+          const { _chartVisible: vis, _chartPad: p, _chartBarW: bw } = canvas;
+          const idx = Math.floor((x - p.left) / bw);
+          if (idx >= 0 && idx < vis.length) setCrosshair({ x: p.left + (idx + 0.5) * bw, y, bar: vis[idx] });
+        }
+      }
+    };
+
+    const onTouchEnd = (e) => {
+      e.stopPropagation();
+      touchState = null;
+      setTimeout(() => setCrosshair(null), 2000);
+    };
+
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+    return () => {
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [chartMode, chartData]);
 
   useEffect(() => {
     if (!chartData || !canvasRef.current || chartMode !== "native") return;
@@ -582,39 +645,6 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
               if (idx >= 0 && idx < vis.length) setCrosshair({ x: p.left + (idx + 0.5) * bw, y, bar: vis[idx] });
             }}
             onMouseLeave={() => setCrosshair(null)}
-            onTouchStart={(e) => {
-              const t = e.touches[0];
-              chartTouchRef.current = { x: t.clientX, y: t.clientY, fingers: e.touches.length, dist: e.touches.length === 2 ? Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY) : 0 };
-            }}
-            onTouchMove={(e) => {
-              if (!chartTouchRef.current) return;
-              const canvas = canvasRef.current;
-              if (e.touches.length === 2 && chartTouchRef.current.fingers === 2) {
-                // Pinch zoom
-                const newDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
-                const scale = newDist / (chartTouchRef.current.dist || 1);
-                setChartZoom(z => Math.max(0.5, Math.min(10, z * (1 + (scale - 1) * 0.3))));
-                chartTouchRef.current.dist = newDist;
-                e.preventDefault();
-              } else if (e.touches.length === 1) {
-                const dx = e.touches[0].clientX - chartTouchRef.current.x;
-                if (Math.abs(dx) > 5) {
-                  const barsToScroll = Math.round(dx / 8);
-                  setChartOffset(o => Math.max(0, o + barsToScroll));
-                  chartTouchRef.current.x = e.touches[0].clientX;
-                  e.preventDefault();
-                }
-                // Also show crosshair on touch
-                const rect = canvas.getBoundingClientRect();
-                const x = e.touches[0].clientX - rect.left, y = e.touches[0].clientY - rect.top;
-                if (canvas._chartVisible) {
-                  const { _chartVisible: vis, _chartPad: p, _chartBarW: bw } = canvas;
-                  const idx = Math.floor((x - p.left) / bw);
-                  if (idx >= 0 && idx < vis.length) setCrosshair({ x: p.left + (idx + 0.5) * bw, y, bar: vis[idx] });
-                }
-              }
-            }}
-            onTouchEnd={() => { chartTouchRef.current = null; setTimeout(() => setCrosshair(null), 2000); }}
             onWheel={(e) => {
               e.preventDefault();
               if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
