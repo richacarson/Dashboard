@@ -254,22 +254,17 @@ function StockLogo({ symbol, size = 32 }) {
   );
 }
 function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef }) {
-  const chartContainerRef = useRef(null);
-  const chartRef = useRef(null);
-  const seriesRef = useRef(null);
-  const [range, setRange] = useState("1D");
-  const [loading, setLoading] = useState(true);
-
-  // Swipe to dismiss from left edge only
+  const containerRef = useRef(null);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const touchStart = useRef(null);
+
   const handleTouchStart = (e) => {
     const t = e.touches[0];
-    touchStart.current = { x: t.clientX, y: t.clientY, edge: t.clientX < 30 };
+    touchStart.current = { x: t.clientX, edge: t.clientX < 30 };
   };
   const handleTouchMove = (e) => {
-    if (!touchStart.current || !touchStart.current.edge) return;
+    if (!touchStart.current?.edge) return;
     const dx = e.touches[0].clientX - touchStart.current.x;
     if (dx > 10) { setDragging(true); setDragX(Math.max(0, dx)); e.preventDefault(); }
   };
@@ -279,200 +274,44 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
   };
 
   const isDark = theme === "dark";
-  const overlayStyle = {
-    position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
-    background: C.bg, display: "flex", flexDirection: "column",
-    transform: dragX > 0 ? `translateX(${dragX}px)` : "none",
-    transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
-    overflow: "hidden",
-  };
 
-  const RANGES = [
-    { l: "1m", tf: "1Min", days: 30, refreshMs: 3000, timeVis: true },
-    { l: "5m", tf: "5Min", days: 90, refreshMs: 5000, timeVis: true },
-    { l: "15m", tf: "15Min", days: 180, refreshMs: 10000, timeVis: true },
-    { l: "1H", tf: "1Hour", days: 365, refreshMs: 30000, timeVis: true },
-    { l: "4H", tf: "4Hour", days: 730, refreshMs: 60000, timeVis: true },
-    { l: "D", tf: "1Day", days: 1825, refreshMs: null, timeVis: false },
-    { l: "W", tf: "1Week", days: 3650, refreshMs: null, timeVis: false },
-  ];
-  const activeRange = RANGES.find(r => r.l === range) || RANGES[0];
-
-  // Load Lightweight Charts library once
+  // Load TradingView widget
   useEffect(() => {
-    if (window.LightweightCharts) return;
+    if (!containerRef.current) return;
+    containerRef.current.innerHTML = "";
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    widgetDiv.style.height = "100%";
+    widgetDiv.style.width = "100%";
+    containerRef.current.appendChild(widgetDiv);
     const script = document.createElement("script");
-    script.src = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
-    document.head.appendChild(script);
-  }, []);
-
-  // Create chart + fetch data
-  useEffect(() => {
-    let destroyed = false;
-    let ro;
-
-    const init = () => {
-      if (destroyed || !chartContainerRef.current || !window.LightweightCharts) return;
-      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; seriesRef.current = null; }
-
-      const container = chartContainerRef.current;
-      const chart = window.LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: container.clientHeight,
-        layout: {
-          background: { type: "solid", color: "transparent" },
-          textColor: isDark ? "#8B9A7B" : "#6B7A5B",
-          fontFamily: "DM Sans, sans-serif",
-          fontSize: 11,
-        },
-        grid: {
-          vertLines: { color: isDark ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.08)" },
-          horzLines: { color: isDark ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.08)" },
-        },
-        crosshair: {
-          mode: 0,
-          vertLine: { color: isDark ? "#6E845066" : "#4A6B2566", width: 1, style: 2, labelBackgroundColor: isDark ? "#1B2A12" : "#4A6B25" },
-          horzLine: { color: isDark ? "#6E845066" : "#4A6B2566", width: 1, style: 2, labelBackgroundColor: isDark ? "#1B2A12" : "#4A6B25" },
-        },
-        rightPriceScale: { borderColor: isDark ? "rgba(110,132,80,0.15)" : "rgba(80,100,60,0.15)" },
-        timeScale: {
-          borderColor: isDark ? "rgba(110,132,80,0.15)" : "rgba(80,100,60,0.15)",
-          timeVisible: activeRange.timeVis,
-          secondsVisible: false,
-        },
-        handleScroll: { vertTouchDrag: false },
-      });
-
-      const series = chart.addCandlestickSeries({
-        upColor: isDark ? "#34D399" : "#16A34A",
-        downColor: isDark ? "#F87171" : "#DC2626",
-        wickUpColor: isDark ? "#34D39988" : "#16A34A88",
-        wickDownColor: isDark ? "#F8717188" : "#DC262688",
-        borderVisible: false,
-        lastValueVisible: true,
-        priceLineVisible: true,
-        priceLineColor: isDark ? "#6E8450" : "#4A6B25",
-        priceLineWidth: 1,
-        priceLineStyle: 2,
-      });
-
-      chartRef.current = chart;
-      seriesRef.current = series;
-
-      ro = new ResizeObserver(() => {
-        if (!destroyed && container.clientWidth > 0) {
-          chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-        }
-      });
-      ro.observe(container);
-
-      fetchAllBars(series, chart);
-    };
-
-    // Wait for lib
-    if (!window.LightweightCharts) {
-      const check = setInterval(() => { if (window.LightweightCharts) { clearInterval(check); init(); } }, 50);
-      return () => { destroyed = true; clearInterval(check); if (ro) ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
-    } else {
-      init();
-    }
-    return () => { destroyed = true; if (ro) ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
-  }, [symbol, range, theme]);
-
-  const fetchAllBars = async (series, chart) => {
-    if (!hdrs) return;
-    setLoading(true);
-    const start = new Date();
-    start.setDate(start.getDate() - Math.max(activeRange.days, 3));
-    let allBars = [];
-    let pageToken = null;
-    
-    try {
-      // Paginate through all bars
-      for (let page = 0; page < 5; page++) {
-        let url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${start.toISOString().slice(0, 10)}&limit=10000&adjustment=split`;
-        if (pageToken) url += `&page_token=${pageToken}`;
-        const r = await fetch(url, { headers: hdrs });
-        const data = await r.json();
-        const bars = data.bars?.[symbol] || [];
-        allBars = allBars.concat(bars);
-        pageToken = data.next_page_token;
-        if (!pageToken || bars.length < 10000) break;
-      }
-      
-      if (allBars.length > 0) {
-        const fmt = allBars.map(b => ({
-          time: activeRange.timeVis ? Math.floor(new Date(b.t).getTime() / 1000) : b.t.slice(0, 10),
-          open: b.o, high: b.h, low: b.l, close: b.c,
-        }));
-        series.setData(fmt);
-        chart.timeScale().fitContent();
-      }
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  };
-
-  // Live updates: poll recent bars + push latest price
-  const currentBarRef = useRef(null);
-  useEffect(() => { currentBarRef.current = null; }, [symbol, range]);
-  
-  useEffect(() => {
-    if (!seriesRef.current || !activeRange.refreshMs) return;
-    
-    const fetchRecent = async () => {
-      try {
-        const lookback = new Date(Date.now() - 600000);
-        const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${lookback.toISOString()}&feed=iex&limit=50&adjustment=split`;
-        const r = await fetch(url, { headers: hdrs });
-        const data = await r.json();
-        const bars = data.bars?.[symbol] || [];
-        for (const b of bars) {
-          const ts = Math.floor(new Date(b.t).getTime() / 1000);
-          const barData = { time: ts, open: b.o, high: b.h, low: b.l, close: b.c };
-          try { seriesRef.current.update(barData); } catch {}
-          currentBarRef.current = barData;
-        }
-      } catch {}
-    };
-    
-    // Also fetch the latest snapshot price and push it
-    const pushTick = async () => {
-      try {
-        const r = await fetch(`https://data.alpaca.markets/v2/stocks/snapshots?symbols=${symbol}&feed=iex`, { headers: hdrs });
-        const data = await r.json();
-        const snap = data[symbol];
-        if (!snap?.latestTrade?.p) return;
-        const price = snap.latestTrade.p;
-        
-        const tfMap = { "1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "4Hour": 14400 };
-        const tfSec = tfMap[activeRange.tf] || 300;
-        const barTs = Math.floor(Date.now() / 1000 / tfSec) * tfSec;
-        
-        const cur = currentBarRef.current;
-        if (cur && cur.time === barTs) {
-          cur.high = Math.max(cur.high, price);
-          cur.low = Math.min(cur.low, price);
-          cur.close = price;
-        } else {
-          currentBarRef.current = { time: barTs, open: price, high: price, low: price, close: price };
-        }
-        try { seriesRef.current.update(currentBarRef.current); } catch {}
-      } catch {}
-    };
-    
-    // Alternate between bar fetch and tick push
-    let tick = 0;
-    const timer = setInterval(() => {
-      tick++;
-      if (tick % 3 === 0) fetchRecent(); // every 3rd interval, fetch full bars
-      else pushTick(); // otherwise just push latest tick
-    }, Math.min(activeRange.refreshMs, 2000));
-    
-    // Initial fetch
-    fetchRecent();
-    
-    return () => clearInterval(timer);
-  }, [symbol, range]);
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: symbol,
+      interval: "W",
+      timezone: "America/New_York",
+      theme: isDark ? "dark" : "light",
+      style: "1",
+      locale: "en",
+      backgroundColor: "rgba(0,0,0,0)",
+      gridColor: isDark ? "rgba(110,132,80,0.05)" : "rgba(80,100,60,0.05)",
+      allow_symbol_change: false,
+      hide_volume: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      calendar: false,
+      withdateranges: true,
+      details: true,
+      hotlist: false,
+      favorite_intervals: ["1", "5", "15", "60", "240", "D"],
+      support_host: "https://www.tradingview.com",
+    });
+    containerRef.current.appendChild(script);
+  }, [symbol, theme]);
 
   // Live price display
   const livePriceRef = useRef(null);
@@ -492,10 +331,16 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
   }, [symbol]);
 
   return (
-    <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={overlayStyle}>
+    <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
+      background: C.bg, display: "flex", flexDirection: "column",
+      transform: dragX > 0 ? `translateX(${dragX}px)` : "none",
+      transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
+      overflow: "hidden",
+    }}>
       <div style={{ width: 36, height: 4, borderRadius: 2, background: C.t4, margin: "8px auto 0", opacity: 0.5 }} />
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <StockLogo symbol={symbol} size={36} />
           <div>
@@ -511,21 +356,8 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
       </div>
-      {/* Timeframe pills */}
-      <div style={{ display: "flex", gap: 4, padding: "8px 18px", flexShrink: 0, overflowX: "auto" }}>
-        {RANGES.map(r => (
-          <button key={r.l} onClick={() => setRange(r.l)} style={{
-            padding: "6px 14px", borderRadius: 8, border: `1px solid ${range === r.l ? C.borderActive : C.border}`,
-            background: range === r.l ? C.accentSoft : "transparent",
-            color: range === r.l ? C.t1 : C.t3, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-          }}>{r.l}</button>
-        ))}
-      </div>
-      {/* Chart */}
-      <div style={{ flex: 1, position: "relative" }}>
-        {loading && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: C.t4, fontSize: 13, zIndex: 2 }}>Loading…</div>}
-        <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
-      </div>
+      {/* TradingView Chart */}
+      <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
     </div>
   );
 }
