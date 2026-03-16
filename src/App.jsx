@@ -172,14 +172,14 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
       gap: 3, borderRadius: 14, overflow: "hidden",
     }}>
       {cells.map(cell => (
-        <div key={cell.sym} onClick={() => onTap(cell.sym)} style={{
+        <div key={cell.sym} onClick={() => onTap(cell.sym)} data-heatmap={cell.sym} style={{
           background: getColor(cell.chg),
           padding: "10px 6px", cursor: "pointer",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          minHeight: 64, borderRadius: 4, transition: "opacity 0.15s",
+          minHeight: 64, borderRadius: 4, transition: "background 0.6s ease-out",
         }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", letterSpacing: 0.3, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{cell.sym}</div>
-          <div style={{
+          <div data-heatmap-chg={cell.sym} style={{
             fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)",
             marginTop: 2, fontVariantNumeric: "tabular-nums",
             textShadow: "0 1px 2px rgba(0,0,0,0.4)",
@@ -606,20 +606,40 @@ export default function App() {
       const isFirstLoad = Object.keys(prevQ).length === 0;
 
       // Direct DOM updates for prices — no React re-render needed
+      const hmColor = (chg) => {
+        const maxA = 5;
+        const intensity = Math.min(Math.abs(chg) / maxA, 1);
+        if (chg > 0) return `rgb(${Math.round(8+intensity*10)},${Math.round(30+intensity*100)},${Math.round(15+intensity*40)})`;
+        if (chg < 0) return `rgb(${Math.round(50+intensity*150)},${Math.round(15+intensity*15)},${Math.round(15+intensity*15)})`;
+        return C.card;
+      };
       const flashes = {};
       let anyQuoteChanged = false;
       for (const s of Object.keys(nq)) {
         if (!prevQ[s] || prevQ[s].p !== nq[s]?.p) {
           anyQuoteChanged = true;
           if (prevQ[s] && nq[s]) flashes[s] = nq[s].p > prevQ[s].p ? "up" : "dn";
-          // Update DOM directly
-          const el = document.querySelector(`[data-ticker-chg="${s}"]`);
-          if (el && nq[s] && (nb[s]?.pc || prevB[s]?.pc)) {
-            const pc = nb[s]?.pc || prevB[s]?.pc;
+          const pc = nb[s]?.pc || prevB[s]?.pc;
+          if (nq[s] && pc) {
             const c = ((nq[s].p - pc) / pc) * 100;
-            el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-            el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-            el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
+            // Ticker row change badge
+            const el = document.querySelector(`[data-ticker-chg="${s}"]`);
+            if (el) {
+              el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+              el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+              el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
+            }
+            // Heatmap cell
+            const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
+            if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
+            const hmCell = document.querySelector(`[data-heatmap="${s}"]`);
+            if (hmCell) hmCell.style.background = hmColor(c);
+            // Metrics Day column
+            const metDay = document.querySelector(`[data-metric-day="${s}"]`);
+            if (metDay) {
+              metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+              metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+            }
           }
         }
       }
@@ -959,6 +979,17 @@ export default function App() {
                 bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
                 bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
               }
+              // Heatmap
+              const hmChg = document.querySelector(`[data-heatmap-chg="${msg.S}"]`);
+              if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
+              const hmCell = document.querySelector(`[data-heatmap="${msg.S}"]`);
+              if (hmCell) {
+                const maxA = 5, intensity = Math.min(Math.abs(c) / maxA, 1);
+                hmCell.style.background = c > 0 ? `rgb(${Math.round(8+intensity*10)},${Math.round(30+intensity*100)},${Math.round(15+intensity*40)})` : c < 0 ? `rgb(${Math.round(50+intensity*150)},${Math.round(15+intensity*15)},${Math.round(15+intensity*15)})` : C.card;
+              }
+              // Metrics Day column
+              const metDay = document.querySelector(`[data-metric-day="${msg.S}"]`);
+              if (metDay) { metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`; metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3; }
             }
           }
         }
@@ -2108,8 +2139,24 @@ export default function App() {
                 noAvg: true, // skip in averages
               });
 
+              // Day change computed live from quotesRef
+              const dayChg = (sym) => {
+                const q = quotesRef.current[sym];
+                const b = barsRef.current[sym];
+                if (q?.p && b?.pc) return ((q.p - b.pc) / b.pc) * 100;
+                return null;
+              };
+
+              const dayCol = {
+                l: "Day", w: 65, k: "_day",
+                fn: (d, sym) => { const c = dayChg(sym); return c != null ? `${c >= 0 ? "+" : ""}${c.toFixed(2)}%` : "—"; },
+                color: (d, sym) => { const c = dayChg(sym); return (c||0) > 0 ? C.up : (c||0) < 0 ? C.dn : C.t3; },
+                live: true, // flag for data attribute
+              };
+
               const divCols = [
                 textCol("Industry", "industry", 110),
+                dayCol,
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
                 pctCol("Last Qtr", "lastQtr"),
                 pctCol("This Qtr", "thisQtr"),
@@ -2126,6 +2173,7 @@ export default function App() {
               ];
               const groCols = [
                 textCol("Industry", "industry", 110),
+                dayCol,
                 { l: "Avg Vol", w: 70, k: "avgVol", fn: d => vol(d.avgVol) },
                 pctCol("Last Qtr", "lastQtr"),
                 pctCol("This Qtr", "thisQtr"),
@@ -2144,6 +2192,12 @@ export default function App() {
               // Sort
               const sorted = [...syms].sort((a, b) => {
                 if (!metricSort.col) return a.localeCompare(b);
+                // Special handling for live Day column
+                if (metricSort.col === "_day") {
+                  const av = dayChg(a); const bv = dayChg(b);
+                  if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+                  return metricSort.dir === "asc" ? av - bv : bv - av;
+                }
                 const av = fundamentals[a]?.[metricSort.col] ?? null;
                 const bv = fundamentals[b]?.[metricSort.col] ?? null;
                 if (av == null && bv == null) return 0;
@@ -2195,10 +2249,11 @@ export default function App() {
                                 </div>
                               </td>
                               {cols.map(col => {
-                                const val = col.fn(d);
-                                const clr = col.color ? col.color(d) : C.t2;
+                                const val = col.fn(d, s);
+                                const clr = col.color ? col.color(d, s) : C.t2;
+                                const dataAttr = col.live ? { "data-metric-day": s } : {};
                                 return (
-                                  <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, fontWeight: 600, color: clr, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{val}</td>
+                                  <td key={col.l} {...dataAttr} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, fontWeight: 600, color: clr, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", transition: "background 0.6s ease-out" }}>{val}</td>
                                 );
                               })}
                             </tr>
@@ -2211,6 +2266,11 @@ export default function App() {
                           <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "10px 12px", borderRight: `1px solid ${C.border}`, fontSize: 12, fontWeight: 800, color: C.t1 }}>Avg</td>
                           {cols.map(col => {
                             if (col.noAvg) return <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, color: C.t4, background: C.surface }}>—</td>;
+                            if (col.k === "_day") {
+                              const dayVals = sorted.map(s => dayChg(s)).filter(v => v != null);
+                              const avg = dayVals.length ? dayVals.reduce((a, b) => a + b, 0) / dayVals.length : null;
+                              return <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, fontWeight: 800, color: avg > 0 ? C.up : avg < 0 ? C.dn : C.t1, background: C.surface, fontVariantNumeric: "tabular-nums" }}>{avg != null ? `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%` : "—"}</td>;
+                            }
                             const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
                             const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
                             const avgD = { [col.k]: avg };
