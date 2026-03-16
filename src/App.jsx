@@ -349,6 +349,11 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
         wickUpColor: isDark ? "#34D39988" : "#16A34A88",
         wickDownColor: isDark ? "#F8717188" : "#DC262688",
         borderVisible: false,
+        lastValueVisible: true,
+        priceLineVisible: true,
+        priceLineColor: isDark ? "#6E8450" : "#4A6B25",
+        priceLineWidth: 1,
+        priceLineStyle: 2,
       });
 
       chartRef.current = chart;
@@ -396,10 +401,14 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     setLoading(false);
   };
 
-  // Live bar updates for intraday
+  // Live updates: poll recent bars + push latest price
+  const currentBarRef = useRef(null);
+  useEffect(() => { currentBarRef.current = null; }, [symbol, range]);
+  
   useEffect(() => {
     if (!seriesRef.current || !activeRange.refreshMs) return;
-    const timer = setInterval(async () => {
+    
+    const fetchRecent = async () => {
       try {
         const lookback = new Date(Date.now() - 600000);
         const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${lookback.toISOString()}&feed=iex&limit=50&adjustment=split`;
@@ -409,39 +418,48 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
         for (const b of bars) {
           const ts = Math.floor(new Date(b.t).getTime() / 1000);
           const barData = { time: ts, open: b.o, high: b.h, low: b.l, close: b.c };
-          seriesRef.current.update(barData);
-          // Keep the latest bar as the current forming candle reference
+          try { seriesRef.current.update(barData); } catch {}
           currentBarRef.current = barData;
         }
       } catch {}
-    }, activeRange.refreshMs);
-    return () => clearInterval(timer);
-  }, [symbol, range]);
-
-  // Push live tick to current candle — merge with existing OHLC
-  const currentBarRef = useRef(null); // { time, open, high, low, close }
-  useEffect(() => { currentBarRef.current = null; }, [symbol, range]); // reset on change
-  
-  useEffect(() => {
-    if (!seriesRef.current || !activeRange.refreshMs) return;
-    const tfMap = { "1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "4Hour": 14400 };
-    const tfSec = tfMap[activeRange.tf] || 300;
+    };
+    
+    // Also fetch the latest snapshot price and push it
+    const pushTick = async () => {
+      try {
+        const r = await fetch(`https://data.alpaca.markets/v2/stocks/snapshots?symbols=${symbol}&feed=iex`, { headers: hdrs });
+        const data = await r.json();
+        const snap = data[symbol];
+        if (!snap?.latestTrade?.p) return;
+        const price = snap.latestTrade.p;
+        
+        const tfMap = { "1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "4Hour": 14400 };
+        const tfSec = tfMap[activeRange.tf] || 300;
+        const barTs = Math.floor(Date.now() / 1000 / tfSec) * tfSec;
+        
+        const cur = currentBarRef.current;
+        if (cur && cur.time === barTs) {
+          cur.high = Math.max(cur.high, price);
+          cur.low = Math.min(cur.low, price);
+          cur.close = price;
+        } else {
+          currentBarRef.current = { time: barTs, open: price, high: price, low: price, close: price };
+        }
+        try { seriesRef.current.update(currentBarRef.current); } catch {}
+      } catch {}
+    };
+    
+    // Alternate between bar fetch and tick push
+    let tick = 0;
     const timer = setInterval(() => {
-      const q = quotesRef?.current?.[symbol];
-      if (!q?.p || !seriesRef.current) return;
-      const barTs = Math.floor(Date.now() / 1000 / tfSec) * tfSec;
-      const cur = currentBarRef.current;
-      if (cur && cur.time === barTs) {
-        // Update existing forming candle
-        cur.high = Math.max(cur.high, q.p);
-        cur.low = Math.min(cur.low, q.p);
-        cur.close = q.p;
-      } else {
-        // New candle period started
-        currentBarRef.current = { time: barTs, open: q.p, high: q.p, low: q.p, close: q.p };
-      }
-      try { seriesRef.current.update(currentBarRef.current); } catch {}
-    }, 1000);
+      tick++;
+      if (tick % 3 === 0) fetchRecent(); // every 3rd interval, fetch full bars
+      else pushTick(); // otherwise just push latest tick
+    }, Math.min(activeRange.refreshMs, 2000));
+    
+    // Initial fetch
+    fetchRecent();
+    
     return () => clearInterval(timer);
   }, [symbol, range]);
 
