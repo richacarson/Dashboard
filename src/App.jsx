@@ -966,8 +966,8 @@ export default function App() {
 
   /* ━━━ MAIN DASHBOARD ━━━ */
 
-  /* ── Robinhood-style Ticker Row — uses CSS for press, no useState to avoid remount issues ── */
-  const TickerRow = useCallback(({ s }) => {
+  /* ── Robinhood-style Ticker Row ── */
+  const TickerRow = ({ s }) => {
     const q = quotes[s], b = bars[s], c = chg(s);
     const nm = names[s] || "";
     const pts = intradayPts[s];
@@ -975,36 +975,28 @@ export default function App() {
     const flash = priceFlash[s];
     const flashBg = flash === "up" ? C.up + "30" : flash === "dn" ? C.dn + "30" : "transparent";
     return (
-      <div onClick={() => setChartSymbol(s)}
-        className="ticker-row"
-        style={{
-          display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer",
-        }}>
-        {/* Logo */}
+      <div onClick={() => setChartSymbol(s)} className="ticker-row"
+        style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
         <div style={{ marginRight: 10, flexShrink: 0 }}>
           <StockLogo symbol={s} size={34} />
         </div>
-        {/* Left: ticker + company name */}
         <div style={{ flex: "0 0 auto", width: 90, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{s}</div>
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortName}</div>
         </div>
-        {/* Center: sparkline */}
         <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 8px" }}>
           <Sparkline points={pts} chg={c} />
         </div>
-        {/* Right: change badge */}
         <div style={{
           padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
           color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
           border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
-          background: flashBg,
-          transition: "background 0.6s ease-out",
+          background: flashBg, transition: "background 0.6s ease-out",
         }}>{pct(c)}</div>
       </div>
     );
-  }, [quotes, bars, names, intradayPts, priceFlash, chg, theme]);
+  };
 
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const SleeveSection = ({ k, sleeve }) => {
