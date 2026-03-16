@@ -1260,6 +1260,7 @@ export default function App() {
     { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
     { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
+    { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
 
@@ -1345,7 +1346,7 @@ export default function App() {
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : "Settings"}
+            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -2327,6 +2328,66 @@ export default function App() {
               );
             })()}
             </>)}
+          </div>
+        )}
+
+        {/* ━━━ BRIEFS ━━━ */}
+        {tab === "briefs" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
+            <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
+              {[
+                {
+                  title: "Morning Brief",
+                  desc: "Daily pre-market analysis and key levels to watch",
+                  icon: "☀️",
+                  url: "https://iownresearch.substack.com/s/iown-morning-brief",
+                  color: isDark ? "#F59E0B" : "#D97706",
+                },
+                {
+                  title: "Market Commentary",
+                  desc: "In-depth market outlook and portfolio strategy",
+                  icon: "📊",
+                  url: "https://iownresearch.substack.com/s/iown-market-commentary",
+                  color: isDark ? "#34D399" : "#16A34A",
+                },
+                {
+                  title: "The Rich Report",
+                  desc: "Macro insights and long-term investment thesis",
+                  icon: "📰",
+                  url: "https://iownresearch.substack.com/p/the-rich-report-march-16-2026",
+                  color: isDark ? "#6366F1" : "#4F46E5",
+                },
+              ].map((brief, i) => (
+                <a key={i} href={brief.url} target="_blank" rel="noopener noreferrer" style={{
+                  textDecoration: "none", display: "block",
+                  background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
+                  padding: isDesktop ? "28px 24px" : "20px 18px",
+                  cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
+                  position: "relative", overflow: "hidden",
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = brief.color + "66"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+                >
+                  {/* Accent top bar */}
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${brief.color}, ${brief.color}44)` }} />
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                    <div style={{
+                      width: 48, height: 48, borderRadius: 14,
+                      background: brief.color + "15", display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 24, flexShrink: 0,
+                    }}>{brief.icon}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{brief.title}</div>
+                      <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{brief.desc}</div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
+                      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         )}
 
