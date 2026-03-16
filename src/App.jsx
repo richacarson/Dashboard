@@ -288,13 +288,13 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
   };
 
   const RANGES = [
-    { l: "1m", tf: "1Min", days: 1, refreshMs: 3000, timeVis: true },
-    { l: "5m", tf: "5Min", days: 2, refreshMs: 5000, timeVis: true },
-    { l: "15m", tf: "15Min", days: 5, refreshMs: 10000, timeVis: true },
-    { l: "1H", tf: "1Hour", days: 30, refreshMs: 30000, timeVis: true },
-    { l: "4H", tf: "4Hour", days: 90, refreshMs: 60000, timeVis: true },
-    { l: "D", tf: "1Day", days: 365, refreshMs: null, timeVis: false },
-    { l: "W", tf: "1Week", days: 1825, refreshMs: null, timeVis: false },
+    { l: "1m", tf: "1Min", days: 10, refreshMs: 3000, timeVis: true },
+    { l: "5m", tf: "5Min", days: 45, refreshMs: 5000, timeVis: true },
+    { l: "15m", tf: "15Min", days: 60, refreshMs: 10000, timeVis: true },
+    { l: "1H", tf: "1Hour", days: 180, refreshMs: 30000, timeVis: true },
+    { l: "4H", tf: "4Hour", days: 365, refreshMs: 60000, timeVis: true },
+    { l: "D", tf: "1Day", days: 1825, refreshMs: null, timeVis: false },
+    { l: "W", tf: "1Week", days: 3650, refreshMs: null, timeVis: false },
   ];
   const activeRange = RANGES.find(r => r.l === range) || RANGES[0];
 
@@ -384,13 +384,24 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     setLoading(true);
     const start = new Date();
     start.setDate(start.getDate() - Math.max(activeRange.days, 3));
-    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
+    let allBars = [];
+    let pageToken = null;
+    
     try {
-      const r = await fetch(url, { headers: hdrs });
-      const data = await r.json();
-      const bars = data.bars?.[symbol] || [];
-      if (bars.length > 0) {
-        const fmt = bars.map(b => ({
+      // Paginate through all bars
+      for (let page = 0; page < 5; page++) {
+        let url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
+        if (pageToken) url += `&page_token=${pageToken}`;
+        const r = await fetch(url, { headers: hdrs });
+        const data = await r.json();
+        const bars = data.bars?.[symbol] || [];
+        allBars = allBars.concat(bars);
+        pageToken = data.next_page_token;
+        if (!pageToken || bars.length < 10000) break;
+      }
+      
+      if (allBars.length > 0) {
+        const fmt = allBars.map(b => ({
           time: activeRange.timeVis ? Math.floor(new Date(b.t).getTime() / 1000) : b.t.slice(0, 10),
           open: b.o, high: b.h, low: b.l, close: b.c,
         }));
