@@ -903,8 +903,6 @@ export default function App() {
 
   /* ── Fetch economic + earnings calendar ── */
   const fetchCalendar = useCallback(async () => {
-    // Economic: fetch from our static JSON (updated daily by GitHub Action)
-    // Falls back to FairEconomy live endpoint if static file is empty
     try {
       let events = [];
       // Try static JSON first (updated by GitHub Action)
@@ -922,22 +920,34 @@ export default function App() {
           }
         } catch {}
       }
-      // Fallback: fetch live from FairEconomy (ForexFactory data) - try multiple URLs
-      if (!events.length) {
-        const urls = [
-          ["https://nfs.faireconomy.media/ff_calendar_thisweek.json", "https://nfs.faireconomy.media/ff_calendar_nextweek.json"],
-          ["https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json", "https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json"],
-        ];
-        for (const [thisUrl, nextUrl] of urls) {
-          try {
-            const [thisR, nextR] = await Promise.all([fetch(thisUrl).catch(() => null), fetch(nextUrl).catch(() => null)]);
-            const thisW = thisR?.ok ? await thisR.json() : [];
-            const nextW = nextR?.ok ? await nextR.json() : [];
-            const combined = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
-            const filtered = combined.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
-            if (filtered.length > 0) { events = filtered; break; }
-          } catch {}
-        }
+      // ALWAYS try live feed to get fresh actuals (even if static has events)
+      const liveUrls = [
+        ["https://nfs.faireconomy.media/ff_calendar_thisweek.json", "https://nfs.faireconomy.media/ff_calendar_nextweek.json"],
+      ];
+      for (const [thisUrl, nextUrl] of liveUrls) {
+        try {
+          const [thisR, nextR] = await Promise.all([fetch(thisUrl).catch(() => null), fetch(nextUrl).catch(() => null)]);
+          const thisW = thisR?.ok ? await thisR.json() : [];
+          const nextW = nextR?.ok ? await nextR.json() : [];
+          const combined = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
+          const liveFiltered = combined.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
+          if (liveFiltered.length > 0) {
+            if (events.length === 0) {
+              events = liveFiltered;
+            } else {
+              // Merge live actuals into static data
+              const liveMap = {};
+              liveFiltered.forEach(e => { liveMap[e.title + "|" + (e.date || "").slice(0, 10)] = e; });
+              events = events.map(e => {
+                const key = e.title + "|" + (e.date || "").slice(0, 10);
+                const live = liveMap[key];
+                if (live && live.actual) return { ...e, actual: live.actual };
+                return e;
+              });
+            }
+            break;
+          }
+        } catch {}
       }
       events.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       setEconCalendar(events);
