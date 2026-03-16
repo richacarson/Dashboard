@@ -1353,7 +1353,7 @@ export default function App() {
               })}
             </div>
             {(() => {
-              const sortMode = sleeveSort[k] || "alpha";
+              const sortMode = sleeveSort[k] || "chgDn";
               const sorted = [...sleeve.symbols].sort((a, b) => {
                 if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
                 if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
