@@ -288,11 +288,11 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
   };
 
   const RANGES = [
-    { l: "1m", tf: "1Min", days: 10, refreshMs: 3000, timeVis: true },
-    { l: "5m", tf: "5Min", days: 45, refreshMs: 5000, timeVis: true },
-    { l: "15m", tf: "15Min", days: 60, refreshMs: 10000, timeVis: true },
-    { l: "1H", tf: "1Hour", days: 180, refreshMs: 30000, timeVis: true },
-    { l: "4H", tf: "4Hour", days: 365, refreshMs: 60000, timeVis: true },
+    { l: "1m", tf: "1Min", days: 30, refreshMs: 3000, timeVis: true },
+    { l: "5m", tf: "5Min", days: 90, refreshMs: 5000, timeVis: true },
+    { l: "15m", tf: "15Min", days: 180, refreshMs: 10000, timeVis: true },
+    { l: "1H", tf: "1Hour", days: 365, refreshMs: 30000, timeVis: true },
+    { l: "4H", tf: "4Hour", days: 730, refreshMs: 60000, timeVis: true },
     { l: "D", tf: "1Day", days: 1825, refreshMs: null, timeVis: false },
     { l: "W", tf: "1Week", days: 3650, refreshMs: null, timeVis: false },
   ];
@@ -390,7 +390,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     try {
       // Paginate through all bars
       for (let page = 0; page < 5; page++) {
-        let url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
+        let url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${start.toISOString().slice(0, 10)}&limit=10000&adjustment=split`;
         if (pageToken) url += `&page_token=${pageToken}`;
         const r = await fetch(url, { headers: hdrs });
         const data = await r.json();
