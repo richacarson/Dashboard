@@ -416,6 +416,7 @@ export default function App() {
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
+  const lastUpRef = useRef(null);
   const [tab, setTab] = useState("home");
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
@@ -623,7 +624,14 @@ export default function App() {
       if (Object.keys(bq).length) setBmQuotes(prev => isFirstLoad || showLoading ? { ...prev, ...bq } : prev);
       if (Object.keys(bb).length) setBmBars(prev => isFirstLoad || showLoading ? { ...prev, ...bb } : prev);
 
-      setLastUp(prev => { const now = new Date(); return !prev || now - prev > 5000 ? now : prev; });
+      // Update timestamp via ref + DOM (no re-render)
+      const now = new Date();
+      if (!lastUpRef.current || now - lastUpRef.current > 3000) {
+        lastUpRef.current = now;
+        const el = document.querySelector("[data-last-updated]");
+        if (el) el.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        if (isFirstLoad || showLoading) setLastUp(now);
+      }
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
   }, [apiKey, apiSecret, hdrs, ALL]);
 
@@ -920,17 +928,18 @@ export default function App() {
   useEffect(() => { if (EK && ES && !authed && unlocked) auth(); }, [unlocked]);
   useEffect(() => {
     if (!authed) return;
-    // Smart auto: 15s during market hours, off when closed. Manual override if set.
     const getInterval = () => {
-      if (refresh === 0) return null; // explicitly off
-      if (refresh > 0) return refresh * 1000; // manual override
-      // Smart: check market status
+      if (refresh === 0) return null;
+      if (refresh > 0) return refresh * 1000;
       return marketStatus.status === "open" ? 1000 : null;
     };
     const ms = getInterval();
     if (ms) {
-      iRef.current = setInterval(() => { fetchData(); fetchNews(); }, ms);
-      return () => clearInterval(iRef.current);
+      // Price polling — fast, no re-renders
+      iRef.current = setInterval(() => { fetchData(); }, ms);
+      // News polling — slow, separate timer
+      const newsTimer = setInterval(() => { fetchNews(); }, 60000);
+      return () => { clearInterval(iRef.current); clearInterval(newsTimer); };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
@@ -1188,7 +1197,7 @@ export default function App() {
               <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}66` }} />
               <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{marketStatus.label}</span>
             </div>
-            {lastUp && <div style={{ fontSize: 11, color: C.t4 }}>Updated {lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>}
+            <div data-last-updated style={{ fontSize: 11, color: C.t4 }}>{lastUp ? `Updated ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</div>
             {loading && <div style={{ fontSize: 11, color: C.t3, marginTop: 4 }}>Refreshing…</div>}
           </div>
         </div>
@@ -1218,7 +1227,7 @@ export default function App() {
           {loading && <div style={{ width: 6, height: 6, borderRadius: 3, background: C.up, boxShadow: `0 0 8px ${C.upGlow}`, animation: "pulse 1.2s ease-in-out infinite" }} />}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {lastUp && <span style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
+          {lastUp && <span data-last-updated style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
           <button onClick={() => { fetchData(true); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
             width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
             background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
@@ -1242,7 +1251,7 @@ export default function App() {
             {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {lastUp && <span style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
+            {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
             <button onClick={() => { fetchData(true); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
               padding: "8px 16px", display: "flex", alignItems: "center", gap: 8,
               background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
