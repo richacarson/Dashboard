@@ -254,332 +254,190 @@ function StockLogo({ symbol, size = 32 }) {
   );
 }
 function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef }) {
-  const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [intv, setIntv] = useState("W");
-  const [chartMode, setChartMode] = useState("native");
-  const [chartData, setChartData] = useState(null);
-  const [range, setRange] = useState("3M");
-  // Swipe/drag to dismiss
+  const chartContainerRef = useRef(null);
+  const chartRef = useRef(null);
+  const seriesRef = useRef(null);
+  const [range, setRange] = useState("1D");
+  const [loading, setLoading] = useState(true);
+
+  // Swipe to dismiss from left edge only
   const [dragX, setDragX] = useState(0);
-  const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
   const touchStart = useRef(null);
   const handleTouchStart = (e) => {
     const t = e.touches[0];
-    // Only allow swipe from left 40px edge OR anywhere for pull-down
-    touchStart.current = { x: t.clientX, y: t.clientY, edge: t.clientX < 40 };
+    touchStart.current = { x: t.clientX, y: t.clientY, edge: t.clientX < 30 };
   };
   const handleTouchMove = (e) => {
-    if (!touchStart.current) return;
-    const t = e.touches[0];
-    const dx = t.clientX - touchStart.current.x;
-    const dy = t.clientY - touchStart.current.y;
-    // Swipe right from edge
-    if (touchStart.current.edge && dx > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      setDragging(true); setDragX(Math.max(0, dx)); e.preventDefault();
-    }
-    // Pull down from top
-    if (!touchStart.current.edge && dy > 10 && touchStart.current.y < 100 && Math.abs(dy) > Math.abs(dx) * 1.5) {
-      setDragging(true); setDragY(Math.max(0, dy)); e.preventDefault();
-    }
+    if (!touchStart.current || !touchStart.current.edge) return;
+    const dx = e.touches[0].clientX - touchStart.current.x;
+    if (dx > 10) { setDragging(true); setDragX(Math.max(0, dx)); e.preventDefault(); }
   };
   const handleTouchEnd = () => {
-    if (dragX > 120 || dragY > 150) { onClose(); }
-    setDragX(0); setDragY(0); setDragging(false); touchStart.current = null;
+    if (dragX > 120) onClose();
+    setDragX(0); setDragging(false); touchStart.current = null;
   };
-  const dismissProgress = Math.max(dragX / 300, dragY / 400);
+
+  const isDark = theme === "dark";
   const overlayStyle = {
-    position: "fixed", inset: 0, zIndex: 1000, background: C.bg,
-    display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)",
-    animation: dragging ? "none" : "slideUp 0.3s cubic-bezier(0.16,1,0.3,1)",
-    transform: dragX > 0 ? `translateX(${dragX}px) scale(${1 - dismissProgress * 0.05})` : dragY > 0 ? `translateY(${dragY}px) scale(${1 - dismissProgress * 0.05})` : "none",
-    opacity: 1 - dismissProgress * 0.3,
-    borderRadius: dismissProgress > 0 ? `${dismissProgress * 20}px` : 0,
-    transition: dragging ? "none" : "transform 0.3s, opacity 0.3s, border-radius 0.3s",
+    position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
+    background: C.bg, display: "flex", flexDirection: "column",
+    transform: dragX > 0 ? `translateX(${dragX}px)` : "none",
+    transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
     overflow: "hidden",
   };
 
+  const RANGES = [
+    { l: "1m", tf: "1Min", days: 1, refreshMs: 3000, timeVis: true },
+    { l: "5m", tf: "5Min", days: 2, refreshMs: 5000, timeVis: true },
+    { l: "15m", tf: "15Min", days: 5, refreshMs: 10000, timeVis: true },
+    { l: "1H", tf: "1Hour", days: 30, refreshMs: 30000, timeVis: true },
+    { l: "4H", tf: "4Hour", days: 90, refreshMs: 60000, timeVis: true },
+    { l: "D", tf: "1Day", days: 365, refreshMs: null, timeVis: false },
+    { l: "W", tf: "1Week", days: 1825, refreshMs: null, timeVis: false },
+  ];
+  const activeRange = RANGES.find(r => r.l === range) || RANGES[0];
+
+  // Load Lightweight Charts library once
   useEffect(() => {
-    if (chartMode !== "native" || !hdrs) return;
-    setChartData(null);
-    const ranges = { "1D": 1, "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
-    const days = ranges[range] || 1;
-    const start = new Date(); start.setDate(start.getDate() - Math.max(days, 3));
-    const tf = days <= 1 ? "5Min" : days <= 7 ? "30Min" : days <= 30 ? "1Hour" : "1Day";
-    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
-    
-    const doFetch = () => {
-      fetch(url, { headers: hdrs }).then(r => r.json()).then(data => {
-        const bars = data.bars?.[symbol] || [];
-        if (bars.length > 1) { setChartData([...bars]); return; }
-        if (days <= 7) {
-          const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 30);
-          fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=1Day&start=${fallbackStart.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
-            .then(r => r.json()).then(d2 => { const b2 = d2.bars?.[symbol] || []; if (b2.length) setChartData(b2); }).catch(() => {});
-        }
-      }).catch(() => {});
-    };
-    
-    doFetch();
-    // Auto-refresh intraday chart every 5s during market hours
-    const refreshMs = days <= 1 ? 5000 : days <= 7 ? 15000 : null;
-    const timer = refreshMs ? setInterval(doFetch, refreshMs) : null;
-    return () => { if (timer) clearInterval(timer); };
-  }, [symbol, range, chartMode, hdrs]);
-
-  // Interactive candlestick chart state
-  const [chartOffset, setChartOffset] = useState(0);
-  const [chartZoom, setChartZoom] = useState(1);
-  const [crosshair, setCrosshair] = useState(null);
-  const chartTouchRef = useRef(null);
-  useEffect(() => { setChartOffset(0); setChartZoom(1); setCrosshair(null); }, [range, symbol]);
-
-  // Native touch events on canvas for pan, zoom, crosshair (bypasses overlay swipe handlers)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || chartMode !== "native") return;
-    let touchState = null;
-
-    const onTouchStart = (e) => {
-      e.stopPropagation();
-      const t = e.touches[0];
-      touchState = {
-        x: t.clientX, y: t.clientY,
-        fingers: e.touches.length,
-        dist: e.touches.length === 2 ? Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY) : 0,
-        moved: false,
-      };
-    };
-
-    const onTouchMove = (e) => {
-      if (!touchState) return;
-      e.stopPropagation();
-      e.preventDefault();
-
-      if (e.touches.length === 2 && touchState.fingers === 2) {
-        const newDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
-        const scale = newDist / (touchState.dist || 1);
-        setChartZoom(z => Math.max(0.5, Math.min(10, z * (1 + (scale - 1) * 0.3))));
-        touchState.dist = newDist;
-        touchState.moved = true;
-      } else if (e.touches.length === 1) {
-        const dx = e.touches[0].clientX - touchState.x;
-        if (Math.abs(dx) > 3) {
-          const barsToScroll = Math.round(dx / 8);
-          if (barsToScroll !== 0) {
-            setChartOffset(o => Math.max(0, o + barsToScroll));
-            touchState.x = e.touches[0].clientX;
-          }
-          touchState.moved = true;
-        }
-        // Show crosshair
-        if (canvas._chartVisible) {
-          const rect = canvas.getBoundingClientRect();
-          const x = e.touches[0].clientX - rect.left, y = e.touches[0].clientY - rect.top;
-          const { _chartVisible: vis, _chartPad: p, _chartBarW: bw } = canvas;
-          const idx = Math.floor((x - p.left) / bw);
-          if (idx >= 0 && idx < vis.length) setCrosshair({ x: p.left + (idx + 0.5) * bw, y, bar: vis[idx] });
-        }
-      }
-    };
-
-    const onTouchEnd = (e) => {
-      e.stopPropagation();
-      touchState = null;
-      setTimeout(() => setCrosshair(null), 2000);
-    };
-
-    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
-    return () => {
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-    };
-  }, [chartMode, chartData]);
-
-  useEffect(() => {
-    if (!chartData || !canvasRef.current || chartMode !== "native") return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    const W = rect.width, H = rect.height;
-    const pad = { top: 16, bottom: 36, left: 8, right: 62 };
-    const cW = W - pad.left - pad.right, cH = H - pad.top - pad.bottom;
-
-    // Determine visible bars based on zoom and offset
-    const baseVisible = Math.max(20, Math.floor(chartData.length / chartZoom));
-    const maxOffset = Math.max(0, chartData.length - baseVisible);
-    const offset = Math.min(chartOffset, maxOffset);
-    const startIdx = Math.max(0, chartData.length - baseVisible - offset);
-    const endIdx = Math.min(chartData.length, startIdx + baseVisible);
-    const visible = chartData.slice(startIdx, endIdx);
-
-    if (visible.length < 2) return;
-
-    const allH = visible.flatMap(b => [b.h, b.l]);
-    const mn = Math.min(...allH), mx = Math.max(...allH);
-    const priceRange = mx - mn || 1;
-    const toY = (p) => pad.top + ((mx - p) / priceRange) * cH;
-    const barW = cW / visible.length;
-    const candleW = Math.max(1, barW * 0.6);
-
-    ctx.clearRect(0, 0, W, H);
-
-    // Subtle grid lines
-    ctx.strokeStyle = theme === "dark" ? "rgba(110,132,80,0.06)" : "rgba(80,100,60,0.06)";
-    ctx.lineWidth = 1;
-    for (let i = 1; i < 4; i++) {
-      const y = pad.top + (cH * i) / 4;
-      ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-    }
-
-    // Price labels
-    ctx.fillStyle = C.t4; ctx.font = "10px DM Sans,sans-serif"; ctx.textAlign = "right";
-    for (let i = 0; i <= 4; i++) {
-      const y = pad.top + (cH * i) / 4;
-      ctx.fillText((mx - (priceRange * i) / 4).toFixed(2), W - 6, y + 4);
-    }
-
-    // Draw candles
-    visible.forEach((bar, i) => {
-      const x = pad.left + (i + 0.5) * barW;
-      const isGreen = bar.c >= bar.o;
-      const color = isGreen ? C.up : C.dn;
-      const oY = toY(bar.o), cY = toY(bar.c), hY = toY(bar.h), lY = toY(bar.l);
-
-      // Wick
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x, hY); ctx.lineTo(x, lY); ctx.stroke();
-
-      // Body
-      const bodyTop = Math.min(oY, cY);
-      const bodyH = Math.max(Math.abs(cY - oY), 1);
-      ctx.fillStyle = color;
-      if (candleW > 3) {
-        ctx.fillRect(x - candleW / 2, bodyTop, candleW, bodyH);
-      } else {
-        // Thin bars for zoomed-out view
-        ctx.fillRect(x - 0.5, bodyTop, 1, bodyH);
-      }
-    });
-
-    // Date labels
-    ctx.fillStyle = C.t4; ctx.font = "10px DM Sans,sans-serif"; ctx.textAlign = "center";
-    const dateStep = Math.max(1, Math.floor(visible.length / 5));
-    for (let i = 0; i < visible.length; i += dateStep) {
-      const x = pad.left + (i + 0.5) * barW;
-      const d = new Date(visible[i].t);
-      const fmt = visible.length > 100 ? { month: "short" } : { month: "short", day: "numeric" };
-      ctx.fillText(d.toLocaleDateString("en-US", fmt), x, H - 8);
-    }
-
-    // Current price line
-    const lastBar = visible[visible.length - 1];
-    const lastY = toY(lastBar.c);
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = lastBar.c >= lastBar.o ? C.up + "88" : C.dn + "88";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(pad.left, lastY); ctx.lineTo(W - pad.right, lastY); ctx.stroke();
-    ctx.setLineDash([]);
-    // Price tag
-    const tagColor = lastBar.c >= visible[0].o ? C.up : C.dn;
-    ctx.fillStyle = tagColor;
-    ctx.fillRect(W - pad.right, lastY - 10, pad.right, 20);
-    ctx.fillStyle = "#fff"; ctx.font = "bold 10px DM Sans,sans-serif"; ctx.textAlign = "center";
-    ctx.fillText(`${lastBar.c.toFixed(2)}`, W - pad.right / 2, lastY + 4);
-
-    // Crosshair tooltip
-    if (crosshair && crosshair.bar) {
-      const b = crosshair.bar;
-      const cx = crosshair.x;
-      // Vertical line
-      ctx.setLineDash([2, 2]);
-      ctx.strokeStyle = C.t4 + "66"; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke();
-      ctx.setLineDash([]);
-      // Horizontal line
-      ctx.beginPath(); ctx.moveTo(pad.left, crosshair.y); ctx.lineTo(W - pad.right, crosshair.y); ctx.stroke();
-      // OHLC tooltip
-      const isG = b.c >= b.o;
-      const tooltipW = 140, tooltipH = 72;
-      const tx = cx + 20 + tooltipW > W ? cx - tooltipW - 10 : cx + 10;
-      const ty = Math.max(pad.top, Math.min(crosshair.y - tooltipH / 2, H - pad.bottom - tooltipH));
-      ctx.fillStyle = theme === "dark" ? "rgba(20,26,15,0.95)" : "rgba(255,255,255,0.95)";
-      ctx.beginPath(); ctx.roundRect(tx, ty, tooltipW, tooltipH, 8); ctx.fill();
-      ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(tx, ty, tooltipW, tooltipH, 8); ctx.stroke();
-      ctx.font = "bold 11px DM Sans,sans-serif"; ctx.textAlign = "left";
-      ctx.fillStyle = C.t1;
-      const dt = new Date(b.t);
-      ctx.fillText(dt.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }), tx + 8, ty + 16);
-      ctx.font = "10px DM Sans,sans-serif";
-      ctx.fillStyle = C.t4; ctx.fillText("O", tx + 8, ty + 32); ctx.fillStyle = C.t2; ctx.fillText(b.o.toFixed(2), tx + 22, ty + 32);
-      ctx.fillStyle = C.t4; ctx.fillText("H", tx + 75, ty + 32); ctx.fillStyle = C.t2; ctx.fillText(b.h.toFixed(2), tx + 89, ty + 32);
-      ctx.fillStyle = C.t4; ctx.fillText("L", tx + 8, ty + 48); ctx.fillStyle = C.t2; ctx.fillText(b.l.toFixed(2), tx + 22, ty + 48);
-      ctx.fillStyle = C.t4; ctx.fillText("C", tx + 75, ty + 48); ctx.fillStyle = isG ? C.up : C.dn; ctx.fillText(b.c.toFixed(2), tx + 89, ty + 48);
-      const chg = ((b.c - b.o) / b.o * 100);
-      ctx.fillStyle = isG ? C.up : C.dn; ctx.font = "bold 11px DM Sans,sans-serif";
-      ctx.fillText(`${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`, tx + 8, ty + 65);
-    }
-
-    // Store visible data for interaction
-    canvas._chartVisible = visible;
-    canvas._chartPad = pad;
-    canvas._chartBarW = barW;
-  }, [chartData, chartMode, theme, chartOffset, chartZoom, crosshair]);
-
-  useEffect(() => {
-    if (chartMode !== "tv" || !containerRef.current) return;
-    containerRef.current.innerHTML = "";
-    // Create proper TradingView widget container
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    widgetDiv.style.height = "100%";
-    widgetDiv.style.width = "100%";
-    containerRef.current.appendChild(widgetDiv);
+    if (window.LightweightCharts) return;
     const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript"; script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: symbol,
-      interval: intv,
-      timezone: "America/New_York",
-      theme: theme === "dark" ? "dark" : "light",
-      style: "1",
-      locale: "en",
-      backgroundColor: "rgba(0,0,0,0)",
-      gridColor: "rgba(110,132,80,0.05)",
-      allow_symbol_change: true,
-      hide_volume: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: false,
-      calendar: false,
-      support_host: "https://www.tradingview.com",
-    });
-    containerRef.current.appendChild(script);
-  }, [symbol, intv, chartMode, theme]);
+    script.src = "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js";
+    document.head.appendChild(script);
+  }, []);
 
-  const pctChg = chartData?.length > 1 ? ((chartData[chartData.length-1].c - chartData[0].c) / chartData[0].c * 100) : null;
-  const priceNow = chartData?.length ? chartData[chartData.length - 1].c : null;
-  
-  // Live price ticker in chart header — updates from quotesRef without re-rendering chart
+  // Create chart + fetch data
+  useEffect(() => {
+    let destroyed = false;
+    let ro;
+
+    const init = () => {
+      if (destroyed || !chartContainerRef.current || !window.LightweightCharts) return;
+      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; seriesRef.current = null; }
+
+      const container = chartContainerRef.current;
+      const chart = window.LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: container.clientHeight,
+        layout: {
+          background: { type: "solid", color: "transparent" },
+          textColor: isDark ? "#8B9A7B" : "#6B7A5B",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: 11,
+        },
+        grid: {
+          vertLines: { color: isDark ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.08)" },
+          horzLines: { color: isDark ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.08)" },
+        },
+        crosshair: {
+          mode: 0,
+          vertLine: { color: isDark ? "#6E845066" : "#4A6B2566", width: 1, style: 2, labelBackgroundColor: isDark ? "#1B2A12" : "#4A6B25" },
+          horzLine: { color: isDark ? "#6E845066" : "#4A6B2566", width: 1, style: 2, labelBackgroundColor: isDark ? "#1B2A12" : "#4A6B25" },
+        },
+        rightPriceScale: { borderColor: isDark ? "rgba(110,132,80,0.15)" : "rgba(80,100,60,0.15)" },
+        timeScale: {
+          borderColor: isDark ? "rgba(110,132,80,0.15)" : "rgba(80,100,60,0.15)",
+          timeVisible: activeRange.timeVis,
+          secondsVisible: false,
+        },
+        handleScroll: { vertTouchDrag: false },
+      });
+
+      const series = chart.addCandlestickSeries({
+        upColor: isDark ? "#34D399" : "#16A34A",
+        downColor: isDark ? "#F87171" : "#DC2626",
+        wickUpColor: isDark ? "#34D39988" : "#16A34A88",
+        wickDownColor: isDark ? "#F8717188" : "#DC262688",
+        borderVisible: false,
+      });
+
+      chartRef.current = chart;
+      seriesRef.current = series;
+
+      ro = new ResizeObserver(() => {
+        if (!destroyed && container.clientWidth > 0) {
+          chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        }
+      });
+      ro.observe(container);
+
+      fetchAllBars(series, chart);
+    };
+
+    // Wait for lib
+    if (!window.LightweightCharts) {
+      const check = setInterval(() => { if (window.LightweightCharts) { clearInterval(check); init(); } }, 50);
+      return () => { destroyed = true; clearInterval(check); if (ro) ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
+    } else {
+      init();
+    }
+    return () => { destroyed = true; if (ro) ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
+  }, [symbol, range, theme]);
+
+  const fetchAllBars = async (series, chart) => {
+    if (!hdrs) return;
+    setLoading(true);
+    const start = new Date();
+    start.setDate(start.getDate() - Math.max(activeRange.days, 3));
+    const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
+    try {
+      const r = await fetch(url, { headers: hdrs });
+      const data = await r.json();
+      const bars = data.bars?.[symbol] || [];
+      if (bars.length > 0) {
+        const fmt = bars.map(b => ({
+          time: activeRange.timeVis ? Math.floor(new Date(b.t).getTime() / 1000) : b.t.slice(0, 10),
+          open: b.o, high: b.h, low: b.l, close: b.c,
+        }));
+        series.setData(fmt);
+        chart.timeScale().fitContent();
+      }
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
+
+  // Live bar updates for intraday
+  useEffect(() => {
+    if (!seriesRef.current || !activeRange.refreshMs) return;
+    const timer = setInterval(async () => {
+      try {
+        const lookback = new Date(Date.now() - 600000);
+        const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${activeRange.tf}&start=${lookback.toISOString()}&feed=iex&limit=50&adjustment=split`;
+        const r = await fetch(url, { headers: hdrs });
+        const data = await r.json();
+        const bars = data.bars?.[symbol] || [];
+        for (const b of bars) {
+          seriesRef.current.update({
+            time: Math.floor(new Date(b.t).getTime() / 1000),
+            open: b.o, high: b.h, low: b.l, close: b.c,
+          });
+        }
+      } catch {}
+    }, activeRange.refreshMs);
+    return () => clearInterval(timer);
+  }, [symbol, range]);
+
+  // Push live tick to current candle
+  useEffect(() => {
+    if (!seriesRef.current || !activeRange.refreshMs) return;
+    const tfMap = { "1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "4Hour": 14400 };
+    const tfSec = tfMap[activeRange.tf] || 300;
+    const timer = setInterval(() => {
+      const q = quotesRef?.current?.[symbol];
+      if (!q?.p || !seriesRef.current) return;
+      const barTs = Math.floor(Date.now() / 1000 / tfSec) * tfSec;
+      try { seriesRef.current.update({ time: barTs, open: q.p, high: q.p, low: q.p, close: q.p }); } catch {}
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [symbol, range]);
+
+  // Live price display
   const livePriceRef = useRef(null);
   const livePctRef = useRef(null);
   useEffect(() => {
     const timer = setInterval(() => {
-      const q = hdrs ? quotesRef?.current?.[symbol] : null;
-      if (q?.p && livePriceRef.current) {
-        livePriceRef.current.textContent = `$${q.p.toFixed(2)}`;
-      }
-      // Update day % from bars ref
+      const q = quotesRef?.current?.[symbol];
+      if (q?.p && livePriceRef.current) livePriceRef.current.textContent = `$${q.p.toFixed(2)}`;
       const b = barsRef?.current?.[symbol];
       if (q?.p && b?.pc && livePctRef.current) {
         const c = ((q.p - b.pc) / b.pc) * 100;
@@ -592,73 +450,39 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
 
   return (
     <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={overlayStyle}>
-      {/* Pull-down indicator */}
       <div style={{ width: 36, height: 4, borderRadius: 2, background: C.t4, margin: "8px auto 0", opacity: 0.5 }} />
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <StockLogo symbol={symbol} size={36} />
           <div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
               <span style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{symbol}</span>
-              <span ref={livePriceRef} style={{ fontSize: 16, fontWeight: 700, color: C.t2 }}>{priceNow ? `$${priceNow.toFixed(2)}` : ""}</span>
-              <span ref={livePctRef} style={{ fontSize: 13, fontWeight: 700, color: pctChg >= 0 ? C.up : C.dn }}>{pctChg != null ? `${pctChg >= 0 ? "+" : ""}${pctChg.toFixed(2)}%` : ""}</span>
+              <span ref={livePriceRef} style={{ fontSize: 16, fontWeight: 700, color: C.t2 }}></span>
+              <span ref={livePctRef} style={{ fontSize: 13, fontWeight: 700, color: C.t3 }}></span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 12, color: C.t4 }}>{names?.[symbol] || ""}</span>
-              {chartMode === "native" && range !== "1D" && pctChg != null && (
-                <span style={{ fontSize: 11, color: C.t4 }}>({range})</span>
-              )}
-            </div>
+            <div style={{ fontSize: 12, color: C.t4 }}>{names?.[symbol] || ""}</div>
           </div>
         </div>
         <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 10, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ display: "flex", gap: 4 }}>
-          {[["native","Chart"],["tv","TradingView"]].map(([v,l]) => (
-            <button key={v} onClick={() => setChartMode(v)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: chartMode === v ? C.accentSoft : "transparent", color: chartMode === v ? C.t1 : C.t4, fontFamily: "inherit" }}>{l}</button>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 3 }}>
-          {chartMode === "native" ? (
-            ["1D","1W","1M","3M","6M","1Y","5Y"].map(r => (
-              <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: range === r ? C.accentSoft : "transparent", color: range === r ? C.t1 : C.t4, fontFamily: "inherit" }}>{r}</button>
-            ))
-          ) : (
-            [["1","1m"],["5","5m"],["15","15m"],["D","1D"],["W","1W"],["M","1M"]].map(([v,l]) => (
-              <button key={v} onClick={() => setIntv(v)} style={{ padding: "5px 9px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 600, background: intv === v ? C.accentSoft : "transparent", color: intv === v ? C.t1 : C.t4, fontFamily: "inherit" }}>{l}</button>
-            ))
-          )}
-        </div>
+      {/* Timeframe pills */}
+      <div style={{ display: "flex", gap: 4, padding: "8px 18px", flexShrink: 0, overflowX: "auto" }}>
+        {RANGES.map(r => (
+          <button key={r.l} onClick={() => setRange(r.l)} style={{
+            padding: "6px 14px", borderRadius: 8, border: `1px solid ${range === r.l ? C.borderActive : C.border}`,
+            background: range === r.l ? C.accentSoft : "transparent",
+            color: range === r.l ? C.t1 : C.t3, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+          }}>{r.l}</button>
+        ))}
       </div>
-      {chartMode === "native" ? (
-        <div style={{ flex: 1, padding: "8px 0" }}>
-          {chartData ? <canvas ref={canvasRef}
-            onMouseMove={(e) => {
-              const canvas = canvasRef.current; if (!canvas?._chartVisible) return;
-              const rect = canvas.getBoundingClientRect();
-              const x = e.clientX - rect.left, y = e.clientY - rect.top;
-              const { _chartVisible: vis, _chartPad: p, _chartBarW: bw } = canvas;
-              const idx = Math.floor((x - p.left) / bw);
-              if (idx >= 0 && idx < vis.length) setCrosshair({ x: p.left + (idx + 0.5) * bw, y, bar: vis[idx] });
-            }}
-            onMouseLeave={() => setCrosshair(null)}
-            onWheel={(e) => {
-              e.preventDefault();
-              if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-                setChartOffset(o => Math.max(0, o + Math.round(e.deltaX / 5)));
-              } else {
-                setChartZoom(z => Math.max(0.5, Math.min(10, z * (1 + e.deltaY * -0.002))));
-              }
-            }}
-            style={{ width: "100%", height: "100%", display: "block", touchAction: "none", cursor: "crosshair" }}
-          /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: C.t4 }}>Loading…</div>}
-        </div>
-      ) : (
-        <div ref={containerRef} style={{ flex: 1, width: "100%", minHeight: 400, paddingBottom: "env(safe-area-inset-bottom, 0px)" }} className="tradingview-widget-container" />
-      )}
+      {/* Chart */}
+      <div style={{ flex: 1, position: "relative" }}>
+        {loading && <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: C.t4, fontSize: 13, zIndex: 2 }}>Loading…</div>}
+        <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
+      </div>
     </div>
   );
 }
