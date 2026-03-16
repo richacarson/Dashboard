@@ -544,7 +544,9 @@ export default function App() {
   }, [hdrs, ALL]);
 
   /* ── Fetch snapshot data ── */
-  const [priceFlash, setPriceFlash] = useState({}); // { SYM: "up"|"dn", ... } for flash animation
+  const [priceFlash, setPriceFlash] = useState({});
+  const quotesRef = useRef({}); // Store quotes in ref to avoid re-renders on poll
+  const barsRef = useRef({});
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
@@ -563,43 +565,65 @@ export default function App() {
         if (snap.dailyBar) tb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!tb[s]) tb[s] = {}; tb[s].pc = snap.prevDailyBar.c; }
       }
-      // Detect price changes for flash, only update state if something changed
-      setQuotes(prev => {
-        const flashes = {};
-        let anyChanged = false;
-        for (const s of Object.keys(nq)) {
-          if (!prev[s] || prev[s].p !== nq[s]?.p) {
-            anyChanged = true;
-            if (prev[s] && nq[s] && prev[s].p !== nq[s].p) {
-              flashes[s] = nq[s].p > prev[s].p ? "up" : "dn";
-            }
+
+      const prevQ = quotesRef.current;
+      const prevB = barsRef.current;
+      const isFirstLoad = Object.keys(prevQ).length === 0;
+
+      // Direct DOM updates for prices — no React re-render needed
+      const flashes = {};
+      let anyQuoteChanged = false;
+      for (const s of Object.keys(nq)) {
+        if (!prevQ[s] || prevQ[s].p !== nq[s]?.p) {
+          anyQuoteChanged = true;
+          if (prevQ[s] && nq[s]) flashes[s] = nq[s].p > prevQ[s].p ? "up" : "dn";
+          // Update DOM directly
+          const el = document.querySelector(`[data-ticker-chg="${s}"]`);
+          if (el && nq[s] && (nb[s]?.pc || prevB[s]?.pc)) {
+            const pc = nb[s]?.pc || prevB[s]?.pc;
+            const c = ((nq[s].p - pc) / pc) * 100;
+            el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+            el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+            el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
           }
         }
-        if (!anyChanged && Object.keys(prev).length === Object.keys(nq).length) return prev; // no change, skip re-render
-        if (Object.keys(flashes).length) {
-          setPriceFlash(flashes);
-          setTimeout(() => setPriceFlash({}), 800);
+      }
+      // Update benchmark DOM directly
+      for (const s of Object.keys(bq)) {
+        const el = document.querySelector(`[data-bm-price="${s}"]`);
+        const elChg = document.querySelector(`[data-bm-chg="${s}"]`);
+        if (el && bq[s]) el.textContent = bq[s].p?.toFixed(2) || "";
+        if (elChg && bq[s] && bb[s]?.pc) {
+          const c = ((bq[s].p - bb[s].pc) / bb[s].pc) * 100;
+          elChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+          elChg.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
         }
-        return nq;
-      });
-      setBars(prev => {
-        // Only update if bars actually changed
-        const changed = Object.keys(nb).some(s => !prev[s] || prev[s].pc !== nb[s]?.pc || prev[s].c !== nb[s]?.c);
-        return changed ? nb : prev;
-      });
-      setBmQuotes(prev => {
-        const changed = Object.keys(bq).some(s => !prev[s] || prev[s].p !== bq[s]?.p);
-        return changed ? { ...prev, ...bq } : prev;
-      });
-      setBmBars(prev => {
-        const changed = Object.keys(bb).some(s => !prev[s] || prev[s].pc !== bb[s]?.pc);
-        return changed ? { ...prev, ...bb } : prev;
-      });
-      setLastUp(prev => {
-        const now = new Date();
-        // Only update lastUp every 5 seconds to avoid constant re-render
-        return !prev || now - prev > 5000 ? now : prev;
-      });
+      }
+
+      // Store in refs (no re-render)
+      quotesRef.current = nq;
+      barsRef.current = { ...prevB, ...nb };
+
+      // Flash effect
+      if (Object.keys(flashes).length) {
+        for (const [s, dir] of Object.entries(flashes)) {
+          const el = document.querySelector(`[data-ticker-chg="${s}"]`);
+          if (el) {
+            el.style.background = dir === "up" ? C.up + "30" : C.dn + "30";
+            setTimeout(() => { if (el) el.style.background = "transparent"; }, 600);
+          }
+        }
+      }
+
+      // Only trigger React re-render on first load or manual refresh
+      if (isFirstLoad || showLoading) {
+        setQuotes(nq); setBars(nb); setBmQuotes(bq); setBmBars(bb);
+      }
+      // Update bmQuotes/bmBars refs for benchmarks
+      if (Object.keys(bq).length) setBmQuotes(prev => isFirstLoad || showLoading ? { ...prev, ...bq } : prev);
+      if (Object.keys(bb).length) setBmBars(prev => isFirstLoad || showLoading ? { ...prev, ...bb } : prev);
+
+      setLastUp(prev => { const now = new Date(); return !prev || now - prev > 5000 ? now : prev; });
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
   }, [apiKey, apiSecret, hdrs, ALL]);
 
@@ -901,7 +925,7 @@ export default function App() {
       if (refresh === 0) return null; // explicitly off
       if (refresh > 0) return refresh * 1000; // manual override
       // Smart: check market status
-      return marketStatus.status === "open" ? 5000 : null;
+      return marketStatus.status === "open" ? 1000 : null;
     };
     const ms = getInterval();
     if (ms) {
@@ -972,8 +996,6 @@ export default function App() {
     const nm = names[s] || "";
     const pts = intradayPts[s];
     const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
-    const flash = priceFlash[s];
-    const flashBg = flash === "up" ? C.up + "30" : flash === "dn" ? C.dn + "30" : "transparent";
     return (
       <div key={s} onClick={() => setChartSymbol(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
@@ -987,12 +1009,12 @@ export default function App() {
         <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 8px" }}>
           <Sparkline points={pts} chg={c} />
         </div>
-        <div style={{
+        <div data-ticker-chg={s} style={{
           padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
           color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
           border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
-          background: flashBg, transition: "background 0.6s ease-out",
+          transition: "background 0.6s ease-out",
         }}>{pct(c)}</div>
       </div>
     );
@@ -1283,8 +1305,8 @@ export default function App() {
                       }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>{bm.name}</div>
                         <div style={{ display: "flex", alignItems: isDesktop ? "center" : "baseline", gap: 8, flexWrap: isDesktop ? "wrap" : "nowrap" }}>
-                          {q && <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q.p.toFixed(2)}</span>}
-                          <span style={{
+                          {q && <span data-bm-price={bm.sym} style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q.p.toFixed(2)}</span>}
+                          <span data-bm-chg={bm.sym} style={{
                             fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
                             color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
                           }}>{pct(c)}</span>
@@ -2160,7 +2182,7 @@ export default function App() {
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Auto-Refresh</div>
-              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 5s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 1s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 1, l: "1s" }, { v: 5, l: "5s" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }].map(({ v, l }) => (
                   <button key={l} onClick={() => setRefresh(v)} style={{
