@@ -253,11 +253,11 @@ function StockLogo({ symbol, size = 32 }) {
     />
   );
 }
-function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
+function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const [intv, setIntv] = useState("W");
-  const [chartMode, setChartMode] = useState("tv");
+  const [chartMode, setChartMode] = useState("native");
   const [chartData, setChartData] = useState(null);
   const [range, setRange] = useState("3M");
   // Swipe/drag to dismiss
@@ -305,19 +305,27 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
     setChartData(null);
     const ranges = { "1D": 1, "1W": 7, "1M": 30, "3M": 90, "6M": 180, "1Y": 365, "5Y": 1825 };
     const days = ranges[range] || 1;
-    const start = new Date(); start.setDate(start.getDate() - Math.max(days, 3)); // min 3 days to ensure data
+    const start = new Date(); start.setDate(start.getDate() - Math.max(days, 3));
     const tf = days <= 1 ? "5Min" : days <= 7 ? "30Min" : days <= 30 ? "1Hour" : "1Day";
     const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=${tf}&start=${start.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`;
-    fetch(url, { headers: hdrs }).then(r => r.json()).then(data => {
-      const bars = data.bars?.[symbol] || [];
-      if (bars.length > 1) { setChartData(bars); return; }
-      // Fallback: if intraday returned empty (weekend/holiday), fetch daily bars instead
-      if (days <= 7) {
-        const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 30);
-        fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=1Day&start=${fallbackStart.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
-          .then(r => r.json()).then(d2 => { const b2 = d2.bars?.[symbol] || []; if (b2.length) setChartData(b2); }).catch(() => {});
-      }
-    }).catch(() => {});
+    
+    const doFetch = () => {
+      fetch(url, { headers: hdrs }).then(r => r.json()).then(data => {
+        const bars = data.bars?.[symbol] || [];
+        if (bars.length > 1) { setChartData(bars); return; }
+        if (days <= 7) {
+          const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 30);
+          fetch(`https://data.alpaca.markets/v2/stocks/bars?symbols=${symbol}&timeframe=1Day&start=${fallbackStart.toISOString().slice(0, 10)}&feed=iex&limit=10000&adjustment=split`, { headers: hdrs })
+            .then(r => r.json()).then(d2 => { const b2 = d2.bars?.[symbol] || []; if (b2.length) setChartData(b2); }).catch(() => {});
+        }
+      }).catch(() => {});
+    };
+    
+    doFetch();
+    // Auto-refresh intraday chart every 5s during market hours
+    const refreshMs = days <= 1 ? 5000 : days <= 7 ? 15000 : null;
+    const timer = refreshMs ? setInterval(doFetch, refreshMs) : null;
+    return () => { if (timer) clearInterval(timer); };
   }, [symbol, range, chartMode, hdrs]);
 
   useEffect(() => {
@@ -394,6 +402,26 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
 
   const pctChg = chartData?.length > 1 ? ((chartData[chartData.length-1].c - chartData[0].c) / chartData[0].c * 100) : null;
   const priceNow = chartData?.length ? chartData[chartData.length - 1].c : null;
+  
+  // Live price ticker in chart header — updates from quotesRef without re-rendering chart
+  const livePriceRef = useRef(null);
+  const livePctRef = useRef(null);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const q = hdrs ? quotesRef?.current?.[symbol] : null;
+      if (q?.p && livePriceRef.current) {
+        livePriceRef.current.textContent = `$${q.p.toFixed(2)}`;
+      }
+      // Update day % from bars ref
+      const b = barsRef?.current?.[symbol];
+      if (q?.p && b?.pc && livePctRef.current) {
+        const c = ((q.p - b.pc) / b.pc) * 100;
+        livePctRef.current.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+        livePctRef.current.style.color = c >= 0 ? C.up : C.dn;
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [symbol]);
 
   return (
     <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={overlayStyle}>
@@ -405,12 +433,13 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
           <div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
               <span style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{symbol}</span>
-              {priceNow && <span style={{ fontSize: 16, fontWeight: 700, color: C.t2 }}>${priceNow.toFixed(2)}</span>}
+              <span ref={livePriceRef} style={{ fontSize: 16, fontWeight: 700, color: C.t2 }}>{priceNow ? `$${priceNow.toFixed(2)}` : ""}</span>
+              <span ref={livePctRef} style={{ fontSize: 13, fontWeight: 700, color: pctChg >= 0 ? C.up : C.dn }}>{pctChg != null ? `${pctChg >= 0 ? "+" : ""}${pctChg.toFixed(2)}%` : ""}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 12, color: C.t4 }}>{names?.[symbol] || ""}</span>
-              {pctChg != null && chartMode === "native" && (
-                <span style={{ fontSize: 12, fontWeight: 700, color: pctChg >= 0 ? C.up : C.dn }}>{pctChg >= 0 ? "+" : ""}{pctChg.toFixed(2)}% ({range})</span>
+              {chartMode === "native" && range !== "1D" && pctChg != null && (
+                <span style={{ fontSize: 11, color: C.t4 }}>({range})</span>
               )}
             </div>
           </div>
@@ -2506,7 +2535,7 @@ export default function App() {
       </div>
       )}
 
-      {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} hdrs={hdrs} names={names} theme={theme} />}
+      {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} />}
       <GS theme={theme} />
     </div>
   );
