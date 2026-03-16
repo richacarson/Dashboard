@@ -454,7 +454,7 @@ export default function App() {
   };
   const [openSleeves, setOpenSleeves] = useState({});
   const [chartSymbol, setChartSymbol] = useState(null);
-  const [refresh, setRefresh] = useState(30);
+  const [refresh, setRefresh] = useState(null); // null = smart auto
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem("iown_theme") || "light"; } catch { return "light"; }
@@ -858,11 +858,20 @@ export default function App() {
 
   useEffect(() => { if (EK && ES && !authed && unlocked) auth(); }, [unlocked]);
   useEffect(() => {
-    if (authed && refresh) {
-      iRef.current = setInterval(() => { fetchData(); fetchNews(); }, refresh * 1000);
+    if (!authed) return;
+    // Smart auto: 15s during market hours, off when closed. Manual override if set.
+    const getInterval = () => {
+      if (refresh === 0) return null; // explicitly off
+      if (refresh > 0) return refresh * 1000; // manual override
+      // Smart: check market status
+      return marketStatus.status === "open" ? 15000 : null;
+    };
+    const ms = getInterval();
+    if (ms) {
+      iRef.current = setInterval(() => { fetchData(); fetchNews(); }, ms);
       return () => clearInterval(iRef.current);
     }
-  }, [authed, refresh, fetchData, fetchNews]);
+  }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
   const chg = s => { const q = quotes[s], b = bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
@@ -2121,9 +2130,10 @@ export default function App() {
               </div>
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Auto-Refresh Interval</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Auto-Refresh</div>
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 15s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
               <div style={{ display: "flex", gap: 6 }}>
-                {[{ v: null, l: "Off" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }, { v: 60, l: "60s" }].map(({ v, l }) => (
+                {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }, { v: 60, l: "60s" }].map(({ v, l }) => (
                   <button key={l} onClick={() => setRefresh(v)} style={{
                     padding: "7px 14px", background: refresh === v ? C.accentSoft : "transparent",
                     border: `1px solid ${refresh === v ? C.borderActive : C.border}`,
