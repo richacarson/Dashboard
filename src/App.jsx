@@ -407,17 +407,21 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
         const data = await r.json();
         const bars = data.bars?.[symbol] || [];
         for (const b of bars) {
-          seriesRef.current.update({
-            time: Math.floor(new Date(b.t).getTime() / 1000),
-            open: b.o, high: b.h, low: b.l, close: b.c,
-          });
+          const ts = Math.floor(new Date(b.t).getTime() / 1000);
+          const barData = { time: ts, open: b.o, high: b.h, low: b.l, close: b.c };
+          seriesRef.current.update(barData);
+          // Keep the latest bar as the current forming candle reference
+          currentBarRef.current = barData;
         }
       } catch {}
     }, activeRange.refreshMs);
     return () => clearInterval(timer);
   }, [symbol, range]);
 
-  // Push live tick to current candle
+  // Push live tick to current candle — merge with existing OHLC
+  const currentBarRef = useRef(null); // { time, open, high, low, close }
+  useEffect(() => { currentBarRef.current = null; }, [symbol, range]); // reset on change
+  
   useEffect(() => {
     if (!seriesRef.current || !activeRange.refreshMs) return;
     const tfMap = { "1Min": 60, "5Min": 300, "15Min": 900, "1Hour": 3600, "4Hour": 14400 };
@@ -426,7 +430,17 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
       const q = quotesRef?.current?.[symbol];
       if (!q?.p || !seriesRef.current) return;
       const barTs = Math.floor(Date.now() / 1000 / tfSec) * tfSec;
-      try { seriesRef.current.update({ time: barTs, open: q.p, high: q.p, low: q.p, close: q.p }); } catch {}
+      const cur = currentBarRef.current;
+      if (cur && cur.time === barTs) {
+        // Update existing forming candle
+        cur.high = Math.max(cur.high, q.p);
+        cur.low = Math.min(cur.low, q.p);
+        cur.close = q.p;
+      } else {
+        // New candle period started
+        currentBarRef.current = { time: barTs, open: q.p, high: q.p, low: q.p, close: q.p };
+      }
+      try { seriesRef.current.update(currentBarRef.current); } catch {}
     }, 1000);
     return () => clearInterval(timer);
   }, [symbol, range]);
