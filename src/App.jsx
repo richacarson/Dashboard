@@ -563,24 +563,43 @@ export default function App() {
         if (snap.dailyBar) tb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!tb[s]) tb[s] = {}; tb[s].pc = snap.prevDailyBar.c; }
       }
-      // Detect which prices changed for flash effect
+      // Detect price changes for flash, only update state if something changed
       setQuotes(prev => {
         const flashes = {};
+        let anyChanged = false;
         for (const s of Object.keys(nq)) {
-          if (prev[s] && nq[s] && prev[s].p !== nq[s].p) {
-            flashes[s] = nq[s].p > prev[s].p ? "up" : "dn";
+          if (!prev[s] || prev[s].p !== nq[s]?.p) {
+            anyChanged = true;
+            if (prev[s] && nq[s] && prev[s].p !== nq[s].p) {
+              flashes[s] = nq[s].p > prev[s].p ? "up" : "dn";
+            }
           }
         }
+        if (!anyChanged && Object.keys(prev).length === Object.keys(nq).length) return prev; // no change, skip re-render
         if (Object.keys(flashes).length) {
           setPriceFlash(flashes);
           setTimeout(() => setPriceFlash({}), 800);
         }
         return nq;
       });
-      setBars(nb);
-      setBmQuotes(prev => ({ ...prev, ...bq }));
-      setBmBars(prev => ({ ...prev, ...bb }));
-      setLastUp(new Date());
+      setBars(prev => {
+        // Only update if bars actually changed
+        const changed = Object.keys(nb).some(s => !prev[s] || prev[s].pc !== nb[s]?.pc || prev[s].c !== nb[s]?.c);
+        return changed ? nb : prev;
+      });
+      setBmQuotes(prev => {
+        const changed = Object.keys(bq).some(s => !prev[s] || prev[s].p !== bq[s]?.p);
+        return changed ? { ...prev, ...bq } : prev;
+      });
+      setBmBars(prev => {
+        const changed = Object.keys(bb).some(s => !prev[s] || prev[s].pc !== bb[s]?.pc);
+        return changed ? { ...prev, ...bb } : prev;
+      });
+      setLastUp(prev => {
+        const now = new Date();
+        // Only update lastUp every 5 seconds to avoid constant re-render
+        return !prev || now - prev > 5000 ? now : prev;
+      });
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
   }, [apiKey, apiSecret, hdrs, ALL]);
 
