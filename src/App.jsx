@@ -275,7 +275,6 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
 
   const isDark = theme === "dark";
 
-  // Load TradingView widget
   useEffect(() => {
     if (!containerRef.current) return;
     containerRef.current.innerHTML = "";
@@ -296,24 +295,36 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
       theme: isDark ? "dark" : "light",
       style: "1",
       locale: "en",
-      backgroundColor: "rgba(0,0,0,0)",
-      gridColor: isDark ? "rgba(110,132,80,0.05)" : "rgba(80,100,60,0.05)",
+      backgroundColor: isDark ? "#080B05" : "#F5F5F0",
+      gridColor: isDark ? "rgba(110,132,80,0.04)" : "rgba(80,100,60,0.04)",
       allow_symbol_change: false,
       hide_volume: false,
       hide_top_toolbar: false,
       hide_legend: false,
+      hide_side_toolbar: false,
       save_image: false,
       calendar: false,
       withdateranges: true,
-      details: true,
+      details: false,
       hotlist: false,
+      show_popup_button: false,
       favorite_intervals: ["1", "5", "15", "60", "240", "D"],
+      overrides: {
+        "mainSeriesProperties.candleStyle.upColor": isDark ? "#34D399" : "#16A34A",
+        "mainSeriesProperties.candleStyle.downColor": isDark ? "#F87171" : "#DC2626",
+        "mainSeriesProperties.candleStyle.wickUpColor": isDark ? "#34D399" : "#16A34A",
+        "mainSeriesProperties.candleStyle.wickDownColor": isDark ? "#F87171" : "#DC2626",
+        "mainSeriesProperties.candleStyle.borderUpColor": isDark ? "#34D399" : "#16A34A",
+        "mainSeriesProperties.candleStyle.borderDownColor": isDark ? "#F87171" : "#DC2626",
+        "paneProperties.background": isDark ? "#080B05" : "#F5F5F0",
+        "paneProperties.backgroundType": "solid",
+      },
       support_host: "https://www.tradingview.com",
     });
     containerRef.current.appendChild(script);
   }, [symbol, theme]);
 
-  // Live price display
+  // Live price
   const livePriceRef = useRef(null);
   const livePctRef = useRef(null);
   useEffect(() => {
@@ -338,26 +349,36 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
       transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
       overflow: "hidden",
     }}>
-      <div style={{ width: 36, height: 4, borderRadius: 2, background: C.t4, margin: "8px auto 0", opacity: 0.5 }} />
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 18px", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <StockLogo symbol={symbol} size={36} />
+      {/* Minimal header — compact, blends with chart */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 16px 6px", flexShrink: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <StockLogo symbol={symbol} size={32} />
           <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{symbol}</span>
-              <span ref={livePriceRef} style={{ fontSize: 16, fontWeight: 700, color: C.t2 }}></span>
-              <span ref={livePctRef} style={{ fontSize: 13, fontWeight: 700, color: C.t3 }}></span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ fontSize: 17, fontWeight: 800, color: C.t1, letterSpacing: 0.3 }}>{symbol}</span>
+              <span ref={livePriceRef} style={{ fontSize: 15, fontWeight: 700, color: C.t2 }}></span>
+              <span ref={livePctRef} style={{ fontSize: 12, fontWeight: 700, color: C.t3 }}></span>
             </div>
-            <div style={{ fontSize: 12, color: C.t4 }}>{names?.[symbol] || ""}</div>
+            <div style={{ fontSize: 11, color: C.t4, marginTop: 1 }}>{names?.[symbol] || ""}</div>
           </div>
         </div>
-        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 10, background: C.surface, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        <button onClick={onClose} style={{
+          width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
+          border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
       </div>
-      {/* TradingView Chart */}
-      <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
+      {/* Chart — takes all remaining space, no borders */}
+      <div ref={containerRef} style={{ flex: 1, width: "100%", marginBottom: -2 }} className="tradingview-widget-container" />
+      {/* Hide TradingView copyright bar with CSS */}
+      <style>{`
+        .tradingview-widget-copyright { display: none !important; }
+        .tradingview-widget-container iframe { border: none !important; }
+      `}</style>
     </div>
   );
 }
