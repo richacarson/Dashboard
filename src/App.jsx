@@ -2335,9 +2335,9 @@ export default function App() {
         {/* ━━━ BRIEFS ━━━ */}
         {tab === "briefs" && (() => {
           const BRIEFS = [
-            { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: isDark ? "#F59E0B" : "#D97706" },
-            { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: isDark ? "#34D399" : "#16A34A" },
-            { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The-Rich-Report.html", color: isDark ? "#6366F1" : "#4F46E5" },
+            { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme === "dark" ? "#F59E0B" : "#D97706" },
+            { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme === "dark" ? "#34D399" : "#16A34A" },
+            { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The-Rich-Report.html", color: theme === "dark" ? "#6366F1" : "#4F46E5" },
           ];
           const active = BRIEFS.find(b => b.id === briefView);
 
