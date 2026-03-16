@@ -90,14 +90,44 @@ const LIGHT = {
 let C = DARK;
 
 /* ── Sparkline from intraday bars array ── */
-function Sparkline({ points, chg, width = 90, height = 32 }) {
+function Sparkline({ points, chg, width = 100, height = 36 }) {
   if (!points || points.length < 2) return <div style={{ width, height }} />;
   const mn = Math.min(...points), mx = Math.max(...points), rng = mx - mn || 1;
-  const d = points.map((p, i) => `${i === 0 ? "M" : "L"}${(i / (points.length - 1)) * width},${height - 2 - ((p - mn) / rng) * (height - 4)}`).join(" ");
+  const pad = 2;
+  const pts = points.map((p, i) => [
+    (i / (points.length - 1)) * width,
+    pad + ((mx - p) / rng) * (height - pad * 2)
+  ]);
+  // Smooth curve using cardinal spline
+  const tension = 0.3;
+  let pathD = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) * tension;
+    const cp1y = p1[1] + (p2[1] - p0[1]) * tension;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * tension;
+    const cp2y = p2[1] - (p3[1] - p1[1]) * tension;
+    pathD += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
+  }
   const color = (chg != null ? chg : 0) >= 0 ? C.up : C.dn;
+  const id = `sp${Math.random().toString(36).slice(2, 8)}`;
+  // Fill path: close to bottom
+  const fillD = pathD + ` L${width},${height} L0,${height} Z`;
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block", flexShrink: 0 }}>
-      <path d={d} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <path d={fillD} fill={`url(#${id})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Dot at last point */}
+      <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="2.5" fill={color} />
     </svg>
   );
 }
@@ -221,7 +251,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const [intv, setIntv] = useState("W");
-  const [chartMode, setChartMode] = useState("native");
+  const [chartMode, setChartMode] = useState("tv");
   const [chartData, setChartData] = useState(null);
   const [range, setRange] = useState("3M");
   // Swipe/drag to dismiss
@@ -644,7 +674,7 @@ export default function App() {
     if (!apiKey || !apiSecret) return;
     try {
       const today = new Date().toISOString().split("T")[0];
-      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=30Min&start=${today}T04:00:00Z&feed=iex&limit=1000`, { headers: hdrs });
+      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${today}T04:00:00Z&feed=iex&limit=10000`, { headers: hdrs });
       if (!r.ok) return;
       const d = await r.json();
       const pts = {};
