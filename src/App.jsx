@@ -2401,7 +2401,7 @@ export default function App() {
                     src={active.url}
                     title={active.title}
                     style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                    sandbox="allow-scripts allow-same-origin allow-popups"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
                   />
                 </div>
               )}
