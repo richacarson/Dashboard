@@ -260,7 +260,7 @@ function StockLogo({ symbol, size = 32 }) {
     let found = false;
     for (const url of srcs) {
       const img = new Image();
-      img.onload = () => { if (!found && img.naturalWidth >= 16) { found = true; setSrc(url); } };
+      img.onload = () => { if (!found) { found = true; setSrc(url); } };
       img.onerror = () => {};
       img.src = url;
     }
