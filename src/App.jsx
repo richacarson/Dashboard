@@ -548,8 +548,6 @@ export default function App() {
   const [priceFlash, setPriceFlash] = useState({});
   const quotesRef = useRef({});
   const barsRef = useRef({});
-  const bmQuotesRef = useRef({});
-  const bmBarsRef = useRef({});
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
@@ -565,27 +563,21 @@ export default function App() {
         if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
       }
-      // Benchmarks that didn't come back from IEX — use FMP real-time quotes (throttled to ~15s)
+      // Non-IEX benchmarks: fetch prevClose from Finnhub on first load (WS handles live prices)
       const missingBM = BM_SYMS.filter(s => !nq[s]);
-      const fmpNow = Date.now();
-      if (missingBM.length > 0 && FK && (!window._lastFmpBm || fmpNow - window._lastFmpBm > 15000)) {
-        window._lastFmpBm = fmpNow;
-        try {
-          const fmpR = await fetch(`https://financialmodelingprep.com/api/v3/quote/${missingBM.join(",")}?apikey=${FK}`);
-          if (fmpR.ok) {
-            const fmpData = await fmpR.json();
-            if (Array.isArray(fmpData)) {
-              for (const q of fmpData) {
-                if (q.symbol && q.price) {
-                  nq[q.symbol] = { p: q.price, t: new Date().toISOString() };
-                  nb[q.symbol] = { ...nb[q.symbol], pc: q.previousClose || q.price, c: q.price, o: q.open || q.price, h: q.dayHigh || q.price, l: q.dayLow || q.price };
-                }
-              }
+      if (missingBM.length > 0 && FH) {
+        await Promise.all(missingBM.map(async (s) => {
+          try {
+            const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${FH}`);
+            if (r.ok) {
+              const q = await r.json();
+              if (q.c) nq[s] = { p: q.c, t: new Date().toISOString() };
+              if (q.pc) nb[s] = { ...nb[s], pc: q.pc, o: q.o, h: q.h, l: q.l, c: q.c };
             }
-          }
-        } catch {}
+          } catch {}
+        }));
       }
-      // For throttled polls, use cached ref data for missing benchmarks
+      // Also fill from cached refs if still missing
       for (const s of missingBM) {
         if (!nq[s] && quotesRef.current[s]) nq[s] = quotesRef.current[s];
         if (!nb[s]?.pc && barsRef.current[s]?.pc) nb[s] = { ...nb[s], ...barsRef.current[s] };
@@ -1125,6 +1117,48 @@ export default function App() {
     } catch {}
   }, [apiKey, apiSecret]);
 
+  // Finnhub WebSocket for benchmarks that don't trade on IEX
+  const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
+  const fhWsRef = useRef(null);
+  const connectFinnhubWS = useCallback(() => {
+    if (!FH) return;
+    try {
+      const ws = new WebSocket(`wss://ws.finnhub.io?token=${FH}`);
+      fhWsRef.current = ws;
+      ws.onopen = () => {
+        for (const s of NON_IEX_BM) {
+          ws.send(JSON.stringify({ type: "subscribe", symbol: s }));
+        }
+      };
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === "trade" && Array.isArray(msg.data)) {
+            for (const trade of msg.data) {
+              const sym = trade.s;
+              const price = trade.p;
+              if (!sym || !price) continue;
+              quotesRef.current[sym] = { p: price, t: new Date(trade.t).toISOString() };
+              const pc = barsRef.current[sym]?.pc;
+              if (pc) {
+                const c = ((price - pc) / pc) * 100;
+                // Benchmark DOM updates
+                const bmEl = document.querySelector(`[data-bm-price="${sym}"]`);
+                if (bmEl) bmEl.textContent = price.toFixed(2);
+                const bmChgEl = document.querySelector(`[data-bm-chg="${sym}"]`);
+                if (bmChgEl) {
+                  bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+                  bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+                }
+              }
+            }
+          }
+        } catch {}
+      };
+      ws.onclose = () => { setTimeout(connectFinnhubWS, 5000); };
+    } catch {}
+  }, []);
+
   const auth = async () => {
     setAuthErr("");
     try {
@@ -1140,6 +1174,7 @@ export default function App() {
       // Preload ExcelJS for export
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
+      connectFinnhubWS();
     } catch { setAuthErr("Invalid API keys."); }
   };
 
@@ -1161,7 +1196,7 @@ export default function App() {
       const sparkTimer = setInterval(() => { fetchIntraday(); }, 30000);
       // Calendar refresh every 5 min to pick up actuals from GitHub Action
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); clearInterval(calTimer); };
+      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); clearInterval(calTimer); if (fhWsRef.current) fhWsRef.current.close(); };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
