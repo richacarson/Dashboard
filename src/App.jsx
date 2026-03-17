@@ -1669,19 +1669,7 @@ export default function App() {
         {tab === "calendar" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Calendar</div>}
-            {/* Toggle: Economic / Earnings */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
-              {[{ v: "economic", l: "📊 Economic" }, { v: "earnings", l: "💰 Earnings" }].map(({ v, l }) => (
-                <button key={v} onClick={() => setCalendarView(v)} style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${calendarView === v ? C.borderActive : C.border}`,
-                  background: calendarView === v ? C.accentSoft : "transparent",
-                  color: calendarView === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "inherit",
-                }}>{l}</button>
-              ))}
-            </div>
-
-            {calendarView === "economic" && (() => {
+            {(() => {
               if (!econCalendar.length) return (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
                   No economic events loaded.
@@ -1767,113 +1755,6 @@ export default function App() {
                 );
               });
             })()}
-            {calendarView === "earnings" && (() => {
-              const [earningsMode, setEM] = typeof window !== "undefined" ? [window._earningsMode || "holdings", v => { window._earningsMode = v; setCalendarView("earnings"); }] : ["holdings", () => {}];
-              return (
-                <div>
-                  {/* Sub-toggle: Holdings vs TradingView */}
-                  <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-                    {[{ id: "holdings", l: "My Holdings" }, { id: "tv", l: "All Earnings" }].map(m => (
-                      <button key={m.id} onClick={() => { window._earningsMode = m.id; setCalendarView("_"); setTimeout(() => setCalendarView("earnings"), 0); }} style={{
-                        padding: "8px 16px", borderRadius: 10, border: `1px solid ${(window._earningsMode || "holdings") === m.id ? C.borderActive : C.border}`,
-                        background: (window._earningsMode || "holdings") === m.id ? C.accentSoft : "transparent",
-                        color: (window._earningsMode || "holdings") === m.id ? C.t1 : C.t3, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-                      }}>{m.l}</button>
-                    ))}
-                  </div>
-                  {(window._earningsMode || "holdings") === "tv" ? (
-                    <div style={{ borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, height: "calc(100dvh - 280px)", minHeight: 400 }}>
-                      <iframe
-                        src={`https://www.tradingview.com/markets/stocks-usa/earnings/`}
-                        style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                        title="TradingView Earnings"
-                        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-              {!earningsCalendar.length ? (
-                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                  No upcoming earnings for your holdings.
-                  <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Earnings</button>
-                </div>
-              ) : (() => {
-              const grouped = {};
-              earningsCalendar.forEach(e => {
-                const date = e.date || "Unknown";
-                if (!grouped[date]) grouped[date] = [];
-                grouped[date].push(e);
-              });
-              return Object.entries(grouped).map(([date, events]) => (
-                <div key={date} style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: C.t3, marginBottom: 10, padding: "8px 0", borderBottom: `1px solid ${C.border}`, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    {new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-                    {date === new Date().toISOString().slice(0, 10) && <span style={{ marginLeft: 8, fontSize: 11, color: C.up, fontWeight: 700 }}>TODAY</span>}
-                  </div>
-                  <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "repeat(2, 1fr)" : undefined, gap: isDesktop ? 12 : 0 }}>
-                  {events.map((evt, i) => {
-                    const hasBeat = evt.epsActual != null && evt.epsEstimate != null;
-                    const epsBeat = hasBeat ? evt.epsActual >= evt.epsEstimate : null;
-                    const hasReported = evt.epsActual != null;
-                    return (
-                    <div key={i} onClick={() => setChartSymbol(evt.symbol)} style={{
-                      padding: isDesktop ? "16px" : "14px 0",
-                      borderBottom: isDesktop ? "none" : `1px solid ${C.border}`,
-                      background: isDesktop ? C.card : "transparent",
-                      border: isDesktop ? `1px solid ${C.border}` : "none",
-                      borderRadius: isDesktop ? 12 : 0,
-                      cursor: "pointer",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <StockLogo symbol={evt.symbol} size={28} />
-                          <div style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{evt.symbol}</div>
-                          {hasReported && (
-                            <span style={{
-                              fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 6,
-                              background: epsBeat ? C.up + "18" : C.dn + "18",
-                              color: epsBeat ? C.up : C.dn,
-                            }}>{epsBeat ? "BEAT" : "MISS"}</span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase" }}>
-                          {hasReported ? "Reported" : evt.hour === "bmo" ? "Before Open" : evt.hour === "amc" ? "After Close" : evt.hour || ""}
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 8 }}>{names[evt.symbol] || fundamentals[evt.symbol]?.companyName || ""}</div>
-                      <div style={{ display: "flex", gap: 12, fontSize: 12, flexWrap: "wrap" }}>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <span style={{ fontSize: 10, color: C.t4, fontWeight: 600 }}>EPS</span>
-                          <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                            {evt.epsEstimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{fmtEps(evt.epsEstimate)}</span></span>}
-                            {evt.epsActual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>{fmtEps(evt.epsActual)}</span></span>}
-                            {hasBeat && <span style={{ fontSize: 11, color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>({epsBeat ? "+" : ""}{((evt.epsActual - evt.epsEstimate) / Math.abs(evt.epsEstimate) * 100).toFixed(1)}%)</span>}
-                          </div>
-                        </div>
-                        {(evt.revenueEstimate != null || evt.revenueActual != null) && (
-                          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                            <span style={{ fontSize: 10, color: C.t4, fontWeight: 600 }}>Revenue</span>
-                            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                              {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{vol(evt.revenueEstimate)}</span></span>}
-                              {evt.revenueActual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: C.t2, fontWeight: 700 }}>{vol(evt.revenueActual)}</span></span>}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    );
-                  })}
-                  </div>
-                </div>
-              ));
-              })()}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        )}
 
         {/* ━━━ METRICS ━━━ */}
         {tab === "research" && (
