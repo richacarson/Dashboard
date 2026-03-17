@@ -141,7 +141,7 @@ function Sparkline({ points, chg, width = 100, height = 36 }) {
 }
 
 /* ── Portfolio Heatmap ── */
-function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
+function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
   // Build cells from all sleeves
   const cells = [];
   for (const [k, sleeve] of Object.entries(sleeves)) {
@@ -179,8 +179,16 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
       gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
       gap: 3, borderRadius: 14, overflow: "hidden",
     }}>
-      {cells.map(cell => (
-        <div key={cell.sym} onClick={() => onTap(cell.sym)} data-heatmap={cell.sym} style={{
+      {cells.map(cell => {
+        let lpTimer = null;
+        return (
+        <div key={cell.sym} 
+          onClick={() => onTap(cell.sym)} 
+          onContextMenu={(e) => { e.preventDefault(); onContext?.(cell.sym, e.clientX, e.clientY); }}
+          onTouchStart={(e) => { const t = e.touches[0]; lpTimer = setTimeout(() => onContext?.(cell.sym, t.clientX, t.clientY), 500); }}
+          onTouchEnd={() => { if (lpTimer) clearTimeout(lpTimer); }}
+          onTouchMove={() => { if (lpTimer) clearTimeout(lpTimer); }}
+          data-heatmap={cell.sym} style={{
           background: getColor(cell.chg),
           padding: "10px 6px", cursor: "pointer",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
@@ -193,7 +201,8 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap }) {
             textShadow: "0 1px 2px rgba(0,0,0,0.4)",
           }}>{cell.chg >= 0 ? "+" : ""}{cell.chg.toFixed(1)}%</div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -2104,7 +2113,7 @@ Instructions:
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
-                <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} />
+                <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} onContext={(s, x, y) => setCtxMenu({ sym: s, x, y })} />
               </div>
             )}
           </div>
