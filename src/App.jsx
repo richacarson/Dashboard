@@ -334,49 +334,68 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     fetchProfile();
 
     // Fetch company description from Wikipedia (free, no API key)
-    const fetchWikiDesc = async () => {
-      await new Promise(r => setTimeout(r, 2000));
-    };
-    fetchWikiDesc();
+    // Merged into profile fetch — runs after profile data is available
   }, [symbol]);
 
   // Fetch Wikipedia description once profile name is available
   useEffect(() => {
     if (!profile || profile.description || profile._wikiDesc || profile._wikiTried) return;
-    setProfile(p => ({ ...p, _wikiTried: true, _aiDescLoading: true }));
     const name = profile.name || profile.companyName || names?.[symbol] || "";
-    if (!name) { setProfile(p => ({ ...p, _aiDescLoading: false })); return; }
+    if (!name) return;
+    
+    setProfile(p => ({ ...p, _wikiTried: true, _aiDescLoading: true }));
 
-    (async () => {
+    const fetchWiki = async () => {
       const clean = name
         .replace(/,?\s*(Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|PLC|plc|LLC|Co\.?|Group|Holdings|International|Incorporated|N\.?V\.?|S\.?A\.?|SE|AG|& Co\.?\s*KGaA|Class [A-C]|Cl [A-C])$/gi, "")
         .replace(/\s+/g, " ").trim();
 
-      // Use Wikipedia search API to find the right article
-      const searchTerms = [clean, name, `${clean} company`, `${symbol} stock`];
-      for (const term of searchTerms) {
+      // Try direct page summary first (fastest)
+      const directNames = [
+        clean,
+        clean.replace(/\s/g, "_"),
+        name.replace(/\s/g, "_"),
+        `${clean}_(company)`,
+      ];
+      for (const n of directNames) {
         try {
-          const searchR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srlimit=3&format=json&origin=*`);
-          if (!searchR.ok) continue;
-          const searchD = await searchR.json();
-          const results = searchD?.query?.search || [];
-          for (const result of results) {
-            // Skip disambiguation and list pages
-            if (/disambiguation|list of/i.test(result.title)) continue;
-            try {
-              const summR = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(result.title)}`);
-              if (!summR.ok) continue;
-              const d = await summR.json();
-              if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
-                setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
-                return;
-              }
-            } catch {}
+          const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(n)}`);
+          if (r.ok) {
+            const d = await r.json();
+            if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
+              setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
+              return;
+            }
           }
         } catch {}
       }
+
+      // Fallback: use Wikipedia search API to find the article
+      try {
+        const searchR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(clean + " company")}&srlimit=5&format=json&origin=*`);
+        if (searchR.ok) {
+          const searchD = await searchR.json();
+          const results = searchD?.query?.search || [];
+          for (const result of results) {
+            if (/disambiguation|list of/i.test(result.title)) continue;
+            try {
+              const summR = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(result.title)}`);
+              if (summR.ok) {
+                const d = await summR.json();
+                if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
+                  setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
+                  return;
+                }
+              }
+            } catch {}
+          }
+        }
+      } catch {}
+
+      // Nothing found
       setProfile(p => ({ ...p, _aiDescLoading: false }));
-    })();
+    };
+    fetchWiki();
   }, [profile?.name, profile?.companyName, symbol]);
 
   // TradingView chart
