@@ -242,8 +242,7 @@ function StockLogo({ symbol, size = 32 }) {
   };
   const domain = domainMap[symbol];
   const srcs = [
-    ...(domain ? [`https://logo.clearbit.com/${domain}`, `https://www.google.com/s2/favicons?sz=128&domain=${domain}`] : []),
-    `https://logo.synthfinance.com/ticker/${symbol}`,
+    ...(domain ? [`https://www.google.com/s2/favicons?sz=128&domain=${domain}`, `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`] : []),
     `https://eodhd.com/img/logos/US/${symbol}.png`,
   ];
   if (errCount >= srcs.length) {
@@ -297,37 +296,17 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     const fetchProfile = async () => {
       setProfileLoading(true);
       try {
-        const fetches = [];
         if (FH) {
-          fetches.push(
+          const [profR, recR, earnR, finR] = await Promise.all([
             fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${symbol}&limit=8&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FH}`),
-          );
-        }
-        // FMP for full company description
-        if (FK) {
-          fetches.push(fetch(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${FK}`));
-        }
-        const results = await Promise.all(fetches);
-        let idx = 0;
-        if (FH) {
-          const profR = results[idx++], recR = results[idx++], earnR = results[idx++], finR = results[idx++];
+          ]);
           if (profR.ok) { const d = await profR.json(); if (d.name) setProfile(d); }
           if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) setRecommendation(d); }
           if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) setEarnings(d); }
           if (finR.ok) { const d = await finR.json(); if (d.metric) setFinancials(d.metric); }
-        }
-        if (FK && results[idx]) {
-          const fmpR = results[idx];
-          if (fmpR.ok) {
-            const d = await fmpR.json();
-            console.log("FMP profile:", symbol, "description length:", d?.[0]?.description?.length || 0);
-            if (Array.isArray(d) && d[0]) {
-              setProfile(prev => ({ ...prev, ...d[0], description: d[0].description || "" }));
-            }
-          }
         }
       } catch {}
       setProfileLoading(false);
