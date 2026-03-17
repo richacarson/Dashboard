@@ -773,10 +773,11 @@ Instructions:
     setArticleLoading(false);
   }, []);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
-  const [perfData, setPerfData] = useState(() => { try { return JSON.parse(localStorage.getItem("iown_perf_data") || "null"); } catch { return null; } }); // { series: [{ date, value, ... }], name, imported }
   const [perfRange, setPerfRange] = useState("ALL");
-  const [perfHover, setPerfHover] = useState(null); // { idx, x, y }
-  const [perfBenchmark, setPerfBenchmark] = useState("SPY"); // benchmark to overlay
+  const [perfHover, setPerfHover] = useState(null);
+  const [msData, setMsData] = useState(() => { try { return JSON.parse(localStorage.getItem("iown_ms_perf") || "null"); } catch { return null; } });
+  const [msLoading, setMsLoading] = useState(false);
+  const [showBenchmark, setShowBenchmark] = useState(true);
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
@@ -907,6 +908,16 @@ Instructions:
   };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
+  /* Load Morningstar performance JSON */
+  useEffect(() => {
+    if (msData || msLoading) return;
+    setMsLoading(true);
+    fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`)
+      .then(r => r.json())
+      .then(d => { setMsData(d); try { localStorage.setItem("iown_ms_perf", JSON.stringify(d)); } catch {} })
+      .catch(() => {})
+      .finally(() => setMsLoading(false));
+  }, []);
   useEffect(() => {
     const t = setInterval(() => {
       const ms = getMarketStatus();
@@ -2103,21 +2114,6 @@ Instructions:
 
         {/* ━━━ PERFORMANCE TAB ━━━ */}
         {tab === "performance" && (() => {
-          /* Load Morningstar performance JSON on first render */
-          const perfJsonRef = useRef(null);
-          const [msData, setMsData] = useState(() => { try { return JSON.parse(localStorage.getItem("iown_ms_perf") || "null"); } catch { return null; } });
-          const [msLoading, setMsLoading] = useState(false);
-          const [showBenchmark, setShowBenchmark] = useState(true);
-
-          useEffect(() => {
-            if (msData || msLoading) return;
-            setMsLoading(true);
-            fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`)
-              .then(r => r.json())
-              .then(d => { setMsData(d); try { localStorage.setItem("iown_ms_perf", JSON.stringify(d)); } catch {} })
-              .catch(() => {})
-              .finally(() => setMsLoading(false));
-          }, []);
 
           /* Also support CSV upload to override */
           const handleCSVUpload = (e) => {
