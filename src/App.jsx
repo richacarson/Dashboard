@@ -908,15 +908,163 @@ Instructions:
   };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
-  /* Load Morningstar performance JSON */
+  /* Build portfolio performance from transaction snapshots + real Alpaca prices */
+  const [perfStatus, setPerfStatus] = useState("");
   useEffect(() => {
-    if (msData || msLoading) return;
+    if (msData || msLoading || !EK || !ES) return;
     setMsLoading(true);
-    fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`)
-      .then(r => r.json())
-      .then(d => { setMsData(d); try { localStorage.setItem("iown_ms_perf", JSON.stringify(d)); } catch {} })
-      .catch(() => {})
-      .finally(() => setMsLoading(false));
+    setPerfStatus("Loading snapshots...");
+    (async () => {
+      try {
+        // 1. Load monthly share snapshots (derived from Morningstar transaction history)
+        const snapResp = await fetch(`${import.meta.env.BASE_URL || "/"}portfolio-snapshots.json`);
+        const snapData = await snapResp.json();
+        const snapshots = snapData.snapshots;
+        const allTickers = snapData.all_tickers;
+        const START_VALUE = snapData.start_value || 100000;
+
+        // 2. Fetch monthly bars from Alpaca for ALL tickers + benchmarks
+        const benchmarks = ["SPY", "QQQ", "DIA", "DVY", "IWS"];
+        const allSyms = [...new Set([...allTickers, ...benchmarks])];
+        const hdrs = { "APCA-API-KEY-ID": EK, "APCA-API-SECRET-KEY": ES };
+        const priceLookup = {}; // sym -> {"2020-07": price, ...}
+
+        // Fetch in batches of 30
+        const batchSize = 30;
+        for (let i = 0; i < allSyms.length; i += batchSize) {
+          const batch = allSyms.slice(i, i + batchSize);
+          setPerfStatus(`Fetching prices: ${i}/${allSyms.length} tickers...`);
+          const syms = batch.join(",");
+          const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${syms}&timeframe=1Month&start=2011-01-01T00:00:00Z&end=2026-04-01T00:00:00Z&limit=10000&adjustment=all&feed=iex`;
+          try {
+            let resp = await fetch(url, { headers: hdrs });
+            let data = await resp.json();
+            if (data.bars) {
+              for (const [sym, bars] of Object.entries(data.bars)) {
+                priceLookup[sym] = {};
+                for (const b of bars) priceLookup[sym][b.t.slice(0, 7)] = b.c;
+              }
+            }
+            // Pagination
+            while (data.next_page_token) {
+              resp = await fetch(url + `&page_token=${data.next_page_token}`, { headers: hdrs });
+              data = await resp.json();
+              if (data.bars) {
+                for (const [sym, bars] of Object.entries(data.bars)) {
+                  if (!priceLookup[sym]) priceLookup[sym] = {};
+                  for (const b of bars) priceLookup[sym][b.t.slice(0, 7)] = b.c;
+                }
+              }
+            }
+          } catch (e) { console.warn("Alpaca batch error:", e); }
+          await new Promise(r => setTimeout(r, 200));
+        }
+
+        setPerfStatus(`Computing portfolio values...`);
+
+        // Helper: get price for a ticker at a given month, with fallback to nearest
+        const getPrice = (sym, monthKey) => {
+          const pl = priceLookup[sym];
+          if (!pl) return null;
+          if (pl[monthKey]) return pl[monthKey];
+          // Fallback: nearest earlier month
+          const months = Object.keys(pl).sort();
+          let best = null;
+          for (const m of months) { if (m <= monthKey) best = pl[m]; else break; }
+          // If no earlier, use first available
+          if (best === null && months.length) best = pl[months[0]];
+          return best;
+        };
+
+        // 3. Compute portfolio value at each month
+        const series = [];
+        for (const snap of snapshots) {
+          const monthKey = snap.d; // "2011-10"
+          let stockValue = 0;
+          let pricedCount = 0;
+          let totalHeld = Object.keys(snap.h).length;
+
+          for (const [ticker, shares] of Object.entries(snap.h)) {
+            const price = getPrice(ticker, monthKey);
+            if (price) {
+              stockValue += shares * price;
+              pricedCount++;
+            }
+          }
+
+          // Add cash (only if positive — negative cash is internal accounting)
+          const totalValue = stockValue + Math.max(snap.c, 0);
+          series.push({
+            date: monthKey + "-01",
+            value: Math.round(totalValue * 100) / 100,
+            positions: totalHeld,
+            priced: pricedCount,
+          });
+        }
+
+        // 4. Build benchmark series (scaled to start at same value as portfolio)
+        const bmData = {};
+        for (const bm of benchmarks) {
+          const pl = priceLookup[bm];
+          if (!pl) continue;
+          const bmMonths = Object.keys(pl).sort();
+          if (!bmMonths.length) continue;
+
+          // Find first month where both portfolio and benchmark have data
+          let startMonth = null;
+          for (const s of series) {
+            const mk = s.date.slice(0, 7);
+            if (pl[mk] && s.value > 0) { startMonth = mk; break; }
+          }
+          if (!startMonth) continue;
+
+          const portStartVal = series.find(s => s.date.slice(0, 7) === startMonth)?.value || START_VALUE;
+          const bmStartPrice = pl[startMonth];
+
+          const bmSeries = [];
+          for (const m of bmMonths) {
+            if (m < startMonth) continue;
+            const scaled = portStartVal * (pl[m] / bmStartPrice);
+            bmSeries.push({ date: m + "-01", value: Math.round(scaled * 100) / 100 });
+          }
+          bmData[bm] = bmSeries;
+        }
+
+        // 5. Also load Morningstar verified return tables (static, from screenshot)
+        let msTables = {};
+        try {
+          const tResp = await fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`);
+          const tData = await tResp.json();
+          msTables = { annual_returns: tData.annual_returns, ytd_2026: tData.ytd_2026, trailing: tData.trailing };
+        } catch {}
+
+        // 6. Build final data object
+        const perfResult = {
+          portfolio: "1 - DIVIDEND",
+          source: "runtime_alpaca_prices",
+          methodology: "Share holdings reconstructed from every Morningstar transaction. Portfolio value = Σ(shares × Alpaca adjusted monthly close) + cash, computed at runtime with real market data.",
+          series,
+          benchmarks: bmData,
+          default_benchmarks: ["DVY", "IWS"],
+          ...msTables,
+          current_value: series[series.length - 1]?.value,
+          tickers_fetched: Object.keys(priceLookup).length,
+        };
+
+        setPerfStatus(`Done: ${Object.keys(priceLookup).length} tickers, ${series.length} months`);
+        setMsData(perfResult);
+        try { localStorage.setItem("iown_ms_perf", JSON.stringify(perfResult)); } catch {}
+      } catch (e) {
+        console.error("Perf calc error:", e);
+        setPerfStatus("Error: " + e.message);
+        // Fallback to static file
+        try {
+          const r = await fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`);
+          const d = await r.json();
+          setMsData(d);
+        } catch {}
+      } finally { setMsLoading(false); }
+    })();
   }, []);
   useEffect(() => {
     const t = setInterval(() => {
@@ -2172,8 +2320,8 @@ Instructions:
 
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
-              {msLoading && <div style={{ textAlign: "center", padding: 40, color: C.t3 }}>Loading…</div>}
+              {!isDesktop && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Performance</div><button onClick={() => { localStorage.removeItem("iown_ms_perf"); setMsData(null); setMsLoading(false); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Recalculate</button></div>}
+              {msLoading && <div style={{ textAlign: "center", padding: 40 }}><div style={{ color: C.t2, fontWeight: 700, marginBottom: 8 }}>Building Portfolio Chart</div><div style={{ color: C.t3, fontSize: 13 }}>{perfStatus || "Loading..."}</div><div style={{ marginTop: 16, width: 40, height: 40, border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, borderRadius: "50%", margin: "16px auto", animation: "spin 1s linear infinite" }} /></div>}
               {!msLoading && !hasData && (
                 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "60px 30px", textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: C.t2, marginBottom: 8 }}>No Performance Data</div>
@@ -2214,7 +2362,7 @@ Instructions:
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 16 }}>
-                  {[{ label: "Start", val: `$${portSeries[0]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[0]?.date?.slice(0,7) }, { label: "Current", val: `$${portSeries[portSeries.length-1]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[portSeries.length-1]?.date }, { label: "Portfolio Return", val: `${totalReturn>=0?"+":""}${totalReturn.toFixed(2)}%`, color: totalReturn>=0?C.up:C.dn }, { label: "Data Source", val: "Morningstar TWR", sub: "Time-Weighted Return" }].map((s,i) => (
+                  {[{ label: "Start", val: `$${portSeries[0]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[0]?.date?.slice(0,7) }, { label: "Current", val: `$${portSeries[portSeries.length-1]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[portSeries.length-1]?.date }, { label: "Portfolio Return", val: `${totalReturn>=0?"+":""}${totalReturn.toFixed(2)}%`, color: totalReturn>=0?C.up:C.dn }, { label: "Source", val: msData?.source === "runtime_alpaca_prices" ? "Live Alpaca" : "Morningstar", sub: msData?.tickers_fetched ? `${msData.tickers_fetched} tickers` : "" }].map((s,i) => (
                     <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{s.label}</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: s.color||C.t1, fontVariantNumeric: "tabular-nums" }}>{s.val}</div>
