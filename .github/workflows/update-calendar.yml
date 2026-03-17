@@ -30,7 +30,7 @@ jobs:
             SIZE=$(wc -c < /tmp/fmp_econ.json 2>/dev/null || echo "0")
             echo "FMP Economic Calendar: HTTP $HTTP_CODE, $SIZE bytes"
           fi
-        run: |
+
           URLS_THIS=(
             "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
             "https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json"
