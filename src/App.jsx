@@ -424,7 +424,7 @@ export default function App() {
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 2000,
-          messages: [{ role: "user", content: `Fetch this news article URL and extract the full article text. Format it as clean paragraphs. Do NOT include any ads, navigation, sidebars, or boilerplate — just the article content. If there are key quotes, keep them. At the end, add a "Key Takeaways" section with 2-4 bullet points.\n\nURL: ${article.url}\n\nHeadline for context: ${article.headline}` }],
+          messages: [{ role: "user", content: `Search the web for this news article and provide the full article content in clean paragraphs. Use the headline and source to find it.\n\nHeadline: "${article.headline}"\nSource: ${article.source}\nURL (for reference): ${article.url}\n\nInstructions:\n- Search for the article using the headline\n- Write out the full article content in clean paragraphs\n- Keep important quotes and data points\n- Do NOT include any preamble like "I found the article" — just go straight into the article content\n- At the end, add a section titled "Key Takeaways" with 2-4 bullet points\n- Do NOT ask any follow-up questions` }],
           tools: [{ type: "web_search_20250305", name: "web_search" }],
         }),
       });
