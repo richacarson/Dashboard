@@ -618,7 +618,22 @@ export default function App() {
           const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
           if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
           const hmCell = document.querySelector(`[data-heatmap="${s}"]`);
-          if (hmCell) hmCell.style.background = hmColor(c);
+          if (hmCell) {
+            hmCell.style.background = hmColor(c);
+            // Flash on price change
+            if (priceChanged) {
+              hmCell.style.transition = "none";
+              hmCell.style.boxShadow = c >= 0 ? `inset 0 0 20px rgba(52,211,153,0.5)` : `inset 0 0 20px rgba(248,113,113,0.5)`;
+              hmCell.style.filter = "brightness(1.4)";
+              setTimeout(() => {
+                if (hmCell) {
+                  hmCell.style.transition = "all 0.6s ease-out";
+                  hmCell.style.boxShadow = "none";
+                  hmCell.style.filter = "brightness(1)";
+                }
+              }, 500);
+            }
+          }
           // Metrics Day column
           const metDay = document.querySelector(`[data-metric-day="${s}"]`);
           if (metDay) {
@@ -1095,6 +1110,17 @@ export default function App() {
               if (hmCell) {
                 const maxA = 5, intensity = Math.min(Math.abs(c) / maxA, 1);
                 hmCell.style.background = c > 0 ? `rgb(${Math.round(8+intensity*10)},${Math.round(30+intensity*100)},${Math.round(15+intensity*40)})` : c < 0 ? `rgb(${Math.round(50+intensity*150)},${Math.round(15+intensity*15)},${Math.round(15+intensity*15)})` : C.card;
+                // Flash
+                hmCell.style.transition = "none";
+                hmCell.style.boxShadow = c >= 0 ? `inset 0 0 20px rgba(52,211,153,0.5)` : `inset 0 0 20px rgba(248,113,113,0.5)`;
+                hmCell.style.filter = "brightness(1.4)";
+                setTimeout(() => {
+                  if (hmCell) {
+                    hmCell.style.transition = "all 0.6s ease-out";
+                    hmCell.style.boxShadow = "none";
+                    hmCell.style.filter = "brightness(1)";
+                  }
+                }, 500);
               }
               // Metrics Day column
               const metDay = document.querySelector(`[data-metric-day="${msg.S}"]`);
