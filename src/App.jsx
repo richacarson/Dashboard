@@ -1768,12 +1768,35 @@ export default function App() {
               });
             })()}
             {calendarView === "earnings" && (() => {
-              if (!earningsCalendar.length) return (
+              const [earningsMode, setEM] = typeof window !== "undefined" ? [window._earningsMode || "holdings", v => { window._earningsMode = v; setCalendarView("earnings"); }] : ["holdings", () => {}];
+              return (
+                <div>
+                  {/* Sub-toggle: Holdings vs TradingView */}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+                    {[{ id: "holdings", l: "My Holdings" }, { id: "tv", l: "All Earnings" }].map(m => (
+                      <button key={m.id} onClick={() => { window._earningsMode = m.id; setCalendarView("_"); setTimeout(() => setCalendarView("earnings"), 0); }} style={{
+                        padding: "8px 16px", borderRadius: 10, border: `1px solid ${(window._earningsMode || "holdings") === m.id ? C.borderActive : C.border}`,
+                        background: (window._earningsMode || "holdings") === m.id ? C.accentSoft : "transparent",
+                        color: (window._earningsMode || "holdings") === m.id ? C.t1 : C.t3, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                      }}>{m.l}</button>
+                    ))}
+                  </div>
+                  {(window._earningsMode || "holdings") === "tv" ? (
+                    <div style={{ borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, height: "calc(100dvh - 280px)", minHeight: 400 }}>
+                      <iframe
+                        src={`https://www.tradingview.com/embed-widget/events/?locale=en&importanceFilter=-1%2C0%2C1&countryFilter=us&colorTheme=${theme === "dark" ? "dark" : "light"}`}
+                        style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                        title="TradingView Earnings"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+              {!earningsCalendar.length ? (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                  {FH ? "No upcoming earnings for your holdings." : "Add FINNHUB_KEY to enable earnings calendar."}
+                  No upcoming earnings for your holdings.
                   <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Earnings</button>
                 </div>
-              );
+              ) : (() => {
               const grouped = {};
               earningsCalendar.forEach(e => {
                 const date = e.date || "Unknown";
@@ -1842,6 +1865,11 @@ export default function App() {
                   </div>
                 </div>
               ));
+              })()}
+                    </div>
+                  )}
+                </div>
+              );
             })()}
           </div>
         )}
