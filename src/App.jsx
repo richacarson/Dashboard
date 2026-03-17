@@ -229,9 +229,19 @@ function StockLogo({ symbol, size = 32 }) {
     // Dividend / Value tickers
     O:"realtyincome.com",STLD:"steeldynamics.com",VLO:"valero.com",CNX:"cnx.com",
     BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
-    SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atni.com",
+    SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
     DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",QQQ:"invesco.com",DIA:"ssga.com",
     IBIT:"ishares.com",ETHA:"ishares.com",
+    // Portfolio holdings — full coverage
+    A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
+    CL:"colgatepalmolive.com",CWAN:"clearwateranalytics.com",DGX:"questdiagnostics.com",
+    EIX:"edison.com",FAST:"fastenal.com",FINV:"finvgroup.com",FTNT:"fortinet.com",
+    GD:"gd.com",GPC:"genpt.com",HRMY:"harmonybiosciences.com",HUT:"hut8.com",
+    KEYS:"keysight.com",LMT:"lockheedmartin.com",LRCX:"lamresearch.com",
+    MATX:"matson.com",NEE:"nexteraenergy.com",NXPI:"nxp.com",OKE:"oneok.com",
+    ORI:"oldrepublic.com",PCAR:"paccar.com",PDD:"pinduoduo.com",
+    SSNC:"ssctech.com",SYF:"synchrony.com",SYK:"stryker.com",
+    TEL:"te.com",TOL:"tollbrothers.com",TSM:"tsmc.com",
     // More
     PFE:"pfizer.com",ABBV:"abbvie.com",UNH:"unitedhealthgroup.com",CVX:"chevron.com",
     XOM:"exxonmobil.com",T:"att.com",MCD:"mcdonalds.com",WFC:"wellsfargo.com",C:"citigroup.com",
@@ -1100,7 +1110,8 @@ Instructions:
       if (missing.length > 0) {
         try {
           const d30 = new Date(); d30.setDate(d30.getDate() - 35);
-          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${missing.join(",")}&timeframe=1Day&start=${d30.toISOString().slice(0,10)}&limit=30&adjustment=split`, { headers: hdrs });
+          // Use feed=sip for historical daily bars — free tier allows SIP for data >15min old
+          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${missing.join(",")}&timeframe=1Day&start=${d30.toISOString().slice(0,10)}&limit=30&adjustment=split&feed=sip`, { headers: hdrs });
           if (dailyR.ok) {
             const dailyD = await dailyR.json();
             if (dailyD.bars) {
