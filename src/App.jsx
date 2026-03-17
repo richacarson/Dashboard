@@ -323,6 +323,42 @@ function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef,
       setProfileLoading(false);
     };
     fetchProfile();
+
+    // Generate AI description if none available after profile loads
+    const genDescription = async () => {
+      // Wait for profile to load first
+      await new Promise(r => setTimeout(r, 2000));
+      setProfile(prev => {
+        if (!prev || prev.description || prev._aiDesc || !CLAUDE_KEY) return prev;
+        // Mark as loading
+        const updated = { ...prev, _aiDescLoading: true };
+        // Fire async request
+        (async () => {
+          try {
+            const name = prev.name || prev.companyName || names?.[symbol] || symbol;
+            const industry = prev.finnhubIndustry || prev.industry || prev.sector || "";
+            const r = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-api-key": CLAUDE_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+              body: JSON.stringify({
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 400,
+                messages: [{ role: "user", content: `Write a 2-3 sentence company description for ${name} (ticker: ${symbol}), a company in the ${industry} sector. Write it in the style of Seeking Alpha or Bloomberg — factual, concise, covering what the company does, its key products/services, and market position. No preamble, just the description.` }],
+              }),
+            });
+            if (r.ok) {
+              const d = await r.json();
+              const text = d.content?.find(b => b.type === "text")?.text || "";
+              if (text) setProfile(p => ({ ...p, _aiDesc: text, _aiDescLoading: false }));
+            } else {
+              setProfile(p => ({ ...p, _aiDescLoading: false }));
+            }
+          } catch { setProfile(p => ({ ...p, _aiDescLoading: false })); }
+        })();
+        return updated;
+      });
+    };
+    genDescription();
   }, [symbol]);
 
   // TradingView chart
@@ -501,11 +537,17 @@ function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef,
                     </div>
                   </div>
                   {/* Full description */}
-                  {profile.description && (
+                  {profile.description ? (
                     <div style={{ fontSize: 13, lineHeight: 1.65, color: C.t3, marginBottom: 14 }}>
                       {profile.description}
                     </div>
-                  )}
+                  ) : profile._aiDesc ? (
+                    <div style={{ fontSize: 13, lineHeight: 1.65, color: C.t3, marginBottom: 14 }}>
+                      {profile._aiDesc}
+                    </div>
+                  ) : profile._aiDescLoading ? (
+                    <div style={{ fontSize: 13, color: C.t4, marginBottom: 14 }}>Loading company description...</div>
+                  ) : null}
                   {/* Company details grid */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
                     {(profile.country || profile.city) && <StatRow label="Location" value={[profile.city, profile.state, profile.country].filter(Boolean).join(", ")} />}
