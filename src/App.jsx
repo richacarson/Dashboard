@@ -2662,13 +2662,13 @@ Instructions:
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                 Back
               </button>
-              {a.url && (
-                <button onClick={() => window.open(a.url, "_blank")} style={{
+              {CLAUDE_KEY && (
+                <button onClick={() => { setArticleContent(null); fetchArticleContent(a); }} style={{
                   background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8,
                   padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit",
                 }}>
-                  Open Source ↗
+                  {articleLoading ? "Generating..." : articleContent ? "Regenerate" : "Generate Summary"}
                 </button>
               )}
             </div>
