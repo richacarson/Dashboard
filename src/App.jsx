@@ -1585,7 +1585,7 @@ export default function App() {
             {Object.entries(sleeves).map(([k, sleeve]) => (
               <SleeveSection key={k} k={k} sleeve={sleeve} />
             ))}
-              </div> {/* end left column */}
+              </div>
 
               {/* Right column: Top Movers + Heatmap */}
               <div style={{ position: isDesktop ? "sticky" : "static", top: isDesktop ? 80 : "auto", alignSelf: "start" }}>
@@ -1604,8 +1604,8 @@ export default function App() {
             </div>
 
             {/* Heatmap */}
-              </div> {/* end right column */}
-            </div> {/* end desktop grid */}
+              </div>
+            </div>
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
@@ -1775,6 +1775,8 @@ export default function App() {
                 );
               });
             })()}
+          </div>
+        )}
 
         {/* ━━━ METRICS ━━━ */}
         {tab === "research" && (
@@ -2516,14 +2518,16 @@ export default function App() {
               </button>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 8, textAlign: "center" }}>Locks the app and requires the access code to re-enter</div>
             </div>
-            </div> {/* end settings grid */}
+            </div>
             <div style={{ marginTop: 40, textAlign: "center", paddingBottom: 20 }}>
               <div style={{ fontSize: 13, color: C.t4, marginTop: 4 }}>Intentional Ownership</div>
               <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>A Registered Investment Advisor under Paradiem</div>
             </div>
           </div>
         )}
-      </div></div>
+
+      </div>
+      </div>
 
       {/* MOBILE BOTTOM TAB BAR — hidden on desktop */}
       {!isDesktop && (
