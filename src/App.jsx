@@ -951,57 +951,60 @@ export default function App() {
       setEconCalendar(events);
     } catch (e) { console.warn("Econ calendar fetch failed:", e.message); }
 
-    // Earnings: try FMP first (keeps estimates after reporting), then Finnhub fallback
+    // Earnings: merge FMP + Finnhub for best coverage
     const today = new Date();
     const from = new Date(today); from.setDate(from.getDate() - 7);
     const to = new Date(today); to.setDate(to.getDate() + 60);
     const fmt = d => d.toISOString().slice(0, 10);
-    let earnings = [];
+    const earningsMap = {}; // key: symbol|date → merged earnings object
 
-    // FMP earnings calendar
+    // Finnhub first (broader coverage)
+    const fhKey = FH || FK;
+    if (fhKey) {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${fmt(from)}&to=${fmt(to)}&token=${fhKey}`);
+        if (r.ok) {
+          const data = await r.json();
+          const raw = data.earningsCalendar || data.result || data.data || [];
+          const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
+          list.filter(e => coreSyms.includes(e.symbol)).forEach(e => {
+            const key = `${e.symbol}|${e.date}`;
+            earningsMap[key] = {
+              symbol: e.symbol, date: e.date, hour: e.hour || "",
+              epsEstimate: e.epsEstimate ?? e.estimate ?? null,
+              epsActual: e.epsActual ?? null,
+              revenueEstimate: e.revenueEstimate ?? null,
+              revenueActual: e.revenueActual ?? null,
+            };
+          });
+        }
+      } catch (e) { console.warn("Finnhub earnings:", e.message); }
+    }
+
+    // FMP overlay (better estimates, persists after reporting)
     if (FK) {
       try {
         const r = await fetch(`https://financialmodelingprep.com/api/v3/earning_calendar?from=${fmt(from)}&to=${fmt(to)}&apikey=${FK}`);
         if (r.ok) {
           const data = await r.json();
           if (Array.isArray(data)) {
-            earnings = data
-              .filter(e => coreSyms.includes(e.symbol))
-              .map(e => ({
-                symbol: e.symbol, date: e.date, hour: e.time === "bmo" ? "bmo" : e.time === "amc" ? "amc" : e.time || "",
-                epsEstimate: e.epsEstimated ?? null, epsActual: e.eps ?? null,
-                revenueEstimate: e.revenueEstimated ?? null, revenueActual: e.revenue ?? null,
-              }))
-              .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+            data.filter(e => coreSyms.includes(e.symbol)).forEach(e => {
+              const key = `${e.symbol}|${e.date}`;
+              const existing = earningsMap[key] || { symbol: e.symbol, date: e.date, hour: "" };
+              // FMP overrides: fill in any missing fields
+              if (e.epsEstimated != null) existing.epsEstimate = e.epsEstimated;
+              if (e.eps != null) existing.epsActual = e.eps;
+              if (e.revenueEstimated != null) existing.revenueEstimate = e.revenueEstimated;
+              if (e.revenue != null) existing.revenueActual = e.revenue;
+              if (e.time) existing.hour = e.time === "bmo" ? "bmo" : e.time === "amc" ? "amc" : e.time;
+              earningsMap[key] = existing;
+            });
           }
         }
-      } catch (e) { console.warn("FMP earnings failed:", e.message); }
+      } catch (e) { console.warn("FMP earnings:", e.message); }
     }
 
-    // Finnhub fallback
-    if (!earnings.length) {
-      const key = FH || FK;
-      if (key) {
-        try {
-          const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${fmt(from)}&to=${fmt(to)}&token=${key}`);
-          if (r.ok) {
-            const data = await r.json();
-            const raw = data.earningsCalendar || data.result || data.data || [];
-            const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
-            earnings = list
-              .filter(e => coreSyms.includes(e.symbol))
-              .map(e => ({
-                ...e,
-                epsEstimate: e.epsEstimate ?? e.estimate ?? null,
-                epsActual: e.epsActual ?? e.actual ?? null,
-                revenueEstimate: e.revenueEstimate ?? null,
-                revenueActual: e.revenueActual ?? null,
-              }))
-              .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-          }
-        } catch (e) { console.warn("Finnhub earnings failed:", e.message); }
-      }
-    }
+    let earnings = Object.values(earningsMap).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
     // Cache estimates in localStorage
     let cache = {};
