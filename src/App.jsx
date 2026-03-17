@@ -1117,47 +1117,40 @@ export default function App() {
     } catch {}
   }, [apiKey, apiSecret]);
 
-  // Finnhub WebSocket for benchmarks that don't trade on IEX
+  // Finnhub REST polling for non-IEX benchmarks (every 5s)
   const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
-  const fhWsRef = useRef(null);
-  const connectFinnhubWS = useCallback(() => {
+  const fhTimerRef = useRef(null);
+  const pollFinnhubBenchmarks = useCallback(async () => {
     if (!FH) return;
-    try {
-      const ws = new WebSocket(`wss://ws.finnhub.io?token=${FH}`);
-      fhWsRef.current = ws;
-      ws.onopen = () => {
-        for (const s of NON_IEX_BM) {
-          ws.send(JSON.stringify({ type: "subscribe", symbol: s }));
-        }
-      };
-      ws.onmessage = (evt) => {
-        try {
-          const msg = JSON.parse(evt.data);
-          if (msg.type === "trade" && Array.isArray(msg.data)) {
-            for (const trade of msg.data) {
-              const sym = trade.s;
-              const price = trade.p;
-              if (!sym || !price) continue;
-              quotesRef.current[sym] = { p: price, t: new Date(trade.t).toISOString() };
-              const pc = barsRef.current[sym]?.pc;
-              if (pc) {
-                const c = ((price - pc) / pc) * 100;
-                // Benchmark DOM updates
-                const bmEl = document.querySelector(`[data-bm-price="${sym}"]`);
-                if (bmEl) bmEl.textContent = price.toFixed(2);
-                const bmChgEl = document.querySelector(`[data-bm-chg="${sym}"]`);
-                if (bmChgEl) {
-                  bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-                  bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-                }
-              }
-            }
+    for (const sym of NON_IEX_BM) {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FH}`);
+        if (!r.ok) continue;
+        const q = await r.json();
+        if (!q.c) continue;
+        const price = q.c;
+        const pc = q.pc || barsRef.current[sym]?.pc;
+        // Update refs
+        quotesRef.current[sym] = { p: price, t: new Date().toISOString() };
+        if (pc) barsRef.current[sym] = { ...barsRef.current[sym], pc };
+        // DOM updates
+        const bmEl = document.querySelector(`[data-bm-price="${sym}"]`);
+        if (bmEl) bmEl.textContent = price.toFixed(2);
+        if (pc) {
+          const c = ((price - pc) / pc) * 100;
+          const bmChgEl = document.querySelector(`[data-bm-chg="${sym}"]`);
+          if (bmChgEl) {
+            bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+            bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
           }
-        } catch {}
-      };
-      ws.onclose = () => { setTimeout(connectFinnhubWS, 5000); };
-    } catch {}
+        }
+      } catch {}
+    }
   }, []);
+  const startFinnhubPolling = useCallback(() => {
+    pollFinnhubBenchmarks();
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
+  }, [pollFinnhubBenchmarks]);
 
   const auth = async () => {
     setAuthErr("");
@@ -1174,7 +1167,7 @@ export default function App() {
       // Preload ExcelJS for export
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
-      connectFinnhubWS();
+      startFinnhubPolling();
     } catch { setAuthErr("Invalid API keys."); }
   };
 
@@ -1196,7 +1189,7 @@ export default function App() {
       const sparkTimer = setInterval(() => { fetchIntraday(); }, 30000);
       // Calendar refresh every 5 min to pick up actuals from GitHub Action
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); clearInterval(calTimer); if (fhWsRef.current) fhWsRef.current.close(); };
+      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
