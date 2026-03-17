@@ -599,38 +599,39 @@ export default function App() {
       const flashes = {};
       let anyQuoteChanged = false;
       for (const s of Object.keys(nq)) {
-        if (!prevQ[s] || prevQ[s].p !== nq[s]?.p) {
+        const priceChanged = !prevQ[s] || prevQ[s].p !== nq[s]?.p;
+        if (priceChanged) {
           anyQuoteChanged = true;
           if (prevQ[s] && nq[s]) flashes[s] = nq[s].p > prevQ[s].p ? "up" : "dn";
-          const pc = nb[s]?.pc || prevB[s]?.pc;
-          if (nq[s] && pc) {
-            const c = ((nq[s].p - pc) / pc) * 100;
-            // Ticker row change badge
-            const el = document.querySelector(`[data-ticker-chg="${s}"]`);
-            if (el) {
-              el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-              el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-              el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
-            }
-            // Heatmap cell
-            const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
-            if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
-            const hmCell = document.querySelector(`[data-heatmap="${s}"]`);
-            if (hmCell) hmCell.style.background = hmColor(c);
-            // Metrics Day column
-            const metDay = document.querySelector(`[data-metric-day="${s}"]`);
-            if (metDay) {
-              metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-              metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-            }
-            // Benchmark price + change
-            const bmEl = document.querySelector(`[data-bm-price="${s}"]`);
-            if (bmEl) bmEl.textContent = nq[s].p.toFixed(2);
-            const bmChgEl = document.querySelector(`[data-bm-chg="${s}"]`);
-            if (bmChgEl) {
-              bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-              bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-            }
+        }
+        const pc = nb[s]?.pc || prevB[s]?.pc;
+        if (nq[s] && pc) {
+          const c = ((nq[s].p - pc) / pc) * 100;
+          // Ticker row change badge
+          const el = document.querySelector(`[data-ticker-chg="${s}"]`);
+          if (el) {
+            el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+            el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+            el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
+          }
+          // Heatmap cell
+          const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
+          if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
+          const hmCell = document.querySelector(`[data-heatmap="${s}"]`);
+          if (hmCell) hmCell.style.background = hmColor(c);
+          // Metrics Day column
+          const metDay = document.querySelector(`[data-metric-day="${s}"]`);
+          if (metDay) {
+            metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+            metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+          }
+          // Benchmark price + change
+          const bmEl = document.querySelector(`[data-bm-price="${s}"]`);
+          if (bmEl) bmEl.textContent = nq[s].p.toFixed(2);
+          const bmChgEl = document.querySelector(`[data-bm-chg="${s}"]`);
+          if (bmChgEl) {
+            bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+            bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
           }
         }
       }
@@ -695,7 +696,7 @@ export default function App() {
       start.setDate(start.getDate() - 2);
       const startStr = start.toISOString().split("T")[0];
       const today = new Date().toISOString().split("T")[0];
-      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${startStr}T04:00:00Z&feed=iex&limit=10000`, { headers: hdrs });
+      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${startStr}T04:00:00Z&limit=10000`, { headers: hdrs });
       if (!r.ok) return;
       const d = await r.json();
       const pts = {};
