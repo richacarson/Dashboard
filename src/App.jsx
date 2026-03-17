@@ -908,17 +908,27 @@ Instructions:
   };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
-  /* Build portfolio performance from transaction snapshots + real Finnhub prices */
+  /* Load portfolio performance - static JSON by default, live Finnhub on recalculate */
   const [perfStatus, setPerfStatus] = useState("");
+  const [perfRecalc, setPerfRecalc] = useState(false); // triggers live Finnhub fetch
   useEffect(() => {
     if (msData || msLoading) return;
-    // Need at least Finnhub key, or Alpaca as fallback
-    if (!FH && !EK) return;
     setMsLoading(true);
+    if (!perfRecalc) {
+      // Default: load pre-built static JSON (instant, works for all users)
+      setPerfStatus("Loading...");
+      fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`)
+        .then(r => r.json())
+        .then(d => { setMsData(d); try { localStorage.setItem("iown_ms_perf", JSON.stringify(d)); } catch {} })
+        .catch(() => setPerfStatus("Failed to load performance data"))
+        .finally(() => setMsLoading(false));
+      return;
+    }
+    // Recalculate mode: fetch live Finnhub prices
+    if (!FH) { setPerfStatus("No Finnhub key"); setMsLoading(false); return; }
     setPerfStatus("Loading snapshots...");
     (async () => {
       try {
-        // 1. Load monthly share snapshots (derived from Morningstar transaction history)
         const snapResp = await fetch(`${import.meta.env.BASE_URL || "/"}portfolio-snapshots.json`);
         const snapData = await snapResp.json();
         const snapshots = snapData.snapshots;
@@ -1067,7 +1077,7 @@ Instructions:
         } catch {}
       } finally { setMsLoading(false); }
     })();
-  }, []);
+  }, [perfRecalc]);
   useEffect(() => {
     const t = setInterval(() => {
       const ms = getMarketStatus();
@@ -2322,7 +2332,7 @@ Instructions:
 
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-              {!isDesktop && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Performance</div><button onClick={() => { localStorage.removeItem("iown_ms_perf"); setMsData(null); setMsLoading(false); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Recalculate</button></div>}
+              {!isDesktop && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Performance</div><button onClick={() => { localStorage.removeItem("iown_ms_perf"); setMsData(null); setMsLoading(false); setPerfRecalc(true); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Recalculate</button></div>}
               {msLoading && <div style={{ textAlign: "center", padding: 40 }}><div style={{ color: C.t2, fontWeight: 700, marginBottom: 8 }}>Building Portfolio Chart</div><div style={{ color: C.t3, fontSize: 13 }}>{perfStatus || "Loading..."}</div><div style={{ marginTop: 16, width: 40, height: 40, border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, borderRadius: "50%", margin: "16px auto", animation: "spin 1s linear infinite" }} /></div>}
               {!msLoading && !hasData && (
                 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "60px 30px", textAlign: "center" }}>
