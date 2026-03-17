@@ -423,7 +423,7 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": CLAUDE_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 2000,
           messages: [{ role: "user", content: `You are a financial news editor. Based on the following article details, write a comprehensive, detailed article summary in clean paragraphs. Expand on the key points, provide context, and explain the market implications.
 
