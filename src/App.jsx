@@ -565,27 +565,23 @@ export default function App() {
         if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
       }
-      // Benchmarks that didn't come back from IEX — fetch latest trades individually
+      // Benchmarks that didn't come back from IEX — use FMP real-time quotes
       const missingBM = BM_SYMS.filter(s => !nq[s]);
-      if (missingBM.length > 0) {
-        await Promise.all(missingBM.map(async (s) => {
-          try {
-            // Latest trade
-            const tr = await fetch(`${BASE}/v2/stocks/${s}/trades/latest`, { headers: hdrs });
-            if (tr.ok) { const td = await tr.json(); if (td.trade) nq[s] = { p: td.trade.p, t: td.trade.t }; }
-            // Latest bar for prevClose
-            if (!nb[s]?.pc) {
-              const start5d = new Date(); start5d.setDate(start5d.getDate() - 5);
-              const br = await fetch(`${BASE}/v2/stocks/bars?symbols=${s}&timeframe=1Day&start=${start5d.toISOString().slice(0,10)}&limit=5&adjustment=split`, { headers: hdrs });
-              if (br.ok) {
-                const bd = await br.json();
-                const bars = bd.bars?.[s] || [];
-                if (bars.length >= 2) nb[s] = { ...nb[s], pc: bars[bars.length - 2].c, c: bars[bars.length - 1].c };
-                else if (bars.length === 1) nb[s] = { ...nb[s], pc: bars[0].o, c: bars[0].c };
+      if (missingBM.length > 0 && FK) {
+        try {
+          const fmpR = await fetch(`https://financialmodelingprep.com/api/v3/quote/${missingBM.join(",")}?apikey=${FK}`);
+          if (fmpR.ok) {
+            const fmpData = await fmpR.json();
+            if (Array.isArray(fmpData)) {
+              for (const q of fmpData) {
+                if (q.symbol && q.price) {
+                  nq[q.symbol] = { p: q.price, t: new Date().toISOString() };
+                  nb[q.symbol] = { ...nb[q.symbol], pc: q.previousClose || q.price, c: q.price, o: q.open || q.price, h: q.dayHigh || q.price, l: q.dayLow || q.price };
+                }
               }
             }
-          } catch {}
-        }));
+          }
+        } catch {}
       }
       
 
