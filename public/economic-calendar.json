@@ -4,8 +4,9 @@
     "country": "USD",
     "date": "2026-03-16T08:30:00-04:00",
     "impact": "Medium",
-    "forecast": "4.0",
-    "previous": "7.1"
+    "forecast": "3.9",
+    "previous": "7.1",
+    "actual": "-0.2"
   },
   {
     "title": "President Trump Speaks",
@@ -20,7 +21,7 @@
     "country": "USD",
     "date": "2026-03-17T10:00:00-04:00",
     "impact": "Medium",
-    "forecast": "-0.6%",
+    "forecast": "-1.2%",
     "previous": "-0.8%"
   },
   {

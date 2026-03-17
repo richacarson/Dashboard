@@ -926,6 +926,13 @@ export default function App() {
         const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
         const earnings = list
           .filter(e => coreSyms.includes(e.symbol))
+          .map(e => ({
+            ...e,
+            epsEstimate: e.epsEstimate ?? e.estimate ?? e.eps_estimate ?? null,
+            epsActual: e.epsActual ?? e.actual ?? e.eps_actual ?? null,
+            revenueEstimate: e.revenueEstimate ?? e.revenue_estimate ?? null,
+            revenueActual: e.revenueActual ?? e.revenue_actual ?? null,
+          }))
           .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
         setEarningsCalendar(earnings);
       }

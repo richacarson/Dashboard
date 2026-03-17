@@ -86,6 +86,25 @@ jobs:
           with_actuals = [e for e in filtered if e.get('actual')]
           print(f"With actual values: {len(with_actuals)}")
 
+          # Merge: preserve manually-set actuals from existing file
+          try:
+              with open('public/economic-calendar.json') as ef:
+                  existing = json.loads(ef.read())
+              existing_map = {}
+              for e in existing:
+                  key = e.get('title', '') + '|' + (e.get('date', '')[:10])
+                  if e.get('actual') and e['actual'].strip():
+                      existing_map[key] = e['actual']
+              merged = 0
+              for e in filtered:
+                  key = e.get('title', '') + '|' + (e.get('date', '')[:10])
+                  if (not e.get('actual') or not e['actual'].strip()) and key in existing_map:
+                      e['actual'] = existing_map[key]
+                      merged += 1
+              print(f"Preserved {merged} manual actuals from existing file")
+          except Exception as ex:
+              print(f"Merge skipped: {ex}")
+
           with open('public/economic-calendar.json', 'w') as f:
               json.dump(filtered, f, indent=2)
           PY
