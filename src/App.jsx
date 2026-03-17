@@ -46,6 +46,7 @@ const EK = import.meta.env.VITE_ALPACA_KEY || "";
 const ES = import.meta.env.VITE_ALPACA_SECRET || "";
 const FK = import.meta.env.VITE_FMP_KEY || "";
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
+const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
 const pct = n => (n == null || isNaN(n)) ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -409,6 +410,34 @@ export default function App() {
   useEffect(() => { sleevesRef.current = sleeves; }, [sleeves]);
   const [news, setNews] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [articleContent, setArticleContent] = useState(null);
+  const [articleLoading, setArticleLoading] = useState(false);
+
+  // Fetch full article content via Claude when article is selected
+  const fetchArticleContent = useCallback(async (article) => {
+    setSelectedArticle(article);
+    setArticleContent(null);
+    if (!CLAUDE_KEY || !article.url) return;
+    setArticleLoading(true);
+    try {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-api-key": CLAUDE_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2000,
+          messages: [{ role: "user", content: `Fetch this news article URL and extract the full article text. Format it as clean paragraphs. Do NOT include any ads, navigation, sidebars, or boilerplate — just the article content. If there are key quotes, keep them. At the end, add a "Key Takeaways" section with 2-4 bullet points.\n\nURL: ${article.url}\n\nHeadline for context: ${article.headline}` }],
+          tools: [{ type: "web_search_20250305", name: "web_search" }],
+        }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const text = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
+        if (text) setArticleContent(text);
+      }
+    } catch (e) { console.error("Article fetch error:", e); }
+    setArticleLoading(false);
+  }, []);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
@@ -1708,7 +1737,7 @@ export default function App() {
               );
               return (<div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "repeat(2, 1fr)" : undefined, gap: isDesktop ? 16 : 0 }}>
               {articles.map((article, i) => (
-                <div key={article.id || i} onClick={() => setSelectedArticle(article)}
+                <div key={article.id || i} onClick={() => fetchArticleContent(article)}
                   style={{
                     padding: isDesktop ? "20px" : "16px 0",
                     borderBottom: isDesktop ? "none" : `1px solid ${C.border}`,
@@ -2657,9 +2686,28 @@ export default function App() {
                 }} />
               )}
               {/* Summary / body */}
-              {a.summary ? (
+              {articleLoading ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 14px" }} />
+                  <div style={{ fontSize: 14, color: C.t4 }}>Reading full article...</div>
+                </div>
+              ) : articleContent ? (
+                <div style={{ fontSize: 16, lineHeight: 1.75, color: C.t2, letterSpacing: 0.1 }}>
+                  {articleContent.split("\n").map((p, i) => {
+                    const trimmed = p.trim();
+                    if (!trimmed) return null;
+                    // Render headers (Key Takeaways, etc)
+                    if (trimmed.startsWith("## ")) return <h2 key={i} style={{ fontSize: 18, fontWeight: 700, color: C.t1, margin: "24px 0 10px" }}>{trimmed.replace("## ", "")}</h2>;
+                    if (trimmed.startsWith("**") && trimmed.endsWith("**")) return <h3 key={i} style={{ fontSize: 17, fontWeight: 700, color: C.t1, margin: "20px 0 8px" }}>{trimmed.replace(/\*\*/g, "")}</h3>;
+                    // Render bullets
+                    if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) return <div key={i} style={{ display: "flex", gap: 8, margin: "6px 0", paddingLeft: 4 }}><span style={{ color: C.accent, fontWeight: 700 }}>•</span><span>{trimmed.replace(/^[-•]\s*/, "")}</span></div>;
+                    return <p key={i} style={{ margin: "0 0 14px" }}>{trimmed}</p>;
+                  })}
+                </div>
+              ) : a.summary ? (
                 <div style={{ fontSize: 16, lineHeight: 1.7, color: C.t2, letterSpacing: 0.1 }}>
                   {a.summary.split("\n").map((p, i) => p.trim() ? <p key={i} style={{ margin: "0 0 14px" }}>{p}</p> : null)}
+                  {!CLAUDE_KEY && <div style={{ fontSize: 12, color: C.t4, marginTop: 16, fontStyle: "italic" }}>Add ANTHROPIC_KEY secret for full article extraction.</div>}
                 </div>
               ) : (
                 <div style={{ fontSize: 14, color: C.t4, textAlign: "center", padding: "40px 0" }}>
