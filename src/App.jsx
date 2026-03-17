@@ -255,8 +255,8 @@ function StockLogo({ symbol, size = 32 }) {
     />
   );
 }
-function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
-  const [profileTab, setProfileTab] = useState("overview");
+function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
+  const [profileTab, setProfileTab] = useState(initTab || "overview");
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
@@ -847,6 +847,26 @@ Instructions:
   };
   const [openSleeves, setOpenSleeves] = useState({});
   const [chartSymbol, setChartSymbol] = useState(null);
+  const [profileInitTab, setProfileInitTab] = useState("overview");
+  const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
+
+  // Open stock profile with specific tab
+  const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
+
+  // Context menu handler (right-click on desktop, long-press on mobile)
+  const stockContextHandlers = (sym) => {
+    let longPressTimer = null;
+    return {
+      onClick: () => openStock(sym),
+      onContextMenu: (e) => { e.preventDefault(); setCtxMenu({ sym, x: e.clientX, y: e.clientY }); },
+      onTouchStart: (e) => {
+        const touch = e.touches[0];
+        longPressTimer = setTimeout(() => { setCtxMenu({ sym, x: touch.clientX, y: touch.clientY }); }, 500);
+      },
+      onTouchEnd: () => { if (longPressTimer) clearTimeout(longPressTimer); },
+      onTouchMove: () => { if (longPressTimer) clearTimeout(longPressTimer); },
+    };
+  };
   const [refresh, setRefresh] = useState(null); // null = smart auto
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState(() => {
@@ -1679,7 +1699,7 @@ Instructions:
     const pts = intradayPts[s];
     const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
     return (
-      <div key={s} onClick={() => setChartSymbol(s)} className="ticker-row"
+      <div key={s} {...stockContextHandlers(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
         <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
           <StockLogo symbol={s} size={34} />
@@ -1975,7 +1995,7 @@ Instructions:
                     const c = bmChg(bm.sym);
                     const q = bmQuotes[bm.sym];
                     return (
-                      <div key={bm.sym} onClick={() => setChartSymbol(bm.sym)} style={{
+                      <div key={bm.sym} {...stockContextHandlers(bm.sym)} style={{
                         flex: isDesktop ? undefined : "0 0 auto",
                         padding: isDesktop ? "16px" : "12px 16px",
                         cursor: "pointer",
@@ -2071,7 +2091,7 @@ Instructions:
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
-                <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => setChartSymbol(s)} />
+                <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} />
               </div>
             )}
           </div>
@@ -2293,7 +2313,7 @@ Instructions:
                     const barWidth = Math.abs(c.qtd) / maxAbs * 100;
                     const isPos = c.qtd >= 0;
                     return (
-                      <div key={c.sym} onClick={() => setChartSymbol(c.sym)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", borderBottom: i < contributions.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                      <div key={c.sym} {...stockContextHandlers(c.sym)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", borderBottom: i < contributions.length - 1 ? `1px solid ${C.border}` : "none" }}>
                         <div style={{ width: 48, fontSize: 13, fontWeight: 700, color: C.accent, flexShrink: 0 }}>{c.sym}</div>
                         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 0 }}>
                           {/* Left side (negative) */}
@@ -2412,7 +2432,7 @@ Instructions:
                         <tr>
                           <th style={{ padding: "12px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: C.t4, background: C.surface, position: "sticky", left: 0, zIndex: 2, borderBottom: `2px solid ${C.accent}` }}>Metric</th>
                           {compareSyms.map((s, i) => (
-                            <th key={s} onClick={() => setChartSymbol(s)} style={{
+                            <th key={s} {...stockContextHandlers(s)} style={{
                               padding: "12px 10px", textAlign: "center", fontWeight: 700, cursor: "pointer",
                               color: i === 0 ? C.accent : C.t2, fontSize: i === 0 ? 14 : 12,
                               background: i === 0 ? C.accentSoft : C.surface,
@@ -2777,7 +2797,7 @@ Instructions:
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                                     </div>
                                   )}
-                                  <div onClick={() => setChartSymbol(s)} style={{ cursor: "pointer" }}>
+                                  <div {...stockContextHandlers(s)} style={{ cursor: "pointer" }}>
                                     <div style={{ fontSize: 14, fontWeight: 800, color: C.accent }}>{s}</div>
                                     <div style={{ fontSize: 11, color: C.t4, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{shortNm}</div>
                                   </div>
@@ -3045,7 +3065,7 @@ Instructions:
               {a.symbols?.length > 0 && (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
                   {a.symbols.filter(s => coreSyms.includes(s)).map(s => (
-                    <span key={s} onClick={(e) => { e.stopPropagation(); setSelectedArticle(null); setChartSymbol(s); }} style={{
+                    <span key={s} onClick={(e) => { e.stopPropagation(); setSelectedArticle(null); openStock(s); }} style={{
                       fontSize: 12, fontWeight: 700, color: C.accent, background: C.accentSoft,
                       padding: "4px 10px", borderRadius: 6, cursor: "pointer",
                     }}>{s}</span>
@@ -3114,7 +3134,41 @@ Instructions:
       </div>
       )}
 
-      {chartSymbol && <StockProfile symbol={chartSymbol} onClose={() => setChartSymbol(null)} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
+      {/* Context menu for stock quick-nav */}
+      {ctxMenu && (
+        <>
+          <div onClick={() => setCtxMenu(null)} style={{ position: "fixed", inset: 0, zIndex: 10000 }} />
+          <div style={{
+            position: "fixed", left: Math.min(ctxMenu.x, window.innerWidth - 180), top: Math.min(ctxMenu.y, window.innerHeight - 220),
+            zIndex: 10001, background: C.card, border: `1px solid ${C.border}`,
+            borderRadius: 12, padding: "6px 0", minWidth: 170,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)", backdropFilter: "blur(20px)",
+          }}>
+            <div style={{ padding: "8px 14px", fontSize: 13, fontWeight: 700, color: C.t1, borderBottom: `1px solid ${C.border}` }}>
+              {ctxMenu.sym} — {names?.[ctxMenu.sym] || ""}
+            </div>
+            {[
+              { id: "overview", label: "Overview", icon: "📊" },
+              { id: "chart", label: "Chart", icon: "📈" },
+              { id: "financials", label: "Financials", icon: "💰" },
+              { id: "news", label: "News", icon: "📰" },
+            ].map(t => (
+              <div key={t.id} onClick={() => openStock(ctxMenu.sym, t.id)} style={{
+                padding: "10px 14px", fontSize: 14, color: C.t2, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 10,
+                borderBottom: t.id !== "news" ? `1px solid ${C.border}22` : "none",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = C.accentSoft; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
+                <span style={{ fontSize: 16 }}>{t.icon}</span>
+                <span style={{ fontWeight: 500 }}>{t.label}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {chartSymbol && <StockProfile symbol={chartSymbol} initTab={profileInitTab} onClose={() => { setChartSymbol(null); setProfileInitTab("overview"); }} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
       <GS theme={theme} />
     </div>
   );
