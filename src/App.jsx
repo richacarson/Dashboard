@@ -296,6 +296,15 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     const fetchProfile = async () => {
       setProfileLoading(true);
       try {
+        // Load static company description
+        try {
+          const descR = await fetch(`${import.meta.env.BASE_URL}company-descriptions.json`);
+          if (descR.ok) {
+            const descs = await descR.json();
+            if (descs[symbol]) setProfile(p => ({ ...p, description: descs[symbol] }));
+          }
+        } catch {}
+        // Finnhub data
         if (FH) {
           const [profR, recR, earnR, finR] = await Promise.all([
             fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FH}`),
@@ -303,7 +312,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
             fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${symbol}&limit=8&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FH}`),
           ]);
-          if (profR.ok) { const d = await profR.json(); if (d.name) setProfile(d); }
+          if (profR.ok) { const d = await profR.json(); if (d.name) setProfile(p => ({ ...p, ...d })); }
           if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) setRecommendation(d); }
           if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) setEarnings(d); }
           if (finR.ok) { const d = await finR.json(); if (d.metric) setFinancials(d.metric); }
