@@ -84,7 +84,7 @@
     "country": "USD",
     "date": "2026-03-19T08:30:00-04:00",
     "impact": "Medium",
-    "forecast": "17.5",
+    "forecast": "8.5",
     "previous": "16.3"
   },
   {
@@ -92,7 +92,7 @@
     "country": "USD",
     "date": "2026-03-19T10:00:00-04:00",
     "impact": "Medium",
-    "forecast": "723K",
+    "forecast": "722K",
     "previous": "745K"
   },
   {
