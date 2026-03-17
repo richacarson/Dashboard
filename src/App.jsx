@@ -2655,13 +2655,22 @@ Instructions:
               padding: "12px 18px", borderBottom: `1px solid ${C.border}`,
               flexShrink: 0,
             }}>
-              <button onClick={() => setSelectedArticle(null)} style={{
-                background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                Back
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => setSelectedArticle(null)} style={{
+                  background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  Back
+                </button>
+                {a.url && (
+                  <button onClick={() => window.open(a.url, "_blank")} style={{
+                    background: "none", border: `1px solid ${C.border}`, borderRadius: 8,
+                    padding: "5px 12px", color: C.t3, fontSize: 11, fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>Open Source ↗</button>
+                )}
+              </div>
               {CLAUDE_KEY && (
                 <button onClick={() => { setArticleContent(null); fetchArticleContent(a); }} style={{
                   background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8,
@@ -2725,17 +2734,6 @@ Instructions:
                       <div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
                       <div style={{ fontSize: 13, color: C.t4 }}>Extracting full article...</div>
                     </div>
-                  ) : CLAUDE_KEY && a.url ? (
-                    <button onClick={() => fetchArticleContent(a)} style={{
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      width: "100%", padding: "14px 0", borderRadius: 12,
-                      background: C.accentSoft, border: `1px solid ${C.borderActive}`,
-                      color: C.t1, fontSize: 14, fontWeight: 700,
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>
-                      Read Full Article
-                    </button>
                   ) : null}
                 </>
               )}
