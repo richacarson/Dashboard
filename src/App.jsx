@@ -1401,8 +1401,8 @@ export default function App() {
           }}>
             <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, flexShrink: 0 }} />
             <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.4 }}>
-              {marketStatus.status === "premarket" && "Pre-market hours — prices shown are from yesterday's close. Upgrade to SIP feed for live pre-market data."}
-              {marketStatus.status === "afterhours" && "After-hours trading — prices shown are from today's close. Upgrade to SIP feed for live after-hours data."}
+              {marketStatus.status === "premarket" && "Pre-market hours — prices shown are from yesterday's close."}
+              {marketStatus.status === "afterhours" && "After-hours trading — prices shown are from today's close."}
               {marketStatus.status === "closed" && "Market is closed — prices shown are from the last trading session."}
             </div>
           </div>
