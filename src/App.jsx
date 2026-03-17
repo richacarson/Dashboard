@@ -935,6 +935,21 @@ export default function App() {
             revenueActual: e.revenueActual ?? e.revenue_actual ?? null,
           }))
           .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+
+        // Cache estimates — Finnhub removes them after earnings are reported
+        let cache = {};
+        try { cache = JSON.parse(localStorage.getItem("iown_earnings_est") || "{}"); } catch {}
+        for (const e of earnings) {
+          const key = `${e.symbol}|${e.date}`;
+          if (e.epsEstimate != null) cache[key] = { eps: e.epsEstimate, rev: e.revenueEstimate };
+          else if (cache[key]) {
+            // Restore cached estimates that Finnhub has removed
+            e.epsEstimate = cache[key].eps;
+            if (e.revenueEstimate == null) e.revenueEstimate = cache[key].rev;
+          }
+        }
+        try { localStorage.setItem("iown_earnings_est", JSON.stringify(cache)); } catch {}
+
         setEarningsCalendar(earnings);
       }
     } catch (e) { console.warn("Earnings fetch failed:", e.message); }
