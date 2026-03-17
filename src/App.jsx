@@ -546,8 +546,10 @@ export default function App() {
 
   /* ── Fetch snapshot data ── */
   const [priceFlash, setPriceFlash] = useState({});
-  const quotesRef = useRef({}); // Store quotes in ref to avoid re-renders on poll
+  const quotesRef = useRef({});
   const barsRef = useRef({});
+  const bmQuotesRef = useRef({});
+  const bmBarsRef = useRef({});
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
@@ -624,6 +626,8 @@ export default function App() {
       // Store in refs (no re-render)
       quotesRef.current = nq;
       barsRef.current = { ...prevB, ...nb };
+      bmQuotesRef.current = { ...bmQuotesRef.current, ...bq };
+      bmBarsRef.current = { ...bmBarsRef.current, ...bb };
 
       // Update sleeve average % changes via DOM
       for (const [k, sleeve] of Object.entries(sleeves)) {
@@ -1046,28 +1050,31 @@ export default function App() {
         const msgs = JSON.parse(evt.data);
         for (const msg of msgs) {
           if (msg.T === "success" && msg.msg === "authenticated") {
-            ws.send(JSON.stringify({ action: "subscribe", trades: ALL }));
+            ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...BM_SYMS] }));
           }
           if (msg.T === "t" && msg.S && msg.p) {
-            // Update via DOM, not React state
-            const prev = quotesRef.current[msg.S];
-            quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
-            const bars = barsRef.current[msg.S];
-            if (bars?.pc) {
-              const c = ((msg.p - bars.pc) / bars.pc) * 100;
-              const el = document.querySelector(`[data-ticker-chg="${msg.S}"]`);
-              if (el) {
-                el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-                el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-                el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
-                // Flash
-                if (prev && prev.p !== msg.p) {
-                  const dir = msg.p > prev.p ? C.up : C.dn;
-                  el.style.background = dir + "30";
-                  setTimeout(() => { if (el) el.style.background = "transparent"; }, 600);
+            const isBM = BM_SYMS.includes(msg.S);
+            // Update refs
+            if (isBM) {
+              bmQuotesRef.current[msg.S] = { p: msg.p, t: msg.t };
+            } else {
+              const prev = quotesRef.current[msg.S];
+              quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
+            }
+            const pc = isBM ? bmBarsRef.current[msg.S]?.pc : barsRef.current[msg.S]?.pc;
+            if (pc) {
+              const c = ((msg.p - pc) / pc) * 100;
+              // Portfolio ticker row
+              if (!isBM) {
+                const prev = quotesRef.current[msg.S];
+                const el = document.querySelector(`[data-ticker-chg="${msg.S}"]`);
+                if (el) {
+                  el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+                  el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+                  el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
                 }
               }
-              // Update benchmark if applicable
+              // Benchmark
               const bmEl = document.querySelector(`[data-bm-price="${msg.S}"]`);
               if (bmEl) bmEl.textContent = msg.p.toFixed(2);
               const bmChgEl = document.querySelector(`[data-bm-chg="${msg.S}"]`);
@@ -1087,15 +1094,17 @@ export default function App() {
               const metDay = document.querySelector(`[data-metric-day="${msg.S}"]`);
               if (metDay) { metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`; metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3; }
               // Sleeve averages
-              for (const [k, sleeve] of Object.entries(sleevesRef.current)) {
-                if (!sleeve.symbols.includes(msg.S)) continue;
-                const changes = sleeve.symbols.map(s => {
-                  const q = quotesRef.current[s], pc = barsRef.current[s]?.pc;
-                  return (q?.p && pc) ? ((q.p - pc) / pc) * 100 : null;
-                }).filter(v => v !== null);
-                const avg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
-                const el = document.querySelector(`[data-sleeve-chg="${k}"]`);
-                if (el && avg != null) { el.textContent = `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`; el.style.color = avg >= 0 ? C.up : C.dn; }
+              if (!isBM) {
+                for (const [k, sleeve] of Object.entries(sleevesRef.current)) {
+                  if (!sleeve.symbols.includes(msg.S)) continue;
+                  const changes = sleeve.symbols.map(s => {
+                    const q = quotesRef.current[s], pc = barsRef.current[s]?.pc;
+                    return (q?.p && pc) ? ((q.p - pc) / pc) * 100 : null;
+                  }).filter(v => v !== null);
+                  const avg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+                  const el = document.querySelector(`[data-sleeve-chg="${k}"]`);
+                  if (el && avg != null) { el.textContent = `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`; el.style.color = avg >= 0 ? C.up : C.dn; }
+                }
               }
             }
           }
