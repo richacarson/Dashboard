@@ -335,13 +335,12 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
     // Fetch company description from Wikipedia (free, no API key)
     const fetchWikiDesc = async () => {
-      // Wait for profile to load first
       await new Promise(r => setTimeout(r, 2000));
     };
     fetchWikiDesc();
   }, [symbol]);
 
-  // Separate effect to fetch Wikipedia description once profile is available
+  // Fetch Wikipedia description once profile name is available
   useEffect(() => {
     if (!profile || profile.description || profile._wikiDesc || profile._wikiTried) return;
     setProfile(p => ({ ...p, _wikiTried: true, _aiDescLoading: true }));
@@ -349,40 +348,33 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     if (!name) { setProfile(p => ({ ...p, _aiDescLoading: false })); return; }
 
     (async () => {
-      // Build search variations — strip common suffixes, try different forms
       const clean = name
-        .replace(/,?\s*(Inc\.?|Corp\.?|Corporation|Ltd\.?|PLC|plc|LLC|Co\.?|Group|Holdings|International|Incorporated|N\.?V\.?|S\.?A\.?|SE|AG|& Co\.?\s*KGaA)$/gi, "")
+        .replace(/,?\s*(Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|PLC|plc|LLC|Co\.?|Group|Holdings|International|Incorporated|N\.?V\.?|S\.?A\.?|SE|AG|& Co\.?\s*KGaA|Class [A-C]|Cl [A-C])$/gi, "")
         .replace(/\s+/g, " ").trim();
-      const tryNames = [
-        clean,
-        name,
-        `${clean} (company)`,
-        `${symbol} (company)`,
-      ];
-      for (const wikiName of tryNames) {
+
+      // Use Wikipedia search API to find the right article
+      const searchTerms = [clean, name, `${clean} company`, `${symbol} stock`];
+      for (const term of searchTerms) {
         try {
-          const encoded = encodeURIComponent(wikiName.replace(/\s+/g, "_"));
-          const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`);
-          if (r.ok) {
-            const d = await r.json();
-            if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
-              setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
-              return;
-            }
+          const searchR = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srlimit=3&format=json&origin=*`);
+          if (!searchR.ok) continue;
+          const searchD = await searchR.json();
+          const results = searchD?.query?.search || [];
+          for (const result of results) {
+            // Skip disambiguation and list pages
+            if (/disambiguation|list of/i.test(result.title)) continue;
+            try {
+              const summR = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(result.title)}`);
+              if (!summR.ok) continue;
+              const d = await summR.json();
+              if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
+                setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
+                return;
+              }
+            } catch {}
           }
         } catch {}
       }
-      // Try Wikipedia search as last resort
-      try {
-        const searchR = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean + " company")}`);
-        if (searchR.ok) {
-          const d = await searchR.json();
-          if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
-            setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
-            return;
-          }
-        }
-      } catch {}
       setProfile(p => ({ ...p, _aiDescLoading: false }));
     })();
   }, [profile?.name, profile?.companyName, symbol]);
