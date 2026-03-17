@@ -534,12 +534,13 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       </div>
 
       {/* Tab content */}
-      {profileTab === "chart" ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      {profileTab === "chart" && (
+        <div key="chart-tab" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
           <style>{`.tradingview-widget-copyright { display: none !important; } .tradingview-widget-container iframe { border: none !important; }`}</style>
         </div>
-      ) : (
+      )}
+      {profileTab !== "chart" && (
         <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 20px)" }}>
 
           {/* ── OVERVIEW TAB ── */}
@@ -1149,16 +1150,14 @@ Instructions:
       start.setDate(start.getDate() - 2);
       const startStr = start.toISOString().split("T")[0];
       const today = new Date().toISOString().split("T")[0];
-      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${startStr}T04:00:00Z&limit=10000`, { headers: hdrs });
+      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${startStr}T04:00:00Z&feed=iex&limit=10000`, { headers: hdrs });
       if (!r.ok) return;
       const d = await r.json();
       const pts = {};
       if (d.bars) {
         for (const [s, barArr] of Object.entries(d.bars)) {
-          // Split into today's bars vs older bars
           const todayBars = barArr.filter(b => b.t.startsWith(today)).map(b => b.c);
           const allCloses = barArr.map(b => b.c);
-          // Use today's bars if we have enough (5+), otherwise show last 78
           if (todayBars.length >= 5) {
             pts[s] = todayBars;
           } else {
@@ -1166,7 +1165,22 @@ Instructions:
           }
         }
       }
-      // Only update React state if the number of data points changed (new bar appeared)
+      // Stocks missing from IEX intraday — fetch 30-day daily bars as sparkline fallback
+      const missing = ALL.filter(s => !pts[s] || pts[s].length < 2);
+      if (missing.length > 0) {
+        try {
+          const d30 = new Date(); d30.setDate(d30.getDate() - 35);
+          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${missing.join(",")}&timeframe=1Day&start=${d30.toISOString().slice(0,10)}&limit=30&adjustment=split`, { headers: hdrs });
+          if (dailyR.ok) {
+            const dailyD = await dailyR.json();
+            if (dailyD.bars) {
+              for (const [s, barArr] of Object.entries(dailyD.bars)) {
+                if (barArr.length >= 2) pts[s] = barArr.map(b => b.c);
+              }
+            }
+          }
+        } catch {}
+      }
       const prev = intradayRef.current;
       const changed = Object.keys(pts).some(s => (pts[s]?.length || 0) !== (prev[s]?.length || 0));
       intradayRef.current = pts;
