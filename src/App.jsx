@@ -1770,8 +1770,7 @@ Instructions:
                       }} />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5 }}>{article.source}</span>
+                      <div style={{ marginBottom: 6 }}>
                         <span style={{ fontSize: 11, color: C.t4 }}>{ago(article.created_at || article.updated_at)}</span>
                       </div>
                       <div style={{ fontSize: 15, fontWeight: 600, color: C.t1, lineHeight: 1.4, marginBottom: 6,
@@ -2739,28 +2738,6 @@ Instructions:
                     </button>
                   ) : null}
                 </>
-              )}
-              ) : (
-                <div style={{ fontSize: 14, color: C.t4, textAlign: "center", padding: "40px 0" }}>
-                  No summary available for this article.
-                  {a.url && <div style={{ marginTop: 12 }}>
-                    <button onClick={() => window.open(a.url, "_blank")} style={{
-                      background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10,
-                      padding: "10px 24px", color: C.t1, fontSize: 14, fontWeight: 600,
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}>Read on {a.source} ↗</button>
-                  </div>}
-                </div>
-              )}
-              {/* Footer link */}
-              {a.summary && a.url && (
-                <div style={{ textAlign: "center", padding: "24px 0 0", borderTop: `1px solid ${C.border}`, marginTop: 12 }}>
-                  <button onClick={() => window.open(a.url, "_blank")} style={{
-                    background: "none", border: `1px solid ${C.border}`, borderRadius: 10,
-                    padding: "10px 24px", color: C.t3, fontSize: 13, fontWeight: 600,
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}>Read full article on {a.source} ↗</button>
-                </div>
               )}
             </div>
           </div>
