@@ -49,7 +49,8 @@ const FH = import.meta.env.VITE_FINNHUB_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
 const pct = n => (n == null || isNaN(n)) ? "—" : `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
-const vol = n => !n ? "—" : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`;
+const vol = n => !n ? "—" : n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`;
+const fmtEps = n => n != null ? `$${Number(n).toFixed(2)}` : null;
 const ago = d => { const s = (Date.now() - new Date(d)) / 1000; if (s < 60) return "just now"; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
 
 /* ── Market hours helper (all times ET) ── */
@@ -1625,12 +1626,18 @@ export default function App() {
               const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280", Policy: "#DC2626", Trade: "#0EA5E9" };
 
               const todayStr = new Date().toISOString().slice(0, 10);
+              // Show from start of current week (Monday)
+              const today = new Date();
+              const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon
+              const monday = new Date(today);
+              monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+              const weekStartStr = monday.toISOString().slice(0, 10);
 
-              // Group by date — FF uses ISO date strings in the "date" field
+              // Group by date — show full week
               const grouped = {};
               econCalendar.forEach(e => {
                 const date = (e.date || "").slice(0, 10);
-                if (!date || date < todayStr) return;
+                if (!date || date < weekStartStr) return;
                 if (!grouped[date]) grouped[date] = [];
                 grouped[date].push(e);
               });
@@ -1638,7 +1645,8 @@ export default function App() {
               return Object.entries(grouped).slice(0, 14).map(([date, events]) => {
                 const isToday = date === todayStr;
                 const daysAway = Math.ceil((new Date(date) - new Date(todayStr)) / 86400000);
-                const relLabel = daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : `${daysAway}d away`;
+                const isPast = daysAway < 0;
+                const relLabel = daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : daysAway < 0 ? `${Math.abs(daysAway)}d ago` : `${daysAway}d away`;
                 const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 
                 return (
@@ -1731,8 +1739,8 @@ export default function App() {
                         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                           <span style={{ fontSize: 10, color: C.t4, fontWeight: 600 }}>EPS</span>
                           <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                            {evt.epsEstimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>${evt.epsEstimate}</span></span>}
-                            {evt.epsActual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>${evt.epsActual}</span></span>}
+                            {evt.epsEstimate != null && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{fmtEps(evt.epsEstimate)}</span></span>}
+                            {evt.epsActual != null && <span style={{ color: C.t4 }}>Act: <span style={{ color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>{fmtEps(evt.epsActual)}</span></span>}
                             {hasBeat && <span style={{ fontSize: 11, color: epsBeat ? C.up : C.dn, fontWeight: 700 }}>({epsBeat ? "+" : ""}{((evt.epsActual - evt.epsEstimate) / Math.abs(evt.epsEstimate) * 100).toFixed(1)}%)</span>}
                           </div>
                         </div>
