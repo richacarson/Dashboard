@@ -584,6 +584,41 @@ export default function App() {
           }
         } catch {}
       }
+      // Final fallback: use intraday + daily bars for any still-missing benchmarks
+      const stillMissing = BM_SYMS.filter(s => !bq[s]);
+      if (stillMissing.length > 0) {
+        try {
+          // Get prevClose from daily bars
+          const start5d = new Date(); start5d.setDate(start5d.getDate() - 5);
+          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${stillMissing.join(",")}&timeframe=1Day&start=${start5d.toISOString().slice(0,10)}&limit=10&adjustment=split`, { headers: hdrs });
+          if (dailyR.ok) {
+            const dailyD = await dailyR.json();
+            if (dailyD.bars) {
+              for (const [s, barArr] of Object.entries(dailyD.bars)) {
+                if (barArr.length >= 2) {
+                  bb[s] = { pc: barArr[barArr.length - 2].c };
+                } else if (barArr.length === 1) {
+                  bb[s] = { pc: barArr[0].o };
+                }
+              }
+            }
+          }
+          // Get latest price from intraday bars (5min)
+          const today = new Date().toISOString().split("T")[0];
+          const intR = await fetch(`${BASE}/v2/stocks/bars?symbols=${stillMissing.join(",")}&timeframe=5Min&start=${today}T04:00:00Z&limit=1000&adjustment=split`, { headers: hdrs });
+          if (intR.ok) {
+            const intD = await intR.json();
+            if (intD.bars) {
+              for (const [s, barArr] of Object.entries(intD.bars)) {
+                if (barArr.length > 0) {
+                  const latest = barArr[barArr.length - 1];
+                  bq[s] = { p: latest.c, t: latest.t };
+                }
+              }
+            }
+          }
+        } catch {}
+      }
 
       const prevQ = quotesRef.current;
       const prevB = barsRef.current;
