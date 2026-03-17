@@ -255,7 +255,13 @@ function StockLogo({ symbol, size = 32 }) {
     />
   );
 }
-function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef }) {
+function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
+  const [profileTab, setProfileTab] = useState("overview");
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [recommendation, setRecommendation] = useState(null);
+  const [earnings, setEarnings] = useState([]);
+  const [financials, setFinancials] = useState(null);
   const containerRef = useRef(null);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -277,8 +283,33 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
 
   const isDark = theme === "dark";
 
+  // Fetch profile data
   useEffect(() => {
-    if (!containerRef.current) return;
+    const fetchProfile = async () => {
+      setProfileLoading(true);
+      try {
+        // Company profile from Finnhub
+        if (FH) {
+          const [profR, recR, earnR, finR] = await Promise.all([
+            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${symbol}&limit=8&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FH}`),
+          ]);
+          if (profR.ok) { const d = await profR.json(); if (d.name) setProfile(d); }
+          if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) setRecommendation(d); }
+          if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) setEarnings(d); }
+          if (finR.ok) { const d = await finR.json(); if (d.metric) setFinancials(d.metric); }
+        }
+      } catch {}
+      setProfileLoading(false);
+    };
+    fetchProfile();
+  }, [symbol]);
+
+  // TradingView chart
+  useEffect(() => {
+    if (profileTab !== "chart" || !containerRef.current) return;
     containerRef.current.innerHTML = "";
     const widgetDiv = document.createElement("div");
     widgetDiv.className = "tradingview-widget-container__widget";
@@ -290,26 +321,13 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     script.type = "text/javascript";
     script.async = true;
     script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: symbol,
-      interval: "W",
-      timezone: "America/New_York",
-      theme: isDark ? "dark" : "light",
-      style: "1",
-      locale: "en",
+      autosize: true, symbol, interval: "W", timezone: "America/New_York",
+      theme: isDark ? "dark" : "light", style: "1", locale: "en",
       backgroundColor: isDark ? "#080B05" : "#F5F5F0",
       gridColor: isDark ? "rgba(110,132,80,0.04)" : "rgba(80,100,60,0.04)",
-      allow_symbol_change: false,
-      hide_volume: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      hide_side_toolbar: false,
-      save_image: false,
-      calendar: false,
-      withdateranges: true,
-      details: false,
-      hotlist: false,
-      show_popup_button: false,
+      allow_symbol_change: false, hide_volume: false, hide_top_toolbar: false,
+      hide_legend: false, hide_side_toolbar: false, save_image: false, calendar: false,
+      withdateranges: true, details: false, hotlist: false, show_popup_button: false,
       favorite_intervals: ["1", "5", "15", "60", "240", "D"],
       overrides: {
         "mainSeriesProperties.candleStyle.upColor": isDark ? "#34D399" : "#16A34A",
@@ -324,7 +342,7 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
       support_host: "https://www.tradingview.com",
     });
     containerRef.current.appendChild(script);
-  }, [symbol, theme]);
+  }, [symbol, theme, profileTab]);
 
   // Live price
   const livePriceRef = useRef(null);
@@ -343,46 +361,295 @@ function ChartOverlay({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef 
     return () => clearInterval(timer);
   }, [symbol]);
 
+  const q = quotesRef?.current?.[symbol];
+  const b = barsRef?.current?.[symbol];
+  const price = q?.p;
+  const pc = b?.pc;
+  const dayChg = price && pc ? ((price - pc) / pc) * 100 : null;
+  const f = fundamentals?.[symbol] || {};
+  const fm = financials || {};
+  const vol = (v) => { if (!v) return "—"; if (v >= 1e12) return `$${(v/1e12).toFixed(2)}T`; if (v >= 1e9) return `$${(v/1e9).toFixed(2)}B`; if (v >= 1e6) return `$${(v/1e6).toFixed(1)}M`; return `$${v.toLocaleString()}`; };
+  const fmt = (v, d=2) => v != null ? v.toFixed(d) : "—";
+  const pct = (v) => v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}%` : "—";
+
+  const tabs = [
+    { id: "overview", label: "Overview" },
+    { id: "chart", label: "Chart" },
+    { id: "financials", label: "Financials" },
+    { id: "news", label: "News" },
+  ];
+
+  // Stat row helper
+  const StatRow = ({ label, value, color }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+      <span style={{ fontSize: 13, color: C.t3 }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: color || C.t1, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+    </div>
+  );
+
+  // Card helper
+  const Card = ({ title, children, grade }) => (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>{title}</span>
+        {grade && <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: grade.color + "22", color: grade.color }}>{grade.label}</span>}
+      </div>
+      {children}
+    </div>
+  );
+
+  // Analyst consensus
+  const latestRec = recommendation?.[0];
+  const totalAnalysts = latestRec ? (latestRec.strongBuy + latestRec.buy + latestRec.hold + latestRec.sell + latestRec.strongSell) : 0;
+  const consensusLabel = latestRec ? (
+    (latestRec.strongBuy + latestRec.buy) > totalAnalysts * 0.6 ? "Buy" :
+    (latestRec.strongSell + latestRec.sell) > totalAnalysts * 0.4 ? "Sell" : "Hold"
+  ) : null;
+  const consensusColor = consensusLabel === "Buy" ? C.up : consensusLabel === "Sell" ? C.dn : "#F59E0B";
+
+  // Ticker news
+  const tickerNews = [...(news || [])].filter(a => a.symbols?.includes(symbol)).slice(0, 15);
+
   return (
     <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} style={{
       position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
       background: C.bg, display: "flex", flexDirection: "column",
       paddingTop: "env(safe-area-inset-top, 0px)",
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
       transform: dragX > 0 ? `translateX(${dragX}px)` : "none",
       transition: dragging ? "none" : "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
       overflow: "hidden",
     }}>
-      {/* Minimal header — compact, blends with chart */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "6px 16px 6px", flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <StockLogo symbol={symbol} size={32} />
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 17, fontWeight: 800, color: C.t1, letterSpacing: 0.3 }}>{symbol}</span>
-              <span ref={livePriceRef} style={{ fontSize: 15, fontWeight: 700, color: C.t2 }}></span>
-              <span ref={livePctRef} style={{ fontSize: 12, fontWeight: 700, color: C.t3 }}></span>
+      {/* Header */}
+      <div style={{ padding: "8px 16px", flexShrink: 0, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <StockLogo symbol={symbol} size={36} />
+            <div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{symbol}</span>
+                <span ref={livePriceRef} style={{ fontSize: 17, fontWeight: 700, color: C.t2 }}>{price ? `$${price.toFixed(2)}` : ""}</span>
+                <span ref={livePctRef} style={{ fontSize: 13, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg != null ? pct(dayChg) : ""}</span>
+              </div>
+              <div style={{ fontSize: 12, color: C.t4, marginTop: 1 }}>{names?.[symbol] || profile?.name || ""}</div>
             </div>
-            <div style={{ fontSize: 11, color: C.t4, marginTop: 1 }}>{names?.[symbol] || ""}</div>
           </div>
+          <button onClick={onClose} style={{
+            width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
+            border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          </button>
         </div>
-        <button onClick={onClose} style={{
-          width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
-          border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-        </button>
+        {/* Tab bar */}
+        <div style={{ display: "flex", gap: 0 }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setProfileTab(t.id)} style={{
+              flex: 1, padding: "10px 0", background: "none", border: "none",
+              borderBottom: profileTab === t.id ? `2px solid ${C.accent}` : "2px solid transparent",
+              color: profileTab === t.id ? C.t1 : C.t4, fontSize: 13, fontWeight: profileTab === t.id ? 700 : 500,
+              cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+            }}>{t.label}</button>
+          ))}
+        </div>
       </div>
-      {/* Chart — takes all remaining space, no borders */}
-      <div ref={containerRef} style={{ flex: 1, width: "100%", marginBottom: -2 }} className="tradingview-widget-container" />
-      {/* Hide TradingView copyright bar with CSS */}
-      <style>{`
-        .tradingview-widget-copyright { display: none !important; }
-        .tradingview-widget-container iframe { border: none !important; }
-      `}</style>
+
+      {/* Tab content */}
+      {profileTab === "chart" ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
+          <style>{`.tradingview-widget-copyright { display: none !important; } .tradingview-widget-container iframe { border: none !important; }`}</style>
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 20px)" }}>
+
+          {/* ── OVERVIEW TAB ── */}
+          {profileTab === "overview" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              {/* Key Stats */}
+              <Card title="Key Statistics">
+                <StatRow label="Market Cap" value={profile?.marketCapitalization ? vol(profile.marketCapitalization * 1e6) : (fm["marketCapitalization"] ? vol(fm["marketCapitalization"]) : "—")} />
+                <StatRow label="P/E (TTM)" value={fmt(f.peTTM || fm["peNormalizedAnnual"])} />
+                <StatRow label="P/E (FWD)" value={fmt(f.peFwd || fm["peTTM"])} />
+                <StatRow label="EPS (TTM)" value={fmt(fm["epsNormalizedAnnual"] || f.epsTTM)} />
+                <StatRow label="Dividend Yield" value={fm["dividendYieldIndicatedAnnual"] != null ? `${(fm["dividendYieldIndicatedAnnual"] * 100).toFixed(2)}%` : (f.divYield != null ? `${f.divYield.toFixed(2)}%` : "—")} />
+                <StatRow label="52-Week High" value={fm["52WeekHigh"] != null ? `$${fmt(fm["52WeekHigh"])}` : "—"} />
+                <StatRow label="52-Week Low" value={fm["52WeekLow"] != null ? `$${fmt(fm["52WeekLow"])}` : "—"} />
+                <StatRow label="Beta" value={fmt(fm["beta"])} />
+                <StatRow label="Volume" value={b?.v ? b.v.toLocaleString() : "—"} />
+              </Card>
+
+              {/* Analyst Ratings */}
+              {latestRec && (
+                <Card title="Analyst Ratings">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: consensusColor, padding: "4px 14px", borderRadius: 8, background: consensusColor + "18", border: `1px solid ${consensusColor}44` }}>{consensusLabel}</span>
+                    <span style={{ fontSize: 12, color: C.t4 }}>{totalAnalysts} analysts</span>
+                  </div>
+                  {[
+                    { label: "Strong Buy", val: latestRec.strongBuy, color: "#16A34A" },
+                    { label: "Buy", val: latestRec.buy, color: "#34D399" },
+                    { label: "Hold", val: latestRec.hold, color: "#F59E0B" },
+                    { label: "Sell", val: latestRec.sell, color: "#F87171" },
+                    { label: "Strong Sell", val: latestRec.strongSell, color: "#DC2626" },
+                  ].map(r => (
+                    <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: C.t3, width: 80 }}>{r.label}</span>
+                      <div style={{ flex: 1, height: 8, background: C.border, borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ width: `${totalAnalysts ? (r.val / totalAnalysts) * 100 : 0}%`, height: "100%", background: r.color, borderRadius: 4, transition: "width 0.3s" }} />
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2, width: 20, textAlign: "right" }}>{r.val}</span>
+                    </div>
+                  ))}
+                  {/* Price target */}
+                  {fm["targetMedianPrice"] && (
+                    <div style={{ marginTop: 14, padding: "12px 0 0", borderTop: `1px solid ${C.border}` }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: C.t4 }}>Price Target</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>${fmt(fm["targetMedianPrice"])}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.t4 }}>
+                        <span>Low: ${fmt(fm["targetLowPrice"])}</span>
+                        <span>High: ${fmt(fm["targetHighPrice"])}</span>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* Company Profile */}
+              {profile && (
+                <Card title="Company Profile">
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: C.t3, marginBottom: 12 }}>
+                    {profile.finnhubIndustry && <span style={{ fontSize: 11, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "3px 8px", borderRadius: 4, marginRight: 6 }}>{profile.finnhubIndustry}</span>}
+                    {profile.exchange && <span style={{ fontSize: 11, color: C.t4 }}>{profile.exchange}</span>}
+                  </div>
+                  <StatRow label="Sector" value={profile.finnhubIndustry || "—"} />
+                  <StatRow label="Country" value={profile.country || "—"} />
+                  <StatRow label="IPO Date" value={profile.ipo || "—"} />
+                  {profile.weburl && <StatRow label="Website" value={profile.weburl.replace(/https?:\/\/(www\.)?/, "")} />}
+                  {profile.phone && <StatRow label="Phone" value={profile.phone} />}
+                </Card>
+              )}
+
+              {/* Momentum */}
+              {(fm["3MonthPriceReturnDaily"] != null || fm["6MonthPriceReturnDaily"] != null) && (
+                <Card title="Momentum">
+                  <StatRow label="3 Month Return" value={pct(fm["3MonthPriceReturnDaily"])} color={fm["3MonthPriceReturnDaily"] >= 0 ? C.up : C.dn} />
+                  <StatRow label="6 Month Return" value={pct(fm["6MonthPriceReturnDaily"])} color={fm["6MonthPriceReturnDaily"] >= 0 ? C.up : C.dn} />
+                  <StatRow label="1 Year Return" value={pct(fm["yearToDatePriceReturnDaily"])} color={fm["yearToDatePriceReturnDaily"] >= 0 ? C.up : C.dn} />
+                </Card>
+              )}
+
+              {profileLoading && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>Loading profile...</div>}
+            </div>
+          )}
+
+          {/* ── FINANCIALS TAB ── */}
+          {profileTab === "financials" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              {/* Valuation */}
+              <Card title="Valuation">
+                <StatRow label="P/E (TTM)" value={fmt(f.peTTM || fm["peNormalizedAnnual"])} />
+                <StatRow label="P/E (FWD)" value={fmt(f.peFwd)} />
+                <StatRow label="PEG Ratio" value={fmt(f.peg || fm["pegAnnual"])} />
+                <StatRow label="Price/Book" value={fmt(fm["pbAnnual"])} />
+                <StatRow label="Price/Sales" value={fmt(fm["psAnnual"])} />
+                <StatRow label="EV/EBITDA" value={fmt(fm["currentEv/freeCashFlowAnnual"])} />
+              </Card>
+
+              {/* Profitability */}
+              <Card title="Profitability">
+                <StatRow label="Gross Margin" value={fm["grossMarginTTM"] != null ? `${fmt(fm["grossMarginTTM"])}%` : "—"} />
+                <StatRow label="Operating Margin" value={fm["operatingMarginTTM"] != null ? `${fmt(fm["operatingMarginTTM"])}%` : "—"} />
+                <StatRow label="Net Margin" value={fm["netProfitMarginTTM"] != null ? `${fmt(fm["netProfitMarginTTM"])}%` : "—"} />
+                <StatRow label="ROE" value={fm["roeTTM"] != null ? `${fmt(fm["roeTTM"])}%` : (f.roe != null ? `${fmt(f.roe)}%` : "—")} />
+                <StatRow label="ROA" value={fm["roaTTM"] != null ? `${fmt(fm["roaTTM"])}%` : "—"} />
+              </Card>
+
+              {/* Growth */}
+              <Card title="Growth">
+                <StatRow label="Revenue Growth (YoY)" value={fm["revenueGrowthQuarterlyYoy"] != null ? `${fmt(fm["revenueGrowthQuarterlyYoy"])}%` : "—"} color={fm["revenueGrowthQuarterlyYoy"] >= 0 ? C.up : C.dn} />
+                <StatRow label="EPS Growth (YoY)" value={fm["epsGrowthQuarterlyYoy"] != null ? `${fmt(fm["epsGrowthQuarterlyYoy"])}%` : "—"} color={fm["epsGrowthQuarterlyYoy"] >= 0 ? C.up : C.dn} />
+                <StatRow label="Revenue Growth (3Y CAGR)" value={fm["revenueGrowth3Y"] != null ? `${fmt(fm["revenueGrowth3Y"])}%` : "—"} />
+                <StatRow label="EPS Growth (3Y CAGR)" value={fm["epsGrowth3Y"] != null ? `${fmt(fm["epsGrowth3Y"])}%` : "—"} />
+              </Card>
+
+              {/* Dividends */}
+              <Card title="Dividends">
+                <StatRow label="Dividend Yield" value={fm["dividendYieldIndicatedAnnual"] != null ? `${(fm["dividendYieldIndicatedAnnual"] * 100).toFixed(2)}%` : (f.divYield != null ? `${f.divYield.toFixed(2)}%` : "—")} />
+                <StatRow label="Dividend Per Share" value={fm["dividendPerShareAnnual"] != null ? `$${fmt(fm["dividendPerShareAnnual"])}` : "—"} />
+                <StatRow label="Payout Ratio" value={fm["payoutRatioAnnual"] != null ? `${fmt(fm["payoutRatioAnnual"])}%` : "—"} />
+                <StatRow label="5Y Avg Dividend Yield" value={fm["dividendYield5Y"] != null ? `${fmt(fm["dividendYield5Y"])}%` : "—"} />
+              </Card>
+
+              {/* Earnings History */}
+              {earnings.length > 0 && (
+                <Card title="Earnings History">
+                  <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8 }}>
+                    {earnings.slice(0, 8).reverse().map((e, i) => {
+                      const beat = e.actual != null && e.estimate != null && e.actual >= e.estimate;
+                      const miss = e.actual != null && e.estimate != null && e.actual < e.estimate;
+                      return (
+                        <div key={i} style={{ flex: "0 0 auto", minWidth: 80, padding: "10px 8px", background: C.surface, borderRadius: 10, border: `1px solid ${C.border}`, textAlign: "center" }}>
+                          <div style={{ fontSize: 10, color: C.t4, marginBottom: 6 }}>{e.period}</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 2 }}>{e.actual != null ? e.actual.toFixed(2) : "—"}</div>
+                          <div style={{ fontSize: 10, color: C.t4 }}>Est: {e.estimate != null ? e.estimate.toFixed(2) : "—"}</div>
+                          {(beat || miss) && (
+                            <div style={{ fontSize: 10, fontWeight: 700, color: beat ? C.up : C.dn, marginTop: 4 }}>
+                              {beat ? "BEAT" : "MISS"} {e.surprise != null ? `${e.surprise >= 0 ? "+" : ""}${(e.surprisePercent || 0).toFixed(1)}%` : ""}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
+
+              {/* Balance Sheet Strength */}
+              <Card title="Balance Sheet">
+                <StatRow label="Debt/Equity" value={fmt(f.de || fm["totalDebt/totalEquityQuarterly"])} />
+                <StatRow label="Current Ratio" value={fmt(fm["currentRatioQuarterly"])} />
+                <StatRow label="Quick Ratio" value={fmt(fm["quickRatioQuarterly"])} />
+                <StatRow label="Book Value/Share" value={fm["bookValuePerShareQuarterly"] != null ? `$${fmt(fm["bookValuePerShareQuarterly"])}` : "—"} />
+              </Card>
+            </div>
+          )}
+
+          {/* ── NEWS TAB ── */}
+          {profileTab === "news" && (
+            <div style={{ animation: "fadeIn 0.3s ease" }}>
+              {tickerNews.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No recent news for {symbol}</div>
+              ) : tickerNews.map((article, i) => (
+                <div key={article.id || i} style={{
+                  padding: "14px 0", borderBottom: i < tickerNews.length - 1 ? `1px solid ${C.border}` : "none",
+                  cursor: "pointer",
+                }} onClick={() => article.url && window.open(article.url, "_blank")}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    {article.images?.[0]?.url && (
+                      <img src={article.images[0].url} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 4 }}>
+                        {article.created_at ? (() => { const d = Date.now() - new Date(article.created_at).getTime(); const m = Math.floor(d/60000); if (m < 60) return `${m}m ago`; const h = Math.floor(m/60); if (h < 24) return `${h}h ago`; return `${Math.floor(h/24)}d ago`; })() : ""}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {article.headline}
+                      </div>
+                      {article.summary && (
+                        <div style={{ fontSize: 12, color: C.t3, marginTop: 4, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {article.summary}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2763,7 +3030,7 @@ Instructions:
       </div>
       )}
 
-      {chartSymbol && <ChartOverlay symbol={chartSymbol} onClose={() => setChartSymbol(null)} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} />}
+      {chartSymbol && <StockProfile symbol={chartSymbol} onClose={() => setChartSymbol(null)} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
       <GS theme={theme} />
     </div>
   );
