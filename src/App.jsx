@@ -418,20 +418,37 @@ export default function App() {
     if (!CLAUDE_KEY || !article.url) return;
     setArticleLoading(true);
     try {
+      const summary = article.summary || "";
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-api-key": CLAUDE_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
+          model: "claude-sonnet-4-20250514",
           max_tokens: 2000,
-          messages: [{ role: "user", content: `Search the web for this news article and provide the full article content in clean paragraphs. Use the headline and source to find it.\n\nHeadline: "${article.headline}"\nSource: ${article.source}\nURL (for reference): ${article.url}\n\nInstructions:\n- Search for the article using the headline\n- Write out the full article content in clean paragraphs\n- Keep important quotes and data points\n- Do NOT include any preamble like "I found the article" — just go straight into the article content\n- At the end, add a section titled "Key Takeaways" with 2-4 bullet points\n- Do NOT ask any follow-up questions` }],
-          tools: [{ type: "web_search_20250305", name: "web_search" }],
+          messages: [{ role: "user", content: `You are a financial news editor. Based on the following article details, write a comprehensive, detailed article summary in clean paragraphs. Expand on the key points, provide context, and explain the market implications.
+
+Headline: "${article.headline}"
+Source: ${article.source}
+Summary: ${summary}
+Symbols mentioned: ${(article.symbols || []).join(", ")}
+
+Instructions:
+- Write 4-6 detailed paragraphs expanding on the news
+- Include relevant market context and implications
+- Keep a professional, objective financial news tone
+- At the end, add "## Key Takeaways" with 3-4 bullet points starting with "- "
+- Do NOT include any preamble — start directly with the article content
+- Do NOT ask questions or offer to help further` }],
         }),
       });
       if (r.ok) {
         const d = await r.json();
+        console.log("Claude response:", d);
         const text = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
         if (text) setArticleContent(text);
+      } else {
+        const err = await r.text();
+        console.error("Claude API error:", r.status, err);
       }
     } catch (e) { console.error("Article fetch error:", e); }
     setArticleLoading(false);
