@@ -565,9 +565,11 @@ export default function App() {
         if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
       }
-      // Benchmarks that didn't come back from IEX — use FMP real-time quotes
+      // Benchmarks that didn't come back from IEX — use FMP real-time quotes (throttled to ~15s)
       const missingBM = BM_SYMS.filter(s => !nq[s]);
-      if (missingBM.length > 0 && FK) {
+      const now = Date.now();
+      if (missingBM.length > 0 && FK && (!window._lastFmpBm || now - window._lastFmpBm > 15000)) {
+        window._lastFmpBm = now;
         try {
           const fmpR = await fetch(`https://financialmodelingprep.com/api/v3/quote/${missingBM.join(",")}?apikey=${FK}`);
           if (fmpR.ok) {
@@ -582,6 +584,11 @@ export default function App() {
             }
           }
         } catch {}
+      }
+      // For throttled polls, use cached ref data for missing benchmarks
+      for (const s of missingBM) {
+        if (!nq[s] && quotesRef.current[s]) nq[s] = quotesRef.current[s];
+        if (!nb[s]?.pc && barsRef.current[s]?.pc) nb[s] = { ...nb[s], ...barsRef.current[s] };
       }
       
 
