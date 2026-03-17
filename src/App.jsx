@@ -777,7 +777,7 @@ Instructions:
   const [perfHover, setPerfHover] = useState(null);
   const [msData, setMsData] = useState(() => { try { return JSON.parse(localStorage.getItem("iown_ms_perf") || "null"); } catch { return null; } });
   const [msLoading, setMsLoading] = useState(false);
-  const [showBenchmark, setShowBenchmark] = useState(true);
+  const [activeBenchmarks, setActiveBenchmarks] = useState(["DVY", "IWS"]); // multi-select benchmarks
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
@@ -2114,38 +2114,10 @@ Instructions:
 
         {/* ━━━ PERFORMANCE TAB ━━━ */}
         {tab === "performance" && (() => {
+          const BM_COLORS = { SPY: "#60A5FA", QQQ: "#A78BFA", DIA: "#FB923C", DVY: "#F472B6", IWS: "#34D399" };
+          const BM_LIST = ["SPY", "QQQ", "DIA", "DVY", "IWS"];
+          const toggleBm = (bm) => setActiveBenchmarks(prev => prev.includes(bm) ? prev.filter(b => b !== bm) : [...prev, bm]);
 
-          /* Also support CSV upload to override */
-          const handleCSVUpload = (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-              const text = ev.target.result;
-              const lines = text.trim().split("\n");
-              const series = [];
-              for (let i = 1; i < lines.length; i++) {
-                const row = lines[i].replace(/"/g, "").split(/[,\t]/);
-                if (row.length < 2) continue;
-                const dateStr = row[0]?.trim();
-                const valStr = row[1]?.trim()?.replace(/[$,%]/g, "");
-                const val = parseFloat(valStr);
-                if (isNaN(val)) continue;
-                let d = new Date(dateStr);
-                if (isNaN(d.getTime())) { const p = dateStr.split(/[\/\-]/); if (p.length===3) d = p[0].length===4 ? new Date(p[0],p[1]-1,p[2]) : new Date(p[2],p[0]-1,p[1]); }
-                if (!isNaN(d.getTime())) series.push({ date: d.toISOString().slice(0, 10), value: val });
-              }
-              series.sort((a, b) => a.date.localeCompare(b.date));
-              if (series.length > 1) {
-                const data = { portfolio: file.name, source: "csv", series, imported: new Date().toISOString() };
-                setMsData(data);
-                try { localStorage.setItem("iown_ms_perf", JSON.stringify(data)); } catch {}
-              }
-            };
-            reader.readAsText(file);
-          };
-
-          /* Filter by range */
           const filterByRange = (series, range) => {
             if (!series?.length || range === "ALL") return series;
             const now = new Date();
@@ -2153,303 +2125,106 @@ Instructions:
             let cutDate;
             if (range === "YTD") cutDate = new Date(now.getFullYear(), 0, 1);
             else { cutDate = new Date(now); cutDate.setMonth(cutDate.getMonth() - (cuts[range] || 0)); }
-            const cutStr = cutDate.toISOString().slice(0, 10);
-            return series.filter(p => p.date >= cutStr);
+            return series.filter(p => p.date >= cutDate.toISOString().slice(0, 10));
           };
 
           const portSeries = filterByRange(msData?.series, perfRange) || [];
-          const bmSeries = filterByRange(msData?.benchmark?.series, perfRange) || [];
           const hasData = portSeries.length > 1;
-
-          /* Normalize to % return */
-          const normalize = (series) => {
-            if (!series?.length) return [];
-            const base = series[0].value;
-            return series.map(p => ({ ...p, pctReturn: ((p.value - base) / base) * 100 }));
-          };
-
+          const normalize = (s) => { if (!s?.length) return []; const b = s[0].value; return s.map(p => ({ ...p, pctReturn: ((p.value - b) / b) * 100 })); };
           const normPort = normalize(portSeries);
-          const normBm = showBenchmark ? normalize(bmSeries) : [];
-          const allPts = [...normPort, ...normBm];
+
+          const bmNorms = {};
+          const allBenchmarks = msData?.benchmarks || {};
+          for (const bm of activeBenchmarks) {
+            const bmS = filterByRange(allBenchmarks[bm], perfRange) || [];
+            if (bmS.length > 1) bmNorms[bm] = normalize(bmS);
+          }
+
+          const allPts = [...normPort, ...Object.values(bmNorms).flat()];
           const minR = allPts.length ? Math.min(...allPts.map(p => p.pctReturn)) : 0;
           const maxR = allPts.length ? Math.max(...allPts.map(p => p.pctReturn)) : 0;
           const rangeR = maxR - minR || 1;
           const totalReturn = normPort.length ? normPort[normPort.length - 1].pctReturn : 0;
-          const bmReturn = normBm.length ? normBm[normBm.length - 1].pctReturn : null;
 
-          /* Chart dims */
           const CW = isDesktop ? 820 : (typeof window !== "undefined" ? window.innerWidth - 40 : 350);
-          const CH = isDesktop ? 380 : 280;
+          const CH = isDesktop ? 400 : 280;
           const PAD = { top: 30, right: 65, bottom: 40, left: 10 };
           const plotW = CW - PAD.left - PAD.right;
           const plotH = CH - PAD.top - PAD.bottom;
 
-          const buildPath = (data) => {
-            if (data.length < 2) return "";
-            return data.map((p, i) => {
-              const x = PAD.left + (i / (data.length - 1)) * plotW;
-              const y = PAD.top + plotH - ((p.pctReturn - minR) / rangeR) * plotH;
-              return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-            }).join(" ");
-          };
+          const buildPath = (data) => data.length < 2 ? "" : data.map((p, i) => {
+            const x = PAD.left + (i / (data.length - 1)) * plotW;
+            const y = PAD.top + plotH - ((p.pctReturn - minR) / rangeR) * plotH;
+            return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+          }).join(" ");
 
           const portPath = buildPath(normPort);
-          const bmPath = buildPath(normBm);
           const areaD = portPath ? `${portPath} L${(PAD.left + plotW).toFixed(1)},${(PAD.top + plotH).toFixed(1)} L${PAD.left},${(PAD.top + plotH).toFixed(1)} Z` : "";
-
-          /* Y-axis ticks */
-          const yTicks = [];
-          if (hasData) { for (let i = 0; i <= 5; i++) { const val = minR + (rangeR / 5) * i; yTicks.push({ val, y: PAD.top + plotH - (i / 5) * plotH }); } }
-
-          /* X labels */
-          const xLabels = [];
-          if (normPort.length > 1) {
-            const step = Math.max(1, Math.floor(normPort.length / (isDesktop ? 8 : 5)));
-            for (let i = 0; i < normPort.length; i += step) {
-              const x = PAD.left + (i / (normPort.length - 1)) * plotW;
-              const d = new Date(normPort[i].date);
-              xLabels.push({ x, label: perfRange === "1M" || perfRange === "3M" ? `${d.getMonth()+1}/${d.getDate()}` : `${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}` });
-            }
-          }
-
-          /* Hover */
+          const yTicks = []; if (hasData) { for (let i = 0; i <= 5; i++) yTicks.push({ val: minR + (rangeR/5)*i, y: PAD.top + plotH - (i/5)*plotH }); }
+          const xLabels = []; if (normPort.length > 1) { const step = Math.max(1, Math.floor(normPort.length / (isDesktop ? 8 : 5))); for (let i = 0; i < normPort.length; i += step) { const x = PAD.left + (i/(normPort.length-1))*plotW; const d = new Date(normPort[i].date); xLabels.push({ x, label: perfRange==="1M"||perfRange==="3M" ? `${d.getMonth()+1}/${d.getDate()}` : `${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}` }); } }
           const hoverPt = perfHover != null && normPort[perfHover.idx] ? normPort[perfHover.idx] : null;
-          const hoverBm = perfHover != null && normBm[perfHover.idx] ? normBm[perfHover.idx] : null;
           const hoverX = perfHover ? PAD.left + (perfHover.idx / (normPort.length - 1)) * plotW : 0;
           const hoverY = hoverPt ? PAD.top + plotH - ((hoverPt.pctReturn - minR) / rangeR) * plotH : 0;
-          const hoverBmY = hoverBm ? PAD.top + plotH - ((hoverBm.pctReturn - minR) / rangeR) * plotH : 0;
-
-          const ranges = ["1M", "3M", "6M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"];
-
-          /* Annual returns table */
+          const ranges = ["1M","3M","6M","YTD","1Y","3Y","5Y","10Y","ALL"];
           const annualRets = msData?.annual_returns;
           const years = annualRets ? Object.keys(annualRets.total || {}).map(Number).sort() : [];
-
-          /* Trailing returns */
           const tr = msData?.trailing;
 
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
               {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
-
-              {/* Loading / Import */}
-              {msLoading && <div style={{ textAlign: "center", padding: 40, color: C.t3 }}>Loading Morningstar data…</div>}
-
+              {msLoading && <div style={{ textAlign: "center", padding: 40, color: C.t3 }}>Loading…</div>}
               {!msLoading && !hasData && (
                 <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "60px 30px", textAlign: "center" }}>
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 16 }}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
                   <div style={{ fontSize: 18, fontWeight: 700, color: C.t2, marginBottom: 8 }}>No Performance Data</div>
-                  <div style={{ fontSize: 13, color: C.t3, marginBottom: 20 }}>Upload a CSV or ensure morningstar-dividend-perf.json is in public/</div>
-                  <label style={{ padding: "10px 20px", borderRadius: 12, background: C.accentSoft, border: `1px solid ${C.borderActive}`, color: C.t1, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                    Import CSV <input type="file" accept=".csv,.tsv,.txt" onChange={handleCSVUpload} style={{ display: "none" }} />
-                  </label>
                 </div>
               )}
-
-              {hasData && (
-                <>
-                  {/* Hero return + portfolio name */}
-                  <div style={{ marginBottom: 4 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{msData?.portfolio || "Dividend Strategy"}</div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
-                      <div style={{ fontSize: 38, fontWeight: 800, color: totalReturn >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
-                        {totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(2)}%
-                      </div>
-                      {showBenchmark && bmReturn != null && (
-                        <div style={{ fontSize: 15, color: C.t3 }}>
-                          vs <span style={{ color: bmReturn >= 0 ? "#60A5FA" : C.dn, fontWeight: 700 }}>
-                            {bmReturn >= 0 ? "+" : ""}{bmReturn.toFixed(2)}%
-                          </span> <span style={{ fontSize: 12 }}>{msData?.benchmark?.name || "Index"}</span>
-                        </div>
-                      )}
-                    </div>
-                    {/* Hover detail */}
-                    {hoverPt && (
-                      <div style={{ fontSize: 12, color: C.t3, marginTop: 4 }}>
-                        <span style={{ color: C.t2, fontWeight: 600 }}>{new Date(hoverPt.date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
-                        {" — "}<span style={{ color: hoverPt.pctReturn >= 0 ? C.up : C.dn, fontWeight: 700 }}>{hoverPt.pctReturn >= 0 ? "+" : ""}{hoverPt.pctReturn.toFixed(2)}%</span>
-                        {" — $"}{hoverPt.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        {hoverBm && <>{" | Index: "}<span style={{ color: "#60A5FA" }}>{hoverBm.pctReturn >= 0 ? "+" : ""}{hoverBm.pctReturn.toFixed(2)}%</span></>}
-                      </div>
-                    )}
+              {hasData && (<>
+                <div style={{ marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{msData?.portfolio || "Dividend Strategy"}</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 38, fontWeight: 800, color: totalReturn >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(2)}%</div>
+                    {activeBenchmarks.map(bm => { const bmN = bmNorms[bm]; if (!bmN?.length) return null; const bmR = bmN[bmN.length-1].pctReturn; return <span key={bm} style={{ fontSize: 13, color: BM_COLORS[bm] }}>vs <b>{bmR >= 0 ? "+" : ""}{bmR.toFixed(1)}%</b> {bm}</span>; })}
                   </div>
-
-                  {/* Range selectors + benchmark toggle */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-                    {ranges.map(r => (
-                      <button key={r} onClick={() => { setPerfRange(r); setPerfHover(null); }} style={{
-                        padding: "7px 12px", borderRadius: 10, border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
-                        background: perfRange === r ? C.accentSoft : "transparent",
-                        color: perfRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700,
-                        cursor: "pointer", fontFamily: "inherit",
-                      }}>{r}</button>
-                    ))}
-                    <div style={{ flex: 1 }} />
-                    {msData?.benchmark && (
-                      <button onClick={() => setShowBenchmark(!showBenchmark)} style={{
-                        padding: "7px 12px", borderRadius: 10, border: `1px solid ${showBenchmark ? "rgba(96,165,250,0.3)" : C.border}`,
-                        background: showBenchmark ? "rgba(96,165,250,0.08)" : "transparent",
-                        color: showBenchmark ? "#60A5FA" : C.t4, fontSize: 11, fontWeight: 700,
-                        cursor: "pointer", fontFamily: "inherit",
-                      }}>Index</button>
-                    )}
+                  {hoverPt && <div style={{ fontSize: 12, color: C.t3, marginTop: 4 }}><span style={{ color: C.t2, fontWeight: 600 }}>{new Date(hoverPt.date).toLocaleDateString("en-US",{month:"short",year:"numeric"})}</span>{" — "}<span style={{ color: hoverPt.pctReturn >= 0 ? C.up : C.dn, fontWeight: 700 }}>{hoverPt.pctReturn >= 0 ? "+" : ""}{hoverPt.pctReturn.toFixed(2)}%</span>{" — $"}{hoverPt.value.toLocaleString(undefined,{maximumFractionDigits:0})}</div>}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                  {ranges.map(r => <button key={r} onClick={() => { setPerfRange(r); setPerfHover(null); }} style={{ padding: "7px 12px", borderRadius: 10, border: `1px solid ${perfRange === r ? C.borderActive : C.border}`, background: perfRange === r ? C.accentSoft : "transparent", color: perfRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>)}
+                </div>
+                <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+                  {BM_LIST.map(bm => { const active = activeBenchmarks.includes(bm); const col = BM_COLORS[bm]; return <button key={bm} onClick={() => toggleBm(bm)} style={{ padding: "6px 12px", borderRadius: 10, border: `1px solid ${active ? col+"55" : C.border}`, background: active ? col+"15" : "transparent", color: active ? col : C.t4, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>; })}
+                </div>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, overflow: "hidden" }}>
+                  <svg width={CW} height={CH} viewBox={`0 0 ${CW} ${CH}`} style={{ display: "block", width: "100%", height: "auto", touchAction: "none" }}
+                    onMouseMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const mx = ((e.clientX-rect.left)/rect.width)*CW; const idx = Math.round(((mx-PAD.left)/plotW)*(normPort.length-1)); if (idx >= 0 && idx < normPort.length) setPerfHover({idx}); }}
+                    onTouchMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const mx = ((e.touches[0].clientX-rect.left)/rect.width)*CW; const idx = Math.round(((mx-PAD.left)/plotW)*(normPort.length-1)); if (idx >= 0 && idx < normPort.length) setPerfHover({idx}); }}
+                    onMouseLeave={() => setPerfHover(null)} onTouchEnd={() => setPerfHover(null)}>
+                    <defs><linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.up} stopOpacity="0.15" /><stop offset="100%" stopColor={C.up} stopOpacity="0" /></linearGradient></defs>
+                    {yTicks.map((t,i) => <g key={i}><line x1={PAD.left} y1={t.y} x2={PAD.left+plotW} y2={t.y} stroke={C.border} strokeWidth="1" /><text x={PAD.left+plotW+8} y={t.y+4} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="600">{t.val>=0?"+":""}{t.val.toFixed(0)}%</text></g>)}
+                    {minR < 0 && maxR > 0 && (() => { const zy = PAD.top+plotH-((0-minR)/rangeR)*plotH; return <line x1={PAD.left} y1={zy} x2={PAD.left+plotW} y2={zy} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" />; })()}
+                    {xLabels.map((l,i) => <text key={i} x={l.x} y={CH-8} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="500" textAnchor="middle">{l.label}</text>)}
+                    {areaD && <path d={areaD} fill="url(#perfGrad)" />}
+                    {activeBenchmarks.map(bm => { const bmN = bmNorms[bm]; if (!bmN?.length) return null; const p = buildPath(bmN); return p ? <path key={bm} d={p} fill="none" stroke={BM_COLORS[bm]} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.65" /> : null; })}
+                    {portPath && <path d={portPath} fill="none" stroke={C.up} strokeWidth="2.5" strokeLinejoin="round" />}
+                    {hoverPt && <><line x1={hoverX} y1={PAD.top} x2={hoverX} y2={PAD.top+plotH} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" /><circle cx={hoverX} cy={hoverY} r="5" fill={C.card} stroke={C.up} strokeWidth="2" /><circle cx={hoverX} cy={hoverY} r="2" fill={C.up} /></>}
+                  </svg>
+                  <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.t2 }}><div style={{ width: 16, height: 2.5, background: C.up, borderRadius: 2 }} />Portfolio</div>
+                    {activeBenchmarks.map(bm => bmNorms[bm]?.length ? <div key={bm} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: BM_COLORS[bm] }}><div style={{ width: 16, height: 1.5, background: BM_COLORS[bm], borderRadius: 2, opacity: 0.65 }} />{bm}</div> : null)}
                   </div>
-
-                  {/* SVG Chart */}
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, overflow: "hidden" }}>
-                    <svg width={CW} height={CH} viewBox={`0 0 ${CW} ${CH}`} style={{ display: "block", width: "100%", height: "auto", touchAction: "none" }}
-                      onMouseMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const mx = ((e.clientX - rect.left) / rect.width) * CW; const idx = Math.round(((mx - PAD.left) / plotW) * (normPort.length - 1)); if (idx >= 0 && idx < normPort.length) setPerfHover({ idx }); }}
-                      onTouchMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const mx = ((e.touches[0].clientX - rect.left) / rect.width) * CW; const idx = Math.round(((mx - PAD.left) / plotW) * (normPort.length - 1)); if (idx >= 0 && idx < normPort.length) setPerfHover({ idx }); }}
-                      onMouseLeave={() => setPerfHover(null)} onTouchEnd={() => setPerfHover(null)}
-                    >
-                      <defs>
-                        <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={C.up} stopOpacity="0.18" />
-                          <stop offset="100%" stopColor={C.up} stopOpacity="0" />
-                        </linearGradient>
-                      </defs>
-                      {/* Grid */}
-                      {yTicks.map((t, i) => (<g key={i}><line x1={PAD.left} y1={t.y} x2={PAD.left + plotW} y2={t.y} stroke={C.border} strokeWidth="1" /><text x={PAD.left + plotW + 8} y={t.y + 4} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="600">{t.val >= 0 ? "+" : ""}{t.val.toFixed(0)}%</text></g>))}
-                      {/* Zero line */}
-                      {minR < 0 && maxR > 0 && (() => { const zy = PAD.top + plotH - ((0 - minR) / rangeR) * plotH; return <line x1={PAD.left} y1={zy} x2={PAD.left + plotW} y2={zy} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" />; })()}
-                      {/* X labels */}
-                      {xLabels.map((l, i) => <text key={i} x={l.x} y={CH - 8} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="500" textAnchor="middle">{l.label}</text>)}
-                      {/* Area fill */}
-                      {areaD && <path d={areaD} fill="url(#perfGrad)" />}
-                      {/* Benchmark line */}
-                      {bmPath && <path d={bmPath} fill="none" stroke="#60A5FA" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.7" />}
-                      {/* Portfolio line */}
-                      {portPath && <path d={portPath} fill="none" stroke={C.up} strokeWidth="2.5" strokeLinejoin="round" />}
-                      {/* Hover crosshair */}
-                      {hoverPt && (<>
-                        <line x1={hoverX} y1={PAD.top} x2={hoverX} y2={PAD.top + plotH} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" />
-                        <circle cx={hoverX} cy={hoverY} r="5" fill={C.card} stroke={C.up} strokeWidth="2" />
-                        <circle cx={hoverX} cy={hoverY} r="2" fill={C.up} />
-                        {hoverBm && <><circle cx={hoverX} cy={hoverBmY} r="4" fill={C.card} stroke="#60A5FA" strokeWidth="1.5" /><circle cx={hoverX} cy={hoverBmY} r="1.5" fill="#60A5FA" /></>}
-                      </>)}
-                    </svg>
-                    {/* Legend */}
-                    <div style={{ display: "flex", gap: 20, justifyContent: "center", marginTop: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.t2 }}><div style={{ width: 16, height: 2.5, background: C.up, borderRadius: 2 }} />Portfolio</div>
-                      {showBenchmark && <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#60A5FA" }}><div style={{ width: 16, height: 1.5, background: "#60A5FA", borderRadius: 2, opacity: 0.7 }} />{ msData?.benchmark?.name || "Index"}</div>}
-                    </div>
-                  </div>
-
-                  {/* Stats row */}
-                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 16 }}>
-                    {[
-                      { label: "Start", val: `$${portSeries[0]?.value?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || "—"}`, sub: portSeries[0]?.date?.slice(0, 7) },
-                      { label: "Current", val: `$${portSeries[portSeries.length - 1]?.value?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || "—"}`, sub: portSeries[portSeries.length - 1]?.date },
-                      { label: "Portfolio Return", val: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
-                      { label: "vs Index", val: bmReturn != null ? `${(totalReturn - bmReturn) >= 0 ? "+" : ""}${(totalReturn - bmReturn).toFixed(2)}%` : "—", color: bmReturn != null ? ((totalReturn - bmReturn) >= 0 ? C.up : C.dn) : C.t3, sub: "Alpha" },
-                    ].map((s, i) => (
-                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 14px" }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{s.label}</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.val}</div>
-                        {s.sub && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.sub}</div>}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Trailing Total Returns table */}
-                  {tr && (
-                    <div style={{ marginTop: 20 }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 10 }}>Trailing Total Returns</div>
-                      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "inherit" }}>
-                          <thead>
-                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                              {["", "1W", "1M", "3M", "YTD", "1Y", "3Y", "5Y", "10Y", "Since Purchase"].map(h => (
-                                <th key={h} style={{ padding: "10px 8px", textAlign: h ? "right" : "left", color: C.t3, fontWeight: 700, whiteSpace: "nowrap", fontSize: 11 }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[
-                              { label: "Total", key: "total", color: C.up },
-                              { label: "Personal", key: "personal", color: C.t1 },
-                              { label: "Index", key: "index", color: "#60A5FA" },
-                            ].map(row => {
-                              const d = tr[row.key];
-                              if (!d) return null;
-                              return (
-                                <tr key={row.key} style={{ borderBottom: `1px solid ${C.border}` }}>
-                                  <td style={{ padding: "10px 8px", fontWeight: 700, color: row.color, whiteSpace: "nowrap" }}>{row.label}</td>
-                                  {["1w", "1m", "3m", "ytd", "1y", "3y_ann", "5y_ann", "10y_ann", "since_purchase_ann"].map(k => {
-                                    const v = d[k];
-                                    return <td key={k} style={{ padding: "10px 8px", textAlign: "right", color: v > 0 ? C.up : v < 0 ? C.dn : C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v != null ? `${v > 0 ? "+" : ""}${v.toFixed(2)}%` : "—"}</td>;
-                                  })}
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Annual Returns table */}
-                  {years.length > 0 && (
-                    <div style={{ marginTop: 20 }}>
-                      <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 10 }}>Annual Return History</div>
-                      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "inherit" }}>
-                          <thead>
-                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                              <th style={{ padding: "10px 8px", textAlign: "left", color: C.t3, fontWeight: 700, fontSize: 11 }}></th>
-                              {years.map(y => <th key={y} style={{ padding: "10px 6px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 11 }}>{y}</th>)}
-                              {msData?.ytd_2026 && <th style={{ padding: "10px 6px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 11 }}>YTD</th>}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[
-                              { label: "Total", key: "total", color: C.up },
-                              { label: "Personal", key: "personal", color: C.t1 },
-                              { label: "Index", key: "index", color: "#60A5FA" },
-                            ].map(row => (
-                              <tr key={row.key} style={{ borderBottom: `1px solid ${C.border}` }}>
-                                <td style={{ padding: "10px 8px", fontWeight: 700, color: row.color, whiteSpace: "nowrap" }}>{row.label}</td>
-                                {years.map(y => {
-                                  const v = annualRets[row.key]?.[y];
-                                  return <td key={y} style={{ padding: "10px 6px", textAlign: "right", color: v > 0 ? C.up : v < 0 ? C.dn : C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v != null ? `${v > 0 ? "+" : ""}${v.toFixed(1)}` : "—"}</td>;
-                                })}
-                                {msData?.ytd_2026 && (() => { const v = msData.ytd_2026[row.key]; return <td style={{ padding: "10px 6px", textAlign: "right", color: v > 0 ? C.up : v < 0 ? C.dn : C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v != null ? `${v > 0 ? "+" : ""}${v.toFixed(1)}` : "—"}</td>; })()}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Peak / Trough / Drawdown */}
-                  {normPort.length > 2 && (() => {
-                    const peak = portSeries.reduce((a, b) => b.value > a.value ? b : a, portSeries[0]);
-                    const trough = portSeries.reduce((a, b) => b.value < a.value ? b : a, portSeries[0]);
-                    let maxVal = portSeries[0].value, dd = 0;
-                    for (const p of portSeries) { if (p.value > maxVal) maxVal = p.value; const cur = ((p.value - maxVal) / maxVal) * 100; if (cur < dd) dd = cur; }
-                    return (
-                      <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : "1fr", gap: 10, marginTop: 16, marginBottom: 30 }}>
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 14px" }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Peak</div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: C.up }}>${peak.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{new Date(peak.date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</div>
-                        </div>
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 14px" }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Trough</div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>${trough.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{new Date(trough.date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</div>
-                        </div>
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 14px" }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Max Drawdown</div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>{dd.toFixed(2)}%</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>Largest peak-to-trough</div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </>
-              )}
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 16 }}>
+                  {[{ label: "Start", val: `$${portSeries[0]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[0]?.date?.slice(0,7) }, { label: "Current", val: `$${portSeries[portSeries.length-1]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[portSeries.length-1]?.date }, { label: "Portfolio Return", val: `${totalReturn>=0?"+":""}${totalReturn.toFixed(2)}%`, color: totalReturn>=0?C.up:C.dn }, { label: "Data Source", val: "Morningstar TWR", sub: "Time-Weighted Return" }].map((s,i) => (
+                    <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{s.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: s.color||C.t1, fontVariantNumeric: "tabular-nums" }}>{s.val}</div>
+                      {s.sub && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.sub}</div>}
+                    </div>))}
+                </div>
+                {tr && <div style={{ marginTop: 20 }}><div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 10 }}>Trailing Total Returns</div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "inherit" }}><thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>{["","1W","1M","3M","YTD","1Y","3Y","5Y","10Y","Since Purchase"].map(h => <th key={h} style={{ padding: "10px 8px", textAlign: h?"right":"left", color: C.t3, fontWeight: 700, whiteSpace: "nowrap", fontSize: 11 }}>{h}</th>)}</tr></thead><tbody>{[{label:"Total",key:"total",color:C.up},{label:"Personal",key:"personal",color:C.t1},{label:"Index",key:"index",color:"#60A5FA"}].map(row => { const d=tr[row.key]; if(!d) return null; return <tr key={row.key} style={{ borderBottom: `1px solid ${C.border}` }}><td style={{ padding: "10px 8px", fontWeight: 700, color: row.color, whiteSpace: "nowrap" }}>{row.label}</td>{["1w","1m","3m","ytd","1y","3y_ann","5y_ann","10y_ann","since_purchase_ann"].map(k => { const v=d[k]; return <td key={k} style={{ padding: "10px 8px", textAlign: "right", color: v>0?C.up:v<0?C.dn:C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v!=null?`${v>0?"+":""}${v.toFixed(2)}%`:"—"}</td>; })}</tr>; })}</tbody></table></div></div>}
+                {years.length > 0 && <div style={{ marginTop: 20 }}><div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 10 }}>Annual Return History</div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "inherit" }}><thead><tr style={{ borderBottom: `1px solid ${C.border}` }}><th style={{ padding: "10px 8px", textAlign: "left", color: C.t3, fontWeight: 700, fontSize: 11 }}></th>{years.map(y => <th key={y} style={{ padding: "10px 6px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 11 }}>{y}</th>)}{msData?.ytd_2026 && <th style={{ padding: "10px 6px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 11 }}>YTD</th>}</tr></thead><tbody>{[{label:"Total",key:"total",color:C.up},{label:"Personal",key:"personal",color:C.t1},{label:"Index",key:"index",color:"#60A5FA"}].map(row => <tr key={row.key} style={{ borderBottom: `1px solid ${C.border}` }}><td style={{ padding: "10px 8px", fontWeight: 700, color: row.color, whiteSpace: "nowrap" }}>{row.label}</td>{years.map(y => { const v=annualRets[row.key]?.[String(y)]; return <td key={y} style={{ padding: "10px 6px", textAlign: "right", color: v>0?C.up:v<0?C.dn:C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v!=null?`${v>0?"+":""}${v.toFixed(1)}`:"—"}</td>; })}{msData?.ytd_2026 && (()=>{ const v=msData.ytd_2026[row.key]; return <td style={{ padding: "10px 6px", textAlign: "right", color: v>0?C.up:v<0?C.dn:C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v!=null?`${v>0?"+":""}${v.toFixed(1)}`:"—"}</td>; })()}</tr>)}</tbody></table></div></div>}
+                {normPort.length > 2 && (() => { const peak=portSeries.reduce((a,b)=>b.value>a.value?b:a,portSeries[0]); const trough=portSeries.reduce((a,b)=>b.value<a.value?b:a,portSeries[0]); let mv=portSeries[0].value,dd=0; for(const p of portSeries){if(p.value>mv)mv=p.value;const c=((p.value-mv)/mv)*100;if(c<dd)dd=c;} return <div style={{ display: "grid", gridTemplateColumns: isDesktop?"repeat(3, 1fr)":"1fr", gap: 10, marginTop: 16, marginBottom: 30 }}><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}><div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Peak</div><div style={{ fontSize: 16, fontWeight: 800, color: C.up }}>${peak.value.toLocaleString(undefined,{maximumFractionDigits:0})}</div><div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{new Date(peak.date).toLocaleDateString("en-US",{month:"short",year:"numeric"})}</div></div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}><div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Trough</div><div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>${trough.value.toLocaleString(undefined,{maximumFractionDigits:0})}</div><div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{new Date(trough.date).toLocaleDateString("en-US",{month:"short",year:"numeric"})}</div></div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}><div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Max Drawdown</div><div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>{dd.toFixed(2)}%</div><div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>Largest peak-to-trough</div></div></div>; })()}
+              </>)}
             </div>
           );
         })()}
