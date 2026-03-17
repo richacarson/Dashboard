@@ -251,17 +251,20 @@ function StockLogo({ symbol, size = 32 }) {
   useEffect(() => {
     setSrc(null); setFallback(false);
     const srcs = [
-      ...(domain ? [`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`] : []),
       `https://eodhd.com/img/logos/US/${symbol}.png`,
+      ...(domain ? [
+        `https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`,
+        `https://www.google.com/s2/favicons?sz=128&domain=${domain}`,
+      ] : []),
     ];
     let found = false;
     for (const url of srcs) {
       const img = new Image();
-      img.onload = () => { if (!found && img.naturalWidth > 32) { found = true; setSrc(url); } };
+      img.onload = () => { if (!found && img.naturalWidth >= 16) { found = true; setSrc(url); } };
       img.onerror = () => {};
       img.src = url;
     }
-    setTimeout(() => { if (!found) setFallback(true); }, 2500);
+    setTimeout(() => { if (!found) setFallback(true); }, 4000);
   }, [symbol, domain]);
   if (fallback || (!src && !domain)) {
     const colors = ["#4A6B25","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
@@ -1110,10 +1113,10 @@ Instructions:
       // Stocks missing from IEX intraday — fetch 30-day daily bars as sparkline fallback
       const missing = ALL.filter(s => !pts[s] || pts[s].length < 2);
       if (missing.length > 0) {
+        // Try Alpaca daily bars without feed restriction
         try {
           const d30 = new Date(); d30.setDate(d30.getDate() - 35);
-          // Use feed=sip for historical daily bars — free tier allows SIP for data >15min old
-          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${missing.join(",")}&timeframe=1Day&start=${d30.toISOString().slice(0,10)}&limit=30&adjustment=split&feed=sip`, { headers: hdrs });
+          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${missing.join(",")}&timeframe=1Day&start=${d30.toISOString().slice(0,10)}&limit=30&adjustment=split`, { headers: hdrs });
           if (dailyR.ok) {
             const dailyD = await dailyR.json();
             if (dailyD.bars) {
@@ -1123,6 +1126,23 @@ Instructions:
             }
           }
         } catch {}
+      }
+      // Still missing — use Finnhub candles as final fallback
+      const stillMissing = ALL.filter(s => !pts[s] || pts[s].length < 2);
+      if (stillMissing.length > 0 && FH) {
+        const now = Math.floor(Date.now() / 1000);
+        const from = now - 30 * 86400;
+        for (const s of stillMissing) {
+          try {
+            const r = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${s}&resolution=D&from=${from}&to=${now}&token=${FH}`);
+            if (r.ok) {
+              const d = await r.json();
+              if (d.s === "ok" && d.c && d.c.length >= 2) {
+                pts[s] = d.c;
+              }
+            }
+          } catch {}
+        }
       }
       const prev = intradayRef.current;
       const changed = Object.keys(pts).some(s => (pts[s]?.length || 0) !== (prev[s]?.length || 0));
