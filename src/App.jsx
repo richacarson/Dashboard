@@ -408,6 +408,7 @@ export default function App() {
   const sleevesRef = useRef(sleeves);
   useEffect(() => { sleevesRef.current = sleeves; }, [sleeves]);
   const [news, setNews] = useState([]);
+  const [selectedArticle, setSelectedArticle] = useState(null);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
@@ -1707,7 +1708,7 @@ export default function App() {
               );
               return (<div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "repeat(2, 1fr)" : undefined, gap: isDesktop ? 16 : 0 }}>
               {articles.map((article, i) => (
-                <div key={article.id || i} onClick={() => article.url && window.open(article.url, "_blank")}
+                <div key={article.id || i} onClick={() => setSelectedArticle(article)}
                   style={{
                     padding: isDesktop ? "20px" : "16px 0",
                     borderBottom: isDesktop ? "none" : `1px solid ${C.border}`,
@@ -2594,6 +2595,98 @@ export default function App() {
 
       </div>
       </div>
+
+      {/* ARTICLE READER OVERLAY */}
+      {selectedArticle && (() => {
+        const a = selectedArticle;
+        const timeStr = a.created_at ? new Date(a.created_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+        return (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
+            display: "flex", flexDirection: "column",
+            paddingTop: "env(safe-area-inset-top, 0px)",
+          }}>
+            {/* Header */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 18px", borderBottom: `1px solid ${C.border}`,
+              flexShrink: 0,
+            }}>
+              <button onClick={() => setSelectedArticle(null)} style={{
+                background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                Back
+              </button>
+              {a.url && (
+                <button onClick={() => window.open(a.url, "_blank")} style={{
+                  background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8,
+                  padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>
+                  Open Source ↗
+                </button>
+              )}
+            </div>
+            {/* Content */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 20px)" }}>
+              {/* Source + time */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 0.5 }}>{a.source}</span>
+                <span style={{ fontSize: 12, color: C.t4 }}>{timeStr}</span>
+              </div>
+              {/* Headline */}
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: C.t1, lineHeight: 1.35, margin: "0 0 16px", fontFamily: "inherit" }}>{a.headline}</h1>
+              {/* Ticker tags */}
+              {a.symbols?.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
+                  {a.symbols.filter(s => coreSyms.includes(s)).map(s => (
+                    <span key={s} onClick={(e) => { e.stopPropagation(); setSelectedArticle(null); setChartSymbol(s); }} style={{
+                      fontSize: 12, fontWeight: 700, color: C.accent, background: C.accentSoft,
+                      padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                    }}>{s}</span>
+                  ))}
+                </div>
+              )}
+              {/* Hero image */}
+              {a.images?.[0]?.url && (
+                <img src={a.images[0].url} alt="" style={{
+                  width: "100%", maxHeight: 280, objectFit: "cover",
+                  borderRadius: 14, marginBottom: 20,
+                }} />
+              )}
+              {/* Summary / body */}
+              {a.summary ? (
+                <div style={{ fontSize: 16, lineHeight: 1.7, color: C.t2, letterSpacing: 0.1 }}>
+                  {a.summary.split("\n").map((p, i) => p.trim() ? <p key={i} style={{ margin: "0 0 14px" }}>{p}</p> : null)}
+                </div>
+              ) : (
+                <div style={{ fontSize: 14, color: C.t4, textAlign: "center", padding: "40px 0" }}>
+                  No summary available for this article.
+                  {a.url && <div style={{ marginTop: 12 }}>
+                    <button onClick={() => window.open(a.url, "_blank")} style={{
+                      background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10,
+                      padding: "10px 24px", color: C.t1, fontSize: 14, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>Read on {a.source} ↗</button>
+                  </div>}
+                </div>
+              )}
+              {/* Footer link */}
+              {a.summary && a.url && (
+                <div style={{ textAlign: "center", padding: "24px 0 0", borderTop: `1px solid ${C.border}`, marginTop: 12 }}>
+                  <button onClick={() => window.open(a.url, "_blank")} style={{
+                    background: "none", border: `1px solid ${C.border}`, borderRadius: 10,
+                    padding: "10px 24px", color: C.t3, fontSize: 13, fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>Read full article on {a.source} ↗</button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* MOBILE BOTTOM TAB BAR — hidden on desktop */}
       {!isDesktop && (
