@@ -567,9 +567,9 @@ export default function App() {
       }
       // Benchmarks that didn't come back from IEX — use FMP real-time quotes (throttled to ~15s)
       const missingBM = BM_SYMS.filter(s => !nq[s]);
-      const now = Date.now();
-      if (missingBM.length > 0 && FK && (!window._lastFmpBm || now - window._lastFmpBm > 15000)) {
-        window._lastFmpBm = now;
+      const fmpNow = Date.now();
+      if (missingBM.length > 0 && FK && (!window._lastFmpBm || fmpNow - window._lastFmpBm > 15000)) {
+        window._lastFmpBm = fmpNow;
         try {
           const fmpR = await fetch(`https://financialmodelingprep.com/api/v3/quote/${missingBM.join(",")}?apikey=${FK}`);
           if (fmpR.ok) {
