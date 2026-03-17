@@ -568,6 +568,22 @@ export default function App() {
         if (snap.dailyBar) tb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!tb[s]) tb[s] = {}; tb[s].pc = snap.prevDailyBar.c; }
       }
+      
+      // If benchmarks missing from IEX feed, fetch separately without feed restriction
+      const missingBM = BM_SYMS.filter(s => !bq[s]);
+      if (missingBM.length > 0) {
+        try {
+          const bmR = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${missingBM.join(",")}`, { headers: hdrs });
+          if (bmR.ok) {
+            const bmD = await bmR.json();
+            for (const [s, snap] of Object.entries(bmD)) {
+              if (snap.latestTrade) bq[s] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
+              if (snap.dailyBar) bb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
+              if (snap.prevDailyBar) { if (!bb[s]) bb[s] = {}; bb[s].pc = snap.prevDailyBar.c; }
+            }
+          }
+        } catch {}
+      }
 
       const prevQ = quotesRef.current;
       const prevB = barsRef.current;
@@ -616,8 +632,24 @@ export default function App() {
         const el = document.querySelector(`[data-bm-price="${s}"]`);
         const elChg = document.querySelector(`[data-bm-chg="${s}"]`);
         if (el && bq[s]) el.textContent = bq[s].p?.toFixed(2) || "";
-        if (elChg && bq[s] && bb[s]?.pc) {
-          const c = ((bq[s].p - bb[s].pc) / bb[s].pc) * 100;
+        const pc = bb[s]?.pc || bmBarsRef.current[s]?.pc;
+        if (elChg && bq[s] && pc) {
+          const c = ((bq[s].p - pc) / pc) * 100;
+          elChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
+          elChg.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
+        }
+      }
+      // Also update benchmarks that are in bmQuotesRef but not in this fetch's bq
+      for (const s of BM_SYMS) {
+        if (bq[s]) continue; // already updated above
+        const q = bmQuotesRef.current[s];
+        const pc = bmBarsRef.current[s]?.pc;
+        if (!q?.p || !pc) continue;
+        const el = document.querySelector(`[data-bm-price="${s}"]`);
+        const elChg = document.querySelector(`[data-bm-chg="${s}"]`);
+        if (el) el.textContent = q.p.toFixed(2);
+        if (elChg) {
+          const c = ((q.p - pc) / pc) * 100;
           elChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
           elChg.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
         }
