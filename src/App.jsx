@@ -326,43 +326,57 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
     // Fetch company description from Wikipedia (free, no API key)
     const fetchWikiDesc = async () => {
-      try {
-        // Wait for profile to get the company name
-        await new Promise(r => setTimeout(r, 1500));
-        setProfile(prev => {
-          if (!prev || prev.description || prev._wikiDesc) return prev;
-          const name = prev.name || prev.companyName || names?.[symbol] || "";
-          if (!name) return prev;
-          // Try fetching Wikipedia summary
-          const updated = { ...prev, _aiDescLoading: true };
-          (async () => {
-            // Try company name variations for Wikipedia
-            const tryNames = [
-              name.replace(/,?\s*(Inc\.?|Corp\.?|Ltd\.?|PLC|plc|LLC|Co\.?|Group|Holdings|International|Incorporated|Corporation)$/gi, "").trim(),
-              name,
-              symbol,
-            ];
-            for (const wikiName of tryNames) {
-              try {
-                const encoded = encodeURIComponent(wikiName.replace(/\s+/g, "_"));
-                const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`);
-                if (r.ok) {
-                  const d = await r.json();
-                  if (d.extract && d.extract.length > 50 && d.type !== "disambiguation") {
-                    setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
-                    return;
-                  }
-                }
-              } catch {}
-            }
-            setProfile(p => ({ ...p, _aiDescLoading: false }));
-          })();
-          return updated;
-        });
-      } catch {}
+      // Wait for profile to load first
+      await new Promise(r => setTimeout(r, 2000));
     };
     fetchWikiDesc();
   }, [symbol]);
+
+  // Separate effect to fetch Wikipedia description once profile is available
+  useEffect(() => {
+    if (!profile || profile.description || profile._wikiDesc || profile._wikiTried) return;
+    setProfile(p => ({ ...p, _wikiTried: true, _aiDescLoading: true }));
+    const name = profile.name || profile.companyName || names?.[symbol] || "";
+    if (!name) { setProfile(p => ({ ...p, _aiDescLoading: false })); return; }
+
+    (async () => {
+      // Build search variations — strip common suffixes, try different forms
+      const clean = name
+        .replace(/,?\s*(Inc\.?|Corp\.?|Corporation|Ltd\.?|PLC|plc|LLC|Co\.?|Group|Holdings|International|Incorporated|N\.?V\.?|S\.?A\.?|SE|AG|& Co\.?\s*KGaA)$/gi, "")
+        .replace(/\s+/g, " ").trim();
+      const tryNames = [
+        clean,
+        name,
+        `${clean} (company)`,
+        `${symbol} (company)`,
+      ];
+      for (const wikiName of tryNames) {
+        try {
+          const encoded = encodeURIComponent(wikiName.replace(/\s+/g, "_"));
+          const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`);
+          if (r.ok) {
+            const d = await r.json();
+            if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
+              setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
+              return;
+            }
+          }
+        } catch {}
+      }
+      // Try Wikipedia search as last resort
+      try {
+        const searchR = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean + " company")}`);
+        if (searchR.ok) {
+          const d = await searchR.json();
+          if (d.extract && d.extract.length > 80 && d.type !== "disambiguation") {
+            setProfile(p => ({ ...p, _wikiDesc: d.extract, _aiDescLoading: false }));
+            return;
+          }
+        }
+      } catch {}
+      setProfile(p => ({ ...p, _aiDescLoading: false }));
+    })();
+  }, [profile?.name, profile?.companyName, symbol]);
 
   // TradingView chart
   useEffect(() => {
@@ -558,7 +572,6 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                     {(profile.fullTimeEmployees || profile.employees) && <StatRow label="Employees" value={(profile.fullTimeEmployees || profile.employees)?.toLocaleString?.()} />}
                     {profile.ceo && <StatRow label="CEO" value={profile.ceo} />}
                     {(profile.weburl || profile.website) && <StatRow label="Website" value={(profile.website || profile.weburl || "").replace(/https?:\/\/(www\.)?/, "")} />}
-                    {(profile.phone || profile.phoneNumber) && <StatRow label="Phone" value={profile.phone || profile.phoneNumber} />}
                   </div>
                 </Card>
               )}
