@@ -288,18 +288,36 @@ function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef,
     const fetchProfile = async () => {
       setProfileLoading(true);
       try {
-        // Company profile from Finnhub
+        const fetches = [];
         if (FH) {
-          const [profR, recR, earnR, finR] = await Promise.all([
+          fetches.push(
             fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${symbol}&limit=8&token=${FH}`),
             fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FH}`),
-          ]);
+          );
+        }
+        // FMP for full company description
+        if (FK) {
+          fetches.push(fetch(`https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${FK}`));
+        }
+        const results = await Promise.all(fetches);
+        let idx = 0;
+        if (FH) {
+          const profR = results[idx++], recR = results[idx++], earnR = results[idx++], finR = results[idx++];
           if (profR.ok) { const d = await profR.json(); if (d.name) setProfile(d); }
           if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) setRecommendation(d); }
           if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) setEarnings(d); }
           if (finR.ok) { const d = await finR.json(); if (d.metric) setFinancials(d.metric); }
+        }
+        if (FK && results[idx]) {
+          const fmpR = results[idx];
+          if (fmpR.ok) {
+            const d = await fmpR.json();
+            if (Array.isArray(d) && d[0]) {
+              setProfile(prev => ({ ...prev, ...d[0], description: d[0].description || "" }));
+            }
+          }
         }
       } catch {}
       setProfileLoading(false);
@@ -465,6 +483,41 @@ function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef,
           {/* ── OVERVIEW TAB ── */}
           {profileTab === "overview" && (
             <div style={{ animation: "fadeIn 0.3s ease" }}>
+              {/* Company Profile — first section */}
+              {profile && (
+                <Card title="Company Profile">
+                  {/* Logo + name + tags */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+                    {profile.logo && (
+                      <img src={profile.logo || profile.image} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, border: `1px solid ${C.border}` }} onError={(e) => { e.target.style.display = "none"; }} />
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{profile.name || profile.companyName || names?.[symbol] || symbol}</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {(profile.finnhubIndustry || profile.sector) && <span style={{ fontSize: 11, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 4 }}>{profile.sector || profile.finnhubIndustry}</span>}
+                        {(profile.industry || profile.finnhubIndustry) && <span style={{ fontSize: 11, fontWeight: 600, color: C.t3, background: C.surface, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}` }}>{profile.industry || profile.finnhubIndustry}</span>}
+                        {profile.exchange && <span style={{ fontSize: 11, color: C.t4, background: C.surface, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}` }}>{profile.exchange || profile.exchangeShortName}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Full description */}
+                  {profile.description && (
+                    <div style={{ fontSize: 13, lineHeight: 1.65, color: C.t3, marginBottom: 14 }}>
+                      {profile.description}
+                    </div>
+                  )}
+                  {/* Company details grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+                    {(profile.country || profile.city) && <StatRow label="Location" value={[profile.city, profile.state, profile.country].filter(Boolean).join(", ")} />}
+                    {(profile.ipo || profile.ipoDate) && <StatRow label="IPO Date" value={profile.ipoDate || profile.ipo} />}
+                    {(profile.fullTimeEmployees || profile.employees) && <StatRow label="Employees" value={(profile.fullTimeEmployees || profile.employees)?.toLocaleString?.()} />}
+                    {profile.ceo && <StatRow label="CEO" value={profile.ceo} />}
+                    {(profile.weburl || profile.website) && <StatRow label="Website" value={(profile.website || profile.weburl || "").replace(/https?:\/\/(www\.)?/, "")} />}
+                    {(profile.phone || profile.phoneNumber) && <StatRow label="Phone" value={profile.phone || profile.phoneNumber} />}
+                  </div>
+                </Card>
+              )}
+
               {/* Key Stats */}
               <Card title="Key Statistics">
                 <StatRow label="Market Cap" value={profile?.marketCapitalization ? vol(profile.marketCapitalization * 1e6) : (fm["marketCapitalization"] ? vol(fm["marketCapitalization"]) : "—")} />
@@ -516,20 +569,6 @@ function StockProfile({ symbol, onClose, hdrs, names, theme, quotesRef, barsRef,
                 </Card>
               )}
 
-              {/* Company Profile */}
-              {profile && (
-                <Card title="Company Profile">
-                  <div style={{ fontSize: 13, lineHeight: 1.6, color: C.t3, marginBottom: 12 }}>
-                    {profile.finnhubIndustry && <span style={{ fontSize: 11, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "3px 8px", borderRadius: 4, marginRight: 6 }}>{profile.finnhubIndustry}</span>}
-                    {profile.exchange && <span style={{ fontSize: 11, color: C.t4 }}>{profile.exchange}</span>}
-                  </div>
-                  <StatRow label="Sector" value={profile.finnhubIndustry || "—"} />
-                  <StatRow label="Country" value={profile.country || "—"} />
-                  <StatRow label="IPO Date" value={profile.ipo || "—"} />
-                  {profile.weburl && <StatRow label="Website" value={profile.weburl.replace(/https?:\/\/(www\.)?/, "")} />}
-                  {profile.phone && <StatRow label="Phone" value={profile.phone} />}
-                </Card>
-              )}
 
               {/* Momentum */}
               {(fm["3MonthPriceReturnDaily"] != null || fm["6MonthPriceReturnDaily"] != null) && (
