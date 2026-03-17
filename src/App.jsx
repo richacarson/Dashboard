@@ -773,6 +773,10 @@ Instructions:
     setArticleLoading(false);
   }, []);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
+  const [perfData, setPerfData] = useState(() => { try { return JSON.parse(localStorage.getItem("iown_perf_data") || "null"); } catch { return null; } }); // { series: [{ date, value, ... }], name, imported }
+  const [perfRange, setPerfRange] = useState("ALL");
+  const [perfHover, setPerfHover] = useState(null); // { idx, x, y }
+  const [perfBenchmark, setPerfBenchmark] = useState("SPY"); // benchmark to overlay
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
@@ -780,7 +784,7 @@ Instructions:
   const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "research", "calendar", "news", "settings"];
+  const tabIds = ["home", "performance", "research", "calendar", "news", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -1852,6 +1856,7 @@ Instructions:
 
   const navItems = [
     { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
+    { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
     { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
     { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
@@ -1941,7 +1946,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : "Settings"}
+            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -2095,6 +2100,355 @@ Instructions:
             )}
           </div>
         )}
+
+        {/* ━━━ PERFORMANCE TAB ━━━ */}
+        {tab === "performance" && (() => {
+          /* CSV Parser for Morningstar exports */
+          const parseMorningstarCSV = (text) => {
+            const lines = text.trim().split("\n");
+            const series = [];
+            // Try to detect format: look for date + value columns
+            // Morningstar portfolio export formats:
+            // 1) "Date","Portfolio Value" or "Date","Total Return %"
+            // 2) Tab-separated or comma-separated
+            // 3) First column is date, subsequent columns are values
+            const header = lines[0].replace(/"/g, "").toLowerCase();
+            const sep = header.includes("\t") ? "\t" : ",";
+            const cols = lines[0].replace(/"/g, "").split(sep).map(c => c.trim());
+            
+            // Find date column and value column
+            let dateIdx = cols.findIndex(c => /date|time|period/i.test(c));
+            let valIdx = cols.findIndex(c => /value|total|balance|portfolio|nav|return/i.test(c));
+            if (dateIdx === -1) dateIdx = 0;
+            if (valIdx === -1) valIdx = 1;
+
+            for (let i = 1; i < lines.length; i++) {
+              const row = lines[i].replace(/"/g, "").split(sep);
+              if (row.length < 2) continue;
+              const dateStr = row[dateIdx]?.trim();
+              const valStr = row[valIdx]?.trim()?.replace(/[$,%]/g, "");
+              if (!dateStr || !valStr) continue;
+              const val = parseFloat(valStr);
+              if (isNaN(val)) continue;
+              // Parse date - handle MM/DD/YYYY, YYYY-MM-DD, etc
+              let d = new Date(dateStr);
+              if (isNaN(d.getTime())) {
+                const parts = dateStr.split(/[\/\-]/);
+                if (parts.length === 3) {
+                  if (parts[0].length === 4) d = new Date(parts[0], parts[1] - 1, parts[2]);
+                  else d = new Date(parts[2], parts[0] - 1, parts[1]);
+                }
+              }
+              if (!isNaN(d.getTime())) series.push({ date: d.toISOString().slice(0, 10), value: val });
+            }
+            series.sort((a, b) => a.date.localeCompare(b.date));
+            return series;
+          };
+
+          const handleCSVUpload = (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const text = ev.target.result;
+              const series = parseMorningstarCSV(text);
+              if (series.length > 0) {
+                const data = { series, name: file.name.replace(/\.[^.]+$/, ""), imported: new Date().toISOString(), source: "morningstar" };
+                setPerfData(data);
+                try { localStorage.setItem("iown_perf_data", JSON.stringify(data)); } catch {}
+              }
+            };
+            reader.readAsText(file);
+          };
+
+          const clearPerfData = () => {
+            setPerfData(null);
+            localStorage.removeItem("iown_perf_data");
+          };
+
+          /* Filter series by range */
+          const filterByRange = (series, range) => {
+            if (!series?.length || range === "ALL") return series;
+            const now = new Date();
+            const cutoffs = {
+              "1M": new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()),
+              "3M": new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
+              "6M": new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()),
+              "YTD": new Date(now.getFullYear(), 0, 1),
+              "1Y": new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()),
+              "3Y": new Date(now.getFullYear() - 3, now.getMonth(), now.getDate()),
+              "5Y": new Date(now.getFullYear() - 5, now.getMonth(), now.getDate()),
+              "10Y": new Date(now.getFullYear() - 10, now.getMonth(), now.getDate()),
+            };
+            const cut = cutoffs[range];
+            if (!cut) return series;
+            const cutStr = cut.toISOString().slice(0, 10);
+            return series.filter(p => p.date >= cutStr);
+          };
+
+          const filtered = filterByRange(perfData?.series, perfRange) || [];
+          const hasData = filtered.length > 1;
+
+          /* Normalize to % return from first point */
+          const normalize = (series) => {
+            if (!series?.length) return [];
+            const base = series[0].value;
+            return series.map(p => ({ ...p, pctReturn: ((p.value - base) / base) * 100 }));
+          };
+
+          const normalized = normalize(filtered);
+          const minR = normalized.length ? Math.min(...normalized.map(p => p.pctReturn)) : 0;
+          const maxR = normalized.length ? Math.max(...normalized.map(p => p.pctReturn)) : 0;
+          const rangeR = maxR - minR || 1;
+          const totalReturn = normalized.length ? normalized[normalized.length - 1].pctReturn : 0;
+
+          /* Chart dimensions */
+          const CW = isDesktop ? 820 : (typeof window !== "undefined" ? window.innerWidth - 40 : 350);
+          const CH = isDesktop ? 380 : 260;
+          const PAD = { top: 30, right: 60, bottom: 40, left: 10 };
+          const plotW = CW - PAD.left - PAD.right;
+          const plotH = CH - PAD.top - PAD.bottom;
+
+          /* Build SVG path */
+          const buildPath = (data) => {
+            if (data.length < 2) return "";
+            return data.map((p, i) => {
+              const x = PAD.left + (i / (data.length - 1)) * plotW;
+              const y = PAD.top + plotH - ((p.pctReturn - minR) / rangeR) * plotH;
+              return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+            }).join(" ");
+          };
+
+          const pathD = buildPath(normalized);
+
+          /* Gradient area path */
+          const areaD = pathD ? `${pathD} L${(PAD.left + plotW).toFixed(1)},${(PAD.top + plotH).toFixed(1)} L${PAD.left},${(PAD.top + plotH).toFixed(1)} Z` : "";
+
+          /* Y-axis grid lines */
+          const yTicks = [];
+          if (hasData) {
+            const step = rangeR / 5;
+            for (let i = 0; i <= 5; i++) {
+              const val = minR + step * i;
+              const y = PAD.top + plotH - (i / 5) * plotH;
+              yTicks.push({ val, y });
+            }
+          }
+
+          /* X-axis date labels */
+          const xLabels = [];
+          if (normalized.length > 1) {
+            const step = Math.max(1, Math.floor(normalized.length / (isDesktop ? 8 : 5)));
+            for (let i = 0; i < normalized.length; i += step) {
+              const x = PAD.left + (i / (normalized.length - 1)) * plotW;
+              const d = new Date(normalized[i].date);
+              const label = perfRange === "1M" || perfRange === "3M" ? `${d.getMonth() + 1}/${d.getDate()}` : `${d.getMonth() + 1}/${String(d.getFullYear()).slice(2)}`;
+              xLabels.push({ x, label });
+            }
+          }
+
+          /* Hover crosshair */
+          const hoverPt = perfHover != null && normalized[perfHover.idx] ? normalized[perfHover.idx] : null;
+          const hoverX = perfHover ? PAD.left + (perfHover.idx / (normalized.length - 1)) * plotW : 0;
+          const hoverY = hoverPt ? PAD.top + plotH - ((hoverPt.pctReturn - minR) / rangeR) * plotH : 0;
+
+          const ranges = ["1M", "3M", "6M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"];
+
+          return (
+            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
+
+              {/* Import / Status bar */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+                <label style={{
+                  padding: "10px 20px", borderRadius: 12, background: C.accentSoft, border: `1px solid ${C.borderActive}`,
+                  color: C.t1, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+                  Import CSV
+                  <input type="file" accept=".csv,.tsv,.txt" onChange={handleCSVUpload} style={{ display: "none" }} />
+                </label>
+                {perfData && (
+                  <>
+                    <span style={{ fontSize: 12, color: C.t3 }}>
+                      {perfData.name} — {perfData.series.length} data points
+                      {perfData.series.length > 0 && ` (${perfData.series[0].date} → ${perfData.series[perfData.series.length - 1].date})`}
+                    </span>
+                    <button onClick={clearPerfData} style={{ padding: "6px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.dn, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Clear</button>
+                  </>
+                )}
+              </div>
+
+              {/* No data state */}
+              {!hasData && (
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "60px 30px", textAlign: "center" }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: 16 }}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.t2, marginBottom: 8 }}>Import Your Portfolio History</div>
+                  <div style={{ fontSize: 13, color: C.t3, lineHeight: 1.6, maxWidth: 400, margin: "0 auto" }}>
+                    Export your portfolio performance from Morningstar.com as a CSV file, then import it here.
+                    The CSV should have a date column and a value/return column.
+                  </div>
+                  <div style={{ marginTop: 20, fontSize: 12, color: C.t4, lineHeight: 1.8 }}>
+                    Morningstar.com → Portfolio → Performance → Export<br />
+                    Supported formats: CSV with Date + Value columns
+                  </div>
+                </div>
+              )}
+
+              {/* Chart */}
+              {hasData && (
+                <>
+                  {/* Summary hero */}
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 16, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 36, fontWeight: 800, color: totalReturn >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                      {totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(2)}%
+                    </div>
+                    <div style={{ fontSize: 13, color: C.t3 }}>
+                      {hoverPt ? (
+                        <span>
+                          <span style={{ color: C.t2, fontWeight: 600 }}>{new Date(hoverPt.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                          {" — "}
+                          <span style={{ color: hoverPt.pctReturn >= 0 ? C.up : C.dn, fontWeight: 700 }}>{hoverPt.pctReturn >= 0 ? "+" : ""}{hoverPt.pctReturn.toFixed(2)}%</span>
+                          {" — "}
+                          <span style={{ fontVariantNumeric: "tabular-nums" }}>${hoverPt.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </span>
+                      ) : (
+                        <span>{perfRange === "ALL" ? "All Time" : perfRange} return — {perfData.name}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Range selectors */}
+                  <div style={{ display: "flex", gap: 4, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+                    {ranges.map(r => (
+                      <button key={r} onClick={() => { setPerfRange(r); setPerfHover(null); }} style={{
+                        padding: "8px 14px", borderRadius: 10, border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
+                        background: perfRange === r ? C.accentSoft : "transparent",
+                        color: perfRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700,
+                        cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                      }}>{r}</button>
+                    ))}
+                  </div>
+
+                  {/* SVG Chart */}
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, overflow: "hidden" }}>
+                    <svg
+                      width={CW} height={CH} viewBox={`0 0 ${CW} ${CH}`}
+                      style={{ display: "block", width: "100%", height: "auto", touchAction: "none" }}
+                      onMouseMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const mx = ((e.clientX - rect.left) / rect.width) * CW;
+                        const idx = Math.round(((mx - PAD.left) / plotW) * (normalized.length - 1));
+                        if (idx >= 0 && idx < normalized.length) setPerfHover({ idx, x: mx });
+                      }}
+                      onTouchMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const mx = ((e.touches[0].clientX - rect.left) / rect.width) * CW;
+                        const idx = Math.round(((mx - PAD.left) / plotW) * (normalized.length - 1));
+                        if (idx >= 0 && idx < normalized.length) setPerfHover({ idx, x: mx });
+                      }}
+                      onMouseLeave={() => setPerfHover(null)}
+                      onTouchEnd={() => setPerfHover(null)}
+                    >
+                      <defs>
+                        <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={totalReturn >= 0 ? C.up : C.dn} stopOpacity="0.25" />
+                          <stop offset="100%" stopColor={totalReturn >= 0 ? C.up : C.dn} stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+
+                      {/* Grid lines */}
+                      {yTicks.map((t, i) => (
+                        <g key={i}>
+                          <line x1={PAD.left} y1={t.y} x2={PAD.left + plotW} y2={t.y} stroke={C.border} strokeWidth="1" />
+                          <text x={PAD.left + plotW + 8} y={t.y + 4} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="600">
+                            {t.val >= 0 ? "+" : ""}{t.val.toFixed(1)}%
+                          </text>
+                        </g>
+                      ))}
+
+                      {/* Zero line */}
+                      {minR < 0 && maxR > 0 && (() => {
+                        const zy = PAD.top + plotH - ((0 - minR) / rangeR) * plotH;
+                        return <line x1={PAD.left} y1={zy} x2={PAD.left + plotW} y2={zy} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" />;
+                      })()}
+
+                      {/* X labels */}
+                      {xLabels.map((l, i) => (
+                        <text key={i} x={l.x} y={CH - 8} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="500" textAnchor="middle">{l.label}</text>
+                      ))}
+
+                      {/* Area fill */}
+                      {areaD && <path d={areaD} fill="url(#perfGrad)" />}
+
+                      {/* Line */}
+                      {pathD && <path d={pathD} fill="none" stroke={totalReturn >= 0 ? C.up : C.dn} strokeWidth="2" strokeLinejoin="round" />}
+
+                      {/* Hover crosshair */}
+                      {hoverPt && (
+                        <>
+                          <line x1={hoverX} y1={PAD.top} x2={hoverX} y2={PAD.top + plotH} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" />
+                          <circle cx={hoverX} cy={hoverY} r="5" fill={C.card} stroke={totalReturn >= 0 ? C.up : C.dn} strokeWidth="2" />
+                          <circle cx={hoverX} cy={hoverY} r="2" fill={totalReturn >= 0 ? C.up : C.dn} />
+                        </>
+                      )}
+                    </svg>
+                  </div>
+
+                  {/* Stats cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 16 }}>
+                    {[
+                      { label: "Start Value", val: `$${filtered[0]?.value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "—"}` },
+                      { label: "Current Value", val: `$${filtered[filtered.length - 1]?.value?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || "—"}` },
+                      { label: "Total Return", val: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
+                      { label: "Data Points", val: filtered.length },
+                    ].map((s, i) => (
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 6 }}>{s.label}</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.val}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Peak / Trough */}
+                  {normalized.length > 2 && (() => {
+                    const peak = normalized.reduce((a, b) => b.value > a.value ? b : a, normalized[0]);
+                    const trough = normalized.reduce((a, b) => b.value < a.value ? b : a, normalized[0]);
+                    const maxDD = (() => {
+                      let maxVal = normalized[0].value, dd = 0;
+                      for (const p of normalized) {
+                        if (p.value > maxVal) maxVal = p.value;
+                        const cur = ((p.value - maxVal) / maxVal) * 100;
+                        if (cur < dd) dd = cur;
+                      }
+                      return dd;
+                    })();
+                    return (
+                      <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : "1fr", gap: 10, marginTop: 10 }}>
+                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 6 }}>Peak Value</div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: C.up }}>${peak.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{new Date(peak.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                        </div>
+                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 6 }}>Trough Value</div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>${trough.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{new Date(trough.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                        </div>
+                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px" }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 6 }}>Max Drawdown</div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>{maxDD.toFixed(2)}%</div>
+                          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Largest peak-to-trough decline</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ━━━ NEWS TAB ━━━ */}
         {tab === "news" && (
