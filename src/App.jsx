@@ -2523,8 +2523,8 @@ export default function App() {
             </div>
           </div>
         )}
-      </div> {/* end maxWidth content */}
-      </div> {/* end main content area */}
+      </div>
+      </div>
 
       {/* MOBILE BOTTOM TAB BAR — hidden on desktop */}
       {!isDesktop && (
