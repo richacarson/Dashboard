@@ -2873,47 +2873,36 @@ Instructions:
                 ))}
               </div>
 
-              {/* Content: cards or embedded iframe */}
-              {!briefView ? (
-                <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
-                  {BRIEFS.map(b => (
-                    <div key={b.id} onClick={() => setBriefView(b.id)} style={{
-                      background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
-                      padding: isDesktop ? "28px 24px" : "20px 18px",
-                      cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
-                      position: "relative", overflow: "hidden",
-                    }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = b.color + "66"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
-                    >
-                      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${b.color}, ${b.color}44)` }} />
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                        <div style={{
-                          width: 48, height: 48, borderRadius: 14,
-                          background: b.color + "15", display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 24, flexShrink: 0,
-                        }}>{b.icon}</div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{b.title}</div>
-                          <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{b.desc}</div>
-                        </div>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
+              {/* Content: cards only — iframe opens as full-screen overlay */}
+              <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
+                {BRIEFS.map(b => (
+                  <div key={b.id} onClick={() => setBriefView(b.id)} style={{
+                    background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
+                    padding: isDesktop ? "28px 24px" : "20px 18px",
+                    cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
+                    position: "relative", overflow: "hidden",
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = b.color + "66"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+                  >
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${b.color}, ${b.color}44)` }} />
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                      <div style={{
+                        width: 48, height: 48, borderRadius: 14,
+                        background: b.color + "15", display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 24, flexShrink: 0,
+                      }}>{b.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{b.title}</div>
+                        <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{b.desc}</div>
                       </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ flex: 1, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, marginTop: 12, background: "#fff" }}>
-                  <iframe
-                    src={active.url}
-                    title={active.title}
-                    style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
-                  />
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </div>
           );
         })()}
@@ -3008,6 +2997,49 @@ Instructions:
 
       </div>
       </div>
+
+      {/* BRIEF FULL-SCREEN OVERLAY */}
+      {briefView && (() => {
+        const BRIEFS = [
+          { id: "morning", title: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme === "dark" ? "#F59E0B" : "#D97706" },
+          { id: "commentary", title: "Market Commentary", url: "https://richacarson.github.io/iown-data", color: theme === "dark" ? "#34D399" : "#16A34A" },
+          { id: "report", title: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme === "dark" ? "#6366F1" : "#4F46E5" },
+        ];
+        const active = BRIEFS.find(b => b.id === briefView);
+        if (!active) return null;
+        return (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
+            display: "flex", flexDirection: "column",
+            paddingTop: "env(safe-area-inset-top, 0px)",
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
+            }}>
+              <button onClick={() => setBriefView(null)} style={{
+                background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                Back
+              </button>
+              <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{active.title}</span>
+              <button onClick={() => window.open(active.url, "_blank")} style={{
+                background: "none", border: `1px solid ${C.border}`, borderRadius: 8,
+                padding: "5px 12px", color: C.t3, fontSize: 11, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>Open ↗</button>
+            </div>
+            <iframe
+              src={active.url}
+              title={active.title}
+              style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
+            />
+          </div>
+        );
+      })()}
 
       {/* ARTICLE READER OVERLAY */}
       {selectedArticle && (() => {
