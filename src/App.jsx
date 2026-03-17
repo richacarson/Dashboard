@@ -1784,9 +1784,10 @@ export default function App() {
                   {(window._earningsMode || "holdings") === "tv" ? (
                     <div style={{ borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, height: "calc(100dvh - 280px)", minHeight: 400 }}>
                       <iframe
-                        src={`https://www.tradingview.com/embed-widget/events/?locale=en&importanceFilter=-1%2C0%2C1&countryFilter=us&colorTheme=${theme === "dark" ? "dark" : "light"}`}
+                        src={`https://www.tradingview.com/markets/stocks-usa/earnings/`}
                         style={{ width: "100%", height: "100%", border: "none", display: "block" }}
                         title="TradingView Earnings"
+                        sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                       />
                     </div>
                   ) : (
