@@ -14,10 +14,22 @@ on:
 jobs:
   update-calendar:
     runs-on: ubuntu-latest
+    env:
+      FMP_KEY: ${{ secrets.FMP_API }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Fetch calendar data
+        run: |
+          # Try FMP first
+          if [ -n "$FMP_KEY" ]; then
+            FROM=$(date -u +%Y-%m-%d -d "last monday")
+            TO=$(date -u +%Y-%m-%d -d "next sunday + 7 days")
+            FMP_URL="https://financialmodelingprep.com/api/v3/economic_calendar?from=${FROM}&to=${TO}&apikey=${FMP_KEY}"
+            HTTP_CODE=$(curl -sL -o /tmp/fmp_econ.json -w "%{http_code}" "$FMP_URL" 2>/dev/null || echo "000")
+            SIZE=$(wc -c < /tmp/fmp_econ.json 2>/dev/null || echo "0")
+            echo "FMP Economic Calendar: HTTP $HTTP_CODE, $SIZE bytes"
+          fi
         run: |
           URLS_THIS=(
             "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
@@ -58,32 +70,58 @@ jobs:
       - name: Process and write calendar
         run: |
           python3 << 'PY'
-          import json
+          import json, os
 
           events = []
-          for f in ['/tmp/thisweek.json', '/tmp/nextweek.json']:
-              try:
-                  with open(f) as fh:
-                      raw = fh.read().strip()
-                      if raw and raw != '[]':
-                          data = json.loads(raw)
-                          if isinstance(data, list):
-                              events.extend(data)
-                              print(f"{f}: {len(data)} events")
-              except Exception as e:
-                  print(f"{f}: error: {e}")
 
-          filtered = [
-              e for e in events
-              if e.get('country') == 'USD'
-              and e.get('impact') in ('High', 'Medium')
-          ]
+          # Try FMP economic calendar first (most reliable for actuals)
+          try:
+              with open('/tmp/fmp_econ.json') as f:
+                  fmp = json.loads(f.read())
+              if isinstance(fmp, list) and len(fmp) > 0:
+                  # FMP format: event, date, country, actual, previous, change, estimate, impact
+                  us_events = [e for e in fmp if e.get('country') == 'US']
+                  for e in us_events:
+                      impact = (e.get('impact') or '').lower()
+                      if impact in ('high', 'medium'):
+                          events.append({
+                              'title': e.get('event', ''),
+                              'date': e.get('date', ''),
+                              'country': 'USD',
+                              'impact': impact.capitalize(),
+                              'actual': str(e.get('actual', '')) if e.get('actual') is not None else '',
+                              'previous': str(e.get('previous', '')) if e.get('previous') is not None else '',
+                              'forecast': str(e.get('estimate', '')) if e.get('estimate') is not None else '',
+                          })
+                  print(f"FMP: {len(us_events)} US events, {len(events)} High/Medium")
+          except Exception as ex:
+              print(f"FMP parse error: {ex}")
 
-          filtered.sort(key=lambda e: e.get('date', ''))
-          print(f"US High/Medium: {len(filtered)} events")
+          # Fallback to FairEconomy if FMP had no data
+          if not events:
+              for f in ['/tmp/thisweek.json', '/tmp/nextweek.json']:
+                  try:
+                      with open(f) as fh:
+                          raw = fh.read().strip()
+                          if raw and raw != '[]':
+                              data = json.loads(raw)
+                              if isinstance(data, list):
+                                  events.extend(data)
+                                  print(f"{f}: {len(data)} events")
+                  except Exception as e:
+                      print(f"{f}: error: {e}")
+
+              events = [
+                  e for e in events
+                  if e.get('country') == 'USD'
+                  and e.get('impact') in ('High', 'Medium')
+              ]
+
+          events.sort(key=lambda e: e.get('date', ''))
+          print(f"US High/Medium: {len(events)} events")
 
           # Show which have actuals
-          with_actuals = [e for e in filtered if e.get('actual')]
+          with_actuals = [e for e in events if e.get('actual') and str(e['actual']).strip()]
           print(f"With actual values: {len(with_actuals)}")
 
           # Merge: preserve manually-set actuals from existing file
@@ -93,12 +131,12 @@ jobs:
               existing_map = {}
               for e in existing:
                   key = e.get('title', '') + '|' + (e.get('date', '')[:10])
-                  if e.get('actual') and e['actual'].strip():
+                  if e.get('actual') and str(e['actual']).strip():
                       existing_map[key] = e['actual']
               merged = 0
-              for e in filtered:
+              for e in events:
                   key = e.get('title', '') + '|' + (e.get('date', '')[:10])
-                  if (not e.get('actual') or not e['actual'].strip()) and key in existing_map:
+                  if (not e.get('actual') or not str(e['actual']).strip()) and key in existing_map:
                       e['actual'] = existing_map[key]
                       merged += 1
               print(f"Preserved {merged} manual actuals from existing file")
@@ -106,7 +144,7 @@ jobs:
               print(f"Merge skipped: {ex}")
 
           with open('public/economic-calendar.json', 'w') as f:
-              json.dump(filtered, f, indent=2)
+              json.dump(events, f, indent=2)
           PY
 
       - name: Commit and push if changed
