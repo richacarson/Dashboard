@@ -773,11 +773,6 @@ Instructions:
     setArticleLoading(false);
   }, []);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
-  const [perfRange, setPerfRange] = useState("ALL");
-  const [perfHover, setPerfHover] = useState(null);
-  const [msData, setMsData] = useState(() => { try { return JSON.parse(localStorage.getItem("iown_ms_perf") || "null"); } catch { return null; } });
-  const [msLoading, setMsLoading] = useState(false);
-  const [activeBenchmarks, setActiveBenchmarks] = useState(["DVY", "IWS"]); // multi-select benchmarks
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
@@ -785,7 +780,7 @@ Instructions:
   const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "performance", "research", "calendar", "news", "settings"];
+  const tabIds = ["home", "research", "calendar", "news", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -908,176 +903,6 @@ Instructions:
   };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
-  /* Load portfolio performance - static JSON by default, live Finnhub on recalculate */
-  const [perfStatus, setPerfStatus] = useState("");
-  const [perfRecalc, setPerfRecalc] = useState(false); // triggers live Finnhub fetch
-  useEffect(() => {
-    if (msData || msLoading) return;
-    setMsLoading(true);
-    if (!perfRecalc) {
-      // Default: load pre-built static JSON (instant, works for all users)
-      setPerfStatus("Loading...");
-      fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`)
-        .then(r => r.json())
-        .then(d => { setMsData(d); try { localStorage.setItem("iown_ms_perf", JSON.stringify(d)); } catch {} })
-        .catch(() => setPerfStatus("Failed to load performance data"))
-        .finally(() => setMsLoading(false));
-      return;
-    }
-    // Recalculate mode: fetch live Finnhub prices
-    if (!FH) { setPerfStatus("No Finnhub key"); setMsLoading(false); return; }
-    setPerfStatus("Loading snapshots...");
-    (async () => {
-      try {
-        const snapResp = await fetch(`${import.meta.env.BASE_URL || "/"}portfolio-snapshots.json`);
-        const snapData = await snapResp.json();
-        const snapshots = snapData.snapshots;
-        const allTickers = snapData.all_tickers;
-        const START_VALUE = snapData.start_value || 100000;
-
-        // 2. Fetch monthly candles from Finnhub for ALL tickers + benchmarks
-        const benchmarks = ["SPY", "QQQ", "DIA", "DVY", "IWS"];
-        const allSyms = [...new Set([...allTickers, ...benchmarks])];
-        const priceLookup = {}; // sym -> {"2020-07": price, ...}
-
-        // Finnhub: /stock/candle?symbol=X&resolution=M&from=UNIX&to=UNIX&token=KEY
-        const fromUnix = Math.floor(new Date("2011-01-01").getTime() / 1000);
-        const toUnix = Math.floor(Date.now() / 1000);
-
-        // Fetch one ticker at a time (Finnhub free = 60 calls/min)
-        let fetched = 0;
-        let rateLimited = 0;
-        for (let i = 0; i < allSyms.length; i++) {
-          const sym = allSyms[i];
-          if (i % 5 === 0) setPerfStatus(`Finnhub: ${i}/${allSyms.length} tickers (${fetched} ok)...`);
-          try {
-            const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=M&from=${fromUnix}&to=${toUnix}&token=${FH}`;
-            const r = await fetch(url);
-            if (r.status === 429) {
-              // Rate limited — wait 60s and retry
-              rateLimited++;
-              setPerfStatus(`Rate limited at ${i}/${allSyms.length}. Waiting 60s... (${fetched} ok)`);
-              await new Promise(r => setTimeout(r, 61000));
-              i--; // Retry this ticker
-              continue;
-            }
-            const d = await r.json();
-            if (d.s === "ok" && d.t && d.c) {
-              priceLookup[sym] = {};
-              for (let j = 0; j < d.t.length; j++) {
-                const dt = new Date(d.t[j] * 1000);
-                const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
-                priceLookup[sym][key] = d.c[j]; // close price
-              }
-              fetched++;
-            }
-          } catch (e) { console.warn("Finnhub", sym, e.message); }
-          // Rate limit: ~30/sec to stay safe (Finnhub free = 60/min)
-          await new Promise(r => setTimeout(r, 350));
-        }
-
-        setPerfStatus(`Computing portfolio values (${fetched} tickers)...`);
-
-        // Helper: get price for a ticker at a given month, with fallback to nearest
-        const getPrice = (sym, monthKey) => {
-          const pl = priceLookup[sym];
-          if (!pl) return null;
-          if (pl[monthKey]) return pl[monthKey];
-          // Fallback: nearest earlier month
-          const months = Object.keys(pl).sort();
-          let best = null;
-          for (const m of months) { if (m <= monthKey) best = pl[m]; else break; }
-          return best;
-        };
-
-        // 3. Compute portfolio value at each month
-        const series = [];
-        for (const snap of snapshots) {
-          const monthKey = snap.d; // "2011-10"
-          let stockValue = 0;
-          let pricedCount = 0;
-          let totalHeld = Object.keys(snap.h).length;
-
-          for (const [ticker, shares] of Object.entries(snap.h)) {
-            const price = getPrice(ticker, monthKey);
-            if (price) {
-              stockValue += shares * price;
-              pricedCount++;
-            }
-          }
-
-          const totalValue = stockValue + Math.max(snap.c, 0);
-          series.push({
-            date: monthKey + "-01",
-            value: Math.round(totalValue * 100) / 100,
-            positions: totalHeld,
-            priced: pricedCount,
-          });
-        }
-
-        // 4. Build benchmark series (scaled to start at portfolio value at first overlapping month)
-        const bmData = {};
-        for (const bm of benchmarks) {
-          const pl = priceLookup[bm];
-          if (!pl) continue;
-          const bmMonths = Object.keys(pl).sort();
-          if (!bmMonths.length) continue;
-
-          let startMonth = null;
-          for (const s of series) {
-            const mk = s.date.slice(0, 7);
-            if (pl[mk] && s.value > 0) { startMonth = mk; break; }
-          }
-          if (!startMonth) continue;
-
-          const portStartVal = series.find(s => s.date.slice(0, 7) === startMonth)?.value || START_VALUE;
-          const bmStartPrice = pl[startMonth];
-
-          const bmSeries = [];
-          for (const m of bmMonths) {
-            if (m < startMonth) continue;
-            const scaled = portStartVal * (pl[m] / bmStartPrice);
-            bmSeries.push({ date: m + "-01", value: Math.round(scaled * 100) / 100 });
-          }
-          bmData[bm] = bmSeries;
-        }
-
-        // 5. Load Morningstar verified return tables (static, from screenshot)
-        let msTables = {};
-        try {
-          const tResp = await fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`);
-          const tData = await tResp.json();
-          msTables = { annual_returns: tData.annual_returns, ytd_2026: tData.ytd_2026, trailing: tData.trailing };
-        } catch {}
-
-        // 6. Build final data object
-        const perfResult = {
-          portfolio: "1 - DIVIDEND",
-          source: "runtime_finnhub_prices",
-          methodology: "Share holdings reconstructed from every Morningstar transaction. Portfolio value = Σ(shares × Finnhub adjusted monthly close) + cash, computed at runtime with real market data going back to 2011.",
-          series,
-          benchmarks: bmData,
-          default_benchmarks: ["DVY", "IWS"],
-          ...msTables,
-          current_value: series[series.length - 1]?.value,
-          tickers_fetched: fetched,
-        };
-
-        setPerfStatus(`Done: ${fetched}/${allSyms.length} tickers, ${series.length} months`);
-        setMsData(perfResult);
-        try { localStorage.setItem("iown_ms_perf", JSON.stringify(perfResult)); } catch {}
-      } catch (e) {
-        console.error("Perf calc error:", e);
-        setPerfStatus("Error: " + e.message);
-        // Fallback to static file
-        try {
-          const r = await fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`);
-          const d = await r.json();
-          setMsData(d);
-        } catch {}
-      } finally { setMsLoading(false); }
-    })();
-  }, [perfRecalc]);
   useEffect(() => {
     const t = setInterval(() => {
       const ms = getMarketStatus();
@@ -2027,7 +1852,6 @@ Instructions:
 
   const navItems = [
     { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
-    { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
     { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
     { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
@@ -2117,7 +1941,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : "Settings"}
+            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -2271,123 +2095,6 @@ Instructions:
             )}
           </div>
         )}
-
-        {/* ━━━ PERFORMANCE TAB ━━━ */}
-        {tab === "performance" && (() => {
-          const BM_COLORS = { SPY: "#60A5FA", QQQ: "#A78BFA", DIA: "#FB923C", DVY: "#F472B6", IWS: "#34D399" };
-          const BM_LIST = ["SPY", "QQQ", "DIA", "DVY", "IWS"];
-          const toggleBm = (bm) => setActiveBenchmarks(prev => prev.includes(bm) ? prev.filter(b => b !== bm) : [...prev, bm]);
-
-          const filterByRange = (series, range) => {
-            if (!series?.length || range === "ALL") return series;
-            const now = new Date();
-            const cuts = { "1M": 1, "3M": 3, "6M": 6, "YTD": 0, "1Y": 12, "3Y": 36, "5Y": 60, "10Y": 120 };
-            let cutDate;
-            if (range === "YTD") cutDate = new Date(now.getFullYear(), 0, 1);
-            else { cutDate = new Date(now); cutDate.setMonth(cutDate.getMonth() - (cuts[range] || 0)); }
-            return series.filter(p => p.date >= cutDate.toISOString().slice(0, 10));
-          };
-
-          const portSeries = filterByRange(msData?.series, perfRange) || [];
-          const hasData = portSeries.length > 1;
-          const normalize = (s) => { if (!s?.length) return []; const b = s[0].value; return s.map(p => ({ ...p, pctReturn: ((p.value - b) / b) * 100 })); };
-          const normPort = normalize(portSeries);
-
-          const bmNorms = {};
-          const allBenchmarks = msData?.benchmarks || {};
-          for (const bm of activeBenchmarks) {
-            const bmS = filterByRange(allBenchmarks[bm], perfRange) || [];
-            if (bmS.length > 1) bmNorms[bm] = normalize(bmS);
-          }
-
-          const allPts = [...normPort, ...Object.values(bmNorms).flat()];
-          const minR = allPts.length ? Math.min(...allPts.map(p => p.pctReturn)) : 0;
-          const maxR = allPts.length ? Math.max(...allPts.map(p => p.pctReturn)) : 0;
-          const rangeR = maxR - minR || 1;
-          const totalReturn = normPort.length ? normPort[normPort.length - 1].pctReturn : 0;
-
-          const CW = isDesktop ? 820 : (typeof window !== "undefined" ? window.innerWidth - 40 : 350);
-          const CH = isDesktop ? 400 : 280;
-          const PAD = { top: 30, right: 65, bottom: 40, left: 10 };
-          const plotW = CW - PAD.left - PAD.right;
-          const plotH = CH - PAD.top - PAD.bottom;
-
-          const buildPath = (data) => data.length < 2 ? "" : data.map((p, i) => {
-            const x = PAD.left + (i / (data.length - 1)) * plotW;
-            const y = PAD.top + plotH - ((p.pctReturn - minR) / rangeR) * plotH;
-            return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-          }).join(" ");
-
-          const portPath = buildPath(normPort);
-          const areaD = portPath ? `${portPath} L${(PAD.left + plotW).toFixed(1)},${(PAD.top + plotH).toFixed(1)} L${PAD.left},${(PAD.top + plotH).toFixed(1)} Z` : "";
-          const yTicks = []; if (hasData) { for (let i = 0; i <= 5; i++) yTicks.push({ val: minR + (rangeR/5)*i, y: PAD.top + plotH - (i/5)*plotH }); }
-          const xLabels = []; if (normPort.length > 1) { const step = Math.max(1, Math.floor(normPort.length / (isDesktop ? 8 : 5))); for (let i = 0; i < normPort.length; i += step) { const x = PAD.left + (i/(normPort.length-1))*plotW; const d = new Date(normPort[i].date); xLabels.push({ x, label: perfRange==="1M"||perfRange==="3M" ? `${d.getMonth()+1}/${d.getDate()}` : `${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}` }); } }
-          const hoverPt = perfHover != null && normPort[perfHover.idx] ? normPort[perfHover.idx] : null;
-          const hoverX = perfHover ? PAD.left + (perfHover.idx / (normPort.length - 1)) * plotW : 0;
-          const hoverY = hoverPt ? PAD.top + plotH - ((hoverPt.pctReturn - minR) / rangeR) * plotH : 0;
-          const ranges = ["1M","3M","6M","YTD","1Y","3Y","5Y","10Y","ALL"];
-          const annualRets = msData?.annual_returns;
-          const years = annualRets ? Object.keys(annualRets.total || {}).map(Number).sort() : [];
-          const tr = msData?.trailing;
-
-          return (
-            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-              {!isDesktop && <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}><div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Performance</div><button onClick={() => { localStorage.removeItem("iown_ms_perf"); setMsData(null); setMsLoading(false); setPerfRecalc(true); }} style={{ padding: "6px 14px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Recalculate</button></div>}
-              {msLoading && <div style={{ textAlign: "center", padding: 40 }}><div style={{ color: C.t2, fontWeight: 700, marginBottom: 8 }}>Building Portfolio Chart</div><div style={{ color: C.t3, fontSize: 13 }}>{perfStatus || "Loading..."}</div><div style={{ marginTop: 16, width: 40, height: 40, border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, borderRadius: "50%", margin: "16px auto", animation: "spin 1s linear infinite" }} /></div>}
-              {!msLoading && !hasData && (
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "60px 30px", textAlign: "center" }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.t2, marginBottom: 8 }}>No Performance Data</div>
-                </div>
-              )}
-              {hasData && (<>
-                <div style={{ marginBottom: 4 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{msData?.portfolio || "Dividend Strategy"}</div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 38, fontWeight: 800, color: totalReturn >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{totalReturn >= 0 ? "+" : ""}{totalReturn.toFixed(2)}%</div>
-                    {activeBenchmarks.map(bm => { const bmN = bmNorms[bm]; if (!bmN?.length) return null; const bmR = bmN[bmN.length-1].pctReturn; return <span key={bm} style={{ fontSize: 13, color: BM_COLORS[bm] }}>vs <b>{bmR >= 0 ? "+" : ""}{bmR.toFixed(1)}%</b> {bm}</span>; })}
-                  </div>
-                  {hoverPt && <div style={{ fontSize: 12, color: C.t3, marginTop: 4 }}><span style={{ color: C.t2, fontWeight: 600 }}>{new Date(hoverPt.date).toLocaleDateString("en-US",{month:"short",year:"numeric"})}</span>{" — "}<span style={{ color: hoverPt.pctReturn >= 0 ? C.up : C.dn, fontWeight: 700 }}>{hoverPt.pctReturn >= 0 ? "+" : ""}{hoverPt.pctReturn.toFixed(2)}%</span>{" — $"}{hoverPt.value.toLocaleString(undefined,{maximumFractionDigits:0})}</div>}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-                  {ranges.map(r => <button key={r} onClick={() => { setPerfRange(r); setPerfHover(null); }} style={{ padding: "7px 12px", borderRadius: 10, border: `1px solid ${perfRange === r ? C.borderActive : C.border}`, background: perfRange === r ? C.accentSoft : "transparent", color: perfRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>)}
-                </div>
-                <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
-                  {BM_LIST.map(bm => { const active = activeBenchmarks.includes(bm); const col = BM_COLORS[bm]; return <button key={bm} onClick={() => toggleBm(bm)} style={{ padding: "6px 12px", borderRadius: 10, border: `1px solid ${active ? col+"55" : C.border}`, background: active ? col+"15" : "transparent", color: active ? col : C.t4, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>; })}
-                </div>
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 16, overflow: "hidden" }}>
-                  <svg width={CW} height={CH} viewBox={`0 0 ${CW} ${CH}`} style={{ display: "block", width: "100%", height: "auto", touchAction: "none" }}
-                    onMouseMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const mx = ((e.clientX-rect.left)/rect.width)*CW; const idx = Math.round(((mx-PAD.left)/plotW)*(normPort.length-1)); if (idx >= 0 && idx < normPort.length) setPerfHover({idx}); }}
-                    onTouchMove={(e) => { const rect = e.currentTarget.getBoundingClientRect(); const mx = ((e.touches[0].clientX-rect.left)/rect.width)*CW; const idx = Math.round(((mx-PAD.left)/plotW)*(normPort.length-1)); if (idx >= 0 && idx < normPort.length) setPerfHover({idx}); }}
-                    onMouseLeave={() => setPerfHover(null)} onTouchEnd={() => setPerfHover(null)}>
-                    <defs><linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.up} stopOpacity="0.15" /><stop offset="100%" stopColor={C.up} stopOpacity="0" /></linearGradient></defs>
-                    {yTicks.map((t,i) => <g key={i}><line x1={PAD.left} y1={t.y} x2={PAD.left+plotW} y2={t.y} stroke={C.border} strokeWidth="1" /><text x={PAD.left+plotW+8} y={t.y+4} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="600">{t.val>=0?"+":""}{t.val.toFixed(0)}%</text></g>)}
-                    {minR < 0 && maxR > 0 && (() => { const zy = PAD.top+plotH-((0-minR)/rangeR)*plotH; return <line x1={PAD.left} y1={zy} x2={PAD.left+plotW} y2={zy} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" />; })()}
-                    {xLabels.map((l,i) => <text key={i} x={l.x} y={CH-8} fill={C.t4} fontSize="10" fontFamily="inherit" fontWeight="500" textAnchor="middle">{l.label}</text>)}
-                    {areaD && <path d={areaD} fill="url(#perfGrad)" />}
-                    {activeBenchmarks.map(bm => { const bmN = bmNorms[bm]; if (!bmN?.length) return null; const p = buildPath(bmN); return p ? <path key={bm} d={p} fill="none" stroke={BM_COLORS[bm]} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.65" /> : null; })}
-                    {portPath && <path d={portPath} fill="none" stroke={C.up} strokeWidth="2.5" strokeLinejoin="round" />}
-                    {hoverPt && <><line x1={hoverX} y1={PAD.top} x2={hoverX} y2={PAD.top+plotH} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" /><circle cx={hoverX} cy={hoverY} r="5" fill={C.card} stroke={C.up} strokeWidth="2" /><circle cx={hoverX} cy={hoverY} r="2" fill={C.up} /></>}
-                  </svg>
-                  <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.t2 }}><div style={{ width: 16, height: 2.5, background: C.up, borderRadius: 2 }} />Portfolio</div>
-                    {activeBenchmarks.map(bm => bmNorms[bm]?.length ? <div key={bm} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: BM_COLORS[bm] }}><div style={{ width: 16, height: 1.5, background: BM_COLORS[bm], borderRadius: 2, opacity: 0.65 }} />{bm}</div> : null)}
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 16 }}>
-                  {[{ label: "Start", val: `$${portSeries[0]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[0]?.date?.slice(0,7) }, { label: "Current", val: `$${portSeries[portSeries.length-1]?.value?.toLocaleString(undefined,{maximumFractionDigits:0})||"—"}`, sub: portSeries[portSeries.length-1]?.date }, { label: "Portfolio Return", val: `${totalReturn>=0?"+":""}${totalReturn.toFixed(2)}%`, color: totalReturn>=0?C.up:C.dn }, { label: "Source", val: msData?.source === "runtime_alpaca_prices" ? "Live Alpaca" : "Morningstar", sub: msData?.tickers_fetched ? `${msData.tickers_fetched} tickers` : "" }].map((s,i) => (
-                    <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>{s.label}</div>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: s.color||C.t1, fontVariantNumeric: "tabular-nums" }}>{s.val}</div>
-                      {s.sub && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.sub}</div>}
-                    </div>))}
-                </div>
-                {tr && <div style={{ marginTop: 20 }}><div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 10 }}>Trailing Total Returns</div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "inherit" }}><thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>{["","1W","1M","3M","YTD","1Y","3Y","5Y","10Y","Since Purchase"].map(h => <th key={h} style={{ padding: "10px 8px", textAlign: h?"right":"left", color: C.t3, fontWeight: 700, whiteSpace: "nowrap", fontSize: 11 }}>{h}</th>)}</tr></thead><tbody>{[{label:"Total",key:"total",color:C.up},{label:"Personal",key:"personal",color:C.t1},{label:"Index",key:"index",color:"#60A5FA"}].map(row => { const d=tr[row.key]; if(!d) return null; return <tr key={row.key} style={{ borderBottom: `1px solid ${C.border}` }}><td style={{ padding: "10px 8px", fontWeight: 700, color: row.color, whiteSpace: "nowrap" }}>{row.label}</td>{["1w","1m","3m","ytd","1y","3y_ann","5y_ann","10y_ann","since_purchase_ann"].map(k => { const v=d[k]; return <td key={k} style={{ padding: "10px 8px", textAlign: "right", color: v>0?C.up:v<0?C.dn:C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v!=null?`${v>0?"+":""}${v.toFixed(2)}%`:"—"}</td>; })}</tr>; })}</tbody></table></div></div>}
-                {years.length > 0 && <div style={{ marginTop: 20 }}><div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 10 }}>Annual Return History</div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontFamily: "inherit" }}><thead><tr style={{ borderBottom: `1px solid ${C.border}` }}><th style={{ padding: "10px 8px", textAlign: "left", color: C.t3, fontWeight: 700, fontSize: 11 }}></th>{years.map(y => <th key={y} style={{ padding: "10px 6px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 11 }}>{y}</th>)}{msData?.ytd_2026 && <th style={{ padding: "10px 6px", textAlign: "right", color: C.t3, fontWeight: 700, fontSize: 11 }}>YTD</th>}</tr></thead><tbody>{[{label:"Total",key:"total",color:C.up},{label:"Personal",key:"personal",color:C.t1},{label:"Index",key:"index",color:"#60A5FA"}].map(row => <tr key={row.key} style={{ borderBottom: `1px solid ${C.border}` }}><td style={{ padding: "10px 8px", fontWeight: 700, color: row.color, whiteSpace: "nowrap" }}>{row.label}</td>{years.map(y => { const v=annualRets[row.key]?.[String(y)]; return <td key={y} style={{ padding: "10px 6px", textAlign: "right", color: v>0?C.up:v<0?C.dn:C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v!=null?`${v>0?"+":""}${v.toFixed(1)}`:"—"}</td>; })}{msData?.ytd_2026 && (()=>{ const v=msData.ytd_2026[row.key]; return <td style={{ padding: "10px 6px", textAlign: "right", color: v>0?C.up:v<0?C.dn:C.t3, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{v!=null?`${v>0?"+":""}${v.toFixed(1)}`:"—"}</td>; })()}</tr>)}</tbody></table></div></div>}
-                {normPort.length > 2 && (() => { const peak=portSeries.reduce((a,b)=>b.value>a.value?b:a,portSeries[0]); const trough=portSeries.reduce((a,b)=>b.value<a.value?b:a,portSeries[0]); let mv=portSeries[0].value,dd=0; for(const p of portSeries){if(p.value>mv)mv=p.value;const c=((p.value-mv)/mv)*100;if(c<dd)dd=c;} return <div style={{ display: "grid", gridTemplateColumns: isDesktop?"repeat(3, 1fr)":"1fr", gap: 10, marginTop: 16, marginBottom: 30 }}><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}><div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Peak</div><div style={{ fontSize: 16, fontWeight: 800, color: C.up }}>${peak.value.toLocaleString(undefined,{maximumFractionDigits:0})}</div><div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{new Date(peak.date).toLocaleDateString("en-US",{month:"short",year:"numeric"})}</div></div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}><div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Trough</div><div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>${trough.value.toLocaleString(undefined,{maximumFractionDigits:0})}</div><div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{new Date(trough.date).toLocaleDateString("en-US",{month:"short",year:"numeric"})}</div></div><div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px" }}><div style={{ fontSize: 11, fontWeight: 600, color: C.t3, marginBottom: 4 }}>Max Drawdown</div><div style={{ fontSize: 16, fontWeight: 800, color: C.dn }}>{dd.toFixed(2)}%</div><div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>Largest peak-to-trough</div></div></div>; })()}
-              </>)}
-            </div>
-          );
-        })()}
 
         {/* ━━━ NEWS TAB ━━━ */}
         {tab === "news" && (
