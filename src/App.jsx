@@ -674,14 +674,19 @@ export default function App() {
   const fetchIntraday = useCallback(async () => {
     if (!apiKey || !apiSecret) return;
     try {
-      const today = new Date().toISOString().split("T")[0];
-      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${today}T04:00:00Z&feed=iex&limit=10000`, { headers: hdrs });
+      // Fetch last 2 trading days so sparklines have data even at market open
+      const start = new Date();
+      start.setDate(start.getDate() - 2);
+      const startStr = start.toISOString().split("T")[0];
+      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${startStr}T04:00:00Z&feed=iex&limit=10000`, { headers: hdrs });
       if (!r.ok) return;
       const d = await r.json();
       const pts = {};
       if (d.bars) {
         for (const [s, barArr] of Object.entries(d.bars)) {
-          pts[s] = barArr.map(b => b.c);
+          // Take last 78 bars max (~1 full trading day of 5-min bars)
+          const closes = barArr.map(b => b.c);
+          pts[s] = closes.length > 78 ? closes.slice(-78) : closes;
         }
       }
       // Only update React state if the number of data points changed (new bar appeared)
