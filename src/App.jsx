@@ -908,10 +908,12 @@ Instructions:
   };
 
   useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
-  /* Build portfolio performance from transaction snapshots + real Alpaca prices */
+  /* Build portfolio performance from transaction snapshots + real Finnhub prices */
   const [perfStatus, setPerfStatus] = useState("");
   useEffect(() => {
-    if (msData || msLoading || !EK || !ES) return;
+    if (msData || msLoading) return;
+    // Need at least Finnhub key, or Alpaca as fallback
+    if (!FH && !EK) return;
     setMsLoading(true);
     setPerfStatus("Loading snapshots...");
     (async () => {
@@ -923,44 +925,48 @@ Instructions:
         const allTickers = snapData.all_tickers;
         const START_VALUE = snapData.start_value || 100000;
 
-        // 2. Fetch monthly bars from Alpaca for ALL tickers + benchmarks
+        // 2. Fetch monthly candles from Finnhub for ALL tickers + benchmarks
         const benchmarks = ["SPY", "QQQ", "DIA", "DVY", "IWS"];
         const allSyms = [...new Set([...allTickers, ...benchmarks])];
-        const hdrs = { "APCA-API-KEY-ID": EK, "APCA-API-SECRET-KEY": ES };
         const priceLookup = {}; // sym -> {"2020-07": price, ...}
 
-        // Fetch in batches of 30
-        const batchSize = 30;
-        for (let i = 0; i < allSyms.length; i += batchSize) {
-          const batch = allSyms.slice(i, i + batchSize);
-          setPerfStatus(`Fetching prices: ${i}/${allSyms.length} tickers...`);
-          const syms = batch.join(",");
-          const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${syms}&timeframe=1Month&start=2011-01-01T00:00:00Z&end=2026-04-01T00:00:00Z&limit=10000&adjustment=all&feed=iex`;
+        // Finnhub: /stock/candle?symbol=X&resolution=M&from=UNIX&to=UNIX&token=KEY
+        const fromUnix = Math.floor(new Date("2011-01-01").getTime() / 1000);
+        const toUnix = Math.floor(Date.now() / 1000);
+
+        // Fetch one ticker at a time (Finnhub free = 60 calls/min)
+        let fetched = 0;
+        let rateLimited = 0;
+        for (let i = 0; i < allSyms.length; i++) {
+          const sym = allSyms[i];
+          if (i % 5 === 0) setPerfStatus(`Finnhub: ${i}/${allSyms.length} tickers (${fetched} ok)...`);
           try {
-            let resp = await fetch(url, { headers: hdrs });
-            let data = await resp.json();
-            if (data.bars) {
-              for (const [sym, bars] of Object.entries(data.bars)) {
-                priceLookup[sym] = {};
-                for (const b of bars) priceLookup[sym][b.t.slice(0, 7)] = b.c;
-              }
+            const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=M&from=${fromUnix}&to=${toUnix}&token=${FH}`;
+            const r = await fetch(url);
+            if (r.status === 429) {
+              // Rate limited — wait 60s and retry
+              rateLimited++;
+              setPerfStatus(`Rate limited at ${i}/${allSyms.length}. Waiting 60s... (${fetched} ok)`);
+              await new Promise(r => setTimeout(r, 61000));
+              i--; // Retry this ticker
+              continue;
             }
-            // Pagination
-            while (data.next_page_token) {
-              resp = await fetch(url + `&page_token=${data.next_page_token}`, { headers: hdrs });
-              data = await resp.json();
-              if (data.bars) {
-                for (const [sym, bars] of Object.entries(data.bars)) {
-                  if (!priceLookup[sym]) priceLookup[sym] = {};
-                  for (const b of bars) priceLookup[sym][b.t.slice(0, 7)] = b.c;
-                }
+            const d = await r.json();
+            if (d.s === "ok" && d.t && d.c) {
+              priceLookup[sym] = {};
+              for (let j = 0; j < d.t.length; j++) {
+                const dt = new Date(d.t[j] * 1000);
+                const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+                priceLookup[sym][key] = d.c[j]; // close price
               }
+              fetched++;
             }
-          } catch (e) { console.warn("Alpaca batch error:", e); }
-          await new Promise(r => setTimeout(r, 200));
+          } catch (e) { console.warn("Finnhub", sym, e.message); }
+          // Rate limit: ~30/sec to stay safe (Finnhub free = 60/min)
+          await new Promise(r => setTimeout(r, 350));
         }
 
-        setPerfStatus(`Computing portfolio values...`);
+        setPerfStatus(`Computing portfolio values (${fetched} tickers)...`);
 
         // Helper: get price for a ticker at a given month, with fallback to nearest
         const getPrice = (sym, monthKey) => {
@@ -971,8 +977,6 @@ Instructions:
           const months = Object.keys(pl).sort();
           let best = null;
           for (const m of months) { if (m <= monthKey) best = pl[m]; else break; }
-          // If no earlier, use first available
-          if (best === null && months.length) best = pl[months[0]];
           return best;
         };
 
@@ -992,7 +996,6 @@ Instructions:
             }
           }
 
-          // Add cash (only if positive — negative cash is internal accounting)
           const totalValue = stockValue + Math.max(snap.c, 0);
           series.push({
             date: monthKey + "-01",
@@ -1002,7 +1005,7 @@ Instructions:
           });
         }
 
-        // 4. Build benchmark series (scaled to start at same value as portfolio)
+        // 4. Build benchmark series (scaled to start at portfolio value at first overlapping month)
         const bmData = {};
         for (const bm of benchmarks) {
           const pl = priceLookup[bm];
@@ -1010,7 +1013,6 @@ Instructions:
           const bmMonths = Object.keys(pl).sort();
           if (!bmMonths.length) continue;
 
-          // Find first month where both portfolio and benchmark have data
           let startMonth = null;
           for (const s of series) {
             const mk = s.date.slice(0, 7);
@@ -1030,7 +1032,7 @@ Instructions:
           bmData[bm] = bmSeries;
         }
 
-        // 5. Also load Morningstar verified return tables (static, from screenshot)
+        // 5. Load Morningstar verified return tables (static, from screenshot)
         let msTables = {};
         try {
           const tResp = await fetch(`${import.meta.env.BASE_URL || "/"}morningstar-dividend-perf.json`);
@@ -1041,17 +1043,17 @@ Instructions:
         // 6. Build final data object
         const perfResult = {
           portfolio: "1 - DIVIDEND",
-          source: "runtime_alpaca_prices",
-          methodology: "Share holdings reconstructed from every Morningstar transaction. Portfolio value = Σ(shares × Alpaca adjusted monthly close) + cash, computed at runtime with real market data.",
+          source: "runtime_finnhub_prices",
+          methodology: "Share holdings reconstructed from every Morningstar transaction. Portfolio value = Σ(shares × Finnhub adjusted monthly close) + cash, computed at runtime with real market data going back to 2011.",
           series,
           benchmarks: bmData,
           default_benchmarks: ["DVY", "IWS"],
           ...msTables,
           current_value: series[series.length - 1]?.value,
-          tickers_fetched: Object.keys(priceLookup).length,
+          tickers_fetched: fetched,
         };
 
-        setPerfStatus(`Done: ${Object.keys(priceLookup).length} tickers, ${series.length} months`);
+        setPerfStatus(`Done: ${fetched}/${allSyms.length} tickers, ${series.length} months`);
         setMsData(perfResult);
         try { localStorage.setItem("iown_ms_perf", JSON.stringify(perfResult)); } catch {}
       } catch (e) {
