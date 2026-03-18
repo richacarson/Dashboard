@@ -497,7 +497,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const sections = ["overview", "financials", "chart", "news"];
+    const sections = ["overview", "financials", "news"];
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
@@ -625,7 +625,20 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
         </div>
       </div>
 
-      {/* All content in one scrollable page */}
+      {/* CHART TAB — full screen */}
+      {profileTab === "chart" && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <iframe
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart`}
+            style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+            title={`${symbol} Chart`}
+            sandbox="allow-scripts allow-same-origin allow-popups"
+          />
+        </div>
+      )}
+
+      {/* OVERVIEW + FINANCIALS + NEWS — scrollable */}
+      {profileTab !== "chart" && (
       <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
 
@@ -802,20 +815,6 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
               </Card>
           </div>
 
-          {/* ── CHART ── */}
-          <div id="section-chart">
-              <Card title="Chart">
-                <div style={{ width: "100%", height: 400, borderRadius: 8, overflow: "hidden" }}>
-                  <iframe
-                    src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart`}
-                    style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                    title={`${symbol} Chart`}
-                    sandbox="allow-scripts allow-same-origin allow-popups"
-                  />
-                </div>
-              </Card>
-          </div>
-
           {/* ── NEWS ── */}
           <div id="section-news">
               {tickerNews.length === 0 ? (
@@ -852,7 +851,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
           </div>
 
         </div>{/* end maxWidth wrapper */}
-      </div>{/* end scrollable container */}
+      </div>)}{/* end scrollable container + profileTab conditional */}
     </div>
   );
 }
