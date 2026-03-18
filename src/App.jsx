@@ -1161,6 +1161,8 @@ Instructions:
             el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
             el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
           }
+          const priceEl = document.querySelector(`[data-ticker-price="${s}"]`);
+          if (priceEl) priceEl.textContent = `$${nq[s].p.toFixed(2)}`;
           // Heatmap cell
           const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
           if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
@@ -1694,6 +1696,8 @@ Instructions:
                 el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
                 el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
               }
+              const priceEl = document.querySelector(`[data-ticker-price="${msg.S}"]`);
+              if (priceEl) priceEl.textContent = `$${msg.p.toFixed(2)}`;
               // Benchmark
               const bmEl = document.querySelector(`[data-bm-price="${msg.S}"]`);
               if (bmEl) bmEl.textContent = msg.p.toFixed(2);
@@ -1878,7 +1882,7 @@ Instructions:
   const renderTickerRow = (s) => {
     const q = quotes[s], b = bars[s], c = chg(s);
     const nm = names[s] || "";
-    const pts = intradayPts[s];
+    const price = q?.p;
     const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
     return (
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
@@ -1891,6 +1895,7 @@ Instructions:
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortName}</div>
         </div>
         <div style={{ flex: 1 }} />
+        {price && <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums" }}>${price.toFixed(2)}</div>}
         <div data-ticker-chg={s} style={{
           padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
