@@ -62,11 +62,11 @@ def parse_transactions(filepath):
         d = f"{full_year}-{month}-{day}"
         
         stock_m = re.match(
-            r'^\s+\d{2}-\d{2}-\d{2}\t(PURCHASE|SALE|DIVIDEND REINVESTMENT)\t([\d.]+)\t([\d.]+)\t([\d,.]+)', raw)
+            r'^\s+\d{2}-\d{2}-\d{2}\t(PURCHASE|SALE|DIVIDEND REINVESTMENT)\t([\d,.]+)\t([\d,.]+)\t([\d,.]+)', raw)
         if stock_m and current_ticker:
             transactions.append({
                 "date": d, "ticker": current_ticker, "type": stock_m.group(1),
-                "shares": float(stock_m.group(2)), "price": float(stock_m.group(3)),
+                "shares": float(stock_m.group(2).replace(",", "")), "price": float(stock_m.group(3).replace(",", "")),
                 "amount": float(stock_m.group(4).replace(",", "")),
             })
             continue
