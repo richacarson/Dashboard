@@ -638,7 +638,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       {/* OVERVIEW + FINANCIALS + NEWS — scrollable */}
       {profileTab !== "chart" && (
       <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
-        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth >= 768 ? "1fr 1fr" : "1fr", gap: 12, alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth >= 768 ? "1fr 1fr" : "1fr", gap: 12, alignItems: "stretch" }}>
 
           {/* ── OVERVIEW ── */}
           <div id="section-overview" style={{ display: "contents" }}>
