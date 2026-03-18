@@ -305,12 +305,53 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
     """
     Replay all transactions chronologically and calculate weekly portfolio values.
     """
+    # Pre-process cash transactions: on each date, net deposits vs withdrawals.
+    # Same-day pairs are rebalancing (net to ~0). Remaining deposits are dividends.
+    from collections import defaultdict as dd
+    cash_by_date = dd(lambda: {"deposits": 0, "withdrawals": 0})
+    for ctx in cash_transactions:
+        if ctx["type"] == "DEPOSIT":
+            cash_by_date[ctx["date"]]["deposits"] += ctx["amount"]
+        elif ctx["type"] == "WITHDRAWAL":
+            cash_by_date[ctx["date"]]["withdrawals"] += ctx["amount"]
+    
+    # Also net with stock buys/sells on the same day
+    stock_by_date = dd(lambda: {"buys": 0, "sells": 0})
+    for tx in transactions:
+        if tx["type"] == "PURCHASE":
+            stock_by_date[tx["date"]]["buys"] += tx["amount"]
+        elif tx["type"] == "SALE":
+            stock_by_date[tx["date"]]["sells"] += tx["amount"]
+    
+    # For each date, check if withdrawals are paired with purchases
+    # and deposits are paired with sales (rebalancing pattern)
+    netted_cash = {}
+    for date in cash_by_date:
+        dep = cash_by_date[date]["deposits"]
+        wth = cash_by_date[date]["withdrawals"]
+        buys = stock_by_date.get(date, {"buys": 0})["buys"]
+        sells = stock_by_date.get(date, {"sells": 0})["sells"]
+        
+        # If there are both buys and withdrawals, or sells and deposits
+        # on the same day, it's rebalancing. Net them.
+        # Only keep the unmatched remainder as real cash flow.
+        net = dep - wth  # positive = more deposited than withdrawn
+        netted_cash[date] = net
+    
+    print(f"  Cash flow summary: {len(cash_by_date)} dates with cash activity")
+    total_net = sum(netted_cash.values())
+    print(f"  Total net cash flow: ${total_net:,.2f}")
+    
     # Combine and sort all events by date
     all_events = []
     for tx in transactions:
         all_events.append({"date": tx["date"], "kind": "stock", **tx})
-    for ctx in cash_transactions:
-        all_events.append({"date": ctx["date"], "kind": "cash", **ctx})
+    # Replace individual deposit/withdrawal events with netted amounts
+    for date, net_amount in netted_cash.items():
+        if net_amount > 0:
+            all_events.append({"date": date, "kind": "cash", "type": "DEPOSIT", "amount": net_amount})
+        elif net_amount < 0:
+            all_events.append({"date": date, "kind": "cash", "type": "WITHDRAWAL", "amount": abs(net_amount)})
     all_events.sort(key=lambda x: x["date"])
     
     # State
