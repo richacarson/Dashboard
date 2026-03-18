@@ -143,7 +143,6 @@ function Sparkline({ points, chg, width = 100, height = 36 }) {
 /* ── Portfolio Performance Chart ── */
 function PortfolioChart({ theme }) {
   const [data, setData] = useState(null);
-  const [selectedBM, setSelectedBM] = useState("DVY");
   const [timeRange, setTimeRange] = useState("ALL");
   const [hoverIdx, setHoverIdx] = useState(null);
   const canvasRef = useRef(null);
@@ -159,38 +158,30 @@ function PortfolioChart({ theme }) {
 
   const isDark = theme === "dark";
   const pColor = isDark ? "#34D399" : "#16A34A";
-  const bmColor = isDark ? "#6366F1" : "#4F46E5";
   const gridColor = isDark ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.06)";
   const textColor = isDark ? "#8B9A78" : "#6B7A5E";
 
   const getFilteredData = () => {
-    if (!data?.portfolio) return { portfolio: [], benchmark: [] };
+    if (!data?.portfolio) return [];
     const portfolio = data.portfolio;
-    const benchmark = data.benchmarks?.[selectedBM] || [];
-    if (timeRange === "ALL") return { portfolio, benchmark };
+    if (timeRange === "ALL") return portfolio;
     const now = new Date();
     let cutoff;
     if (timeRange === "1Y") cutoff = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
     else if (timeRange === "3Y") cutoff = new Date(now.getFullYear() - 3, now.getMonth(), now.getDate());
     else if (timeRange === "5Y") cutoff = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
     else if (timeRange === "YTD") cutoff = new Date(now.getFullYear(), 0, 1);
-    else return { portfolio, benchmark };
+    else return portfolio;
     const cutStr = cutoff.toISOString().slice(0, 10);
     const fp = portfolio.filter(p => p.date >= cutStr);
-    const fb = benchmark.filter(b => b.date >= cutStr);
     if (fp.length > 0) {
       const pStart = fp[0].value;
-      const normP = fp.map(p => ({ ...p, value: (p.value / pStart) * 100000 }));
-      if (fb.length > 0) {
-        const bStart = fb[0].value;
-        return { portfolio: normP, benchmark: fb.map(b => ({ ...b, value: (b.value / bStart) * 100000 })) };
-      }
-      return { portfolio: normP, benchmark: [] };
+      return fp.map(p => ({ ...p, value: (p.value / pStart) * 100000 }));
     }
-    return { portfolio: fp, benchmark: fb };
+    return fp;
   };
 
-  const { portfolio: fp, benchmark: fb } = getFilteredData();
+  const fp = getFilteredData();
 
   useEffect(() => {
     if (!canvasRef.current || !fp.length) return;
@@ -205,7 +196,7 @@ function PortfolioChart({ theme }) {
     const pad = { top: 20, right: 10, bottom: 30, left: 60 };
     ctx.clearRect(0, 0, W, H);
 
-    const allVals = [...fp.map(p => p.value), ...fb.map(b => b.value)];
+    const allVals = fp.map(p => p.value);
     const minV = Math.min(...allVals) * 0.95, maxV = Math.max(...allVals) * 1.05;
     const xS = (i, len) => pad.left + (i / Math.max(len - 1, 1)) * (W - pad.left - pad.right);
     const yS = (v) => pad.top + (1 - (v - minV) / (maxV - minV || 1)) * (H - pad.top - pad.bottom);
@@ -225,12 +216,6 @@ function PortfolioChart({ theme }) {
       const idx = Math.floor(i * (fp.length - 1) / Math.max(lc - 1, 1));
       ctx.fillStyle = textColor; ctx.fillText(fp[idx].date.slice(0, 7), xS(idx, fp.length), H - 8);
     }
-    // Benchmark line
-    if (fb.length > 1) {
-      ctx.beginPath(); ctx.strokeStyle = bmColor + "88"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
-      fb.forEach((b, i) => { const x = xS(i, fb.length), y = yS(b.value); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-      ctx.stroke(); ctx.setLineDash([]);
-    }
     // Portfolio line
     ctx.beginPath(); ctx.strokeStyle = pColor; ctx.lineWidth = 2;
     fp.forEach((p, i) => { const x = xS(i, fp.length), y = yS(p.value); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
@@ -248,7 +233,7 @@ function PortfolioChart({ theme }) {
       ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke(); ctx.setLineDash([]);
       ctx.beginPath(); ctx.arc(x, yS(fp[hoverIdx].value), 4, 0, Math.PI * 2); ctx.fillStyle = pColor; ctx.fill();
     }
-  }, [fp, fb, hoverIdx, theme]);
+  }, [fp, hoverIdx, theme]);
 
   const handleMouse = (e) => {
     if (!canvasRef.current || !fp.length) return;
@@ -262,7 +247,6 @@ function PortfolioChart({ theme }) {
   if (!data) return null;
 
   const totalRet = fp.length >= 2 ? ((fp[fp.length - 1].value / fp[0].value) - 1) * 100 : 0;
-  const bmRet = fb.length >= 2 ? ((fb[fb.length - 1].value / fb[0].value) - 1) * 100 : null;
   const hPt = hoverIdx !== null && hoverIdx < fp.length ? fp[hoverIdx] : null;
 
   return (
@@ -279,16 +263,11 @@ function PortfolioChart({ theme }) {
           ) : (
             <div>
               <span style={{ fontSize: 20, fontWeight: 700, color: totalRet >= 0 ? C.up : C.dn }}>{totalRet >= 0 ? "+" : ""}{totalRet.toFixed(1)}%</span>
-              {bmRet !== null && (
-                <span style={{ fontSize: 13, color: C.t4, marginLeft: 10 }}>
-                  vs {selectedBM}: <span style={{ color: bmRet >= 0 ? C.up : C.dn, fontWeight: 600 }}>{bmRet >= 0 ? "+" : ""}{bmRet.toFixed(1)}%</span>
-                </span>
-              )}
             </div>
           )}
         </div>
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+      <div style={{ display: "flex", marginBottom: 12 }}>
         <div style={{ display: "flex", gap: 4 }}>
           {["YTD", "1Y", "3Y", "5Y", "ALL"].map(r => (
             <button key={r} onClick={() => { setTimeRange(r); setHoverIdx(null); }} style={{
@@ -297,16 +276,6 @@ function PortfolioChart({ theme }) {
               color: timeRange === r ? C.t1 : C.t4, fontSize: 11, fontWeight: 600,
               cursor: "pointer", fontFamily: "inherit",
             }}>{r}</button>
-          ))}
-        </div>
-        <div style={{ display: "flex", gap: 4 }}>
-          {["DVY", "IWS", "IUSG", "SPY", "QQQ", "DIA"].map(bm => (
-            <button key={bm} onClick={() => setSelectedBM(bm)} style={{
-              padding: "5px 8px", borderRadius: 6, border: `1px solid ${selectedBM === bm ? bmColor + "66" : C.border}`,
-              background: selectedBM === bm ? bmColor + "18" : "transparent",
-              color: selectedBM === bm ? bmColor : C.t4, fontSize: 10, fontWeight: 600,
-              cursor: "pointer", fontFamily: "inherit",
-            }}>{bm}</button>
           ))}
         </div>
       </div>
@@ -318,12 +287,6 @@ function PortfolioChart({ theme }) {
           <div style={{ width: 16, height: 2, background: pColor, borderRadius: 1 }} />
           <span>Dividend Strategy</span>
         </div>
-        {fb.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 16, height: 0, borderTop: `2px dashed ${bmColor}` }} />
-            <span>{selectedBM}</span>
-          </div>
-        )}
       </div>
     </div>
   );
