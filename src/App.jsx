@@ -556,7 +556,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
   // Card helper
   const Card = ({ title, children, grade }) => (
-    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 12 }}>
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: 16, marginBottom: 0 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
         <span style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>{title}</span>
         {grade && <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 6, background: grade.color + "22", color: grade.color }}>{grade.label}</span>}
@@ -638,11 +638,12 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       {/* OVERVIEW + FINANCIALS + NEWS — scrollable */}
       {profileTab !== "chart" && (
       <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth >= 768 ? "1fr 1fr" : "1fr", gap: 12, alignItems: "start" }}>
 
           {/* ── OVERVIEW ── */}
-          <div id="section-overview">
+          <div id="section-overview" style={{ display: "contents" }}>
           {profile && (
+            <div style={{ gridColumn: "1 / -1" }}>
                 <Card title="Company Profile">
                   {/* Logo + name + tags */}
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
@@ -677,6 +678,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                     )}
                   </div>
                 </Card>
+            </div>
               )}
 
               {/* Key Stats */}
@@ -744,7 +746,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
           </div>
 
           {/* ── FINANCIALS ── */}
-          <div id="section-financials">
+          <div id="section-financials" style={{ display: "contents" }}>
               {/* Valuation */}
               <Card title="Valuation">
                 <StatRow label="P/E (TTM)" value={fmt(f.peTTM || fm["peNormalizedAnnual"])} />
@@ -814,7 +816,8 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
           </div>
 
           {/* ── NEWS ── */}
-          <div id="section-news">
+          <div id="section-news" style={{ display: "contents" }}>
+            <div style={{ gridColumn: "1 / -1" }}>
               {tickerNews.length === 0 ? (
                 <Card title="News"><div style={{ textAlign: "center", padding: "20px 0", color: C.t4, fontSize: 14 }}>No recent news for {symbol}</div></Card>
               ) : (
@@ -846,6 +849,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
               ))}
                 </Card>
               )}
+            </div>
           </div>
 
         </div>{/* end maxWidth wrapper */}
