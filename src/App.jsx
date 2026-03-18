@@ -936,7 +936,7 @@ Instructions:
   const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "research", "calendar", "news", "settings"];
+  const tabIds = ["home", "research", "calendar", "news", "clients", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -1334,6 +1334,12 @@ Instructions:
   const [earningsCalendar, setEarningsCalendar] = useState([]);
   const [econCalendar, setEconCalendar] = useState([]);
   const [calendarView, setCalendarView] = useState("economic");
+  const [rtContacts, setRtContacts] = useState([]);
+  const [rtActivities, setRtActivities] = useState([]);
+  const [rtCalendar, setRtCalendar] = useState([]);
+  const [rtSearch, setRtSearch] = useState("");
+  const [rtLoading, setRtLoading] = useState(false);
+  const [rtTab, setRtTab] = useState("contacts"); // contacts | tasks | calendar
   const fetchFundamentals = useCallback(async (force = false) => {
     const key = FH || FK;
     if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
@@ -2042,6 +2048,7 @@ Instructions:
     { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
     { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg> },
+    { id: "clients", label: "Clients", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
 
@@ -2127,7 +2134,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : "Settings"}
+            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "clients" ? "Clients" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -3098,6 +3105,158 @@ Instructions:
             </div>
           );
         })()}
+
+        {/* ━━━ CLIENTS (REDTAIL CRM) ━━━ */}
+        {tab === "clients" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Clients</div>}
+            {(() => {
+              const RT_KEY = import.meta.env.VITE_REDTAIL_KEY || "";
+              const rtConnected = !!RT_KEY;
+
+              if (!rtConnected) return (
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 32, textAlign: "center" }}>
+                  <div style={{ fontSize: 40, marginBottom: 16 }}>🔗</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Connect Redtail CRM</div>
+                  <div style={{ fontSize: 13, color: C.t3, lineHeight: 1.6, maxWidth: 400, margin: "0 auto 20px" }}>
+                    Link your Redtail CRM to view contacts, tasks, and appointments directly in IOWN. You'll need a Redtail API key.
+                  </div>
+                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, maxWidth: 420, margin: "0 auto", textAlign: "left" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Setup Instructions</div>
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.8 }}>
+                      <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.accent, background: C.accentSoft, width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>1</span>
+                        <span>Request an API key at <span style={{ color: C.accent, fontWeight: 600 }}>corporate.redtailtechnology.com/api</span></span>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.accent, background: C.accentSoft, width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>2</span>
+                        <span>Add the key as a GitHub Secret: <span style={{ color: C.t2, fontWeight: 600, fontFamily: "monospace", fontSize: 11 }}>VITE_REDTAIL_KEY</span></span>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.accent, background: C.accentSoft, width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>3</span>
+                        <span>Add your Redtail user key: <span style={{ color: C.t2, fontWeight: 600, fontFamily: "monospace", fontSize: 11 }}>VITE_REDTAIL_USER_KEY</span></span>
+                      </div>
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.accent, background: C.accentSoft, width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>4</span>
+                        <span>Re-deploy and your CRM data will appear here</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+
+              // Connected state — show CRM data
+              const rtTabs = [
+                { id: "contacts", label: "Contacts", icon: "👤" },
+                { id: "tasks", label: "Tasks", icon: "✅" },
+                { id: "calendar", label: "Appointments", icon: "📅" },
+              ];
+
+              return (
+                <div>
+                  {/* Sub-tab bar */}
+                  <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+                    {rtTabs.map(t => (
+                      <button key={t.id} onClick={() => setRtTab(t.id)} style={{
+                        padding: "8px 16px", borderRadius: 8, border: `1px solid ${rtTab === t.id ? C.borderActive : C.border}`,
+                        background: rtTab === t.id ? C.accentSoft : "transparent",
+                        color: rtTab === t.id ? C.t1 : C.t4, fontSize: 13, fontWeight: 600,
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>{t.icon} {t.label}</button>
+                    ))}
+                  </div>
+
+                  {/* Search bar */}
+                  {rtTab === "contacts" && (
+                    <div style={{ marginBottom: 16 }}>
+                      <input value={rtSearch} onChange={e => setRtSearch(e.target.value)} placeholder="Search contacts..."
+                        style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${C.border}`,
+                          background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none",
+                          boxSizing: "border-box",
+                        }} />
+                    </div>
+                  )}
+
+                  {/* Content area */}
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: "hidden" }}>
+                    {rtLoading ? (
+                      <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>Loading CRM data...</div>
+                    ) : rtTab === "contacts" ? (
+                      rtContacts.length === 0 ? (
+                        <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>
+                          <div style={{ fontSize: 32, marginBottom: 8 }}>👤</div>
+                          <div style={{ fontSize: 14, color: C.t3 }}>Contacts will appear here once connected</div>
+                        </div>
+                      ) : (
+                        rtContacts.filter(c => !rtSearch || (c.name || "").toLowerCase().includes(rtSearch.toLowerCase())).map((c, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", padding: "14px 16px", borderBottom: `1px solid ${C.border}`, gap: 12 }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 20, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: C.accent, flexShrink: 0 }}>
+                              {(c.name || "?")[0]}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{c.name}</div>
+                              {c.email && <div style={{ fontSize: 12, color: C.t3, marginTop: 2 }}>{c.email}</div>}
+                            </div>
+                            {c.phone && <div style={{ fontSize: 12, color: C.t4, fontVariantNumeric: "tabular-nums" }}>{c.phone}</div>}
+                          </div>
+                        ))
+                      )
+                    ) : rtTab === "tasks" ? (
+                      rtActivities.length === 0 ? (
+                        <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>
+                          <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+                          <div style={{ fontSize: 14, color: C.t3 }}>Tasks & activities will appear here</div>
+                        </div>
+                      ) : (
+                        rtActivities.map((a, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "flex-start", padding: "14px 16px", borderBottom: `1px solid ${C.border}`, gap: 12 }}>
+                            <div style={{ width: 24, height: 24, borderRadius: 6, border: `2px solid ${a.completed ? C.up : C.border}`, background: a.completed ? C.up + "18" : "transparent",
+                              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                              {a.completed && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.up} strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: a.completed ? C.t4 : C.t1, textDecoration: a.completed ? "line-through" : "none" }}>{a.subject}</div>
+                              <div style={{ display: "flex", gap: 10, marginTop: 4, fontSize: 12, color: C.t4 }}>
+                                {a.date && <span>{a.date}</span>}
+                                {a.type && <span style={{ color: C.accent }}>{a.type}</span>}
+                                {a.contact && <span>→ {a.contact}</span>}
+                              </div>
+                            </div>
+                            {a.priority === "high" && <span style={{ fontSize: 10, fontWeight: 700, color: C.dn, padding: "2px 6px", borderRadius: 4, background: C.dnSoft }}>HIGH</span>}
+                          </div>
+                        ))
+                      )
+                    ) : (
+                      rtCalendar.length === 0 ? (
+                        <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>
+                          <div style={{ fontSize: 32, marginBottom: 8 }}>📅</div>
+                          <div style={{ fontSize: 14, color: C.t3 }}>Appointments will appear here</div>
+                        </div>
+                      ) : (
+                        rtCalendar.map((a, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "flex-start", padding: "14px 16px", borderBottom: `1px solid ${C.border}`, gap: 12 }}>
+                            <div style={{ width: 44, textAlign: "center", flexShrink: 0 }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: "uppercase" }}>{a.month}</div>
+                              <div style={{ fontSize: 22, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{a.day}</div>
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{a.subject}</div>
+                              <div style={{ display: "flex", gap: 10, marginTop: 4, fontSize: 12, color: C.t4 }}>
+                                {a.time && <span>{a.time}</span>}
+                                {a.location && <span>📍 {a.location}</span>}
+                                {a.contact && <span>→ {a.contact}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* ━━━ SETTINGS ━━━ */}
         {tab === "settings" && (
