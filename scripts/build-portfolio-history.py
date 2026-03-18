@@ -330,22 +330,15 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
     for evt in all_events:
         events_by_date[evt["date"]].append(evt)
     
-    # Process week by week using TIME-WEIGHTED RETURN
-    # Each week: portfolio_value = sum(shares * price)
-    # When cash flows happen (buy/sell), we calculate the sub-period return
-    # and chain-multiply. This isolates pure investment performance from
-    # the effect of adding/removing money.
+    # Simple portfolio value: stocks + cash
+    # All deposits/withdrawals included (dividends + rebalancing are internal)
+    # Morningstar uses this same data and treats it as a closed system
     
     history = []
     event_idx = 0
-    prev_value = None  # Portfolio value at start of current sub-period
-    cumulative_growth = 1.0  # Chained return factor
     
     for friday in fridays:
         friday_str = friday.strftime("%Y-%m-%d")
-        
-        # Track cash flows that happened this week
-        week_flows = 0  # Net cash flow: positive = money added (purchase), negative = money removed (sale)
         
         # Apply all events up to and including this Friday
         while event_idx < len(all_events) and all_events[event_idx]["date"] <= friday_str:
@@ -354,19 +347,25 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             if evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
-                    week_flows += evt["amount"]  # Money flowing INTO portfolio
+                    cash -= evt["amount"]
                 elif evt["type"] == "SALE":
                     holdings[evt["ticker"]] -= evt["shares"]
                     if holdings[evt["ticker"]] <= 0.0001:
                         holdings[evt["ticker"]] = 0
-                    week_flows -= evt["amount"]  # Money flowing OUT of portfolio
+                    cash += evt["amount"]
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
                     holdings[evt["ticker"]] += evt["shares"]
-                    # No cash flow — dividend is internal return
+                    # Shares added, cash neutral
+            
+            elif evt["kind"] == "cash":
+                if evt["type"] == "DEPOSIT":
+                    cash += evt["amount"]
+                elif evt["type"] == "WITHDRAWAL":
+                    cash -= evt["amount"]
             
             event_idx += 1
         
-        # Calculate current portfolio value (stock holdings only)
+        # Calculate portfolio value = stocks + cash
         stock_value = 0
         held_tickers = {t: s for t, s in holdings.items() if s > 0}
         
@@ -380,25 +379,13 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                         stock_value += shares * evt["price"]
                         break
         
-        # Calculate time-weighted return for this period
-        if prev_value is not None and prev_value > 0:
-            # Value BEFORE cash flows happened = current value - net flows
-            # Return = (end_value) / (start_value + cash_flows)
-            adjusted_start = prev_value + week_flows
-            if adjusted_start > 0:
-                period_return = stock_value / adjusted_start
-                cumulative_growth *= period_return
-        
-        prev_value = stock_value
-        
-        # Portfolio value = $100K * cumulative growth factor
-        display_value = round(start_balance * cumulative_growth, 2) if cumulative_growth > 0 else start_balance
+        total_value = stock_value + cash
         
         history.append({
             "date": friday_str,
-            "value": display_value,
+            "value": round(total_value, 2),
             "stocks": round(stock_value, 2),
-            "cash": 0,
+            "cash": round(cash, 2),
             "num_holdings": len(held_tickers),
         })
     
