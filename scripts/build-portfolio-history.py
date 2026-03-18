@@ -148,7 +148,7 @@ def fetch_historical_prices(tickers, start_date, end_date):
                 req.add_header("APCA-API-SECRET-KEY", api_secret)
                 
                 try:
-                    with urllib.request.urlopen(req) as resp:
+                    with urllib.request.urlopen(req, timeout=30) as resp:
                         data = json.loads(resp.read().decode())
                     
                     if "bars" in data:
@@ -186,6 +186,54 @@ def fetch_historical_prices(tickers, start_date, end_date):
             current_start = current_end
             
         print(f"  Fetched {len(batch)} tickers: {batch[0]}...{batch[-1]} ({sum(len(v) for k, v in all_prices.items() if k in batch)} data points)")
+    
+    # Backfill missing 2025+ data from Finnhub
+    import time
+    finnhub_key = os.environ.get("FINNHUB_KEY", "")
+    if finnhub_key:
+        gap_start = datetime(2025, 1, 1)
+        gap_end = end_date
+        gap_start_ts = int(gap_start.timestamp())
+        gap_end_ts = int(gap_end.timestamp())
+        
+        # Find tickers that have data but nothing in 2025+
+        tickers_needing_backfill = []
+        for t in ticker_list:
+            if t not in all_prices:
+                tickers_needing_backfill.append(t)
+                continue
+            dates_2025 = [d for d in all_prices[t] if d >= "2025-01-01"]
+            if not dates_2025:
+                tickers_needing_backfill.append(t)
+        
+        if tickers_needing_backfill:
+            print(f"\n  Backfilling {len(tickers_needing_backfill)} tickers with 2025+ data from Finnhub...")
+            backfill_count = 0
+            for t in tickers_needing_backfill:
+                url = (
+                    f"https://finnhub.io/api/v1/stock/candle"
+                    f"?symbol={t}&resolution=W"
+                    f"&from={gap_start_ts}&to={gap_end_ts}"
+                    f"&token={finnhub_key}"
+                )
+                try:
+                    req = urllib.request.Request(url)
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        data = json.loads(resp.read().decode())
+                    if data.get("s") == "ok" and data.get("c"):
+                        if t not in all_prices:
+                            all_prices[t] = {}
+                        for close, ts in zip(data["c"], data["t"]):
+                            date = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                            all_prices[t][date] = close
+                        backfill_count += 1
+                except Exception as e:
+                    pass  # Skip silently, Finnhub rate limits
+                time.sleep(0.5)  # Rate limit: stay under 60/min
+            
+            print(f"  Backfilled {backfill_count}/{len(tickers_needing_backfill)} tickers from Finnhub")
+            total_points = sum(len(v) for v in all_prices.values())
+            print(f"  Total price data points after backfill: {total_points}")
     
     return all_prices
 
