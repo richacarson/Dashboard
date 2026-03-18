@@ -72,13 +72,13 @@ function getMarketStatus() {
 }
 
 const DARK = {
-  bg: "#080B05", surface: "#0E120A", card: "#141A0F", cardHover: "#1B2315", elevated: "#1F2918",
-  border: "rgba(120,140,88,0.07)", borderHover: "rgba(120,140,88,0.18)", borderActive: "rgba(120,140,88,0.30)",
-  t1: "#EBF0E1", t2: "#B8C9A0", t3: "#6E8450", t4: "#3A4A28",
+  bg: "#0C1018", surface: "#121722", card: "#171D2A", cardHover: "#1E2536", elevated: "#232B3D",
+  border: "rgba(140,160,130,0.08)", borderHover: "rgba(140,160,130,0.16)", borderActive: "rgba(140,160,130,0.28)",
+  t1: "#EDF0E8", t2: "#B0BDA0", t3: "#7A8E68", t4: "#3D4A32",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
-  accent: "#6E8450", accentSoft: "rgba(110,132,80,0.10)", accentGlow: "rgba(110,132,80,0.30)",
-  shadow: "none",
+  accent: "#8FA878", accentSoft: "rgba(143,168,120,0.10)", accentGlow: "rgba(143,168,120,0.25)",
+  shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
   bg: "#F5F5F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#F0F2EC", elevated: "#FFFFFF",
@@ -158,8 +158,8 @@ function PortfolioChart({ theme }) {
 
   const isDark = theme === "dark";
   const pColor = isDark ? "#34D399" : "#16A34A";
-  const gridColor = isDark ? "rgba(110,132,80,0.08)" : "rgba(80,100,60,0.06)";
-  const textColor = isDark ? "#8B9A78" : "#6B7A5E";
+  const gridColor = isDark ? "rgba(143,168,120,0.06)" : "rgba(80,100,60,0.06)";
+  const textColor = isDark ? "#7A8E68" : "#6B7A5E";
 
   const getFilteredData = () => {
     if (!data?.portfolio) return [];
@@ -1132,8 +1132,8 @@ Instructions:
       const hmColor = (chg) => {
         const maxA = 5;
         const intensity = Math.min(Math.abs(chg) / maxA, 1);
-        if (chg > 0) return `rgb(${Math.round(8+intensity*10)},${Math.round(30+intensity*100)},${Math.round(15+intensity*40)})`;
-        if (chg < 0) return `rgb(${Math.round(50+intensity*150)},${Math.round(15+intensity*15)},${Math.round(15+intensity*15)})`;
+        if (chg > 0) return `rgb(${Math.round(14+intensity*8)},${Math.round(24+intensity*90)},${Math.round(20+intensity*35)})`;
+        if (chg < 0) return `rgb(${Math.round(40+intensity*130)},${Math.round(14+intensity*12)},${Math.round(18+intensity*14)})`;
         return C.card;
       };
       const flashes = {};
@@ -1680,7 +1680,7 @@ Instructions:
               const hmCell = document.querySelector(`[data-heatmap="${msg.S}"]`);
               if (hmCell) {
                 const maxA = 5, intensity = Math.min(Math.abs(c) / maxA, 1);
-                hmCell.style.background = c > 0 ? `rgb(${Math.round(8+intensity*10)},${Math.round(30+intensity*100)},${Math.round(15+intensity*40)})` : c < 0 ? `rgb(${Math.round(50+intensity*150)},${Math.round(15+intensity*15)},${Math.round(15+intensity*15)})` : C.card;
+                hmCell.style.background = c > 0 ? `rgb(${Math.round(14+intensity*8)},${Math.round(24+intensity*90)},${Math.round(20+intensity*35)})` : c < 0 ? `rgb(${Math.round(40+intensity*130)},${Math.round(14+intensity*12)},${Math.round(18+intensity*14)})` : C.card;
                 // Flash only if price actually changed from previous
                 if (prev && prev.p !== msg.p) {
                   hmCell.style.transition = "none";
