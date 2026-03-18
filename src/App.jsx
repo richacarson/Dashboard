@@ -492,64 +492,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     fetchProfile();
   }, [symbol]);
 
-  // TradingView chart — loads into the chart section
-  useEffect(() => {
-    if (!containerRef.current) return;
-    // Longer delay on mobile to ensure container is rendered and sized
-    const timer = setTimeout(() => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      // If container has no dimensions yet, retry
-      if (rect.width < 50) {
-        const retry = setTimeout(() => {
-          if (!containerRef.current) return;
-          loadChart();
-        }, 500);
-        return () => clearTimeout(retry);
-      }
-      loadChart();
-    }, 300);
-
-    function loadChart() {
-      if (!containerRef.current) return;
-      containerRef.current.innerHTML = "";
-      const widgetDiv = document.createElement("div");
-      widgetDiv.className = "tradingview-widget-container__widget";
-      widgetDiv.style.height = "100%";
-      widgetDiv.style.width = "100%";
-      containerRef.current.appendChild(widgetDiv);
-      const script = document.createElement("script");
-      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-      script.type = "text/javascript";
-      script.async = true;
-      const isMobile = window.innerWidth < 768;
-      script.innerHTML = JSON.stringify({
-        autosize: true, symbol, interval: "W", timezone: "America/New_York",
-        theme: isDark ? "dark" : "light", style: "1", locale: "en",
-        backgroundColor: isDark ? "#171D2A" : "#F5F5F0",
-        gridColor: isDark ? "rgba(110,132,80,0.04)" : "rgba(80,100,60,0.04)",
-        allow_symbol_change: false, hide_volume: isMobile, hide_top_toolbar: isMobile,
-        hide_legend: false, hide_side_toolbar: true, save_image: false, calendar: false,
-        withdateranges: !isMobile, details: false, hotlist: false, show_popup_button: false,
-        width: "100%", height: isMobile ? 350 : 400,
-        favorite_intervals: ["1", "5", "15", "60", "240", "D"],
-        overrides: {
-          "mainSeriesProperties.candleStyle.upColor": isDark ? "#34D399" : "#16A34A",
-          "mainSeriesProperties.candleStyle.downColor": isDark ? "#F87171" : "#DC2626",
-          "mainSeriesProperties.candleStyle.wickUpColor": isDark ? "#34D399" : "#16A34A",
-          "mainSeriesProperties.candleStyle.wickDownColor": isDark ? "#F87171" : "#DC2626",
-          "mainSeriesProperties.candleStyle.borderUpColor": isDark ? "#34D399" : "#16A34A",
-          "mainSeriesProperties.candleStyle.borderDownColor": isDark ? "#F87171" : "#DC2626",
-          "paneProperties.background": isDark ? "#171D2A" : "#F5F5F0",
-          "paneProperties.backgroundType": "solid",
-        },
-        support_host: "https://www.tradingview.com",
-      });
-      containerRef.current.appendChild(script);
-    }
-
-    return () => clearTimeout(timer);
-  }, [symbol, theme]);
+  // TradingView chart is now an inline iframe — no script loading needed
 
   // Track which section is visible and update tab indicator
   const scrollContainerRef = useRef(null);
@@ -700,9 +643,8 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{profile.name || profile.companyName || names?.[symbol] || symbol}</div>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {(profile.finnhubIndustry || profile.sector) && <span style={{ fontSize: 11, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 4 }}>{profile.sector || profile.finnhubIndustry}</span>}
-                        {(profile.industry || profile.finnhubIndustry) && <span style={{ fontSize: 11, fontWeight: 600, color: C.t3, background: C.surface, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}` }}>{profile.industry || profile.finnhubIndustry}</span>}
-                        {profile.exchange && <span style={{ fontSize: 11, color: C.t4, background: C.surface, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}` }}>{profile.exchange || profile.exchangeShortName}</span>}
+                        {(profile.finnhubIndustry || profile.sector || profile.industry) && <span style={{ fontSize: 11, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 4 }}>{profile.finnhubIndustry || profile.sector || profile.industry}</span>}
+                        {profile.exchange && <span style={{ fontSize: 11, color: C.t4, background: C.surface, padding: "2px 8px", borderRadius: 4, border: `1px solid ${C.border}` }}>{profile.exchange}</span>}
                       </div>
                     </div>
                   </div>
@@ -865,8 +807,14 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
           {/* ── CHART ── */}
           <div id="section-chart">
               <Card title="Chart">
-                <div ref={containerRef} style={{ width: "100%", height: 400 }} className="tradingview-widget-container" />
-                <style>{`.tradingview-widget-copyright { display: none !important; } .tradingview-widget-container iframe { border: none !important; }`}</style>
+                <div style={{ width: "100%", height: 400, borderRadius: 8, overflow: "hidden" }}>
+                  <iframe
+                    src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart`}
+                    style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                    title={`${symbol} Chart`}
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                  />
+                </div>
               </Card>
           </div>
 
