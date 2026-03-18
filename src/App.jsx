@@ -994,7 +994,14 @@ Instructions:
   const [refresh, setRefresh] = useState(null); // null = smart auto
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState(() => {
-    try { return localStorage.getItem("iown_theme") || "light"; } catch { return "light"; }
+    try {
+      const saved = localStorage.getItem("iown_theme");
+      if (saved) return saved;
+      // Default: dark after 4pm ET (3pm CST / market close), light during market hours
+      const now = new Date();
+      const etHour = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" })).getHours();
+      return (etHour >= 16 || etHour < 7) ? "dark" : "light";
+    } catch { return "dark"; }
   });
   C = theme === "light" ? LIGHT : DARK;
   const toggleTheme = (t) => { setTheme(t); try { localStorage.setItem("iown_theme", t); } catch {} };
@@ -1499,7 +1506,8 @@ Instructions:
       if (FK) {
         try {
           const today = new Date();
-          const from = new Date(today); from.setDate(from.getDate() - (today.getDay() === 0 ? 6 : today.getDay() - 1)); // Monday
+          const localDay = today.getDay();
+          const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1)); // Monday
           const to = new Date(from); to.setDate(to.getDate() + 13); // 2 weeks
           const fmpUrl = `https://financialmodelingprep.com/api/v3/economic_calendar?from=${from.toISOString().slice(0,10)}&to=${to.toISOString().slice(0,10)}&apikey=${FK}`;
           const fmpR = await fetch(fmpUrl).catch(() => null);
@@ -2061,7 +2069,7 @@ Instructions:
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: theme === "dark" ? "rgba(8,11,5,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme === "dark" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -2355,14 +2363,13 @@ Instructions:
               const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280", Policy: "#DC2626", Trade: "#0EA5E9" };
 
               const todayStr = new Date().toISOString().slice(0, 10);
-              // Show from start of current week (Monday)
+              // Show from start of current week (Monday) in LOCAL time
               const today = new Date();
-              const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon
-              const monday = new Date(today);
-              monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-              const weekStartStr = monday.toISOString().slice(0, 10);
+              const localDay = today.getDay(); // 0=Sun, 1=Mon...6=Sat
+              const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+              const weekStartStr = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
 
-              // Group by date — show full week
+              // Group by date — show full week starting Monday
               const grouped = {};
               econCalendar.forEach(e => {
                 const date = (e.date || "").slice(0, 10);
