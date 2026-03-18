@@ -1499,10 +1499,47 @@ Instructions:
         const usEvents = combined.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
         if (usEvents.length > 0) {
           events = usEvents;
-          // Cache to localStorage for offline/fallback
           try { localStorage.setItem("iown_econ_calendar", JSON.stringify(usEvents)); } catch {}
         }
       } catch {}
+      
+      // ACTUALS OVERLAY: Finnhub economic calendar (faster actuals than FairEconomy)
+      if (events.length > 0 && FH) {
+        try {
+          const today = new Date();
+          const localDay = today.getDay();
+          const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+          const friday = new Date(monday); friday.setDate(friday.getDate() + 4);
+          const fhUrl = `https://finnhub.io/api/v1/calendar/economic?from=${monday.toISOString().slice(0,10)}&to=${friday.toISOString().slice(0,10)}&token=${FH}`;
+          const r = await fetch(fhUrl).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            const fhEvents = data?.economicCalendar || data?.result || [];
+            if (Array.isArray(fhEvents) && fhEvents.length > 0) {
+              const norm = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+              const fhByDate = {};
+              fhEvents.filter(e => e.country === "US" && e.actual != null && String(e.actual).trim() !== "").forEach(e => {
+                const d = (e.time || e.date || "").slice(0, 10);
+                if (!fhByDate[d]) fhByDate[d] = [];
+                fhByDate[d].push(e);
+              });
+              let filled = 0;
+              events = events.map(e => {
+                if (e.actual && String(e.actual).trim()) return e; // Already has actual
+                const d = (e.date || "").slice(0, 10);
+                const candidates = fhByDate[d] || [];
+                const nt = norm(e.title);
+                let match = candidates.find(c => norm(c.event) === nt);
+                if (!match) match = candidates.find(c => { const cn = norm(c.event); return nt.includes(cn) || cn.includes(nt); });
+                if (!match) match = candidates.find(c => norm(c.event).slice(0, 10) === nt.slice(0, 10));
+                if (match) { filled++; return { ...e, actual: String(match.actual) }; }
+                return e;
+              });
+              if (filled > 0) console.log(`Calendar: filled ${filled} actuals from Finnhub`);
+            }
+          }
+        } catch {}
+      }
       
       // FALLBACK 1: FMP economic calendar (if FairEconomy failed)
       if (events.length === 0 && FK) {
