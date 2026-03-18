@@ -543,9 +543,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
   const tabs = [
     { id: "overview", label: "Overview" },
-    { id: "financials", label: "Financials" },
     { id: "chart", label: "Chart" },
-    { id: "news", label: "News" },
   ];
 
   // Stat row helper
