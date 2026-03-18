@@ -534,6 +534,27 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     return () => clearTimeout(timer);
   }, [symbol, theme]);
 
+  // Track which section is visible and update tab indicator
+  const scrollContainerRef = useRef(null);
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const sections = ["overview", "financials", "chart", "news"];
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+          const id = entry.target.id?.replace("section-", "");
+          if (id && sections.includes(id)) setProfileTab(id);
+        }
+      }
+    }, { root: container, threshold: 0.3 });
+    sections.forEach(id => {
+      const el = container.querySelector(`#section-${id}`);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [symbol]);
+
   // Live price
   const livePriceRef = useRef(null);
   const livePctRef = useRef(null);
@@ -647,7 +668,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       </div>
 
       {/* All content in one scrollable page */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
+      <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
 
           {/* ── OVERVIEW ── */}
