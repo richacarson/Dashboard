@@ -3523,7 +3523,7 @@ Instructions:
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {navItems.filter(t => ["home", "research", "calendar", "clients", "briefs"].includes(t.id)).map(t => (
+        {["home", "research", "calendar", "clients", "briefs"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
           <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
@@ -3540,13 +3540,13 @@ Instructions:
         <>
           <div onClick={() => setMoreMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.5)" }} />
           <div style={{
-            position: "fixed", top: 0, right: 0, bottom: 0, width: 280, zIndex: 9999,
-            background: C.surface, borderLeft: `1px solid ${C.border}`,
+            position: "fixed", top: 0, left: 0, bottom: 0, width: 280, zIndex: 9999,
+            background: C.surface, borderRight: `1px solid ${C.border}`,
             display: "flex", flexDirection: "column",
             paddingTop: "calc(env(safe-area-inset-top, 20px) + 16px)",
-            animation: "slideInRight 0.25s cubic-bezier(0.16,1,0.3,1)",
+            animation: "slideInLeft 0.25s cubic-bezier(0.16,1,0.3,1)",
           }}>
-            <style>{`@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+            <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.border}` }}>
               <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ height: 36 }} />
               <button onClick={() => setMoreMenu(false)} style={{
