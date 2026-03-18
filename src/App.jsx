@@ -775,8 +775,6 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                 </Card>
               )}
 
-              )}
-
               {/* Analyst Ratings */}
               {latestRec && (
                 <Card title="Analyst Ratings">
