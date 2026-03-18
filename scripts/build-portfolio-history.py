@@ -25,10 +25,14 @@ def parse_transactions(filepath):
     for line in lines:
         raw = line.rstrip('\r\n')
         
-        # CASH$ section
+        # CASH$ section — parse the cash balance from header
         if raw.startswith("CASH$"):
             in_cash = True
             current_ticker = None
+            # Parse: CASH$\tDefault Cash\t--\t--\t5,863.85
+            cash_header = re.match(r'^CASH\$\t[^\t]+\t--\t--\t([\d,.]+)', raw)
+            if cash_header:
+                current_holdings["__CASH__"] = float(cash_header.group(1).replace(",", ""))
             continue
         
         # Ticker header line (exits CASH$ section)
@@ -414,12 +418,14 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
     
     # Override the last data point with Morningstar ground truth if available
     if current_holdings and history:
+        gt_cash_from_file = current_holdings.pop("__CASH__", None)
         gt_stocks = sum(h["value"] for h in current_holdings.values())
-        gt_cash = cash  # Cash from transaction replay is correct
+        gt_cash = gt_cash_from_file if gt_cash_from_file is not None else cash
         gt_total = gt_stocks + gt_cash
         gt_holdings = len(current_holdings)
         history[-1]["value"] = round(gt_total, 2)
         history[-1]["stocks"] = round(gt_stocks, 2)
+        history[-1]["cash"] = round(gt_cash, 2)
         history[-1]["num_holdings"] = gt_holdings
         print(f"  Ground truth override: stocks=${gt_stocks:,.2f}, cash=${gt_cash:,.2f}, total=${gt_total:,.2f}, holdings={gt_holdings}")
     
