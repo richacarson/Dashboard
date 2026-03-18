@@ -305,25 +305,14 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
     """
     Replay all transactions chronologically and calculate weekly portfolio values.
     
-    Cash handling: Large deposits/withdrawals are rebalancing (the cash side of
-    buy/sell trades) and are ALREADY reflected in the buy/sell transactions.
-    Including them would double-count. Only small deposits (<$500) are kept
-    as they represent dividend income.
+    Morningstar's cash balance = $100K + all deposits - all withdrawals 
+    + all sells - all buys = $5,864. Include ALL cash transactions.
     """
-    # Filter cash transactions: only keep small deposits (dividends)
-    DIVIDEND_THRESHOLD = 500
-    dividend_deposits = [ctx for ctx in cash_transactions 
-                        if ctx["type"] == "DEPOSIT" and ctx["amount"] < DIVIDEND_THRESHOLD]
-    
-    total_div = sum(d["amount"] for d in dividend_deposits)
-    print(f"  Dividend deposits (<${DIVIDEND_THRESHOLD}): {len(dividend_deposits)} entries, ${total_div:,.2f}")
-    print(f"  Ignored: {len(cash_transactions) - len(dividend_deposits)} rebalancing entries")
-    
-    # Combine stock transactions + dividend deposits
+    # Combine ALL events
     all_events = []
     for tx in transactions:
         all_events.append({"date": tx["date"], "kind": "stock", **tx})
-    for ctx in dividend_deposits:
+    for ctx in cash_transactions:
         all_events.append({"date": ctx["date"], "kind": "cash", **ctx})
     all_events.sort(key=lambda x: x["date"])
     
@@ -374,7 +363,8 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             elif evt["kind"] == "cash":
                 if evt["type"] == "DEPOSIT":
                     cash += evt["amount"]
-                # No WITHDRAWAL handling — all withdrawals are filtered out
+                elif evt["type"] == "WITHDRAWAL":
+                    cash -= evt["amount"]
             
             event_idx += 1
         
