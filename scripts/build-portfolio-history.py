@@ -252,53 +252,66 @@ def get_price_on_date(prices, ticker, target_date, fridays_list):
 def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None, ghost_tickers=None):
     """
     Replay all transactions and calculate weekly portfolio values.
-    Cash: only small deposits (<$500) as dividend income.
+
+    Cash tracking uses the cash section exclusively (DEPOSIT/WITHDRAWAL).
+    Stock transactions only update share counts, not cash — because
+    Morningstar records both sides: a PURCHASE shows as a stock entry
+    AND a cash WITHDRAWAL. Using both would double-count.
     """
-    DIVIDEND_THRESHOLD = 500
-    dividend_deposits = [ctx for ctx in cash_transactions 
-                        if ctx["type"] == "DEPOSIT" and ctx["amount"] < DIVIDEND_THRESHOLD]
-    total_div = sum(d["amount"] for d in dividend_deposits)
-    print(f"  Dividend deposits (<${DIVIDEND_THRESHOLD}): {len(dividend_deposits)} entries, ${total_div:,.2f}")
-    
+    total_deposits = sum(c["amount"] for c in cash_transactions if c["type"] == "DEPOSIT")
+    total_withdrawals = sum(c["amount"] for c in cash_transactions if c["type"] == "WITHDRAWAL")
+    print(f"  Cash deposits: {sum(1 for c in cash_transactions if c['type'] == 'DEPOSIT')} entries, ${total_deposits:,.2f}")
+    print(f"  Cash withdrawals: {sum(1 for c in cash_transactions if c['type'] == 'WITHDRAWAL')} entries, ${total_withdrawals:,.2f}")
+
     all_events = []
+    # Stock events — only affect holdings (share counts)
     for tx in transactions:
         all_events.append({"date": tx["date"], "kind": "stock", **tx})
-    for ctx in dividend_deposits:
+    # Cash events — ALL deposits and withdrawals affect cash balance
+    # Skip the initial deposit matching start_balance (handled by cash init)
+    initial_skipped = False
+    for ctx in cash_transactions:
+        if not initial_skipped and ctx["type"] == "DEPOSIT" and abs(ctx["amount"] - start_balance) < 0.01:
+            initial_skipped = True
+            continue
         all_events.append({"date": ctx["date"], "kind": "cash", **ctx})
-    all_events.sort(key=lambda x: x["date"])
-    
+    # Sort by date, then deposits/sales before withdrawals/purchases
+    # so cash inflows are processed before outflows on the same day
+    ORDER = {"DEPOSIT": 0, "SALE": 1, "DIVIDEND REINVESTMENT": 2, "PURCHASE": 3, "WITHDRAWAL": 4}
+    all_events.sort(key=lambda x: (x["date"], ORDER.get(x.get("type", ""), 5)))
+
     holdings = defaultdict(float)
     cash = start_balance
-    
+
     if not all_events:
         return []
-    
+
     start_date = datetime.strptime(all_events[0]["date"], "%Y-%m-%d")
     end_date = datetime.now()
     fridays = get_all_fridays(start_date - timedelta(days=7), end_date)
-    
+
     history = []
     event_idx = 0
-    
+
     for friday in fridays:
         friday_str = friday.strftime("%Y-%m-%d")
-        
+
         while event_idx < len(all_events) and all_events[event_idx]["date"] <= friday_str:
             evt = all_events[event_idx]
             if evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
-                    cash -= evt["amount"]
                 elif evt["type"] == "SALE":
                     holdings[evt["ticker"]] -= evt["shares"]
                     if holdings[evt["ticker"]] <= 0.0001:
                         holdings[evt["ticker"]] = 0
-                    cash += evt["amount"]
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
                     holdings[evt["ticker"]] += evt["shares"]
             elif evt["kind"] == "cash":
                 if evt["type"] == "DEPOSIT":
                     cash += evt["amount"]
+                elif evt["type"] == "WITHDRAWAL":
+                    cash -= evt["amount"]
             event_idx += 1
         
         stock_value = 0
