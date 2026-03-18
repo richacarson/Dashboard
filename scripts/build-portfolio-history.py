@@ -308,10 +308,9 @@ def fetch_benchmark_history(benchmark_ticker, start_date, end_date, start_value=
     
     finnhub_key = os.environ.get("FINNHUB_KEY", "")
     if not finnhub_key:
-        print(f"  Warning: No FINNHUB_KEY set, skipping {benchmark_ticker}")
+        print(f"  ERROR: FINNHUB_KEY not set! Cannot fetch {benchmark_ticker}")
         return []
     
-    # Finnhub candle endpoint — resolution W = weekly
     from_ts = int(start_date.timestamp())
     to_ts = int(end_date.timestamp())
     
@@ -324,25 +323,32 @@ def fetch_benchmark_history(benchmark_ticker, start_date, end_date, start_value=
         f"&token={finnhub_key}"
     )
     
+    print(f"    URL: {url[:80]}...&token=***")
+    print(f"    From: {start_date.date()} ({from_ts}) To: {end_date.date()} ({to_ts})")
+    
     try:
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req) as resp:
-            data = json.loads(resp.read().decode())
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            raw = resp.read().decode()
+            print(f"    Response length: {len(raw)} bytes")
+            data = json.loads(raw)
+        
+        print(f"    Status: {data.get('s', 'unknown')}, Keys: {list(data.keys())}")
         
         if data.get("s") != "ok" or not data.get("c"):
-            print(f"  Warning: Finnhub returned no data for {benchmark_ticker}")
+            print(f"    WARNING: No candle data returned. Full response: {raw[:200]}")
             return []
         
         closes = data["c"]
         timestamps = data["t"]
+        print(f"    Data points: {len(closes)}")
         
         if not closes:
             return []
         
-        # Normalize to start_value
         first_close = closes[0]
         history = []
-        for i, (close, ts) in enumerate(zip(closes, timestamps)):
+        for close, ts in zip(closes, timestamps):
             date = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
             normalized = (close / first_close) * start_value
             history.append({"date": date, "value": round(normalized, 2)})
@@ -350,7 +356,7 @@ def fetch_benchmark_history(benchmark_ticker, start_date, end_date, start_value=
         return history
         
     except Exception as e:
-        print(f"  Warning: Failed to fetch benchmark {benchmark_ticker}: {e}")
+        print(f"    EXCEPTION: {type(e).__name__}: {e}")
         return []
 
 
