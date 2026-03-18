@@ -302,62 +302,76 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
 
 
 def fetch_benchmark_history(benchmark_ticker, start_date, end_date, start_value=100000):
-    """Fetch benchmark weekly prices from Finnhub and normalize to start_value."""
+    """Fetch benchmark weekly prices from Alpaca and normalize to start_value."""
     import urllib.request
     import os
     
-    finnhub_key = os.environ.get("FINNHUB_KEY", "")
-    if not finnhub_key:
-        print(f"  ERROR: FINNHUB_KEY not set! Cannot fetch {benchmark_ticker}")
+    api_key = os.environ.get("ALPACA_KEY", "")
+    api_secret = os.environ.get("ALPACA_SECRET", "")
+    
+    if not api_key or not api_secret:
+        print(f"  ERROR: No Alpaca keys, skipping {benchmark_ticker}")
         return []
     
-    from_ts = int(start_date.timestamp())
-    to_ts = int(end_date.timestamp())
+    all_bars = []
     
-    url = (
-        f"https://finnhub.io/api/v1/stock/candle"
-        f"?symbol={benchmark_ticker}"
-        f"&resolution=W"
-        f"&from={from_ts}"
-        f"&to={to_ts}"
-        f"&token={finnhub_key}"
-    )
+    # Fetch year by year (same approach as portfolio stocks)
+    current_start = start_date
+    while current_start < end_date:
+        current_end = min(current_start.replace(year=current_start.year + 1), end_date)
+        
+        url = (
+            f"https://data.alpaca.markets/v2/stocks/bars"
+            f"?symbols={benchmark_ticker}"
+            f"&timeframe=1Week"
+            f"&start={current_start.strftime('%Y-%m-%d')}"
+            f"&end={current_end.strftime('%Y-%m-%d')}"
+            f"&limit=10000"
+            f"&adjustment=split"
+            f"&feed=iex"
+        )
+        
+        try:
+            req = urllib.request.Request(url)
+            req.add_header("APCA-API-KEY-ID", api_key)
+            req.add_header("APCA-API-SECRET-KEY", api_secret)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode())
+            if "bars" in data and benchmark_ticker in data["bars"]:
+                all_bars.extend(data["bars"][benchmark_ticker])
+            
+            # Pagination
+            next_token = data.get("next_page_token")
+            while next_token:
+                purl = url + f"&page_token={next_token}"
+                req2 = urllib.request.Request(purl)
+                req2.add_header("APCA-API-KEY-ID", api_key)
+                req2.add_header("APCA-API-SECRET-KEY", api_secret)
+                with urllib.request.urlopen(req2, timeout=30) as resp2:
+                    data2 = json.loads(resp2.read().decode())
+                if "bars" in data2 and benchmark_ticker in data2["bars"]:
+                    all_bars.extend(data2["bars"][benchmark_ticker])
+                next_token = data2.get("next_page_token")
+        except Exception as e:
+            print(f"    Warning: {benchmark_ticker} {current_start.year}: {e}")
+        
+        current_start = current_end
     
-    print(f"    URL: {url[:80]}...&token=***")
-    print(f"    From: {start_date.date()} ({from_ts}) To: {end_date.date()} ({to_ts})")
-    
-    try:
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            raw = resp.read().decode()
-            print(f"    Response length: {len(raw)} bytes")
-            data = json.loads(raw)
-        
-        print(f"    Status: {data.get('s', 'unknown')}, Keys: {list(data.keys())}")
-        
-        if data.get("s") != "ok" or not data.get("c"):
-            print(f"    WARNING: No candle data returned. Full response: {raw[:200]}")
-            return []
-        
-        closes = data["c"]
-        timestamps = data["t"]
-        print(f"    Data points: {len(closes)}")
-        
-        if not closes:
-            return []
-        
-        first_close = closes[0]
-        history = []
-        for close, ts in zip(closes, timestamps):
-            date = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
-            normalized = (close / first_close) * start_value
-            history.append({"date": date, "value": round(normalized, 2)})
-        
-        return history
-        
-    except Exception as e:
-        print(f"    EXCEPTION: {type(e).__name__}: {e}")
+    if not all_bars:
+        print(f"    No bars returned for {benchmark_ticker}")
         return []
+    
+    print(f"    {len(all_bars)} weekly bars fetched")
+    
+    # Normalize to start_value
+    first_close = all_bars[0]["c"]
+    history = []
+    for bar in all_bars:
+        date = bar["t"][:10]
+        normalized = (bar["c"] / first_close) * start_value
+        history.append({"date": date, "value": round(normalized, 2)})
+    
+    return history
 
 
 def main():
