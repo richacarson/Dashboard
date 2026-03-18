@@ -1516,10 +1516,12 @@ Instructions:
             if (Array.isArray(fmpData) && fmpData.length > 0) {
               const fmpFiltered = fmpData.filter(e => e.country === "US" && ["high","medium"].includes((e.impact||"").toLowerCase()));
               if (fmpFiltered.length > 0) {
-                const fmpMap = {};
+                const normFmp = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                const fmpByDate = {};
                 fmpFiltered.forEach(e => {
-                  const key = (e.event || "") + "|" + (e.date || "").slice(0, 10);
-                  fmpMap[key] = e;
+                  const d = (e.date || "").slice(0, 10);
+                  if (!fmpByDate[d]) fmpByDate[d] = [];
+                  fmpByDate[d].push(e);
                 });
                 if (events.length === 0) {
                   events = fmpFiltered.map(e => ({
@@ -1528,11 +1530,14 @@ Instructions:
                     forecast: e.estimate != null ? String(e.estimate) : "",
                   }));
                 } else {
-                  // Merge FMP actuals into existing events
                   events = events.map(ev => {
-                    const key = (ev.title || "") + "|" + (ev.date || "").slice(0, 10);
-                    const fmp = fmpMap[key];
-                    if (fmp && fmp.actual != null && String(fmp.actual).trim()) return { ...ev, actual: String(fmp.actual) };
+                    const d = (ev.date || "").slice(0, 10);
+                    const candidates = fmpByDate[d] || [];
+                    const nt = normFmp(ev.title);
+                    let match = candidates.find(c => normFmp(c.event) === nt);
+                    if (!match) match = candidates.find(c => { const cn = normFmp(c.event); return nt.includes(cn) || cn.includes(nt); });
+                    if (!match) match = candidates.find(c => normFmp(c.event).slice(0, 8) === nt.slice(0, 8));
+                    if (match && match.actual != null && String(match.actual).trim()) return { ...ev, actual: String(match.actual) };
                     return ev;
                   });
                 }
@@ -1556,13 +1561,25 @@ Instructions:
             if (events.length === 0) {
               events = liveFiltered;
             } else {
-              // Merge live actuals into static data
-              const liveMap = {};
-              liveFiltered.forEach(e => { liveMap[e.title + "|" + (e.date || "").slice(0, 10)] = e; });
+              // Merge live actuals — fuzzy title matching
+              const norm = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+              const liveByDate = {};
+              liveFiltered.forEach(e => {
+                const d = (e.date || "").slice(0, 10);
+                if (!liveByDate[d]) liveByDate[d] = [];
+                liveByDate[d].push(e);
+              });
               events = events.map(e => {
-                const key = e.title + "|" + (e.date || "").slice(0, 10);
-                const live = liveMap[key];
-                if (live && live.actual) return { ...e, actual: live.actual };
+                const d = (e.date || "").slice(0, 10);
+                const candidates = liveByDate[d] || [];
+                const nt = norm(e.title);
+                // Exact match first
+                let match = candidates.find(c => norm(c.title) === nt);
+                // Partial match: one title contains the other
+                if (!match) match = candidates.find(c => { const cn = norm(c.title); return nt.includes(cn) || cn.includes(nt); });
+                // First-word match (e.g. "pending" matches "pending home sales")
+                if (!match) match = candidates.find(c => norm(c.title).slice(0, 8) === nt.slice(0, 8));
+                if (match && match.actual) return { ...e, actual: match.actual };
                 return e;
               });
             }
