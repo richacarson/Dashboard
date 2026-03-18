@@ -557,8 +557,8 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
   const tabs = [
     { id: "overview", label: "Overview" },
-    { id: "chart", label: "Chart" },
     { id: "financials", label: "Financials" },
+    { id: "chart", label: "Chart" },
     { id: "news", label: "News" },
   ];
 
@@ -606,7 +606,6 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       <div style={{ padding: "8px 16px", flexShrink: 0, borderBottom: `1px solid ${C.border}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <StockLogo symbol={symbol} size={36} />
             <div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{symbol}</span>
@@ -644,7 +643,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
         </div>
       )}
       {profileTab !== "chart" && (
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 20px)" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
 
           {/* ── OVERVIEW TAB ── */}
           {profileTab === "overview" && (
@@ -678,7 +677,12 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                     {(profile.ipo || profile.ipoDate) && <StatRow label="IPO Date" value={profile.ipoDate || profile.ipo} />}
                     {(profile.fullTimeEmployees || profile.employees) && <StatRow label="Employees" value={(profile.fullTimeEmployees || profile.employees)?.toLocaleString?.()} />}
                     {profile.ceo && <StatRow label="CEO" value={profile.ceo} />}
-                    {(profile.weburl || profile.website) && <StatRow label="Website" value={(profile.website || profile.weburl || "").replace(/https?:\/\/(www\.)?/, "")} />}
+                    {(profile.weburl || profile.website) && (
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                        <span style={{ fontSize: 13, color: C.t3 }}>Website</span>
+                        <a href={profile.weburl || profile.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: C.accent, textDecoration: "none" }}>{(profile.website || profile.weburl || "").replace(/https?:\/\/(www\.)?/, "")}</a>
+                      </div>
+                    )}
                   </div>
                 </Card>
               )}
@@ -689,7 +693,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                 <StatRow label="P/E (TTM)" value={fmt(f.peTTM || fm["peNormalizedAnnual"])} />
                 <StatRow label="P/E (FWD)" value={fmt(f.peFwd || fm["peTTM"])} />
                 <StatRow label="EPS (TTM)" value={fmt(fm["epsNormalizedAnnual"] || f.epsTTM)} />
-                <StatRow label="Dividend Yield" value={fm["dividendYieldIndicatedAnnual"] != null ? `${(fm["dividendYieldIndicatedAnnual"] * 100).toFixed(2)}%` : (f.divYield != null ? `${f.divYield.toFixed(2)}%` : "—")} />
+                <StatRow label="Dividend Yield" value={fm["dividendYieldIndicatedAnnual"] != null ? `${fm["dividendYieldIndicatedAnnual"].toFixed(2)}%` : (f.divYield != null ? `${f.divYield.toFixed(2)}%` : "—")} />
                 <StatRow label="52-Week High" value={fm["52WeekHigh"] != null ? `$${fmt(fm["52WeekHigh"])}` : "—"} />
                 <StatRow label="52-Week Low" value={fm["52WeekLow"] != null ? `$${fmt(fm["52WeekLow"])}` : "—"} />
                 <StatRow label="Beta" value={fmt(fm["beta"])} />
@@ -780,7 +784,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
               {/* Dividends */}
               <Card title="Dividends">
-                <StatRow label="Dividend Yield" value={fm["dividendYieldIndicatedAnnual"] != null ? `${(fm["dividendYieldIndicatedAnnual"] * 100).toFixed(2)}%` : (f.divYield != null ? `${f.divYield.toFixed(2)}%` : "—")} />
+                <StatRow label="Dividend Yield" value={fm["dividendYieldIndicatedAnnual"] != null ? `${fm["dividendYieldIndicatedAnnual"].toFixed(2)}%` : (f.divYield != null ? `${f.divYield.toFixed(2)}%` : "—")} />
                 <StatRow label="Dividend Per Share" value={fm["dividendPerShareAnnual"] != null ? `$${fmt(fm["dividendPerShareAnnual"])}` : "—"} />
                 <StatRow label="Payout Ratio" value={fm["payoutRatioAnnual"] != null ? `${fmt(fm["payoutRatioAnnual"])}%` : "—"} />
                 <StatRow label="5Y Avg Dividend Yield" value={fm["dividendYield5Y"] != null ? `${fmt(fm["dividendYield5Y"])}%` : "—"} />
@@ -1135,10 +1139,10 @@ Instructions:
       const flashes = {};
       let anyQuoteChanged = false;
       for (const s of Object.keys(nq)) {
-        const priceChanged = !prevQ[s] || prevQ[s].p !== nq[s]?.p;
+        const priceChanged = prevQ[s] && nq[s] && prevQ[s].p !== nq[s].p;
         if (priceChanged) {
           anyQuoteChanged = true;
-          if (prevQ[s] && nq[s]) flashes[s] = nq[s].p > prevQ[s].p ? "up" : "dn";
+          flashes[s] = nq[s].p > prevQ[s].p ? "up" : "dn";
         }
         const pc = nb[s]?.pc || prevB[s]?.pc;
         if (nq[s] && pc) {
@@ -1677,17 +1681,19 @@ Instructions:
               if (hmCell) {
                 const maxA = 5, intensity = Math.min(Math.abs(c) / maxA, 1);
                 hmCell.style.background = c > 0 ? `rgb(${Math.round(8+intensity*10)},${Math.round(30+intensity*100)},${Math.round(15+intensity*40)})` : c < 0 ? `rgb(${Math.round(50+intensity*150)},${Math.round(15+intensity*15)},${Math.round(15+intensity*15)})` : C.card;
-                // Flash
-                hmCell.style.transition = "none";
-                hmCell.style.boxShadow = c >= 0 ? `inset 0 0 20px rgba(52,211,153,0.5)` : `inset 0 0 20px rgba(248,113,113,0.5)`;
-                hmCell.style.filter = "brightness(1.4)";
-                setTimeout(() => {
-                  if (hmCell) {
-                    hmCell.style.transition = "all 0.6s ease-out";
-                    hmCell.style.boxShadow = "none";
-                    hmCell.style.filter = "brightness(1)";
-                  }
-                }, 500);
+                // Flash only if price actually changed from previous
+                if (prev && prev.p !== msg.p) {
+                  hmCell.style.transition = "none";
+                  hmCell.style.boxShadow = c >= 0 ? `inset 0 0 20px rgba(52,211,153,0.5)` : `inset 0 0 20px rgba(248,113,113,0.5)`;
+                  hmCell.style.filter = "brightness(1.4)";
+                  setTimeout(() => {
+                    if (hmCell) {
+                      hmCell.style.transition = "all 0.6s ease-out";
+                      hmCell.style.boxShadow = "none";
+                      hmCell.style.filter = "brightness(1)";
+                    }
+                  }, 500);
+                }
               }
               // Metrics Day column
               const metDay = document.querySelector(`[data-metric-day="${msg.S}"]`);
@@ -1859,9 +1865,7 @@ Instructions:
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{s}</div>
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortName}</div>
         </div>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 8px" }}>
-          <Sparkline points={pts} chg={c} />
-        </div>
+        <div style={{ flex: 1 }} />
         <div data-ticker-chg={s} style={{
           padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
