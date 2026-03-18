@@ -492,10 +492,13 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     fetchProfile();
   }, [symbol]);
 
-  // TradingView chart
+  // TradingView chart — loads into the chart section
   useEffect(() => {
-    if (profileTab !== "chart" || !containerRef.current) return;
-    containerRef.current.innerHTML = "";
+    if (!containerRef.current) return;
+    // Small delay to let the DOM render
+    const timer = setTimeout(() => {
+      if (!containerRef.current) return;
+      containerRef.current.innerHTML = "";
     const widgetDiv = document.createElement("div");
     widgetDiv.className = "tradingview-widget-container__widget";
     widgetDiv.style.height = "100%";
@@ -508,7 +511,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
     script.innerHTML = JSON.stringify({
       autosize: true, symbol, interval: "W", timezone: "America/New_York",
       theme: isDark ? "dark" : "light", style: "1", locale: "en",
-      backgroundColor: isDark ? "#080B05" : "#F5F5F0",
+      backgroundColor: isDark ? "#171D2A" : "#F5F5F0",
       gridColor: isDark ? "rgba(110,132,80,0.04)" : "rgba(80,100,60,0.04)",
       allow_symbol_change: false, hide_volume: false, hide_top_toolbar: false,
       hide_legend: false, hide_side_toolbar: false, save_image: false, calendar: false,
@@ -521,13 +524,15 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
         "mainSeriesProperties.candleStyle.wickDownColor": isDark ? "#F87171" : "#DC2626",
         "mainSeriesProperties.candleStyle.borderUpColor": isDark ? "#34D399" : "#16A34A",
         "mainSeriesProperties.candleStyle.borderDownColor": isDark ? "#F87171" : "#DC2626",
-        "paneProperties.background": isDark ? "#080B05" : "#F5F5F0",
+        "paneProperties.background": isDark ? "#171D2A" : "#F5F5F0",
         "paneProperties.backgroundType": "solid",
       },
       support_host: "https://www.tradingview.com",
     });
     containerRef.current.appendChild(script);
-  }, [symbol, theme, profileTab]);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [symbol, theme]);
 
   // Live price
   const livePriceRef = useRef(null);
@@ -624,10 +629,14 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>
         </div>
-        {/* Tab bar */}
+        {/* Tab bar — scrolls to section */}
         <div style={{ display: "flex", gap: 0 }}>
           {tabs.map(t => (
-            <button key={t.id} onClick={() => setProfileTab(t.id)} style={{
+            <button key={t.id} onClick={() => {
+              setProfileTab(t.id);
+              const el = document.getElementById(`section-${t.id}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }} style={{
               flex: 1, padding: "10px 0", background: "none", border: "none",
               borderBottom: profileTab === t.id ? `2px solid ${C.accent}` : "2px solid transparent",
               color: profileTab === t.id ? C.t1 : C.t4, fontSize: 13, fontWeight: profileTab === t.id ? 700 : 500,
@@ -637,21 +646,13 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
         </div>
       </div>
 
-      {/* Tab content */}
-      {profileTab === "chart" && (
-        <div key="chart-tab" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <div ref={containerRef} style={{ flex: 1, width: "100%" }} className="tradingview-widget-container" />
-          <style>{`.tradingview-widget-copyright { display: none !important; } .tradingview-widget-container iframe { border: none !important; }`}</style>
-        </div>
-      )}
-      {profileTab !== "chart" && (
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
+      {/* All content in one scrollable page */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto" }}>
 
-          {/* ── OVERVIEW TAB ── */}
-          {profileTab === "overview" && (
-            <div style={{ animation: "fadeIn 0.3s ease" }}>
-              {/* Company Profile — first section */}
-              {profile && (
+          {/* ── OVERVIEW ── */}
+          <div id="section-overview">
+          {profile && (
                 <Card title="Company Profile">
                   {/* Logo + name + tags */}
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
@@ -751,12 +752,10 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
               )}
 
               {profileLoading && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>Loading profile...</div>}
-            </div>
-          )}
+          </div>
 
-          {/* ── FINANCIALS TAB ── */}
-          {profileTab === "financials" && (
-            <div style={{ animation: "fadeIn 0.3s ease" }}>
+          {/* ── FINANCIALS ── */}
+          <div id="section-financials">
               {/* Valuation */}
               <Card title="Valuation">
                 <StatRow label="P/E (TTM)" value={fmt(f.peTTM || fm["peNormalizedAnnual"])} />
@@ -823,15 +822,23 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                 <StatRow label="Quick Ratio" value={fmt(fm["quickRatioQuarterly"])} />
                 <StatRow label="Book Value/Share" value={fm["bookValuePerShareQuarterly"] != null ? `$${fmt(fm["bookValuePerShareQuarterly"])}` : "—"} />
               </Card>
-            </div>
-          )}
+          </div>
 
-          {/* ── NEWS TAB ── */}
-          {profileTab === "news" && (
-            <div style={{ animation: "fadeIn 0.3s ease" }}>
+          {/* ── CHART ── */}
+          <div id="section-chart">
+              <Card title="Chart">
+                <div ref={containerRef} style={{ width: "100%", height: 400 }} className="tradingview-widget-container" />
+                <style>{`.tradingview-widget-copyright { display: none !important; } .tradingview-widget-container iframe { border: none !important; }`}</style>
+              </Card>
+          </div>
+
+          {/* ── NEWS ── */}
+          <div id="section-news">
               {tickerNews.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No recent news for {symbol}</div>
-              ) : tickerNews.map((article, i) => (
+                <Card title="News"><div style={{ textAlign: "center", padding: "20px 0", color: C.t4, fontSize: 14 }}>No recent news for {symbol}</div></Card>
+              ) : (
+                <Card title="News">
+                {tickerNews.map((article, i) => (
                 <div key={article.id || i} style={{
                   padding: "14px 0", borderBottom: i < tickerNews.length - 1 ? `1px solid ${C.border}` : "none",
                   cursor: "pointer",
@@ -856,10 +863,12 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-        </div>
-      )}
+                </Card>
+              )}
+          </div>
+
+        </div>{/* end maxWidth wrapper */}
+      </div>{/* end scrollable container */}
     </div>
   );
 }
