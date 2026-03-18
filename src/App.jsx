@@ -3226,7 +3226,8 @@ Instructions:
               const now = new Date();
               const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
               const rangeDays = rangeMap[perfRange];
-              const cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
+              const ytdCutoff = perfRange === "YTD" ? `${now.getFullYear()}-01-01` : null;
+              const cutoff = ytdCutoff || (rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null);
               const filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
               if (!filtered.length) return null;
 
@@ -3359,7 +3360,7 @@ Instructions:
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
                     <div style={{ display: "flex", gap: 4 }}>
-                      {["1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
+                      {["YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
                         <button key={r} onClick={() => setPerfRange(r)} style={{
                           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                           border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
