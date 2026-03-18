@@ -193,53 +193,82 @@ def fetch_historical_prices(tickers, start_date, end_date):
             
         print(f"  Fetched {len(batch)} tickers: {batch[0]}...{batch[-1]} ({sum(len(v) for k, v in all_prices.items() if k in batch)} data points)")
     
-    # Backfill missing 2025+ data from Finnhub
-    import time
-    finnhub_key = os.environ.get("FINNHUB_KEY", "")
-    if finnhub_key:
-        gap_start = datetime(2025, 1, 1)
-        gap_end = end_date
-        gap_start_ts = int(gap_start.timestamp())
-        gap_end_ts = int(gap_end.timestamp())
+    # Backfill missing 2025+ data using Alpaca DAILY bars (feed=iex)
+    # Weekly bars returned empty, but daily bars have more IEX volume data
+    tickers_needing_backfill = []
+    for t in ticker_list:
+        if t not in all_prices:
+            tickers_needing_backfill.append(t)
+            continue
+        has_2025 = any(d >= "2025-01-01" for d in all_prices[t])
+        if not has_2025:
+            tickers_needing_backfill.append(t)
+    
+    if tickers_needing_backfill:
+        print(f"\n  Backfilling {len(tickers_needing_backfill)} tickers with 2025+ DAILY bars...")
+        for batch_start in range(0, len(tickers_needing_backfill), 30):
+            batch = tickers_needing_backfill[batch_start:batch_start + 30]
+            syms = ",".join(batch)
+            url = (
+                f"https://data.alpaca.markets/v2/stocks/bars"
+                f"?symbols={syms}&timeframe=1Day"
+                f"&start=2025-01-01&end={end_date.strftime('%Y-%m-%d')}"
+                f"&limit=10000&adjustment=split&feed=iex"
+            )
+            try:
+                req = urllib.request.Request(url)
+                req.add_header("APCA-API-KEY-ID", api_key)
+                req.add_header("APCA-API-SECRET-KEY", api_secret)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    data = json.loads(resp.read().decode())
+                if "bars" in data:
+                    for sym, bars in data["bars"].items():
+                        if sym not in all_prices:
+                            all_prices[sym] = {}
+                        for bar in bars:
+                            all_prices[sym][bar["t"][:10]] = bar["c"]
+                next_token = data.get("next_page_token")
+                while next_token:
+                    purl = url + f"&page_token={next_token}"
+                    req2 = urllib.request.Request(purl)
+                    req2.add_header("APCA-API-KEY-ID", api_key)
+                    req2.add_header("APCA-API-SECRET-KEY", api_secret)
+                    with urllib.request.urlopen(req2, timeout=30) as resp2:
+                        data2 = json.loads(resp2.read().decode())
+                    if "bars" in data2:
+                        for sym, bars in data2["bars"].items():
+                            if sym not in all_prices:
+                                all_prices[sym] = {}
+                            for bar in bars:
+                                all_prices[sym][bar["t"][:10]] = bar["c"]
+                    next_token = data2.get("next_page_token")
+            except Exception as e:
+                print(f"  Warning: Daily backfill batch failed: {e}")
         
-        # Find ALL tickers that are missing 2025+ data
-        tickers_needing_backfill = []
-        for t in ticker_list:
-            if t not in all_prices:
-                tickers_needing_backfill.append(t)
-                continue
-            has_2025 = any(d >= "2025-01-01" for d in all_prices[t])
-            if not has_2025:
-                tickers_needing_backfill.append(t)
+        # Also get latest snapshots for current prices
+        for batch_start in range(0, len(tickers_needing_backfill), 50):
+            batch = tickers_needing_backfill[batch_start:batch_start + 50]
+            try:
+                snap_url = f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={','.join(batch)}&feed=iex"
+                req = urllib.request.Request(snap_url)
+                req.add_header("APCA-API-KEY-ID", api_key)
+                req.add_header("APCA-API-SECRET-KEY", api_secret)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    snap_data = json.loads(resp.read().decode())
+                today = end_date.strftime("%Y-%m-%d")
+                for sym, snap in snap_data.items():
+                    if "latestTrade" in snap:
+                        if sym not in all_prices:
+                            all_prices[sym] = {}
+                        all_prices[sym][today] = snap["latestTrade"]["p"]
+            except Exception as e:
+                print(f"  Warning: Snapshot batch failed: {e}")
         
-        if tickers_needing_backfill:
-            print(f"\n  Backfilling {len(tickers_needing_backfill)} tickers with 2025+ data from Finnhub...")
-            backfill_count = 0
-            for t in tickers_needing_backfill:
-                url = (
-                    f"https://finnhub.io/api/v1/stock/candle"
-                    f"?symbol={t}&resolution=W"
-                    f"&from={gap_start_ts}&to={gap_end_ts}"
-                    f"&token={finnhub_key}"
-                )
-                try:
-                    req = urllib.request.Request(url)
-                    with urllib.request.urlopen(req, timeout=15) as resp:
-                        data = json.loads(resp.read().decode())
-                    if data.get("s") == "ok" and data.get("c"):
-                        if t not in all_prices:
-                            all_prices[t] = {}
-                        for close, ts in zip(data["c"], data["t"]):
-                            date = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
-                            all_prices[t][date] = close
-                        backfill_count += 1
-                except Exception as e:
-                    pass  # Skip silently, Finnhub rate limits
-                time.sleep(0.5)  # Rate limit: stay under 60/min
-            
-            print(f"  Backfilled {backfill_count}/{len(tickers_needing_backfill)} tickers from Finnhub")
-            total_points = sum(len(v) for v in all_prices.values())
-            print(f"  Total price data points after backfill: {total_points}")
+        backfilled = sum(1 for t in tickers_needing_backfill
+                        if t in all_prices and any(d >= "2025-01-01" for d in all_prices[t]))
+        total_points = sum(len(v) for v in all_prices.values())
+        print(f"  Backfilled {backfilled}/{len(tickers_needing_backfill)} tickers")
+        print(f"  Total price data points after backfill: {total_points}")
     
     return all_prices
 
