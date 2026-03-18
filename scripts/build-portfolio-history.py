@@ -126,6 +126,15 @@ def fetch_historical_prices(tickers, start_date, end_date):
             current_end = min(current_start.replace(year=current_start.year + 1), end_date)
             
             syms = ",".join(batch)
+            
+            # For 2025+, Alpaca free tier blocks default SIP feed.
+            # Use feed=iex which is free for real-time data.
+            # For pre-2025, use default (SIP historical is free).
+            if current_start.year >= 2025:
+                feed_options = ["&feed=iex"]
+            else:
+                feed_options = ["", "&feed=iex"]
+            
             base_url = (
                 f"https://data.alpaca.markets/v2/stocks/bars"
                 f"?symbols={syms}"
@@ -136,10 +145,8 @@ def fetch_historical_prices(tickers, start_date, end_date):
                 f"&adjustment=split"
             )
             
-            # Try without feed restriction first (more data for historical),
-            # fall back to feed=iex if 403
             fetched = False
-            for feed_param in ["", "&feed=iex"]:
+            for feed_param in feed_options:
                 if fetched:
                     break
                 url = base_url + feed_param
@@ -179,9 +186,8 @@ def fetch_historical_prices(tickers, start_date, end_date):
                     
                     fetched = True
                 except Exception as e:
-                    if "403" in str(e) and feed_param == "&feed=iex":
-                        continue  # Try without feed=iex
-                    print(f"  Warning: Failed to fetch {batch[0]}..{batch[-1]} for {current_start.year}: {e}")
+                    print(f"  Warning: Failed to fetch {batch[0]}..{batch[-1]} for {current_start.year} (feed={feed_param or 'default'}): {e}")
+                    # Continue to next feed option
             
             current_start = current_end
             
@@ -196,14 +202,14 @@ def fetch_historical_prices(tickers, start_date, end_date):
         gap_start_ts = int(gap_start.timestamp())
         gap_end_ts = int(gap_end.timestamp())
         
-        # Find tickers that have data but nothing in 2025+
+        # Find ALL tickers that are missing 2025+ data
         tickers_needing_backfill = []
         for t in ticker_list:
             if t not in all_prices:
                 tickers_needing_backfill.append(t)
                 continue
-            dates_2025 = [d for d in all_prices[t] if d >= "2025-01-01"]
-            if not dates_2025:
+            has_2025 = any(d >= "2025-01-01" for d in all_prices[t])
+            if not has_2025:
                 tickers_needing_backfill.append(t)
         
         if tickers_needing_backfill:
