@@ -1882,16 +1882,16 @@ Instructions:
     const q = quotes[s], b = bars[s], c = chg(s);
     const nm = names[s] || "";
     const price = q?.p;
-    const shortName = nm.length > 18 ? nm.slice(0, 18) + "…" : nm;
+    const shortName = nm;
     return (
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
         <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
           <StockLogo symbol={s} size={34} />
         </div>
-        <div style={{ flex: "0 0 auto", width: 90, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{s}</div>
-          <div style={{ fontSize: 11, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortName}</div>
+          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{shortName}</div>
         </div>
         <div style={{ flex: 1 }} />
         {price && <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums" }}>${price.toFixed(2)}</div>}
@@ -2987,7 +2987,7 @@ Instructions:
                         {sorted.map((s, ri) => {
                           const d = fundamentals[s] || {};
                           const nm = names[s] || "";
-                          const shortNm = nm.length > 16 ? nm.slice(0, 16) + "…" : nm;
+                          const shortNm = nm;
                           return (
                             <tr key={s} style={{ borderBottom: `1px solid ${C.border}` }}>
                               <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.card, padding: "10px 12px", borderRight: `1px solid ${C.border}` }}>
@@ -2999,7 +2999,7 @@ Instructions:
                                   )}
                                   <div {...stockContextHandlers(s)} style={{ cursor: "pointer" }}>
                                     <div style={{ fontSize: 14, fontWeight: 800, color: C.accent }}>{s}</div>
-                                    <div style={{ fontSize: 11, color: C.t4, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>{shortNm}</div>
+                                    <div style={{ fontSize: 11, color: C.t4, marginTop: 1 }}>{shortNm}</div>
                                   </div>
                                 </div>
                               </td>
