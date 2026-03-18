@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """
 IOWN Portfolio History Builder
-Parses transaction data, fetches historical weekly prices from Polygon.io,
+Parses transaction data, fetches historical weekly prices,
 and outputs portfolio-history.json for the dashboard chart.
+
+Price sources:
+- Alpaca (free): 2011-2024 weekly bars (SIP historical, accurate)
+- Polygon.io (free): 2024-2026 weekly bars (official NYSE/NASDAQ closes)
 """
 
 import re
@@ -21,13 +25,12 @@ def parse_transactions(filepath):
     current_ticker = None
     transactions = []
     cash_transactions = []
-    current_holdings = {}  # From file headers: ticker -> {shares, price, value}
+    current_holdings = {}
     in_cash = False
     
     for line in lines:
         raw = line.rstrip('\r\n')
         
-        # CASH$ section — parse the cash balance from header
         if raw.startswith("CASH$"):
             in_cash = True
             current_ticker = None
@@ -36,7 +39,6 @@ def parse_transactions(filepath):
                 current_holdings["__CASH__"] = float(cash_header.group(1).replace(",", ""))
             continue
         
-        # Ticker header line
         m = re.match(r'^([A-Z][A-Z0-9]{0,5})\t(.+)\t([\d.]+)\t([\d.]+)\t([\d,.]+)', raw)
         if m and "CASH$" not in raw:
             current_ticker = m.group(1)
@@ -50,53 +52,38 @@ def parse_transactions(filepath):
             in_cash = False
             continue
         
-        # Parse date-based entries
         tm = re.match(r'^\s+(\d{2}-\d{2}-\d{2})\t(\w[\w\s]*?)\t', raw)
         if not tm:
             continue
-            
         date_str = tm.group(1)
         month, day, year = date_str.split("-")
         yr = int(year)
         full_year = 2000 + yr if yr < 50 else 1900 + yr
         d = f"{full_year}-{month}-{day}"
         
-        # Stock transactions
         stock_m = re.match(
-            r'^\s+\d{2}-\d{2}-\d{2}\t(PURCHASE|SALE|DIVIDEND REINVESTMENT)\t([\d.]+)\t([\d.]+)\t([\d,.]+)',
-            raw
-        )
+            r'^\s+\d{2}-\d{2}-\d{2}\t(PURCHASE|SALE|DIVIDEND REINVESTMENT)\t([\d.]+)\t([\d.]+)\t([\d,.]+)', raw)
         if stock_m and current_ticker:
             transactions.append({
-                "date": d,
-                "ticker": current_ticker,
-                "type": stock_m.group(1),
-                "shares": float(stock_m.group(2)),
-                "price": float(stock_m.group(3)),
+                "date": d, "ticker": current_ticker, "type": stock_m.group(1),
+                "shares": float(stock_m.group(2)), "price": float(stock_m.group(3)),
                 "amount": float(stock_m.group(4).replace(",", "")),
             })
             continue
         
-        # Cash transactions
-        cash_m = re.match(
-            r'^\s+\d{2}-\d{2}-\d{2}\t(DEPOSIT|WITHDRAWAL)\t--\t--\t([\d,.]+)',
-            raw
-        )
+        cash_m = re.match(r'^\s+\d{2}-\d{2}-\d{2}\t(DEPOSIT|WITHDRAWAL)\t--\t--\t([\d,.]+)', raw)
         if cash_m:
             cash_transactions.append({
-                "date": d,
-                "type": cash_m.group(1),
+                "date": d, "type": cash_m.group(1),
                 "amount": float(cash_m.group(2).replace(",", "")),
             })
     
     transactions.sort(key=lambda x: x["date"])
     cash_transactions.sort(key=lambda x: x["date"])
-    
     return transactions, cash_transactions, current_holdings
 
 
 def get_all_fridays(start_date, end_date):
-    """Get all Friday dates between start and end."""
     fridays = []
     d = start_date
     while d <= end_date:
@@ -106,31 +93,101 @@ def get_all_fridays(start_date, end_date):
     return fridays
 
 
-def fetch_polygon_prices(tickers, start_date, end_date):
-    """
-    Fetch weekly close prices from Polygon.io for all tickers.
-    Uses /v2/aggs/ticker/{ticker}/range/1/week/{from}/{to}
-    Free tier: 5 calls/minute.
-    """
-    import urllib.request
-    import os
+def fetch_alpaca_prices(tickers, start_date, end_date):
+    """Fetch weekly bars from Alpaca for 2011-2024 (SIP historical, free)."""
+    import urllib.request, os
     
-    api_key = os.environ.get("POLYGON_KEY", "")
-    if not api_key:
-        print("  ERROR: POLYGON_KEY not set!")
+    api_key = os.environ.get("ALPACA_KEY", "")
+    api_secret = os.environ.get("ALPACA_SECRET", "")
+    if not api_key or not api_secret:
+        print("  WARNING: No Alpaca keys, skipping Alpaca fetch")
         return {}
     
     all_prices = {}
     ticker_list = sorted(tickers)
-    start_str = start_date.strftime("%Y-%m-%d")
+    
+    # Cap end date at 2024-12-31 (Alpaca 403s for 2025+)
+    alpaca_end = min(end_date, datetime(2024, 12, 31))
+    if start_date >= alpaca_end:
+        return {}
+    
+    for batch_start in range(0, len(ticker_list), 30):
+        batch = ticker_list[batch_start:batch_start + 30]
+        current_start = start_date
+        while current_start < alpaca_end:
+            current_end = min(current_start.replace(year=current_start.year + 1), alpaca_end)
+            syms = ",".join(batch)
+            url = (
+                f"https://data.alpaca.markets/v2/stocks/bars"
+                f"?symbols={syms}&timeframe=1Week"
+                f"&start={current_start.strftime('%Y-%m-%d')}"
+                f"&end={current_end.strftime('%Y-%m-%d')}"
+                f"&limit=10000&adjustment=split"
+            )
+            try:
+                req = urllib.request.Request(url)
+                req.add_header("APCA-API-KEY-ID", api_key)
+                req.add_header("APCA-API-SECRET-KEY", api_secret)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    data = json.loads(resp.read().decode())
+                if "bars" in data:
+                    for sym, bars in data["bars"].items():
+                        if sym not in all_prices:
+                            all_prices[sym] = {}
+                        for bar in bars:
+                            all_prices[sym][bar["t"][:10]] = bar["c"]
+                next_token = data.get("next_page_token")
+                while next_token:
+                    purl = url + f"&page_token={next_token}"
+                    req2 = urllib.request.Request(purl)
+                    req2.add_header("APCA-API-KEY-ID", api_key)
+                    req2.add_header("APCA-API-SECRET-KEY", api_secret)
+                    with urllib.request.urlopen(req2, timeout=30) as resp2:
+                        data2 = json.loads(resp2.read().decode())
+                    if "bars" in data2:
+                        for sym, bars in data2["bars"].items():
+                            if sym not in all_prices:
+                                all_prices[sym] = {}
+                            for bar in bars:
+                                all_prices[sym][bar["t"][:10]] = bar["c"]
+                    next_token = data2.get("next_page_token")
+            except Exception as e:
+                print(f"  Warning: Alpaca {batch[0]}..{batch[-1]} {current_start.year}: {e}")
+            current_start = current_end
+        
+        pts = sum(len(v) for k, v in all_prices.items() if k in batch)
+        print(f"  Alpaca: {batch[0]}...{batch[-1]} ({pts} points)")
+    
+    return all_prices
+
+
+def fetch_polygon_prices(tickers, start_date, end_date):
+    """Fetch weekly bars from Polygon.io for 2024+ (official closes, free 2yr)."""
+    import urllib.request, os
+    
+    api_key = os.environ.get("POLYGON_KEY", "")
+    if not api_key:
+        print("  WARNING: No POLYGON_KEY, skipping Polygon fetch")
+        return {}
+    
+    # Polygon free tier: 2 years history, 5 calls/min
+    polygon_start = max(start_date, datetime(2024, 1, 1))
+    start_str = polygon_start.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
     
+    all_prices = {}
+    ticker_list = sorted(tickers)
     call_count = 0
     
+    print(f"  Polygon: fetching {len(ticker_list)} tickers ({start_str} to {end_str})")
+    print(f"  Rate limit: 5 calls/min, estimated {len(ticker_list) // 5 + 1} minutes")
+    
     for i, ticker in enumerate(ticker_list):
-        # Rate limit: 5 calls/min on free tier
         if call_count >= 5:
-            print(f"    Rate limit pause (60s)... [{i}/{len(ticker_list)}]")
+            elapsed_tickers = i
+            remaining = len(ticker_list) - i
+            est_min = remaining // 5 + 1
+            print(f"    Rate limit pause... [{i}/{len(ticker_list)}] ~{est_min} min remaining")
             time.sleep(61)
             call_count = 0
         
@@ -143,67 +200,54 @@ def fetch_polygon_prices(tickers, start_date, end_date):
             req = urllib.request.Request(url)
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode())
-            
             call_count += 1
             
             if data.get("resultsCount", 0) > 0 and data.get("results"):
-                all_prices[ticker] = {}
+                if ticker not in all_prices:
+                    all_prices[ticker] = {}
                 for bar in data["results"]:
-                    # bar["t"] is Unix timestamp in milliseconds
                     ts = bar["t"] / 1000
                     date = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
-                    all_prices[ticker][date] = bar["c"]  # Close price
-                
+                    all_prices[ticker][date] = bar["c"]
         except Exception as e:
             print(f"    Warning: {ticker}: {e}")
             call_count += 1
         
-        # Progress every 10 tickers
         if (i + 1) % 10 == 0:
             total_pts = sum(len(v) for v in all_prices.values())
             print(f"    Progress: {i+1}/{len(ticker_list)} tickers, {total_pts} data points")
     
+    total_pts = sum(len(v) for v in all_prices.values())
+    print(f"  Polygon complete: {len(all_prices)} tickers, {total_pts} data points")
     return all_prices
 
 
 def get_price_on_date(prices, ticker, target_date, fridays_list):
-    """Get the closest available price for a ticker on or before target_date."""
     date_str = target_date.strftime("%Y-%m-%d")
-    
     if ticker not in prices:
         return None
-    
-    ticker_prices = prices[ticker]
-    
-    if date_str in ticker_prices:
-        return ticker_prices[date_str]
-    
-    # Try nearby dates (within 10 days before)
+    tp = prices[ticker]
+    if date_str in tp:
+        return tp[date_str]
     for delta in range(1, 11):
         check = (target_date - timedelta(days=delta)).strftime("%Y-%m-%d")
-        if check in ticker_prices:
-            return ticker_prices[check]
-    
-    # Try nearby dates (within 5 days after)
+        if check in tp:
+            return tp[check]
     for delta in range(1, 6):
         check = (target_date + timedelta(days=delta)).strftime("%Y-%m-%d")
-        if check in ticker_prices:
-            return ticker_prices[check]
-    
+        if check in tp:
+            return tp[check]
     return None
 
 
 def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None):
     """
-    Replay all transactions chronologically and calculate weekly portfolio values.
-    
-    Cash: Only small deposits (<$500) are dividend income.
-    Large deposits/withdrawals are rebalancing (already in buy/sell).
+    Replay all transactions and calculate weekly portfolio values.
+    Cash: only small deposits (<$500) as dividend income.
     """
     DIVIDEND_THRESHOLD = 500
     dividend_deposits = [ctx for ctx in cash_transactions 
                         if ctx["type"] == "DEPOSIT" and ctx["amount"] < DIVIDEND_THRESHOLD]
-    
     total_div = sum(d["amount"] for d in dividend_deposits)
     print(f"  Dividend deposits (<${DIVIDEND_THRESHOLD}): {len(dividend_deposits)} entries, ${total_div:,.2f}")
     
@@ -232,7 +276,6 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
         
         while event_idx < len(all_events) and all_events[event_idx]["date"] <= friday_str:
             evt = all_events[event_idx]
-            
             if evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
@@ -244,29 +287,24 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                     cash += evt["amount"]
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
                     holdings[evt["ticker"]] += evt["shares"]
-            
             elif evt["kind"] == "cash":
                 if evt["type"] == "DEPOSIT":
                     cash += evt["amount"]
-            
             event_idx += 1
         
         stock_value = 0
         held_tickers = {t: s for t, s in holdings.items() if s > 0}
-        
         for ticker, shares in held_tickers.items():
             price = get_price_on_date(prices, ticker, friday, fridays)
             if price is not None:
                 stock_value += shares * price
             else:
-                # Fallback to transaction price
                 for evt in reversed(all_events[:event_idx]):
                     if evt.get("ticker") == ticker and evt.get("price", 0) > 0:
                         stock_value += shares * evt["price"]
                         break
         
         total_value = stock_value + cash
-        
         history.append({
             "date": friday_str,
             "value": round(total_value, 2),
@@ -275,18 +313,19 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             "num_holdings": len(held_tickers),
         })
     
-    # Override last point with Morningstar ground truth from file headers
+    # Override last point with file header ground truth
     if current_holdings and history:
-        gt_cash_from_file = current_holdings.pop("__CASH__", None)
+        gt_cash = current_holdings.pop("__CASH__", None)
         gt_stocks = sum(h["value"] for h in current_holdings.values())
-        gt_cash = gt_cash_from_file if gt_cash_from_file is not None else cash
+        if gt_cash is None:
+            gt_cash = cash
         gt_total = gt_stocks + gt_cash
         gt_holdings = len(current_holdings)
         history[-1]["value"] = round(gt_total, 2)
         history[-1]["stocks"] = round(gt_stocks, 2)
         history[-1]["cash"] = round(gt_cash, 2)
         history[-1]["num_holdings"] = gt_holdings
-        print(f"  Ground truth endpoint: stocks=${gt_stocks:,.2f}, cash=${gt_cash:,.2f}, total=${gt_total:,.2f}, holdings={gt_holdings}")
+        print(f"  Ground truth endpoint: ${gt_total:,.2f} (stocks=${gt_stocks:,.2f} cash=${gt_cash:,.2f}) {gt_holdings} holdings")
     
     return history
 
@@ -298,57 +337,67 @@ def main():
     sleeve_name = sys.argv[2] if len(sys.argv) > 2 else "dividend"
     
     print(f"=== IOWN Portfolio History Builder ===")
-    print(f"Transaction file: {tx_file}")
     print(f"Sleeve: {sleeve_name}")
     print()
     
-    # Parse transactions
     print("Parsing transactions...")
     transactions, cash_transactions, current_holdings = parse_transactions(tx_file)
-    print(f"  Stock transactions: {len(transactions)}")
-    print(f"  Cash transactions: {len(cash_transactions)}")
-    
-    if not transactions:
-        print("ERROR: No transactions found!")
-        sys.exit(1)
+    print(f"  Stock txns: {len(transactions)}, Cash txns: {len(cash_transactions)}")
     
     all_tickers = set(tx["ticker"] for tx in transactions)
-    print(f"  Unique tickers: {len(all_tickers)}")
-    print(f"  Current holdings (from file headers): {len([k for k in current_holdings if k != '__CASH__'])} tickers, ${sum(h['value'] for k, h in current_holdings.items() if k != '__CASH__'):,.2f}")
+    gt_count = len([k for k in current_holdings if k != "__CASH__"])
+    gt_value = sum(h["value"] for k, h in current_holdings.items() if k != "__CASH__")
+    print(f"  {len(all_tickers)} unique tickers, {gt_count} current holdings (${gt_value:,.2f})")
     
     start_date = datetime.strptime(transactions[0]["date"], "%Y-%m-%d")
     end_date = datetime.now()
     print(f"  Date range: {start_date.date()} to {end_date.date()}")
     print()
     
-    # Fetch historical prices from Polygon.io
-    print("Fetching historical weekly prices from Polygon.io...")
-    print(f"  (Free tier: 5 calls/min, {len(all_tickers)} tickers = ~{len(all_tickers)//5 + 1} minutes)")
-    prices = fetch_polygon_prices(all_tickers, start_date, end_date)
-    total_points = sum(len(v) for v in prices.values())
-    print(f"  Total price data points: {total_points}")
-    print(f"  Tickers with data: {len(prices)}/{len(all_tickers)}")
-    missing = all_tickers - set(prices.keys())
+    # === HYBRID PRICE FETCH ===
+    # Phase 1: Alpaca for 2011-2024 (free SIP historical)
+    print("Phase 1: Fetching 2011-2024 from Alpaca...")
+    alpaca_prices = fetch_alpaca_prices(all_tickers, start_date, end_date)
+    alpaca_pts = sum(len(v) for v in alpaca_prices.values())
+    print(f"  Alpaca total: {len(alpaca_prices)} tickers, {alpaca_pts} data points")
+    print()
+    
+    # Phase 2: Polygon for 2024-2026 (free tier, official closes)
+    print("Phase 2: Fetching 2024-2026 from Polygon.io...")
+    polygon_prices = fetch_polygon_prices(all_tickers, start_date, end_date)
+    polygon_pts = sum(len(v) for v in polygon_prices.values())
+    print(f"  Polygon total: {len(polygon_prices)} tickers, {polygon_pts} data points")
+    print()
+    
+    # Merge: Polygon takes priority (more accurate official closes)
+    print("Merging price data (Polygon priority for overlapping dates)...")
+    merged = {}
+    for ticker in all_tickers:
+        merged[ticker] = {}
+        if ticker in alpaca_prices:
+            merged[ticker].update(alpaca_prices[ticker])
+        if ticker in polygon_prices:
+            merged[ticker].update(polygon_prices[ticker])  # Overwrites Alpaca for overlap
+    
+    total_pts = sum(len(v) for v in merged.values())
+    tickers_with_data = sum(1 for v in merged.values() if v)
+    missing = [t for t in all_tickers if not merged.get(t)]
+    print(f"  Merged: {tickers_with_data}/{len(all_tickers)} tickers, {total_pts} data points")
     if missing:
-        print(f"  Missing price data: {sorted(missing)}")
+        print(f"  Missing: {sorted(missing)}")
     print()
     
     # Build portfolio history
     print("Building portfolio history...")
-    history = build_portfolio_history(transactions, cash_transactions, prices, current_holdings=current_holdings)
+    history = build_portfolio_history(transactions, cash_transactions, merged, current_holdings=current_holdings)
     print(f"  Weekly data points: {len(history)}")
     if history:
-        print(f"  Start value: ${history[0]['value']:,.2f}")
-        print(f"  End value: ${history[-1]['value']:,.2f}")
-        print(f"  End cash: ${history[-1]['cash']:,.2f}")
-        print(f"  End stocks: ${history[-1]['stocks']:,.2f}")
-        total_return = ((history[-1]['value'] / history[0]['value']) - 1) * 100
-        print(f"  Total return: {total_return:+.2f}%")
-        for pt in [history[0], history[len(history)//2], history[-1]]:
-            print(f"    {pt['date']}: ${pt['value']:>12,.2f} (stocks: ${pt['stocks']:>12,.2f}, cash: ${pt['cash']:>10,.2f}, holdings: {pt['num_holdings']})")
+        print(f"  Start: ${history[0]['value']:,.2f}")
+        print(f"  End:   ${history[-1]['value']:,.2f} (stocks=${history[-1]['stocks']:,.2f} cash=${history[-1]['cash']:,.2f})")
+        ret = ((history[-1]['value'] / history[0]['value']) - 1) * 100
+        print(f"  Return: {ret:+.2f}%")
     print()
     
-    # Output (no benchmarks for now)
     output = {
         "sleeve": sleeve_name,
         "generated": datetime.now().isoformat(),
@@ -363,9 +412,7 @@ def main():
     with open(out_file, "w") as f:
         json.dump(output, f)
     
-    import os as _os
-    print(f"Output written to {out_file}")
-    print(f"File size: {_os.path.getsize(out_file) / 1024:.1f} KB")
+    print(f"Output: {out_file} ({os.path.getsize(out_file) / 1024:.1f} KB)")
     print("Done!")
 
 
