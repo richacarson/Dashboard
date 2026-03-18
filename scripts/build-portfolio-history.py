@@ -27,6 +27,7 @@ def parse_transactions(filepath):
     cash_transactions = []
     current_holdings = {}
     in_cash = False
+    seen_tickers = set()  # Track which tickers we've seen a header for
     
     for line in lines:
         raw = line.rstrip('\r\n')
@@ -49,6 +50,18 @@ def parse_transactions(filepath):
                 current_holdings[current_ticker] = {
                     "shares": shares, "price": price, "value": value
                 }
+            # If this is a second block for the same ticker, mark it
+            # so we can reset holdings when we hit the new block's transactions
+            if current_ticker in seen_tickers:
+                # Insert a RESET marker — the build function will zero out
+                # this ticker's shares when it encounters this event
+                transactions.append({
+                    "date": "0000-00-00",  # placeholder, will be fixed below
+                    "ticker": current_ticker, "type": "BLOCK_RESET",
+                    "shares": 0, "price": 0, "amount": 0,
+                    "_needs_date": True,
+                })
+            seen_tickers.add(current_ticker)
             in_cash = False
             continue
         
@@ -77,6 +90,18 @@ def parse_transactions(filepath):
                 "date": d, "type": cash_m.group(1),
                 "amount": float(cash_m.group(2).replace(",", "")),
             })
+    
+    # Fix BLOCK_RESET dates: set each to the earliest transaction date in its new block
+    # The RESET events have _needs_date=True and are followed by the new block's transactions
+    for i, tx in enumerate(transactions):
+        if tx.get("_needs_date"):
+            # Find the next real transaction for this ticker
+            for j in range(i + 1, len(transactions)):
+                if transactions[j]["ticker"] == tx["ticker"] and transactions[j]["type"] != "BLOCK_RESET":
+                    # Set RESET date to just before the first transaction in the new block
+                    tx["date"] = transactions[j]["date"]
+                    break
+            del tx["_needs_date"]
     
     transactions.sort(key=lambda x: x["date"])
     cash_transactions.sort(key=lambda x: x["date"])
@@ -277,7 +302,10 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
         while event_idx < len(all_events) and all_events[event_idx]["date"] <= friday_str:
             evt = all_events[event_idx]
             if evt["kind"] == "stock":
-                if evt["type"] == "PURCHASE":
+                if evt["type"] == "BLOCK_RESET":
+                    # New holding period for this ticker — zero out old shares
+                    holdings[evt["ticker"]] = 0
+                elif evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
                     cash -= evt["amount"]
                 elif evt["type"] == "SALE":
