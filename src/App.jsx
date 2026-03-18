@@ -268,9 +268,8 @@ function PortfolioChart({ theme }) {
         </div>
       </div>
       <div style={{ display: "flex", marginBottom: 12 }}>
-        {/* Time range selectors hidden until data is fully accurate
         <div style={{ display: "flex", gap: 4 }}>
-          {["YTD", "1Y", "3Y", "5Y", "ALL"].map(r => (
+          {["YTD", "1Y", "ALL"].map(r => (
             <button key={r} onClick={() => { setTimeRange(r); setHoverIdx(null); }} style={{
               padding: "5px 10px", borderRadius: 6, border: `1px solid ${timeRange === r ? C.borderActive : C.border}`,
               background: timeRange === r ? C.accentSoft : "transparent",
@@ -279,7 +278,6 @@ function PortfolioChart({ theme }) {
             }}>{r}</button>
           ))}
         </div>
-        */}
       </div>
       <canvas ref={canvasRef} onMouseMove={handleMouse} onMouseLeave={() => setHoverIdx(null)}
         onTouchMove={(e) => handleMouse({ clientX: e.touches[0].clientX })} onTouchEnd={() => setHoverIdx(null)}
