@@ -126,7 +126,7 @@ def fetch_historical_prices(tickers, start_date, end_date):
             current_end = min(current_start.replace(year=current_start.year + 1), end_date)
             
             syms = ",".join(batch)
-            url = (
+            base_url = (
                 f"https://data.alpaca.markets/v2/stocks/bars"
                 f"?symbols={syms}"
                 f"&timeframe=1Week"
@@ -136,43 +136,51 @@ def fetch_historical_prices(tickers, start_date, end_date):
                 f"&adjustment=split"
             )
             
-            req = urllib.request.Request(url)
-            req.add_header("APCA-API-KEY-ID", api_key)
-            req.add_header("APCA-API-SECRET-KEY", api_secret)
-            
-            try:
-                with urllib.request.urlopen(req) as resp:
-                    data = json.loads(resp.read().decode())
+            # Try with feed=iex first, then without (for older data)
+            fetched = False
+            for feed_param in ["&feed=iex", ""]:
+                if fetched:
+                    break
+                url = base_url + feed_param
+                req = urllib.request.Request(url)
+                req.add_header("APCA-API-KEY-ID", api_key)
+                req.add_header("APCA-API-SECRET-KEY", api_secret)
                 
-                if "bars" in data:
-                    for sym, bars in data["bars"].items():
-                        if sym not in all_prices:
-                            all_prices[sym] = {}
-                        for bar in bars:
-                            # bar["t"] is like "2024-01-05T05:00:00Z"
-                            bar_date = bar["t"][:10]
-                            all_prices[sym][bar_date] = bar["c"]
-                
-                # Handle pagination
-                next_token = data.get("next_page_token")
-                while next_token:
-                    purl = url + f"&page_token={next_token}"
-                    req2 = urllib.request.Request(purl)
-                    req2.add_header("APCA-API-KEY-ID", api_key)
-                    req2.add_header("APCA-API-SECRET-KEY", api_secret)
-                    with urllib.request.urlopen(req2) as resp2:
-                        data2 = json.loads(resp2.read().decode())
-                    if "bars" in data2:
-                        for sym, bars in data2["bars"].items():
+                try:
+                    with urllib.request.urlopen(req) as resp:
+                        data = json.loads(resp.read().decode())
+                    
+                    if "bars" in data:
+                        for sym, bars in data["bars"].items():
                             if sym not in all_prices:
                                 all_prices[sym] = {}
                             for bar in bars:
                                 bar_date = bar["t"][:10]
                                 all_prices[sym][bar_date] = bar["c"]
-                    next_token = data2.get("next_page_token")
                     
-            except Exception as e:
-                print(f"  Warning: Failed to fetch {syms} for {current_start.year}: {e}")
+                    # Handle pagination
+                    next_token = data.get("next_page_token")
+                    while next_token:
+                        purl = url + f"&page_token={next_token}"
+                        req2 = urllib.request.Request(purl)
+                        req2.add_header("APCA-API-KEY-ID", api_key)
+                        req2.add_header("APCA-API-SECRET-KEY", api_secret)
+                        with urllib.request.urlopen(req2) as resp2:
+                            data2 = json.loads(resp2.read().decode())
+                        if "bars" in data2:
+                            for sym, bars in data2["bars"].items():
+                                if sym not in all_prices:
+                                    all_prices[sym] = {}
+                                for bar in bars:
+                                    bar_date = bar["t"][:10]
+                                    all_prices[sym][bar_date] = bar["c"]
+                        next_token = data2.get("next_page_token")
+                    
+                    fetched = True
+                except Exception as e:
+                    if "403" in str(e) and feed_param == "&feed=iex":
+                        continue  # Try without feed=iex
+                    print(f"  Warning: Failed to fetch {batch[0]}..{batch[-1]} for {current_start.year}: {e}")
             
             current_start = current_end
             
@@ -261,14 +269,12 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                         holdings[evt["ticker"]] = 0
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
                     holdings[evt["ticker"]] += evt["shares"]
-                    # Dividend reinvestment: shares added, cash neutral
-                    # (the dividend was already deposited as cash, then used to buy shares)
+                    # Shares added, cash neutral — dividend value is already
+                    # reflected in the share price history
             
-            elif evt["kind"] == "cash":
-                if evt["type"] == "DEPOSIT":
-                    cash += evt["amount"]
-                elif evt["type"] == "WITHDRAWAL":
-                    cash -= evt["amount"]
+            # SKIP deposits/withdrawals — these are rebalancing moves
+            # between sleeves, not real external cash flows. Cash is
+            # derived purely from: $100K + sales - purchases.
             
             event_idx += 1
         
@@ -422,8 +428,13 @@ def main():
     if history:
         print(f"  Start value: ${history[0]['value']:,.2f}")
         print(f"  End value: ${history[-1]['value']:,.2f}")
+        print(f"  End cash: ${history[-1]['cash']:,.2f}")
+        print(f"  End stocks: ${history[-1]['stocks']:,.2f}")
         total_return = ((history[-1]['value'] / history[0]['value']) - 1) * 100
         print(f"  Total return: {total_return:+.2f}%")
+        # Sample data points
+        for pt in [history[0], history[len(history)//2], history[-1]]:
+            print(f"    {pt['date']}: ${pt['value']:>12,.2f} (stocks: ${pt['stocks']:>12,.2f}, cash: ${pt['cash']:>10,.2f}, holdings: {pt['num_holdings']})")
     print()
     
     # Fetch benchmarks
