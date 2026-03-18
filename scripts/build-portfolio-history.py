@@ -304,54 +304,27 @@ def get_price_on_date(prices, ticker, target_date, fridays_list):
 def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000):
     """
     Replay all transactions chronologically and calculate weekly portfolio values.
+    
+    Cash handling: Large deposits/withdrawals are rebalancing (the cash side of
+    buy/sell trades) and are ALREADY reflected in the buy/sell transactions.
+    Including them would double-count. Only small deposits (<$500) are kept
+    as they represent dividend income.
     """
-    # Pre-process cash transactions: on each date, net deposits vs withdrawals.
-    # Same-day pairs are rebalancing (net to ~0). Remaining deposits are dividends.
-    from collections import defaultdict as dd
-    cash_by_date = dd(lambda: {"deposits": 0, "withdrawals": 0})
-    for ctx in cash_transactions:
-        if ctx["type"] == "DEPOSIT":
-            cash_by_date[ctx["date"]]["deposits"] += ctx["amount"]
-        elif ctx["type"] == "WITHDRAWAL":
-            cash_by_date[ctx["date"]]["withdrawals"] += ctx["amount"]
+    # Filter cash transactions: only keep small deposits (dividends)
+    DIVIDEND_THRESHOLD = 500
+    dividend_deposits = [ctx for ctx in cash_transactions 
+                        if ctx["type"] == "DEPOSIT" and ctx["amount"] < DIVIDEND_THRESHOLD]
     
-    # Also net with stock buys/sells on the same day
-    stock_by_date = dd(lambda: {"buys": 0, "sells": 0})
-    for tx in transactions:
-        if tx["type"] == "PURCHASE":
-            stock_by_date[tx["date"]]["buys"] += tx["amount"]
-        elif tx["type"] == "SALE":
-            stock_by_date[tx["date"]]["sells"] += tx["amount"]
+    total_div = sum(d["amount"] for d in dividend_deposits)
+    print(f"  Dividend deposits (<${DIVIDEND_THRESHOLD}): {len(dividend_deposits)} entries, ${total_div:,.2f}")
+    print(f"  Ignored: {len(cash_transactions) - len(dividend_deposits)} rebalancing entries")
     
-    # For each date, check if withdrawals are paired with purchases
-    # and deposits are paired with sales (rebalancing pattern)
-    netted_cash = {}
-    for date in cash_by_date:
-        dep = cash_by_date[date]["deposits"]
-        wth = cash_by_date[date]["withdrawals"]
-        buys = stock_by_date.get(date, {"buys": 0})["buys"]
-        sells = stock_by_date.get(date, {"sells": 0})["sells"]
-        
-        # If there are both buys and withdrawals, or sells and deposits
-        # on the same day, it's rebalancing. Net them.
-        # Only keep the unmatched remainder as real cash flow.
-        net = dep - wth  # positive = more deposited than withdrawn
-        netted_cash[date] = net
-    
-    print(f"  Cash flow summary: {len(cash_by_date)} dates with cash activity")
-    total_net = sum(netted_cash.values())
-    print(f"  Total net cash flow: ${total_net:,.2f}")
-    
-    # Combine and sort all events by date
+    # Combine stock transactions + dividend deposits
     all_events = []
     for tx in transactions:
         all_events.append({"date": tx["date"], "kind": "stock", **tx})
-    # Replace individual deposit/withdrawal events with netted amounts
-    for date, net_amount in netted_cash.items():
-        if net_amount > 0:
-            all_events.append({"date": date, "kind": "cash", "type": "DEPOSIT", "amount": net_amount})
-        elif net_amount < 0:
-            all_events.append({"date": date, "kind": "cash", "type": "WITHDRAWAL", "amount": abs(net_amount)})
+    for ctx in dividend_deposits:
+        all_events.append({"date": ctx["date"], "kind": "cash", **ctx})
     all_events.sort(key=lambda x: x["date"])
     
     # State
@@ -401,8 +374,7 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             elif evt["kind"] == "cash":
                 if evt["type"] == "DEPOSIT":
                     cash += evt["amount"]
-                elif evt["type"] == "WITHDRAWAL":
-                    cash -= evt["amount"]
+                # No WITHDRAWAL handling — all withdrawals are filtered out
             
             event_idx += 1
         
