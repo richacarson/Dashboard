@@ -3506,7 +3506,7 @@ Instructions:
         );
       })()}
 
-      {/* MOBILE BOTTOM TAB BAR — hidden on desktop */}
+      {/* MOBILE BOTTOM TAB BAR */}
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
@@ -3514,8 +3514,8 @@ Instructions:
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {navItems.filter(t => ["home", "research", "calendar", "news", "clients"].includes(t.id)).map(t => (
-          <button key={t.id} onClick={() => handleTabTap(t.id)} style={{
+        {navItems.filter(t => ["home", "research", "calendar", "news"].includes(t.id)).map(t => (
+          <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
           }}>
@@ -3524,41 +3524,61 @@ Instructions:
             <div style={{ width: tab === t.id ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)", boxShadow: tab === t.id ? `0 0 8px ${C.accentGlow}` : "none" }} />
           </button>
         ))}
-        {/* More button for Briefs, Settings */}
-        <button onClick={() => setMoreMenu(!moreMenu)} style={{
+        <button onClick={() => setMoreMenu(true)} style={{
           display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
           padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
         }}>
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={["settings","briefs"].includes(tab) ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round">
-            <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={moreMenu || ["settings","briefs","clients"].includes(tab) ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round">
+            <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="18" x2="20" y2="18" />
           </svg>
-          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3, color: ["settings","briefs"].includes(tab) ? C.t1 : C.t4 }}>More</span>
-          <div style={{ width: ["settings","briefs"].includes(tab) ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)" }} />
+          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3, color: moreMenu || ["settings","briefs","clients"].includes(tab) ? C.t1 : C.t4 }}>More</span>
+          <div style={{ width: ["settings","briefs","clients"].includes(tab) ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)" }} />
         </button>
-        {/* More popup menu */}
-        {moreMenu && (
-          <>
-            <div onClick={() => setMoreMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 200 }} />
-            <div style={{
-              position: "absolute", bottom: "100%", right: 8, marginBottom: 8, zIndex: 201,
-              background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "6px 0",
-              minWidth: 160, boxShadow: "0 -8px 32px rgba(0,0,0,0.3)",
-            }}>
-              {navItems.filter(t => ["briefs", "settings"].includes(t.id)).map(t => (
+      </div>
+      )}
+      {/* MOBILE SLIDE-OUT DRAWER */}
+      {!isDesktop && moreMenu && (
+        <>
+          <div onClick={() => setMoreMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.5)" }} />
+          <div style={{
+            position: "fixed", top: 0, right: 0, bottom: 0, width: 280, zIndex: 9999,
+            background: C.surface, borderLeft: `1px solid ${C.border}`,
+            display: "flex", flexDirection: "column",
+            paddingTop: "calc(env(safe-area-inset-top, 20px) + 16px)",
+            animation: "slideInRight 0.25s cubic-bezier(0.16,1,0.3,1)",
+          }}>
+            <style>{`@keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.border}` }}>
+              <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ height: 36 }} />
+              <button onClick={() => setMoreMenu(false)} style={{
+                width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
+                border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <nav style={{ flex: 1, padding: "12px 0", overflowY: "auto" }}>
+              {navItems.map(t => (
                 <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
-                  display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px",
-                  background: tab === t.id ? C.accentSoft : "transparent", border: "none",
-                  color: tab === t.id ? C.t1 : C.t2, fontSize: 14, fontWeight: 500,
-                  cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                  display: "flex", alignItems: "center", gap: 14, width: "100%",
+                  padding: "14px 24px", background: tab === t.id ? C.accentSoft : "transparent",
+                  border: "none", borderLeft: tab === t.id ? `3px solid ${C.accent}` : "3px solid transparent",
+                  cursor: "pointer", transition: "all 0.15s", fontFamily: "inherit",
                 }}>
                   {t.icon(tab === t.id)}
-                  <span>{t.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.t1 : C.t3 }}>{t.label}</span>
                 </button>
               ))}
+            </nav>
+            <div style={{ padding: "16px 24px", borderTop: `1px solid ${C.border}`, paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}66` }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{marketStatus.label}</span>
+              </div>
+              <div style={{ fontSize: 11, color: C.t4 }}>{lastUp ? `Updated ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</div>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </>
       )}
 
       {/* Context menu for stock quick-nav */}
