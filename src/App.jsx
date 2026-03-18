@@ -944,6 +944,7 @@ Instructions:
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
   const [tab, setTab] = useState("home");
+  const [moreMenu, setMoreMenu] = useState(false);
   const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
@@ -3509,20 +3510,54 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: theme === "dark" ? "rgba(8,11,5,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+        background: theme === "dark" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {navItems.map(t => (
+        {navItems.filter(t => ["home", "research", "calendar", "news", "clients"].includes(t.id)).map(t => (
           <button key={t.id} onClick={() => handleTabTap(t.id)} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-            padding: "6px 24px", background: "transparent", border: "none", cursor: "pointer",
+            padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
           }}>
             {t.icon(tab === t.id)}
             <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3, color: tab === t.id ? C.t1 : C.t4 }}>{t.label}</span>
             <div style={{ width: tab === t.id ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)", boxShadow: tab === t.id ? `0 0 8px ${C.accentGlow}` : "none" }} />
           </button>
         ))}
+        {/* More button for Briefs, Settings */}
+        <button onClick={() => setMoreMenu(!moreMenu)} style={{
+          display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+          padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
+        }}>
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={["settings","briefs"].includes(tab) ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round">
+            <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+          </svg>
+          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3, color: ["settings","briefs"].includes(tab) ? C.t1 : C.t4 }}>More</span>
+          <div style={{ width: ["settings","briefs"].includes(tab) ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)" }} />
+        </button>
+        {/* More popup menu */}
+        {moreMenu && (
+          <>
+            <div onClick={() => setMoreMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 200 }} />
+            <div style={{
+              position: "absolute", bottom: "100%", right: 8, marginBottom: 8, zIndex: 201,
+              background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "6px 0",
+              minWidth: 160, boxShadow: "0 -8px 32px rgba(0,0,0,0.3)",
+            }}>
+              {navItems.filter(t => ["briefs", "settings"].includes(t.id)).map(t => (
+                <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
+                  display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px",
+                  background: tab === t.id ? C.accentSoft : "transparent", border: "none",
+                  color: tab === t.id ? C.t1 : C.t2, fontSize: 14, fontWeight: 500,
+                  cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                }}>
+                  {t.icon(tab === t.id)}
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
       )}
 
