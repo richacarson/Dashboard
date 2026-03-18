@@ -302,62 +302,56 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
 
 
 def fetch_benchmark_history(benchmark_ticker, start_date, end_date, start_value=100000):
-    """Fetch benchmark weekly prices and normalize to start_value."""
+    """Fetch benchmark weekly prices from Finnhub and normalize to start_value."""
     import urllib.request
     import os
     
-    api_key = os.environ.get("ALPACA_KEY", "")
-    api_secret = os.environ.get("ALPACA_SECRET", "")
+    finnhub_key = os.environ.get("FINNHUB_KEY", "")
+    if not finnhub_key:
+        print(f"  Warning: No FINNHUB_KEY set, skipping {benchmark_ticker}")
+        return []
+    
+    # Finnhub candle endpoint — resolution W = weekly
+    from_ts = int(start_date.timestamp())
+    to_ts = int(end_date.timestamp())
     
     url = (
-        f"https://data.alpaca.markets/v2/stocks/bars"
-        f"?symbols={benchmark_ticker}"
-        f"&timeframe=1Week"
-        f"&start={start_date.strftime('%Y-%m-%d')}"
-        f"&end={end_date.strftime('%Y-%m-%d')}"
-        f"&limit=10000"
-        f"&adjustment=split"
+        f"https://finnhub.io/api/v1/stock/candle"
+        f"?symbol={benchmark_ticker}"
+        f"&resolution=W"
+        f"&from={from_ts}"
+        f"&to={to_ts}"
+        f"&token={finnhub_key}"
     )
     
-    req = urllib.request.Request(url)
-    req.add_header("APCA-API-KEY-ID", api_key)
-    req.add_header("APCA-API-SECRET-KEY", api_secret)
-    
-    all_bars = []
     try:
+        req = urllib.request.Request(url)
         with urllib.request.urlopen(req) as resp:
             data = json.loads(resp.read().decode())
-        if "bars" in data and benchmark_ticker in data["bars"]:
-            all_bars = data["bars"][benchmark_ticker]
         
-        # Pagination
-        next_token = data.get("next_page_token")
-        while next_token:
-            purl = url + f"&page_token={next_token}"
-            req2 = urllib.request.Request(purl)
-            req2.add_header("APCA-API-KEY-ID", api_key)
-            req2.add_header("APCA-API-SECRET-KEY", api_secret)
-            with urllib.request.urlopen(req2) as resp2:
-                data2 = json.loads(resp2.read().decode())
-            if "bars" in data2 and benchmark_ticker in data2["bars"]:
-                all_bars.extend(data2["bars"][benchmark_ticker])
-            next_token = data2.get("next_page_token")
+        if data.get("s") != "ok" or not data.get("c"):
+            print(f"  Warning: Finnhub returned no data for {benchmark_ticker}")
+            return []
+        
+        closes = data["c"]
+        timestamps = data["t"]
+        
+        if not closes:
+            return []
+        
+        # Normalize to start_value
+        first_close = closes[0]
+        history = []
+        for i, (close, ts) in enumerate(zip(closes, timestamps)):
+            date = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+            normalized = (close / first_close) * start_value
+            history.append({"date": date, "value": round(normalized, 2)})
+        
+        return history
+        
     except Exception as e:
         print(f"  Warning: Failed to fetch benchmark {benchmark_ticker}: {e}")
         return []
-    
-    if not all_bars:
-        return []
-    
-    # Normalize to start_value
-    first_close = all_bars[0]["c"]
-    history = []
-    for bar in all_bars:
-        date = bar["t"][:10]
-        normalized = (bar["c"] / first_close) * start_value
-        history.append({"date": date, "value": round(normalized, 2)})
-    
-    return history
 
 
 def main():
@@ -415,7 +409,8 @@ def main():
     # Fetch benchmarks
     benchmarks = ["SPY", "QQQ", "DIA", "DVY", "IWS", "IUSG"]
     benchmark_data = {}
-    print("Fetching benchmark data...")
+    print("Fetching benchmark data from Finnhub...")
+    import time
     for bm in benchmarks:
         print(f"  Fetching {bm}...")
         bm_history = fetch_benchmark_history(bm, start_date, end_date)
@@ -425,6 +420,7 @@ def main():
             print(f"    {len(bm_history)} points, return: {bm_return:+.2f}%")
         else:
             print(f"    No data available")
+        time.sleep(1.5)  # Rate limit: 60 calls/min on Finnhub free tier
     print()
     
     # Output

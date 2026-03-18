@@ -26,6 +26,7 @@ jobs:
         env:
           ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+          FINNHUB_KEY: ${{ secrets.FINHUB_API }}
         run: |
           python3 scripts/build-portfolio-history.py \
             "transactions/${{ inputs.sleeve }}_strategy_transactions.txt" \
