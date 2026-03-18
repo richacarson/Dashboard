@@ -529,7 +529,7 @@ def main():
     # Get all unique tickers
     all_tickers = set(tx["ticker"] for tx in transactions)
     print(f"  Unique tickers: {len(all_tickers)}")
-    print(f"  Current holdings (from file headers): {len(current_holdings)} tickers, ${sum(h['value'] for h in current_holdings.values()):,.2f}")
+    print(f"  Current holdings (from file headers): {len([k for k in current_holdings if k != '__CASH__'])} tickers, ${sum(h['value'] for k, h in current_holdings.items() if k != '__CASH__'):,.2f}")
     
     start_date = datetime.strptime(transactions[0]["date"], "%Y-%m-%d")
     end_date = datetime.now()
