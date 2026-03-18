@@ -25,9 +25,9 @@ def parse_transactions(filepath):
     current_ticker = None
     transactions = []
     cash_transactions = []
-    current_holdings = {}
+    current_holdings = {}  # First header with shares > 0
+    all_headers = {}  # ALL headers (including 0-share) - first occurrence
     in_cash = False
-    seen_tickers = set()  # Track which tickers we've seen a header for
     
     for line in lines:
         raw = line.rstrip('\r\n')
@@ -46,22 +46,13 @@ def parse_transactions(filepath):
             shares = float(m.group(3))
             price = float(m.group(4))
             value = float(m.group(5).replace(",", ""))
+            # Track first header for each ticker
+            if current_ticker not in all_headers:
+                all_headers[current_ticker] = shares
             if shares > 0 and current_ticker not in current_holdings:
                 current_holdings[current_ticker] = {
                     "shares": shares, "price": price, "value": value
                 }
-            # If this is a second block for the same ticker, mark it
-            # so we can reset holdings when we hit the new block's transactions
-            if current_ticker in seen_tickers:
-                # Insert a RESET marker — the build function will zero out
-                # this ticker's shares when it encounters this event
-                transactions.append({
-                    "date": "0000-00-00",  # placeholder, will be fixed below
-                    "ticker": current_ticker, "type": "BLOCK_RESET",
-                    "shares": 0, "price": 0, "amount": 0,
-                    "_needs_date": True,
-                })
-            seen_tickers.add(current_ticker)
             in_cash = False
             continue
         
@@ -91,27 +82,14 @@ def parse_transactions(filepath):
                 "amount": float(cash_m.group(2).replace(",", "")),
             })
     
-    # Fix BLOCK_RESET dates: set each to the earliest transaction date in its new block
-    # Transactions within each block are listed newest-first in the file,
-    # so we need to find the EARLIEST (last listed) transaction in the new block
-    for i, tx in enumerate(transactions):
-        if tx.get("_needs_date"):
-            # Collect all transactions for this ticker in this block (until next header/reset)
-            earliest_date = None
-            for j in range(i + 1, len(transactions)):
-                if transactions[j]["ticker"] != tx["ticker"]:
-                    continue
-                if transactions[j]["type"] == "BLOCK_RESET":
-                    break  # Hit the next block
-                if earliest_date is None or transactions[j]["date"] < earliest_date:
-                    earliest_date = transactions[j]["date"]
-            if earliest_date:
-                tx["date"] = earliest_date
-            del tx["_needs_date"]
-    
     transactions.sort(key=lambda x: x["date"])
     cash_transactions.sort(key=lambda x: x["date"])
-    return transactions, cash_transactions, current_holdings
+    
+    # Ghost tickers: appear in transactions but header shows 0 shares
+    # These were removed via mergers/delistings/corporate actions, not sales
+    ghost_tickers = set(t for t, s in all_headers.items() if s == 0)
+    
+    return transactions, cash_transactions, current_holdings, ghost_tickers
 
 
 def get_all_fridays(start_date, end_date):
@@ -271,7 +249,7 @@ def get_price_on_date(prices, ticker, target_date, fridays_list):
     return None
 
 
-def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None):
+def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None, ghost_tickers=None):
     """
     Replay all transactions and calculate weekly portfolio values.
     Cash: only small deposits (<$500) as dividend income.
@@ -308,10 +286,7 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
         while event_idx < len(all_events) and all_events[event_idx]["date"] <= friday_str:
             evt = all_events[event_idx]
             if evt["kind"] == "stock":
-                if evt["type"] == "BLOCK_RESET":
-                    # New holding period for this ticker — zero out old shares
-                    holdings[evt["ticker"]] = 0
-                elif evt["type"] == "PURCHASE":
+                if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
                     cash -= evt["amount"]
                 elif evt["type"] == "SALE":
@@ -327,7 +302,9 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             event_idx += 1
         
         stock_value = 0
-        held_tickers = {t: s for t, s in holdings.items() if s > 0}
+        # Exclude ghost tickers (delisted/merged, no sale in file)
+        ghosts = ghost_tickers or set()
+        held_tickers = {t: s for t, s in holdings.items() if s > 0 and t not in ghosts}
         for ticker, shares in held_tickers.items():
             price = get_price_on_date(prices, ticker, friday, fridays)
             if price is not None:
@@ -375,8 +352,9 @@ def main():
     print()
     
     print("Parsing transactions...")
-    transactions, cash_transactions, current_holdings = parse_transactions(tx_file)
+    transactions, cash_transactions, current_holdings, ghost_tickers = parse_transactions(tx_file)
     print(f"  Stock txns: {len(transactions)}, Cash txns: {len(cash_transactions)}")
+    print(f"  Ghost tickers (delisted/merged): {len(ghost_tickers)}")
     
     all_tickers = set(tx["ticker"] for tx in transactions)
     gt_count = len([k for k in current_holdings if k != "__CASH__"])
@@ -423,7 +401,7 @@ def main():
     
     # Build portfolio history
     print("Building portfolio history...")
-    history = build_portfolio_history(transactions, cash_transactions, merged, current_holdings=current_holdings)
+    history = build_portfolio_history(transactions, cash_transactions, merged, current_holdings=current_holdings, ghost_tickers=ghost_tickers)
     print(f"  Weekly data points: {len(history)}")
     if history:
         print(f"  Start: ${history[0]['value']:,.2f}")
