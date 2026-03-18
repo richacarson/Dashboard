@@ -136,9 +136,10 @@ def fetch_historical_prices(tickers, start_date, end_date):
                 f"&adjustment=split"
             )
             
-            # Try with feed=iex first, then without (for older data)
+            # Try without feed restriction first (more data for historical),
+            # fall back to feed=iex if 403
             fetched = False
-            for feed_param in ["&feed=iex", ""]:
+            for feed_param in ["", "&feed=iex"]:
                 if fetched:
                     break
                 url = base_url + feed_param
@@ -260,25 +261,17 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             if evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
-                    cash -= evt["amount"]
                 elif evt["type"] == "SALE":
                     holdings[evt["ticker"]] -= evt["shares"]
-                    cash += evt["amount"]
-                    # Clean up zero holdings
                     if holdings[evt["ticker"]] <= 0.0001:
                         holdings[evt["ticker"]] = 0
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
                     holdings[evt["ticker"]] += evt["shares"]
-                    # Shares added, cash neutral — dividend value is already
-                    # reflected in the share price history
-            
-            # SKIP deposits/withdrawals — these are rebalancing moves
-            # between sleeves, not real external cash flows. Cash is
-            # derived purely from: $100K + sales - purchases.
             
             event_idx += 1
         
-        # Calculate portfolio value
+        # Calculate portfolio value = sum of (shares * price) only
+        # No cash component — matches Morningstar time-weighted return
         stock_value = 0
         held_tickers = {t: s for t, s in holdings.items() if s > 0}
         
@@ -287,22 +280,33 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             if price is not None:
                 stock_value += shares * price
             else:
-                # Use the transaction price as fallback
-                # Find most recent transaction for this ticker
                 for evt in reversed(all_events[:event_idx]):
                     if evt.get("ticker") == ticker and evt.get("price", 0) > 0:
                         stock_value += shares * evt["price"]
                         break
         
-        total_value = stock_value + cash
-        
+        # Normalize: on the first week with holdings, set to start_balance
+        # Then track relative performance from there
         history.append({
             "date": friday_str,
-            "value": round(total_value, 2),
+            "value": round(stock_value, 2),
             "stocks": round(stock_value, 2),
-            "cash": round(cash, 2),
+            "cash": 0,
             "num_holdings": len(held_tickers),
         })
+    
+    # Normalize all values so the first week with holdings = start_balance
+    first_val = None
+    for h in history:
+        if h["value"] > 0 and first_val is None:
+            first_val = h["value"]
+        if first_val and first_val > 0:
+            ratio = h["value"] / first_val
+            h["value"] = round(ratio * start_balance, 2)
+            h["stocks"] = h["value"]
+        else:
+            h["value"] = start_balance
+            h["stocks"] = 0
     
     return history
 
