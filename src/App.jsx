@@ -694,45 +694,6 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                 <StatRow label="Volume" value={b?.v ? b.v.toLocaleString() : "—"} />
               </Card>
 
-              {/* Analyst Ratings */}
-              {latestRec && (
-                <Card title="Analyst Ratings">
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: consensusColor, padding: "4px 14px", borderRadius: 8, background: consensusColor + "18", border: `1px solid ${consensusColor}44` }}>{consensusLabel}</span>
-                    <span style={{ fontSize: 12, color: C.t4 }}>{totalAnalysts} analysts</span>
-                  </div>
-                  {[
-                    { label: "Strong Buy", val: latestRec.strongBuy, color: "#16A34A" },
-                    { label: "Buy", val: latestRec.buy, color: "#34D399" },
-                    { label: "Hold", val: latestRec.hold, color: "#F59E0B" },
-                    { label: "Sell", val: latestRec.sell, color: "#F87171" },
-                    { label: "Strong Sell", val: latestRec.strongSell, color: "#DC2626" },
-                  ].map(r => (
-                    <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, color: C.t3, width: 80 }}>{r.label}</span>
-                      <div style={{ flex: 1, height: 8, background: C.border, borderRadius: 4, overflow: "hidden" }}>
-                        <div style={{ width: `${totalAnalysts ? (r.val / totalAnalysts) * 100 : 0}%`, height: "100%", background: r.color, borderRadius: 4, transition: "width 0.3s" }} />
-                      </div>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2, width: 20, textAlign: "right" }}>{r.val}</span>
-                    </div>
-                  ))}
-                  {/* Price target */}
-                  {fm["targetMedianPrice"] && (
-                    <div style={{ marginTop: 14, padding: "12px 0 0", borderTop: `1px solid ${C.border}` }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, color: C.t4 }}>Price Target</span>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>${fmt(fm["targetMedianPrice"])}</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.t4 }}>
-                        <span>Low: ${fmt(fm["targetLowPrice"])}</span>
-                        <span>High: ${fmt(fm["targetHighPrice"])}</span>
-                      </div>
-                    </div>
-                  )}
-                </Card>
-              )}
-
-
               {/* Momentum */}
               {(fm["3MonthPriceReturnDaily"] != null || fm["6MonthPriceReturnDaily"] != null) && (
                 <Card title="Momentum">
@@ -782,6 +743,14 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                 <StatRow label="5Y Avg Dividend Yield" value={fm["dividendYield5Y"] != null ? `${fmt(fm["dividendYield5Y"])}%` : "—"} />
               </Card>
 
+              {/* Balance Sheet Strength */}
+              <Card title="Balance Sheet">
+                <StatRow label="Debt/Equity" value={fmt(f.de || fm["totalDebt/totalEquityQuarterly"])} />
+                <StatRow label="Current Ratio" value={fmt(fm["currentRatioQuarterly"])} />
+                <StatRow label="Quick Ratio" value={fmt(fm["quickRatioQuarterly"])} />
+                <StatRow label="Book Value/Share" value={fm["bookValuePerShareQuarterly"] != null ? `$${fmt(fm["bookValuePerShareQuarterly"])}` : "—"} />
+              </Card>
+
               {/* Earnings History */}
               {earnings.length > 0 && (
                 <Card title="Earnings History">
@@ -806,13 +775,45 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
                 </Card>
               )}
 
-              {/* Balance Sheet Strength */}
-              <Card title="Balance Sheet">
-                <StatRow label="Debt/Equity" value={fmt(f.de || fm["totalDebt/totalEquityQuarterly"])} />
-                <StatRow label="Current Ratio" value={fmt(fm["currentRatioQuarterly"])} />
-                <StatRow label="Quick Ratio" value={fmt(fm["quickRatioQuarterly"])} />
-                <StatRow label="Book Value/Share" value={fm["bookValuePerShareQuarterly"] != null ? `$${fmt(fm["bookValuePerShareQuarterly"])}` : "—"} />
-              </Card>
+              )}
+
+              {/* Analyst Ratings */}
+              {latestRec && (
+                <Card title="Analyst Ratings">
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: consensusColor, padding: "4px 14px", borderRadius: 8, background: consensusColor + "18", border: `1px solid ${consensusColor}44` }}>{consensusLabel}</span>
+                    <span style={{ fontSize: 12, color: C.t4 }}>{totalAnalysts} analysts</span>
+                  </div>
+                  {[
+                    { label: "Strong Buy", val: latestRec.strongBuy, color: "#16A34A" },
+                    { label: "Buy", val: latestRec.buy, color: "#34D399" },
+                    { label: "Hold", val: latestRec.hold, color: "#F59E0B" },
+                    { label: "Sell", val: latestRec.sell, color: "#F87171" },
+                    { label: "Strong Sell", val: latestRec.strongSell, color: "#DC2626" },
+                  ].map(r => (
+                    <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: C.t3, width: 80 }}>{r.label}</span>
+                      <div style={{ flex: 1, height: 8, background: C.border, borderRadius: 4, overflow: "hidden" }}>
+                        <div style={{ width: `${totalAnalysts ? (r.val / totalAnalysts) * 100 : 0}%`, height: "100%", background: r.color, borderRadius: 4, transition: "width 0.3s" }} />
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2, width: 20, textAlign: "right" }}>{r.val}</span>
+                    </div>
+                  ))}
+                  {/* Price target */}
+                  {fm["targetMedianPrice"] && (
+                    <div style={{ marginTop: 14, padding: "12px 0 0", borderTop: `1px solid ${C.border}` }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: C.t4 }}>Price Target</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>${fmt(fm["targetMedianPrice"])}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.t4 }}>
+                        <span>Low: ${fmt(fm["targetLowPrice"])}</span>
+                        <span>High: ${fmt(fm["targetHighPrice"])}</span>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              )}
           </div>
 
           {/* ── NEWS ── */}
