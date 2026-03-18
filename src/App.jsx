@@ -2394,7 +2394,11 @@ Instructions:
                             <div style={{ display: "flex", gap: 14, marginTop: 5, fontSize: 12 }}>
                               {evt.previous != null && evt.previous !== "" && <span style={{ color: C.t4 }}>Prev: <span style={{ color: C.t2 }}>{evt.previous}</span></span>}
                               {evt.forecast != null && evt.forecast !== "" && <span style={{ color: C.t4 }}>Est: <span style={{ color: C.t2 }}>{evt.forecast}</span></span>}
-                              {evt.actual != null && evt.actual !== "" && <span style={{ color: C.t4 }}>Act: <span style={{ color: C.up, fontWeight: 700 }}>{evt.actual}</span></span>}
+                              {evt.actual != null && evt.actual !== "" ? (
+                                <span style={{ color: C.t4 }}>Act: <span style={{ color: C.up, fontWeight: 700 }}>{evt.actual}</span></span>
+                              ) : isPast ? (
+                                <span style={{ fontSize: 11, color: C.t4, fontStyle: "italic" }}>Awaiting data...</span>
+                              ) : null}
                             </div>
                           </div>
                         </div>
