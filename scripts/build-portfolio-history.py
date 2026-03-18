@@ -92,15 +92,21 @@ def parse_transactions(filepath):
             })
     
     # Fix BLOCK_RESET dates: set each to the earliest transaction date in its new block
-    # The RESET events have _needs_date=True and are followed by the new block's transactions
+    # Transactions within each block are listed newest-first in the file,
+    # so we need to find the EARLIEST (last listed) transaction in the new block
     for i, tx in enumerate(transactions):
         if tx.get("_needs_date"):
-            # Find the next real transaction for this ticker
+            # Collect all transactions for this ticker in this block (until next header/reset)
+            earliest_date = None
             for j in range(i + 1, len(transactions)):
-                if transactions[j]["ticker"] == tx["ticker"] and transactions[j]["type"] != "BLOCK_RESET":
-                    # Set RESET date to just before the first transaction in the new block
-                    tx["date"] = transactions[j]["date"]
-                    break
+                if transactions[j]["ticker"] != tx["ticker"]:
+                    continue
+                if transactions[j]["type"] == "BLOCK_RESET":
+                    break  # Hit the next block
+                if earliest_date is None or transactions[j]["date"] < earliest_date:
+                    earliest_date = transactions[j]["date"]
+            if earliest_date:
+                tx["date"] = earliest_date
             del tx["_needs_date"]
     
     transactions.sort(key=lambda x: x["date"])
