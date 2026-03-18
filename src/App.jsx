@@ -918,7 +918,7 @@ Instructions:
       });
       if (r.ok) {
         const d = await r.json();
-        console.log("Claude response:", d);
+        // Claude summary received
         const text = d.content?.filter(b => b.type === "text").map(b => b.text).join("\n") || "";
         if (text) setArticleContent(text);
       } else {
@@ -1787,7 +1787,6 @@ Instructions:
       if (!r.ok) throw new Error("fail");
       setAuthed(true);
       fetchData(true);
-      fetchIntraday();
       fetchNames();
       fetchNews();
       fetchFundamentals();
@@ -1813,11 +1812,9 @@ Instructions:
       iRef.current = setInterval(() => { fetchData(); }, ms);
       // News polling — slow, separate timer
       const newsTimer = setInterval(() => { fetchNews(); }, 60000);
-      // Sparkline refresh every 30s (new 5min bar appears every 5min, but check frequently)
-      const sparkTimer = setInterval(() => { fetchIntraday(); }, 30000);
-      // Calendar refresh every 5 min to pick up actuals from GitHub Action
+      // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(sparkTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); };
+      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
@@ -2105,7 +2102,7 @@ Instructions:
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {lastUp && <span data-last-updated style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-          <button onClick={() => { fetchData(true); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
+          <button onClick={() => { fetchData(true); fetchNews(); }} disabled={loading} style={{
             width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
             background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
           }}>
@@ -2129,7 +2126,7 @@ Instructions:
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-            <button onClick={() => { fetchData(true); fetchNews(); fetchIntraday(); }} disabled={loading} style={{
+            <button onClick={() => { fetchData(true); fetchNews(); }} disabled={loading} style={{
               padding: "8px 16px", display: "flex", alignItems: "center", gap: 8,
               background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
             }}>
@@ -3146,7 +3143,6 @@ Instructions:
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Data Loaded</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                 <div style={{ fontSize: 12, color: C.t3 }}>Company names: <span style={{ color: C.t2 }}>{Object.keys(names).length}/{ALL.length}</span></div>
-                <div style={{ fontSize: 12, color: C.t3 }}>Intraday charts: <span style={{ color: C.t2 }}>{Object.keys(intradayPts).length}/{ALL.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>News articles: <span style={{ color: C.t2 }}>{news.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
