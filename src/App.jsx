@@ -780,7 +780,7 @@ Instructions:
   const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "research", "calendar", "news", "clients", "settings"];
+  const tabIds = ["home", "performance", "research", "calendar", "news", "clients", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -874,6 +874,13 @@ Instructions:
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
+  // Performance tab state
+  const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... } }
+  const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
+  const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
+  const [perfLoading, setPerfLoading] = useState(false);
+  const [perfBmToggles, setPerfBmToggles] = useState({ SPY: true, QQQ: true, DIA: false });
+  const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -1634,6 +1641,85 @@ Instructions:
     fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
   }, [pollFinnhubBenchmarks]);
 
+  // ── Performance tab: fetch portfolio history + benchmark bars ──
+  const fetchPerfData = useCallback(async () => {
+    if (perfData || perfLoading) return;
+    setPerfLoading(true);
+    try {
+      // Load portfolio history JSON
+      const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-dividend.json`);
+      if (!pRes.ok) throw new Error("No portfolio history");
+      const pJson = await pRes.json();
+      const portfolio = pJson.portfolio || [];
+      if (!portfolio.length) { setPerfLoading(false); return; }
+
+      // Use pre-computed benchmarks from JSON if available, otherwise fetch live
+      const bmSyms = ["SPY", "QQQ", "DIA"];
+      const startDate = portfolio[0].date;
+      const jsonBm = pJson.benchmarks || {};
+      const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
+
+      let benchmarks = {};
+
+      if (hasPrebaked) {
+        // Convert pre-computed array format to date->price map for chart
+        for (const sym of bmSyms) {
+          if (Array.isArray(jsonBm[sym])) {
+            benchmarks[sym] = {};
+            jsonBm[sym].forEach(pt => { benchmarks[sym][pt.date] = pt.close; });
+          }
+        }
+      } else if (apiKey && apiSecret) {
+        // Fetch live from Alpaca in yearly chunks
+        for (const sym of bmSyms) {
+          benchmarks[sym] = {};
+          let yearStart = new Date(startDate);
+          const end = new Date();
+          while (yearStart < end) {
+            const yearEnd = new Date(Math.min(yearStart.getTime() + 365 * 24 * 60 * 60 * 1000, end.getTime()));
+            const alpacaEnd = new Date(Math.min(yearEnd.getTime(), new Date("2024-12-31").getTime()));
+            if (yearStart <= alpacaEnd) {
+              try {
+                const url = `${BASE}/v2/stocks/bars?symbols=${sym}&timeframe=1Week&start=${yearStart.toISOString().slice(0,10)}&end=${alpacaEnd.toISOString().slice(0,10)}&limit=10000&adjustment=split`;
+                const r = await fetch(url, { headers: hdrs });
+                if (r.ok) {
+                  const d = await r.json();
+                  if (d.bars?.[sym]) d.bars[sym].forEach(b => { benchmarks[sym][b.t.slice(0,10)] = b.c; });
+                }
+              } catch {}
+            }
+            yearStart = yearEnd;
+          }
+        }
+
+        // Polygon for 2024+ if env key available
+        const polyKey = import.meta.env.VITE_POLYGON_KEY;
+        if (polyKey) {
+          for (const sym of bmSyms) {
+            try {
+              const url = `https://api.polygon.io/v2/aggs/ticker/${sym}/range/1/week/2024-01-01/${new Date().toISOString().slice(0,10)}?adjusted=true&sort=asc&limit=50000&apiKey=${polyKey}`;
+              const r = await fetch(url);
+              if (r.ok) {
+                const d = await r.json();
+                if (d.results) d.results.forEach(b => { benchmarks[sym][new Date(b.t).toISOString().slice(0,10)] = b.c; });
+              }
+            } catch {}
+          }
+        }
+      }
+
+      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000 });
+    } catch (e) {
+      console.error("Performance fetch error:", e);
+    }
+    setPerfLoading(false);
+  }, [perfData, perfLoading, apiKey, apiSecret, hdrs]);
+
+  // Load perf data when tab is opened
+  useEffect(() => {
+    if (tab === "performance" && authed && !perfData && !perfLoading) fetchPerfData();
+  }, [tab, authed, perfData, perfLoading, fetchPerfData]);
+
   const auth = async () => {
     setAuthErr("");
     try {
@@ -1888,6 +1974,7 @@ Instructions:
 
   const navItems = [
     { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
+    { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
     { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
     { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
@@ -1987,7 +2074,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "clients" ? "Clients" : "Settings"}
+            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "clients" ? "Clients" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -3108,6 +3195,354 @@ Instructions:
           </div>
         )}
 
+        {/* ━━━ PERFORMANCE ━━━ */}
+        {tab === "performance" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Performance</div>}
+
+            {perfLoading && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 80 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
+                  <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                </svg>
+                <span style={{ marginLeft: 12, color: C.t3, fontSize: 14 }}>Loading portfolio history...</span>
+              </div>
+            )}
+
+            {!perfLoading && !perfData && (
+              <div style={{ padding: 60, textAlign: "center" }}>
+                <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.4 }}>📈</div>
+                <div style={{ fontSize: 16, color: C.t3, marginBottom: 8 }}>No portfolio history available</div>
+                <div style={{ fontSize: 13, color: C.t4 }}>Run the portfolio history builder script to generate data</div>
+              </div>
+            )}
+
+            {!perfLoading && perfData && (() => {
+              const portfolio = perfData.portfolio;
+              const benchmarks = perfData.benchmarks || {};
+              const startBalance = perfData.startBalance || 100000;
+
+              // Filter by time range
+              const now = new Date();
+              const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
+              const rangeDays = rangeMap[perfRange];
+              const cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
+              const filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
+              if (!filtered.length) return null;
+
+              // Normalize portfolio to base 100
+              const baseVal = filtered[0].value;
+              const portNorm = filtered.map(p => ({ date: p.date, val: (p.value / baseVal) * 100, raw: p.value }));
+
+              // Normalize benchmarks to base 100 from same start date
+              const bmColors = { SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
+              const bmNorm = {};
+              Object.entries(benchmarks).forEach(([sym, priceMap]) => {
+                if (!perfBmToggles[sym]) return;
+                const prices = Object.entries(priceMap).sort((a,b) => a[0].localeCompare(b[0]));
+                if (!prices.length) return;
+                // Find first price on or after portfolio start
+                const startDate = filtered[0].date;
+                let basePrice = null;
+                for (const [d, p] of prices) {
+                  if (d >= startDate) { basePrice = p; break; }
+                }
+                if (!basePrice) return;
+                // Map benchmark dates to portfolio dates (nearest Friday match)
+                const bmPoints = [];
+                let priceIdx = 0;
+                for (const pt of filtered) {
+                  // Find nearest benchmark price
+                  while (priceIdx < prices.length - 1 && prices[priceIdx + 1][0] <= pt.date) priceIdx++;
+                  if (prices[priceIdx][0] <= pt.date || priceIdx === 0) {
+                    bmPoints.push({ date: pt.date, val: (prices[priceIdx][1] / basePrice) * 100 });
+                  }
+                }
+                if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
+              });
+
+              // Chart dimensions
+              const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
+              const H = isDesktop ? 480 : 320;
+              const PAD = { top: 30, right: 70, bottom: 50, left: 60 };
+              const cw = W - PAD.left - PAD.right;
+              const ch = H - PAD.top - PAD.bottom;
+
+              // Compute Y range across all series
+              let allVals = portNorm.map(p => p.val);
+              Object.values(bmNorm).forEach(pts => pts.forEach(p => allVals.push(p.val)));
+              const yMin = Math.floor(Math.min(...allVals) / 10) * 10;
+              const yMax = Math.ceil(Math.max(...allVals) / 10) * 10;
+              const yRange = yMax - yMin || 1;
+
+              const xScale = (i) => PAD.left + (i / (portNorm.length - 1)) * cw;
+              const yScale = (v) => PAD.top + ch - ((v - yMin) / yRange) * ch;
+
+              // Build SVG path
+              const buildPath = (points, key = "val") => {
+                if (!points.length) return "";
+                return points.map((p, i) => {
+                  const x = key === "val" ? xScale(i) : xScale(portNorm.findIndex(pp => pp.date === p.date) ?? i);
+                  const y = yScale(p[key] ?? p.val);
+                  return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+                }).join(" ");
+              };
+
+              // Build benchmark path using portfolio index mapping
+              const buildBmPath = (points) => {
+                if (!points.length) return "";
+                const dateToIdx = {};
+                portNorm.forEach((p, i) => { dateToIdx[p.date] = i; });
+                return points.map((p, i) => {
+                  const idx = dateToIdx[p.date] ?? i;
+                  const x = xScale(idx);
+                  const y = yScale(p.val);
+                  return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
+                }).join(" ");
+              };
+
+              const portPath = buildPath(portNorm);
+
+              // Grid lines
+              const yTicks = [];
+              const tickStep = yRange <= 100 ? 10 : yRange <= 300 ? 25 : yRange <= 600 ? 50 : 100;
+              for (let v = yMin; v <= yMax; v += tickStep) yTicks.push(v);
+
+              // X axis date labels
+              const xLabels = [];
+              const totalPts = portNorm.length;
+              const labelCount = isDesktop ? 8 : 5;
+              for (let i = 0; i < labelCount; i++) {
+                const idx = Math.round((i / (labelCount - 1)) * (totalPts - 1));
+                if (idx < totalPts) {
+                  const d = new Date(portNorm[idx].date + "T12:00:00");
+                  xLabels.push({ x: xScale(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+                }
+              }
+
+              // Hover handler
+              const handleMouseMove = (e) => {
+                const svg = perfSvgRef.current;
+                if (!svg) return;
+                const rect = svg.getBoundingClientRect();
+                const mx = e.clientX - rect.left;
+                const idx = Math.round(((mx - PAD.left) / cw) * (portNorm.length - 1));
+                if (idx >= 0 && idx < portNorm.length) {
+                  setPerfHover({ idx, x: xScale(idx), y: yScale(portNorm[idx].val) });
+                }
+              };
+
+              // Summary stats
+              const totalReturn = ((portNorm[portNorm.length - 1].val / 100) - 1) * 100;
+              const startVal = filtered[0].value;
+              const endVal = filtered[filtered.length - 1].value;
+              const years = (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
+              const cagr = years > 0 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
+
+              return (
+                <>
+                  {/* Summary cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
+                    {[
+                      { label: "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(1)}%`, color: totalReturn >= 0 ? C.up : C.dn },
+                      { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn },
+                    ].map((s, i) => (
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{s.label}</div>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Time range selector + benchmark toggles */}
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {["1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
+                        <button key={r} onClick={() => setPerfRange(r)} style={{
+                          padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                          border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
+                          background: perfRange === r ? C.accentSoft : "transparent",
+                          color: perfRange === r ? C.t1 : C.t3, cursor: "pointer", fontFamily: "inherit",
+                        }}>{r}</button>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>vs</span>
+                      {Object.entries(bmColors).map(([sym, color]) => (
+                        <button key={sym} onClick={() => setPerfBmToggles(prev => ({ ...prev, [sym]: !prev[sym] }))} style={{
+                          padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                          border: `1px solid ${perfBmToggles[sym] ? color + "66" : C.border}`,
+                          background: perfBmToggles[sym] ? color + "18" : "transparent",
+                          color: perfBmToggles[sym] ? color : C.t4, cursor: "pointer", fontFamily: "inherit",
+                        }}>{sym}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Chart */}
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 24 : 12, overflow: "hidden" }}>
+                    <svg
+                      ref={perfSvgRef}
+                      width={W} height={H}
+                      viewBox={`0 0 ${W} ${H}`}
+                      style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
+                      onMouseMove={handleMouseMove}
+                      onMouseLeave={() => setPerfHover(null)}
+                      onTouchMove={(e) => {
+                        const touch = e.touches[0];
+                        const svg = perfSvgRef.current;
+                        if (!svg) return;
+                        const rect = svg.getBoundingClientRect();
+                        const scale = W / rect.width;
+                        const mx = (touch.clientX - rect.left) * scale;
+                        const idx = Math.round(((mx - PAD.left) / cw) * (portNorm.length - 1));
+                        if (idx >= 0 && idx < portNorm.length) setPerfHover({ idx, x: xScale(idx), y: yScale(portNorm[idx].val) });
+                      }}
+                      onTouchEnd={() => setPerfHover(null)}
+                    >
+                      {/* Grid lines */}
+                      {yTicks.map(v => (
+                        <g key={v}>
+                          <line x1={PAD.left} y1={yScale(v)} x2={W - PAD.right} y2={yScale(v)}
+                            stroke={C.border} strokeWidth="1" />
+                          <text x={PAD.left - 8} y={yScale(v) + 4} textAnchor="end"
+                            fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">
+                            {v}
+                          </text>
+                        </g>
+                      ))}
+
+                      {/* Base 100 line */}
+                      <line x1={PAD.left} y1={yScale(100)} x2={W - PAD.right} y2={yScale(100)}
+                        stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />
+
+                      {/* X axis labels */}
+                      {xLabels.map((l, i) => (
+                        <text key={i} x={l.x} y={H - 10} textAnchor="middle"
+                          fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">
+                          {l.label}
+                        </text>
+                      ))}
+
+                      {/* Benchmark lines */}
+                      {Object.entries(bmNorm).map(([sym, pts]) => (
+                        <path key={sym} d={buildBmPath(pts)} fill="none"
+                          stroke={bmColors[sym]} strokeWidth="1.5" opacity="0.7" />
+                      ))}
+
+                      {/* Portfolio gradient fill */}
+                      <defs>
+                        <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={C.accent} stopOpacity="0.25" />
+                          <stop offset="100%" stopColor={C.accent} stopOpacity="0.02" />
+                        </linearGradient>
+                      </defs>
+                      <path d={`${portPath} L${xScale(portNorm.length-1).toFixed(1)},${(PAD.top+ch).toFixed(1)} L${PAD.left.toFixed(1)},${(PAD.top+ch).toFixed(1)} Z`}
+                        fill="url(#perfGrad)" />
+
+                      {/* Portfolio line */}
+                      <path d={portPath} fill="none" stroke={C.accent} strokeWidth="2.5" strokeLinejoin="round" />
+
+                      {/* Hover crosshair + tooltip */}
+                      {perfHover && perfHover.idx >= 0 && perfHover.idx < portNorm.length && (
+                        <g>
+                          <line x1={perfHover.x} y1={PAD.top} x2={perfHover.x} y2={PAD.top + ch}
+                            stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
+                          <circle cx={perfHover.x} cy={perfHover.y} r="4" fill={C.accent} stroke={C.card} strokeWidth="2" />
+                          {/* Benchmark dots */}
+                          {Object.entries(bmNorm).map(([sym, pts]) => {
+                            const pt = pts.find(p => p.date === portNorm[perfHover.idx]?.date);
+                            if (!pt) return null;
+                            return <circle key={sym} cx={perfHover.x} cy={yScale(pt.val)} r="3" fill={bmColors[sym]} stroke={C.card} strokeWidth="1.5" />;
+                          })}
+                        </g>
+                      )}
+
+                      {/* Right-side labels for last values */}
+                      <text x={W - PAD.right + 8} y={yScale(portNorm[portNorm.length-1].val) + 4}
+                        fill={C.accent} fontSize="11" fontWeight="700" fontFamily="inherit">
+                        {portNorm[portNorm.length-1].val.toFixed(0)}
+                      </text>
+                      {Object.entries(bmNorm).map(([sym, pts]) => (
+                        <text key={sym} x={W - PAD.right + 8} y={yScale(pts[pts.length-1].val) + 4}
+                          fill={bmColors[sym]} fontSize="10" fontWeight="700" fontFamily="inherit">
+                          {pts[pts.length-1].val.toFixed(0)}
+                        </text>
+                      ))}
+                    </svg>
+
+                    {/* Hover tooltip overlay */}
+                    {perfHover && perfHover.idx >= 0 && perfHover.idx < portNorm.length && (
+                      <div style={{
+                        position: "relative", marginTop: -H + 8, marginLeft: PAD.left,
+                        pointerEvents: "none", height: 0,
+                      }}>
+                        <div style={{
+                          position: "absolute",
+                          left: Math.min(Math.max(perfHover.x - PAD.left - 80, 0), cw - 180),
+                          top: 0,
+                          background: C.elevated || C.card, border: `1px solid ${C.border}`,
+                          borderRadius: 10, padding: "10px 14px", minWidth: 160,
+                          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                        }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, marginBottom: 6 }}>
+                            {new Date(portNorm[perfHover.idx].date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                            <span style={{ fontSize: 12, color: C.accent, fontWeight: 700 }}>Dividend</span>
+                            <span style={{ fontSize: 12, color: C.t1, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+                              ${portNorm[perfHover.idx].raw.toLocaleString(undefined, {maximumFractionDigits: 0})}
+                              <span style={{ color: portNorm[perfHover.idx].val >= 100 ? C.up : C.dn, marginLeft: 6, fontSize: 11 }}>
+                                {portNorm[perfHover.idx].val >= 100 ? "+" : ""}{(portNorm[perfHover.idx].val - 100).toFixed(1)}%
+                              </span>
+                            </span>
+                          </div>
+                          {Object.entries(bmNorm).map(([sym, pts]) => {
+                            const pt = pts.find(p => p.date === portNorm[perfHover.idx]?.date);
+                            if (!pt) return null;
+                            return (
+                              <div key={sym} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
+                                <span style={{ fontSize: 12, color: bmColors[sym], fontWeight: 600 }}>{sym}</span>
+                                <span style={{ fontSize: 12, color: C.t2, fontVariantNumeric: "tabular-nums" }}>
+                                  {pt.val >= 100 ? "+" : ""}{(pt.val - 100).toFixed(1)}%
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Legend */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 20, height: 3, borderRadius: 2, background: C.accent }} />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>IOWN Dividend Strategy</span>
+                    </div>
+                    {Object.entries(bmColors).map(([sym, color]) => perfBmToggles[sym] && (
+                      <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 20, height: 2, borderRadius: 2, background: color, opacity: 0.7 }} />
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{sym === "SPY" ? "S&P 500" : sym === "QQQ" ? "Nasdaq 100" : "Dow Jones"}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Data range info */}
+                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4, textAlign: "center" }}>
+                    {new Date(filtered[0].date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    {" — "}
+                    {new Date(filtered[filtered.length-1].date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                    {" · "}{filtered.length} weekly data points
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
         {/* ━━━ SETTINGS ━━━ */}
         {tab === "settings" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
@@ -3352,7 +3787,7 @@ Instructions:
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {["home", "research", "calendar", "clients", "briefs"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
+        {["home", "performance", "research", "calendar", "clients"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
           <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",

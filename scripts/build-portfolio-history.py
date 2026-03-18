@@ -410,6 +410,31 @@ def main():
         print(f"  Return: {ret:+.2f}%")
     print()
     
+    # === BENCHMARK DATA ===
+    benchmark_syms = ["SPY", "QQQ", "DIA"]
+    print("Phase 3: Fetching benchmark data (SPY, QQQ, DIA)...")
+    bm_alpaca = fetch_alpaca_prices(set(benchmark_syms), start_date, end_date)
+    bm_polygon = fetch_polygon_prices(set(benchmark_syms), start_date, end_date)
+
+    benchmarks = {}
+    for sym in benchmark_syms:
+        merged_bm = {}
+        if sym in bm_alpaca:
+            merged_bm.update(bm_alpaca[sym])
+        if sym in bm_polygon:
+            merged_bm.update(bm_polygon[sym])
+        if merged_bm:
+            # Convert to sorted weekly points aligned to portfolio Fridays
+            bm_points = []
+            for h in history:
+                d = datetime.strptime(h["date"], "%Y-%m-%d")
+                price = get_price_on_date({sym: merged_bm}, sym, d, fridays)
+                if price is not None:
+                    bm_points.append({"date": h["date"], "close": round(price, 2)})
+            benchmarks[sym] = bm_points
+            print(f"  {sym}: {len(bm_points)} weekly points")
+    print()
+
     output = {
         "sleeve": sleeve_name,
         "generated": datetime.now().isoformat(),
@@ -417,13 +442,13 @@ def main():
         "start_date": start_date.strftime("%Y-%m-%d"),
         "end_date": end_date.strftime("%Y-%m-%d"),
         "portfolio": history,
-        "benchmarks": {},
+        "benchmarks": benchmarks,
     }
-    
+
     out_file = f"portfolio-history-{sleeve_name}.json"
     with open(out_file, "w") as f:
         json.dump(output, f)
-    
+
     print(f"Output: {out_file} ({os.path.getsize(out_file) / 1024:.1f} KB)")
     print("Done!")
 
