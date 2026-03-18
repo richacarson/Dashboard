@@ -19,6 +19,7 @@ def parse_transactions(filepath):
     current_ticker = None
     transactions = []
     cash_transactions = []
+    current_holdings = {}  # From file headers: ticker -> {shares, price, value}
     in_cash = False
     
     for line in lines:
@@ -31,9 +32,18 @@ def parse_transactions(filepath):
             continue
         
         # Ticker header line (exits CASH$ section)
-        m = re.match(r'^([A-Z][A-Z0-9]{0,5})\t(.+)\t([\d.]+)\t([\d.]+)\t', raw)
+        m = re.match(r'^([A-Z][A-Z0-9]{0,5})\t(.+)\t([\d.]+)\t([\d.]+)\t([\d,.]+)', raw)
         if m and "CASH$" not in raw:
             current_ticker = m.group(1)
+            shares = float(m.group(3))
+            price = float(m.group(4))
+            value = float(m.group(5).replace(",", ""))
+            # Only record the FIRST header per ticker (current position)
+            # Subsequent headers for same ticker are historical (shares=0)
+            if shares > 0 and current_ticker not in current_holdings:
+                current_holdings[current_ticker] = {
+                    "shares": shares, "price": price, "value": value
+                }
             in_cash = False
             continue
         
@@ -81,7 +91,7 @@ def parse_transactions(filepath):
     transactions.sort(key=lambda x: x["date"])
     cash_transactions.sort(key=lambda x: x["date"])
     
-    return transactions, cash_transactions
+    return transactions, cash_transactions, current_holdings
 
 
 def get_all_fridays(start_date, end_date):
@@ -301,7 +311,7 @@ def get_price_on_date(prices, ticker, target_date, fridays_list):
     return None
 
 
-def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000):
+def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None):
     """
     Replay all transactions chronologically and calculate weekly portfolio values.
     
@@ -402,6 +412,17 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             "num_holdings": len(held_tickers),
         })
     
+    # Override the last data point with Morningstar ground truth if available
+    if current_holdings and history:
+        gt_stocks = sum(h["value"] for h in current_holdings.values())
+        gt_cash = cash  # Cash from transaction replay is correct
+        gt_total = gt_stocks + gt_cash
+        gt_holdings = len(current_holdings)
+        history[-1]["value"] = round(gt_total, 2)
+        history[-1]["stocks"] = round(gt_stocks, 2)
+        history[-1]["num_holdings"] = gt_holdings
+        print(f"  Ground truth override: stocks=${gt_stocks:,.2f}, cash=${gt_cash:,.2f}, total=${gt_total:,.2f}, holdings={gt_holdings}")
+    
     return history
 
 
@@ -491,7 +512,7 @@ def main():
     
     # Parse transactions
     print("Parsing transactions...")
-    transactions, cash_transactions = parse_transactions(tx_file)
+    transactions, cash_transactions, current_holdings = parse_transactions(tx_file)
     print(f"  Stock transactions: {len(transactions)}")
     print(f"  Cash transactions: {len(cash_transactions)}")
     
@@ -502,6 +523,7 @@ def main():
     # Get all unique tickers
     all_tickers = set(tx["ticker"] for tx in transactions)
     print(f"  Unique tickers: {len(all_tickers)}")
+    print(f"  Current holdings (from file headers): {len(current_holdings)} tickers, ${sum(h['value'] for h in current_holdings.values()):,.2f}")
     
     start_date = datetime.strptime(transactions[0]["date"], "%Y-%m-%d")
     end_date = datetime.now()
@@ -521,7 +543,7 @@ def main():
     
     # Build portfolio history
     print("Building portfolio history...")
-    history = build_portfolio_history(transactions, cash_transactions, prices)
+    history = build_portfolio_history(transactions, cash_transactions, prices, current_holdings=current_holdings)
     print(f"  Weekly data points: {len(history)}")
     if history:
         print(f"  Start value: ${history[0]['value']:,.2f}")
