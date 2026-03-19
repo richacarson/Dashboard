@@ -248,12 +248,7 @@ const logoCache = {};
 function tryLoadImage(url) {
   return new Promise((resolve) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const minDim = 24;
-      if (img.naturalWidth < minDim && img.naturalHeight < minDim) { resolve(false); return; }
-      resolve(true);
-    };
+    img.onload = () => resolve(true);
     img.onerror = () => resolve(false);
     img.src = url;
   });
@@ -267,7 +262,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32 }) {
     let cancelled = false;
     setSrc(null); setFallback(false);
     const sources = [];
-    if (domain) sources.push(`https://logo.clearbit.com/${domain}`);
+    if (domain) sources.push(`https://logos-api.apistemic.com/domain:${domain}`);
     if (domain) sources.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`);
     (async () => {
       for (const url of sources) {
