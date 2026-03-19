@@ -877,6 +877,8 @@ Instructions:
   const [showTxModal, setShowTxModal] = useState(false); // add transaction modal
   const [txForm, setTxForm] = useState({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) });
   const [showTxHistory, setShowTxHistory] = useState(false); // transaction history panel
+  const [expandedHolding, setExpandedHolding] = useState(null); // mobile holdings expand
+  const [expandedMetric, setExpandedMetric] = useState(null); // mobile metrics expand
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   // Performance tab state
@@ -2383,6 +2385,30 @@ Instructions:
 
                 {/* Transaction History Panel */}
                 {showTxHistory && perfData.transactions && (
+                  !isDesktop ? (
+                  <div style={{ maxHeight: 400, overflow: "auto", marginBottom: 16 }}>
+                    {[...perfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
+                      const isStock = !!tx.ticker;
+                      const typeMap = { PURCHASE: "BUY", SALE: "SELL", "DIVIDEND REINVESTMENT": "DIV", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
+                      const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                      return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: typeColor, background: typeColor + "18", padding: "3px 6px", borderRadius: 4, flexShrink: 0 }}>{typeMap[tx.type] || tx.type}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{tx.ticker || "Cash"}</div>
+                              {isStock && <div style={{ fontSize: 11, color: C.t4 }}>{tx.shares?.toFixed(2)} @ ${tx.price?.toFixed(2)}</div>}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 10 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                            <div style={{ fontSize: 11, color: C.t4 }}>{tx.date}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  ) : (
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, marginBottom: 16, maxHeight: 400, overflow: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
                       <thead>
@@ -2410,10 +2436,138 @@ Instructions:
                       </tbody>
                     </table>
                   </div>
+                  )
                 )}
 
-                {/* Holdings Table */}
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                {/* Holdings Table / Cards */}
+                {(() => {
+                  const totalVal = liveValue ? liveValue.value : 1;
+                  const cashVal = liveValue?.cash || perfData.cash || 0;
+                  const cashWeight = liveValue ? ((cashVal / liveValue.value) * 100) : 0;
+                  const rows = Object.entries(perfData.holdings).map(([ticker, shares]) => {
+                    const q = quotesRef.current?.[ticker];
+                    const price = q?.p || 0;
+                    const pc = bars[ticker]?.pc || price;
+                    const dayChg = price - pc;
+                    const dayChgPct = pc > 0 ? (dayChg / pc) * 100 : 0;
+                    const mktValue = shares * price;
+                    const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
+                    const cb = perfData.costBasis[ticker] || {};
+                    const avgCost = cb.avg_cost || 0;
+                    const costBasis = cb.total_cost || 0;
+                    const gainLoss = mktValue - costBasis;
+                    const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+                    const name = names[ticker] || "";
+                    return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct };
+                  });
+                  const { col: sc, dir: sd } = holdingsSort;
+                  const sortKey = {
+                    symbol: r => r.ticker, name: r => (r.name || "").toLowerCase(), shares: r => r.shares,
+                    price: r => r.price, dayChg: r => r.dayChg, dayChgPct: r => r.dayChgPct,
+                    mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost,
+                    costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct,
+                  }[sc] || (r => r.weight);
+                  rows.sort((a, b) => {
+                    const av = sortKey(a), bv = sortKey(b);
+                    if (typeof av === "string") return sd === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+                    return sd === "asc" ? av - bv : bv - av;
+                  });
+                  // Compute averages/totals
+                  const totMktVal = rows.reduce((s, r) => s + r.mktValue, 0);
+                  const totCostBasis = rows.reduce((s, r) => s + r.costBasis, 0);
+                  const totGainLoss = rows.reduce((s, r) => s + r.gainLoss, 0);
+                  const avgDayChgPct = totMktVal > 0 ? rows.reduce((s, r) => s + r.dayChgPct * r.mktValue, 0) / totMktVal : 0;
+                  const totGainLossPct = totCostBasis > 0 ? (totGainLoss / totCostBasis) * 100 : 0;
+                  const avgPrice = rows.length > 0 ? rows.reduce((s, r) => s + r.price, 0) / rows.length : 0;
+                  const avgDayChg = rows.length > 0 ? rows.reduce((s, r) => s + r.dayChg, 0) / rows.length : 0;
+
+                  if (!isDesktop) {
+                    // ── MOBILE: Card Layout ──
+                    return (
+                      <div>
+                        {/* Sort pills */}
+                        <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", scrollbarWidth: "none" }}>
+                          {[
+                            { col: "weight", label: "Weight" },
+                            { col: "gainLossPct", label: "G/L %" },
+                            { col: "dayChgPct", label: "Day %" },
+                            { col: "mktValue", label: "Value" },
+                            { col: "symbol", label: "A-Z" },
+                          ].map(s => {
+                            const active = holdingsSort.col === s.col;
+                            return (
+                              <button key={s.col} onClick={() => setHoldingsSort(prev => ({ col: s.col, dir: prev.col === s.col && prev.dir === "desc" ? "asc" : "desc" }))} style={{
+                                padding: "6px 14px", borderRadius: 8, border: `1px solid ${active ? C.borderActive : C.border}`,
+                                background: active ? C.accentSoft : "transparent",
+                                color: active ? C.t1 : C.t4, fontSize: 11, fontWeight: 600,
+                                cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+                              }}>{s.label} {active ? (holdingsSort.dir === "desc" ? "▼" : "▲") : ""}</button>
+                            );
+                          })}
+                        </div>
+                        {/* Holding cards */}
+                        {rows.map(r => {
+                          const isExpanded = expandedHolding === r.ticker;
+                          return (
+                            <div key={r.ticker} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
+                              <div onClick={() => setExpandedHolding(prev => prev === r.ticker ? null : r.ticker)} style={{ cursor: "pointer" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                  <span onClick={e => { e.stopPropagation(); openStock(r.ticker); }} style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{r.ticker}</span>
+                                  <span data-holding-gainpct={r.ticker} style={{ fontSize: 13, fontWeight: 700, color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</span>
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <span style={{ fontSize: 12, color: C.t4 }}>{r.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })} × <span data-holding-price={r.ticker}>${r.price.toFixed(2)}</span> = <span data-holding-mktval={r.ticker} style={{ color: C.t2, fontWeight: 600 }}>${r.mktValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+                                  <span data-holding-gain={r.ticker} style={{ fontSize: 12, fontWeight: 600, color: r.gainLoss >= 0 ? C.up : C.dn }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                                </div>
+                              </div>
+                              {isExpanded && (
+                                <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, animation: "fadeIn 0.15s ease" }}>
+                                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", fontSize: 12 }}>
+                                    <div><span style={{ color: C.t4 }}>Name</span><div style={{ color: C.t2, fontWeight: 500 }}>{r.name || "—"}</div></div>
+                                    <div><span style={{ color: C.t4 }}>Weight</span><div data-holding-weight={r.ticker} style={{ color: C.t1, fontWeight: 600 }}>{r.weight.toFixed(1)}%</div></div>
+                                    <div><span style={{ color: C.t4 }}>Day Chg</span><div data-holding-daychg={r.ticker} style={{ color: r.dayChg >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.dayChg >= 0 ? "+" : ""}{r.dayChg.toFixed(2)}</div></div>
+                                    <div><span style={{ color: C.t4 }}>Day %</span><div data-holding-daypct={r.ticker} style={{ color: r.dayChgPct >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.dayChgPct >= 0 ? "+" : ""}{r.dayChgPct.toFixed(2)}%</div></div>
+                                    <div><span style={{ color: C.t4 }}>Avg Cost</span><div style={{ color: C.t3 }}>${r.avgCost.toFixed(2)}</div></div>
+                                    <div><span style={{ color: C.t4 }}>Cost Basis</span><div style={{ color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
+                                  </div>
+                                  <button onClick={() => openStock(r.ticker)} style={{ marginTop: 10, width: "100%", padding: "10px 0", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Profile</button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {/* Cash card */}
+                        <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: C.t3 }}>CASH</div>
+                              <div style={{ fontSize: 12, color: C.t4 }}>Cash & Equivalents</div>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                              <div style={{ fontSize: 12, color: C.t3 }}>{cashWeight.toFixed(1)}%</div>
+                            </div>
+                          </div>
+                        </div>
+                        {/* Totals card */}
+                        <div style={{ background: C.card, border: `2px solid ${C.border}`, borderRadius: 12, padding: "14px 14px", marginTop: 4 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Totals</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", fontSize: 12 }}>
+                            <div><span style={{ color: C.t4 }}>Mkt Value</span><div style={{ color: C.t1, fontWeight: 700 }}>${totMktVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
+                            <div><span style={{ color: C.t4 }}>Cost Basis</span><div style={{ color: C.t3 }}>${totCostBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
+                            <div><span style={{ color: C.t4 }}>Total G/L</span><div style={{ color: totGainLoss >= 0 ? C.up : C.dn, fontWeight: 700 }}>{totGainLoss >= 0 ? "+$" : "-$"}{Math.abs(totGainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
+                            <div><span style={{ color: C.t4 }}>G/L %</span><div style={{ color: totGainLossPct >= 0 ? C.up : C.dn, fontWeight: 700 }}>{totGainLossPct >= 0 ? "+" : ""}{totGainLossPct.toFixed(1)}%</div></div>
+                            <div><span style={{ color: C.t4 }}>Avg Day %</span><div style={{ color: avgDayChgPct >= 0 ? C.up : C.dn, fontWeight: 600 }}>{avgDayChgPct >= 0 ? "+" : ""}{avgDayChgPct.toFixed(2)}%</div></div>
+                            <div><span style={{ color: C.t4 }}>Holdings</span><div style={{ color: C.t1, fontWeight: 600 }}>{rows.length}</div></div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // ── DESKTOP: Table Layout ──
+                  return (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
                   <div style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
                       <thead>
@@ -2447,38 +2601,7 @@ Instructions:
                         </tr>
                       </thead>
                       <tbody>
-                        {(() => {
-                          const totalVal = liveValue ? liveValue.value : 1;
-                          const rows = Object.entries(perfData.holdings).map(([ticker, shares]) => {
-                            const q = quotesRef.current?.[ticker];
-                            const price = q?.p || 0;
-                            const pc = bars[ticker]?.pc || price;
-                            const dayChg = price - pc;
-                            const dayChgPct = pc > 0 ? (dayChg / pc) * 100 : 0;
-                            const mktValue = shares * price;
-                            const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
-                            const cb = perfData.costBasis[ticker] || {};
-                            const avgCost = cb.avg_cost || 0;
-                            const costBasis = cb.total_cost || 0;
-                            const gainLoss = mktValue - costBasis;
-                            const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
-                            const name = names[ticker] || "";
-                            return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct };
-                          });
-                          // Sort
-                          const { col: sc, dir: sd } = holdingsSort;
-                          const sortKey = {
-                            symbol: r => r.ticker, name: r => (r.name || "").toLowerCase(), shares: r => r.shares,
-                            price: r => r.price, dayChg: r => r.dayChg, dayChgPct: r => r.dayChgPct,
-                            mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost,
-                            costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct,
-                          }[sc] || (r => r.weight);
-                          rows.sort((a, b) => {
-                            const av = sortKey(a), bv = sortKey(b);
-                            if (typeof av === "string") return sd === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
-                            return sd === "asc" ? av - bv : bv - av;
-                          });
-                          return rows.map(r => (
+                        {rows.map(r => (
                             <tr key={r.ticker} {...stockContextHandlers(r.ticker)} style={{ cursor: "pointer", borderBottom: `1px solid ${C.border}` }}
                               onMouseEnter={e => e.currentTarget.style.background = C.hover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                               <td style={{ padding: "10px 12px", fontWeight: 700, color: C.t1, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>{r.ticker}</td>
@@ -2494,21 +2617,37 @@ Instructions:
                               <td data-holding-gain={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                               <td data-holding-gainpct={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
                             </tr>
-                          ));
-                        })()}
+                        ))}
                         {/* Cash row */}
                         <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
                           <td style={{ padding: "10px 12px", fontWeight: 700, color: C.t3, position: "sticky", left: 0, background: C.bg }}>CASH</td>
                           <td style={{ padding: "10px 12px", color: C.t4 }}>Cash & Equivalents</td>
                           <td colSpan={4} />
-                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${(liveValue?.cash || perfData.cash || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
-                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>{liveValue ? ((liveValue.cash / liveValue.value) * 100).toFixed(1) : "—"}%</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>{cashWeight.toFixed(1)}%</td>
                           <td colSpan={4} />
+                        </tr>
+                        {/* Totals row */}
+                        <tr style={{ borderTop: `2px solid ${C.accent}44`, background: C.accentSoft }}>
+                          <td style={{ padding: "10px 12px", fontWeight: 800, color: C.t1, position: "sticky", left: 0, background: C.accentSoft }}>TOTALS</td>
+                          <td style={{ padding: "10px 12px", color: C.t4, fontSize: 11 }}>{rows.length} holdings</td>
+                          <td style={{ padding: "10px 12px" }} />
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${avgPrice.toFixed(2)}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: avgDayChg >= 0 ? C.up : C.dn, fontWeight: 600 }}>{avgDayChg >= 0 ? "+" : ""}{avgDayChg.toFixed(2)}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: avgDayChgPct >= 0 ? C.up : C.dn, fontWeight: 600 }}>{avgDayChgPct >= 0 ? "+" : ""}{avgDayChgPct.toFixed(2)}%</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 800 }}>${totMktVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>100%</td>
+                          <td style={{ padding: "10px 12px" }} />
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3, fontWeight: 600 }}>${totCostBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: totGainLoss >= 0 ? C.up : C.dn, fontWeight: 800 }}>{totGainLoss >= 0 ? "+$" : "-$"}{Math.abs(totGainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: totGainLossPct >= 0 ? C.up : C.dn, fontWeight: 800 }}>{totGainLossPct >= 0 ? "+" : ""}{totGainLossPct.toFixed(1)}%</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                </div>
+                  </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -2589,9 +2728,9 @@ Instructions:
             )}
             {/* Add Transaction Modal */}
             {showTxModal && (
-              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 0.15s ease" }}
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: isDesktop ? "center" : "flex-end", justifyContent: "center", animation: "fadeIn 0.15s ease" }}
                 onClick={e => { if (e.target === e.currentTarget) setShowTxModal(false); }}>
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 28, width: Math.min(440, window.innerWidth - 40), maxHeight: "80vh", overflow: "auto" }}>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: isDesktop ? 18 : "18px 18px 0 0", padding: isDesktop ? 28 : "24px 20px", paddingBottom: isDesktop ? 28 : "calc(env(safe-area-inset-bottom, 8px) + 20px)", width: isDesktop ? Math.min(440, window.innerWidth - 40) : "100%", maxHeight: isDesktop ? "80vh" : "85vh", overflow: "auto", animation: isDesktop ? "none" : "slideUp 0.25s cubic-bezier(0.16,1,0.3,1)" }}>
                   <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Add Transaction</div>
                   {/* Type selector */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
@@ -3367,6 +3506,77 @@ Instructions:
                 else setMetricSort({ col: k, dir: "desc" });
               };
 
+              if (!isDesktop) {
+                // ── MOBILE: Metrics Cards ──
+                return (
+                  <div>
+                    {sorted.map(s => {
+                      const d = fundamentals[s] || {};
+                      const nm = names[s] || "";
+                      const dc = dayChg(s);
+                      const isExp = expandedMetric === s;
+                      const keyMetrics = researchView === "dividend"
+                        ? [{ l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" }, { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn }, { l: "Yield", v: d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" }]
+                        : [{ l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" }, { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn }, { l: "Rev YoY", v: d.revenueYoY != null ? `${d.revenueYoY >= 0 ? "+" : ""}${d.revenueYoY.toFixed(1)}%` : "—", c: (d.revenueYoY||0) >= 0 ? C.up : C.dn }];
+                      return (
+                        <div key={s} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
+                          <div onClick={() => setExpandedMetric(prev => prev === s ? null : s)} style={{ cursor: "pointer" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {metricsEditMode && <div onClick={e => { e.stopPropagation(); removeSymbol(researchView, s); }} style={{ width: 20, height: 20, borderRadius: 10, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></div>}
+                                <div>
+                                  <span onClick={e => { e.stopPropagation(); openStock(s); }} style={{ fontSize: 15, fontWeight: 800, color: C.accent }}>{s}</span>
+                                  <div style={{ fontSize: 11, color: C.t4 }}>{nm}</div>
+                                </div>
+                              </div>
+                              <span data-metric-day={s} style={{ fontSize: 13, fontWeight: 700, color: dc > 0 ? C.up : dc < 0 ? C.dn : C.t3 }}>{dc != null ? `${dc >= 0 ? "+" : ""}${dc.toFixed(2)}%` : "—"}</span>
+                            </div>
+                            <div style={{ display: "flex", gap: 16 }}>
+                              {keyMetrics.map(m => (
+                                <div key={m.l}><span style={{ fontSize: 10, color: C.t4 }}>{m.l}</span><div style={{ fontSize: 12, fontWeight: 600, color: m.c || C.t2 }}>{m.v}</div></div>
+                              ))}
+                            </div>
+                          </div>
+                          {isExp && (
+                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, animation: "fadeIn 0.15s ease" }}>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 12px", fontSize: 12 }}>
+                                {cols.filter(c => !["_day"].includes(c.k)).map(col => {
+                                  const val = col.fn(d, s);
+                                  const clr = col.color ? col.color(d, s) : C.t2;
+                                  return <div key={col.l}><span style={{ color: C.t4, fontSize: 10 }}>{col.l}</span><div style={{ fontWeight: 600, color: clr }}>{val}</div></div>;
+                                })}
+                              </div>
+                              <button onClick={() => openStock(s)} style={{ marginTop: 10, width: "100%", padding: "10px 0", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Profile</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {/* Averages card */}
+                    {sorted.length > 0 && (
+                      <div style={{ background: C.card, border: `2px solid ${C.border}`, borderRadius: 12, padding: "14px 14px", marginTop: 4 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Averages</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 12px", fontSize: 12 }}>
+                          {cols.filter(c => !c.noAvg).map(col => {
+                            let avg;
+                            if (col.k === "_day") {
+                              const dayVals = sorted.map(s => dayChg(s)).filter(v => v != null);
+                              avg = dayVals.length ? dayVals.reduce((a, b) => a + b, 0) / dayVals.length : null;
+                            } else {
+                              const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
+                              avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                            }
+                            const val = avg != null ? col.fn({ [col.k]: avg }) : "—";
+                            return <div key={col.l}><span style={{ color: C.t4, fontSize: 10 }}>{col.l}</span><div style={{ fontWeight: 700, color: C.t1 }}>{val}</div></div>;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // ── DESKTOP: Table Layout ──
               return (
                 <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                   <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 280px)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
@@ -4524,7 +4734,7 @@ Instructions:
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
           }}>
             {t.icon(tab === t.id)}
-            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.3, color: tab === t.id ? C.t1 : C.t4 }}>{t.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, color: tab === t.id ? C.t1 : C.t4 }}>{t.label}</span>
             <div style={{ width: tab === t.id ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)", boxShadow: tab === t.id ? `0 0 8px ${C.accentGlow}` : "none" }} />
           </button>
         ))}
@@ -4578,14 +4788,21 @@ Instructions:
       {/* Context menu for stock quick-nav */}
       {ctxMenu && (
         <>
-          <div onClick={() => setCtxMenu(null)} style={{ position: "fixed", inset: 0, zIndex: 10000 }} />
-          <div style={{
+          <div onClick={() => setCtxMenu(null)} style={{ position: "fixed", inset: 0, zIndex: 10000, background: isDesktop ? "transparent" : "rgba(0,0,0,0.4)" }} />
+          <div style={isDesktop ? {
             position: "fixed", left: Math.min(ctxMenu.x, window.innerWidth - 180), top: Math.min(ctxMenu.y, window.innerHeight - 220),
             zIndex: 10001, background: C.card, border: `1px solid ${C.border}`,
             borderRadius: 12, padding: "6px 0", minWidth: 170,
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)", backdropFilter: "blur(20px)",
+          } : {
+            position: "fixed", bottom: 0, left: 0, right: 0,
+            zIndex: 10001, background: C.card, border: `1px solid ${C.border}`,
+            borderRadius: "16px 16px 0 0", padding: "6px 0",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
+            boxShadow: "0 -8px 32px rgba(0,0,0,0.25)", backdropFilter: "blur(20px)",
+            animation: "slideUp 0.2s cubic-bezier(0.16,1,0.3,1)",
           }}>
-            <div style={{ padding: "8px 14px", fontSize: 13, fontWeight: 700, color: C.t1, borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ padding: isDesktop ? "8px 14px" : "12px 18px", fontSize: isDesktop ? 13 : 16, fontWeight: 700, color: C.t1, borderBottom: `1px solid ${C.border}` }}>
               {ctxMenu.sym} — {names?.[ctxMenu.sym] || ""}
             </div>
             {[
@@ -4595,13 +4812,13 @@ Instructions:
               { id: "news", label: "News", icon: "📰" },
             ].map(t => (
               <div key={t.id} onClick={() => openStock(ctxMenu.sym, t.id)} style={{
-                padding: "10px 14px", fontSize: 14, color: C.t2, cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 10,
+                padding: isDesktop ? "10px 14px" : "14px 18px", fontSize: isDesktop ? 14 : 16, color: C.t2, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 12,
                 borderBottom: t.id !== "news" ? `1px solid ${C.border}22` : "none",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = C.accentSoft; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                <span style={{ fontSize: 16 }}>{t.icon}</span>
+              onMouseEnter={(e) => { if (isDesktop) e.currentTarget.style.background = C.accentSoft; }}
+              onMouseLeave={(e) => { if (isDesktop) e.currentTarget.style.background = "transparent"; }}>
+                <span style={{ fontSize: isDesktop ? 16 : 20 }}>{t.icon}</span>
                 <span style={{ fontWeight: 500 }}>{t.label}</span>
               </div>
             ))}
