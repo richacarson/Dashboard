@@ -3226,9 +3226,16 @@ Instructions:
               const now = new Date();
               const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
               const rangeDays = rangeMap[perfRange];
-              const ytdCutoff = perfRange === "YTD" ? `${now.getFullYear()}-01-01` : null;
-              const cutoff = ytdCutoff || (rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null);
-              const filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
+              let cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
+              let filtered;
+              if (perfRange === "YTD") {
+                // Use last trading day of prior year as YTD start
+                const yearEnd = `${now.getFullYear() - 1}-12-31`;
+                const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
+                filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
+              } else {
+                filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
+              }
               if (!filtered.length) return null;
 
               // Normalize portfolio to base 100
