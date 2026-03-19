@@ -3434,11 +3434,15 @@ Instructions:
                 const portStartDate = filtered[0].date;
                 Object.entries(ibm).forEach(([sym, pts]) => {
                   if (!perfBmToggles[sym] || !pts.length) return;
-                  // Find benchmark price at or just before portfolio start
-                  let basePrice = pts[0].close;
-                  for (const p of pts) {
-                    if (p.date <= portStartDate) basePrice = p.close;
-                    else break;
+                  // Use previous close as base price to match homepage change%
+                  let basePrice = bmBars[sym]?.pc || pts[0].close;
+                  if (!basePrice) {
+                    // Fallback: find benchmark price at or just before portfolio start
+                    basePrice = pts[0].close;
+                    for (const p of pts) {
+                      if (p.date <= portStartDate) basePrice = p.close;
+                      else break;
+                    }
                   }
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
