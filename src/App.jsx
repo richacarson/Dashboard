@@ -1712,7 +1712,7 @@ Instructions:
             const alpacaEnd = new Date(Math.min(yearEnd.getTime(), new Date("2024-12-31").getTime()));
             if (yearStart <= alpacaEnd) {
               try {
-                const url = `${BASE}/v2/stocks/bars?symbols=${sym}&timeframe=1Week&start=${yearStart.toISOString().slice(0,10)}&end=${alpacaEnd.toISOString().slice(0,10)}&limit=10000&adjustment=split`;
+                const url = `${BASE}/v2/stocks/bars?symbols=${sym}&timeframe=1Week&start=${yearStart.toISOString().slice(0,10)}&end=${alpacaEnd.toISOString().slice(0,10)}&limit=10000&adjustment=all`;
                 const r = await fetch(url, { headers: hdrs });
                 if (r.ok) {
                   const d = await r.json();
