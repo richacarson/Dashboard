@@ -3422,7 +3422,7 @@ Instructions:
               }
               if (!filtered.length) return null;
 
-              // Normalize portfolio to % change from start (base 0)
+              // Normalize portfolio to % change from first point (starts at 0%)
               const baseVal = filtered[0].value;
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
@@ -3437,7 +3437,6 @@ Instructions:
                   if (!perfBmToggles[sym] || !pts.length) return;
                   // Use first intraday bar as base so all lines start at 0%
                   let basePrice = pts[0].close;
-                  if (!basePrice) return;
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
                   const bmPoints = [];
@@ -3561,20 +3560,33 @@ Instructions:
               };
 
               // Summary stats
-              // For intraday views, use daily portfolio data for accurate start/end values
-              // (intraday bars may be incomplete at market open)
-              let startVal, endVal;
+              const startVal = filtered[0].value;
+              const endVal = isIntraday
+                ? (liveValue ? liveValue.value : portfolio[portfolio.length - 1].value)
+                : filtered[filtered.length - 1].value;
+              // For intraday, compute value-weighted change from dividend sleeve (matches home page)
+              let totalReturn;
+              let dollarChange;
               if (isIntraday) {
-                // Previous close from daily data as baseline
-                const dailyPrev = portfolio[portfolio.length - (perfRange === "1D" ? 2 : perfRange === "1W" ? 6 : 22)];
-                startVal = (dailyPrev || portfolio[portfolio.length - 2] || portfolio[0]).value;
-                endVal = liveValue ? liveValue.value : portfolio[portfolio.length - 1].value;
+                const divSyms = (sleeves.dividend || DEFAULT_SLEEVES.dividend).symbols;
+                const holdings = perfData?.holdings;
+                let totalVal = 0, weightedChgSum = 0;
+                for (const sym of divSyms) {
+                  const q = quotes[sym], b = bars[sym];
+                  const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
+                  const sh = holdings?.[sym];
+                  if (c !== null && q && sh) {
+                    const mv = sh * q.p;
+                    totalVal += mv;
+                    weightedChgSum += mv * c;
+                  }
+                }
+                totalReturn = totalVal > 0 ? weightedChgSum / totalVal : 0;
+                dollarChange = endVal - startVal;
               } else {
-                startVal = filtered[0].value;
-                endVal = filtered[filtered.length - 1].value;
+                totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
+                dollarChange = endVal - startVal;
               }
-              const totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
-              const dollarChange = endVal - startVal;
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
               const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
 
