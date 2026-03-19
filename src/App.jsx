@@ -2131,7 +2131,7 @@ Instructions:
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                       </div>
                     )}
-                    <div style={{ flex: 1 }}>{ renderTickerRow(s) }</div>
+                    <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>{ renderTickerRow(s) }</div>
                   </div>
                   {i < sorted.length - 1 && <div style={{ height: 1, background: C.border }} />}
                 </div>
