@@ -120,6 +120,18 @@ def get_all_fridays(start_date, end_date):
     return fridays
 
 
+def get_trading_days(start_date, end_date, prices):
+    """
+    Get all trading days from the price data (any date that has at least one price).
+    Falls back to weekdays if no price data available.
+    """
+    all_dates = set()
+    for ticker_prices in prices.values():
+        all_dates.update(ticker_prices.keys())
+    trading_days = sorted(d for d in all_dates if start_date.strftime("%Y-%m-%d") <= d <= end_date.strftime("%Y-%m-%d"))
+    return [datetime.strptime(d, "%Y-%m-%d") for d in trading_days]
+
+
 def apply_split_adjustments(prices, split_schedule):
     """
     Adjust Yahoo Finance close prices (which are actual historical prices)
@@ -244,7 +256,10 @@ def get_price_on_date(prices, ticker, target_date, fridays_list=None):
 
 def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None):
     """
-    Replay all transactions and calculate weekly portfolio values.
+    Replay all transactions and calculate daily portfolio values.
+
+    Uses daily sampling (every trading day) for accurate period returns.
+    Truncates DRIP fractional shares to match Morningstar's rounding.
 
     Cash tracking uses the cash section exclusively (DEPOSIT/WITHDRAWAL).
     Stock transactions only update share counts, not cash — because
@@ -281,15 +296,30 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
 
     start_date = datetime.strptime(all_events[0]["date"], "%Y-%m-%d")
     end_date = datetime.now()
-    fridays = get_all_fridays(start_date - timedelta(days=7), end_date)
 
-    history = []
+    # Use daily trading days from price data for accurate date alignment
+    sample_days = get_trading_days(start_date - timedelta(days=7), end_date, prices)
+    if not sample_days:
+        # Fallback to Fridays if no price data
+        sample_days = get_all_fridays(start_date - timedelta(days=7), end_date)
+
+    print(f"  Sampling {len(sample_days)} trading days")
+
+    # Prepend the starting balance as the initial data point (day before first event)
+    pre_start = (start_date - timedelta(days=1)).strftime("%Y-%m-%d")
+    history = [{
+        "date": pre_start,
+        "value": start_balance,
+        "stocks": 0,
+        "cash": start_balance,
+        "num_holdings": 0,
+    }]
     event_idx = 0
 
-    for friday in fridays:
-        friday_str = friday.strftime("%Y-%m-%d")
+    for day in sample_days:
+        day_str = day.strftime("%Y-%m-%d")
 
-        while event_idx < len(all_events) and all_events[event_idx]["date"] <= friday_str:
+        while event_idx < len(all_events) and all_events[event_idx]["date"] <= day_str:
             evt = all_events[event_idx]
             if evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
@@ -299,7 +329,8 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                     if holdings[evt["ticker"]] <= 0.0001:
                         holdings[evt["ticker"]] = 0
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
-                    holdings[evt["ticker"]] += evt["shares"]
+                    # Truncate to 4 decimal places to match Morningstar's rounding
+                    holdings[evt["ticker"]] += int(evt["shares"] * 10000) / 10000
             elif evt["kind"] == "cash":
                 if evt["type"] == "DEPOSIT":
                     cash += evt["amount"]
@@ -309,9 +340,8 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
 
         stock_value = 0
         held_tickers = {t: s for t, s in holdings.items() if s > 0}
-        missing_price_tickers = []
         for ticker, shares in held_tickers.items():
-            price = get_price_on_date(prices, ticker, friday)
+            price = get_price_on_date(prices, ticker, day)
             if price is not None:
                 stock_value += shares * price
             else:
@@ -319,12 +349,11 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                 for evt in reversed(all_events[:event_idx]):
                     if evt.get("ticker") == ticker and evt.get("price", 0) > 0:
                         stock_value += shares * evt["price"]
-                        missing_price_tickers.append(ticker)
                         break
 
         total_value = stock_value + cash
         history.append({
-            "date": friday_str,
+            "date": day_str,
             "value": round(total_value, 2),
             "stocks": round(stock_value, 2),
             "cash": round(cash, 2),
@@ -393,7 +422,7 @@ def main():
     # Build portfolio history
     print("Building portfolio history...")
     history = build_portfolio_history(transactions, cash_transactions, prices, current_holdings=current_holdings)
-    print(f"  Weekly data points: {len(history)}")
+    print(f"  Daily data points: {len(history)}")
     if history:
         print(f"  Start: ${history[0]['value']:,.2f}")
         print(f"  End:   ${history[-1]['value']:,.2f} (stocks=${history[-1]['stocks']:,.2f} cash=${history[-1]['cash']:,.2f})")
@@ -410,7 +439,6 @@ def main():
     print("Fetching benchmark data (SPY, QQQ, DIA, IWS, DVY)...")
     bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
 
-    fridays = get_all_fridays(start_date - timedelta(days=7), end_date)
     benchmarks = {}
     for sym in benchmark_syms:
         if sym in bm_prices and bm_prices[sym]:
@@ -421,7 +449,7 @@ def main():
                 if price is not None:
                     bm_points.append({"date": h["date"], "close": round(price, 2)})
             benchmarks[sym] = bm_points
-            print(f"  {sym}: {len(bm_points)} weekly points")
+            print(f"  {sym}: {len(bm_points)} data points")
     print()
 
     output = {
@@ -445,18 +473,20 @@ def main():
         print()
         print("=== Return Check ===")
         last = history[-1]
-        for label, cutoff_fn in [
-            ("YTD", lambda: f"{datetime.now().year}-01-01"),
-            ("1Y", lambda: (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")),
-            ("3Y", lambda: (datetime.now() - timedelta(days=365*3)).strftime("%Y-%m-%d")),
-            ("5Y", lambda: (datetime.now() - timedelta(days=365*5)).strftime("%Y-%m-%d")),
-            ("ALL", lambda: None),
+        # YTD uses last trading day of prior year (Dec 31 or nearest before)
+        ytd_cutoff = f"{datetime.now().year - 1}-12-31"
+        ytd_start = None
+        for h in reversed(history):
+            if h["date"] <= ytd_cutoff:
+                ytd_start = h
+                break
+        for label, start_entry in [
+            ("YTD", ytd_start or history[0]),
+            ("1Y", next((h for h in history if h["date"] >= (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")), history[0])),
+            ("3Y", next((h for h in history if h["date"] >= (datetime.now() - timedelta(days=365*3)).strftime("%Y-%m-%d")), history[0])),
+            ("5Y", next((h for h in history if h["date"] >= (datetime.now() - timedelta(days=365*5)).strftime("%Y-%m-%d")), history[0])),
+            ("ALL", history[0]),
         ]:
-            cutoff = cutoff_fn()
-            if cutoff:
-                start_entry = next((h for h in history if h["date"] >= cutoff), history[0])
-            else:
-                start_entry = history[0]
             ret = ((last["value"] / start_entry["value"]) - 1) * 100
             print(f"  {label}: {ret:+.1f}% (from {start_entry['date']} ${start_entry['value']:,.0f} to ${last['value']:,.0f})")
 
