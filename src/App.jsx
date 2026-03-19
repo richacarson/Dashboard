@@ -1709,7 +1709,7 @@ Instructions:
         }
       }
 
-      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0 });
+      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, cashFlows: pJson.cash_flows || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} });
     } catch (e) {
       console.error("Performance fetch error:", e);
     }
@@ -3245,12 +3245,14 @@ Instructions:
 
               // Filter by time range
               const now = new Date();
-              const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
+              const rangeMap = { "1W": 7, "1M": 30, "3M": 91, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
               const rangeDays = rangeMap[perfRange];
               let cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
               let filtered;
-              if (perfRange === "YTD") {
-                // Use last trading day of prior year as YTD start
+              if (perfRange === "1D") {
+                // Today: show last 2 data points (yesterday + today)
+                filtered = portfolio.slice(-2);
+              } else if (perfRange === "YTD") {
                 const yearEnd = `${now.getFullYear() - 1}-12-31`;
                 const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
                 filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
@@ -3388,7 +3390,7 @@ Instructions:
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
                     <div style={{ display: "flex", gap: 4 }}>
-                      {["YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
+                      {["1D", "1W", "1M", "3M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
                         <button key={r} onClick={() => setPerfRange(r)} style={{
                           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                           border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
@@ -3564,8 +3566,212 @@ Instructions:
                     {new Date(filtered[0].date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                     {" — "}
                     {new Date(filtered[filtered.length-1].date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                    {" · "}{filtered.length} weekly data points
+                    {" · "}{filtered.length} data points
+                    {liveValue ? " · Live" : ""}
                   </div>
+
+                  {/* ── Trailing Total Returns ── */}
+                  {(() => {
+                    // Compute returns for various trailing periods from portfolio data
+                    const end = portfolio[portfolio.length - 1];
+                    if (!end) return null;
+                    const endVal = end.value;
+                    const endDate = new Date(end.date + "T12:00:00");
+
+                    const trailingPeriods = [
+                      { label: "1-Week", days: 7 },
+                      { label: "1-Month", days: 30 },
+                      { label: "3-Month", days: 91 },
+                      { label: "YTD", ytd: true },
+                      { label: "1-Year", days: 365 },
+                      { label: "3-Year", days: 365 * 3, ann: true },
+                      { label: "5-Year", days: 365 * 5, ann: true },
+                      { label: "10-Year", days: 365 * 10, ann: true },
+                      { label: "Since Inception", all: true, ann: true },
+                    ];
+
+                    const getReturn = (p) => {
+                      let startPt;
+                      if (p.ytd) {
+                        const yearEnd = `${now.getFullYear() - 1}-12-31`;
+                        startPt = [...portfolio].reverse().find(pt => pt.date <= yearEnd);
+                      } else if (p.all) {
+                        startPt = portfolio[0];
+                      } else {
+                        const cutoffDate = new Date(endDate.getTime() - p.days * 86400000).toISOString().slice(0, 10);
+                        // Find nearest point on or after cutoff
+                        startPt = portfolio.find(pt => pt.date >= cutoffDate);
+                        if (!startPt) startPt = portfolio[0];
+                      }
+                      if (!startPt || startPt.value <= 0) return null;
+                      const raw = (endVal / startPt.value - 1) * 100;
+                      if (p.ann) {
+                        const years = (endDate - new Date(startPt.date + "T12:00:00")) / (365.25 * 86400000);
+                        return years > 1 ? (Math.pow(endVal / startPt.value, 1 / years) - 1) * 100 : raw;
+                      }
+                      return raw;
+                    };
+
+                    // Get benchmark returns for same periods
+                    const getBmReturn = (sym, p) => {
+                      const bmPrices = benchmarks[sym];
+                      if (!bmPrices) return null;
+                      const prices = Object.entries(bmPrices).sort((a, b) => a[0].localeCompare(b[0]));
+                      if (!prices.length) return null;
+                      const lastPrice = prices[prices.length - 1][1];
+                      const lastDate = new Date(prices[prices.length - 1][0] + "T12:00:00");
+                      let startPrice;
+                      if (p.ytd) {
+                        const yearEnd = `${now.getFullYear() - 1}-12-31`;
+                        const found = [...prices].reverse().find(([d]) => d <= yearEnd);
+                        startPrice = found ? found[1] : null;
+                      } else if (p.all) {
+                        startPrice = prices[0][1];
+                      } else {
+                        const cutoffDate = new Date(lastDate.getTime() - p.days * 86400000).toISOString().slice(0, 10);
+                        const found = prices.find(([d]) => d >= cutoffDate);
+                        startPrice = found ? found[1] : prices[0][1];
+                      }
+                      if (!startPrice || startPrice <= 0) return null;
+                      const raw = (lastPrice / startPrice - 1) * 100;
+                      if (p.ann) {
+                        const years = (lastDate - new Date((p.all ? prices[0][0] : new Date(lastDate.getTime() - p.days * 86400000).toISOString().slice(0, 10)) + "T12:00:00")) / (365.25 * 86400000);
+                        return years > 1 ? (Math.pow(lastPrice / startPrice, 1 / years) - 1) * 100 : raw;
+                      }
+                      return raw;
+                    };
+
+                    // Personal Return (IRR) — money-weighted return
+                    const cashFlows = perfData.cashFlows || [];
+                    let personalReturn = null;
+                    if (cashFlows.length > 0) {
+                      // Simple XIRR approximation using Newton's method
+                      const flows = cashFlows.map(cf => ({
+                        amount: cf.amount,
+                        days: (endDate - new Date(cf.date + "T12:00:00")) / 86400000,
+                      }));
+                      // Add terminal value as final cash flow (positive = inflow)
+                      flows.push({ amount: endVal, days: 0 });
+
+                      // Newton's method for XIRR
+                      let rate = 0.10; // Initial guess 10%
+                      for (let iter = 0; iter < 100; iter++) {
+                        let npv = 0, dnpv = 0;
+                        for (const f of flows) {
+                          const t = f.days / 365.25;
+                          const disc = Math.pow(1 + rate, t);
+                          npv += f.amount / disc;
+                          dnpv -= t * f.amount / (disc * (1 + rate));
+                        }
+                        if (Math.abs(dnpv) < 1e-10) break;
+                        const newRate = rate - npv / dnpv;
+                        if (Math.abs(newRate - rate) < 1e-8) { rate = newRate; break; }
+                        rate = newRate;
+                        // Clamp to prevent divergence
+                        if (rate < -0.99) rate = -0.99;
+                        if (rate > 10) rate = 10;
+                      }
+                      personalReturn = rate * 100;
+                    }
+
+                    const fmtPct = (v) => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+                    const pctColor = (v) => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
+                    const activeBms = Object.keys(perfBmToggles).filter(s => perfBmToggles[s]);
+
+                    return (
+                      <div style={{ marginTop: 28 }}>
+                        <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 14 }}>Trailing Total Returns</div>
+                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                          <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                              <thead>
+                                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                                  <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: C.t3, fontSize: 11 }}>Return</th>
+                                  {trailingPeriods.map(p => (
+                                    <th key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: C.t4, fontSize: 11, whiteSpace: "nowrap" }}>
+                                      {p.label}{p.ann ? " (Ann.)" : ""}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                                  <td style={{ padding: "10px 14px", fontWeight: 700, color: C.accent, fontSize: 12 }}>Total</td>
+                                  {trailingPeriods.map(p => {
+                                    const v = getReturn(p);
+                                    return <td key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{fmtPct(v)}</td>;
+                                  })}
+                                </tr>
+                                {personalReturn != null && (
+                                  <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                                    <td style={{ padding: "10px 14px", fontWeight: 700, color: C.t2, fontSize: 12 }}>Personal (IRR)</td>
+                                    <td colSpan={trailingPeriods.length} style={{ padding: "10px 10px", textAlign: "center", fontWeight: 700, color: pctColor(personalReturn), fontSize: 13 }}>
+                                      {fmtPct(personalReturn)} annualized since inception
+                                    </td>
+                                  </tr>
+                                )}
+                                {activeBms.map(sym => (
+                                  <tr key={sym} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                    <td style={{ padding: "10px 14px", fontWeight: 600, color: bmColors[sym], fontSize: 12 }}>{sym}</td>
+                                    {trailingPeriods.map(p => {
+                                      const v = getBmReturn(sym, p);
+                                      return <td key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: pctColor(v) }}>{fmtPct(v)}</td>;
+                                    })}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* ── Annual Return History ── */}
+                        {(() => {
+                          const annReturns = perfData.annualReturns || {};
+                          const bmAnnReturns = perfData.bmAnnualReturns || {};
+                          const years = Object.keys(annReturns).sort();
+                          if (!years.length) return null;
+
+                          return (
+                            <div style={{ marginTop: 28 }}>
+                              <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 14 }}>Annual Return History</div>
+                              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                                <div style={{ overflowX: "auto" }}>
+                                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                                    <thead>
+                                      <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                                        <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: C.t3, fontSize: 11, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>Return %</th>
+                                        {years.map(yr => (
+                                          <th key={yr} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: C.t4, fontSize: 11 }}>{yr}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                                        <td style={{ padding: "10px 14px", fontWeight: 700, color: C.accent, fontSize: 12, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>Dividend</td>
+                                        {years.map(yr => {
+                                          const v = annReturns[yr];
+                                          return <td key={yr} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{v != null ? v.toFixed(1) : "—"}</td>;
+                                        })}
+                                      </tr>
+                                      {activeBms.map(sym => (
+                                        <tr key={sym} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                          <td style={{ padding: "10px 14px", fontWeight: 600, color: bmColors[sym], fontSize: 12, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>{sym}</td>
+                                          {years.map(yr => {
+                                            const v = (bmAnnReturns[sym] || {})[yr];
+                                            return <td key={yr} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: pctColor(v) }}>{v != null ? v.toFixed(1) : "—"}</td>;
+                                          })}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
                 </>
               );
             })()}

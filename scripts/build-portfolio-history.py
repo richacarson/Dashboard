@@ -460,6 +460,68 @@ def main():
     for ticker, info in fresh_holdings.items():
         holdings_map[ticker] = info["shares"]
 
+    # Cash flows for Personal Return (IRR) calculation
+    # Include initial deposit as first cash flow, then all subsequent deposits/withdrawals
+    cash_flows = [{"date": start_date.strftime("%Y-%m-%d"), "amount": -100000}]  # negative = outflow (investment)
+    initial_skipped = False
+    for ctx in cash_transactions:
+        if not initial_skipped and ctx["type"] == "DEPOSIT" and abs(ctx["amount"] - 100000) < 0.01:
+            initial_skipped = True
+            continue
+        if ctx["type"] == "DEPOSIT":
+            cash_flows.append({"date": ctx["date"], "amount": -ctx["amount"]})  # investment = negative
+        elif ctx["type"] == "WITHDRAWAL":
+            cash_flows.append({"date": ctx["date"], "amount": ctx["amount"]})  # withdrawal = positive
+
+    # Annual return history by year
+    annual_returns = {}
+    if history and len(history) > 52:
+        # Group data points by year
+        by_year = {}
+        for h in history:
+            yr = h["date"][:4]
+            if yr not in by_year:
+                by_year[yr] = []
+            by_year[yr].append(h)
+        years_sorted = sorted(by_year.keys())
+        for i, yr in enumerate(years_sorted):
+            pts = by_year[yr]
+            if i == 0:
+                # First year: start from first data point
+                start_v = pts[0]["value"]
+            else:
+                # Use last data point of previous year as start
+                prev_yr = years_sorted[i - 1]
+                start_v = by_year[prev_yr][-1]["value"]
+            end_v = pts[-1]["value"]
+            if start_v > 0:
+                annual_returns[yr] = round(((end_v / start_v) - 1) * 100, 2)
+
+    # Benchmark annual returns
+    bm_annual = {}
+    for sym, bm_points in benchmarks.items():
+        if not bm_points:
+            continue
+        bm_by_year = {}
+        for bp in bm_points:
+            yr = bp["date"][:4]
+            if yr not in bm_by_year:
+                bm_by_year[yr] = []
+            bm_by_year[yr].append(bp)
+        bm_ann = {}
+        bm_years = sorted(bm_by_year.keys())
+        for i, yr in enumerate(bm_years):
+            pts = bm_by_year[yr]
+            if i == 0:
+                start_v = pts[0]["close"]
+            else:
+                prev_yr = bm_years[i - 1]
+                start_v = bm_by_year[prev_yr][-1]["close"]
+            end_v = pts[-1]["close"]
+            if start_v > 0:
+                bm_ann[yr] = round(((end_v / start_v) - 1) * 100, 2)
+        bm_annual[sym] = bm_ann
+
     output = {
         "sleeve": sleeve_name,
         "generated": datetime.now().isoformat(),
@@ -470,6 +532,9 @@ def main():
         "benchmarks": benchmarks,
         "holdings": holdings_map,
         "cash": live_cash,
+        "cash_flows": cash_flows,
+        "annual_returns": annual_returns,
+        "bm_annual_returns": bm_annual,
     }
 
     out_file = f"portfolio-history-{sleeve_name}.json"
