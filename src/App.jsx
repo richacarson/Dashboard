@@ -2001,12 +2001,11 @@ Instructions:
         <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
           <StockLogo symbol={s} size={34} />
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{s}</div>
-          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{shortName}</div>
+        <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</div>
+          <div style={{ fontSize: 11, color: C.t4, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortName}</div>
         </div>
-        <div style={{ flex: 1 }} />
-        <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums", minWidth: 80, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
+        <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginLeft: "auto", marginRight: 14, fontVariantNumeric: "tabular-nums", width: 90, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
         <div data-ticker-chg={s} style={{
           padding: "6px 0", borderRadius: 6, width: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
@@ -2116,7 +2115,7 @@ Instructions:
               })}
             </div>
             {(() => {
-              const sortMode = sleeveSort[k] || "chgDn";
+              const sortMode = sleeveSort[k] || "alpha";
               const sorted = [...sleeve.symbols].sort((a, b) => {
                 if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
                 if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
