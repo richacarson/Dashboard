@@ -1863,11 +1863,18 @@ Instructions:
         } catch { return {}; }
       };
 
-      const [bm1D, bm1W, bm1M] = await Promise.all([
+      const [bm1DRaw, bm1W, bm1M] = await Promise.all([
         fetchBmBars("1Min", d1Start),
         fetchBmBars("30Min", d7Start),
         fetchBmBars("1Day", d30Start),
       ]);
+
+      // Filter benchmark 1D bars to same trading day as portfolio
+      const lastPortDate = pts1D.length ? pts1D[pts1D.length - 1].date.slice(0, 10) : null;
+      const bm1D = {};
+      for (const [sym, bars] of Object.entries(bm1DRaw)) {
+        bm1D[sym] = lastPortDate ? bars.filter(b => b.date.slice(0, 10) === lastPortDate) : bars;
+      }
 
       setIntradayBenchmarks({ "1D": bm1D, "1W": bm1W, "1M": bm1M });
     };
@@ -3559,34 +3566,13 @@ Instructions:
                 }
               };
 
-              // Summary stats
+              // Summary stats — use chart's normalized values so cards always match the chart
               const startVal = filtered[0].value;
               const endVal = isIntraday
                 ? (liveValue ? liveValue.value : portfolio[portfolio.length - 1].value)
                 : filtered[filtered.length - 1].value;
-              // For intraday, compute value-weighted change from dividend sleeve (matches home page)
-              let totalReturn;
-              let dollarChange;
-              if (isIntraday) {
-                const divSyms = (sleeves.dividend || DEFAULT_SLEEVES.dividend).symbols;
-                const holdings = perfData?.holdings;
-                let totalVal = 0, weightedChgSum = 0;
-                for (const sym of divSyms) {
-                  const q = quotes[sym], b = bars[sym];
-                  const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
-                  const sh = holdings?.[sym];
-                  if (c !== null && q && sh) {
-                    const mv = sh * q.p;
-                    totalVal += mv;
-                    weightedChgSum += mv * c;
-                  }
-                }
-                totalReturn = totalVal > 0 ? weightedChgSum / totalVal : 0;
-                dollarChange = endVal - startVal;
-              } else {
-                totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
-                dollarChange = endVal - startVal;
-              }
+              const totalReturn = portNorm[portNorm.length - 1].val;
+              const dollarChange = endVal - startVal;
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
               const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
 
