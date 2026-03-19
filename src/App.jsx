@@ -2054,14 +2054,6 @@ Instructions:
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {lastUp && <span data-last-updated style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-          <button onClick={() => { fetchData(true); fetchNews(); }} disabled={loading} style={{
-            width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
-            background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: loading ? "spin 1s linear infinite" : "none" }}>
-              <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-            </svg>
-          </button>
         </div>
       </div>
       )}
@@ -2078,15 +2070,6 @@ Instructions:
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
-            <button onClick={() => { fetchData(true); fetchNews(); }} disabled={loading} style={{
-              padding: "8px 16px", display: "flex", alignItems: "center", gap: 8,
-              background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: loading ? "spin 1s linear infinite" : "none" }}>
-                <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-              </svg>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>Refresh</span>
-            </button>
           </div>
         </div>
       )}
