@@ -3422,8 +3422,15 @@ Instructions:
               }
               if (!filtered.length) return null;
 
-              // Normalize portfolio to % change from start (base 0)
-              const baseVal = filtered[0].value;
+              // For intraday views, use previous daily close as baseline (matches summary cards)
+              // For non-intraday, use first filtered point
+              let baseVal;
+              if (isIntraday) {
+                const dailyPrev = portfolio[portfolio.length - (perfRange === "1D" ? 2 : perfRange === "1W" ? 6 : 22)];
+                baseVal = (dailyPrev || portfolio[portfolio.length - 2] || portfolio[0]).value;
+              } else {
+                baseVal = filtered[0].value;
+              }
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
@@ -3435,9 +3442,16 @@ Instructions:
                 const portStartDate = filtered[0].date;
                 Object.entries(ibm).forEach(([sym, pts]) => {
                   if (!perfBmToggles[sym] || !pts.length) return;
-                  // Use first intraday bar as base so all lines start at 0%
-                  let basePrice = pts[0].close;
-                  if (!basePrice) return;
+                  // Use previous close from daily benchmark data as base (matches portfolio baseline)
+                  const dailyPrices = benchmarks[sym] ? Object.entries(benchmarks[sym]).sort((a,b) => a[0].localeCompare(b[0])) : [];
+                  let basePrice = null;
+                  // Find the last daily close before the intraday start
+                  const intradayStartDate = filtered[0].date.slice(0, 10);
+                  for (let i = dailyPrices.length - 1; i >= 0; i--) {
+                    if (dailyPrices[i][0] < intradayStartDate) { basePrice = dailyPrices[i][1]; break; }
+                  }
+                  // Fallback to first intraday bar if no daily data
+                  if (!basePrice) basePrice = pts[0].close;
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
                   const bmPoints = [];
@@ -3560,19 +3574,11 @@ Instructions:
                 }
               };
 
-              // Summary stats
-              // For intraday views, use daily portfolio data for accurate start/end values
-              // (intraday bars may be incomplete at market open)
-              let startVal, endVal;
-              if (isIntraday) {
-                // Previous close from daily data as baseline
-                const dailyPrev = portfolio[portfolio.length - (perfRange === "1D" ? 2 : perfRange === "1W" ? 6 : 22)];
-                startVal = (dailyPrev || portfolio[portfolio.length - 2] || portfolio[0]).value;
-                endVal = liveValue ? liveValue.value : portfolio[portfolio.length - 1].value;
-              } else {
-                startVal = filtered[0].value;
-                endVal = filtered[filtered.length - 1].value;
-              }
+              // Summary stats — reuse baseVal (previous close for intraday, first filtered for daily)
+              const startVal = baseVal;
+              const endVal = isIntraday
+                ? (liveValue ? liveValue.value : portfolio[portfolio.length - 1].value)
+                : filtered[filtered.length - 1].value;
               const totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
               const dollarChange = endVal - startVal;
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
