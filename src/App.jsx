@@ -2003,11 +2003,11 @@ Instructions:
         <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
           <StockLogo symbol={s} size={34} />
         </div>
-        <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: "hidden", marginRight: 8 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</div>
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortName}</div>
         </div>
-        <div data-ticker-price={s} style={{ fontSize: isDesktop ? 15 : 13, fontWeight: 600, color: C.t2, marginLeft: "auto", marginRight: isDesktop ? 14 : 8, fontVariantNumeric: "tabular-nums", width: isDesktop ? 90 : 72, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
+        <div data-ticker-price={s} style={{ fontSize: isDesktop ? 15 : 13, fontWeight: 600, color: C.t2, marginRight: isDesktop ? 14 : 8, fontVariantNumeric: "tabular-nums", minWidth: isDesktop ? 70 : 58, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
         <div data-ticker-chg={s} style={{
           padding: "6px 0", borderRadius: 6, width: isDesktop ? 80 : 64, textAlign: "center",
           fontSize: isDesktop ? 14 : 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
