@@ -3897,7 +3897,7 @@ Instructions:
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
                     <div style={{ display: "flex", gap: 4 }}>
-                      {["1D", "1W", "1M", "3M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
+                      {["3M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
                         <button key={r} onClick={() => setPerfRange(r)} style={{
                           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                           border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
