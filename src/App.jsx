@@ -40,6 +40,8 @@ const BENCHMARKS = [
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
+const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
+const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
@@ -970,7 +972,7 @@ Instructions:
     if (!apiKey || !apiSecret) return;
     if (showLoading) setLoading(true);
     try {
-      const allSyms = [...ALL, ...BM_SYMS];
+      const allSyms = [...ALL, ...IEX_BM];
       const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${allSyms.join(",")}&feed=iex`, { headers: hdrs });
       if (!r.ok) throw new Error("fail");
       const d = await r.json();
@@ -980,10 +982,10 @@ Instructions:
         if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
       }
-      // Non-IEX benchmarks: fetch prevClose from Finnhub on first load (WS handles live prices)
-      const missingBM = BM_SYMS.filter(s => !nq[s]);
-      if (missingBM.length > 0 && FH) {
-        await Promise.all(missingBM.map(async (s) => {
+      // Non-IEX benchmarks: use Finnhub on first load, then rely on poller + cached refs
+      const isFirstFetch = Object.keys(quotesRef.current).length === 0;
+      if (isFirstFetch && FH) {
+        await Promise.all(NON_IEX_BM.map(async (s) => {
           try {
             const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${FH}`);
             if (r.ok) {
@@ -994,8 +996,8 @@ Instructions:
           } catch {}
         }));
       }
-      // Also fill from cached refs if still missing
-      for (const s of missingBM) {
+      // Fill from cached refs (kept fresh by Finnhub poller)
+      for (const s of NON_IEX_BM) {
         if (!nq[s] && quotesRef.current[s]) nq[s] = quotesRef.current[s];
         if (!nb[s]?.pc && barsRef.current[s]?.pc) nb[s] = { ...nb[s], ...barsRef.current[s] };
       }
@@ -1558,7 +1560,7 @@ Instructions:
         const msgs = JSON.parse(evt.data);
         for (const msg of msgs) {
           if (msg.T === "success" && msg.msg === "authenticated") {
-            ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...BM_SYMS] }));
+            ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...IEX_BM] }));
           }
           if (msg.T === "t" && msg.S && msg.p) {
             // All symbols (portfolio + benchmarks) in same refs
@@ -1628,10 +1630,10 @@ Instructions:
   }, [apiKey, apiSecret]);
 
   // Finnhub REST polling for non-IEX benchmarks (every 5s)
-  const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
   const fhTimerRef = useRef(null);
   const pollFinnhubBenchmarks = useCallback(async () => {
     if (!FH) return;
+    const batchQ = {}, batchB = {};
     for (const sym of NON_IEX_BM) {
       try {
         const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FH}`);
@@ -1641,8 +1643,14 @@ Instructions:
         const price = q.c;
         const pc = q.pc || barsRef.current[sym]?.pc;
         // Update refs
-        quotesRef.current[sym] = { p: price, t: new Date().toISOString() };
-        if (pc) barsRef.current[sym] = { ...barsRef.current[sym], pc };
+        const quoteVal = { p: price, t: new Date().toISOString() };
+        quotesRef.current[sym] = quoteVal;
+        batchQ[sym] = quoteVal;
+        if (pc) {
+          const barVal = { ...barsRef.current[sym], pc };
+          barsRef.current[sym] = barVal;
+          batchB[sym] = barVal;
+        }
         // DOM updates
         const bmEl = document.querySelector(`[data-bm-price="${sym}"]`);
         if (bmEl) bmEl.textContent = price.toFixed(2);
@@ -1656,6 +1664,9 @@ Instructions:
         }
       } catch {}
     }
+    // Sync React state so re-renders don't revert to stale values
+    if (Object.keys(batchQ).length) setBmQuotes(prev => ({ ...prev, ...batchQ }));
+    if (Object.keys(batchB).length) setBmBars(prev => ({ ...prev, ...batchB }));
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
