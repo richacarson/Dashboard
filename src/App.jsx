@@ -871,7 +871,7 @@ Instructions:
   const [peerSymbol, setPeerSymbol] = useState(null); // for peer comparison overlay
   const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers"
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
-  const [homeView, setHomeView] = useState("holdings"); // "holdings" | "lists"
+  const [homeView, setHomeView] = useState("lists"); // "holdings" | "lists"
   const [holdingsSort, setHoldingsSort] = useState({ col: "weight", dir: "desc" }); // sortable holdings table
   const [showTxModal, setShowTxModal] = useState(false); // add transaction modal
   const [txForm, setTxForm] = useState({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) });
@@ -2325,7 +2325,7 @@ Instructions:
             )}
             {/* Holdings / Lists toggle */}
             <div style={{ display: "flex", gap: 6, marginTop: 16, marginBottom: 4 }}>
-              {[{ v: "holdings", l: "Holdings" }, { v: "lists", l: "Lists" }].map(({ v, l }) => (
+              {[{ v: "lists", l: "Lists" }, { v: "holdings", l: "Holdings" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setHomeView(v)} style={{
                   flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${homeView === v ? C.borderActive : C.border}`,
                   background: homeView === v ? C.accentSoft : "transparent",
