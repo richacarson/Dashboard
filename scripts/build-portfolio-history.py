@@ -406,8 +406,8 @@ def main():
     print()
 
     # Benchmark data from Yahoo Finance
-    benchmark_syms = ["SPY", "QQQ", "DIA"]
-    print("Fetching benchmark data (SPY, QQQ, DIA)...")
+    benchmark_syms = ["SPY", "QQQ", "DIA", "IWS", "DVY"]
+    print("Fetching benchmark data (SPY, QQQ, DIA, IWS, DVY)...")
     bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
 
     fridays = get_all_fridays(start_date - timedelta(days=7), end_date)
