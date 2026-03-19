@@ -2346,14 +2346,19 @@ Instructions:
                     const stocksVal = liveValue ? liveValue.stocks : 0;
                     const cashVal = liveValue ? liveValue.cash : (perfData.cash || 0);
                     const holdCount = liveValue ? liveValue.holdings : Object.keys(perfData.holdings).length;
-                    const totalCostBasis = Object.entries(perfData.holdings).reduce((sum, [t]) => sum + (perfData.costBasis[t]?.total_cost || 0), 0);
-                    const totalGain = stocksVal - totalCostBasis;
-                    const totalGainPct = totalCostBasis > 0 ? (totalGain / totalCostBasis) * 100 : 0;
+                    const netDeposits = (perfData.transactions || []).reduce((sum, tx) => {
+                      if (tx.type === "DEPOSIT") return sum + (tx.amount || 0);
+                      if (tx.type === "WITHDRAWAL") return sum - (tx.amount || 0);
+                      return sum;
+                    }, 0);
+                    const netInvested = (perfData.startBalance || 0) + netDeposits;
+                    const totalGain = totalVal - netInvested;
+                    const totalGainPct = netInvested > 0 ? (totalGain / netInvested) * 100 : 0;
                     return [
                       { label: "Portfolio Value", value: `$${totalVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
                       { label: "Cash", value: `$${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
-                      { label: "Total Gain/Loss", value: `${totalGain >= 0 ? "+$" : "-$"}${Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalGain >= 0 ? C.up : C.dn },
-                      { label: "Gain %", value: `${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(1)}%`, color: totalGainPct >= 0 ? C.up : C.dn },
+                      { label: "All-Time Gain/Loss", value: `${totalGain >= 0 ? "+$" : "-$"}${Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalGain >= 0 ? C.up : C.dn },
+                      { label: "All-Time %", value: `${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(1)}%`, color: totalGainPct >= 0 ? C.up : C.dn },
                     ];
                   })().map((s, i) => (
                     <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
