@@ -3408,15 +3408,21 @@ Instructions:
               const baseVal = filtered[0].value;
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
-              // Normalize benchmarks to base 100 from same start date
+              // Normalize benchmarks to % change from portfolio start (base 0)
               const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
                 const ibm = intradayBenchmarks[perfRange] || {};
+                const portStartDate = filtered[0].date;
                 Object.entries(ibm).forEach(([sym, pts]) => {
                   if (!perfBmToggles[sym] || !pts.length) return;
-                  const basePrice = pts[0].close;
+                  // Find benchmark price at or just before portfolio start
+                  let basePrice = pts[0].close;
+                  for (const p of pts) {
+                    if (p.date <= portStartDate) basePrice = p.close;
+                    else break;
+                  }
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
                   const bmPoints = [];
@@ -3466,7 +3472,7 @@ Instructions:
               const rawMin = Math.min(...allVals);
               const rawMax = Math.max(...allVals);
               const rawSpan = rawMax - rawMin || 1;
-              const step = rawSpan <= 2 ? 0.5 : rawSpan <= 5 ? 1 : rawSpan <= 20 ? 2 : rawSpan <= 50 ? 5 : 10;
+              const step = rawSpan <= 2 ? 0.5 : rawSpan <= 5 ? 1 : rawSpan <= 20 ? 2 : rawSpan <= 50 ? 5 : rawSpan <= 100 ? 10 : rawSpan <= 200 ? 20 : rawSpan <= 500 ? 50 : 100;
               const yMin = Math.floor(rawMin / step) * step;
               const yMax = Math.ceil(rawMax / step) * step;
               const yRange = yMax - yMin || 1;
@@ -3501,7 +3507,7 @@ Instructions:
 
               // Grid lines
               const yTicks = [];
-              const tickStep = yRange <= 2 ? 0.5 : yRange <= 5 ? 1 : yRange <= 20 ? 2 : yRange <= 50 ? 5 : 10;
+              const tickStep = yRange <= 2 ? 0.5 : yRange <= 5 ? 1 : yRange <= 20 ? 2 : yRange <= 50 ? 5 : yRange <= 100 ? 10 : yRange <= 200 ? 20 : yRange <= 500 ? 50 : 100;
               for (let v = yMin; v <= yMax; v += tickStep) yTicks.push(Math.round(v * 100) / 100);
 
               // X axis date labels
