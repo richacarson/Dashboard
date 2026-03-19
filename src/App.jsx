@@ -2001,13 +2001,13 @@ Instructions:
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{shortName}</div>
         </div>
         <div style={{ flex: 1 }} />
-        {price && <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums" }}>${price.toFixed(2)}</div>}
+        <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums", minWidth: 75, textAlign: "right" }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
         <div data-ticker-chg={s} style={{
-          padding: "6px 12px", borderRadius: 6, minWidth: 80, textAlign: "center",
+          padding: "6px 0", borderRadius: 6, width: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
           color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
           border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
-          transition: "background 0.6s ease-out",
+          transition: "background 0.6s ease-out", flexShrink: 0,
         }}>{pct(c)}</div>
       </div>
     );
