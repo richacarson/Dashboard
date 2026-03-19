@@ -879,7 +879,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
-  const [perfBmToggles, setPerfBmToggles] = useState({ SPY: true, QQQ: true, DIA: false });
+  const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, QQQ: false, DIA: false });
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -1654,7 +1654,7 @@ Instructions:
       if (!portfolio.length) { setPerfLoading(false); return; }
 
       // Use pre-computed benchmarks from JSON if available, otherwise fetch live
-      const bmSyms = ["SPY", "QQQ", "DIA"];
+      const bmSyms = ["IWS", "DVY", "SPY", "QQQ", "DIA"];
       const startDate = portfolio[0].date;
       const jsonBm = pJson.benchmarks || {};
       const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
@@ -3236,7 +3236,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: (p.value / baseVal) * 100, raw: p.value }));
 
               // Normalize benchmarks to base 100 from same start date
-              const bmColors = { SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
+              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
               const bmNorm = {};
               Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                 if (!perfBmToggles[sym]) return;
@@ -3526,7 +3526,7 @@ Instructions:
                     {Object.entries(bmColors).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 20, height: 2, borderRadius: 2, background: color, opacity: 0.7 }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{sym === "SPY" ? "S&P 500" : sym === "QQQ" ? "Nasdaq 100" : "Dow Jones"}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", QQQ: "Nasdaq 100", DIA: "Dow Jones" }[sym]}</span>
                       </div>
                     ))}
                   </div>
