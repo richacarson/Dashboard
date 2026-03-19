@@ -253,7 +253,7 @@ function tryLoadImage(url) {
     img.src = url;
   });
 }
-const StockLogo = React.memo(function StockLogo({ symbol, size = 32 }) {
+const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) {
   const [src, setSrc] = useState(logoCache[symbol] || null);
   const [fallback, setFallback] = useState(false);
   const domain = LOGO_DOMAINS[symbol];
@@ -262,6 +262,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32 }) {
     let cancelled = false;
     setSrc(null); setFallback(false);
     const sources = [];
+    if (logoUrl) sources.push(logoUrl);
     if (domain) sources.push(`https://logos-api.apistemic.com/domain:${domain}`);
     if (domain) sources.push(`https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`);
     (async () => {
@@ -273,7 +274,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32 }) {
       if (!cancelled) setFallback(true);
     })();
     return () => { cancelled = true; };
-  }, [symbol, domain]);
+  }, [symbol, domain, logoUrl]);
   if (fallback || (!src && !domain)) {
     const colors = ["#4A6B25","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
     const bg = colors[symbol.charCodeAt(0) % colors.length];
@@ -1268,11 +1269,12 @@ Instructions:
         const d = await metR.json();
         const m = d?.metric || {};
         // Profile: industry from Finnhub
-        let profileIndustry = null, profileSector = null, profileName = null;
+        let profileIndustry = null, profileSector = null, profileName = null, profileLogo = null;
         if (profR?.ok) {
           const prof = await profR.json();
           profileIndustry = prof?.finnhubIndustry || null;
           profileName = prof?.name || null;
+          profileLogo = prof?.logo || null;
           // Map Finnhub industries to broader sectors
           const ind = (profileIndustry || "").toLowerCase();
           if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) profileSector = "Technology";
@@ -1330,6 +1332,7 @@ Instructions:
           companyName: profileName,
           sector: profileSector,
           industry: profileIndustry,
+          logo: profileLogo,
           avgVol: m["3MonthAverageTradingVolume"] ? m["3MonthAverageTradingVolume"] * 1e6 : null,
           peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null,
           peFwd: m.peAnnual ?? null,
@@ -2009,7 +2012,7 @@ Instructions:
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer", overflow: "hidden" }}>
         <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
-          <StockLogo symbol={s} size={34} />
+          <StockLogo symbol={s} size={34} logoUrl={fundamentals[s]?.logo} />
         </div>
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden", marginRight: 6 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</div>
@@ -3105,7 +3108,7 @@ Instructions:
                           background: C.card, cursor: "pointer", fontFamily: "inherit",
                           display: "flex", alignItems: "center", gap: 8,
                         }}>
-                          <StockLogo symbol={s} size={22} />
+                          <StockLogo symbol={s} size={22} logoUrl={fundamentals[s]?.logo} />
                           <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{s}</span>
                         </button>
                       ))}
@@ -3158,7 +3161,7 @@ Instructions:
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <StockLogo symbol={peerSymbol} size={32} />
+                      <StockLogo symbol={peerSymbol} size={32} logoUrl={fundamentals[peerSymbol]?.logo} />
                       <div>
                         <div style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>{peerSymbol}</div>
                         <div style={{ fontSize: 12, color: C.t4 }}>{d.industry || "No industry"} · vs {peers.length} peer{peers.length !== 1 ? "s" : ""}</div>
