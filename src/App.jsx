@@ -2523,23 +2523,27 @@ Instructions:
                             <div key={r.ticker} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
                               <div onClick={() => setExpandedHolding(prev => prev === r.ticker ? null : r.ticker)} style={{ cursor: "pointer" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                  <span onClick={e => { e.stopPropagation(); openStock(r.ticker); }} style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{r.ticker}</span>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span onClick={e => { e.stopPropagation(); openStock(r.ticker); }} style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{r.ticker}</span>
+                                    <span data-holding-weight={r.ticker} style={{ fontSize: 11, fontWeight: 600, color: C.t4, background: C.bg, padding: "1px 6px", borderRadius: 4 }}>{r.weight.toFixed(1)}%</span>
+                                  </div>
                                   <span data-holding-gainpct={r.ticker} style={{ fontSize: 13, fontWeight: 700, color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</span>
                                 </div>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                   <span style={{ fontSize: 12, color: C.t4 }}>{r.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })} × <span data-holding-price={r.ticker}>${r.price.toFixed(2)}</span> = <span data-holding-mktval={r.ticker} style={{ color: C.t2, fontWeight: 600 }}>${r.mktValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
                                   <span data-holding-gain={r.ticker} style={{ fontSize: 12, fontWeight: 600, color: r.gainLoss >= 0 ? C.up : C.dn }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                                 </div>
+                                <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+                                  <div><span style={{ fontSize: 10, color: C.t4 }}>Day</span><div data-holding-daypct={r.ticker} style={{ fontSize: 12, fontWeight: 600, color: r.dayChgPct >= 0 ? C.up : r.dayChgPct < 0 ? C.dn : C.t3 }}>{r.dayChgPct >= 0 ? "+" : ""}{r.dayChgPct.toFixed(2)}%</div></div>
+                                  <div><span style={{ fontSize: 10, color: C.t4 }}>Avg Cost</span><div style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>${r.avgCost.toFixed(2)}</div></div>
+                                  <div><span style={{ fontSize: 10, color: C.t4 }}>Cost Basis</span><div style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
+                                </div>
                               </div>
                               {isExpanded && (
                                 <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, animation: "fadeIn 0.15s ease" }}>
                                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px", fontSize: 12 }}>
                                     <div><span style={{ color: C.t4 }}>Name</span><div style={{ color: C.t2, fontWeight: 500 }}>{r.name || "—"}</div></div>
-                                    <div><span style={{ color: C.t4 }}>Weight</span><div data-holding-weight={r.ticker} style={{ color: C.t1, fontWeight: 600 }}>{r.weight.toFixed(1)}%</div></div>
                                     <div><span style={{ color: C.t4 }}>Day Chg</span><div data-holding-daychg={r.ticker} style={{ color: r.dayChg >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.dayChg >= 0 ? "+" : ""}{r.dayChg.toFixed(2)}</div></div>
-                                    <div><span style={{ color: C.t4 }}>Day %</span><div data-holding-daypct={r.ticker} style={{ color: r.dayChgPct >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.dayChgPct >= 0 ? "+" : ""}{r.dayChgPct.toFixed(2)}%</div></div>
-                                    <div><span style={{ color: C.t4 }}>Avg Cost</span><div style={{ color: C.t3 }}>${r.avgCost.toFixed(2)}</div></div>
-                                    <div><span style={{ color: C.t4 }}>Cost Basis</span><div style={{ color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div></div>
                                   </div>
                                   <button onClick={() => openStock(r.ticker)} style={{ marginTop: 10, width: "100%", padding: "10px 0", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Profile</button>
                                 </div>
@@ -3527,8 +3531,22 @@ Instructions:
                       const dc = dayChg(s);
                       const isExp = expandedMetric === s;
                       const keyMetrics = researchView === "dividend"
-                        ? [{ l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" }, { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn }, { l: "Yield", v: d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" }]
-                        : [{ l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" }, { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn }, { l: "Rev YoY", v: d.revenueYoY != null ? `${d.revenueYoY >= 0 ? "+" : ""}${d.revenueYoY.toFixed(1)}%` : "—", c: (d.revenueYoY||0) >= 0 ? C.up : C.dn }];
+                        ? [
+                          { l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" },
+                          { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn },
+                          { l: "Yield", v: d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
+                          { l: "Payout", v: d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
+                          { l: "ROE", v: d.roe != null ? `${d.roe.toFixed(1)}%` : "—" },
+                          { l: "D/E", v: d.de != null ? d.de.toFixed(2) : "—" },
+                        ]
+                        : [
+                          { l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" },
+                          { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn },
+                          { l: "Rev YoY", v: d.revenueYoY != null ? `${d.revenueYoY >= 0 ? "+" : ""}${d.revenueYoY.toFixed(1)}%` : "—", c: (d.revenueYoY||0) >= 0 ? C.up : C.dn },
+                          { l: "Margin", v: d.profitMargin != null ? `${d.profitMargin.toFixed(1)}%` : "—" },
+                          { l: "ROE", v: d.roe != null ? `${d.roe.toFixed(1)}%` : "—" },
+                          { l: "D/E", v: d.de != null ? d.de.toFixed(2) : "—" },
+                        ];
                       return (
                         <div key={s} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
                           <div onClick={() => setExpandedMetric(prev => prev === s ? null : s)} style={{ cursor: "pointer" }}>
@@ -3542,7 +3560,7 @@ Instructions:
                               </div>
                               <span data-metric-day={s} style={{ fontSize: 13, fontWeight: 700, color: dc > 0 ? C.up : dc < 0 ? C.dn : C.t3 }}>{dc != null ? `${dc >= 0 ? "+" : ""}${dc.toFixed(2)}%` : "—"}</span>
                             </div>
-                            <div style={{ display: "flex", gap: 16 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px 12px" }}>
                               {keyMetrics.map(m => (
                                 <div key={m.l}><span style={{ fontSize: 10, color: C.t4 }}>{m.l}</span><div style={{ fontSize: 12, fontWeight: 600, color: m.c || C.t2 }}>{m.v}</div></div>
                               ))}
