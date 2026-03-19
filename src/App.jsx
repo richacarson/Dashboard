@@ -1823,14 +1823,14 @@ Instructions:
       const d7 = new Date(now); d7.setDate(d7.getDate() - 8);
       const d7Start = d7.toISOString().slice(0, 10) + "T04:00:00Z";
 
-      // 1M: 4Hour bars, last 30 days
+      // 1M: 1Day bars, last 30 days
       const d30 = new Date(now); d30.setDate(d30.getDate() - 32);
-      const d30Start = d30.toISOString().slice(0, 10) + "T04:00:00Z";
+      const d30Start = d30.toISOString().slice(0, 10);
 
       const [pts1DRaw, pts1W, pts1M] = await Promise.all([
         fetchIntraday("1Min", d1Start, "1D"),
         fetchIntraday("30Min", d7Start, "1W"),
-        fetchIntraday("4Hour", d30Start, "1M"),
+        fetchIntraday("1Day", d30Start, "1M"),
       ]);
 
       // For 1D, only keep the most recent trading session
@@ -1866,7 +1866,7 @@ Instructions:
       const [bm1D, bm1W, bm1M] = await Promise.all([
         fetchBmBars("1Min", d1Start),
         fetchBmBars("30Min", d7Start),
-        fetchBmBars("4Hour", d30Start),
+        fetchBmBars("1Day", d30Start),
       ]);
 
       setIntradayBenchmarks({ "1D": bm1D, "1W": bm1W, "1M": bm1M });
@@ -3522,8 +3522,10 @@ Instructions:
                   let label;
                   if (isIntraday && perfRange === "1D") {
                     label = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-                  } else if (isIntraday) {
+                  } else if (isIntraday && perfRange === "1W") {
                     label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+                  } else if (isIntraday) {
+                    label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   } else {
                     label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
                   }
