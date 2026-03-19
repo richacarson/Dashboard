@@ -1999,17 +1999,17 @@ Instructions:
     const shortName = nm;
     return (
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
-        style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer" }}>
+        style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer", overflow: "hidden" }}>
         <div style={{ marginRight: 10, flexShrink: 0, width: 34, height: 34 }}>
           <StockLogo symbol={s} size={34} />
         </div>
-        <div style={{ flex: 1, minWidth: 0, overflow: "hidden", marginRight: 8 }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: "hidden", marginRight: 6 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</div>
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortName}</div>
         </div>
-        <div data-ticker-price={s} style={{ fontSize: isDesktop ? 15 : 13, fontWeight: 600, color: C.t2, marginRight: isDesktop ? 14 : 8, fontVariantNumeric: "tabular-nums", minWidth: isDesktop ? 70 : 58, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
+        <div data-ticker-price={s} style={{ fontSize: isDesktop ? 15 : 13, fontWeight: 600, color: C.t2, marginRight: isDesktop ? 10 : 6, fontVariantNumeric: "tabular-nums", width: isDesktop ? 80 : 62, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
         <div data-ticker-chg={s} style={{
-          padding: "6px 0", borderRadius: 6, width: isDesktop ? 80 : 64, textAlign: "center",
+          padding: "6px 0", borderRadius: 6, width: isDesktop ? 80 : 62, textAlign: "center",
           fontSize: isDesktop ? 14 : 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
           color: c > 0 ? C.up : c < 0 ? C.dn : C.t3,
           border: `1px solid ${c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border}`,
