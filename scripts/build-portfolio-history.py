@@ -4,7 +4,7 @@ IOWN Portfolio History Builder
 Parses transaction data, fetches historical daily prices from Yahoo Finance,
 and outputs portfolio-history.json for the dashboard chart.
 
-Price source: Yahoo Finance close (split-adjusted for holdings, dividend-adjusted for benchmarks)
+Price source: Yahoo Finance close (split-adjusted, matching displayed prices)
 """
 
 import re
@@ -151,15 +151,12 @@ def apply_split_adjustments(prices, split_schedule):
     return prices
 
 
-def fetch_yahoo_prices(tickers, start_date, end_date, use_adjclose=False):
+def fetch_yahoo_prices(tickers, start_date, end_date):
     """
     Fetch daily close prices from Yahoo Finance.
     No API key needed. Returns {ticker: {date_str: close_price}}.
-
-    use_adjclose=False: regular close (split-adjusted only) — use for portfolio
-        holdings where dividends are tracked separately via reinvestment transactions.
-    use_adjclose=True: dividend-adjusted close — use for benchmarks to get total
-        return, matching what Yahoo Finance displays.
+    Uses regular close (split-adjusted, not dividend-adjusted) to match
+    Yahoo Finance's displayed price and YTD return.
     """
     all_prices = {}
     ticker_list = sorted(tickers)
@@ -188,12 +185,9 @@ def fetch_yahoo_prices(tickers, start_date, end_date, use_adjclose=False):
                 if result:
                     r = result[0]
                     timestamps = r.get("timestamp", [])
-                    if use_adjclose:
-                        # Dividend-adjusted close for total return (benchmarks)
-                        adjclose = r.get("indicators", {}).get("adjclose", [{}])[0].get("adjclose", [])
-                    else:
-                        # Regular close for portfolio holdings (dividends tracked separately)
-                        adjclose = r.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+                    # Use regular close (split-adjusted, not dividend-adjusted)
+                    # to match Yahoo Finance's displayed prices
+                    adjclose = r.get("indicators", {}).get("quote", [{}])[0].get("close", [])
 
                     if timestamps and adjclose:
                         all_prices[ticker] = {}
@@ -479,8 +473,8 @@ def main():
 
     # Benchmark data from Yahoo Finance
     benchmark_syms = ["SPY", "DIA", "IWS", "DVY"]
-    print("Fetching benchmark data (SPY, DIA, IWS, DVY) with dividend-adjusted prices...")
-    bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date, use_adjclose=True)
+    print("Fetching benchmark data (SPY, DIA, IWS, DVY)...")
+    bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
 
     benchmarks = {}
     for sym in benchmark_syms:
