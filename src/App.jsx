@@ -36,7 +36,6 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "IWS", name: "IWS" },
   { sym: "SPY", name: "SPY" },
-  { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
@@ -229,7 +228,7 @@ function StockLogo({ symbol, size = 32 }) {
     O:"realtyincome.com",STLD:"steeldynamics.com",VLO:"valero.com",CNX:"cnx.com",
     BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
     SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
-    DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",QQQ:"invesco.com",DIA:"ssga.com",
+    DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
     IBIT:"ishares.com",ETHA:"ishares.com",
     A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
     CL:"colgatepalmolive.com",CWAN:"clearwateranalytics.com",DGX:"questdiagnostics.com",
@@ -872,6 +871,11 @@ Instructions:
   const [peerSymbol, setPeerSymbol] = useState(null); // for peer comparison overlay
   const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers"
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
+  const [homeView, setHomeView] = useState("holdings"); // "holdings" | "lists"
+  const [holdingsSort, setHoldingsSort] = useState({ col: "weight", dir: "desc" }); // sortable holdings table
+  const [showTxModal, setShowTxModal] = useState(false); // add transaction modal
+  const [txForm, setTxForm] = useState({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) });
+  const [showTxHistory, setShowTxHistory] = useState(false); // transaction history panel
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   // Performance tab state
@@ -879,7 +883,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
-  const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, QQQ: false, DIA: false });
+  const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, DIA: false });
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}], "1W": [...], "1M": [...] }
   const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
@@ -1657,7 +1661,7 @@ Instructions:
       if (!portfolio.length) { setPerfLoading(false); return; }
 
       // Use pre-computed benchmarks from JSON if available, otherwise fetch live
-      const bmSyms = ["IWS", "DVY", "SPY", "QQQ", "DIA"];
+      const bmSyms = ["IWS", "DVY", "SPY", "DIA"];
       const startDate = portfolio[0].date;
       const jsonBm = pJson.benchmarks || {};
       const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
@@ -1711,7 +1715,7 @@ Instructions:
         }
       }
 
-      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} });
+      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} });
     } catch (e) {
       console.error("Performance fetch error:", e);
     }
@@ -1846,7 +1850,7 @@ Instructions:
       setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
 
       // Fetch intraday benchmark bars
-      const bmSyms = ["SPY", "QQQ", "DIA", "IWS", "DVY"];
+      const bmSyms = ["SPY", "DIA", "IWS", "DVY"];
       const fetchBmBars = async (timeframe, startDate) => {
         try {
           const url = `${BASE}/v2/stocks/bars?symbols=${bmSyms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
@@ -2319,7 +2323,192 @@ Instructions:
                 {!isDesktop && <div style={{ height: 1, background: C.border }} />}
               </div>
             )}
-            {/* Desktop: 2-column layout for Lists + Right panel */}
+            {/* Holdings / Lists toggle */}
+            <div style={{ display: "flex", gap: 6, marginTop: 16, marginBottom: 4 }}>
+              {[{ v: "holdings", l: "Holdings" }, { v: "lists", l: "Lists" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setHomeView(v)} style={{
+                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${homeView === v ? C.borderActive : C.border}`,
+                  background: homeView === v ? C.accentSoft : "transparent",
+                  color: homeView === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{l}</button>
+              ))}
+            </div>
+
+            {/* ━━━ HOLDINGS VIEW ━━━ */}
+            {homeView === "holdings" && perfData && (
+              <div style={{ animation: "fadeIn 0.2s ease" }}>
+                {/* Portfolio Summary */}
+                <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 12, marginBottom: 16 }}>
+                  {(() => {
+                    const totalVal = liveValue ? liveValue.value : 0;
+                    const stocksVal = liveValue ? liveValue.stocks : 0;
+                    const cashVal = liveValue ? liveValue.cash : (perfData.cash || 0);
+                    const holdCount = liveValue ? liveValue.holdings : Object.keys(perfData.holdings).length;
+                    const totalCostBasis = Object.entries(perfData.holdings).reduce((sum, [t]) => sum + (perfData.costBasis[t]?.total_cost || 0), 0);
+                    const totalGain = stocksVal - totalCostBasis;
+                    const totalGainPct = totalCostBasis > 0 ? (totalGain / totalCostBasis) * 100 : 0;
+                    return [
+                      { label: "Portfolio Value", value: `$${totalVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+                      { label: "Cash", value: `$${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
+                      { label: "Total Gain/Loss", value: `${totalGain >= 0 ? "+$" : "-$"}${Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalGain >= 0 ? C.up : C.dn },
+                      { label: "Gain %", value: `${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(1)}%`, color: totalGainPct >= 0 ? C.up : C.dn },
+                    ];
+                  })().map((s, i) => (
+                    <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{s.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => { setShowTxModal(true); setTxForm({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) }); }} style={{
+                    padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.borderActive}`,
+                    background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>+ Add Transaction</button>
+                  <button onClick={() => setShowTxHistory(!showTxHistory)} style={{
+                    padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.border}`,
+                    background: showTxHistory ? C.accentSoft : "transparent", color: showTxHistory ? C.t1 : C.t3,
+                    fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  }}>{showTxHistory ? "Hide History" : "Transaction History"}</button>
+                </div>
+
+                {/* Transaction History Panel */}
+                {showTxHistory && perfData.transactions && (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, marginBottom: 16, maxHeight: 400, overflow: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                      <thead>
+                        <tr style={{ position: "sticky", top: 0, background: C.card, zIndex: 1 }}>
+                          {["Date", "Type", "Symbol", "Shares", "Price", "Amount"].map(h => (
+                            <th key={h} style={{ padding: "10px 12px", textAlign: h === "Date" || h === "Type" || h === "Symbol" ? "left" : "right", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {perfData.transactions.slice(0, 100).map((tx, i) => {
+                          const isStock = !!tx.ticker;
+                          const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                          return (
+                            <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "8px 12px", color: C.t2 }}>{tx.date}</td>
+                              <td style={{ padding: "8px 12px", color: typeColor, fontWeight: 600 }}>{tx.type}</td>
+                              <td style={{ padding: "8px 12px", color: C.t1, fontWeight: 600 }}>{tx.ticker || "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? tx.shares?.toFixed(4) : "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? `$${tx.price?.toFixed(2)}` : "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Holdings Table */}
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                      <thead>
+                        <tr>
+                          {[
+                            { key: "symbol", label: "Symbol", align: "left" },
+                            { key: "name", label: "Name", align: "left" },
+                            { key: "shares", label: "Shares", align: "right" },
+                            { key: "price", label: "Price", align: "right" },
+                            { key: "dayChg", label: "Day Chg", align: "right" },
+                            { key: "dayChgPct", label: "Day %", align: "right" },
+                            { key: "mktValue", label: "Mkt Value", align: "right" },
+                            { key: "weight", label: "Weight", align: "right" },
+                            { key: "avgCost", label: "Avg Cost", align: "right" },
+                            { key: "costBasis", label: "Cost Basis", align: "right" },
+                            { key: "gainLoss", label: "Gain/Loss", align: "right" },
+                            { key: "gainLossPct", label: "G/L %", align: "right" },
+                          ].map(col => (
+                            <th key={col.key} onClick={() => setHoldingsSort(prev => ({ col: col.key, dir: prev.col === col.key && prev.dir === "desc" ? "asc" : "desc" }))}
+                              style={{
+                                padding: "10px 12px", textAlign: col.align, fontSize: 10, fontWeight: 700,
+                                color: holdingsSort.col === col.key ? C.t1 : C.t4,
+                                textTransform: "uppercase", letterSpacing: 0.5, cursor: "pointer", whiteSpace: "nowrap",
+                                borderBottom: `1px solid ${C.border}`, userSelect: "none",
+                                position: col.key === "symbol" ? "sticky" : "static", left: col.key === "symbol" ? 0 : "auto",
+                                background: C.card, zIndex: col.key === "symbol" ? 2 : 1,
+                              }}>
+                              {col.label} {holdingsSort.col === col.key ? (holdingsSort.dir === "desc" ? "▼" : "▲") : ""}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const totalVal = liveValue ? liveValue.value : 1;
+                          const rows = Object.entries(perfData.holdings).map(([ticker, shares]) => {
+                            const q = quotesRef.current?.[ticker];
+                            const price = q?.p || 0;
+                            const pc = bars[ticker]?.pc || price;
+                            const dayChg = price - pc;
+                            const dayChgPct = pc > 0 ? (dayChg / pc) * 100 : 0;
+                            const mktValue = shares * price;
+                            const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
+                            const cb = perfData.costBasis[ticker] || {};
+                            const avgCost = cb.avg_cost || 0;
+                            const costBasis = cb.total_cost || 0;
+                            const gainLoss = mktValue - costBasis;
+                            const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+                            const name = names(ticker);
+                            return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct };
+                          });
+                          // Sort
+                          const { col: sc, dir: sd } = holdingsSort;
+                          const sortKey = {
+                            symbol: r => r.ticker, name: r => (r.name || "").toLowerCase(), shares: r => r.shares,
+                            price: r => r.price, dayChg: r => r.dayChg, dayChgPct: r => r.dayChgPct,
+                            mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost,
+                            costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct,
+                          }[sc] || (r => r.weight);
+                          rows.sort((a, b) => {
+                            const av = sortKey(a), bv = sortKey(b);
+                            if (typeof av === "string") return sd === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+                            return sd === "asc" ? av - bv : bv - av;
+                          });
+                          return rows.map(r => (
+                            <tr key={r.ticker} {...stockContextHandlers(r.ticker)} style={{ cursor: "pointer", borderBottom: `1px solid ${C.border}` }}
+                              onMouseEnter={e => e.currentTarget.style.background = C.hover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                              <td style={{ padding: "10px 12px", fontWeight: 700, color: C.t1, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>{r.ticker}</td>
+                              <td style={{ padding: "10px 12px", color: C.t2, whiteSpace: "nowrap", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{r.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                              <td data-holding-price={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.price.toFixed(2)}</td>
+                              <td data-holding-daychg={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: r.dayChg >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.dayChg >= 0 ? "+" : ""}{r.dayChg.toFixed(2)}</td>
+                              <td data-holding-daypct={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: r.dayChgPct >= 0 ? C.up : C.dn }}>{r.dayChgPct >= 0 ? "+" : ""}{r.dayChgPct.toFixed(2)}%</td>
+                              <td data-holding-mktval={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.mktValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td data-holding-weight={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: C.t1 }}>{r.weight.toFixed(1)}%</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.avgCost.toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td data-holding-gain={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td data-holding-gainpct={r.ticker} style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
+                            </tr>
+                          ));
+                        })()}
+                        {/* Cash row */}
+                        <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
+                          <td style={{ padding: "10px 12px", fontWeight: 700, color: C.t3, position: "sticky", left: 0, background: C.bg }}>CASH</td>
+                          <td style={{ padding: "10px 12px", color: C.t4 }}>Cash & Equivalents</td>
+                          <td colSpan={4} />
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${(liveValue?.cash || perfData.cash || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>{liveValue ? ((liveValue.cash / liveValue.value) * 100).toFixed(1) : "—"}%</td>
+                          <td colSpan={4} />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ━━━ LISTS VIEW ━━━ */}
+            {homeView === "lists" && (
             <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 380px" : undefined, gap: isDesktop ? 32 : 0, marginTop: isDesktop ? 8 : 0 }}>
               {/* Left column: Lists */}
               <div>
@@ -2386,10 +2575,114 @@ Instructions:
             {/* Heatmap */}
               </div>
             </div>
+            )}
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
                 <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} onContext={(s, x, y) => setCtxMenu({ sym: s, x, y })} />
+              </div>
+            )}
+            {/* Add Transaction Modal */}
+            {showTxModal && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", animation: "fadeIn 0.15s ease" }}
+                onClick={e => { if (e.target === e.currentTarget) setShowTxModal(false); }}>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: 28, width: Math.min(440, window.innerWidth - 40), maxHeight: "80vh", overflow: "auto" }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Add Transaction</div>
+                  {/* Type selector */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+                    {["PURCHASE", "SALE", "DIVIDEND REINVESTMENT", "DEPOSIT", "WITHDRAWAL"].map(t => (
+                      <button key={t} onClick={() => setTxForm(f => ({ ...f, type: t }))} style={{
+                        padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                        border: `1px solid ${txForm.type === t ? C.borderActive : C.border}`,
+                        background: txForm.type === t ? C.accentSoft : "transparent",
+                        color: txForm.type === t ? C.t1 : C.t3, cursor: "pointer", fontFamily: "inherit",
+                      }}>{t}</button>
+                    ))}
+                  </div>
+                  {/* Fields */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <input type="date" value={txForm.date} onChange={e => setTxForm(f => ({ ...f, date: e.target.value }))}
+                      style={{ padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
+                    {txForm.type !== "DEPOSIT" && txForm.type !== "WITHDRAWAL" && (
+                      <>
+                        <input type="text" placeholder="Ticker (e.g. AAPL)" value={txForm.ticker}
+                          onChange={e => setTxForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
+                          style={{ padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
+                        <div style={{ display: "flex", gap: 10 }}>
+                          <input type="number" placeholder="Shares" value={txForm.shares}
+                            onChange={e => setTxForm(f => ({ ...f, shares: e.target.value, amount: e.target.value && f.price ? (parseFloat(e.target.value) * parseFloat(f.price)).toFixed(2) : f.amount }))}
+                            style={{ flex: 1, padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
+                          <input type="number" placeholder="Price" value={txForm.price}
+                            onChange={e => setTxForm(f => ({ ...f, price: e.target.value, amount: f.shares && e.target.value ? (parseFloat(f.shares) * parseFloat(e.target.value)).toFixed(2) : f.amount }))}
+                            style={{ flex: 1, padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
+                        </div>
+                      </>
+                    )}
+                    <input type="number" placeholder="Amount ($)" value={txForm.amount}
+                      onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))}
+                      style={{ padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
+                    <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                      <button onClick={() => {
+                        const isStock = txForm.type !== "DEPOSIT" && txForm.type !== "WITHDRAWAL";
+                        if (isStock && !txForm.ticker) return;
+                        if (!txForm.amount && !(txForm.shares && txForm.price)) return;
+                        const shares = parseFloat(txForm.shares) || 0;
+                        const price = parseFloat(txForm.price) || 0;
+                        const amount = parseFloat(txForm.amount) || (shares * price);
+                        const newTx = isStock
+                          ? { date: txForm.date, ticker: txForm.ticker, type: txForm.type, shares, price, amount }
+                          : { date: txForm.date, type: txForm.type, amount };
+                        // Update perfData in memory
+                        setPerfData(prev => {
+                          if (!prev) return prev;
+                          const updated = { ...prev, transactions: [newTx, ...prev.transactions] };
+                          if (isStock) {
+                            const h = { ...prev.holdings };
+                            const cb = { ...prev.costBasis };
+                            if (txForm.type === "PURCHASE" || txForm.type === "DIVIDEND REINVESTMENT") {
+                              const oldShares = h[txForm.ticker] || 0;
+                              const oldCost = cb[txForm.ticker]?.total_cost || 0;
+                              h[txForm.ticker] = oldShares + shares;
+                              const newTotalCost = oldCost + (shares * price);
+                              cb[txForm.ticker] = { avg_cost: h[txForm.ticker] > 0 ? newTotalCost / h[txForm.ticker] : 0, total_cost: newTotalCost };
+                            } else if (txForm.type === "SALE") {
+                              const oldShares = h[txForm.ticker] || 0;
+                              const oldCost = cb[txForm.ticker]?.total_cost || 0;
+                              const avgCost = oldShares > 0 ? oldCost / oldShares : 0;
+                              h[txForm.ticker] = Math.max(0, oldShares - shares);
+                              cb[txForm.ticker] = { avg_cost: avgCost, total_cost: avgCost * h[txForm.ticker] };
+                              if (h[txForm.ticker] <= 0) { delete h[txForm.ticker]; delete cb[txForm.ticker]; }
+                            }
+                            updated.holdings = h;
+                            updated.costBasis = cb;
+                            // Adjust cash for stock transactions
+                            if (txForm.type === "PURCHASE" || txForm.type === "DIVIDEND REINVESTMENT") {
+                              updated.cash = (prev.cash || 0) - amount;
+                            } else if (txForm.type === "SALE") {
+                              updated.cash = (prev.cash || 0) + amount;
+                            }
+                          } else {
+                            updated.cash = txForm.type === "DEPOSIT" ? (prev.cash || 0) + amount : (prev.cash || 0) - amount;
+                          }
+                          // Persist to server file + localStorage backup
+                          fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTx) }).catch(() => {});
+                          try { localStorage.setItem("iown_pending_transactions", JSON.stringify(updated.transactions.slice(0, 50))); } catch(e) {}
+                          return updated;
+                        });
+                        setShowTxModal(false);
+                      }} style={{
+                        flex: 1, padding: "14px 0", borderRadius: 12, border: "none",
+                        background: C.accent, color: "#fff", fontSize: 15, fontWeight: 700,
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>Add Transaction</button>
+                      <button onClick={() => setShowTxModal(false)} style={{
+                        padding: "14px 20px", borderRadius: 12, border: `1px solid ${C.border}`,
+                        background: "transparent", color: C.t3, fontSize: 15, fontWeight: 600,
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -3434,7 +3727,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
-              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
+              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
@@ -3559,7 +3852,8 @@ Instructions:
                 const svg = perfSvgRef.current;
                 if (!svg) return;
                 const rect = svg.getBoundingClientRect();
-                const mx = e.clientX - rect.left;
+                const scale = W / rect.width;
+                const mx = (e.clientX - rect.left) * scale;
                 const idx = Math.round(((mx - PAD.left) / cw) * (portNorm.length - 1));
                 if (idx >= 0 && idx < portNorm.length) {
                   setPerfHover({ idx, x: xScale(idx), y: yScale(portNorm[idx].val) });
@@ -3626,6 +3920,7 @@ Instructions:
 
                   {/* Chart */}
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 24 : 12, overflow: "hidden" }}>
+                    <div style={{ position: "relative" }}>
                     <svg
                       ref={perfSvgRef}
                       width={W} height={H}
@@ -3731,8 +4026,8 @@ Instructions:
                     {/* Hover tooltip overlay */}
                     {perfHover && perfHover.idx >= 0 && perfHover.idx < portNorm.length && (
                       <div style={{
-                        position: "relative", marginTop: -H + 8, marginLeft: PAD.left,
-                        pointerEvents: "none", height: 0,
+                        position: "absolute", top: 8, left: PAD.left,
+                        pointerEvents: "none", width: cw, height: 0,
                       }}>
                         <div style={{
                           position: "absolute",
@@ -3775,6 +4070,7 @@ Instructions:
                         </div>
                       </div>
                     )}
+                    </div>
                   </div>
 
                   {/* Legend */}
@@ -3786,7 +4082,7 @@ Instructions:
                     {Object.entries(bmColors).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 20, height: 3, borderRadius: 2, background: color }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", QQQ: "Nasdaq 100", DIA: "Dow Jones" }[sym]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones" }[sym]}</span>
                       </div>
                     ))}
                   </div>

@@ -389,6 +389,43 @@ def main():
 
     print("Parsing transactions...")
     transactions, cash_transactions, current_holdings, split_schedule = parse_transactions(tx_file)
+
+    # Merge user-added transactions from the dashboard UI
+    user_tx_file = os.path.join(os.path.dirname(tx_file), "user_transactions.json")
+    if os.path.exists(user_tx_file):
+        with open(user_tx_file) as f:
+            user_txs = json.load(f)
+        for utx in user_txs:
+            if utx.get("ticker"):
+                transactions.append({
+                    "date": utx["date"], "ticker": utx["ticker"], "type": utx["type"],
+                    "shares": utx.get("shares", 0), "price": utx.get("price", 0),
+                    "amount": utx.get("amount", 0),
+                })
+                # Update current_holdings for ground truth
+                t = utx["ticker"]
+                if utx["type"] in ("PURCHASE", "DIVIDEND REINVESTMENT"):
+                    if t in current_holdings:
+                        current_holdings[t]["shares"] += utx.get("shares", 0)
+                    else:
+                        current_holdings[t] = {"shares": utx.get("shares", 0), "price": utx.get("price", 0), "value": utx.get("amount", 0)}
+                elif utx["type"] == "SALE" and t in current_holdings:
+                    current_holdings[t]["shares"] -= utx.get("shares", 0)
+                    if current_holdings[t]["shares"] <= 0:
+                        current_holdings[t]["shares"] = 0
+            else:
+                cash_transactions.append({"date": utx["date"], "type": utx["type"], "amount": utx.get("amount", 0)})
+                if utx["type"] == "DEPOSIT":
+                    current_holdings.setdefault("__CASH__", 0)
+                    if isinstance(current_holdings.get("__CASH__"), (int, float)):
+                        current_holdings["__CASH__"] += utx["amount"]
+                elif utx["type"] == "WITHDRAWAL":
+                    if isinstance(current_holdings.get("__CASH__"), (int, float)):
+                        current_holdings["__CASH__"] -= utx["amount"]
+        transactions.sort(key=lambda x: x["date"])
+        cash_transactions.sort(key=lambda x: x["date"])
+        print(f"  Merged {len(user_txs)} user transactions from dashboard UI")
+
     print(f"  Stock txns: {len(transactions)}, Cash txns: {len(cash_transactions)}")
     if split_schedule:
         for ticker, splits in sorted(split_schedule.items()):
@@ -435,8 +472,8 @@ def main():
     print()
 
     # Benchmark data from Yahoo Finance
-    benchmark_syms = ["SPY", "QQQ", "DIA", "IWS", "DVY"]
-    print("Fetching benchmark data (SPY, QQQ, DIA, IWS, DVY)...")
+    benchmark_syms = ["SPY", "DIA", "IWS", "DVY"]
+    print("Fetching benchmark data (SPY, DIA, IWS, DVY)...")
     bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
 
     benchmarks = {}
@@ -509,6 +546,48 @@ def main():
                 bm_ann[yr] = round(((end_v / start_v) - 1) * 100, 2)
         bm_annual[sym] = bm_ann
 
+    # Compute cost basis per holding using average cost method
+    cost_basis = {}
+    cb_holdings = defaultdict(float)  # ticker -> shares held
+    cb_cost = defaultdict(float)      # ticker -> total cost
+    for tx in sorted(transactions, key=lambda x: x["date"]):
+        t = tx["ticker"]
+        if tx["type"] in ("PURCHASE", "DIVIDEND REINVESTMENT"):
+            cb_holdings[t] += tx["shares"]
+            cb_cost[t] += tx["shares"] * tx["price"]
+        elif tx["type"] == "SALE":
+            if cb_holdings[t] > 0:
+                avg = cb_cost[t] / cb_holdings[t]
+                cb_holdings[t] -= tx["shares"]
+                cb_cost[t] = avg * max(cb_holdings[t], 0)
+                if cb_holdings[t] <= 0.0001:
+                    cb_holdings[t] = 0
+                    cb_cost[t] = 0
+        elif tx["type"] == "SPLIT":
+            if cb_holdings[t] > 0:
+                cb_holdings[t] *= tx.get("ratio", 1)
+                # Total cost stays the same — avg cost per share decreases
+    for ticker in holdings_map:
+        if cb_holdings[ticker] > 0:
+            cost_basis[ticker] = {
+                "avg_cost": round(cb_cost[ticker] / cb_holdings[ticker], 4),
+                "total_cost": round(cb_cost[ticker], 2),
+            }
+    print(f"  Cost basis computed for {len(cost_basis)} holdings")
+
+    # Build transactions list for the dashboard (stock + cash, newest first)
+    all_tx = []
+    for tx in transactions:
+        all_tx.append({
+            "date": tx["date"], "ticker": tx["ticker"], "type": tx["type"],
+            "shares": tx["shares"], "price": tx["price"], "amount": tx["amount"],
+        })
+    for ctx in cash_transactions:
+        all_tx.append({
+            "date": ctx["date"], "type": ctx["type"], "amount": ctx["amount"],
+        })
+    all_tx.sort(key=lambda x: x["date"], reverse=True)
+
     output = {
         "sleeve": sleeve_name,
         "generated": datetime.now().isoformat(),
@@ -519,6 +598,8 @@ def main():
         "benchmarks": benchmarks,
         "holdings": holdings_map,
         "cash": live_cash,
+        "cost_basis": cost_basis,
+        "transactions": all_tx,
 
         "annual_returns": annual_returns,
         "bm_annual_returns": bm_annual,
