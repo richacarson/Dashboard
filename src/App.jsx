@@ -3535,21 +3535,38 @@ Instructions:
               };
 
               // Summary stats
-              const totalReturn = ((portNorm[portNorm.length - 1].val / 100) - 1) * 100;
-              const startVal = filtered[0].value;
-              const endVal = filtered[filtered.length - 1].value;
-              const years = (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
-              const cagr = years > 0 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
+              // For intraday views, use daily portfolio data for accurate start/end values
+              // (intraday bars may be incomplete at market open)
+              let startVal, endVal;
+              if (isIntraday) {
+                // Previous close from daily data as baseline
+                const dailyPrev = portfolio[portfolio.length - (perfRange === "1D" ? 2 : perfRange === "1W" ? 6 : 22)];
+                startVal = (dailyPrev || portfolio[portfolio.length - 2] || portfolio[0]).value;
+                endVal = liveValue ? liveValue.value : portfolio[portfolio.length - 1].value;
+              } else {
+                startVal = filtered[0].value;
+                endVal = filtered[filtered.length - 1].value;
+              }
+              const totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
+              const dollarChange = endVal - startVal;
+              const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
+              const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
+
+              const periodLabel = { "1D": "Day", "1W": "Week", "1M": "Month" }[perfRange];
 
               return (
                 <>
                   {/* Summary cards */}
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
                     {[
-                      { label: "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: isIntraday ? "Previous Close" : "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
                       { label: liveValue ? "Live Value" : "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
-                      { label: "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(1)}%`, color: totalReturn >= 0 ? C.up : C.dn },
-                      { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn },
+                      { label: isIntraday ? `${periodLabel} Change` : "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
+                      isIntraday
+                        ? { label: "$ Change", value: `${dollarChange >= 0 ? "+" : ""}$${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
+                        : years > 1
+                          ? { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn }
+                          : { label: "$ Change", value: `${dollarChange >= 0 ? "+" : ""}$${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn },
                     ].map((s, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{s.label}</div>
