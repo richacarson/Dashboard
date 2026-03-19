@@ -875,11 +875,12 @@ Instructions:
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   // Performance tab state
-  const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... } }
+  const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
   const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
   const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, QQQ: false, DIA: false });
+  const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -1708,7 +1709,7 @@ Instructions:
         }
       }
 
-      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000 });
+      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0 });
     } catch (e) {
       console.error("Performance fetch error:", e);
     }
@@ -1719,6 +1720,27 @@ Instructions:
   useEffect(() => {
     if (tab === "performance" && authed && !perfData && !perfLoading) fetchPerfData();
   }, [tab, authed, perfData, perfLoading, fetchPerfData]);
+
+  // Compute live portfolio value from WebSocket prices every 2s
+  useEffect(() => {
+    if (!perfData?.holdings || !authed) return;
+    const calc = () => {
+      const h = perfData.holdings;
+      const cash = perfData.cash || 0;
+      let stocks = 0, priced = 0, total = Object.keys(h).length;
+      for (const [ticker, shares] of Object.entries(h)) {
+        const q = quotesRef.current[ticker];
+        if (q && q.p > 0) { stocks += shares * q.p; priced++; }
+      }
+      // Only update if we have prices for most holdings
+      if (priced >= total * 0.8) {
+        setLiveValue({ value: Math.round((stocks + cash) * 100) / 100, stocks: Math.round(stocks * 100) / 100, cash, holdings: total });
+      }
+    };
+    calc(); // Initial
+    const t = setInterval(calc, 2000);
+    return () => clearInterval(t);
+  }, [perfData, authed]);
 
   const auth = async () => {
     setAuthErr("");
@@ -3218,9 +3240,25 @@ Instructions:
             )}
 
             {!perfLoading && perfData && (() => {
-              const portfolio = perfData.portfolio;
+              const perfCash = perfData.cash || 0;
               const benchmarks = perfData.benchmarks || {};
               const startBalance = perfData.startBalance || 100000;
+
+              // Build portfolio with live endpoint appended if we have live data
+              const basePortfolio = perfData.portfolio;
+              let portfolio;
+              if (liveValue) {
+                const today = new Date().toISOString().slice(0, 10);
+                const lastDate = basePortfolio[basePortfolio.length - 1]?.date;
+                if (today > lastDate) {
+                  portfolio = [...basePortfolio, { date: today, value: liveValue.value, stocks: liveValue.stocks, cash: liveValue.cash, num_holdings: liveValue.holdings }];
+                } else {
+                  // Same day — replace the last point with live
+                  portfolio = [...basePortfolio.slice(0, -1), { ...basePortfolio[basePortfolio.length - 1], value: liveValue.value, stocks: liveValue.stocks, cash: liveValue.cash }];
+                }
+              } else {
+                portfolio = basePortfolio;
+              }
 
               // Filter by time range
               const now = new Date();
@@ -3353,7 +3391,7 @@ Instructions:
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
                     {[
                       { label: "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
-                      { label: "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: liveValue ? "Live Value" : "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
                       { label: "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(1)}%`, color: totalReturn >= 0 ? C.up : C.dn },
                       { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn },
                     ].map((s, i) => (

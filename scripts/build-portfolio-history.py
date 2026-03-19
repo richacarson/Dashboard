@@ -452,6 +452,14 @@ def main():
             print(f"  {sym}: {len(bm_points)} data points")
     print()
 
+    # Current holdings for live portfolio value calculation
+    # Re-parse to get fresh copy (current_holdings was consumed by ground truth override)
+    _, _, fresh_holdings, _ = parse_transactions(tx_file)
+    live_cash = fresh_holdings.pop("__CASH__", 0)
+    holdings_map = {}
+    for ticker, info in fresh_holdings.items():
+        holdings_map[ticker] = info["shares"]
+
     output = {
         "sleeve": sleeve_name,
         "generated": datetime.now().isoformat(),
@@ -460,6 +468,8 @@ def main():
         "end_date": end_date.strftime("%Y-%m-%d"),
         "portfolio": history,
         "benchmarks": benchmarks,
+        "holdings": holdings_map,
+        "cash": live_cash,
     }
 
     out_file = f"portfolio-history-{sleeve_name}.json"
