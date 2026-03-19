@@ -1822,7 +1822,7 @@ Instructions:
       const d30Start = d30.toISOString().slice(0, 10) + "T04:00:00Z";
 
       const [pts1D, pts1W, pts1M] = await Promise.all([
-        fetchIntraday("5Min", d1Start, "1D"),
+        fetchIntraday("1Min", d1Start, "1D"),
         fetchIntraday("30Min", d7Start, "1W"),
         fetchIntraday("4Hour", d30Start, "1M"),
       ]);
@@ -1848,7 +1848,7 @@ Instructions:
       };
 
       const [bm1D, bm1W, bm1M] = await Promise.all([
-        fetchBmBars("5Min", d1Start),
+        fetchBmBars("1Min", d1Start),
         fetchBmBars("30Min", d7Start),
         fetchBmBars("4Hour", d30Start),
       ]);
@@ -3662,15 +3662,15 @@ Instructions:
                         </g>
                       )}
 
-                      {/* Right-side labels for last values */}
+                      {/* Right-side labels — show % change from base */}
                       <text x={W - PAD.right + 8} y={yScale(portNorm[portNorm.length-1].val) + 4}
                         fill={C.accent} fontSize="11" fontWeight="700" fontFamily="inherit">
-                        {portNorm[portNorm.length-1].val.toFixed(0)}
+                        {(portNorm[portNorm.length-1].val - 100) >= 0 ? "+" : ""}{(portNorm[portNorm.length-1].val - 100).toFixed(1)}%
                       </text>
                       {Object.entries(bmNorm).map(([sym, pts]) => (
                         <text key={sym} x={W - PAD.right + 8} y={yScale(pts[pts.length-1].val) + 4}
                           fill={bmColors[sym]} fontSize="10" fontWeight="700" fontFamily="inherit">
-                          {pts[pts.length-1].val.toFixed(0)}
+                          {(pts[pts.length-1].val - 100) >= 0 ? "+" : ""}{(pts[pts.length-1].val - 100).toFixed(1)}%
                         </text>
                       ))}
                     </svg>
@@ -3749,7 +3749,7 @@ Instructions:
                       };
                       return `${fmt(filtered[0].date)} — ${fmt(filtered[filtered.length-1].date)}`;
                     })()}
-                    {" · "}{filtered.length} {isIntraday ? (perfRange === "1D" ? "5-min" : perfRange === "1W" ? "30-min" : "4-hour") : ""} data points
+                    {" · "}{filtered.length} {isIntraday ? (perfRange === "1D" ? "1-min" : perfRange === "1W" ? "30-min" : "4-hour") : ""} data points
                     {liveValue ? " · Live" : ""}
                   </div>
 
