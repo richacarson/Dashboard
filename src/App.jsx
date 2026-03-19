@@ -3462,7 +3462,7 @@ Instructions:
               // Chart dimensions
               const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
               const H = isDesktop ? 480 : 320;
-              const PAD = { top: 30, right: 70, bottom: 50, left: 60 };
+              const PAD = { top: 30, right: 70, bottom: 50, left: 66 };
               const cw = W - PAD.left - PAD.right;
               const ch = H - PAD.top - PAD.bottom;
 
@@ -3662,15 +3662,18 @@ Instructions:
                           stroke={bmColors[sym]} strokeWidth="2" strokeLinejoin="round" />
                       ))}
 
-                      {/* Portfolio gradient fill */}
+                      {/* Portfolio gradient fill — from line to zero baseline */}
                       <defs>
                         <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={C.accent} stopOpacity="0.25" />
                           <stop offset="100%" stopColor={C.accent} stopOpacity="0.02" />
                         </linearGradient>
                       </defs>
-                      <path d={`${portPath} L${xScale(portNorm.length-1).toFixed(1)},${(PAD.top+ch).toFixed(1)} L${PAD.left.toFixed(1)},${(PAD.top+ch).toFixed(1)} Z`}
-                        fill="url(#perfGrad)" />
+                      {(() => {
+                        const zeroY = Math.min(Math.max(yScale(0), PAD.top), PAD.top + ch);
+                        return <path d={`${portPath} L${xScale(portNorm.length-1).toFixed(1)},${zeroY.toFixed(1)} L${PAD.left.toFixed(1)},${zeroY.toFixed(1)} Z`}
+                          fill="url(#perfGrad)" />;
+                      })()}
 
                       {/* Portfolio line */}
                       <path d={portPath} fill="none" stroke={C.accent} strokeWidth="2.5" strokeLinejoin="round" />
@@ -3690,17 +3693,26 @@ Instructions:
                         </g>
                       )}
 
-                      {/* Right-side labels — show % change from base */}
-                      <text x={W - PAD.right + 8} y={yScale(portNorm[portNorm.length-1].val) + 4}
-                        fill={C.accent} fontSize="11" fontWeight="700" fontFamily="inherit">
-                        {portNorm[portNorm.length-1].val >= 0 ? "+" : ""}{portNorm[portNorm.length-1].val.toFixed(1)}%
-                      </text>
-                      {Object.entries(bmNorm).map(([sym, pts]) => (
-                        <text key={sym} x={W - PAD.right + 8} y={yScale(pts[pts.length-1].val) + 4}
-                          fill={bmColors[sym]} fontSize="10" fontWeight="700" fontFamily="inherit">
-                          {pts[pts.length-1].val >= 0 ? "+" : ""}{pts[pts.length-1].val.toFixed(1)}%
-                        </text>
-                      ))}
+                      {/* Right-side labels — show % change, de-overlap */}
+                      {(() => {
+                        const labels = [{ val: portNorm[portNorm.length-1].val, color: C.accent, fontSize: 11 }];
+                        Object.entries(bmNorm).forEach(([sym, pts]) => {
+                          labels.push({ val: pts[pts.length-1].val, color: bmColors[sym], fontSize: 10 });
+                        });
+                        // Sort by value descending so highest is on top
+                        labels.sort((a, b) => b.val - a.val);
+                        // De-overlap: ensure at least 12px between labels
+                        const positions = labels.map(l => yScale(l.val) + 4);
+                        for (let i = 1; i < positions.length; i++) {
+                          if (positions[i] - positions[i-1] < 12) positions[i] = positions[i-1] + 12;
+                        }
+                        return labels.map((l, i) => (
+                          <text key={i} x={W - PAD.right + 8} y={positions[i]}
+                            fill={l.color} fontSize={l.fontSize} fontWeight="700" fontFamily="inherit">
+                            {l.val >= 0 ? "+" : ""}{l.val.toFixed(1)}%
+                          </text>
+                        ));
+                      })()}
                     </svg>
 
                     {/* Hover tooltip overlay */}
@@ -3760,7 +3772,7 @@ Instructions:
                     </div>
                     {Object.entries(bmColors).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ width: 20, height: 2, borderRadius: 2, background: color, opacity: 0.7 }} />
+                        <div style={{ width: 20, height: 3, borderRadius: 2, background: color }} />
                         <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", QQQ: "Nasdaq 100", DIA: "Dow Jones" }[sym]}</span>
                       </div>
                     ))}
@@ -3777,7 +3789,7 @@ Instructions:
                       };
                       return `${fmt(filtered[0].date)} — ${fmt(filtered[filtered.length-1].date)}`;
                     })()}
-                    {" · "}{filtered.length} {isIntraday ? (perfRange === "1D" ? "1-min" : perfRange === "1W" ? "30-min" : "4-hour") : ""} data points
+                    {" · "}{filtered.length} {isIntraday ? (perfRange === "1D" ? "1-min" : perfRange === "1W" ? "30-min" : "daily") : ""} data points
                     {liveValue ? " · Live" : ""}
                   </div>
 
