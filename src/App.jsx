@@ -2004,9 +2004,27 @@ Instructions:
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const SleeveSection = ({ k, sleeve }) => {
     const isOpen = openSleeves[k];
-    // Calculate average change for this sleeve
-    const changes = sleeve.symbols.map(chg).filter(c => c !== null);
-    const avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+    // Calculate value-weighted change for this sleeve (uses position sizes when available)
+    const holdings = perfData?.holdings;
+    let avgChg = null;
+    if (holdings) {
+      let totalVal = 0, weightedChgSum = 0;
+      for (const sym of sleeve.symbols) {
+        const c = chg(sym);
+        const q = quotes[sym];
+        const sh = holdings[sym];
+        if (c !== null && q && sh) {
+          const mv = sh * q.p;
+          totalVal += mv;
+          weightedChgSum += mv * c;
+        }
+      }
+      avgChg = totalVal > 0 ? weightedChgSum / totalVal : null;
+    }
+    if (avgChg === null) {
+      const changes = sleeve.symbols.map(chg).filter(c => c !== null);
+      avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
+    }
     const isAddingTicker = addTickerFor === k;
 
     return (
@@ -3417,16 +3435,9 @@ Instructions:
                 const portStartDate = filtered[0].date;
                 Object.entries(ibm).forEach(([sym, pts]) => {
                   if (!perfBmToggles[sym] || !pts.length) return;
-                  // Use previous close as base price to match homepage change%
-                  let basePrice = bmBars[sym]?.pc || pts[0].close;
-                  if (!basePrice) {
-                    // Fallback: find benchmark price at or just before portfolio start
-                    basePrice = pts[0].close;
-                    for (const p of pts) {
-                      if (p.date <= portStartDate) basePrice = p.close;
-                      else break;
-                    }
-                  }
+                  // Use first intraday bar as base so all lines start at 0%
+                  let basePrice = pts[0].close;
+                  if (!basePrice) return;
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
                   const bmPoints = [];
