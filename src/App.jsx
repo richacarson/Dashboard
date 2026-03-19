@@ -2001,7 +2001,7 @@ Instructions:
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{shortName}</div>
         </div>
         <div style={{ flex: 1 }} />
-        <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums", minWidth: 75, textAlign: "right" }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
+        <div data-ticker-price={s} style={{ fontSize: 15, fontWeight: 600, color: C.t2, marginRight: 14, fontVariantNumeric: "tabular-nums", minWidth: 80, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
         <div data-ticker-chg={s} style={{
           padding: "6px 0", borderRadius: 6, width: 80, textAlign: "center",
           fontSize: 14, fontWeight: 700, fontVariantNumeric: "tabular-nums",
@@ -2077,7 +2077,7 @@ Instructions:
           {/* Right side: avg change + chevron */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {avgChg != null && (
-              <span data-sleeve-chg={k} style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: avgChg >= 0 ? C.up : C.dn }}>{pct(avgChg)}</span>
+              <span data-sleeve-chg={k} style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: avgChg >= 0 ? C.up : C.dn, display: "inline-block", minWidth: 70, textAlign: "right" }}>{pct(avgChg)}</span>
             )}
             <div onClick={() => toggleSleeve(k)} style={{
               width: 40, height: 40, borderRadius: 20, border: `1px solid ${C.border}`,
