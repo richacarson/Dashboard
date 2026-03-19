@@ -3404,9 +3404,9 @@ Instructions:
               }
               if (!filtered.length) return null;
 
-              // Normalize portfolio to base 100
+              // Normalize portfolio to % change from start (base 0)
               const baseVal = filtered[0].value;
-              const portNorm = filtered.map(p => ({ date: p.date, val: (p.value / baseVal) * 100, raw: p.value }));
+              const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to base 100 from same start date
               const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
@@ -3424,7 +3424,7 @@ Instructions:
                   for (const fp of filtered) {
                     while (ptIdx < pts.length - 1 && pts[ptIdx + 1].date <= fp.date) ptIdx++;
                     if (pts[ptIdx].date <= fp.date || ptIdx === 0) {
-                      bmPoints.push({ date: fp.date, val: (pts[ptIdx].close / basePrice) * 100 });
+                      bmPoints.push({ date: fp.date, val: ((pts[ptIdx].close / basePrice) - 1) * 100 });
                     }
                   }
                   if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
@@ -3447,7 +3447,7 @@ Instructions:
                   // Find nearest benchmark price
                   while (priceIdx < prices.length - 1 && prices[priceIdx + 1][0] <= pt.date) priceIdx++;
                   if (prices[priceIdx][0] <= pt.date || priceIdx === 0) {
-                    bmPoints.push({ date: pt.date, val: (prices[priceIdx][1] / basePrice) * 100 });
+                    bmPoints.push({ date: pt.date, val: ((prices[priceIdx][1] / basePrice) - 1) * 100 });
                   }
                 }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
@@ -3463,8 +3463,12 @@ Instructions:
               // Compute Y range across all series
               let allVals = portNorm.map(p => p.val);
               Object.values(bmNorm).forEach(pts => pts.forEach(p => allVals.push(p.val)));
-              const yMin = Math.floor(Math.min(...allVals) / 10) * 10;
-              const yMax = Math.ceil(Math.max(...allVals) / 10) * 10;
+              const rawMin = Math.min(...allVals);
+              const rawMax = Math.max(...allVals);
+              const rawSpan = rawMax - rawMin || 1;
+              const step = rawSpan <= 2 ? 0.5 : rawSpan <= 5 ? 1 : rawSpan <= 20 ? 2 : rawSpan <= 50 ? 5 : 10;
+              const yMin = Math.floor(rawMin / step) * step;
+              const yMax = Math.ceil(rawMax / step) * step;
               const yRange = yMax - yMin || 1;
 
               const xScale = (i) => PAD.left + (i / (portNorm.length - 1)) * cw;
@@ -3497,8 +3501,8 @@ Instructions:
 
               // Grid lines
               const yTicks = [];
-              const tickStep = yRange <= 5 ? 1 : yRange <= 20 ? 2 : yRange <= 50 ? 5 : yRange <= 100 ? 10 : yRange <= 300 ? 25 : yRange <= 600 ? 50 : 100;
-              for (let v = yMin; v <= yMax; v += tickStep) yTicks.push(v);
+              const tickStep = yRange <= 2 ? 0.5 : yRange <= 5 ? 1 : yRange <= 20 ? 2 : yRange <= 50 ? 5 : 10;
+              for (let v = yMin; v <= yMax; v += tickStep) yTicks.push(Math.round(v * 100) / 100);
 
               // X axis date labels
               const xLabels = [];
@@ -3627,13 +3631,13 @@ Instructions:
                             stroke={C.border} strokeWidth="1" />
                           <text x={PAD.left - 8} y={yScale(v) + 4} textAnchor="end"
                             fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">
-                            {v}
+                            {v}%
                           </text>
                         </g>
                       ))}
 
-                      {/* Base 100 line */}
-                      <line x1={PAD.left} y1={yScale(100)} x2={W - PAD.right} y2={yScale(100)}
+                      {/* Zero baseline */}
+                      <line x1={PAD.left} y1={yScale(0)} x2={W - PAD.right} y2={yScale(0)}
                         stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />
 
                       {/* X axis labels */}
@@ -3681,12 +3685,12 @@ Instructions:
                       {/* Right-side labels — show % change from base */}
                       <text x={W - PAD.right + 8} y={yScale(portNorm[portNorm.length-1].val) + 4}
                         fill={C.accent} fontSize="11" fontWeight="700" fontFamily="inherit">
-                        {(portNorm[portNorm.length-1].val - 100) >= 0 ? "+" : ""}{(portNorm[portNorm.length-1].val - 100).toFixed(1)}%
+                        {portNorm[portNorm.length-1].val >= 0 ? "+" : ""}{portNorm[portNorm.length-1].val.toFixed(1)}%
                       </text>
                       {Object.entries(bmNorm).map(([sym, pts]) => (
                         <text key={sym} x={W - PAD.right + 8} y={yScale(pts[pts.length-1].val) + 4}
                           fill={bmColors[sym]} fontSize="10" fontWeight="700" fontFamily="inherit">
-                          {(pts[pts.length-1].val - 100) >= 0 ? "+" : ""}{(pts[pts.length-1].val - 100).toFixed(1)}%
+                          {pts[pts.length-1].val >= 0 ? "+" : ""}{pts[pts.length-1].val.toFixed(1)}%
                         </text>
                       ))}
                     </svg>
@@ -3718,8 +3722,8 @@ Instructions:
                             <span style={{ fontSize: 12, color: C.accent, fontWeight: 700 }}>Dividend</span>
                             <span style={{ fontSize: 12, color: C.t1, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                               ${portNorm[perfHover.idx].raw.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                              <span style={{ color: portNorm[perfHover.idx].val >= 100 ? C.up : C.dn, marginLeft: 6, fontSize: 11 }}>
-                                {portNorm[perfHover.idx].val >= 100 ? "+" : ""}{(portNorm[perfHover.idx].val - 100).toFixed(1)}%
+                              <span style={{ color: portNorm[perfHover.idx].val >= 0 ? C.up : C.dn, marginLeft: 6, fontSize: 11 }}>
+                                {portNorm[perfHover.idx].val >= 0 ? "+" : ""}{portNorm[perfHover.idx].val.toFixed(1)}%
                               </span>
                             </span>
                           </div>
@@ -3730,7 +3734,7 @@ Instructions:
                               <div key={sym} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
                                 <span style={{ fontSize: 12, color: bmColors[sym], fontWeight: 600 }}>{sym}</span>
                                 <span style={{ fontSize: 12, color: C.t2, fontVariantNumeric: "tabular-nums" }}>
-                                  {pt.val >= 100 ? "+" : ""}{(pt.val - 100).toFixed(1)}%
+                                  {pt.val >= 0 ? "+" : ""}{pt.val.toFixed(1)}%
                                 </span>
                               </div>
                             );
