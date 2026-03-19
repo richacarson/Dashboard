@@ -3422,15 +3422,8 @@ Instructions:
               }
               if (!filtered.length) return null;
 
-              // For intraday views, use previous daily close as baseline (matches summary cards)
-              // For non-intraday, use first filtered point
-              let baseVal;
-              if (isIntraday) {
-                const dailyPrev = portfolio[portfolio.length - (perfRange === "1D" ? 2 : perfRange === "1W" ? 6 : 22)];
-                baseVal = (dailyPrev || portfolio[portfolio.length - 2] || portfolio[0]).value;
-              } else {
-                baseVal = filtered[0].value;
-              }
+              // Normalize portfolio to % change from first point (starts at 0%)
+              const baseVal = filtered[0].value;
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
@@ -3442,16 +3435,8 @@ Instructions:
                 const portStartDate = filtered[0].date;
                 Object.entries(ibm).forEach(([sym, pts]) => {
                   if (!perfBmToggles[sym] || !pts.length) return;
-                  // Use previous close from daily benchmark data as base (matches portfolio baseline)
-                  const dailyPrices = benchmarks[sym] ? Object.entries(benchmarks[sym]).sort((a,b) => a[0].localeCompare(b[0])) : [];
-                  let basePrice = null;
-                  // Find the last daily close before the intraday start
-                  const intradayStartDate = filtered[0].date.slice(0, 10);
-                  for (let i = dailyPrices.length - 1; i >= 0; i--) {
-                    if (dailyPrices[i][0] < intradayStartDate) { basePrice = dailyPrices[i][1]; break; }
-                  }
-                  // Fallback to first intraday bar if no daily data
-                  if (!basePrice) basePrice = pts[0].close;
+                  // Use first intraday bar as base so all lines start at 0%
+                  let basePrice = pts[0].close;
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
                   const bmPoints = [];
@@ -3574,13 +3559,34 @@ Instructions:
                 }
               };
 
-              // Summary stats — reuse baseVal (previous close for intraday, first filtered for daily)
-              const startVal = baseVal;
+              // Summary stats
+              const startVal = filtered[0].value;
               const endVal = isIntraday
                 ? (liveValue ? liveValue.value : portfolio[portfolio.length - 1].value)
                 : filtered[filtered.length - 1].value;
-              const totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
-              const dollarChange = endVal - startVal;
+              // For intraday, compute value-weighted change from dividend sleeve (matches home page)
+              let totalReturn;
+              let dollarChange;
+              if (isIntraday) {
+                const divSyms = (sleeves.dividend || DEFAULT_SLEEVES.dividend).symbols;
+                const holdings = perfData?.holdings;
+                let totalVal = 0, weightedChgSum = 0;
+                for (const sym of divSyms) {
+                  const q = quotes[sym], b = bars[sym];
+                  const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
+                  const sh = holdings?.[sym];
+                  if (c !== null && q && sh) {
+                    const mv = sh * q.p;
+                    totalVal += mv;
+                    weightedChgSum += mv * c;
+                  }
+                }
+                totalReturn = totalVal > 0 ? weightedChgSum / totalVal : 0;
+                dollarChange = endVal - startVal;
+              } else {
+                totalReturn = startVal > 0 ? ((endVal / startVal) - 1) * 100 : 0;
+                dollarChange = endVal - startVal;
+              }
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
               const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
 
