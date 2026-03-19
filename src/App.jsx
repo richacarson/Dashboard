@@ -2458,7 +2458,7 @@ Instructions:
                             const costBasis = cb.total_cost || 0;
                             const gainLoss = mktValue - costBasis;
                             const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
-                            const name = names(ticker);
+                            const name = names[ticker] || "";
                             return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct };
                           });
                           // Sort
