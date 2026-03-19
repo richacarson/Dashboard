@@ -882,6 +882,7 @@ Instructions:
   const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, QQQ: false, DIA: false });
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}], "1W": [...], "1M": [...] }
+  const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -1710,7 +1711,7 @@ Instructions:
         }
       }
 
-      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, cashFlows: pJson.cash_flows || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} });
+      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} });
     } catch (e) {
       console.error("Performance fetch error:", e);
     }
@@ -1827,6 +1828,32 @@ Instructions:
       ]);
 
       setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
+
+      // Fetch intraday benchmark bars
+      const bmSyms = ["SPY", "QQQ", "DIA", "IWS", "DVY"];
+      const fetchBmBars = async (timeframe, startDate) => {
+        try {
+          const url = `${BASE}/v2/stocks/bars?symbols=${bmSyms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
+          const r = await fetch(url, { headers: hdrs });
+          if (!r.ok) return {};
+          const d = await r.json();
+          const result = {};
+          if (d.bars) {
+            for (const [sym, bars] of Object.entries(d.bars)) {
+              result[sym] = bars.map(b => ({ date: b.t, close: b.c }));
+            }
+          }
+          return result;
+        } catch { return {}; }
+      };
+
+      const [bm1D, bm1W, bm1M] = await Promise.all([
+        fetchBmBars("5Min", d1Start),
+        fetchBmBars("30Min", d7Start),
+        fetchBmBars("4Hour", d30Start),
+      ]);
+
+      setIntradayBenchmarks({ "1D": bm1D, "1W": bm1W, "1M": bm1M });
     };
 
     run();
@@ -3365,10 +3392,28 @@ Instructions:
               const baseVal = filtered[0].value;
               const portNorm = filtered.map(p => ({ date: p.date, val: (p.value / baseVal) * 100, raw: p.value }));
 
-              // Normalize benchmarks to base 100 from same start date (skip for intraday views)
+              // Normalize benchmarks to base 100 from same start date
               const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
               const bmNorm = {};
-              if (!isIntraday) Object.entries(benchmarks).forEach(([sym, priceMap]) => {
+              if (isIntraday) {
+                // Use intraday benchmark bars
+                const ibm = intradayBenchmarks[perfRange] || {};
+                Object.entries(ibm).forEach(([sym, pts]) => {
+                  if (!perfBmToggles[sym] || !pts.length) return;
+                  const basePrice = pts[0].close;
+                  if (!basePrice) return;
+                  // Map benchmark timestamps to portfolio timestamps
+                  const bmPoints = [];
+                  let ptIdx = 0;
+                  for (const fp of filtered) {
+                    while (ptIdx < pts.length - 1 && pts[ptIdx + 1].date <= fp.date) ptIdx++;
+                    if (pts[ptIdx].date <= fp.date || ptIdx === 0) {
+                      bmPoints.push({ date: fp.date, val: (pts[ptIdx].close / basePrice) * 100 });
+                    }
+                  }
+                  if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
+                });
+              } else Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                 if (!perfBmToggles[sym]) return;
                 const prices = Object.entries(priceMap).sort((a,b) => a[0].localeCompare(b[0]));
                 if (!prices.length) return;
@@ -3762,39 +3807,6 @@ Instructions:
                       return raw;
                     };
 
-                    // Personal Return (IRR) — money-weighted return
-                    const cashFlows = perfData.cashFlows || [];
-                    let personalReturn = null;
-                    if (cashFlows.length > 0) {
-                      // Simple XIRR approximation using Newton's method
-                      const flows = cashFlows.map(cf => ({
-                        amount: cf.amount,
-                        days: (endDate - new Date(cf.date + "T12:00:00")) / 86400000,
-                      }));
-                      // Add terminal value as final cash flow (positive = inflow)
-                      flows.push({ amount: endVal, days: 0 });
-
-                      // Newton's method for XIRR
-                      let rate = 0.10; // Initial guess 10%
-                      for (let iter = 0; iter < 100; iter++) {
-                        let npv = 0, dnpv = 0;
-                        for (const f of flows) {
-                          const t = f.days / 365.25;
-                          const disc = Math.pow(1 + rate, t);
-                          npv += f.amount / disc;
-                          dnpv -= t * f.amount / (disc * (1 + rate));
-                        }
-                        if (Math.abs(dnpv) < 1e-10) break;
-                        const newRate = rate - npv / dnpv;
-                        if (Math.abs(newRate - rate) < 1e-8) { rate = newRate; break; }
-                        rate = newRate;
-                        // Clamp to prevent divergence
-                        if (rate < -0.99) rate = -0.99;
-                        if (rate > 10) rate = 10;
-                      }
-                      personalReturn = rate * 100;
-                    }
-
                     const fmtPct = (v) => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
                     const pctColor = (v) => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
                     const activeBms = Object.keys(perfBmToggles).filter(s => perfBmToggles[s]);
@@ -3823,14 +3835,6 @@ Instructions:
                                     return <td key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{fmtPct(v)}</td>;
                                   })}
                                 </tr>
-                                {personalReturn != null && (
-                                  <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                                    <td style={{ padding: "10px 14px", fontWeight: 700, color: C.t2, fontSize: 12 }}>Personal (IRR)</td>
-                                    <td colSpan={trailingPeriods.length} style={{ padding: "10px 10px", textAlign: "center", fontWeight: 700, color: pctColor(personalReturn), fontSize: 13 }}>
-                                      {fmtPct(personalReturn)} annualized since inception
-                                    </td>
-                                  </tr>
-                                )}
                                 {activeBms.map(sym => (
                                   <tr key={sym} style={{ borderBottom: `1px solid ${C.border}` }}>
                                     <td style={{ padding: "10px 14px", fontWeight: 600, color: bmColors[sym], fontSize: 12 }}>{sym}</td>

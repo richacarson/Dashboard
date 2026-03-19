@@ -460,19 +460,6 @@ def main():
     for ticker, info in fresh_holdings.items():
         holdings_map[ticker] = info["shares"]
 
-    # Cash flows for Personal Return (IRR) calculation
-    # Include initial deposit as first cash flow, then all subsequent deposits/withdrawals
-    cash_flows = [{"date": start_date.strftime("%Y-%m-%d"), "amount": -100000}]  # negative = outflow (investment)
-    initial_skipped = False
-    for ctx in cash_transactions:
-        if not initial_skipped and ctx["type"] == "DEPOSIT" and abs(ctx["amount"] - 100000) < 0.01:
-            initial_skipped = True
-            continue
-        if ctx["type"] == "DEPOSIT":
-            cash_flows.append({"date": ctx["date"], "amount": -ctx["amount"]})  # investment = negative
-        elif ctx["type"] == "WITHDRAWAL":
-            cash_flows.append({"date": ctx["date"], "amount": ctx["amount"]})  # withdrawal = positive
-
     # Annual return history by year
     annual_returns = {}
     if history and len(history) > 52:
@@ -532,7 +519,7 @@ def main():
         "benchmarks": benchmarks,
         "holdings": holdings_map,
         "cash": live_cash,
-        "cash_flows": cash_flows,
+
         "annual_returns": annual_returns,
         "bm_annual_returns": bm_annual,
     }
