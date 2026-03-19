@@ -1739,9 +1739,14 @@ Instructions:
         const q = quotesRef.current[ticker];
         if (q && q.p > 0) { stocks += shares * q.p; priced++; }
       }
-      // Only update if we have prices for most holdings
+      // Only update if we have prices for most holdings and value actually changed
       if (priced >= total * 0.8) {
-        setLiveValue({ value: Math.round((stocks + cash) * 100) / 100, stocks: Math.round(stocks * 100) / 100, cash, holdings: total });
+        const newVal = Math.round((stocks + cash) * 100) / 100;
+        const newStocks = Math.round(stocks * 100) / 100;
+        setLiveValue(prev => {
+          if (prev && prev.value === newVal && prev.stocks === newStocks && prev.cash === cash && prev.holdings === total) return prev;
+          return { value: newVal, stocks: newStocks, cash, holdings: total };
+        });
       }
     };
     calc(); // Initial
