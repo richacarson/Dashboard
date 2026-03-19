@@ -1777,9 +1777,14 @@ Instructions:
         const timestamps = [...tsSet].sort();
         if (!timestamps.length) return [];
 
-        // For each timestamp, compute portfolio value = sum(shares × close) + cash
-        // Use last known price for tickers missing at that timestamp
+        // Seed lastPrice with previous close so all holdings are valued from the start
         const lastPrice = {};
+        for (const ticker of tickers) {
+          const pc = barsRef.current[ticker]?.pc;
+          if (pc) lastPrice[ticker] = pc;
+        }
+
+        // For each timestamp, compute portfolio value = sum(shares × close) + cash
         const portfolioPoints = [];
         for (const ts of timestamps) {
           for (const [sym, bars] of Object.entries(allBars)) {
@@ -1791,7 +1796,8 @@ Instructions:
           for (const [ticker, shares] of Object.entries(holdings)) {
             if (lastPrice[ticker]) { stocks += shares * lastPrice[ticker]; priced++; }
           }
-          if (priced >= tickers.length * 0.5) {
+          // Only include points where we have prices for most holdings
+          if (priced >= tickers.length * 0.8) {
             portfolioPoints.push({
               date: ts,
               value: Math.round((stocks + cash) * 100) / 100,
@@ -1821,11 +1827,21 @@ Instructions:
       const d30 = new Date(now); d30.setDate(d30.getDate() - 32);
       const d30Start = d30.toISOString().slice(0, 10) + "T04:00:00Z";
 
-      const [pts1D, pts1W, pts1M] = await Promise.all([
+      const [pts1DRaw, pts1W, pts1M] = await Promise.all([
         fetchIntraday("1Min", d1Start, "1D"),
         fetchIntraday("30Min", d7Start, "1W"),
         fetchIntraday("4Hour", d30Start, "1M"),
       ]);
+
+      // For 1D, only keep the most recent trading session
+      let pts1D = pts1DRaw;
+      if (pts1DRaw.length > 1) {
+        // Find the last trading day in the data
+        const lastDate = pts1DRaw[pts1DRaw.length - 1].date.slice(0, 10);
+        pts1D = pts1DRaw.filter(p => p.date.slice(0, 10) === lastDate);
+        // If no points for last date (e.g. weekend), use all
+        if (pts1D.length < 2) pts1D = pts1DRaw;
+      }
 
       setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
 
@@ -3546,10 +3562,10 @@ Instructions:
                       { label: liveValue ? "Live Value" : "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
                       { label: isIntraday ? `${periodLabel} Change` : "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
                       isIntraday
-                        ? { label: "$ Change", value: `${dollarChange >= 0 ? "+" : ""}$${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
+                        ? { label: "$ Change", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
                         : years > 1
                           ? { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn }
-                          : { label: "$ Change", value: `${dollarChange >= 0 ? "+" : ""}$${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn },
+                          : { label: "$ Change", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn },
                     ].map((s, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{s.label}</div>
