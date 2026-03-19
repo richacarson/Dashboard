@@ -881,6 +881,7 @@ Instructions:
   const [perfLoading, setPerfLoading] = useState(false);
   const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, QQQ: false, DIA: false });
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
+  const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}], "1W": [...], "1M": [...] }
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -1741,6 +1742,98 @@ Instructions:
     const t = setInterval(calc, 2000);
     return () => clearInterval(t);
   }, [perfData, authed]);
+
+  // Fetch intraday bars for 1D (5min), 1W (30min), 1M (4hr) portfolio chart
+  useEffect(() => {
+    if (!perfData?.holdings || !authed || !apiKey) return;
+    const holdings = perfData.holdings;
+    const cash = perfData.cash || 0;
+    const tickers = Object.keys(holdings);
+    if (!tickers.length) return;
+
+    const fetchIntraday = async (timeframe, startDate, key) => {
+      try {
+        // Alpaca limits symbols per request; chunk if needed
+        const allBars = {};
+        for (let i = 0; i < tickers.length; i += 30) {
+          const chunk = tickers.slice(i, i + 30);
+          const url = `${BASE}/v2/stocks/bars?symbols=${chunk.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
+          const r = await fetch(url, { headers: hdrs });
+          if (!r.ok) continue;
+          const d = await r.json();
+          if (d.bars) {
+            for (const [sym, bars] of Object.entries(d.bars)) {
+              allBars[sym] = (allBars[sym] || []).concat(bars);
+            }
+          }
+        }
+
+        // Collect all unique timestamps and sort
+        const tsSet = new Set();
+        for (const bars of Object.values(allBars)) {
+          bars.forEach(b => tsSet.add(b.t));
+        }
+        const timestamps = [...tsSet].sort();
+        if (!timestamps.length) return [];
+
+        // For each timestamp, compute portfolio value = sum(shares × close) + cash
+        // Use last known price for tickers missing at that timestamp
+        const lastPrice = {};
+        const portfolioPoints = [];
+        for (const ts of timestamps) {
+          for (const [sym, bars] of Object.entries(allBars)) {
+            const bar = bars.find(b => b.t === ts);
+            if (bar) lastPrice[sym] = bar.c;
+          }
+          let stocks = 0;
+          let priced = 0;
+          for (const [ticker, shares] of Object.entries(holdings)) {
+            if (lastPrice[ticker]) { stocks += shares * lastPrice[ticker]; priced++; }
+          }
+          if (priced >= tickers.length * 0.5) {
+            portfolioPoints.push({
+              date: ts,
+              value: Math.round((stocks + cash) * 100) / 100,
+              stocks: Math.round(stocks * 100) / 100,
+              cash,
+            });
+          }
+        }
+        return portfolioPoints;
+      } catch (e) {
+        console.error(`Intraday fetch error (${key}):`, e);
+        return [];
+      }
+    };
+
+    const run = async () => {
+      const now = new Date();
+      // 1D: 5Min bars, start from today 4AM ET (or yesterday if before market open)
+      const d1 = new Date(now); d1.setDate(d1.getDate() - 2);
+      const d1Start = d1.toISOString().slice(0, 10) + "T04:00:00Z";
+
+      // 1W: 30Min bars, last 7 days
+      const d7 = new Date(now); d7.setDate(d7.getDate() - 8);
+      const d7Start = d7.toISOString().slice(0, 10) + "T04:00:00Z";
+
+      // 1M: 4Hour bars, last 30 days
+      const d30 = new Date(now); d30.setDate(d30.getDate() - 32);
+      const d30Start = d30.toISOString().slice(0, 10) + "T04:00:00Z";
+
+      const [pts1D, pts1W, pts1M] = await Promise.all([
+        fetchIntraday("5Min", d1Start, "1D"),
+        fetchIntraday("30Min", d7Start, "1W"),
+        fetchIntraday("4Hour", d30Start, "1M"),
+      ]);
+
+      setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
+    };
+
+    run();
+    // Refresh intraday data every 60 seconds
+    const t = setInterval(run, 60000);
+    return () => clearInterval(t);
+  }, [perfData, authed, apiKey]);
 
   const auth = async () => {
     setAuthErr("");
@@ -3243,21 +3336,28 @@ Instructions:
                 portfolio = basePortfolio;
               }
 
-              // Filter by time range
+              // Filter by time range — use intraday data for short periods
               const now = new Date();
-              const rangeMap = { "1W": 7, "1M": 30, "3M": 91, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
-              const rangeDays = rangeMap[perfRange];
-              let cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
+              const useIntraday = (perfRange === "1D" || perfRange === "1W" || perfRange === "1M") && intradayPortfolio[perfRange]?.length > 1;
               let filtered;
-              if (perfRange === "1D") {
-                // Today: show last 2 data points (yesterday + today)
-                filtered = portfolio.slice(-2);
-              } else if (perfRange === "YTD") {
-                const yearEnd = `${now.getFullYear() - 1}-12-31`;
-                const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
-                filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
+              let isIntraday = false;
+
+              if (useIntraday) {
+                filtered = intradayPortfolio[perfRange];
+                isIntraday = true;
               } else {
-                filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
+                const rangeMap = { "1W": 7, "1M": 30, "3M": 91, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
+                const rangeDays = rangeMap[perfRange];
+                let cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
+                if (perfRange === "1D") {
+                  filtered = portfolio.slice(-2);
+                } else if (perfRange === "YTD") {
+                  const yearEnd = `${now.getFullYear() - 1}-12-31`;
+                  const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
+                  filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
+                } else {
+                  filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
+                }
               }
               if (!filtered.length) return null;
 
@@ -3265,10 +3365,10 @@ Instructions:
               const baseVal = filtered[0].value;
               const portNorm = filtered.map(p => ({ date: p.date, val: (p.value / baseVal) * 100, raw: p.value }));
 
-              // Normalize benchmarks to base 100 from same start date
+              // Normalize benchmarks to base 100 from same start date (skip for intraday views)
               const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", QQQ: "#E8A838", DIA: "#C76BDB" };
               const bmNorm = {};
-              Object.entries(benchmarks).forEach(([sym, priceMap]) => {
+              if (!isIntraday) Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                 if (!perfBmToggles[sym]) return;
                 const prices = Object.entries(priceMap).sort((a,b) => a[0].localeCompare(b[0]));
                 if (!prices.length) return;
@@ -3336,7 +3436,7 @@ Instructions:
 
               // Grid lines
               const yTicks = [];
-              const tickStep = yRange <= 100 ? 10 : yRange <= 300 ? 25 : yRange <= 600 ? 50 : 100;
+              const tickStep = yRange <= 5 ? 1 : yRange <= 20 ? 2 : yRange <= 50 ? 5 : yRange <= 100 ? 10 : yRange <= 300 ? 25 : yRange <= 600 ? 50 : 100;
               for (let v = yMin; v <= yMax; v += tickStep) yTicks.push(v);
 
               // X axis date labels
@@ -3346,8 +3446,17 @@ Instructions:
               for (let i = 0; i < labelCount; i++) {
                 const idx = Math.round((i / (labelCount - 1)) * (totalPts - 1));
                 if (idx < totalPts) {
-                  const d = new Date(portNorm[idx].date + "T12:00:00");
-                  xLabels.push({ x: xScale(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+                  const dateStr = portNorm[idx].date;
+                  const d = new Date(dateStr.length > 10 ? dateStr : dateStr + "T12:00:00");
+                  let label;
+                  if (isIntraday && perfRange === "1D") {
+                    label = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+                  } else if (isIntraday) {
+                    label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+                  } else {
+                    label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+                  }
+                  xLabels.push({ x: xScale(idx), label });
                 }
               }
 
@@ -3519,7 +3628,13 @@ Instructions:
                           boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
                         }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, marginBottom: 6 }}>
-                            {new Date(portNorm[perfHover.idx].date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            {(() => {
+                              const ds = portNorm[perfHover.idx].date;
+                              const d = new Date(ds.length > 10 ? ds : ds + "T12:00:00");
+                              return isIntraday
+                                ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                                : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                            })()}
                           </div>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
                             <span style={{ fontSize: 12, color: C.accent, fontWeight: 700 }}>Dividend</span>
@@ -3563,10 +3678,16 @@ Instructions:
 
                   {/* Data range info */}
                   <div style={{ marginTop: 12, fontSize: 11, color: C.t4, textAlign: "center" }}>
-                    {new Date(filtered[0].date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                    {" — "}
-                    {new Date(filtered[filtered.length-1].date + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                    {" · "}{filtered.length} data points
+                    {(() => {
+                      const fmt = (ds) => {
+                        const d = new Date(ds.length > 10 ? ds : ds + "T12:00:00");
+                        return isIntraday
+                          ? d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                          : d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+                      };
+                      return `${fmt(filtered[0].date)} — ${fmt(filtered[filtered.length-1].date)}`;
+                    })()}
+                    {" · "}{filtered.length} {isIntraday ? (perfRange === "1D" ? "5-min" : perfRange === "1W" ? "30-min" : "4-hour") : ""} data points
                     {liveValue ? " · Live" : ""}
                   </div>
 
