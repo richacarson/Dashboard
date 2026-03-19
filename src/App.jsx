@@ -2346,14 +2346,9 @@ Instructions:
                     const stocksVal = liveValue ? liveValue.stocks : 0;
                     const cashVal = liveValue ? liveValue.cash : (perfData.cash || 0);
                     const holdCount = liveValue ? liveValue.holdings : Object.keys(perfData.holdings).length;
-                    const netDeposits = (perfData.transactions || []).reduce((sum, tx) => {
-                      if (tx.type === "DEPOSIT") return sum + (tx.amount || 0);
-                      if (tx.type === "WITHDRAWAL") return sum - (tx.amount || 0);
-                      return sum;
-                    }, 0);
-                    const netInvested = (perfData.startBalance || 0) + netDeposits;
-                    const totalGain = totalVal - netInvested;
-                    const totalGainPct = netInvested > 0 ? (totalGain / netInvested) * 100 : 0;
+                    const startVal = perfData.portfolio?.[0]?.value || (perfData.startBalance || 100000);
+                    const totalGain = totalVal - startVal;
+                    const totalGainPct = startVal > 0 ? ((totalVal / startVal) - 1) * 100 : 0;
                     return [
                       { label: "Portfolio Value", value: `$${totalVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
                       { label: "Cash", value: `$${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
