@@ -2394,7 +2394,7 @@ Instructions:
                         </tr>
                       </thead>
                       <tbody>
-                        {perfData.transactions.slice(0, 100).map((tx, i) => {
+                        {[...perfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                           const isStock = !!tx.ticker;
                           const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
                           return (
