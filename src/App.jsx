@@ -36,6 +36,7 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "IWS", name: "IWS" },
   { sym: "SPY", name: "SPY" },
+  { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
@@ -1724,7 +1725,7 @@ Instructions:
 
   // Load perf data when tab is opened
   useEffect(() => {
-    if (tab === "performance" && authed && !perfData && !perfLoading) fetchPerfData();
+    if ((tab === "performance" || tab === "home") && authed && !perfData && !perfLoading) fetchPerfData();
   }, [tab, authed, perfData, perfLoading, fetchPerfData]);
 
   // Compute live portfolio value from WebSocket prices every 2s
