@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
    IOWN PORTFOLIO COMMAND CENTER v3
@@ -208,7 +208,7 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
 }
 
 /* ── Stock Logo with fallback ── */
-function StockLogo({ symbol, size = 32 }) {
+const StockLogo = React.memo(function StockLogo({ symbol, size = 32 }) {
   const [src, setSrc] = useState(null);
   const [fallback, setFallback] = useState(false);
   const domainMap = {
@@ -277,7 +277,7 @@ function StockLogo({ symbol, size = 32 }) {
   }
   if (!src) return <div style={{ width: size, height: size, borderRadius: size / 2, background: C.surface, flexShrink: 0 }} />;
   return <img src={src} alt={symbol} onError={() => setFallback(true)} style={{ width: size, height: size, borderRadius: size / 2, objectFit: "contain", flexShrink: 0, background: "#fff" }} />;
-}
+});
 function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
   const [profileTab, setProfileTab] = useState(initTab || "overview");
   const [profile, setProfile] = useState(null);
@@ -2018,7 +2018,7 @@ Instructions:
   };
 
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
-  const SleeveSection = ({ k, sleeve }) => {
+  const renderSleeve = (k, sleeve) => {
     const isOpen = openSleeves[k];
     // Calculate value-weighted change for this sleeve (uses position sizes when available)
     const holdings = perfData?.holdings;
@@ -2046,7 +2046,7 @@ Instructions:
     return (
       <div>
         {/* Sleeve header row */}
-        <div style={{ display: "flex", alignItems: "center", padding: "18px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", padding: "18px 0", userSelect: "none", WebkitUserSelect: "none" }}>
           {/* Edit mode: delete list button */}
           {editMode && (
             <div onClick={() => { if (confirm(`Delete "${sleeve.name}"?`)) removeList(k); }} style={{ width: 28, height: 28, borderRadius: 14, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 10, cursor: "pointer", flexShrink: 0 }}>
@@ -2557,7 +2557,7 @@ Instructions:
 
             {/* Sleeve sections */}
             {Object.entries(sleeves).map(([k, sleeve]) => (
-              <SleeveSection key={k} k={k} sleeve={sleeve} />
+              <React.Fragment key={k}>{renderSleeve(k, sleeve)}</React.Fragment>
             ))}
               </div>
 
@@ -4634,6 +4634,8 @@ function GS({ theme }) {
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.2" : "80,100,60,0.2"}); border-radius: 6px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.35" : "80,100,60,0.35"}); }
       body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; }
+      #root { user-select: none; -webkit-user-select: none; }
+      input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
       .ticker-row:active { transform: scale(0.97); opacity: 0.85; }
       @media (min-width: 768px) {
