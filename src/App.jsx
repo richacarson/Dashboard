@@ -3659,7 +3659,7 @@ Instructions:
                       {/* Benchmark lines */}
                       {Object.entries(bmNorm).map(([sym, pts]) => (
                         <path key={sym} d={buildBmPath(pts)} fill="none"
-                          stroke={bmColors[sym]} strokeWidth="1.5" opacity="0.7" />
+                          stroke={bmColors[sym]} strokeWidth="2" strokeLinejoin="round" />
                       ))}
 
                       {/* Portfolio gradient fill */}
