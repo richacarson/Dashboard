@@ -389,6 +389,43 @@ def main():
 
     print("Parsing transactions...")
     transactions, cash_transactions, current_holdings, split_schedule = parse_transactions(tx_file)
+
+    # Merge user-added transactions from the dashboard UI
+    user_tx_file = os.path.join(os.path.dirname(tx_file), "user_transactions.json")
+    if os.path.exists(user_tx_file):
+        with open(user_tx_file) as f:
+            user_txs = json.load(f)
+        for utx in user_txs:
+            if utx.get("ticker"):
+                transactions.append({
+                    "date": utx["date"], "ticker": utx["ticker"], "type": utx["type"],
+                    "shares": utx.get("shares", 0), "price": utx.get("price", 0),
+                    "amount": utx.get("amount", 0),
+                })
+                # Update current_holdings for ground truth
+                t = utx["ticker"]
+                if utx["type"] in ("PURCHASE", "DIVIDEND REINVESTMENT"):
+                    if t in current_holdings:
+                        current_holdings[t]["shares"] += utx.get("shares", 0)
+                    else:
+                        current_holdings[t] = {"shares": utx.get("shares", 0), "price": utx.get("price", 0), "value": utx.get("amount", 0)}
+                elif utx["type"] == "SALE" and t in current_holdings:
+                    current_holdings[t]["shares"] -= utx.get("shares", 0)
+                    if current_holdings[t]["shares"] <= 0:
+                        current_holdings[t]["shares"] = 0
+            else:
+                cash_transactions.append({"date": utx["date"], "type": utx["type"], "amount": utx.get("amount", 0)})
+                if utx["type"] == "DEPOSIT":
+                    current_holdings.setdefault("__CASH__", 0)
+                    if isinstance(current_holdings.get("__CASH__"), (int, float)):
+                        current_holdings["__CASH__"] += utx["amount"]
+                elif utx["type"] == "WITHDRAWAL":
+                    if isinstance(current_holdings.get("__CASH__"), (int, float)):
+                        current_holdings["__CASH__"] -= utx["amount"]
+        transactions.sort(key=lambda x: x["date"])
+        cash_transactions.sort(key=lambda x: x["date"])
+        print(f"  Merged {len(user_txs)} user transactions from dashboard UI")
+
     print(f"  Stock txns: {len(transactions)}, Cash txns: {len(cash_transactions)}")
     if split_schedule:
         for ticker, splits in sorted(split_schedule.items()):

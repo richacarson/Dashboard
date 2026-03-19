@@ -2664,7 +2664,8 @@ Instructions:
                           } else {
                             updated.cash = txForm.type === "DEPOSIT" ? (prev.cash || 0) + amount : (prev.cash || 0) - amount;
                           }
-                          // Persist to localStorage
+                          // Persist to server file + localStorage backup
+                          fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTx) }).catch(() => {});
                           try { localStorage.setItem("iown_pending_transactions", JSON.stringify(updated.transactions.slice(0, 50))); } catch(e) {}
                           return updated;
                         });
