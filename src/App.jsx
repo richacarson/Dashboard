@@ -726,6 +726,8 @@ export default function App() {
   const [codeFocused, setCodeFocused] = useState(false);
   const [apiKey, setApiKey] = useState(EK);
   const [apiSecret, setApiSecret] = useState(ES);
+  const [ghToken, setGhToken] = useState(() => localStorage.getItem("iown_gh_token") || "");
+  useEffect(() => { if (ghToken) localStorage.setItem("iown_gh_token", ghToken); }, [ghToken]);
   const [authed, setAuthed] = useState(false);
   const [authErr, setAuthErr] = useState("");
   const [quotes, setQuotes] = useState({});
@@ -886,6 +888,7 @@ Instructions:
   const [homeView, setHomeView] = useState("lists"); // "holdings" | "lists"
   const [holdingsSort, setHoldingsSort] = useState({ col: "weight", dir: "desc" }); // sortable holdings table
   const [showTxModal, setShowTxModal] = useState(false); // add transaction modal
+  const [showRebalModal, setShowRebalModal] = useState(false); // rebalance modal
   const [txForm, setTxForm] = useState({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) });
   const [showTxHistory, setShowTxHistory] = useState(false); // transaction history panel
   const [expandedHolding, setExpandedHolding] = useState(null); // mobile holdings expand
@@ -1880,10 +1883,11 @@ Instructions:
       setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
 
       // Fetch intraday benchmark bars
-      const bmSyms = ["SPY", "DIA", "IWS", "DVY"];
-      const fetchBmBars = async (timeframe, startDate) => {
+      // IEX benchmarks (SPY, DIA) via Alpaca
+      const iexBmSyms = ["SPY", "DIA"];
+      const fetchBmBars = async (syms, timeframe, startDate) => {
         try {
-          const url = `${BASE}/v2/stocks/bars?symbols=${bmSyms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
+          const url = `${BASE}/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
           const r = await fetch(url, { headers: hdrs });
           if (!r.ok) return {};
           const d = await r.json();
@@ -1896,12 +1900,38 @@ Instructions:
           return result;
         } catch { return {}; }
       };
+      // Non-IEX benchmarks (DVY, IWS) via Finnhub candles
+      const fhBmSyms = ["DVY", "IWS"];
+      const fetchFhBmBars = async (resolution, from) => {
+        if (!FH) return {};
+        const result = {};
+        const fromTs = Math.floor(new Date(from).getTime() / 1000);
+        const toTs = Math.floor(Date.now() / 1000);
+        for (const sym of fhBmSyms) {
+          try {
+            const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=${resolution}&from=${fromTs}&to=${toTs}&token=${FH}`;
+            const r = await fetch(url);
+            if (!r.ok) continue;
+            const d = await r.json();
+            if (d.s === "ok" && d.t && d.c) {
+              result[sym] = d.t.map((t, i) => ({ date: new Date(t * 1000).toISOString(), close: d.c[i] }));
+            }
+          } catch {}
+        }
+        return result;
+      };
 
-      const [bm1DRaw, bm1W, bm1M] = await Promise.all([
-        fetchBmBars("1Min", d1Start),
-        fetchBmBars("30Min", d7Start),
-        fetchBmBars("1Day", d30Start),
+      const [iex1DRaw, iex1W, iex1M, fh1DRaw, fh1W, fh1M] = await Promise.all([
+        fetchBmBars(iexBmSyms, "1Min", d1Start),
+        fetchBmBars(iexBmSyms, "30Min", d7Start),
+        fetchBmBars(iexBmSyms, "1Day", d30Start),
+        fetchFhBmBars("1", d1Start),
+        fetchFhBmBars("30", d7Start),
+        fetchFhBmBars("D", d30Start),
       ]);
+      const bm1DRaw = { ...iex1DRaw, ...fh1DRaw };
+      const bm1W = { ...iex1W, ...fh1W };
+      const bm1M = { ...iex1M, ...fh1M };
 
       // Filter benchmark 1D bars to same trading day as portfolio
       const lastPortDate = pts1D.length ? pts1D[pts1D.length - 1].date.slice(0, 10) : null;
@@ -1918,6 +1948,31 @@ Instructions:
     const t = setInterval(run, 60000);
     return () => clearInterval(t);
   }, [perfData, authed, apiKey]);
+
+  // GitHub API: commit transaction to repo so all users see it
+  const GH_REPO = "richacarson/Dashboard";
+  const GH_TX_PATH = "transactions/user_transactions.json";
+  const commitTransaction = useCallback(async (newTx) => {
+    if (!ghToken) return;
+    try {
+      // Get current file (may not exist yet)
+      const ghHeaders = { Authorization: `token ${ghToken}`, Accept: "application/vnd.github.v3+json" };
+      let existing = [], sha = null;
+      try {
+        const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_TX_PATH}`, { headers: ghHeaders });
+        if (r.ok) {
+          const d = await r.json();
+          sha = d.sha;
+          existing = JSON.parse(atob(d.content));
+        }
+      } catch {}
+      existing.unshift({ ...newTx, id: Date.now() });
+      // Commit updated file
+      const body = { message: `Add ${newTx.type} transaction${newTx.ticker ? ` for ${newTx.ticker}` : ""}`, content: btoa(JSON.stringify(existing, null, 2)) };
+      if (sha) body.sha = sha;
+      await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_TX_PATH}`, { method: "PUT", headers: { ...ghHeaders, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    } catch (e) { console.error("GitHub commit failed:", e); }
+  }, [ghToken]);
 
   const auth = async () => {
     setAuthErr("");
@@ -2001,7 +2056,9 @@ Instructions:
             <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>API Key</label>
             <input type="text" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="APCA-API-KEY-ID" style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 20, fontFamily: "inherit" }} />
             <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>Secret Key</label>
-            <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="APCA-API-SECRET-KEY" style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 28, fontFamily: "inherit" }} />
+            <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="APCA-API-SECRET-KEY" style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 20, fontFamily: "inherit" }} />
+            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>GitHub Token <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional — for saving transactions)</span></label>
+            <input type="password" value={ghToken} onChange={e => setGhToken(e.target.value)} placeholder="ghp_..." style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 28, fontFamily: "inherit" }} />
             <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(74,107,37,0.3)" }}>Connect</button>
             {authErr && <div style={{ marginTop: 14, color: C.dn, fontSize: 13, fontWeight: 500, textAlign: "center" }}>{authErr}</div>}
           </div>
@@ -2398,6 +2455,11 @@ Instructions:
                     background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 700,
                     cursor: "pointer", fontFamily: "inherit",
                   }}>+ Add Transaction</button>
+                  <button onClick={() => setShowRebalModal(true)} style={{
+                    padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.border}`,
+                    background: "transparent", color: C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>Rebalance</button>
                   <button onClick={() => setShowTxHistory(!showTxHistory)} style={{
                     padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.border}`,
                     background: showTxHistory ? C.accentSoft : "transparent", color: showTxHistory ? C.t1 : C.t3,
@@ -2411,8 +2473,8 @@ Instructions:
                   <div style={{ maxHeight: 400, overflow: "auto", marginBottom: 16 }}>
                     {[...perfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                       const isStock = !!tx.ticker;
-                      const typeMap = { PURCHASE: "BUY", SALE: "SELL", "DIVIDEND REINVESTMENT": "DIV", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
-                      const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                      const typeMap = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
+                      const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
                       return (
                         <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
@@ -2443,7 +2505,7 @@ Instructions:
                       <tbody>
                         {[...perfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                           const isStock = !!tx.ticker;
-                          const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                          const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
                           return (
                             <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
                               <td style={{ padding: "8px 12px", color: C.t2 }}>{tx.date}</td>
@@ -2760,7 +2822,7 @@ Instructions:
                   <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Add Transaction</div>
                   {/* Type selector */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
-                    {["PURCHASE", "SALE", "DIVIDEND REINVESTMENT", "DEPOSIT", "WITHDRAWAL"].map(t => (
+                    {["PURCHASE", "SALE", "DIVIDEND", "DEPOSIT", "WITHDRAWAL"].map(t => (
                       <button key={t} onClick={() => setTxForm(f => ({ ...f, type: t }))} style={{
                         padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                         border: `1px solid ${txForm.type === t ? C.borderActive : C.border}`,
@@ -2773,7 +2835,7 @@ Instructions:
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <input type="date" value={txForm.date} onChange={e => setTxForm(f => ({ ...f, date: e.target.value }))}
                       style={{ padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
-                    {txForm.type !== "DEPOSIT" && txForm.type !== "WITHDRAWAL" && (
+                    {txForm.type !== "DEPOSIT" && txForm.type !== "WITHDRAWAL" && txForm.type !== "DIVIDEND" && (
                       <>
                         <input type="text" placeholder="Ticker (e.g. AAPL)" value={txForm.ticker}
                           onChange={e => setTxForm(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
@@ -2793,7 +2855,7 @@ Instructions:
                       style={{ padding: "10px 14px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, color: C.t1, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
                     <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
                       <button onClick={() => {
-                        const isStock = txForm.type !== "DEPOSIT" && txForm.type !== "WITHDRAWAL";
+                        const isStock = txForm.type !== "DEPOSIT" && txForm.type !== "WITHDRAWAL" && txForm.type !== "DIVIDEND";
                         if (isStock && !txForm.ticker) return;
                         if (!txForm.amount && !(txForm.shares && txForm.price)) return;
                         const shares = parseFloat(txForm.shares) || 0;
@@ -2809,7 +2871,7 @@ Instructions:
                           if (isStock) {
                             const h = { ...prev.holdings };
                             const cb = { ...prev.costBasis };
-                            if (txForm.type === "PURCHASE" || txForm.type === "DIVIDEND REINVESTMENT") {
+                            if (txForm.type === "PURCHASE") {
                               const oldShares = h[txForm.ticker] || 0;
                               const oldCost = cb[txForm.ticker]?.total_cost || 0;
                               h[txForm.ticker] = oldShares + shares;
@@ -2826,15 +2888,16 @@ Instructions:
                             updated.holdings = h;
                             updated.costBasis = cb;
                             // Adjust cash for stock transactions
-                            if (txForm.type === "PURCHASE" || txForm.type === "DIVIDEND REINVESTMENT") {
+                            if (txForm.type === "PURCHASE") {
                               updated.cash = (prev.cash || 0) - amount;
                             } else if (txForm.type === "SALE") {
                               updated.cash = (prev.cash || 0) + amount;
                             }
                           } else {
-                            updated.cash = txForm.type === "DEPOSIT" ? (prev.cash || 0) + amount : (prev.cash || 0) - amount;
+                            updated.cash = (txForm.type === "DEPOSIT" || txForm.type === "DIVIDEND") ? (prev.cash || 0) + amount : (prev.cash || 0) - amount;
                           }
-                          // Persist to server file + localStorage backup
+                          // Persist: commit to GitHub repo (shared) + localStorage backup
+                          commitTransaction(newTx);
                           fetch("/api/transactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(newTx) }).catch(() => {});
                           try { localStorage.setItem("iown_pending_transactions", JSON.stringify(updated.transactions.slice(0, 50))); } catch(e) {}
                           return updated;
@@ -2855,6 +2918,94 @@ Instructions:
                 </div>
               </div>
             )}
+
+            {/* Rebalance Modal */}
+            {showRebalModal && perfData && (() => {
+              const h = perfData.holdings || {};
+              const cash = perfData.cash || 0;
+              let totalStocks = 0;
+              const holdingRows = [];
+              for (const [ticker, shares] of Object.entries(h)) {
+                const q = quotesRef.current[ticker];
+                const price = q?.p || 0;
+                const mktVal = shares * price;
+                totalStocks += mktVal;
+                holdingRows.push({ ticker, shares, price, mktVal });
+              }
+              const totalPort = totalStocks + cash;
+              const targetCash = totalPort * 0.01;
+              const excessCash = cash - targetCash;
+              const cashPct = totalPort > 0 ? (cash / totalPort) * 100 : 0;
+              // Distribute excess cash proportionally to current weights
+              const orders = [];
+              if (excessCash > 10) {
+                const totalWeight = holdingRows.reduce((s, r) => s + r.mktVal, 0);
+                for (const r of holdingRows) {
+                  if (r.price <= 0 || totalWeight <= 0) continue;
+                  const weight = r.mktVal / totalWeight;
+                  const buyAmt = excessCash * weight;
+                  const buyShares = Math.floor((buyAmt / r.price) * 10000) / 10000;
+                  if (buyShares > 0 && buyAmt >= 1) {
+                    orders.push({ ticker: r.ticker, shares: buyShares, price: r.price, amount: Math.round(buyShares * r.price * 100) / 100 });
+                  }
+                }
+              }
+              return (
+                <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: isDesktop ? "center" : "flex-end", justifyContent: "center", zIndex: 1000 }}
+                  onClick={e => { if (e.target === e.currentTarget) setShowRebalModal(false); }}>
+                  <div style={{ background: C.surface, borderRadius: isDesktop ? 20 : "20px 20px 0 0", padding: 28, width: isDesktop ? 500 : "100%", maxHeight: "80vh", overflow: "auto", border: `1px solid ${C.border}` }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Rebalance to 1% Cash</div>
+                    <div style={{ fontSize: 13, color: C.t3, marginBottom: 20 }}>
+                      Current cash: <span style={{ fontWeight: 700, color: C.t1 }}>${cash.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span style={{ color: C.t4 }}> ({cashPct.toFixed(2)}%)</span>
+                      {" → "}Target: <span style={{ fontWeight: 700, color: C.t1 }}>${targetCash.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span style={{ color: C.t4 }}> (1.00%)</span>
+                    </div>
+                    {excessCash <= 10 ? (
+                      <div style={{ padding: 20, background: C.bg, borderRadius: 12, textAlign: "center", color: C.t3, fontSize: 14 }}>
+                        Cash is already at or below 1% target. No rebalance needed.
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: C.t3, marginBottom: 10 }}>
+                          Suggested orders — deploy ${excessCash.toLocaleString(undefined, { minimumFractionDigits: 2 })} across holdings:
+                        </div>
+                        <div style={{ background: C.bg, borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}`, marginBottom: 16 }}>
+                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                            <thead>
+                              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                                <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: C.t3, fontSize: 11 }}>Ticker</th>
+                                <th style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: C.t3, fontSize: 11 }}>Shares</th>
+                                <th style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: C.t3, fontSize: 11 }}>Price</th>
+                                <th style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: C.t3, fontSize: 11 }}>Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orders.map(o => (
+                                <tr key={o.ticker} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                  <td style={{ padding: "8px 12px", fontWeight: 700, color: C.t1 }}>{o.ticker}</td>
+                                  <td style={{ padding: "8px 12px", textAlign: "right", color: C.t1 }}>{o.shares.toFixed(4)}</td>
+                                  <td style={{ padding: "8px 12px", textAlign: "right", color: C.t3 }}>${o.price.toFixed(2)}</td>
+                                  <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: C.up }}>${o.amount.toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div style={{ fontSize: 11, color: C.t4, marginBottom: 16, fontStyle: "italic" }}>
+                          Orders distributed proportionally to current portfolio weights. Execute these manually in your brokerage.
+                        </div>
+                      </>
+                    )}
+                    <button onClick={() => setShowRebalModal(false)} style={{
+                      width: "100%", padding: 14, borderRadius: 12, border: `1px solid ${C.border}`,
+                      background: "transparent", color: C.t3, fontSize: 15, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>Close</button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
