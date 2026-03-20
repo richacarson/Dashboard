@@ -907,6 +907,7 @@ Instructions:
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
+  const fhWsRef = useRef(null);
 
   const ALL = useMemo(() => getAllSyms(sleeves), [sleeves]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
@@ -1492,7 +1493,39 @@ Instructions:
     } catch {}
   }, [apiKey, apiSecret]);
 
-  // Finnhub REST polling for non-IEX benchmarks (every 5s)
+  // Finnhub WebSocket for real-time non-IEX benchmark streaming (DVY, IWS, IUSG)
+  const connectFinnhubWS = useCallback(() => {
+    if (!FH) return;
+    try {
+      const fhWs = new WebSocket(`wss://ws.finnhub.io?token=${FH}`);
+      fhWsRef.current = fhWs;
+      fhWs.onopen = () => {
+        for (const sym of NON_IEX_BM) {
+          fhWs.send(JSON.stringify({ type: "subscribe", symbol: sym }));
+        }
+      };
+      fhWs.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === "trade" && msg.data?.length) {
+            const updates = {};
+            for (const t of msg.data) {
+              if (NON_IEX_BM.includes(t.s)) {
+                updates[t.s] = { p: t.p, t: new Date(t.t).toISOString() };
+                quotesRef.current[t.s] = updates[t.s];
+              }
+            }
+            if (Object.keys(updates).length) {
+              setBmQuotes(prev => ({ ...prev, ...updates }));
+            }
+          }
+        } catch {}
+      };
+      fhWs.onclose = () => { setTimeout(connectFinnhubWS, 5000); };
+    } catch {}
+  }, []);
+
+  // Finnhub REST polling for non-IEX benchmarks (fallback, every 2s)
   const fhTimerRef = useRef(null);
   const pollFinnhubBenchmarks = useCallback(async () => {
     if (!FH) return;
@@ -1523,7 +1556,7 @@ Instructions:
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 2000);
   }, [pollFinnhubBenchmarks]);
 
   // ── Performance tab: fetch portfolio history + benchmark bars ──
@@ -1874,6 +1907,7 @@ Instructions:
       // Preload ExcelJS for export
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
+      connectFinnhubWS();
       startFinnhubPolling();
     } catch { setAuthErr("Invalid API keys."); }
   };
@@ -1894,7 +1928,11 @@ Instructions:
       const newsTimer = setInterval(() => { fetchNews(); }, 60000);
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      return () => { clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); };
+      return () => {
+        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current);
+        try { wsRef.current?.close(); } catch {}
+        try { fhWsRef.current?.close(); } catch {}
+      };
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
