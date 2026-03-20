@@ -1761,18 +1761,25 @@ Instructions:
     const calc = () => {
       const h = perfData.holdings;
       const cash = perfData.cash || 0;
-      let stocks = 0, priced = 0, total = Object.keys(h).length;
+      let stocks = 0, pcStocks = 0, priced = 0, total = Object.keys(h).length;
       for (const [ticker, shares] of Object.entries(h)) {
         const q = quotesRef.current[ticker];
-        if (q && q.p > 0) { stocks += shares * q.p; priced++; }
+        const pc = barsRef.current[ticker]?.pc;
+        if (q && q.p > 0) {
+          stocks += shares * q.p;
+          // For previous close, use pc if available, else use current price (assumes 0% change)
+          pcStocks += shares * (pc > 0 ? pc : q.p);
+          priced++;
+        }
       }
       // Only update if we have prices for most holdings and value actually changed
       if (priced >= total * 0.8) {
         const newVal = Math.round((stocks + cash) * 100) / 100;
         const newStocks = Math.round(stocks * 100) / 100;
+        const newPcVal = Math.round((pcStocks + cash) * 100) / 100;
         setLiveValue(prev => {
-          if (prev && prev.value === newVal && prev.stocks === newStocks && prev.cash === cash && prev.holdings === total) return prev;
-          return { value: newVal, stocks: newStocks, cash, holdings: total };
+          if (prev && prev.value === newVal && prev.stocks === newStocks && prev.cash === cash && prev.holdings === total && prev.prevClose === newPcVal) return prev;
+          return { value: newVal, stocks: newStocks, cash, holdings: total, prevClose: newPcVal };
         });
       }
     };
@@ -1827,7 +1834,10 @@ Instructions:
           let pcStocks = 0, pcPriced = 0;
           for (const [ticker, shares] of Object.entries(holdings)) {
             const pc = barsRef.current[ticker]?.pc;
-            if (pc && pc > 0) { pcStocks += shares * pc; pcPriced++; }
+            const fallbackPrice = quotesRef.current[ticker]?.p;
+            // Use pc if available; fall back to current price (assumes 0% change for that holding)
+            const price = (pc && pc > 0) ? pc : (fallbackPrice && fallbackPrice > 0) ? fallbackPrice : 0;
+            if (price > 0) { pcStocks += shares * price; pcPriced++; }
           }
           if (pcPriced >= tickers.length * 0.8) {
             // Use a timestamp just before the first bar so it sorts first
@@ -4299,12 +4309,14 @@ Instructions:
                 }
               };
 
-              // Summary stats — use chart's normalized values so cards always match the chart
-              const startVal = filtered[0].value;
+              // Summary stats — for 1D use liveValue.prevClose for accurate % (matched stock universe)
+              const startVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : filtered[0].value;
               const endVal = isIntraday
                 ? (liveValue ? liveValue.value : portfolio[portfolio.length - 1].value)
                 : filtered[filtered.length - 1].value;
-              const totalReturn = portNorm[portNorm.length - 1].val;
+              const totalReturn = (isIntraday && perfRange === "1D" && liveValue?.prevClose)
+                ? ((endVal / liveValue.prevClose) - 1) * 100
+                : portNorm[portNorm.length - 1].val;
               const dollarChange = endVal - startVal;
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
               const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
