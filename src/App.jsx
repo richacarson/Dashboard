@@ -1018,109 +1018,25 @@ Instructions:
         if (chg < 0) return `rgb(${Math.round(40+intensity*130)},${Math.round(14+intensity*12)},${Math.round(18+intensity*14)})`;
         return C.card;
       };
-      const flashes = {};
-      let anyQuoteChanged = false;
-      for (const s of Object.keys(nq)) {
-        const priceChanged = prevQ[s] && nq[s] && prevQ[s].p !== nq[s].p;
-        if (priceChanged) {
-          anyQuoteChanged = true;
-          flashes[s] = nq[s].p > prevQ[s].p ? "up" : "dn";
-        }
-        const pc = nb[s]?.pc || prevB[s]?.pc;
-        if (nq[s] && pc) {
-          const c = ((nq[s].p - pc) / pc) * 100;
-          // Ticker row change badge (update ALL instances — ticker may appear in top movers + sleeve)
-          document.querySelectorAll(`[data-ticker-chg="${s}"]`).forEach(el => {
-            el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-            el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-            el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
-          });
-          document.querySelectorAll(`[data-ticker-price="${s}"]`).forEach(el => {
-            el.textContent = `$${nq[s].p.toFixed(2)}`;
-          });
-          // Heatmap cell
-          const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
-          if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
-          const hmCell = document.querySelector(`[data-heatmap="${s}"]`);
-          if (hmCell) {
-            hmCell.style.background = hmColor(c);
-            // Flash on price change
-            if (priceChanged) {
-              hmCell.style.transition = "none";
-              hmCell.style.boxShadow = c >= 0 ? `inset 0 0 20px rgba(52,211,153,0.5)` : `inset 0 0 20px rgba(248,113,113,0.5)`;
-              hmCell.style.filter = "brightness(1.4)";
-              setTimeout(() => {
-                if (hmCell) {
-                  hmCell.style.transition = "all 0.6s ease-out";
-                  hmCell.style.boxShadow = "none";
-                  hmCell.style.filter = "brightness(1)";
-                }
-              }, 500);
-            }
-          }
-          // Metrics Day column
-          const metDay = document.querySelector(`[data-metric-day="${s}"]`);
-          if (metDay) {
-            metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-            metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-          }
-          // Benchmark price + change
-          const bmEl = document.querySelector(`[data-bm-price="${s}"]`);
-          if (bmEl) bmEl.textContent = nq[s].p.toFixed(2);
-          const bmChgEl = document.querySelector(`[data-bm-chg="${s}"]`);
-          if (bmChgEl) {
-            bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-            bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-          }
-        }
-      }
-
-      // Store in refs (no re-render)
+      // Store in refs for WebSocket callbacks
       quotesRef.current = nq;
       barsRef.current = { ...prevB, ...nb };
 
-      // Update sleeve average % changes via DOM
-      for (const [k, sleeve] of Object.entries(sleeves)) {
-        const changes = sleeve.symbols.map(s => {
-          const q = nq[s], pc = (nb[s]?.pc || barsRef.current[s]?.pc);
-          return (q?.p && pc) ? ((q.p - pc) / pc) * 100 : null;
-        }).filter(c => c !== null);
-        const avg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
-        const el = document.querySelector(`[data-sleeve-chg="${k}"]`);
-        if (el && avg != null) {
-          el.textContent = `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`;
-          el.style.color = avg >= 0 ? C.up : C.dn;
-        }
+      // Always update React state — let React own the DOM
+      const pq = {}, pb = {}, bmq = {}, bmb = {};
+      for (const s of Object.keys(nq)) {
+        if (BM_SYMS.includes(s)) bmq[s] = nq[s]; else pq[s] = nq[s];
       }
-
-      // Flash effect
-      if (Object.keys(flashes).length) {
-        for (const [s, dir] of Object.entries(flashes)) {
-          document.querySelectorAll(`[data-ticker-chg="${s}"]`).forEach(el => {
-            el.style.background = dir === "up" ? C.up + "30" : C.dn + "30";
-            setTimeout(() => { if (el) el.style.background = "transparent"; }, 600);
-          });
-        }
+      for (const s of Object.keys(nb)) {
+        if (BM_SYMS.includes(s)) bmb[s] = nb[s]; else pb[s] = nb[s];
       }
+      setQuotes(pq); setBars(pb); setBmQuotes(prev => ({ ...prev, ...bmq })); setBmBars(prev => ({ ...prev, ...bmb }));
 
-      if (isFirstLoad || showLoading) {
-        const pq = {}, pb = {}, bmq = {}, bmb = {};
-        for (const s of Object.keys(nq)) {
-          if (BM_SYMS.includes(s)) bmq[s] = nq[s]; else pq[s] = nq[s];
-        }
-        for (const s of Object.keys(nb)) {
-          if (BM_SYMS.includes(s)) bmb[s] = nb[s]; else pb[s] = nb[s];
-        }
-        setQuotes(pq); setBars(pb); setBmQuotes(prev => ({ ...prev, ...bmq })); setBmBars(prev => ({ ...prev, ...bmb }));
-      }
-
-      // Update timestamp via ref + DOM (no re-render)
+      // Update timestamp
       const now = new Date();
       if (!lastUpRef.current || now - lastUpRef.current > 3000) {
         lastUpRef.current = now;
-        const el = document.querySelector("[data-last-updated]");
-        if (el) el.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-        if (isFirstLoad || showLoading) setLastUp(now);
+        setLastUp(now);
       }
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
   }, [apiKey, apiSecret, hdrs, ALL]);
@@ -1559,73 +1475,18 @@ Instructions:
         ws.send(JSON.stringify({ action: "auth", key: apiKey, secret: apiSecret }));
       };
       ws.onmessage = (evt) => {
-        const msgs = JSON.parse(evt.data);
-        for (const msg of msgs) {
-          if (msg.T === "success" && msg.msg === "authenticated") {
-            ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...IEX_BM] }));
-          }
-          if (msg.T === "t" && msg.S && msg.p) {
-            // All symbols (portfolio + benchmarks) in same refs
-            const prev = quotesRef.current[msg.S];
-            quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
-            const pc = barsRef.current[msg.S]?.pc;
-            if (pc) {
-              const c = ((msg.p - pc) / pc) * 100;
-              // Ticker row change badge (portfolio — update ALL instances)
-              document.querySelectorAll(`[data-ticker-chg="${msg.S}"]`).forEach(el => {
-                el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-                el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-                el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
-              });
-              document.querySelectorAll(`[data-ticker-price="${msg.S}"]`).forEach(el => {
-                el.textContent = `$${msg.p.toFixed(2)}`;
-              });
-              // Benchmark
-              const bmEl = document.querySelector(`[data-bm-price="${msg.S}"]`);
-              if (bmEl) bmEl.textContent = msg.p.toFixed(2);
-              const bmChgEl = document.querySelector(`[data-bm-chg="${msg.S}"]`);
-              if (bmChgEl) {
-                bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-                bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-              }
-              // Heatmap
-              const hmChg = document.querySelector(`[data-heatmap-chg="${msg.S}"]`);
-              if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
-              const hmCell = document.querySelector(`[data-heatmap="${msg.S}"]`);
-              if (hmCell) {
-                const maxA = 5, intensity = Math.min(Math.abs(c) / maxA, 1);
-                hmCell.style.background = c > 0 ? `rgb(${Math.round(14+intensity*8)},${Math.round(24+intensity*90)},${Math.round(20+intensity*35)})` : c < 0 ? `rgb(${Math.round(40+intensity*130)},${Math.round(14+intensity*12)},${Math.round(18+intensity*14)})` : C.card;
-                // Flash only if price actually changed from previous
-                if (prev && prev.p !== msg.p) {
-                  hmCell.style.transition = "none";
-                  hmCell.style.boxShadow = c >= 0 ? `inset 0 0 20px rgba(52,211,153,0.5)` : `inset 0 0 20px rgba(248,113,113,0.5)`;
-                  hmCell.style.filter = "brightness(1.4)";
-                  setTimeout(() => {
-                    if (hmCell) {
-                      hmCell.style.transition = "all 0.6s ease-out";
-                      hmCell.style.boxShadow = "none";
-                      hmCell.style.filter = "brightness(1)";
-                    }
-                  }, 500);
-                }
-              }
-              // Metrics Day column
-              const metDay = document.querySelector(`[data-metric-day="${msg.S}"]`);
-              if (metDay) { metDay.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`; metDay.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3; }
-              // Sleeve averages
-              for (const [k, sleeve] of Object.entries(sleevesRef.current)) {
-                if (!sleeve.symbols.includes(msg.S)) continue;
-                const changes = sleeve.symbols.map(s => {
-                  const q = quotesRef.current[s], pc = barsRef.current[s]?.pc;
-                  return (q?.p && pc) ? ((q.p - pc) / pc) * 100 : null;
-                }).filter(v => v !== null);
-                const avg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
-                const el = document.querySelector(`[data-sleeve-chg="${k}"]`);
-                if (el && avg != null) { el.textContent = `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%`; el.style.color = avg >= 0 ? C.up : C.dn; }
-              }
+        try {
+          const msgs = JSON.parse(evt.data);
+          for (const msg of msgs) {
+            if (msg.T === "success" && msg.msg === "authenticated") {
+              ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...IEX_BM] }));
+            }
+            if (msg.T === "t" && msg.S && msg.p) {
+              // Update refs only — React state syncs on next poll cycle (every 1s)
+              quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
             }
           }
-        }
+        } catch {}
       };
       ws.onclose = () => { setTimeout(connectWS, 5000); };
     } catch {}
@@ -1653,17 +1514,7 @@ Instructions:
           barsRef.current[sym] = barVal;
           batchB[sym] = barVal;
         }
-        // DOM updates
-        const bmEl = document.querySelector(`[data-bm-price="${sym}"]`);
-        if (bmEl) bmEl.textContent = price.toFixed(2);
-        if (pc) {
-          const c = ((price - pc) / pc) * 100;
-          const bmChgEl = document.querySelector(`[data-bm-chg="${sym}"]`);
-          if (bmChgEl) {
-            bmChgEl.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
-            bmChgEl.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
-          }
-        }
+        // React state sync below handles rendering
       } catch {}
     }
     // Sync React state so re-renders don't revert to stale values
