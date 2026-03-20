@@ -1571,15 +1571,15 @@ Instructions:
             const pc = barsRef.current[msg.S]?.pc;
             if (pc) {
               const c = ((msg.p - pc) / pc) * 100;
-              // Ticker row change badge (portfolio)
-              const el = document.querySelector(`[data-ticker-chg="${msg.S}"]`);
-              if (el) {
+              // Ticker row change badge (portfolio — update ALL instances)
+              document.querySelectorAll(`[data-ticker-chg="${msg.S}"]`).forEach(el => {
                 el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
                 el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
                 el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
-              }
-              const priceEl = document.querySelector(`[data-ticker-price="${msg.S}"]`);
-              if (priceEl) priceEl.textContent = `$${msg.p.toFixed(2)}`;
+              });
+              document.querySelectorAll(`[data-ticker-price="${msg.S}"]`).forEach(el => {
+                el.textContent = `$${msg.p.toFixed(2)}`;
+              });
               // Benchmark
               const bmEl = document.querySelector(`[data-bm-price="${msg.S}"]`);
               if (bmEl) bmEl.textContent = msg.p.toFixed(2);
@@ -2219,7 +2219,7 @@ Instructions:
                 { v: "chgDn", l: "% ↓" },
                 { v: "chgUp", l: "% ↑" },
               ].map(({ v, l }) => {
-                const active = (sleeveSort[k] || "alpha") === v;
+                const active = (sleeveSort[k] || "chgDn") === v;
                 return (
                   <button key={v} onClick={() => setSleeveSort(p => ({ ...p, [k]: v }))} style={{
                     padding: "5px 12px", borderRadius: 8, border: `1px solid ${active ? C.borderActive : C.border}`,
@@ -2231,7 +2231,7 @@ Instructions:
               })}
             </div>
             {(() => {
-              const sortMode = sleeveSort[k] || "alpha";
+              const sortMode = sleeveSort[k] || "chgDn";
               const sorted = [...sleeve.symbols].sort((a, b) => {
                 if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
                 if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
