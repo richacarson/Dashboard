@@ -4431,6 +4431,7 @@ Instructions:
                     const endDate = new Date(end.date + "T12:00:00");
 
                     const trailingPeriods = [
+                      { label: "1-Day", oneDay: true },
                       { label: "1-Week", days: 7 },
                       { label: "1-Month", days: 30 },
                       { label: "3-Month", days: 91 },
@@ -4443,6 +4444,12 @@ Instructions:
                     ];
 
                     const getReturn = (p) => {
+                      if (p.oneDay) {
+                        // Use prevClose as base, same as 1D chart
+                        const base = liveValue?.prevClose;
+                        if (!base || base <= 0) return null;
+                        return ((endVal / base) - 1) * 100;
+                      }
                       let startPt;
                       if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
@@ -4474,6 +4481,12 @@ Instructions:
                       const liveQ = bmQuotes[sym];
                       const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
                       const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
+                      if (p.oneDay) {
+                        // Use previous close as base, same as 1D chart
+                        const pc = bmBars[sym]?.pc;
+                        if (!pc || pc <= 0 || lastPrice <= 0) return null;
+                        return ((lastPrice / pc) - 1) * 100;
+                      }
                       let startPrice;
                       if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
