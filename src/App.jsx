@@ -1029,15 +1029,15 @@ Instructions:
         const pc = nb[s]?.pc || prevB[s]?.pc;
         if (nq[s] && pc) {
           const c = ((nq[s].p - pc) / pc) * 100;
-          // Ticker row change badge
-          const el = document.querySelector(`[data-ticker-chg="${s}"]`);
-          if (el) {
+          // Ticker row change badge (update ALL instances — ticker may appear in top movers + sleeve)
+          document.querySelectorAll(`[data-ticker-chg="${s}"]`).forEach(el => {
             el.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(2)}%`;
             el.style.color = c > 0 ? C.up : c < 0 ? C.dn : C.t3;
             el.style.borderColor = c > 0 ? C.up + "55" : c < 0 ? C.dn + "55" : C.border;
-          }
-          const priceEl = document.querySelector(`[data-ticker-price="${s}"]`);
-          if (priceEl) priceEl.textContent = `$${nq[s].p.toFixed(2)}`;
+          });
+          document.querySelectorAll(`[data-ticker-price="${s}"]`).forEach(el => {
+            el.textContent = `$${nq[s].p.toFixed(2)}`;
+          });
           // Heatmap cell
           const hmChg = document.querySelector(`[data-heatmap-chg="${s}"]`);
           if (hmChg) hmChg.textContent = `${c >= 0 ? "+" : ""}${c.toFixed(1)}%`;
@@ -1096,11 +1096,10 @@ Instructions:
       // Flash effect
       if (Object.keys(flashes).length) {
         for (const [s, dir] of Object.entries(flashes)) {
-          const el = document.querySelector(`[data-ticker-chg="${s}"]`);
-          if (el) {
+          document.querySelectorAll(`[data-ticker-chg="${s}"]`).forEach(el => {
             el.style.background = dir === "up" ? C.up + "30" : C.dn + "30";
             setTimeout(() => { if (el) el.style.background = "transparent"; }, 600);
-          }
+          });
         }
       }
 
@@ -2048,7 +2047,7 @@ Instructions:
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
-  const chg = s => { const q = quotes[s], b = bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+  const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
 
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
@@ -4347,7 +4346,7 @@ Instructions:
 
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-                    <div style={{ display: "flex", gap: 4 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {["1D", "1W", "1M", "3M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
                         <button key={r} onClick={() => setPerfRange(r)} style={{
                           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
