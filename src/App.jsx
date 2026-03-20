@@ -4090,6 +4090,12 @@ Instructions:
                     bmPoints.push({ date: pt.date, val: ((prices[priceIdx][1] / basePrice) - 1) * 100 });
                   }
                 }
+                // Append live benchmark price for today if available
+                const liveQ = bmQuotes[sym];
+                if (liveQ?.p && filtered.length > 0) {
+                  const lastPortDate = filtered[filtered.length - 1].date;
+                  bmPoints.push({ date: lastPortDate, val: ((liveQ.p / basePrice) - 1) * 100 });
+                }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
               });
 
