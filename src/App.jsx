@@ -4111,6 +4111,14 @@ Instructions:
 
               if (useIntraday) {
                 filtered = intradayPortfolio[perfRange];
+                // Append live value as real-time trailing point (updates every ~2s via WebSocket)
+                if (liveValue && perfRange === "1D") {
+                  const livePoint = { date: new Date().toISOString(), value: liveValue.value, stocks: liveValue.stocks, cash: liveValue.cash };
+                  const last = filtered[filtered.length - 1];
+                  if (!last || Math.abs(livePoint.value - last.value) > 0.01) {
+                    filtered = [...filtered, livePoint];
+                  }
+                }
                 isIntraday = true;
               } else {
                 const rangeMap = { "1W": 7, "1M": 30, "3M": 91, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
