@@ -902,7 +902,7 @@ Instructions:
   const [perfLoading, setPerfLoading] = useState(false);
   const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, DIA: false });
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
-  const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}], "1W": [...], "1M": [...] }
+  const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
   const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
@@ -1671,7 +1671,7 @@ Instructions:
     return () => clearInterval(t);
   }, [perfData, authed]);
 
-  // Fetch intraday bars for 1D (5min), 1W (30min), 1M (4hr) portfolio chart
+  // Fetch intraday bars for 1D (1min) portfolio chart
   useEffect(() => {
     if (!perfData?.holdings || !authed || !apiKey) return;
     const holdings = perfData.holdings;
@@ -1768,19 +1768,7 @@ Instructions:
       const d1 = new Date(now); d1.setDate(d1.getDate() - 2);
       const d1Start = d1.toISOString().slice(0, 10) + "T04:00:00Z";
 
-      // 1W: 30Min bars, last 7 days
-      const d7 = new Date(now); d7.setDate(d7.getDate() - 8);
-      const d7Start = d7.toISOString().slice(0, 10) + "T04:00:00Z";
-
-      // 1M: 1Day bars, last 30 days
-      const d30 = new Date(now); d30.setDate(d30.getDate() - 32);
-      const d30Start = d30.toISOString().slice(0, 10);
-
-      const [pts1DRaw, pts1W, pts1M] = await Promise.all([
-        fetchIntraday("1Min", d1Start, "1D"),
-        fetchIntraday("30Min", d7Start, "1W"),
-        fetchIntraday("1Day", d30Start, "1M"),
-      ]);
+      const pts1DRaw = await fetchIntraday("1Min", d1Start, "1D");
 
       // For 1D, only keep the most recent trading session
       let pts1D = pts1DRaw;
@@ -1792,7 +1780,7 @@ Instructions:
         if (pts1D.length < 2) pts1D = pts1DRaw;
       }
 
-      setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
+      setIntradayPortfolio({ "1D": pts1D });
 
       // Fetch intraday benchmark bars
       // All benchmarks via Alpaca IEX feed
@@ -1832,13 +1820,9 @@ Instructions:
         return result;
       };
 
-      const [iex1DRaw, iex1W, iex1M, fh1DRaw, fh1W, fh1M] = await Promise.all([
+      const [iex1DRaw, fh1DRaw] = await Promise.all([
         fetchBmBars(allBmSyms, "1Min", d1Start),
-        fetchBmBars(allBmSyms, "30Min", d7Start),
-        fetchBmBars(allBmSyms, "1Day", d30Start),
         fetchFhBmBars("1", d1Start),
-        fetchFhBmBars("30", d7Start),
-        fetchFhBmBars("D", d30Start),
       ]);
       // Merge: prefer IEX data, fall back to Finnhub for missing symbols
       const mergeBm = (iex, fh) => {
@@ -1849,8 +1833,6 @@ Instructions:
         return merged;
       };
       const bm1DRaw = mergeBm(iex1DRaw, fh1DRaw);
-      const bm1W = mergeBm(iex1W, fh1W);
-      const bm1M = mergeBm(iex1M, fh1M);
 
       // Filter benchmark 1D bars to same trading day as portfolio
       const lastPortDate = pts1D.length ? pts1D[pts1D.length - 1].date.slice(0, 10) : null;
@@ -1859,7 +1841,7 @@ Instructions:
         bm1D[sym] = lastPortDate ? bars.filter(b => b.date.slice(0, 10) === lastPortDate) : bars;
       }
 
-      setIntradayBenchmarks({ "1D": bm1D, "1W": bm1W, "1M": bm1M });
+      setIntradayBenchmarks({ "1D": bm1D });
     };
 
     run();
@@ -4029,7 +4011,7 @@ Instructions:
 
               // Filter by time range — use intraday data for short periods
               const now = new Date();
-              const useIntraday = (perfRange === "1D" || perfRange === "1W" || perfRange === "1M") && intradayPortfolio[perfRange]?.length > 1;
+              const useIntraday = perfRange === "1D" && intradayPortfolio[perfRange]?.length > 1;
               let filtered;
               let isIntraday = false;
 
@@ -4045,7 +4027,7 @@ Instructions:
                 }
                 isIntraday = true;
               } else {
-                const rangeMap = { "1W": 7, "1M": 30, "3M": 91, "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
+                const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
                 const rangeDays = rangeMap[perfRange];
                 let cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
                 if (perfRange === "1D") {
@@ -4174,10 +4156,6 @@ Instructions:
                   let label;
                   if (isIntraday && perfRange === "1D") {
                     label = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-                  } else if (isIntraday && perfRange === "1W") {
-                    label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-                  } else if (isIntraday) {
-                    label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
                   } else {
                     label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
                   }
@@ -4200,31 +4178,27 @@ Instructions:
 
               // Summary stats — for 1D use liveValue.prevClose for accurate % (matched stock universe)
               const startVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : filtered[0].value;
-              const endVal = isIntraday
-                ? (liveValue ? liveValue.value : portfolio[portfolio.length - 1].value)
-                : filtered[filtered.length - 1].value;
+              const endVal = liveValue ? liveValue.value : filtered[filtered.length - 1].value;
               const totalReturn = (isIntraday && perfRange === "1D" && liveValue?.prevClose)
                 ? ((endVal / liveValue.prevClose) - 1) * 100
-                : portNorm[portNorm.length - 1].val;
+                : ((endVal / startVal) - 1) * 100;
               const dollarChange = endVal - startVal;
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
               const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
 
-              const periodLabel = { "1D": "Day", "1W": "Week", "1M": "Month" }[perfRange];
+              const periodLabel = { "1D": "Day", "YTD": "YTD" }[perfRange];
 
               return (
                 <>
                   {/* Summary cards */}
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
                     {[
-                      { label: isIntraday ? "Previous Close" : "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: (isIntraday || perfRange === "YTD") ? (perfRange === "1D" ? "Previous Close" : "Starting Value") : "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
                       { label: liveValue ? "Live Value" : "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
-                      { label: isIntraday ? `${periodLabel} Change` : "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
-                      isIntraday
+                      { label: periodLabel ? `${periodLabel} Change` : "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
+                      (isIntraday || perfRange === "YTD" || years <= 1)
                         ? { label: "$ Change", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
-                        : years > 1
-                          ? { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn }
-                          : { label: "$ Change", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn },
+                        : { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn },
                     ].map((s, i) => (
                       <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px" }}>
                         <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{s.label}</div>
@@ -4236,7 +4210,7 @@ Instructions:
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {["1D", "1W", "1M", "3M", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
+                      {["1D", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].map(r => (
                         <button key={r} onClick={() => setPerfRange(r)} style={{
                           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
                           border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
@@ -4438,7 +4412,7 @@ Instructions:
                       };
                       return `${fmt(filtered[0].date)} — ${fmt(filtered[filtered.length-1].date)}`;
                     })()}
-                    {" · "}{filtered.length} {isIntraday ? (perfRange === "1D" ? "1-min" : perfRange === "1W" ? "30-min" : "daily") : ""} data points
+                    {" · "}{filtered.length} {isIntraday ? "1-min" : ""} data points
                     {liveValue ? " · Live" : ""}
                   </div>
 
