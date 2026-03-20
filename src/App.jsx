@@ -4173,7 +4173,8 @@ Instructions:
               if (!filtered.length) return null;
 
               // Normalize portfolio to % change from first point (starts at 0%)
-              const baseVal = filtered[0].value;
+              // For 1D, use liveValue.prevClose as base so chart matches the Day Change card
+              const baseVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : filtered[0].value;
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
