@@ -7,6 +7,14 @@ on:
         description: 'Sleeve name (dividend, growth, digital)'
         required: true
         default: 'dividend'
+  schedule:
+    # Daily rebuild at 9:30 PM ET (01:30 UTC) — after market close
+    - cron: '30 1 * * 1-5'
+  push:
+    branches: [main]
+    paths:
+      - 'transactions/user_transactions.json'
+      - 'transactions/*_strategy_transactions.txt'
 
 permissions:
   contents: write
@@ -22,6 +30,15 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Determine sleeve
+        id: sleeve
+        run: |
+          if [ -n "${{ inputs.sleeve }}" ]; then
+            echo "name=${{ inputs.sleeve }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=dividend" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build portfolio history
         env:
           ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
@@ -29,21 +46,21 @@ jobs:
           POLYGON_KEY: ${{ secrets.POLYGON_API_KEY }}
         run: |
           python3 scripts/build-portfolio-history.py \
-            "transactions/${{ inputs.sleeve }}_strategy_transactions.txt" \
-            "${{ inputs.sleeve }}"
-          
+            "transactions/${{ steps.sleeve.outputs.name }}_strategy_transactions.txt" \
+            "${{ steps.sleeve.outputs.name }}"
+
           # Move output to public folder
-          mv "portfolio-history-${{ inputs.sleeve }}.json" "public/portfolio-history-${{ inputs.sleeve }}.json"
-          
+          mv "portfolio-history-${{ steps.sleeve.outputs.name }}.json" "public/portfolio-history-${{ steps.sleeve.outputs.name }}.json"
+
           echo "=== Output ==="
           ls -la public/portfolio-history-*.json
-          head -c 500 "public/portfolio-history-${{ inputs.sleeve }}.json"
+          head -c 500 "public/portfolio-history-${{ steps.sleeve.outputs.name }}.json"
 
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/portfolio-history-*.json
-          git commit -m "Update portfolio history for ${{ inputs.sleeve }} sleeve" || echo "No changes"
+          git commit -m "Update portfolio history for ${{ steps.sleeve.outputs.name }} sleeve" || echo "No changes"
           git pull --rebase origin main
           git push

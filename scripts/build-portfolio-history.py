@@ -329,8 +329,8 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                     if holdings[evt["ticker"]] <= 0.0001:
                         holdings[evt["ticker"]] = 0
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
-                    # Truncate to 4 decimal places to match Morningstar's rounding
-                    holdings[evt["ticker"]] += int(evt["shares"] * 10000) / 10000
+                    # Dividends go to cash, not reinvested as shares
+                    cash += evt.get("amount", evt["shares"] * evt.get("price", 0))
             elif evt["kind"] == "cash":
                 if evt["type"] == "DEPOSIT":
                     cash += evt["amount"]
@@ -552,7 +552,7 @@ def main():
     cb_cost = defaultdict(float)      # ticker -> total cost
     for tx in sorted(transactions, key=lambda x: x["date"]):
         t = tx["ticker"]
-        if tx["type"] in ("PURCHASE", "DIVIDEND REINVESTMENT"):
+        if tx["type"] == "PURCHASE":
             cb_holdings[t] += tx["shares"]
             cb_cost[t] += tx["shares"] * tx["price"]
         elif tx["type"] == "SALE":
