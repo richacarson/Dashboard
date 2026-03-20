@@ -4470,8 +4470,10 @@ Instructions:
                       if (!bmPrices) return null;
                       const prices = Object.entries(bmPrices).sort((a, b) => a[0].localeCompare(b[0]));
                       if (!prices.length) return null;
-                      const lastPrice = prices[prices.length - 1][1];
-                      const lastDate = new Date(prices[prices.length - 1][0] + "T12:00:00");
+                      // Use live benchmark price if available, otherwise fall back to last historical price
+                      const liveQ = bmQuotes[sym];
+                      const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
+                      const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                       let startPrice;
                       if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
