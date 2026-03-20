@@ -1821,8 +1821,27 @@ Instructions:
           if (pc) lastPrice[ticker] = pc;
         }
 
-        // For each timestamp, compute portfolio value = sum(shares × close) + cash
+        // For 1D, prepend a "previous close" point so daily return is measured from prior close
         const portfolioPoints = [];
+        if (key === "1D") {
+          let pcStocks = 0, pcPriced = 0;
+          for (const [ticker, shares] of Object.entries(holdings)) {
+            const pc = barsRef.current[ticker]?.pc;
+            if (pc && pc > 0) { pcStocks += shares * pc; pcPriced++; }
+          }
+          if (pcPriced >= tickers.length * 0.8) {
+            // Use a timestamp just before the first bar so it sorts first
+            const pcDate = new Date(new Date(timestamps[0]).getTime() - 60000).toISOString();
+            portfolioPoints.push({
+              date: pcDate,
+              value: Math.round((pcStocks + cash) * 100) / 100,
+              stocks: Math.round(pcStocks * 100) / 100,
+              cash,
+            });
+          }
+        }
+
+        // For each timestamp, compute portfolio value = sum(shares × close) + cash
         for (const ts of timestamps) {
           for (const [sym, bars] of Object.entries(allBars)) {
             const bar = bars.find(b => b.t === ts);
@@ -1883,8 +1902,8 @@ Instructions:
       setIntradayPortfolio({ "1D": pts1D, "1W": pts1W, "1M": pts1M });
 
       // Fetch intraday benchmark bars
-      // IEX benchmarks (SPY, DIA) via Alpaca
-      const iexBmSyms = ["SPY", "DIA"];
+      // All benchmarks via Alpaca IEX feed
+      const allBmSyms = ["SPY", "DIA", "DVY", "IWS"];
       const fetchBmBars = async (syms, timeframe, startDate) => {
         try {
           const url = `${BASE}/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
@@ -1900,14 +1919,13 @@ Instructions:
           return result;
         } catch { return {}; }
       };
-      // Non-IEX benchmarks (DVY, IWS) via Finnhub candles
-      const fhBmSyms = ["DVY", "IWS"];
+      // Fallback: Finnhub candles for any symbols missing from IEX
       const fetchFhBmBars = async (resolution, from) => {
         if (!FH) return {};
         const result = {};
         const fromTs = Math.floor(new Date(from).getTime() / 1000);
         const toTs = Math.floor(Date.now() / 1000);
-        for (const sym of fhBmSyms) {
+        for (const sym of allBmSyms) {
           try {
             const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=${resolution}&from=${fromTs}&to=${toTs}&token=${FH}`;
             const r = await fetch(url);
@@ -1922,16 +1940,24 @@ Instructions:
       };
 
       const [iex1DRaw, iex1W, iex1M, fh1DRaw, fh1W, fh1M] = await Promise.all([
-        fetchBmBars(iexBmSyms, "1Min", d1Start),
-        fetchBmBars(iexBmSyms, "30Min", d7Start),
-        fetchBmBars(iexBmSyms, "1Day", d30Start),
+        fetchBmBars(allBmSyms, "1Min", d1Start),
+        fetchBmBars(allBmSyms, "30Min", d7Start),
+        fetchBmBars(allBmSyms, "1Day", d30Start),
         fetchFhBmBars("1", d1Start),
         fetchFhBmBars("30", d7Start),
         fetchFhBmBars("D", d30Start),
       ]);
-      const bm1DRaw = { ...iex1DRaw, ...fh1DRaw };
-      const bm1W = { ...iex1W, ...fh1W };
-      const bm1M = { ...iex1M, ...fh1M };
+      // Merge: prefer IEX data, fall back to Finnhub for missing symbols
+      const mergeBm = (iex, fh) => {
+        const merged = { ...fh };
+        for (const [sym, bars] of Object.entries(iex)) {
+          if (bars.length > 0) merged[sym] = bars;
+        }
+        return merged;
+      };
+      const bm1DRaw = mergeBm(iex1DRaw, fh1DRaw);
+      const bm1W = mergeBm(iex1W, fh1W);
+      const bm1M = mergeBm(iex1M, fh1M);
 
       // Filter benchmark 1D bars to same trading day as portfolio
       const lastPortDate = pts1D.length ? pts1D[pts1D.length - 1].date.slice(0, 10) : null;
@@ -4146,11 +4172,10 @@ Instructions:
               if (isIntraday) {
                 // Use intraday benchmark bars
                 const ibm = intradayBenchmarks[perfRange] || {};
-                const portStartDate = filtered[0].date;
                 Object.entries(ibm).forEach(([sym, pts]) => {
                   if (!perfBmToggles[sym] || !pts.length) return;
-                  // Use first intraday bar as base so all lines start at 0%
-                  let basePrice = pts[0].close;
+                  // For 1D, use previous close as base so % change matches actual daily return
+                  let basePrice = (perfRange === "1D" && bmBars[sym]?.pc) ? bmBars[sym].pc : pts[0].close;
                   if (!basePrice) return;
                   // Map benchmark timestamps to portfolio timestamps
                   const bmPoints = [];
