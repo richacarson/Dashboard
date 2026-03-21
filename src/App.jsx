@@ -3821,7 +3821,7 @@ Instructions:
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Screener</div>}
             <div style={{ flex: 1, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, background: C.card }}>
               <iframe
-                src="https://richacarson.github.io/Stock-Screener/"
+                src="https://richacarson.github.io/Stock-Screener/?embed=1"
                 title="Stock Screener"
                 style={{ width: "100%", height: "100%", border: "none", display: "block" }}
                 allow="clipboard-write"
