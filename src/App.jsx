@@ -3816,19 +3816,7 @@ Instructions:
         })()}
 
         {/* ━━━ SCREENER ━━━ */}
-        {tab === "screener" && (
-          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, display: "flex", flexDirection: "column", height: isDesktop ? "calc(100dvh - 80px)" : "calc(100dvh - 160px)" }}>
-            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Screener</div>}
-            <div style={{ flex: 1, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, background: C.card }}>
-              <iframe
-                src="https://richacarson.github.io/Stock-Screener/?embed=1"
-                title="Stock Screener"
-                style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                allow="clipboard-write"
-              />
-            </div>
-          </div>
-        )}
+        {tab === "screener" && null}
 
         {/* ━━━ CLIENTS (REDTAIL CRM) ━━━ */}
         {tab === "clients" && (
@@ -4752,6 +4740,40 @@ Instructions:
           </div>
         );
       })()}
+
+      {/* SCREENER FULL-PAGE OVERLAY */}
+      {tab === "screener" && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
+          display: "flex", flexDirection: "column",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
+          }}>
+            <button onClick={() => setTab("home")} style={{
+              background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
+              cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+              Back
+            </button>
+            <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>Stock Screener</span>
+            <button onClick={() => window.open("https://richacarson.github.io/Stock-Screener/", "_blank")} style={{
+              background: "none", border: `1px solid ${C.border}`, borderRadius: 8,
+              padding: "5px 12px", color: C.t3, fontSize: 11, fontWeight: 600,
+              cursor: "pointer", fontFamily: "inherit",
+            }}>Open ↗</button>
+          </div>
+          <iframe
+            src="https://richacarson.github.io/Stock-Screener/?embed=1"
+            title="Stock Screener"
+            style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
+          />
+        </div>
+      )}
 
       {/* ARTICLE READER OVERLAY */}
       {selectedArticle && (() => {
