@@ -1263,6 +1263,7 @@ Instructions:
           peFwd: m.peAnnual ?? null,
           pegTTM: m.pegTTM ?? null,
           yieldFwd: m.dividendYieldIndicatedAnnual ?? null,
+          dps: m.dividendPerShareAnnual ?? null,
           payoutRatio: m.payoutRatioTTM ?? m.payoutRatioAnnual ?? null,
           revenueYoY: m.revenueGrowthQuarterlyYoy ?? m.revenueGrowthTTMYoy ?? null,
           revenue5Y: m.revenueGrowth5Y ?? null,
@@ -1814,6 +1815,56 @@ Instructions:
     const t = setInterval(calc, 2000);
     return () => clearInterval(t);
   }, [perfData, authed]);
+
+  // Auto-accrue dividends: use fundamentals.dps (annual $/share) to estimate
+  // dividends earned since the last recorded DIVIDEND transaction, then credit cash.
+  const divAccruedRef = useRef({}); // track which sleeves we've already accrued for
+  useEffect(() => {
+    if (!fundamentals?._ts || !perfDataMap || Object.keys(perfDataMap).length === 0) return;
+    const today = new Date().toISOString().slice(0, 10);
+    for (const [sleeve, data] of Object.entries(perfDataMap)) {
+      const key = `${sleeve}_${fundamentals._ts}`;
+      if (divAccruedRef.current[key]) continue; // already done this cycle
+      const holdings = data.holdings;
+      if (!holdings || Object.keys(holdings).length === 0) continue;
+
+      // Find most recent DIVIDEND transaction date
+      const divTxs = (data.transactions || []).filter(tx => tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT");
+      let lastDivDate = data.start_date || "2011-01-01";
+      for (const tx of divTxs) {
+        if (tx.date > lastDivDate) lastDivDate = tx.date;
+      }
+
+      // Calculate days since last dividend (cap at 90 to avoid huge catch-ups)
+      const msPerDay = 86400000;
+      const daysSince = Math.min(90, Math.max(0, Math.floor((new Date(today) - new Date(lastDivDate)) / msPerDay)));
+      if (daysSince < 1) { divAccruedRef.current[key] = true; continue; }
+
+      // Sum daily dividend accrual across all holdings
+      let totalAccrued = 0;
+      const breakdown = [];
+      for (const [ticker, shares] of Object.entries(holdings)) {
+        const f = fundamentals[ticker];
+        if (!f?.dps || f.dps <= 0) continue;
+        const dailyDiv = (shares * f.dps) / 365;
+        const accrued = dailyDiv * daysSince;
+        if (accrued > 0.005) {
+          totalAccrued += accrued;
+          breakdown.push({ ticker, amount: Math.round(accrued * 100) / 100 });
+        }
+      }
+
+      if (totalAccrued < 0.01) { divAccruedRef.current[key] = true; continue; }
+      totalAccrued = Math.round(totalAccrued * 100) / 100;
+
+      // Create auto-dividend transaction and update perfData
+      const newTx = { date: today, type: "DIVIDEND", amount: totalAccrued, auto: true, days: daysSince, breakdown };
+      const updated = { ...data, transactions: [newTx, ...data.transactions], cash: (data.cash || 0) + totalAccrued };
+      setPerfDataMap(prev => ({ ...prev, [sleeve]: updated }));
+      if (sleeve === perfSleeve) setPerfData(updated);
+      divAccruedRef.current[key] = true;
+    }
+  }, [fundamentals, perfDataMap, perfSleeve]);
 
   // Fetch intraday bars for 1D (1min) portfolio chart
   useEffect(() => {
@@ -2547,8 +2598,9 @@ Instructions:
                           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                             <span style={{ fontSize: 10, fontWeight: 700, color: typeColor, background: typeColor + "18", padding: "3px 6px", borderRadius: 4, flexShrink: 0 }}>{typeMap[tx.type] || tx.type}</span>
                             <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{tx.ticker || "Cash"}</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{tx.ticker || "Cash"}{tx.auto && <span style={{ fontSize: 10, color: C.t4, fontWeight: 400, marginLeft: 4 }}>(est {tx.days}d)</span>}</div>
                               {isStock && <div style={{ fontSize: 11, color: C.t4 }}>{tx.shares?.toFixed(2)} @ ${tx.price?.toFixed(2)}</div>}
+                              {tx.auto && tx.breakdown && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{tx.breakdown.slice(0, 5).map(b => `${b.ticker} $${b.amount}`).join(", ")}{tx.breakdown.length > 5 ? ` +${tx.breakdown.length - 5} more` : ""}</div>}
                             </div>
                           </div>
                           <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 10 }}>
@@ -2577,9 +2629,9 @@ Instructions:
                           return (
                             <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
                               <td style={{ padding: "8px 12px", color: C.t2 }}>{tx.date}</td>
-                              <td style={{ padding: "8px 12px", color: typeColor, fontWeight: 600 }}>{typeMap[tx.type] || tx.type}</td>
-                              <td style={{ padding: "8px 12px", color: C.t1, fontWeight: 600 }}>{tx.ticker || "—"}</td>
-                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? tx.shares?.toFixed(4) : "—"}</td>
+                              <td style={{ padding: "8px 12px", color: typeColor, fontWeight: 600 }}>{typeMap[tx.type] || tx.type}{tx.auto && <span style={{ fontSize: 10, color: C.t4, fontWeight: 400, marginLeft: 4 }}>est</span>}</td>
+                              <td style={{ padding: "8px 12px", color: C.t1, fontWeight: 600 }}>{tx.ticker || (tx.auto && tx.breakdown ? tx.breakdown.slice(0, 4).map(b => b.ticker).join(", ") + (tx.breakdown.length > 4 ? "…" : "") : "—")}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? tx.shares?.toFixed(4) : (tx.auto ? `${tx.days}d` : "—")}</td>
                               <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? `$${tx.price?.toFixed(2)}` : "—"}</td>
                               <td style={{ padding: "8px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
