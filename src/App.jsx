@@ -2478,8 +2478,8 @@ Instructions:
               if (!hPerfData) return null;
               return (
               <div style={{ animation: "fadeIn 0.2s ease" }}>
-                {/* Sleeve selector for holdings */}
-                {Object.keys(perfDataMap).length > 1 && (
+                {/* Sleeve selector for holdings — hidden until Growth is validated */}
+                {false && Object.keys(perfDataMap).length > 1 && (
                   <div style={{ display: "flex", gap: 6, marginTop: 8, marginBottom: 12 }}>
                     {[{ k: "dividend", l: "Dividend", icon: "💰" }, { k: "growth", l: "Growth", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
                       <button key={s.k} onClick={() => setHoldingsSleeve(s.k)} style={{
@@ -4245,8 +4245,8 @@ Instructions:
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Performance</div>}
 
-            {/* Sleeve selector */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+            {/* Sleeve selector — hidden until Growth is validated */}
+            <div style={{ display: "none", gap: 6, marginBottom: 20 }}>
               {[{ k: "dividend", l: "Dividend", icon: "💰" }, { k: "growth", l: "Growth", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
                 <button key={s.k} onClick={() => { setPerfSleeve(s.k); setPerfRange("ALL"); }} style={{
                   flex: 1, padding: "12px 0", borderRadius: 12, border: `1px solid ${perfSleeve === s.k ? C.borderActive : C.border}`,
