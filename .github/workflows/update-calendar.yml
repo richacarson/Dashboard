@@ -1,4 +1,4 @@
-name: Update Economic Calendar
+name: Update Calendars
 
 on:
   schedule:
@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FMP_KEY: ${{ secrets.FMP_API }}
+      FINNHUB_KEY: ${{ secrets.FINHUB_API }}
     steps:
       - uses: actions/checkout@v4
 
@@ -188,9 +189,120 @@ jobs:
               json.dump(events, f, indent=2)
           PY
 
+      - name: Fetch earnings calendar
+        run: |
+          # Get this week and next week date ranges
+          THIS_MON=$(date -u +%Y-%m-%d -d "last monday")
+          THIS_FRI=$(date -u +%Y-%m-%d -d "last monday + 4 days")
+          NEXT_MON=$(date -u +%Y-%m-%d -d "next monday")
+          NEXT_FRI=$(date -u +%Y-%m-%d -d "next monday + 4 days")
+
+          echo "[]" > /tmp/earnings_fmp.json
+          echo "[]" > /tmp/earnings_finnhub.json
+
+          # FMP earnings
+          if [ -n "$FMP_KEY" ]; then
+            HTTP_CODE=$(curl -sL -o /tmp/earnings_fmp_raw.json -w "%{http_code}" \
+              "https://financialmodelingprep.com/api/v3/earning_calendar?from=${THIS_MON}&to=${NEXT_FRI}&apikey=${FMP_KEY}" 2>/dev/null || echo "000")
+            SIZE=$(wc -c < /tmp/earnings_fmp_raw.json 2>/dev/null || echo "0")
+            echo "FMP Earnings: HTTP $HTTP_CODE, $SIZE bytes"
+            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
+              cp /tmp/earnings_fmp_raw.json /tmp/earnings_fmp.json
+            fi
+          fi
+
+          # Finnhub earnings
+          if [ -n "$FINNHUB_KEY" ]; then
+            HTTP_CODE=$(curl -sL -o /tmp/earnings_finnhub_raw.json -w "%{http_code}" \
+              "https://finnhub.io/api/v1/calendar/earnings?from=${THIS_MON}&to=${NEXT_FRI}&token=${FINNHUB_KEY}" 2>/dev/null || echo "000")
+            SIZE=$(wc -c < /tmp/earnings_finnhub_raw.json 2>/dev/null || echo "0")
+            echo "Finnhub Earnings: HTTP $HTTP_CODE, $SIZE bytes"
+            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
+              cp /tmp/earnings_finnhub_raw.json /tmp/earnings_finnhub.json
+            fi
+          fi
+
+      - name: Process earnings calendar
+        run: |
+          python3 << 'PY'
+          import json
+
+          earnings = {}  # key: symbol|date
+
+          # FMP is primary (reliable dates)
+          try:
+              with open('/tmp/earnings_fmp.json') as f:
+                  data = json.loads(f.read())
+              if isinstance(data, list):
+                  for e in data:
+                      sym, dt = e.get('symbol'), e.get('date')
+                      if not sym or not dt:
+                          continue
+                      key = f"{sym}|{dt}"
+                      earnings[key] = {
+                          'symbol': sym, 'date': dt,
+                          'hour': 'bmo' if e.get('time') == 'bmo' else ('amc' if e.get('time') == 'amc' else (e.get('time') or '')),
+                          'epsEstimate': e.get('epsEstimated'),
+                          'epsActual': e.get('eps'),
+                          'revenueEstimate': e.get('revenueEstimated'),
+                          'revenueActual': e.get('revenue'),
+                          'source': 'fmp',
+                      }
+                  print(f"FMP: {len(earnings)} earnings entries")
+          except Exception as ex:
+              print(f"FMP earnings error: {ex}")
+
+          # Finnhub overlay
+          fmp_count = len(earnings)
+          try:
+              with open('/tmp/earnings_finnhub.json') as f:
+                  data = json.loads(f.read())
+              raw = data.get('earningsCalendar', data.get('result', data.get('data', [])))
+              if not isinstance(raw, list):
+                  raw = raw.get('result', raw.get('data', []))
+              added = 0
+              for e in (raw if isinstance(raw, list) else []):
+                  sym, dt = e.get('symbol'), e.get('date')
+                  if not sym or not dt:
+                      continue
+                  key = f"{sym}|{dt}"
+                  if key in earnings:
+                      # Fill missing fields
+                      ex = earnings[key]
+                      if ex.get('epsActual') is None and e.get('epsActual') is not None:
+                          ex['epsActual'] = e['epsActual']
+                      if ex.get('epsEstimate') is None:
+                          ex['epsEstimate'] = e.get('epsEstimate') or e.get('estimate')
+                      if ex.get('revenueActual') is None and e.get('revenueActual') is not None:
+                          ex['revenueActual'] = e['revenueActual']
+                      if not ex.get('hour') and e.get('hour'):
+                          ex['hour'] = e['hour']
+                  elif fmp_count == 0:
+                      # Only trust Finnhub dates if FMP unavailable
+                      earnings[key] = {
+                          'symbol': sym, 'date': dt, 'hour': e.get('hour', ''),
+                          'epsEstimate': e.get('epsEstimate') or e.get('estimate'),
+                          'epsActual': e.get('epsActual'),
+                          'revenueEstimate': e.get('revenueEstimate'),
+                          'revenueActual': e.get('revenueActual'),
+                          'source': 'finnhub',
+                      }
+                      added += 1
+              if added:
+                  print(f"Finnhub: added {added} entries (no FMP)")
+          except Exception as ex:
+              print(f"Finnhub earnings error: {ex}")
+
+          result = sorted(earnings.values(), key=lambda e: (e.get('date', ''), e.get('symbol', '')))
+          print(f"Final: {len(result)} earnings entries")
+
+          with open('public/earnings-calendar.json', 'w') as f:
+              json.dump(result, f, indent=2)
+          PY
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/economic-calendar.json
-          git diff --cached --quiet || (git commit -m "Auto-update economic calendar $(date -u +%Y-%m-%d\ %H:%M) UTC" && git push)
+          git add public/economic-calendar.json public/earnings-calendar.json
+          git diff --cached --quiet || (git commit -m "Auto-update calendars $(date -u +%Y-%m-%d\ %H:%M) UTC" && git push)
