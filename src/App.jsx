@@ -1818,27 +1818,33 @@ Instructions:
 
   // Auto-accrue dividends: use fundamentals.dps (annual $/share) to estimate
   // dividends earned since the last recorded DIVIDEND transaction, then credit cash.
-  const divAccruedRef = useRef({}); // track which sleeves we've already accrued for
+  // Persists the "accrued through" date per sleeve in localStorage so multiple
+  // users / page reloads don't double-count.
+  const divAccruedRef = useRef({}); // track which sleeves we've already accrued this session
   useEffect(() => {
     if (!fundamentals?._ts || !perfDataMap || Object.keys(perfDataMap).length === 0) return;
     const today = new Date().toISOString().slice(0, 10);
     for (const [sleeve, data] of Object.entries(perfDataMap)) {
-      const key = `${sleeve}_${fundamentals._ts}`;
-      if (divAccruedRef.current[key]) continue; // already done this cycle
+      const refKey = `${sleeve}_${fundamentals._ts}`;
+      if (divAccruedRef.current[refKey]) continue; // already done this session cycle
       const holdings = data.holdings;
       if (!holdings || Object.keys(holdings).length === 0) continue;
 
-      // Find most recent DIVIDEND transaction date
+      // Determine the start date for accrual: max of last DIVIDEND tx date and
+      // localStorage "accrued through" date (prevents re-accruing on reload)
       const divTxs = (data.transactions || []).filter(tx => tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT");
       let lastDivDate = data.start_date || "2011-01-01";
       for (const tx of divTxs) {
         if (tx.date > lastDivDate) lastDivDate = tx.date;
       }
+      const lsKey = `iown_div_accrued_${sleeve}`;
+      const lsDate = localStorage.getItem(lsKey);
+      const accrueFrom = (lsDate && lsDate > lastDivDate) ? lsDate : lastDivDate;
 
-      // Calculate days since last dividend (cap at 90 to avoid huge catch-ups)
+      // Calculate days since accrueFrom (cap at 90 to avoid huge catch-ups)
       const msPerDay = 86400000;
-      const daysSince = Math.min(90, Math.max(0, Math.floor((new Date(today) - new Date(lastDivDate)) / msPerDay)));
-      if (daysSince < 1) { divAccruedRef.current[key] = true; continue; }
+      const daysSince = Math.min(90, Math.max(0, Math.floor((new Date(today) - new Date(accrueFrom)) / msPerDay)));
+      if (daysSince < 1) { divAccruedRef.current[refKey] = true; continue; }
 
       // Sum daily dividend accrual across all holdings
       let totalAccrued = 0;
@@ -1854,7 +1860,7 @@ Instructions:
         }
       }
 
-      if (totalAccrued < 0.01) { divAccruedRef.current[key] = true; continue; }
+      if (totalAccrued < 0.01) { divAccruedRef.current[refKey] = true; continue; }
       totalAccrued = Math.round(totalAccrued * 100) / 100;
 
       // Create auto-dividend transaction and update perfData
@@ -1862,7 +1868,9 @@ Instructions:
       const updated = { ...data, transactions: [newTx, ...data.transactions], cash: (data.cash || 0) + totalAccrued };
       setPerfDataMap(prev => ({ ...prev, [sleeve]: updated }));
       if (sleeve === perfSleeve) setPerfData(updated);
-      divAccruedRef.current[key] = true;
+      // Persist "accrued through today" so reloads / other users don't re-accrue
+      try { localStorage.setItem(lsKey, today); } catch {}
+      divAccruedRef.current[refKey] = true;
     }
   }, [fundamentals, perfDataMap, perfSleeve]);
 
