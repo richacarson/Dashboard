@@ -2494,10 +2494,10 @@ Instructions:
                 {/* Portfolio Summary */}
                 <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 12, marginBottom: 16 }}>
                   {(() => {
-                    const totalVal = holdingsSleeve === "dividend" && liveValue ? liveValue.value : 0;
-                    const stocksVal = holdingsSleeve === "dividend" && liveValue ? liveValue.stocks : 0;
-                    const cashVal = holdingsSleeve === "dividend" && liveValue ? liveValue.cash : (hPerfData.cash || 0);
-                    const holdCount = holdingsSleeve === "dividend" && liveValue ? liveValue.holdings : Object.keys(hPerfData.holdings).length;
+                    const totalVal = liveValue ? liveValue.value : 0;
+                    const stocksVal = liveValue ? liveValue.stocks : 0;
+                    const cashVal = liveValue ? liveValue.cash : (hPerfData.cash || 0);
+                    const holdCount = liveValue ? liveValue.holdings : Object.keys(hPerfData.holdings).length;
                     const startVal = hPerfData.portfolio?.[0]?.value || (hPerfData.startBalance || 100000);
                     const totalGain = totalVal - startVal;
                     const totalGainPct = startVal > 0 ? ((totalVal / startVal) - 1) * 100 : 0;
