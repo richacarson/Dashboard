@@ -886,6 +886,7 @@ Instructions:
   const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers"
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
   const [homeView, setHomeView] = useState("lists"); // "holdings" | "lists"
+  const [holdingsSleeve, setHoldingsSleeve] = useState("dividend"); // which sleeve to show in holdings
   const [holdingsSort, setHoldingsSort] = useState({ col: "weight", dir: "desc" }); // sortable holdings table
   const [showTxModal, setShowTxModal] = useState(false); // add transaction modal
   const [showRebalModal, setShowRebalModal] = useState(false); // rebalance modal
@@ -2472,16 +2473,32 @@ Instructions:
             </div>
 
             {/* ━━━ HOLDINGS VIEW ━━━ */}
-            {homeView === "holdings" && perfData && (
+            {homeView === "holdings" && perfDataMap && Object.keys(perfDataMap).length > 0 && (() => {
+              const hPerfData = perfDataMap[holdingsSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
+              if (!hPerfData) return null;
+              return (
               <div style={{ animation: "fadeIn 0.2s ease" }}>
+                {/* Sleeve selector for holdings */}
+                {Object.keys(perfDataMap).length > 1 && (
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, marginBottom: 12 }}>
+                    {[{ k: "dividend", l: "Dividend", icon: "💰" }, { k: "growth", l: "Growth", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
+                      <button key={s.k} onClick={() => setHoldingsSleeve(s.k)} style={{
+                        flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${holdingsSleeve === s.k ? C.borderActive : C.border}`,
+                        background: holdingsSleeve === s.k ? C.accentSoft : "transparent",
+                        color: holdingsSleeve === s.k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                        cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      }}><span style={{ fontSize: 14 }}>{s.icon}</span>{s.l}</button>
+                    ))}
+                  </div>
+                )}
                 {/* Portfolio Summary */}
                 <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 12, marginBottom: 16 }}>
                   {(() => {
-                    const totalVal = liveValue ? liveValue.value : 0;
-                    const stocksVal = liveValue ? liveValue.stocks : 0;
-                    const cashVal = liveValue ? liveValue.cash : (perfData.cash || 0);
-                    const holdCount = liveValue ? liveValue.holdings : Object.keys(perfData.holdings).length;
-                    const startVal = perfData.portfolio?.[0]?.value || (perfData.startBalance || 100000);
+                    const totalVal = holdingsSleeve === "dividend" && liveValue ? liveValue.value : 0;
+                    const stocksVal = holdingsSleeve === "dividend" && liveValue ? liveValue.stocks : 0;
+                    const cashVal = holdingsSleeve === "dividend" && liveValue ? liveValue.cash : (hPerfData.cash || 0);
+                    const holdCount = holdingsSleeve === "dividend" && liveValue ? liveValue.holdings : Object.keys(hPerfData.holdings).length;
+                    const startVal = hPerfData.portfolio?.[0]?.value || (hPerfData.startBalance || 100000);
                     const totalGain = totalVal - startVal;
                     const totalGainPct = startVal > 0 ? ((totalVal / startVal) - 1) * 100 : 0;
                     return [
@@ -2518,10 +2535,10 @@ Instructions:
                 </div>
 
                 {/* Transaction History Panel */}
-                {showTxHistory && perfData.transactions && (
+                {showTxHistory && hPerfData.transactions && (
                   !isDesktop ? (
                   <div style={{ maxHeight: 400, overflow: "auto", marginBottom: 16 }}>
-                    {[...perfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
+                    {[...hPerfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                       const isStock = !!tx.ticker;
                       const typeMap = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
                       const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
@@ -2553,7 +2570,7 @@ Instructions:
                         </tr>
                       </thead>
                       <tbody>
-                        {[...perfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
+                        {[...hPerfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                           const isStock = !!tx.ticker;
                           const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
                           return (
@@ -2576,9 +2593,9 @@ Instructions:
                 {/* Holdings Table / Cards */}
                 {(() => {
                   const totalVal = liveValue ? liveValue.value : 1;
-                  const cashVal = liveValue?.cash || perfData.cash || 0;
+                  const cashVal = liveValue?.cash || hPerfData.cash || 0;
                   const cashWeight = liveValue ? ((cashVal / liveValue.value) * 100) : 0;
-                  const rows = Object.entries(perfData.holdings).map(([ticker, shares]) => {
+                  const rows = Object.entries(hPerfData.holdings).map(([ticker, shares]) => {
                     const q = quotesRef.current?.[ticker];
                     const price = q?.p || 0;
                     const pc = bars[ticker]?.pc || price;
@@ -2586,7 +2603,7 @@ Instructions:
                     const dayChgPct = pc > 0 ? (dayChg / pc) * 100 : 0;
                     const mktValue = shares * price;
                     const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
-                    const cb = perfData.costBasis[ticker] || {};
+                    const cb = hPerfData.costBasis[ticker] || {};
                     const avgCost = cb.avg_cost || 0;
                     const costBasis = cb.total_cost || 0;
                     const gainLoss = mktValue - costBasis;
@@ -2787,7 +2804,7 @@ Instructions:
                   );
                 })()}
               </div>
-            )}
+            ); })()}
 
             {/* ━━━ LISTS VIEW ━━━ */}
             {homeView === "lists" && (
