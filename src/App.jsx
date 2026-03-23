@@ -1341,7 +1341,45 @@ Instructions:
           }
         } catch {}
       }
-      
+
+      // ACTUALS OVERLAY: FMP economic calendar (more reliable actuals than Finnhub)
+      if (events.length > 0 && FK) {
+        try {
+          const today = new Date();
+          const localDay = today.getDay();
+          const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+          const endDate = new Date(monday); endDate.setDate(endDate.getDate() + 13);
+          const fmpUrl = `https://financialmodelingprep.com/api/v3/economic_calendar?from=${monday.toISOString().slice(0,10)}&to=${endDate.toISOString().slice(0,10)}&apikey=${FK}`;
+          const r = await fetch(fmpUrl).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            if (Array.isArray(data)) {
+              const norm = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+              const fmpByDate = {};
+              data.filter(e => e.country === "US" && e.actual != null && String(e.actual).trim() !== "").forEach(e => {
+                const d = (e.date || "").slice(0, 10);
+                if (!fmpByDate[d]) fmpByDate[d] = [];
+                fmpByDate[d].push(e);
+              });
+              let filled = 0;
+              events = events.map(e => {
+                if (e.actual && String(e.actual).trim()) return e;
+                const d = (e.date || "").slice(0, 10);
+                const candidates = fmpByDate[d] || [];
+                const nt = norm(e.title);
+                // Try exact match, then substring match, then prefix match
+                let match = candidates.find(c => norm(c.event) === nt);
+                if (!match) match = candidates.find(c => { const cn = norm(c.event); return nt.includes(cn) || cn.includes(nt); });
+                if (!match) match = candidates.find(c => norm(c.event).slice(0, 12) === nt.slice(0, 12));
+                if (match) { filled++; return { ...e, actual: String(match.actual) }; }
+                return e;
+              });
+              if (filled > 0) console.log(`Calendar: filled ${filled} actuals from FMP`);
+            }
+          }
+        } catch {}
+      }
+
       // FALLBACK 1: FMP economic calendar (if FairEconomy failed)
       if (events.length === 0 && FK) {
         try {
