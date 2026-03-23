@@ -1506,29 +1506,48 @@ Instructions:
       } catch (e) { console.warn("Finnhub earnings:", e.message); }
     }
 
-    // Fetch market caps for all earnings symbols via FMP quote
+    // Market caps + company names: use localStorage cache to avoid burning FMP calls
+    // Only refresh once per day (earnings don't change market cap meaningfully intra-day)
+    let mcapCache = {};
+    try { mcapCache = JSON.parse(localStorage.getItem("iown_mcap_cache") || "{}"); } catch {}
+    const mcapAge = Date.now() - (mcapCache._ts || 0);
+    const mcapStale = mcapAge > 24 * 3600000; // older than 24h
     const allEarnSyms = [...new Set(Object.values(earningsMap).map(e => e.symbol))];
-    if (FK && allEarnSyms.length > 0) {
+    const uncachedSyms = allEarnSyms.filter(s => !mcapCache[s]);
+
+    // Only fetch if cache is stale or we have new symbols — and limit to 1 batch call
+    if (FK && (mcapStale || uncachedSyms.length > 0)) {
+      const symsToFetch = mcapStale ? allEarnSyms : uncachedSyms;
       try {
-        // FMP batch quote supports comma-separated symbols
-        for (let b = 0; b < allEarnSyms.length; b += 100) {
-          const batch = allEarnSyms.slice(b, b + 100);
-          const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/${batch.join(",")}?apikey=${FK}`);
-          if (r.ok) {
-            const quotes = await r.json();
-            if (Array.isArray(quotes)) {
-              quotes.forEach(q => {
-                // Apply market cap to all earnings entries for this symbol
-                Object.values(earningsMap).forEach(e => {
-                  if (e.symbol === q.symbol && q.marketCap) e.marketCap = q.marketCap;
-                  if (e.symbol === q.symbol && q.name) e.companyName = q.name;
-                });
-              });
-            }
+        // Single batch call — FMP quote supports comma-separated, cap at 100 most important
+        // Sort by which symbols are in portfolio first, then alphabetically
+        const prioritized = symsToFetch.sort((a, b) => {
+          const ai = coreSyms.includes(a) ? 0 : 1;
+          const bi = coreSyms.includes(b) ? 0 : 1;
+          return ai - bi || a.localeCompare(b);
+        }).slice(0, 100);
+        const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/${prioritized.join(",")}?apikey=${FK}`);
+        if (r.ok) {
+          const quotes = await r.json();
+          if (Array.isArray(quotes)) {
+            quotes.forEach(q => {
+              if (q.symbol) mcapCache[q.symbol] = { marketCap: q.marketCap || 0, name: q.name || "" };
+            });
+            mcapCache._ts = Date.now();
+            try { localStorage.setItem("iown_mcap_cache", JSON.stringify(mcapCache)); } catch {}
           }
         }
       } catch (e) { console.warn("FMP quote batch:", e.message); }
     }
+
+    // Apply cached market cap + company name to earnings entries
+    Object.values(earningsMap).forEach(e => {
+      const cached = mcapCache[e.symbol];
+      if (cached) {
+        e.marketCap = cached.marketCap;
+        e.companyName = cached.name;
+      }
+    });
 
     let earnings = Object.values(earningsMap).sort((a, b) =>
       (a.date || "").localeCompare(b.date || "") || (b.marketCap || 0) - (a.marketCap || 0)
