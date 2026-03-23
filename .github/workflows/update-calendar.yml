@@ -2,12 +2,13 @@ name: Update Economic Calendar
 
 on:
   schedule:
-    - cron: '0 5 * * 1-5'    # Midnight EST, weekdays
-    - cron: '30 12 * * 1-5'  # 8:30 AM EST - when most data drops (CPI, PPI, NFP, GDP, jobless claims)
-    - cron: '0 13 * * 1-5'   # 9:00 AM EST - catch stragglers
-    - cron: '0 14 * * 1-5'   # 10:00 AM EST - consumer confidence, ISM, home sales
-    - cron: '0 18 * * 1-5'   # 2:00 PM EST - FOMC decisions
-    - cron: '0 19 * * 1-5'   # 3:00 PM EST - post-FOMC press conference
+    - cron: '0 5 * * 1-5'    # Midnight ET - refresh schedule
+    - cron: '45 12 * * 1-5'  # 8:45 AM ET - catch 8:30 releases (CPI, PPI, NFP, GDP, claims)
+    - cron: '15 13 * * 1-5'  # 9:15 AM ET - stragglers from 8:30/9:00
+    - cron: '15 14 * * 1-5'  # 10:15 AM ET - catch 10:00 releases (ISM, consumer, home sales)
+    - cron: '0 16 * * 1-5'   # 12:00 PM ET - midday catch-all
+    - cron: '15 18 * * 1-5'  # 2:15 PM ET - FOMC decisions
+    - cron: '0 19 * * 1-5'   # 3:00 PM ET - post-FOMC press conference
     - cron: '0 12 * * 0'     # Sunday noon - get next week's schedule
   workflow_dispatch:
 
