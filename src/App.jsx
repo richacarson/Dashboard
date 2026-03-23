@@ -1341,7 +1341,45 @@ Instructions:
           }
         } catch {}
       }
-      
+
+      // ACTUALS OVERLAY: FMP economic calendar (more reliable actuals than Finnhub)
+      if (events.length > 0 && FK) {
+        try {
+          const today = new Date();
+          const localDay = today.getDay();
+          const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+          const endDate = new Date(monday); endDate.setDate(endDate.getDate() + 13);
+          const fmpUrl = `https://financialmodelingprep.com/api/v3/economic_calendar?from=${monday.toISOString().slice(0,10)}&to=${endDate.toISOString().slice(0,10)}&apikey=${FK}`;
+          const r = await fetch(fmpUrl).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            if (Array.isArray(data)) {
+              const norm = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+              const fmpByDate = {};
+              data.filter(e => e.country === "US" && e.actual != null && String(e.actual).trim() !== "").forEach(e => {
+                const d = (e.date || "").slice(0, 10);
+                if (!fmpByDate[d]) fmpByDate[d] = [];
+                fmpByDate[d].push(e);
+              });
+              let filled = 0;
+              events = events.map(e => {
+                if (e.actual && String(e.actual).trim()) return e;
+                const d = (e.date || "").slice(0, 10);
+                const candidates = fmpByDate[d] || [];
+                const nt = norm(e.title);
+                // Try exact match, then substring match, then prefix match
+                let match = candidates.find(c => norm(c.event) === nt);
+                if (!match) match = candidates.find(c => { const cn = norm(c.event); return nt.includes(cn) || cn.includes(nt); });
+                if (!match) match = candidates.find(c => norm(c.event).slice(0, 12) === nt.slice(0, 12));
+                if (match) { filled++; return { ...e, actual: String(match.actual) }; }
+                return e;
+              });
+              if (filled > 0) console.log(`Calendar: filled ${filled} actuals from FMP`);
+            }
+          }
+        } catch {}
+      }
+
       // FALLBACK 1: FMP economic calendar (if FairEconomy failed)
       if (events.length === 0 && FK) {
         try {
@@ -1395,60 +1433,125 @@ Instructions:
       setEconCalendar(events);
     } catch (e) { console.warn("Econ calendar fetch failed:", e.message); }
 
-    // Earnings: merge FMP + Finnhub for best coverage
+    // Earnings: FMP is the trusted source for dates + actuals (Finnhub has date errors)
     const today = new Date();
-    const from = new Date(today); from.setDate(from.getDate() - 7);
-    const to = new Date(today); to.setDate(to.getDate() + 60);
+    const localDay = today.getDay();
+    const earnMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+    const earnFriday = new Date(earnMonday); earnFriday.setDate(earnFriday.getDate() + 4);
     const fmt = d => d.toISOString().slice(0, 10);
+    const earnFrom = fmt(earnMonday);
+    const earnTo = fmt(earnFriday);
     const earningsMap = {}; // key: symbol|date → merged earnings object
 
-    // Finnhub first (broader coverage)
-    const fhKey = FH || FK;
-    if (fhKey) {
-      try {
-        const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${fmt(from)}&to=${fmt(to)}&token=${fhKey}`);
-        if (r.ok) {
-          const data = await r.json();
-          const raw = data.earningsCalendar || data.result || data.data || [];
-          const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
-          list.filter(e => coreSyms.includes(e.symbol)).forEach(e => {
-            const key = `${e.symbol}|${e.date}`;
-            earningsMap[key] = {
-              symbol: e.symbol, date: e.date, hour: e.hour || "",
-              epsEstimate: e.epsEstimate ?? e.estimate ?? null,
-              epsActual: e.epsActual ?? null,
-              revenueEstimate: e.revenueEstimate ?? null,
-              revenueActual: e.revenueActual ?? null,
-            };
-          });
-        }
-      } catch (e) { console.warn("Finnhub earnings:", e.message); }
-    }
-
-    // FMP overlay (better estimates, persists after reporting)
+    // FMP is PRIMARY for earnings (reliable dates, good actuals)
     if (FK) {
       try {
-        const r = await fetch(`https://financialmodelingprep.com/api/v3/earning_calendar?from=${fmt(from)}&to=${fmt(to)}&apikey=${FK}`);
+        const r = await fetch(`https://financialmodelingprep.com/api/v3/earning_calendar?from=${earnFrom}&to=${earnTo}&apikey=${FK}`);
         if (r.ok) {
           const data = await r.json();
           if (Array.isArray(data)) {
-            data.filter(e => coreSyms.includes(e.symbol)).forEach(e => {
+            data.filter(e => e.symbol && e.date).forEach(e => {
               const key = `${e.symbol}|${e.date}`;
-              const existing = earningsMap[key] || { symbol: e.symbol, date: e.date, hour: "" };
-              // FMP overrides: fill in any missing fields
-              if (e.epsEstimated != null) existing.epsEstimate = e.epsEstimated;
-              if (e.eps != null) existing.epsActual = e.eps;
-              if (e.revenueEstimated != null) existing.revenueEstimate = e.revenueEstimated;
-              if (e.revenue != null) existing.revenueActual = e.revenue;
-              if (e.time) existing.hour = e.time === "bmo" ? "bmo" : e.time === "amc" ? "amc" : e.time;
-              earningsMap[key] = existing;
+              earningsMap[key] = {
+                symbol: e.symbol, date: e.date,
+                hour: e.time === "bmo" ? "bmo" : e.time === "amc" ? "amc" : e.time || "",
+                epsEstimate: e.epsEstimated ?? null,
+                epsActual: e.eps ?? null,
+                revenueEstimate: e.revenueEstimated ?? null,
+                revenueActual: e.revenue ?? null,
+                source: "fmp",
+              };
             });
+            console.log(`Earnings: ${Object.keys(earningsMap).length} from FMP for ${earnFrom} to ${earnTo}`);
           }
         }
       } catch (e) { console.warn("FMP earnings:", e.message); }
     }
 
-    let earnings = Object.values(earningsMap).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+    // Finnhub overlay: only fill in data for symbols FMP already confirmed (don't trust Finnhub dates alone)
+    const fhKey = FH || FK;
+    if (fhKey) {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${earnFrom}&to=${earnTo}&token=${fhKey}`);
+        if (r.ok) {
+          const data = await r.json();
+          const raw = data.earningsCalendar || data.result || data.data || [];
+          const list = Array.isArray(raw) ? raw : (raw.result || raw.data || []);
+          let added = 0;
+          list.filter(e => e.symbol && e.date).forEach(e => {
+            const key = `${e.symbol}|${e.date}`;
+            if (earningsMap[key]) {
+              // Fill in missing fields from Finnhub on FMP-confirmed entries
+              const ex = earningsMap[key];
+              if (ex.epsActual == null && e.epsActual != null) ex.epsActual = e.epsActual;
+              if (ex.epsEstimate == null && (e.epsEstimate ?? e.estimate) != null) ex.epsEstimate = e.epsEstimate ?? e.estimate;
+              if (ex.revenueActual == null && e.revenueActual != null) ex.revenueActual = e.revenueActual;
+              if (ex.revenueEstimate == null && e.revenueEstimate != null) ex.revenueEstimate = e.revenueEstimate;
+              if (!ex.hour && e.hour) ex.hour = e.hour;
+            } else if (!FK) {
+              // Only trust Finnhub dates if FMP is unavailable
+              earningsMap[key] = {
+                symbol: e.symbol, date: e.date, hour: e.hour || "",
+                epsEstimate: e.epsEstimate ?? e.estimate ?? null,
+                epsActual: e.epsActual ?? null,
+                revenueEstimate: e.revenueEstimate ?? null,
+                revenueActual: e.revenueActual ?? null,
+                source: "finnhub",
+              };
+              added++;
+            }
+          });
+          if (added > 0) console.log(`Earnings: added ${added} Finnhub-only entries (no FMP key)`);
+        }
+      } catch (e) { console.warn("Finnhub earnings:", e.message); }
+    }
+
+    // Market caps + company names: use localStorage cache to avoid burning FMP calls
+    // Only refresh once per day (earnings don't change market cap meaningfully intra-day)
+    let mcapCache = {};
+    try { mcapCache = JSON.parse(localStorage.getItem("iown_mcap_cache") || "{}"); } catch {}
+    const mcapAge = Date.now() - (mcapCache._ts || 0);
+    const mcapStale = mcapAge > 24 * 3600000; // older than 24h
+    const allEarnSyms = [...new Set(Object.values(earningsMap).map(e => e.symbol))];
+    const uncachedSyms = allEarnSyms.filter(s => !mcapCache[s]);
+
+    // Only fetch if cache is stale or we have new symbols — and limit to 1 batch call
+    if (FK && (mcapStale || uncachedSyms.length > 0)) {
+      const symsToFetch = mcapStale ? allEarnSyms : uncachedSyms;
+      try {
+        // Single batch call — FMP quote supports comma-separated, cap at 100 most important
+        // Sort by which symbols are in portfolio first, then alphabetically
+        const prioritized = symsToFetch.sort((a, b) => {
+          const ai = coreSyms.includes(a) ? 0 : 1;
+          const bi = coreSyms.includes(b) ? 0 : 1;
+          return ai - bi || a.localeCompare(b);
+        }).slice(0, 100);
+        const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/${prioritized.join(",")}?apikey=${FK}`);
+        if (r.ok) {
+          const quotes = await r.json();
+          if (Array.isArray(quotes)) {
+            quotes.forEach(q => {
+              if (q.symbol) mcapCache[q.symbol] = { marketCap: q.marketCap || 0, name: q.name || "" };
+            });
+            mcapCache._ts = Date.now();
+            try { localStorage.setItem("iown_mcap_cache", JSON.stringify(mcapCache)); } catch {}
+          }
+        }
+      } catch (e) { console.warn("FMP quote batch:", e.message); }
+    }
+
+    // Apply cached market cap + company name to earnings entries
+    Object.values(earningsMap).forEach(e => {
+      const cached = mcapCache[e.symbol];
+      if (cached) {
+        e.marketCap = cached.marketCap;
+        e.companyName = cached.name;
+      }
+    });
+
+    let earnings = Object.values(earningsMap).sort((a, b) =>
+      (a.date || "").localeCompare(b.date || "") || (b.marketCap || 0) - (a.marketCap || 0)
+    );
 
     // Cache estimates in localStorage
     let cache = {};
@@ -2989,7 +3092,21 @@ Instructions:
         {tab === "calendar" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Calendar</div>}
-            {(() => {
+
+            {/* Sub-tab toggle: Economic / Earnings */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+              {[{ v: "economic", l: "Economic" }, { v: "earnings", l: "Earnings" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setCalendarView(v)} style={{
+                  flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${calendarView === v ? C.borderActive : C.border}`,
+                  background: calendarView === v ? C.accentSoft : "transparent",
+                  color: calendarView === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>{l}</button>
+              ))}
+            </div>
+
+            {/* ── Economic Calendar ── */}
+            {calendarView === "economic" && (() => {
               if (!econCalendar.length) return (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
                   No economic events loaded.
@@ -3016,13 +3133,11 @@ Instructions:
               const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280", Policy: "#DC2626", Trade: "#0EA5E9" };
 
               const todayStr = new Date().toISOString().slice(0, 10);
-              // Show from start of current week (Monday) in LOCAL time
               const today = new Date();
-              const localDay = today.getDay(); // 0=Sun, 1=Mon...6=Sat
+              const localDay = today.getDay();
               const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
               const weekStartStr = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
 
-              // Group by date — show full week starting Monday
               const grouped = {};
               econCalendar.forEach(e => {
                 const date = (e.date || "").slice(0, 10);
@@ -3077,6 +3192,105 @@ Instructions:
                   </div>
                 );
               });
+            })()}
+
+            {/* ── Earnings Calendar ── */}
+            {calendarView === "earnings" && (() => {
+              if (!earningsCalendar.length) return (
+                <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
+                  No earnings data loaded.
+                  <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Load Earnings</button>
+                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4 }}>Requires FMP or Finnhub API key.</div>
+                </div>
+              );
+
+              const todayStr = new Date().toISOString().slice(0, 10);
+              const today = new Date();
+              const localDay = today.getDay();
+              const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+              const friday = new Date(monday); friday.setDate(friday.getDate() + 4);
+              const weekStart = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
+              const weekEnd = `${friday.getFullYear()}-${String(friday.getMonth()+1).padStart(2,"0")}-${String(friday.getDate()).padStart(2,"0")}`;
+
+              const weekEarnings = earningsCalendar.filter(e => e.date >= weekStart && e.date <= weekEnd);
+              const iownEarnings = weekEarnings.filter(e => coreSyms.includes(e.symbol));
+              const allEarnings = weekEarnings;
+
+              const fmtMcap = n => !n ? "" : n >= 1e12 ? `$${(n / 1e12).toFixed(1)}T` : n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : "";
+              const fmtEps = n => n == null ? null : typeof n === "number" ? `$${n.toFixed(2)}` : `$${n}`;
+              const fmtRev = n => n == null ? null : typeof n === "number" ? vol(n) : String(n);
+
+              const renderEarningsSection = (title, list) => {
+                if (!list.length) return null;
+                const grouped = {};
+                list.forEach(e => {
+                  if (!grouped[e.date]) grouped[e.date] = [];
+                  grouped[e.date].push(e);
+                });
+
+                return (
+                  <div style={{ marginBottom: 28 }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 12 }}>{title}</div>
+                    {Object.entries(grouped).map(([date, events]) => {
+                      const isToday = date === todayStr;
+                      const daysAway = Math.ceil((new Date(date) - new Date(todayStr)) / 86400000);
+                      const isPast = daysAway < 0;
+                      const relLabel = daysAway === 0 ? "Today" : daysAway === 1 ? "Tomorrow" : daysAway < 0 ? `${Math.abs(daysAway)}d ago` : `${daysAway}d away`;
+                      const dayLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+
+                      return (
+                        <div key={date} style={{ marginBottom: 16 }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0 8px", borderBottom: `1px solid ${C.border}` }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: isToday ? C.t1 : C.t2 }}>{dayLabel}</div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? C.up : C.t4, padding: "2px 8px", borderRadius: 6, background: isToday ? C.up + "18" : "transparent" }}>{relLabel}</div>
+                          </div>
+                          {events.map((evt, i) => {
+                            const hasActual = evt.epsActual != null;
+                            const beat = hasActual && evt.epsEstimate != null && evt.epsActual > evt.epsEstimate;
+                            const miss = hasActual && evt.epsEstimate != null && evt.epsActual < evt.epsEstimate;
+                            const hourLabel = evt.hour === "bmo" ? "Pre-market" : evt.hour === "amc" ? "After-close" : evt.hour || "";
+
+                            return (
+                              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                                <StockLogo symbol={evt.symbol} size={36} logoUrl={fundamentals[evt.symbol]?.logo} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{evt.symbol}</span>
+                                    {evt.companyName && <span style={{ fontSize: 12, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{evt.companyName}</span>}
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 3, flexWrap: "wrap" }}>
+                                    {hourLabel && <span style={{ fontSize: 11, color: C.t4 }}>{hourLabel}</span>}
+                                    {evt.marketCap > 0 && <span style={{ fontSize: 11, color: C.t4 }}>{fmtMcap(evt.marketCap)}</span>}
+                                  </div>
+                                  <div style={{ display: "flex", gap: 14, marginTop: 5, fontSize: 12, flexWrap: "wrap" }}>
+                                    {evt.epsEstimate != null && <span style={{ color: C.t4 }}>EPS Est: <span style={{ color: C.t2 }}>{fmtEps(evt.epsEstimate)}</span></span>}
+                                    {hasActual ? (
+                                      <span style={{ color: C.t4 }}>EPS Act: <span style={{ color: beat ? C.up : miss ? C.dn : C.t2, fontWeight: 700 }}>{fmtEps(evt.epsActual)}</span></span>
+                                    ) : isPast ? (
+                                      <span style={{ fontSize: 11, color: C.t4, fontStyle: "italic" }}>Awaiting results...</span>
+                                    ) : null}
+                                    {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Rev Est: <span style={{ color: C.t2 }}>{fmtRev(evt.revenueEstimate)}</span></span>}
+                                    {evt.revenueActual != null ? (
+                                      <span style={{ color: C.t4 }}>Rev Act: <span style={{ color: evt.revenueActual > (evt.revenueEstimate || 0) ? C.up : evt.revenueActual < (evt.revenueEstimate || 0) ? C.dn : C.t2, fontWeight: 700 }}>{fmtRev(evt.revenueActual)}</span></span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  {renderEarningsSection("IOWN Holdings", iownEarnings)}
+                  {renderEarningsSection("All Earnings This Week", allEarnings)}
+                </>
+              );
             })()}
           </div>
         )}

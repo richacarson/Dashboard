@@ -2,12 +2,13 @@ name: Update Economic Calendar
 
 on:
   schedule:
-    - cron: '0 5 * * 1-5'    # Midnight EST, weekdays
-    - cron: '30 12 * * 1-5'  # 8:30 AM EST - when most data drops (CPI, PPI, NFP, GDP, jobless claims)
-    - cron: '0 13 * * 1-5'   # 9:00 AM EST - catch stragglers
-    - cron: '0 14 * * 1-5'   # 10:00 AM EST - consumer confidence, ISM, home sales
-    - cron: '0 18 * * 1-5'   # 2:00 PM EST - FOMC decisions
-    - cron: '0 19 * * 1-5'   # 3:00 PM EST - post-FOMC press conference
+    - cron: '0 5 * * 1-5'    # Midnight ET - refresh schedule
+    - cron: '45 12 * * 1-5'  # 8:45 AM ET - catch 8:30 releases (CPI, PPI, NFP, GDP, claims)
+    - cron: '15 13 * * 1-5'  # 9:15 AM ET - stragglers from 8:30/9:00
+    - cron: '15 14 * * 1-5'  # 10:15 AM ET - catch 10:00 releases (ISM, consumer, home sales)
+    - cron: '0 16 * * 1-5'   # 12:00 PM ET - midday catch-all
+    - cron: '15 18 * * 1-5'  # 2:15 PM ET - FOMC decisions
+    - cron: '0 19 * * 1-5'   # 3:00 PM ET - post-FOMC press conference
     - cron: '0 12 * * 0'     # Sunday noon - get next week's schedule
   workflow_dispatch:
 
@@ -70,61 +71,101 @@ jobs:
       - name: Process and write calendar
         run: |
           python3 << 'PY'
-          import json, os
+          import json, os, re
 
+          # PRIMARY: FairEconomy (clean schedule, good formatting)
           events = []
+          for f in ['/tmp/thisweek.json', '/tmp/nextweek.json']:
+              try:
+                  with open(f) as fh:
+                      raw = fh.read().strip()
+                      if raw and raw != '[]':
+                          data = json.loads(raw)
+                          if isinstance(data, list):
+                              events.extend(data)
+                              print(f"{f}: {len(data)} events")
+              except Exception as e:
+                  print(f"{f}: error: {e}")
 
-          # Try FMP economic calendar first (most reliable for actuals)
+          events = [
+              e for e in events
+              if e.get('country') == 'USD'
+              and e.get('impact') in ('High', 'Medium')
+          ]
+          print(f"FairEconomy US High/Medium: {len(events)} events")
+
+          # If FairEconomy failed entirely, use FMP as the event source
+          if not events:
+              try:
+                  with open('/tmp/fmp_econ.json') as f:
+                      fmp = json.loads(f.read())
+                  if isinstance(fmp, list) and len(fmp) > 0:
+                      for e in fmp:
+                          if e.get('country') == 'US' and (e.get('impact') or '').lower() in ('high', 'medium'):
+                              events.append({
+                                  'title': e.get('event', ''),
+                                  'date': e.get('date', ''),
+                                  'country': 'USD',
+                                  'impact': (e.get('impact') or '').capitalize(),
+                                  'actual': str(e['actual']) if e.get('actual') is not None else '',
+                                  'previous': str(e['previous']) if e.get('previous') is not None else '',
+                                  'forecast': str(e['estimate']) if e.get('estimate') is not None else '',
+                              })
+                      print(f"FMP fallback: {len(events)} events")
+              except Exception as ex:
+                  print(f"FMP fallback error: {ex}")
+
+          # ACTUALS OVERLAY: merge FMP actuals onto FairEconomy events
+          def norm(t):
+              return re.sub(r'[^a-z0-9]', '', (t or '').lower())
+
           try:
               with open('/tmp/fmp_econ.json') as f:
                   fmp = json.loads(f.read())
-              if isinstance(fmp, list) and len(fmp) > 0:
-                  # FMP format: event, date, country, actual, previous, change, estimate, impact
-                  us_events = [e for e in fmp if e.get('country') == 'US']
-                  for e in us_events:
-                      impact = (e.get('impact') or '').lower()
-                      if impact in ('high', 'medium'):
-                          events.append({
-                              'title': e.get('event', ''),
-                              'date': e.get('date', ''),
-                              'country': 'USD',
-                              'impact': impact.capitalize(),
-                              'actual': str(e.get('actual', '')) if e.get('actual') is not None else '',
-                              'previous': str(e.get('previous', '')) if e.get('previous') is not None else '',
-                              'forecast': str(e.get('estimate', '')) if e.get('estimate') is not None else '',
-                          })
-                  print(f"FMP: {len(us_events)} US events, {len(events)} High/Medium")
+              if isinstance(fmp, list):
+                  fmp_by_date = {}
+                  for e in fmp:
+                      if e.get('country') == 'US' and e.get('actual') is not None and str(e['actual']).strip():
+                          d = (e.get('date') or '')[:10]
+                          fmp_by_date.setdefault(d, []).append(e)
+
+                  filled = 0
+                  for e in events:
+                      if e.get('actual') and str(e['actual']).strip():
+                          continue
+                      d = (e.get('date') or '')[:10]
+                      candidates = fmp_by_date.get(d, [])
+                      nt = norm(e.get('title', ''))
+                      match = None
+                      # Exact match
+                      for c in candidates:
+                          if norm(c.get('event', '')) == nt:
+                              match = c; break
+                      # Substring match
+                      if not match:
+                          for c in candidates:
+                              cn = norm(c.get('event', ''))
+                              if nt in cn or cn in nt:
+                                  match = c; break
+                      # Prefix match (first 12 chars)
+                      if not match:
+                          for c in candidates:
+                              if norm(c.get('event', ''))[:12] == nt[:12]:
+                                  match = c; break
+                      if match:
+                          e['actual'] = str(match['actual'])
+                          filled += 1
+                  print(f"FMP actuals overlay: filled {filled} actuals")
           except Exception as ex:
-              print(f"FMP parse error: {ex}")
-
-          # Fallback to FairEconomy if FMP had no data
-          if not events:
-              for f in ['/tmp/thisweek.json', '/tmp/nextweek.json']:
-                  try:
-                      with open(f) as fh:
-                          raw = fh.read().strip()
-                          if raw and raw != '[]':
-                              data = json.loads(raw)
-                              if isinstance(data, list):
-                                  events.extend(data)
-                                  print(f"{f}: {len(data)} events")
-                  except Exception as e:
-                      print(f"{f}: error: {e}")
-
-              events = [
-                  e for e in events
-                  if e.get('country') == 'USD'
-                  and e.get('impact') in ('High', 'Medium')
-              ]
+              print(f"FMP actuals overlay skipped: {ex}")
 
           events.sort(key=lambda e: e.get('date', ''))
-          print(f"US High/Medium: {len(events)} events")
+          print(f"Final: {len(events)} events")
 
-          # Show which have actuals
           with_actuals = [e for e in events if e.get('actual') and str(e['actual']).strip()]
           print(f"With actual values: {len(with_actuals)}")
 
-          # Merge: preserve manually-set actuals from existing file
+          # Preserve actuals from existing file (in case sources lost them)
           try:
               with open('public/economic-calendar.json') as ef:
                   existing = json.loads(ef.read())
@@ -139,7 +180,7 @@ jobs:
                   if (not e.get('actual') or not str(e['actual']).strip()) and key in existing_map:
                       e['actual'] = existing_map[key]
                       merged += 1
-              print(f"Preserved {merged} manual actuals from existing file")
+              print(f"Preserved {merged} actuals from existing file")
           except Exception as ex:
               print(f"Merge skipped: {ex}")
 
