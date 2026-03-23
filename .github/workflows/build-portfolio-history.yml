@@ -30,13 +30,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Determine sleeve
+      - name: Determine sleeve(s)
         id: sleeve
         run: |
           if [ -n "${{ inputs.sleeve }}" ]; then
-            echo "name=${{ inputs.sleeve }}" >> $GITHUB_OUTPUT
+            echo "names=${{ inputs.sleeve }}" >> $GITHUB_OUTPUT
           else
-            echo "name=dividend" >> $GITHUB_OUTPUT
+            # Build all available sleeves on schedule/push
+            SLEEVES=""
+            for f in transactions/*_strategy_transactions.txt; do
+              name=$(basename "$f" | sed 's/_strategy_transactions\.txt//')
+              SLEEVES="${SLEEVES:+$SLEEVES,}$name"
+            done
+            echo "names=${SLEEVES:-dividend}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build portfolio history
@@ -45,22 +51,28 @@ jobs:
           ALPACA_SECRET: ${{ secrets.ALPACA_API_SECRET }}
           POLYGON_KEY: ${{ secrets.POLYGON_API_KEY }}
         run: |
-          python3 scripts/build-portfolio-history.py \
-            "transactions/${{ steps.sleeve.outputs.name }}_strategy_transactions.txt" \
-            "${{ steps.sleeve.outputs.name }}"
+          IFS=',' read -ra SLEEVES <<< "${{ steps.sleeve.outputs.names }}"
+          for sleeve in "${SLEEVES[@]}"; do
+            echo ""
+            echo "=========================================="
+            echo "Building sleeve: $sleeve"
+            echo "=========================================="
+            python3 scripts/build-portfolio-history.py \
+              "transactions/${sleeve}_strategy_transactions.txt" \
+              "$sleeve"
 
-          # Move output to public folder
-          mv "portfolio-history-${{ steps.sleeve.outputs.name }}.json" "public/portfolio-history-${{ steps.sleeve.outputs.name }}.json"
+            # Move output to public folder
+            mv "portfolio-history-${sleeve}.json" "public/portfolio-history-${sleeve}.json"
+          done
 
-          echo "=== Output ==="
+          echo "=== All outputs ==="
           ls -la public/portfolio-history-*.json
-          head -c 500 "public/portfolio-history-${{ steps.sleeve.outputs.name }}.json"
 
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add public/portfolio-history-*.json
-          git commit -m "Update portfolio history for ${{ steps.sleeve.outputs.name }} sleeve" || echo "No changes"
+          git commit -m "Update portfolio history [${{ steps.sleeve.outputs.names }}]" || echo "No changes"
           git pull --rebase origin main
           git push

@@ -17,10 +17,196 @@ import urllib.request
 import urllib.error
 
 
+## ── Company-name-to-ticker map (for "By Activity" exports) ──────────────────
+NAME_TO_TICKER = {
+    "Advanced Micro Devices Inc": "AMD",
+    "Agnico Eagle Mines Ltd": "AEM",
+    "Atour Lifestyle Holdings Ltd ADR": "ATAT",
+    "Block Inc Class A": "XYZ",
+    "CNX Resources Corp": "CNX",
+    "Chevron Corp": "CVX",
+    "Clearwater Analytics Holdings Inc Class A": "CWAN",
+    "Coinbase Global Inc Ordinary Shares - Class A": "COIN",
+    "Docusign Inc": "DOCU",
+    "Edison International": "EIX",
+    "FinVolution Group ADR": "FINV",
+    "Fortinet Inc": "FTNT",
+    "Gold Fields Ltd ADR": "GFI",
+    "Grupo Supervielle SA ADR": "SUPV",
+    "Harmony Biosciences Holdings Inc Ordinary Shares": "HRMY",
+    "Hut 8 Corp": "HUT",
+    "Keysight Technologies Inc": "KEYS",
+    "Linde PLC": "LIN",
+    "MARA Holdings Inc": "MARA",
+    "Meritage Homes Corp": "MTH",
+    "NVIDIA Corp": "NVDA",
+    "NXP Semiconductors NV": "NXPI",
+    "ONEOK Inc": "OKE",
+    "PDD Holdings Inc ADR": "PDD",
+    "Robinhood Markets Inc Class A": "HOOD",
+    "SoFi Technologies Inc Ordinary Shares": "SOFI",
+    "Super Micro Computer Inc": "SMCI",
+    "Synchrony Financial": "SYF",
+    "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
+    "Toll Brothers Inc": "TOL",
+    "Cash": "__CASH__",
+}
+
+
+def _detect_format(lines):
+    """Detect whether the file is 'By Security' (has ticker headers) or 'By Activity'."""
+    for line in lines[:10]:
+        raw = line.rstrip('\r\n')
+        if raw.startswith("Date\t") or "By Activity" in raw:
+            return "activity"
+    return "security"
+
+
+def _parse_by_activity(lines):
+    """Parse Morningstar 'By Activity' format (chronological, no ticker headers).
+
+    Format is:
+      <space> <tab> MM-DD-YY <tab> <CR>
+      TYPECompanyName <CR>
+      shares <tab> price <tab> amount <tab> Edit <tab> <space> <CR>
+
+    For cash events:
+      <space> <tab> MM-DD-YY <tab> <CR>
+      DEPOSITCash <CR>
+      -- <tab> -- <tab> amount <tab> Edit <tab> <space> <CR>
+    """
+    transactions = []
+    cash_transactions = []
+
+    i = 0
+    while i < len(lines):
+        raw = lines[i].rstrip('\r\n')
+
+        # Look for date lines: leading whitespace, tab, MM-DD-YY, tab
+        date_m = re.match(r'^\s+\t(\d{2}-\d{2}-\d{2})\t', raw)
+        if not date_m:
+            i += 1
+            continue
+
+        date_str = date_m.group(1)
+        month, day, year = date_str.split("-")
+        yr = int(year)
+        full_year = 2000 + yr if yr < 50 else 1900 + yr
+        d = f"{full_year}-{month}-{day}"
+
+        # Next line should be TYPECompanyName
+        if i + 1 >= len(lines):
+            i += 1
+            continue
+        type_line = lines[i + 1].rstrip('\r\n')
+
+        tx_type = None
+        company_name = None
+        for prefix in ["DIVIDEND REINVESTMENT", "PURCHASE", "SALE"]:
+            if type_line.startswith(prefix):
+                tx_type = prefix
+                company_name = type_line[len(prefix):]
+                break
+
+        # Check for DEPOSIT/WITHDRAWAL
+        if tx_type is None:
+            for prefix in ["DEPOSIT", "WITHDRAWAL"]:
+                if type_line.startswith(prefix):
+                    tx_type = prefix
+                    company_name = type_line[len(prefix):]
+                    break
+
+        if tx_type is None:
+            i += 1
+            continue
+
+        # Next line has the numbers: shares<tab>price<tab>amount<tab>Edit
+        if i + 2 >= len(lines):
+            i += 2
+            continue
+        nums_line = lines[i + 2].rstrip('\r\n')
+
+        if tx_type in ("DEPOSIT", "WITHDRAWAL"):
+            # Cash event: --<tab>--<tab>amount<tab>Edit
+            cash_m = re.match(r'^--\t--\t([\d,.]+)\t', nums_line)
+            if cash_m:
+                cash_transactions.append({
+                    "date": d, "type": tx_type,
+                    "amount": float(cash_m.group(1).replace(",", "")),
+                })
+            i += 3
+            continue
+
+        # Stock event: shares<tab>price<tab>amount<tab>Edit
+        nums_m = re.match(r'^([\d,.]+)\t([\d,.]+)\t([\d,.]+)\t', nums_line)
+        if nums_m and company_name:
+            ticker = NAME_TO_TICKER.get(company_name.strip())
+            if not ticker:
+                print(f"  WARNING: Unknown company name: '{company_name.strip()}' — skipping")
+                i += 3
+                continue
+            transactions.append({
+                "date": d, "ticker": ticker, "type": tx_type,
+                "shares": float(nums_m.group(1).replace(",", "")),
+                "price": float(nums_m.group(2).replace(",", "")),
+                "amount": float(nums_m.group(3).replace(",", "")),
+            })
+        i += 3
+
+    transactions.sort(key=lambda x: x["date"])
+    cash_transactions.sort(key=lambda x: x["date"])
+
+    # Build current_holdings by replaying all transactions
+    holdings = defaultdict(float)
+    last_price = {}
+    for tx in transactions:
+        t = tx["ticker"]
+        if tx["type"] == "PURCHASE":
+            holdings[t] += tx["shares"]
+        elif tx["type"] == "SALE":
+            holdings[t] -= tx["shares"]
+        elif tx["type"] == "DIVIDEND REINVESTMENT":
+            # DRIPs add shares
+            holdings[t] += tx["shares"]
+        last_price[t] = tx["price"]
+
+    current_holdings = {}
+    for t, shares in holdings.items():
+        if shares > 0.0001:
+            price = last_price.get(t, 0)
+            current_holdings[t] = {
+                "shares": round(shares, 6), "price": price, "value": round(shares * price, 2)
+            }
+
+    # Add cash from cash transactions
+    cash_total = sum(c["amount"] for c in cash_transactions if c["type"] == "DEPOSIT") - \
+                 sum(c["amount"] for c in cash_transactions if c["type"] == "WITHDRAWAL")
+    if cash_total != 0:
+        current_holdings["__CASH__"] = cash_total
+
+    # Build split schedule
+    split_schedule = defaultdict(list)
+    for tx in transactions:
+        if tx["type"] == "SPLIT":
+            split_schedule[tx["ticker"]].append((tx["date"], tx["ratio"]))
+    for ticker in split_schedule:
+        split_schedule[ticker].sort()
+
+    return transactions, cash_transactions, current_holdings, split_schedule
+
+
 def parse_transactions(filepath):
-    """Parse the Morningstar transaction text file."""
+    """Parse the Morningstar transaction text file (auto-detects format)."""
     with open(filepath) as f:
         lines = f.readlines()
+
+    # Auto-detect format
+    fmt = _detect_format(lines)
+    if fmt == "activity":
+        print(f"  Detected 'By Activity' format — using name-to-ticker mapping")
+        return _parse_by_activity(lines)
+
+    print(f"  Detected 'By Security' format — using ticker headers")
 
     current_ticker = None
     transactions = []
@@ -472,8 +658,14 @@ def main():
     print()
 
     # Benchmark data from Yahoo Finance
-    benchmark_syms = ["SPY", "DIA", "IWS", "DVY"]
-    print("Fetching benchmark data (SPY, DIA, IWS, DVY)...")
+    # Benchmark symbols per sleeve
+    SLEEVE_BENCHMARKS = {
+        "dividend": ["SPY", "DIA", "IWS", "DVY"],
+        "growth": ["IUSG", "QQQ", "SPY"],
+        "digital": ["SPY", "BITO", "IBIT"],
+    }
+    benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
+    print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")
     bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
 
     benchmarks = {}

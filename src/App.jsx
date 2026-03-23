@@ -11,7 +11,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "
 
 const DEFAULT_SLEEVES = {
   dividend: { name: "Dividend Strategy", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
-  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], icon: "🚀" },
+  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","DOCU","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","LIN","MARA","MTH","NVDA","NXPI","OKE","PDD","HOOD","SMCI","SOFI","SYF","TSM","TOL","XYZ"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
 };
 const loadSleeves = () => {
@@ -896,11 +896,14 @@ Instructions:
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   // Performance tab state
+  const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
+  const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
   const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
-  const [perfBmToggles, setPerfBmToggles] = useState({ IWS: true, DVY: true, SPY: false, DIA: false });
+  const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false }, digital: { SPY: true, BITO: false, IBIT: false } };
+  const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
   const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
@@ -1682,82 +1685,101 @@ Instructions:
 
   // ── Performance tab: fetch portfolio history + benchmark bars ──
   const fetchPerfData = useCallback(async () => {
-    if (perfData || perfLoading) return;
+    if (Object.keys(perfDataMap).length > 0 || perfLoading) return;
     setPerfLoading(true);
     try {
-      // Load portfolio history JSON
-      const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-dividend.json`);
-      if (!pRes.ok) throw new Error("No portfolio history");
-      const pJson = await pRes.json();
-      const portfolio = pJson.portfolio || [];
-      if (!portfolio.length) { setPerfLoading(false); return; }
+      const sleevesToLoad = ["dividend", "growth"];
+      const newMap = {};
 
-      // Use pre-computed benchmarks from JSON if available, otherwise fetch live
-      const bmSyms = ["IWS", "DVY", "SPY", "DIA"];
-      const startDate = portfolio[0].date;
-      const jsonBm = pJson.benchmarks || {};
-      const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
+      for (const sleeve of sleevesToLoad) {
+        try {
+          const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-${sleeve}.json`);
+          if (!pRes.ok) continue;
+          const pJson = await pRes.json();
+          const portfolio = pJson.portfolio || [];
+          if (!portfolio.length) continue;
 
-      let benchmarks = {};
+          // Use pre-computed benchmarks from JSON if available
+          const jsonBm = pJson.benchmarks || {};
+          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["IWS", "DVY", "SPY", "DIA"]);
+          const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
 
-      if (hasPrebaked) {
-        // Convert pre-computed array format to date->price map for chart
-        for (const sym of bmSyms) {
-          if (Array.isArray(jsonBm[sym])) {
-            benchmarks[sym] = {};
-            jsonBm[sym].forEach(pt => { benchmarks[sym][pt.date] = pt.close; });
-          }
-        }
-      } else if (apiKey && apiSecret) {
-        // Fetch live from Alpaca in yearly chunks
-        for (const sym of bmSyms) {
-          benchmarks[sym] = {};
-          let yearStart = new Date(startDate);
-          const end = new Date();
-          while (yearStart < end) {
-            const yearEnd = new Date(Math.min(yearStart.getTime() + 365 * 24 * 60 * 60 * 1000, end.getTime()));
-            const alpacaEnd = new Date(Math.min(yearEnd.getTime(), new Date("2024-12-31").getTime()));
-            if (yearStart <= alpacaEnd) {
-              try {
-                const url = `${BASE}/v2/stocks/bars?symbols=${sym}&timeframe=1Week&start=${yearStart.toISOString().slice(0,10)}&end=${alpacaEnd.toISOString().slice(0,10)}&limit=10000&adjustment=split`;
-                const r = await fetch(url, { headers: hdrs });
-                if (r.ok) {
-                  const d = await r.json();
-                  if (d.bars?.[sym]) d.bars[sym].forEach(b => { benchmarks[sym][b.t.slice(0,10)] = b.c; });
-                }
-              } catch {}
-            }
-            yearStart = yearEnd;
-          }
-        }
+          let benchmarks = {};
 
-        // Polygon for 2024+ if env key available
-        const polyKey = import.meta.env.VITE_POLYGON_KEY;
-        if (polyKey) {
-          for (const sym of bmSyms) {
-            try {
-              const url = `https://api.polygon.io/v2/aggs/ticker/${sym}/range/1/week/2024-01-01/${new Date().toISOString().slice(0,10)}?adjusted=true&sort=asc&limit=50000&apiKey=${polyKey}`;
-              const r = await fetch(url);
-              if (r.ok) {
-                const d = await r.json();
-                if (d.results) d.results.forEach(b => { benchmarks[sym][new Date(b.t).toISOString().slice(0,10)] = b.c; });
+          if (hasPrebaked) {
+            for (const sym of bmSyms) {
+              if (Array.isArray(jsonBm[sym])) {
+                benchmarks[sym] = {};
+                jsonBm[sym].forEach(pt => { benchmarks[sym][pt.date] = pt.close; });
               }
-            } catch {}
+            }
+          } else if (apiKey && apiSecret) {
+            const startDate = portfolio[0].date;
+            for (const sym of bmSyms) {
+              benchmarks[sym] = {};
+              let yearStart = new Date(startDate);
+              const end = new Date();
+              while (yearStart < end) {
+                const yearEnd = new Date(Math.min(yearStart.getTime() + 365 * 24 * 60 * 60 * 1000, end.getTime()));
+                const alpacaEnd = new Date(Math.min(yearEnd.getTime(), new Date("2024-12-31").getTime()));
+                if (yearStart <= alpacaEnd) {
+                  try {
+                    const url = `${BASE}/v2/stocks/bars?symbols=${sym}&timeframe=1Week&start=${yearStart.toISOString().slice(0,10)}&end=${alpacaEnd.toISOString().slice(0,10)}&limit=10000&adjustment=split`;
+                    const r = await fetch(url, { headers: hdrs });
+                    if (r.ok) {
+                      const d = await r.json();
+                      if (d.bars?.[sym]) d.bars[sym].forEach(b => { benchmarks[sym][b.t.slice(0,10)] = b.c; });
+                    }
+                  } catch {}
+                }
+                yearStart = yearEnd;
+              }
+            }
+
+            const polyKey = import.meta.env.VITE_POLYGON_KEY;
+            if (polyKey) {
+              for (const sym of bmSyms) {
+                try {
+                  const url = `https://api.polygon.io/v2/aggs/ticker/${sym}/range/1/week/2024-01-01/${new Date().toISOString().slice(0,10)}?adjusted=true&sort=asc&limit=50000&apiKey=${polyKey}`;
+                  const r = await fetch(url);
+                  if (r.ok) {
+                    const d = await r.json();
+                    if (d.results) d.results.forEach(b => { benchmarks[sym][new Date(b.t).toISOString().slice(0,10)] = b.c; });
+                  }
+                } catch {}
+              }
+            }
           }
+
+          newMap[sleeve] = { portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} };
+        } catch (e) {
+          console.warn(`Failed to load ${sleeve} portfolio:`, e);
         }
       }
 
-      setPerfData({ portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} });
+      setPerfDataMap(newMap);
+      // Set perfData to the active sleeve
+      const active = newMap[perfSleeve] || newMap.dividend || Object.values(newMap)[0] || null;
+      setPerfData(active);
     } catch (e) {
       console.error("Performance fetch error:", e);
     }
     setPerfLoading(false);
-  }, [perfData, perfLoading, apiKey, apiSecret, hdrs]);
+  }, [perfDataMap, perfLoading, apiKey, apiSecret, hdrs, perfSleeve]);
+
+  // Switch perfData when sleeve changes
+  useEffect(() => {
+    if (perfDataMap[perfSleeve]) {
+      setPerfData(perfDataMap[perfSleeve]);
+      setPerfBmToggles(SLEEVE_BM_DEFAULTS[perfSleeve] || SLEEVE_BM_DEFAULTS.dividend);
+      setPerfHover(null);
+    }
+  }, [perfSleeve, perfDataMap]);
 
   // Load perf data when tab is opened
   useEffect(() => {
-    if ((tab === "performance" || tab === "home") && authed && !perfData && !perfLoading) fetchPerfData();
-  }, [tab, authed, perfData, perfLoading, fetchPerfData]);
+    if ((tab === "performance" || tab === "home") && authed && Object.keys(perfDataMap).length === 0 && !perfLoading) fetchPerfData();
+  }, [tab, authed, perfDataMap, perfLoading, fetchPerfData]);
 
   // Compute live portfolio value from WebSocket prices every 2s
   useEffect(() => {
@@ -4206,6 +4228,18 @@ Instructions:
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Performance</div>}
 
+            {/* Sleeve selector */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+              {[{ k: "dividend", l: "Dividend", icon: "💰" }, { k: "growth", l: "Growth", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
+                <button key={s.k} onClick={() => { setPerfSleeve(s.k); setPerfRange("ALL"); }} style={{
+                  flex: 1, padding: "12px 0", borderRadius: 12, border: `1px solid ${perfSleeve === s.k ? C.borderActive : C.border}`,
+                  background: perfSleeve === s.k ? C.accentSoft : "transparent",
+                  color: perfSleeve === s.k ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                }}><span>{s.icon}</span>{s.l}</button>
+              ))}
+            </div>
+
             {perfLoading && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 80 }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={C.accent} strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}>
@@ -4283,7 +4317,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
-              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB" };
+              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800", BITO: "#FF9800", IBIT: "#C76BDB" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
