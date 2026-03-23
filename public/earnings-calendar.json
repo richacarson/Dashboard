@@ -3304,9 +3304,9 @@
     "date": "2026-03-23",
     "hour": "bmo",
     "epsEstimate": 0.6018,
-    "epsActual": null,
+    "epsActual": 0.56,
     "revenueEstimate": 73338000,
-    "revenueActual": null,
+    "revenueActual": 74740000,
     "source": "finnhub"
   },
   {
@@ -7290,16 +7290,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CXAI",
-    "date": "2026-03-30",
-    "hour": "bmo",
-    "epsEstimate": -0.1938,
-    "epsActual": null,
-    "revenueEstimate": 1122000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CYBL",
     "date": "2026-03-30",
     "hour": "",
@@ -8180,6 +8170,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "OXBR",
+    "date": "2026-03-30",
+    "hour": "",
+    "epsEstimate": -0.0102,
+    "epsActual": null,
+    "revenueEstimate": 675240,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "OZ",
     "date": "2026-03-30",
     "hour": "",
@@ -8591,16 +8591,6 @@
   },
   {
     "symbol": "SJT",
-    "date": "2026-03-30",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SMXT",
     "date": "2026-03-30",
     "hour": "",
     "epsEstimate": null,
@@ -9220,16 +9210,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MDBH",
-    "date": "2026-03-31",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MIMI",
     "date": "2026-03-31",
     "hour": "",
@@ -9276,16 +9256,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "OXBR",
-    "date": "2026-03-31",
-    "hour": "",
-    "epsEstimate": -0.0102,
-    "epsActual": null,
-    "revenueEstimate": 675240,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9896,16 +9866,6 @@
     "epsEstimate": -0.051,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "XOM",
-    "date": "2026-04-01",
-    "hour": "bmo",
-    "epsEstimate": 1.6303,
-    "epsActual": null,
-    "revenueEstimate": 85192559467,
     "revenueActual": null,
     "source": "finnhub"
   },
