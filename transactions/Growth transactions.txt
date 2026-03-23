@@ -1,0 +1,324 @@
+Your Transactions
+Growth Hybrid
+All Transactions
+By Activity
+For All Time
+Done
+Add
+Date	Transaction	Shares	Share Price $	Amount $	 
+ 	03-17-26	
+DIVIDEND REINVESTMENTTaiwan Semiconductor Manufacturing Co Ltd ADR
+0.0387	345.9800	13.38	Edit	 
+ 	03-13-26	
+DIVIDEND REINVESTMENTGold Fields Ltd ADR
+2.7863	45.5400	126.89	Edit	 
+ 	03-11-26	
+DIVIDEND REINVESTMENTNVIDIA Corp
+0.0013	186.0300	0.25	Edit	 
+ 	03-02-26	
+DIVIDEND REINVESTMENTAgnico Eagle Mines Ltd
+0.0393	252.1900	9.90	Edit	 
+ 	02-19-26	
+SALEDocusign Inc
+81.0000	43.8709	3,553.54	Edit	 
+ 	02-17-26	
+DIVIDEND REINVESTMENTChevron Corp
+0.2662	180.5500	48.06	Edit	 
+ 	02-06-26	
+DIVIDEND REINVESTMENTSynchrony Financial
+0.2355	75.1600	17.70	Edit	 
+ 	02-02-26	
+DIVIDEND REINVESTMENTONEOK Inc
+0.8524	75.3200	64.20	Edit	 
+ 	01-21-26	
+SALEAgnico Eagle Mines Ltd
+2.0000	205.3500	410.70	Edit	 
+ 	01-21-26	
+SALEAdvanced Micro Devices Inc
+1.0000	249.8000	249.80	Edit	 
+ 	01-21-26	
+PURCHASEAtour Lifestyle Holdings Ltd ADR
+3.0000	37.7700	113.31	Edit	 
+ 	01-21-26	
+SALECNX Resources Corp
+14.0000	37.2700	521.78	Edit	 
+ 	01-21-26	
+PURCHASECoinbase Global Inc Ordinary Shares - Class A
+7.0000	226.9300	1,588.51	Edit	 
+ 	01-21-26	
+SALEChevron Corp
+2.0000	166.7300	333.46	Edit	 
+ 	01-21-26	
+SALEClearwater Analytics Holdings Inc Class A
+51.0000	24.3300	1,240.83	Edit	 
+ 	01-21-26	
+PURCHASEDocusign Inc
+17.0000	56.0300	952.51	Edit	 
+ 	01-21-26	
+SALEEdison International
+1.0000	60.4200	60.42	Edit	 
+ 	01-21-26	
+PURCHASEFinVolution Group ADR
+227.0000	5.0600	1,148.62	Edit	 
+ 	01-21-26	
+PURCHASEFortinet Inc
+60.0000	74.9800	4,498.80	Edit	 
+ 	01-21-26	
+SALEGold Fields Ltd ADR
+5.0000	51.3000	256.50	Edit	 
+ 	01-21-26	
+PURCHASERobinhood Markets Inc Class A
+10.0000	105.9200	1,059.20	Edit	 
+ 	01-21-26	
+SALEHarmony Biosciences Holdings Inc Ordinary Shares
+42.0000	36.6900	1,540.98	Edit	 
+ 	01-21-26	
+SALEHut 8 Corp
+12.0000	58.9400	707.28	Edit	 
+ 	01-21-26	
+SALEKeysight Technologies Inc
+6.0000	216.6900	1,300.14	Edit	 
+ 	01-21-26	
+SALELinde PLC
+10.0000	439.3500	4,393.50	Edit	 
+ 	01-21-26	
+PURCHASEMARA Holdings Inc
+217.0000	10.5600	2,291.52	Edit	 
+ 	01-21-26	
+PURCHASENVIDIA Corp
+1.0000	183.3200	183.32	Edit	 
+ 	01-21-26	
+PURCHASENXP Semiconductors NV
+19.0000	233.2600	4,431.94	Edit	 
+ 	01-21-26	
+SALEONEOK Inc
+4.0000	75.8200	303.28	Edit	 
+ 	01-21-26	
+PURCHASEPDD Holdings Inc ADR
+9.0000	105.9200	953.28	Edit	 
+ 	01-21-26	
+SALESuper Micro Computer Inc
+81.0000	32.2400	2,611.44	Edit	 
+ 	01-21-26	
+PURCHASEGrupo Supervielle SA ADR
+405.0000	11.2100	4,540.05	Edit	 
+ 	01-21-26	
+SALEGrupo Supervielle SA ADR
+703.0000	11.2100	7,880.63	Edit	 
+ 	01-21-26	
+PURCHASESynchrony Financial
+59.0000	76.7900	4,530.61	Edit	 
+ 	01-21-26	
+SALEToll Brothers Inc
+2.0000	148.5400	297.08	Edit	 
+ 	01-21-26	
+SALETaiwan Semiconductor Manufacturing Co Ltd ADR
+1.0000	326.1200	326.12	Edit	 
+ 	01-21-26	
+SALEBlock Inc Class A
+57.0000	64.0000	3,648.00	Edit	 
+ 	01-09-26	
+DIVIDEND REINVESTMENTToll Brothers Inc
+0.0550	145.3800	8.00	Edit	 
+ 	01-07-26	
+DIVIDEND REINVESTMENTEdison International
+1.1408	58.4600	66.69	Edit	 
+ 	12-11-25	
+DIVIDEND REINVESTMENTTaiwan Semiconductor Manufacturing Co Ltd ADR
+0.0391	304.8500	11.93	Edit	 
+ 	12-05-25	
+DIVIDEND REINVESTMENTAtour Lifestyle Holdings Ltd ADR
+0.9820	42.8900	42.12	Edit	 
+ 	12-04-25	
+DIVIDEND REINVESTMENTNVIDIA Corp
+0.0013	183.3800	0.24	Edit	 
+ 	12-03-25	
+DIVIDEND REINVESTMENTLinde PLC
+0.0367	409.1500	15.00	Edit	 
+ 	12-01-25	
+DIVIDEND REINVESTMENTAgnico Eagle Mines Ltd
+0.0558	172.0100	9.60	Edit	 
+ 	11-18-25	
+DIVIDEND REINVESTMENTChevron Corp
+0.3228	153.6200	49.59	Edit	 
+ 	11-03-25	
+DIVIDEND REINVESTMENTONEOK Inc
+1.0086	65.3600	65.92	Edit	 
+ 	10-15-25	
+PURCHASEAgnico Eagle Mines Ltd
+24.0000	178.7400	4,289.76	Edit	 
+ 	10-15-25	
+PURCHASEAdvanced Micro Devices Inc
+19.0000	238.6000	4,533.40	Edit	 
+ 	10-15-25	
+PURCHASEAtour Lifestyle Holdings Ltd ADR
+3.0000	37.0700	111.21	Edit	 
+ 	10-15-25	
+PURCHASECNX Resources Corp
+4.0000	31.9500	127.80	Edit	 
+ 	10-15-25	
+PURCHASECoinbase Global Inc Ordinary Shares - Class A
+2.0000	335.4200	670.84	Edit	 
+ 	10-15-25	
+PURCHASEChevron Corp
+3.0000	151.1900	453.57	Edit	 
+ 	10-15-25	
+PURCHASEClearwater Analytics Holdings Inc Class A
+49.0000	18.2800	895.72	Edit	 
+ 	10-15-25	
+PURCHASEDocusign Inc
+14.0000	67.5500	945.70	Edit	 
+ 	10-15-25	
+PURCHASEFinVolution Group ADR
+212.0000	6.4900	1,375.88	Edit	 
+ 	10-15-25	
+SALEGold Fields Ltd ADR
+65.0000	46.8700	3,046.55	Edit	 
+ 	10-15-25	
+SALERobinhood Markets Inc Class A
+5.0000	133.4400	667.20	Edit	 
+ 	10-15-25	
+PURCHASEHarmony Biosciences Holdings Inc Ordinary Shares
+54.0000	26.2200	1,415.88	Edit	 
+ 	10-15-25	
+SALEHut 8 Corp
+114.0000	51.9500	5,922.30	Edit	 
+ 	10-15-25	
+PURCHASEKeysight Technologies Inc
+3.0000	162.8000	488.40	Edit	 
+ 	10-15-25	
+PURCHASELinde PLC
+1.0000	441.3000	441.30	Edit	 
+ 	10-15-25	
+SALEMARA Holdings Inc
+27.0000	20.8800	563.76	Edit	 
+ 	10-15-25	
+SALEMeritage Homes Corp
+57.0000	69.6200	3,968.34	Edit	 
+ 	10-15-25	
+PURCHASENVIDIA Corp
+2.0000	182.4400	364.88	Edit	 
+ 	10-15-25	
+PURCHASEONEOK Inc
+16.0000	67.6000	1,081.60	Edit	 
+ 	10-15-25	
+PURCHASESuper Micro Computer Inc
+13.0000	55.2200	717.86	Edit	 
+ 	10-15-25	
+SALESoFi Technologies Inc Ordinary Shares
+190.0000	28.0300	5,325.70	Edit	 
+ 	10-15-25	
+PURCHASEGrupo Supervielle SA ADR
+337.0000	6.1900	2,086.03	Edit	 
+ 	10-15-25	
+SALETaiwan Semiconductor Manufacturing Co Ltd ADR
+1.0000	300.7700	300.77	Edit	 
+ 	10-15-25	
+PURCHASEBlock Inc Class A
+6.0000	75.3900	452.34	Edit	 
+ 	10-10-25	
+DIVIDEND REINVESTMENTToll Brothers Inc
+0.0629	127.2600	8.00	Edit	 
+ 	10-07-25	
+DIVIDEND REINVESTMENTEdison International
+1.1714	53.6900	62.89	Edit	 
+ 	09-16-25	
+DIVIDEND REINVESTMENTMeritage Homes Corp
+0.3212	76.3100	24.51	Edit	 
+ 	09-16-25	
+DIVIDEND REINVESTMENTTaiwan Semiconductor Manufacturing Co Ltd ADR
+0.0502	262.0600	13.15	Edit	 
+ 	09-12-25	
+DIVIDEND REINVESTMENTGold Fields Ltd ADR
+1.6893	37.6000	63.52	Edit	 
+ 	09-11-25	
+DIVIDEND REINVESTMENTNVIDIA Corp
+0.0012	177.1700	0.22	Edit	 
+ 	09-04-25	
+DIVIDEND REINVESTMENTLinde PLC
+0.0286	472.3900	13.50	Edit	 
+ 	08-19-25	
+DIVIDEND REINVESTMENTChevron Corp
+0.2925	152.0000	44.46	Edit	 
+ 	08-01-25	
+DIVIDEND REINVESTMENTONEOK Inc
+0.6259	78.9900	49.44	Edit	 
+ 	07-29-25	
+DEPOSITCash
+--	--	1,144.70	Edit	 
+ 	07-29-25	
+PURCHASEAtour Lifestyle Holdings Ltd ADR
+114.0000	34.8800	3,976.32	Edit	 
+ 	07-29-25	
+PURCHASECNX Resources Corp
+132.0000	30.3100	4,000.92	Edit	 
+ 	07-29-25	
+PURCHASECoinbase Global Inc Ordinary Shares - Class A
+11.0000	371.4400	4,085.84	Edit	 
+ 	07-29-25	
+PURCHASEChevron Corp
+26.0000	157.0300	4,082.78	Edit	 
+ 	07-29-25	
+PURCHASEClearwater Analytics Holdings Inc Class A
+189.0000	21.0900	3,986.01	Edit	 
+ 	07-29-25	
+PURCHASEDocusign Inc
+50.0000	79.8800	3,994.00	Edit	 
+ 	07-29-25	
+PURCHASEEdison International
+76.0000	52.4500	3,986.20	Edit	 
+ 	07-29-25	
+PURCHASEFinVolution Group ADR
+458.0000	8.7300	3,998.34	Edit	 
+ 	07-29-25	
+PURCHASEGold Fields Ltd ADR
+158.0000	25.3200	4,000.56	Edit	 
+ 	07-29-25	
+PURCHASERobinhood Markets Inc Class A
+38.0000	103.3200	3,926.16	Edit	 
+ 	07-29-25	
+PURCHASEHarmony Biosciences Holdings Inc Ordinary Shares
+112.0000	35.4500	3,970.40	Edit	 
+ 	07-29-25	
+PURCHASEHut 8 Corp
+203.0000	19.7000	3,999.10	Edit	 
+ 	07-29-25	
+PURCHASEKeysight Technologies Inc
+24.0000	167.0100	4,008.24	Edit	 
+ 	07-29-25	
+PURCHASELinde PLC
+9.0000	471.5100	4,243.59	Edit	 
+ 	07-29-25	
+PURCHASEMARA Holdings Inc
+240.0000	16.6100	3,986.40	Edit	 
+ 	07-29-25	
+PURCHASEMeritage Homes Corp
+57.0000	69.4700	3,959.79	Edit	 
+ 	07-29-25	
+PURCHASENVIDIA Corp
+22.0000	175.5100	3,861.22	Edit	 
+ 	07-29-25	
+PURCHASEONEOK Inc
+48.0000	83.4700	4,006.56	Edit	 
+ 	07-29-25	
+PURCHASEPDD Holdings Inc ADR
+34.0000	115.4200	3,924.28	Edit	 
+ 	07-29-25	
+PURCHASESuper Micro Computer Inc
+68.0000	58.6300	3,986.84	Edit	 
+ 	07-29-25	
+PURCHASESoFi Technologies Inc Ordinary Shares
+190.0000	22.4000	4,256.00	Edit	 
+ 	07-29-25	
+PURCHASEGrupo Supervielle SA ADR
+366.0000	10.9300	4,000.38	Edit	 
+ 	07-29-25	
+PURCHASEToll Brothers Inc
+32.0000	122.8700	3,931.84	Edit	 
+ 	07-29-25	
+PURCHASETaiwan Semiconductor Manufacturing Co Ltd ADR
+16.0000	241.3300	3,861.28	Edit	 
+ 	07-29-25	
+PURCHASEBlock Inc Class A
+51.0000	78.1800	3,987.18	Edit	 
+As of Mon 03-23-26 10:06 AM CSTDone
