@@ -662,7 +662,6 @@ def main():
     SLEEVE_BENCHMARKS = {
         "dividend": ["SPY", "DIA", "IWS", "DVY"],
         "growth": ["IUSG", "QQQ", "SPY"],
-        "digital": ["SPY", "BITO", "IBIT"],
     }
     benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
     print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")

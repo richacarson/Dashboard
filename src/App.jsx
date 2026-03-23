@@ -902,7 +902,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
-  const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false }, digital: { SPY: true, BITO: false, IBIT: false } };
+  const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
@@ -4317,7 +4317,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
-              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800", BITO: "#FF9800", IBIT: "#C76BDB" };
+              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
@@ -4671,7 +4671,7 @@ Instructions:
                     {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 20, height: 3, borderRadius: 2, background: color }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100", BITO: "ProShares Bitcoin", IBIT: "iShares Bitcoin" }[sym]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100" }[sym]}</span>
                       </div>
                     ))}
                   </div>
