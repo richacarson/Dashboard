@@ -1506,6 +1506,24 @@ Instructions:
       } catch (e) { console.warn("Finnhub earnings:", e.message); }
     }
 
+    // Fallback: if no earnings from APIs, load pre-fetched static JSON
+    if (Object.keys(earningsMap).length === 0) {
+      try {
+        const base = import.meta.env.BASE_URL || "/";
+        const r = await fetch(`${base}earnings-calendar.json`);
+        if (r.ok) {
+          const data = await r.json();
+          if (Array.isArray(data)) {
+            data.filter(e => e.symbol && e.date).forEach(e => {
+              const key = `${e.symbol}|${e.date}`;
+              earningsMap[key] = { ...e, source: e.source || "static" };
+            });
+            console.log(`Earnings: ${Object.keys(earningsMap).length} from static JSON fallback`);
+          }
+        }
+      } catch (e) { console.warn("Static earnings fallback:", e.message); }
+    }
+
     // Market caps + company names: use localStorage cache to avoid burning FMP calls
     // Only refresh once per day (earnings don't change market cap meaningfully intra-day)
     let mcapCache = {};
