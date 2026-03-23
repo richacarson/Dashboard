@@ -4496,7 +4496,7 @@ Instructions:
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>vs</span>
-                      {Object.entries(bmColors).map(([sym, color]) => (
+                      {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => (
                         <button key={sym} onClick={() => setPerfBmToggles(prev => ({ ...prev, [sym]: !prev[sym] }))} style={{
                           padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700,
                           border: `1px solid ${perfBmToggles[sym] ? color + "66" : C.border}`,
@@ -4666,12 +4666,12 @@ Instructions:
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 20, height: 3, borderRadius: 2, background: C.accent }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>IOWN Dividend Strategy</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>IOWN {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</span>
                     </div>
-                    {Object.entries(bmColors).map(([sym, color]) => perfBmToggles[sym] && (
+                    {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 20, height: 3, borderRadius: 2, background: color }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones" }[sym]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100", BITO: "ProShares Bitcoin", IBIT: "iShares Bitcoin" }[sym]}</span>
                       </div>
                     ))}
                   </div>
@@ -4842,7 +4842,7 @@ Instructions:
                                     </thead>
                                     <tbody>
                                       <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                                        <td style={{ padding: "10px 14px", fontWeight: 700, color: C.accent, fontSize: 12, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>Dividend</td>
+                                        <td style={{ padding: "10px 14px", fontWeight: 700, color: C.accent, fontSize: 12, position: "sticky", left: 0, background: C.card, zIndex: 1 }}>{perfSleeve === "growth" ? "Growth" : "Dividend"}</td>
                                         {years.map(yr => {
                                           const v = annReturns[yr];
                                           return <td key={yr} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{v != null ? v.toFixed(1) : "—"}</td>;
