@@ -3232,7 +3232,6 @@ Instructions:
 
               const weekEarnings = earningsCalendar.filter(e => e.date >= weekStart && e.date <= weekEnd);
               const iownEarnings = weekEarnings.filter(e => coreSyms.includes(e.symbol));
-              const allEarnings = weekEarnings;
 
               const fmtMcap = n => !n ? "" : n >= 1e12 ? `$${(n / 1e12).toFixed(1)}T` : n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : "";
               const fmtEps = n => n == null ? null : typeof n === "number" ? `$${n.toFixed(2)}` : `$${n}`;
@@ -3306,7 +3305,7 @@ Instructions:
               return (
                 <>
                   {renderEarningsSection("IOWN Holdings", iownEarnings)}
-                  {renderEarningsSection("All Earnings This Week", allEarnings)}
+                  {!iownEarnings.length && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No holdings reporting earnings this week.</div>}
                 </>
               );
             })()}
