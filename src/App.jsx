@@ -1263,6 +1263,7 @@ Instructions:
           peFwd: m.peAnnual ?? null,
           pegTTM: m.pegTTM ?? null,
           yieldFwd: m.dividendYieldIndicatedAnnual ?? null,
+          dps: m.dividendPerShareAnnual ?? null,
           payoutRatio: m.payoutRatioTTM ?? m.payoutRatioAnnual ?? null,
           revenueYoY: m.revenueGrowthQuarterlyYoy ?? m.revenueGrowthTTMYoy ?? null,
           revenue5Y: m.revenueGrowth5Y ?? null,
@@ -1591,6 +1592,47 @@ Instructions:
     setEarningsCalendar(earnings);
   }, [coreSyms]);
 
+  // Re-fetch actuals for portfolio holdings that should have reported but are missing results.
+  // Uses Finnhub /stock/earnings per-symbol (returns actuals faster than calendar endpoints).
+  const actualsRetryRef = useRef(0);
+  useEffect(() => {
+    if (!earningsCalendar.length || !FH) return;
+    const now = new Date();
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    const hour = now.getHours();
+
+    // Find entries missing actuals that should have reported
+    const missing = earningsCalendar.filter(e =>
+      e.epsActual == null &&
+      coreSyms.includes(e.symbol) &&
+      (e.date < todayLocal || (e.date === todayLocal && e.hour === "bmo" && hour >= 10) || (e.date === todayLocal && e.hour === "amc" && hour >= 17))
+    );
+    if (!missing.length) { actualsRetryRef.current = 0; return; }
+    if (actualsRetryRef.current >= 6) return; // stop after 6 retries (~30 min)
+
+    const timer = setTimeout(async () => {
+      actualsRetryRef.current++;
+      let updated = false;
+      for (const evt of missing) {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${evt.symbol}&limit=1&token=${FH}`);
+          if (!r.ok) continue;
+          const data = await r.json();
+          if (!Array.isArray(data) || !data.length) continue;
+          const latest = data[0];
+          // Match by quarter/year or by proximity to the earnings date
+          if (latest.actual != null) {
+            evt.epsActual = latest.actual;
+            if (latest.surprise != null) evt.epsSurprise = latest.surprise;
+            updated = true;
+          }
+        } catch {}
+      }
+      if (updated) setEarningsCalendar(prev => [...prev]);
+    }, 5000); // 5s delay to not block initial render
+    return () => clearTimeout(timer);
+  }, [earningsCalendar, coreSyms]);
+
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
     if (!apiKey || !apiSecret) return;
@@ -1814,6 +1856,64 @@ Instructions:
     const t = setInterval(calc, 2000);
     return () => clearInterval(t);
   }, [perfData, authed]);
+
+  // Auto-accrue dividends: use fundamentals.dps (annual $/share) to estimate
+  // dividends earned since the last recorded DIVIDEND transaction, then credit cash.
+  // Persists the "accrued through" date per sleeve in localStorage so multiple
+  // users / page reloads don't double-count.
+  const divAccruedRef = useRef({}); // track which sleeves we've already accrued this session
+  useEffect(() => {
+    if (!fundamentals?._ts || !perfDataMap || Object.keys(perfDataMap).length === 0) return;
+    const today = new Date().toISOString().slice(0, 10);
+    for (const [sleeve, data] of Object.entries(perfDataMap)) {
+      const refKey = `${sleeve}_${fundamentals._ts}`;
+      if (divAccruedRef.current[refKey]) continue; // already done this session cycle
+      const holdings = data.holdings;
+      if (!holdings || Object.keys(holdings).length === 0) continue;
+
+      // Determine the start date for accrual: max of last DIVIDEND tx date and
+      // localStorage "accrued through" date (prevents re-accruing on reload)
+      const divTxs = (data.transactions || []).filter(tx => tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT");
+      let lastDivDate = data.start_date || "2011-01-01";
+      for (const tx of divTxs) {
+        if (tx.date > lastDivDate) lastDivDate = tx.date;
+      }
+      const lsKey = `iown_div_accrued_${sleeve}`;
+      const lsDate = localStorage.getItem(lsKey);
+      const accrueFrom = (lsDate && lsDate > lastDivDate) ? lsDate : lastDivDate;
+
+      // Calculate days since accrueFrom (cap at 90 to avoid huge catch-ups)
+      const msPerDay = 86400000;
+      const daysSince = Math.min(90, Math.max(0, Math.floor((new Date(today) - new Date(accrueFrom)) / msPerDay)));
+      if (daysSince < 1) { divAccruedRef.current[refKey] = true; continue; }
+
+      // Sum daily dividend accrual across all holdings
+      let totalAccrued = 0;
+      const breakdown = [];
+      for (const [ticker, shares] of Object.entries(holdings)) {
+        const f = fundamentals[ticker];
+        if (!f?.dps || f.dps <= 0) continue;
+        const dailyDiv = (shares * f.dps) / 365;
+        const accrued = dailyDiv * daysSince;
+        if (accrued > 0.005) {
+          totalAccrued += accrued;
+          breakdown.push({ ticker, amount: Math.round(accrued * 100) / 100 });
+        }
+      }
+
+      if (totalAccrued < 0.01) { divAccruedRef.current[refKey] = true; continue; }
+      totalAccrued = Math.round(totalAccrued * 100) / 100;
+
+      // Create auto-dividend transaction and update perfData
+      const newTx = { date: today, type: "DIVIDEND", amount: totalAccrued, auto: true, days: daysSince, breakdown };
+      const updated = { ...data, transactions: [newTx, ...data.transactions], cash: (data.cash || 0) + totalAccrued };
+      setPerfDataMap(prev => ({ ...prev, [sleeve]: updated }));
+      if (sleeve === perfSleeve) setPerfData(updated);
+      // Persist "accrued through today" so reloads / other users don't re-accrue
+      try { localStorage.setItem(lsKey, today); } catch {}
+      divAccruedRef.current[refKey] = true;
+    }
+  }, [fundamentals, perfDataMap, perfSleeve]);
 
   // Fetch intraday bars for 1D (1min) portfolio chart
   useEffect(() => {
@@ -2494,10 +2594,10 @@ Instructions:
                 {/* Portfolio Summary */}
                 <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginTop: 12, marginBottom: 16 }}>
                   {(() => {
-                    const totalVal = holdingsSleeve === "dividend" && liveValue ? liveValue.value : 0;
-                    const stocksVal = holdingsSleeve === "dividend" && liveValue ? liveValue.stocks : 0;
-                    const cashVal = holdingsSleeve === "dividend" && liveValue ? liveValue.cash : (hPerfData.cash || 0);
-                    const holdCount = holdingsSleeve === "dividend" && liveValue ? liveValue.holdings : Object.keys(hPerfData.holdings).length;
+                    const totalVal = liveValue ? liveValue.value : 0;
+                    const stocksVal = liveValue ? liveValue.stocks : 0;
+                    const cashVal = liveValue ? liveValue.cash : (hPerfData.cash || 0);
+                    const holdCount = liveValue ? liveValue.holdings : Object.keys(hPerfData.holdings).length;
                     const startVal = hPerfData.portfolio?.[0]?.value || (hPerfData.startBalance || 100000);
                     const totalGain = totalVal - startVal;
                     const totalGainPct = startVal > 0 ? ((totalVal / startVal) - 1) * 100 : 0;
@@ -2540,15 +2640,16 @@ Instructions:
                   <div style={{ maxHeight: 400, overflow: "auto", marginBottom: 16 }}>
                     {[...hPerfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                       const isStock = !!tx.ticker;
-                      const typeMap = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
-                      const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                      const typeMap = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", "DIVIDEND REINVESTMENT": "DRIP", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
+                      const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
                       return (
                         <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.border}` }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                             <span style={{ fontSize: 10, fontWeight: 700, color: typeColor, background: typeColor + "18", padding: "3px 6px", borderRadius: 4, flexShrink: 0 }}>{typeMap[tx.type] || tx.type}</span>
                             <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{tx.ticker || "Cash"}</div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: C.t1 }}>{tx.ticker || "Cash"}{tx.auto && <span style={{ fontSize: 10, color: C.t4, fontWeight: 400, marginLeft: 4 }}>(est {tx.days}d)</span>}</div>
                               {isStock && <div style={{ fontSize: 11, color: C.t4 }}>{tx.shares?.toFixed(2)} @ ${tx.price?.toFixed(2)}</div>}
+                              {tx.auto && tx.breakdown && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{tx.breakdown.slice(0, 5).map(b => `${b.ticker} $${b.amount}`).join(", ")}{tx.breakdown.length > 5 ? ` +${tx.breakdown.length - 5} more` : ""}</div>}
                             </div>
                           </div>
                           <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 10 }}>
@@ -2572,13 +2673,14 @@ Instructions:
                       <tbody>
                         {[...hPerfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
                           const isStock = !!tx.ticker;
-                          const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                          const typeMap = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", "DIVIDEND REINVESTMENT": "DRIP", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
+                          const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
                           return (
                             <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
                               <td style={{ padding: "8px 12px", color: C.t2 }}>{tx.date}</td>
-                              <td style={{ padding: "8px 12px", color: typeColor, fontWeight: 600 }}>{tx.type}</td>
-                              <td style={{ padding: "8px 12px", color: C.t1, fontWeight: 600 }}>{tx.ticker || "—"}</td>
-                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? tx.shares?.toFixed(4) : "—"}</td>
+                              <td style={{ padding: "8px 12px", color: typeColor, fontWeight: 600 }}>{typeMap[tx.type] || tx.type}{tx.auto && <span style={{ fontSize: 10, color: C.t4, fontWeight: 400, marginLeft: 4 }}>est</span>}</td>
+                              <td style={{ padding: "8px 12px", color: C.t1, fontWeight: 600 }}>{tx.ticker || (tx.auto && tx.breakdown ? tx.breakdown.slice(0, 4).map(b => b.ticker).join(", ") + (tx.breakdown.length > 4 ? "…" : "") : "—")}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? tx.shares?.toFixed(4) : (tx.auto ? `${tx.days}d` : "—")}</td>
                               <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? `$${tx.price?.toFixed(2)}` : "—"}</td>
                               <td style={{ padding: "8px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
@@ -3189,8 +3291,8 @@ Instructions:
               const catIcon = (cat) => ({ Fed: "🏛️", Inflation: "📈", Jobs: "👷", Growth: "🇺🇸", Consumer: "🛒", Business: "🏭", Housing: "🏠", Policy: "🎤", Bonds: "📜", Trade: "🌐" }[cat] || "📊");
               const catColors = { Fed: "#6366F1", Inflation: "#F59E0B", Jobs: "#3B82F6", Growth: "#10B981", Consumer: "#8B5CF6", Business: "#EC4899", Housing: "#F97316", Bonds: "#6B7280", Policy: "#DC2626", Trade: "#0EA5E9" };
 
-              const todayStr = new Date().toISOString().slice(0, 10);
               const today = new Date();
+              const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
               const localDay = today.getDay();
               const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
               const weekStartStr = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
@@ -3261,8 +3363,8 @@ Instructions:
                 </div>
               );
 
-              const todayStr = new Date().toISOString().slice(0, 10);
               const today = new Date();
+              const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
               const localDay = today.getDay();
               const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
               const friday = new Date(monday); friday.setDate(friday.getDate() + 4);
@@ -3305,6 +3407,9 @@ Instructions:
                             const beat = hasActual && evt.epsEstimate != null && evt.epsActual > evt.epsEstimate;
                             const miss = hasActual && evt.epsEstimate != null && evt.epsActual < evt.epsEstimate;
                             const hourLabel = evt.hour === "bmo" ? "Pre-market" : evt.hour === "amc" ? "After-close" : evt.hour || "";
+                            // Show "Awaiting results" for: past dates, OR today's BMO after 9:30 AM local
+                            const nowHour = new Date().getHours();
+                            const shouldHaveReported = isPast || (isToday && evt.hour === "bmo" && nowHour >= 10) || (isToday && evt.hour === "amc" && nowHour >= 17);
 
                             return (
                               <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
@@ -3322,7 +3427,7 @@ Instructions:
                                     {evt.epsEstimate != null && <span style={{ color: C.t4 }}>EPS Est: <span style={{ color: C.t2 }}>{fmtEps(evt.epsEstimate)}</span></span>}
                                     {hasActual ? (
                                       <span style={{ color: C.t4 }}>EPS Act: <span style={{ color: beat ? C.up : miss ? C.dn : C.t2, fontWeight: 700 }}>{fmtEps(evt.epsActual)}</span></span>
-                                    ) : isPast ? (
+                                    ) : shouldHaveReported ? (
                                       <span style={{ fontSize: 11, color: C.t4, fontStyle: "italic" }}>Awaiting results...</span>
                                     ) : null}
                                     {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Rev Est: <span style={{ color: C.t2 }}>{fmtRev(evt.revenueEstimate)}</span></span>}
@@ -4051,8 +4156,8 @@ Instructions:
                 ))}
               </div>
 
-              {/* Content: cards only — iframe opens as full-screen overlay */}
-              <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
+              {/* Content: cards only — shown when no brief is active */}
+              {!briefView && <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
                   <div key={b.id} onClick={() => setBriefView(b.id)} style={{
                     background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
@@ -4080,7 +4185,7 @@ Instructions:
                     </div>
                   </div>
                 ))}
-              </div>
+              </div>}
             </div>
           );
         })()}
