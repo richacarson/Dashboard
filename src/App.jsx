@@ -4156,8 +4156,8 @@ Instructions:
                 ))}
               </div>
 
-              {/* Content: cards only — iframe opens as full-screen overlay */}
-              <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
+              {/* Content: cards only — shown when no brief is active */}
+              {!briefView && <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
                   <div key={b.id} onClick={() => setBriefView(b.id)} style={{
                     background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
@@ -4185,7 +4185,7 @@ Instructions:
                     </div>
                   </div>
                 ))}
-              </div>
+              </div>}
             </div>
           );
         })()}
