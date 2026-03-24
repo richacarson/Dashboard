@@ -380,6 +380,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "IDR",
+    "date": "2026-03-23",
+    "hour": "bmo",
+    "epsEstimate": 0.202,
+    "epsActual": 0.62,
+    "revenueEstimate": 12019000,
+    "revenueActual": 14569710,
+    "source": "finnhub"
+  },
+  {
     "symbol": "IMMX",
     "date": "2026-03-23",
     "hour": "amc",
@@ -4487,16 +4497,6 @@
     "epsActual": null,
     "revenueEstimate": 912900,
     "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "IDR",
-    "date": "2026-03-30",
-    "hour": "",
-    "epsEstimate": 0.202,
-    "epsActual": null,
-    "revenueEstimate": 12019000,
-    "revenueActual": 14569710,
     "source": "finnhub"
   },
   {
