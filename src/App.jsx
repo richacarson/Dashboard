@@ -1592,6 +1592,47 @@ Instructions:
     setEarningsCalendar(earnings);
   }, [coreSyms]);
 
+  // Re-fetch actuals for portfolio holdings that should have reported but are missing results.
+  // Uses Finnhub /stock/earnings per-symbol (returns actuals faster than calendar endpoints).
+  const actualsRetryRef = useRef(0);
+  useEffect(() => {
+    if (!earningsCalendar.length || !FH) return;
+    const now = new Date();
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    const hour = now.getHours();
+
+    // Find entries missing actuals that should have reported
+    const missing = earningsCalendar.filter(e =>
+      e.epsActual == null &&
+      coreSyms.includes(e.symbol) &&
+      (e.date < todayLocal || (e.date === todayLocal && e.hour === "bmo" && hour >= 10) || (e.date === todayLocal && e.hour === "amc" && hour >= 17))
+    );
+    if (!missing.length) { actualsRetryRef.current = 0; return; }
+    if (actualsRetryRef.current >= 6) return; // stop after 6 retries (~30 min)
+
+    const timer = setTimeout(async () => {
+      actualsRetryRef.current++;
+      let updated = false;
+      for (const evt of missing) {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${evt.symbol}&limit=1&token=${FH}`);
+          if (!r.ok) continue;
+          const data = await r.json();
+          if (!Array.isArray(data) || !data.length) continue;
+          const latest = data[0];
+          // Match by quarter/year or by proximity to the earnings date
+          if (latest.actual != null) {
+            evt.epsActual = latest.actual;
+            if (latest.surprise != null) evt.epsSurprise = latest.surprise;
+            updated = true;
+          }
+        } catch {}
+      }
+      if (updated) setEarningsCalendar(prev => [...prev]);
+    }, 5000); // 5s delay to not block initial render
+    return () => clearTimeout(timer);
+  }, [earningsCalendar, coreSyms]);
+
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
     if (!apiKey || !apiSecret) return;
@@ -3366,6 +3407,9 @@ Instructions:
                             const beat = hasActual && evt.epsEstimate != null && evt.epsActual > evt.epsEstimate;
                             const miss = hasActual && evt.epsEstimate != null && evt.epsActual < evt.epsEstimate;
                             const hourLabel = evt.hour === "bmo" ? "Pre-market" : evt.hour === "amc" ? "After-close" : evt.hour || "";
+                            // Show "Awaiting results" for: past dates, OR today's BMO after 9:30 AM local
+                            const nowHour = new Date().getHours();
+                            const shouldHaveReported = isPast || (isToday && evt.hour === "bmo" && nowHour >= 10) || (isToday && evt.hour === "amc" && nowHour >= 17);
 
                             return (
                               <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
@@ -3383,7 +3427,7 @@ Instructions:
                                     {evt.epsEstimate != null && <span style={{ color: C.t4 }}>EPS Est: <span style={{ color: C.t2 }}>{fmtEps(evt.epsEstimate)}</span></span>}
                                     {hasActual ? (
                                       <span style={{ color: C.t4 }}>EPS Act: <span style={{ color: beat ? C.up : miss ? C.dn : C.t2, fontWeight: 700 }}>{fmtEps(evt.epsActual)}</span></span>
-                                    ) : isPast ? (
+                                    ) : shouldHaveReported ? (
                                       <span style={{ fontSize: 11, color: C.t4, fontStyle: "italic" }}>Awaiting results...</span>
                                     ) : null}
                                     {evt.revenueEstimate != null && <span style={{ color: C.t4 }}>Rev Est: <span style={{ color: C.t2 }}>{fmtRev(evt.revenueEstimate)}</span></span>}
