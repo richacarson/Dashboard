@@ -1062,11 +1062,11 @@
   {
     "symbol": "EPSN",
     "date": "2026-03-24",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0408,
-    "epsActual": null,
+    "epsActual": 0.21,
     "revenueEstimate": 11589240,
-    "revenueActual": null,
+    "revenueActual": 14820000,
     "source": "finnhub"
   },
   {
@@ -4932,7 +4932,7 @@
   {
     "symbol": "OXBR",
     "date": "2026-03-30",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0102,
     "epsActual": null,
     "revenueEstimate": 675240,
@@ -5722,7 +5722,7 @@
   {
     "symbol": "AIRO",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0867,
     "epsActual": null,
     "revenueEstimate": 53244000,
@@ -5762,7 +5762,7 @@
   {
     "symbol": "BOSC",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -5812,7 +5812,7 @@
   {
     "symbol": "CSAI",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -5862,7 +5862,7 @@
   {
     "symbol": "FRMM",
     "date": "2026-03-31",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -5922,7 +5922,7 @@
   {
     "symbol": "LAES",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -5992,7 +5992,7 @@
   {
     "symbol": "NWTG",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.3468,
     "epsActual": null,
     "revenueEstimate": 1887000,
@@ -6032,7 +6032,7 @@
   {
     "symbol": "PROP",
     "date": "2026-03-31",
-    "hour": "bmo",
+    "hour": "amc",
     "epsEstimate": 0.1729,
     "epsActual": null,
     "revenueEstimate": 108459996,
@@ -6062,7 +6062,7 @@
   {
     "symbol": "SLSN",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -6092,7 +6092,7 @@
   {
     "symbol": "SNYR",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0102,
     "epsActual": null,
     "revenueEstimate": 11046600,
@@ -6152,7 +6152,7 @@
   {
     "symbol": "TONX",
     "date": "2026-03-31",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": -1.8054,
     "epsActual": null,
     "revenueEstimate": 1428000,
@@ -6162,7 +6162,7 @@
   {
     "symbol": "TOYO",
     "date": "2026-03-31",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
