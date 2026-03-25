@@ -229,6 +229,13 @@ jobs:
 
           earnings = {}  # key: symbol|date
 
+          # Portfolio holdings — always include from Finnhub even when FMP has data
+          PORTFOLIO = {
+              "ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO",
+              "AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","DOCU","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","LIN","MARA","MTH","NVDA","NXPI","OKE","PDD","HOOD","SMCI","SOFI","SYF","TSM","TOL","XYZ",
+              "IBIT","ETHA",
+          }
+
           # FMP is primary (reliable dates)
           try:
               with open('/tmp/earnings_fmp.json') as f:
@@ -277,8 +284,8 @@ jobs:
                           ex['revenueActual'] = e['revenueActual']
                       if not ex.get('hour') and e.get('hour'):
                           ex['hour'] = e['hour']
-                  elif fmp_count == 0:
-                      # Only trust Finnhub dates if FMP unavailable
+                  elif fmp_count == 0 or sym in PORTFOLIO:
+                      # Add Finnhub-only entries if no FMP OR if it's a portfolio holding
                       earnings[key] = {
                           'symbol': sym, 'date': dt, 'hour': e.get('hour', ''),
                           'epsEstimate': e.get('epsEstimate') or e.get('estimate'),
