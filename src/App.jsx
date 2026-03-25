@@ -1128,6 +1128,7 @@ Instructions:
   const [fmpStatus, setFmpStatus] = useState("");
   const [earningsCalendar, setEarningsCalendar] = useState([]);
   const [econCalendar, setEconCalendar] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarView, setCalendarView] = useState("economic");
   const [rtContacts, setRtContacts] = useState([]);
   const [rtActivities, setRtActivities] = useState([]);
@@ -1291,24 +1292,65 @@ Instructions:
   const fetchCalendar = useCallback(async () => {
     try {
       let events = [];
-      
-      // PRIMARY: FairEconomy — free, reliable, includes actuals
-      const ffUrls = [
-        "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
-        "https://nfs.faireconomy.media/ff_calendar_nextweek.json",
-      ];
+
+      // PRIMARY: Static JSON from GitHub Actions (same-origin, fast, no CORS issues)
       try {
+        const cacheBust = `?t=${Math.floor(Date.now() / 60000)}`;
+        for (const url of [
+          `${import.meta.env.BASE_URL || "/"}economic-calendar.json${cacheBust}`,
+          `https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json${cacheBust}`,
+        ]) {
+          try {
+            const r = await fetch(url).catch(() => null);
+            if (r?.ok) {
+              const data = await r.json();
+              if (Array.isArray(data) && data.length > 0) {
+                events = data;
+                try { localStorage.setItem("iown_econ_calendar", JSON.stringify(data)); } catch {}
+                break;
+              }
+            }
+          } catch {}
+        }
+      } catch {}
+
+      // FALLBACK: localStorage cache (offline or if static JSON fetch failed)
+      if (events.length === 0) {
+        try {
+          const cached = localStorage.getItem("iown_econ_calendar");
+          if (cached) events = JSON.parse(cached);
+        } catch {}
+      }
+
+      // LIVE OVERLAY: FairEconomy — may have fresher data than static JSON
+      try {
+        const ffUrls = [
+          "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+          "https://nfs.faireconomy.media/ff_calendar_nextweek.json",
+        ];
         const [thisR, nextR] = await Promise.all(ffUrls.map(u => fetch(u).catch(() => null)));
         const thisW = thisR?.ok ? await thisR.json() : [];
         const nextW = nextR?.ok ? await nextR.json() : [];
         const combined = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
         const usEvents = combined.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
         if (usEvents.length > 0) {
+          // Preserve actuals from static JSON that FairEconomy may lack
+          const existingActuals = {};
+          events.forEach(e => {
+            const key = (e.title || "") + "|" + (e.date || "").slice(0, 10);
+            if (e.actual && String(e.actual).trim()) existingActuals[key] = e.actual;
+          });
+          usEvents.forEach(e => {
+            if (!e.actual || !String(e.actual).trim()) {
+              const key = (e.title || "") + "|" + (e.date || "").slice(0, 10);
+              if (existingActuals[key]) e.actual = existingActuals[key];
+            }
+          });
           events = usEvents;
           try { localStorage.setItem("iown_econ_calendar", JSON.stringify(usEvents)); } catch {}
         }
       } catch {}
-      
+
       // ACTUALS OVERLAY: Finnhub economic calendar (faster actuals than FairEconomy)
       if (events.length > 0 && FH) {
         try {
@@ -1385,55 +1427,6 @@ Instructions:
         } catch {}
       }
 
-      // FALLBACK 1: FMP economic calendar (if FairEconomy failed)
-      if (events.length === 0 && FK) {
-        try {
-          const today = new Date();
-          const localDay = today.getDay();
-          const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
-          const endDate = new Date(monday); endDate.setDate(endDate.getDate() + 13);
-          const fmpUrl = `https://financialmodelingprep.com/api/v3/economic_calendar?from=${monday.toISOString().slice(0,10)}&to=${endDate.toISOString().slice(0,10)}&apikey=${FK}`;
-          const r = await fetch(fmpUrl).catch(() => null);
-          if (r?.ok) {
-            const data = await r.json();
-            if (Array.isArray(data)) {
-              events = data
-                .filter(e => e.country === "US" && ["high","medium"].includes((e.impact||"").toLowerCase()))
-                .map(e => ({
-                  title: e.event, date: e.date, country: "USD",
-                  impact: (e.impact || "").charAt(0).toUpperCase() + (e.impact || "").slice(1).toLowerCase(),
-                  actual: e.actual != null ? String(e.actual) : "",
-                  previous: e.previous != null ? String(e.previous) : "",
-                  forecast: e.estimate != null ? String(e.estimate) : "",
-                }));
-              if (events.length > 0) try { localStorage.setItem("iown_econ_calendar", JSON.stringify(events)); } catch {}
-            }
-          }
-        } catch {}
-      }
-      
-      // FALLBACK 2: Static JSON from GitHub (cached by GitHub Action)
-      if (events.length === 0) {
-        const cacheBust = `?t=${Math.floor(Date.now() / 60000)}`;
-        for (const url of [
-          `${import.meta.env.BASE_URL || "/"}economic-calendar.json${cacheBust}`,
-          `https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json${cacheBust}`,
-        ]) {
-          try {
-            const r = await fetch(url).catch(() => null);
-            if (r?.ok) { const data = await r.json(); if (Array.isArray(data) && data.length > 0) { events = data; break; } }
-          } catch {}
-        }
-      }
-      
-      // FALLBACK 3: localStorage cache (last resort)
-      if (events.length === 0) {
-        try {
-          const cached = localStorage.getItem("iown_econ_calendar");
-          if (cached) events = JSON.parse(cached);
-        } catch {}
-      }
-      
       events.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
       setEconCalendar(events);
     } catch (e) { console.warn("Econ calendar fetch failed:", e.message); }
@@ -1448,7 +1441,24 @@ Instructions:
     const earnTo = fmt(earnFriday);
     const earningsMap = {}; // key: symbol|date → merged earnings object
 
-    // FMP is PRIMARY for earnings (reliable dates, good actuals)
+    // PRIMARY: Static JSON from GitHub Actions (same-origin, always available)
+    try {
+      const base = import.meta.env.BASE_URL || "/";
+      const cacheBust = `?t=${Math.floor(Date.now() / 60000)}`;
+      const r = await fetch(`${base}earnings-calendar.json${cacheBust}`);
+      if (r.ok) {
+        const data = await r.json();
+        if (Array.isArray(data)) {
+          data.filter(e => e.symbol && e.date).forEach(e => {
+            const key = `${e.symbol}|${e.date}`;
+            earningsMap[key] = { ...e, source: e.source || "static" };
+          });
+          console.log(`Earnings: ${Object.keys(earningsMap).length} from static JSON`);
+        }
+      }
+    } catch (e) { console.warn("Static earnings load:", e.message); }
+
+    // OVERLAY: FMP earnings (more authoritative for actuals, overwrites static)
     if (FK) {
       try {
         const r = await fetch(`https://financialmodelingprep.com/api/v3/earning_calendar?from=${earnFrom}&to=${earnTo}&apikey=${FK}`);
@@ -1458,22 +1468,23 @@ Instructions:
             data.filter(e => e.symbol && e.date).forEach(e => {
               const key = `${e.symbol}|${e.date}`;
               earningsMap[key] = {
+                ...(earningsMap[key] || {}),
                 symbol: e.symbol, date: e.date,
-                hour: e.time === "bmo" ? "bmo" : e.time === "amc" ? "amc" : e.time || "",
-                epsEstimate: e.epsEstimated ?? null,
-                epsActual: e.eps ?? null,
-                revenueEstimate: e.revenueEstimated ?? null,
-                revenueActual: e.revenue ?? null,
+                hour: e.time === "bmo" ? "bmo" : e.time === "amc" ? "amc" : e.time || (earningsMap[key]?.hour || ""),
+                epsEstimate: e.epsEstimated ?? earningsMap[key]?.epsEstimate ?? null,
+                epsActual: e.eps ?? earningsMap[key]?.epsActual ?? null,
+                revenueEstimate: e.revenueEstimated ?? earningsMap[key]?.revenueEstimate ?? null,
+                revenueActual: e.revenue ?? earningsMap[key]?.revenueActual ?? null,
                 source: "fmp",
               };
             });
-            console.log(`Earnings: ${Object.keys(earningsMap).length} from FMP for ${earnFrom} to ${earnTo}`);
+            console.log(`Earnings: ${Object.keys(earningsMap).length} after FMP overlay for ${earnFrom} to ${earnTo}`);
           }
         }
       } catch (e) { console.warn("FMP earnings:", e.message); }
     }
 
-    // Finnhub overlay: only fill in data for symbols FMP already confirmed (don't trust Finnhub dates alone)
+    // OVERLAY: Finnhub — fill gaps + add portfolio holdings even when FMP exists
     const fhKey = FH || FK;
     if (fhKey) {
       try {
@@ -1486,15 +1497,15 @@ Instructions:
           list.filter(e => e.symbol && e.date).forEach(e => {
             const key = `${e.symbol}|${e.date}`;
             if (earningsMap[key]) {
-              // Fill in missing fields from Finnhub on FMP-confirmed entries
+              // Fill in missing fields from Finnhub on existing entries
               const ex = earningsMap[key];
               if (ex.epsActual == null && e.epsActual != null) ex.epsActual = e.epsActual;
               if (ex.epsEstimate == null && (e.epsEstimate ?? e.estimate) != null) ex.epsEstimate = e.epsEstimate ?? e.estimate;
               if (ex.revenueActual == null && e.revenueActual != null) ex.revenueActual = e.revenueActual;
               if (ex.revenueEstimate == null && e.revenueEstimate != null) ex.revenueEstimate = e.revenueEstimate;
               if (!ex.hour && e.hour) ex.hour = e.hour;
-            } else if (!FK) {
-              // Only trust Finnhub dates if FMP is unavailable
+            } else if (!FK || coreSyms.includes(e.symbol)) {
+              // Add if no FMP key, OR if it's a portfolio holding (Finnhub may have it when FMP doesn't)
               earningsMap[key] = {
                 symbol: e.symbol, date: e.date, hour: e.hour || "",
                 epsEstimate: e.epsEstimate ?? e.estimate ?? null,
@@ -1506,27 +1517,9 @@ Instructions:
               added++;
             }
           });
-          if (added > 0) console.log(`Earnings: added ${added} Finnhub-only entries (no FMP key)`);
+          if (added > 0) console.log(`Earnings: added ${added} Finnhub entries`);
         }
       } catch (e) { console.warn("Finnhub earnings:", e.message); }
-    }
-
-    // Fallback: if no earnings from APIs, load pre-fetched static JSON
-    if (Object.keys(earningsMap).length === 0) {
-      try {
-        const base = import.meta.env.BASE_URL || "/";
-        const r = await fetch(`${base}earnings-calendar.json`);
-        if (r.ok) {
-          const data = await r.json();
-          if (Array.isArray(data)) {
-            data.filter(e => e.symbol && e.date).forEach(e => {
-              const key = `${e.symbol}|${e.date}`;
-              earningsMap[key] = { ...e, source: e.source || "static" };
-            });
-            console.log(`Earnings: ${Object.keys(earningsMap).length} from static JSON fallback`);
-          }
-        }
-      } catch (e) { console.warn("Static earnings fallback:", e.message); }
     }
 
     // Market caps + company names: use localStorage cache to avoid burning FMP calls
@@ -1590,6 +1583,7 @@ Instructions:
     try { localStorage.setItem("iown_earnings_est", JSON.stringify(cache)); } catch {}
 
     setEarningsCalendar(earnings);
+    setCalendarLoading(false);
   }, [coreSyms]);
 
   // Re-fetch actuals for portfolio holdings that should have reported but are missing results.
@@ -3268,9 +3262,8 @@ Instructions:
             {calendarView === "economic" && (() => {
               if (!econCalendar.length) return (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                  No economic events loaded.
-                  <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Load Calendar</button>
-                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4 }}>Calendar data is fetched from a live source and cached daily via GitHub Actions. If empty, the data source may be temporarily unavailable.</div>
+                  {calendarLoading ? "Loading economic calendar..." : "No economic events loaded."}
+                  {!calendarLoading && <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Retry</button>}
                 </div>
               );
 
@@ -3357,9 +3350,8 @@ Instructions:
             {calendarView === "earnings" && (() => {
               if (!earningsCalendar.length) return (
                 <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                  No earnings data loaded.
-                  <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Load Earnings</button>
-                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4 }}>Requires FMP or Finnhub API key.</div>
+                  {calendarLoading ? "Loading earnings calendar..." : "No earnings data loaded."}
+                  {!calendarLoading && <button onClick={fetchCalendar} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Retry</button>}
                 </div>
               );
 
