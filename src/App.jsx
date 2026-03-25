@@ -1292,138 +1292,88 @@ Instructions:
   const fetchCalendar = useCallback(async () => {
     try {
       let events = [];
+      const today = new Date();
+      const localDay = today.getDay();
+      const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+      const nextSunday = new Date(monday); nextSunday.setDate(nextSunday.getDate() + 13);
+      const fmtD = d => d.toISOString().slice(0, 10);
 
-      // PRIMARY: Static JSON from GitHub Actions (same-origin, fast, no CORS issues)
-      try {
-        const cacheBust = `?t=${Math.floor(Date.now() / 60000)}`;
-        for (const url of [
-          `${import.meta.env.BASE_URL || "/"}economic-calendar.json${cacheBust}`,
-          `https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json${cacheBust}`,
-        ]) {
-          try {
-            const r = await fetch(url).catch(() => null);
-            if (r?.ok) {
-              const data = await r.json();
-              if (Array.isArray(data) && data.length > 0) {
-                events = data;
-                try { localStorage.setItem("iown_econ_calendar", JSON.stringify(data)); } catch {}
-                break;
+      // PRIMARY: Finnhub economic calendar (CORS-friendly, includes actuals natively)
+      if (FH) {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${fmtD(monday)}&to=${fmtD(nextSunday)}&token=${FH}`).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            const fhEvents = data?.economicCalendar || data?.result || [];
+            if (Array.isArray(fhEvents)) {
+              events = fhEvents
+                .filter(e => e.country === "US" && ["high","medium"].includes((e.impact || "").toLowerCase()))
+                .map(e => ({
+                  title: e.event || "", date: e.time || e.date || "", country: "USD",
+                  impact: (e.impact || "").charAt(0).toUpperCase() + (e.impact || "").slice(1).toLowerCase(),
+                  actual: e.actual != null ? String(e.actual) : "",
+                  previous: e.prev != null ? String(e.prev) : "",
+                  forecast: e.estimate != null ? String(e.estimate) : "",
+                  unit: e.unit || "",
+                }));
+              if (events.length > 0) {
+                console.log(`Calendar: ${events.length} events from Finnhub (${events.filter(e => e.actual).length} with actuals)`);
+                try { localStorage.setItem("iown_econ_calendar", JSON.stringify(events)); } catch {}
               }
             }
-          } catch {}
-        }
-      } catch {}
+          }
+        } catch {}
+      }
 
-      // FALLBACK: localStorage cache (offline or if static JSON fetch failed)
+      // SECONDARY: FMP economic calendar (if Finnhub failed or returned empty)
+      if (events.length === 0 && FK) {
+        try {
+          const r = await fetch(`https://financialmodelingprep.com/api/v3/economic_calendar?from=${fmtD(monday)}&to=${fmtD(nextSunday)}&apikey=${FK}`).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            if (Array.isArray(data)) {
+              events = data
+                .filter(e => e.country === "US" && ["high","medium"].includes((e.impact||"").toLowerCase()))
+                .map(e => ({
+                  title: e.event || "", date: e.date || "", country: "USD",
+                  impact: (e.impact || "").charAt(0).toUpperCase() + (e.impact || "").slice(1).toLowerCase(),
+                  actual: e.actual != null ? String(e.actual) : "",
+                  previous: e.previous != null ? String(e.previous) : "",
+                  forecast: e.estimate != null ? String(e.estimate) : "",
+                }));
+              if (events.length > 0) {
+                console.log(`Calendar: ${events.length} events from FMP`);
+                try { localStorage.setItem("iown_econ_calendar", JSON.stringify(events)); } catch {}
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // FALLBACK: Static JSON from GitHub Actions
+      if (events.length === 0) {
+        try {
+          const cacheBust = `?t=${Math.floor(Date.now() / 60000)}`;
+          for (const url of [
+            `${import.meta.env.BASE_URL || "/"}economic-calendar.json${cacheBust}`,
+            `https://raw.githubusercontent.com/richacarson/Dashboard/main/public/economic-calendar.json${cacheBust}`,
+          ]) {
+            try {
+              const r = await fetch(url).catch(() => null);
+              if (r?.ok) {
+                const data = await r.json();
+                if (Array.isArray(data) && data.length > 0) { events = data; break; }
+              }
+            } catch {}
+          }
+        } catch {}
+      }
+
+      // LAST RESORT: localStorage cache
       if (events.length === 0) {
         try {
           const cached = localStorage.getItem("iown_econ_calendar");
           if (cached) events = JSON.parse(cached);
-        } catch {}
-      }
-
-      // LIVE OVERLAY: FairEconomy — may have fresher data than static JSON
-      try {
-        const ffUrls = [
-          "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
-          "https://nfs.faireconomy.media/ff_calendar_nextweek.json",
-        ];
-        const [thisR, nextR] = await Promise.all(ffUrls.map(u => fetch(u).catch(() => null)));
-        const thisW = thisR?.ok ? await thisR.json() : [];
-        const nextW = nextR?.ok ? await nextR.json() : [];
-        const combined = [...(Array.isArray(thisW) ? thisW : []), ...(Array.isArray(nextW) ? nextW : [])];
-        const usEvents = combined.filter(e => e.country === "USD" && (e.impact === "High" || e.impact === "Medium"));
-        if (usEvents.length > 0) {
-          // Preserve actuals from static JSON that FairEconomy may lack
-          const existingActuals = {};
-          events.forEach(e => {
-            const key = (e.title || "") + "|" + (e.date || "").slice(0, 10);
-            if (e.actual && String(e.actual).trim()) existingActuals[key] = e.actual;
-          });
-          usEvents.forEach(e => {
-            if (!e.actual || !String(e.actual).trim()) {
-              const key = (e.title || "") + "|" + (e.date || "").slice(0, 10);
-              if (existingActuals[key]) e.actual = existingActuals[key];
-            }
-          });
-          events = usEvents;
-          try { localStorage.setItem("iown_econ_calendar", JSON.stringify(usEvents)); } catch {}
-        }
-      } catch {}
-
-      // ACTUALS OVERLAY: Finnhub economic calendar (faster actuals than FairEconomy)
-      if (events.length > 0 && FH) {
-        try {
-          const today = new Date();
-          const localDay = today.getDay();
-          const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
-          const friday = new Date(monday); friday.setDate(friday.getDate() + 4);
-          const fhUrl = `https://finnhub.io/api/v1/calendar/economic?from=${monday.toISOString().slice(0,10)}&to=${friday.toISOString().slice(0,10)}&token=${FH}`;
-          const r = await fetch(fhUrl).catch(() => null);
-          if (r?.ok) {
-            const data = await r.json();
-            const fhEvents = data?.economicCalendar || data?.result || [];
-            if (Array.isArray(fhEvents) && fhEvents.length > 0) {
-              const norm = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-              const fhByDate = {};
-              fhEvents.filter(e => e.country === "US" && e.actual != null && String(e.actual).trim() !== "").forEach(e => {
-                const d = (e.time || e.date || "").slice(0, 10);
-                if (!fhByDate[d]) fhByDate[d] = [];
-                fhByDate[d].push(e);
-              });
-              let filled = 0;
-              events = events.map(e => {
-                if (e.actual && String(e.actual).trim()) return e; // Already has actual
-                const d = (e.date || "").slice(0, 10);
-                const candidates = fhByDate[d] || [];
-                const nt = norm(e.title);
-                let match = candidates.find(c => norm(c.event) === nt);
-                if (!match) match = candidates.find(c => { const cn = norm(c.event); return nt.includes(cn) || cn.includes(nt); });
-                if (!match) match = candidates.find(c => norm(c.event).slice(0, 10) === nt.slice(0, 10));
-                if (match) { filled++; return { ...e, actual: String(match.actual) }; }
-                return e;
-              });
-              if (filled > 0) console.log(`Calendar: filled ${filled} actuals from Finnhub`);
-            }
-          }
-        } catch {}
-      }
-
-      // ACTUALS OVERLAY: FMP economic calendar (more reliable actuals than Finnhub)
-      if (events.length > 0 && FK) {
-        try {
-          const today = new Date();
-          const localDay = today.getDay();
-          const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
-          const endDate = new Date(monday); endDate.setDate(endDate.getDate() + 13);
-          const fmpUrl = `https://financialmodelingprep.com/api/v3/economic_calendar?from=${monday.toISOString().slice(0,10)}&to=${endDate.toISOString().slice(0,10)}&apikey=${FK}`;
-          const r = await fetch(fmpUrl).catch(() => null);
-          if (r?.ok) {
-            const data = await r.json();
-            if (Array.isArray(data)) {
-              const norm = (t) => (t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-              const fmpByDate = {};
-              data.filter(e => e.country === "US" && e.actual != null && String(e.actual).trim() !== "").forEach(e => {
-                const d = (e.date || "").slice(0, 10);
-                if (!fmpByDate[d]) fmpByDate[d] = [];
-                fmpByDate[d].push(e);
-              });
-              let filled = 0;
-              events = events.map(e => {
-                if (e.actual && String(e.actual).trim()) return e;
-                const d = (e.date || "").slice(0, 10);
-                const candidates = fmpByDate[d] || [];
-                const nt = norm(e.title);
-                // Try exact match, then substring match, then prefix match
-                let match = candidates.find(c => norm(c.event) === nt);
-                if (!match) match = candidates.find(c => { const cn = norm(c.event); return nt.includes(cn) || cn.includes(nt); });
-                if (!match) match = candidates.find(c => norm(c.event).slice(0, 12) === nt.slice(0, 12));
-                if (match) { filled++; return { ...e, actual: String(match.actual) }; }
-                return e;
-              });
-              if (filled > 0) console.log(`Calendar: filled ${filled} actuals from FMP`);
-            }
-          }
         } catch {}
       }
 
