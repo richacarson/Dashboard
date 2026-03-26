@@ -4143,10 +4143,8 @@ Instructions:
             if (!md) return null;
             // Strip YAML frontmatter
             let text = md;
-            if (text.startsWith("---")) {
-              const end = text.indexOf("---", 3);
-              if (end !== -1) text = text.slice(end + 3).trim();
-            }
+            const fmMatch = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+            if (fmMatch) text = text.slice(fmMatch[0].length).trim();
             const lines = text.split("\n");
             const elements = [];
             let inList = false;
