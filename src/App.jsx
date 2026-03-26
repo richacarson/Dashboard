@@ -4141,7 +4141,13 @@ Instructions:
         {tab === "research" && (() => {
           const renderMarkdown = (md) => {
             if (!md) return null;
-            const lines = md.split("\n");
+            // Strip YAML frontmatter
+            let text = md;
+            if (text.startsWith("---")) {
+              const end = text.indexOf("---", 3);
+              if (end !== -1) text = text.slice(end + 3).trim();
+            }
+            const lines = text.split("\n");
             const elements = [];
             let inList = false;
             let listItems = [];
@@ -4165,6 +4171,38 @@ Instructions:
             };
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i];
+              // Table detection: line starts with |
+              if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+                flushList();
+                const tableRows = [];
+                let j = i;
+                while (j < lines.length && lines[j].trim().startsWith("|") && lines[j].trim().endsWith("|")) {
+                  tableRows.push(lines[j]);
+                  j++;
+                }
+                if (tableRows.length >= 2) {
+                  const parseRow = (row) => row.split("|").slice(1, -1).map(c => c.trim());
+                  const headers = parseRow(tableRows[0]);
+                  // Skip separator row (|---|---|)
+                  const dataStart = tableRows[1].replace(/[|\s-:]/g, "") === "" ? 2 : 1;
+                  const tStyle = { borderCollapse: "collapse", width: "100%", fontSize: 13, margin: "12px 0" };
+                  const thStyle = { textAlign: "left", padding: "8px 12px", borderBottom: `2px solid ${C.border}`, color: C.t1, fontWeight: 700, whiteSpace: "nowrap" };
+                  const tdStyle = { padding: "8px 12px", borderBottom: `1px solid ${C.border}`, color: C.t2, lineHeight: 1.5 };
+                  elements.push(
+                    <div key={i} style={{ overflowX: "auto", margin: "12px 0" }}>
+                      <table style={tStyle}>
+                        <thead><tr>{headers.map((h, hi) => <th key={hi} style={thStyle}>{renderInline(h)}</th>)}</tr></thead>
+                        <tbody>{tableRows.slice(dataStart).map((row, ri) => {
+                          const cells = parseRow(row);
+                          return <tr key={ri}>{cells.map((c, ci) => <td key={ci} style={tdStyle}>{renderInline(c)}</td>)}</tr>;
+                        })}</tbody>
+                      </table>
+                    </div>
+                  );
+                  i = j - 1; // skip processed table rows
+                  continue;
+                }
+              }
               if (line.startsWith("# ")) { flushList(); elements.push(<h1 key={i} style={{ fontSize: 28, fontWeight: 800, color: C.t1, margin: "24px 0 12px" }}>{renderInline(line.slice(2))}</h1>); }
               else if (line.startsWith("## ")) { flushList(); elements.push(<h2 key={i} style={{ fontSize: 22, fontWeight: 700, color: C.t1, margin: "20px 0 10px" }}>{renderInline(line.slice(3))}</h2>); }
               else if (line.startsWith("### ")) { flushList(); elements.push(<h3 key={i} style={{ fontSize: 18, fontWeight: 700, color: C.t1, margin: "16px 0 8px" }}>{renderInline(line.slice(4))}</h3>); }
