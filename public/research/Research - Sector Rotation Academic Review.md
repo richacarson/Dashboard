@@ -1,14 +1,3 @@
----
-type: research
-status: done
-date_created: 2026-03-26
-related: "[[Sector Rotation Rebalancing Strategy]]"
-tags:
-  - research
-  - sector-rotation
-  - strategy
----
-
 # Sector Rotation as a Source of Alpha: Academic & Practitioner Evidence
 
 **Agent 1 of 4 | Prepared for Investment Committee Review**
