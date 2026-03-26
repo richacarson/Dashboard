@@ -4237,7 +4237,7 @@ Instructions:
                       </div>
                     </div>
                   )}
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: isDesktop ? "32px 40px" : "20px 18px", maxWidth: 800 }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: isDesktop ? "32px 48px" : "20px 18px" }}>
                     {researchContent ? renderMarkdown(researchContent) : <div style={{ color: C.t4, padding: 20, textAlign: "center" }}>Loading report...</div>}
                   </div>
                 </div>
