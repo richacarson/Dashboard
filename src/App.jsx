@@ -791,9 +791,12 @@ Instructions:
   const [tab, setTab] = useState("home");
   const [moreMenu, setMoreMenu] = useState(false);
   const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
+  const [researchReports, setResearchReports] = useState([]);
+  const [researchView, setResearchView] = useState(null); // null = list, or report id
+  const [researchContent, setResearchContent] = useState("");
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "performance", "research", "calendar", "news", "screener", "clients", "settings"];
+  const tabIds = ["home", "performance", "metrics", "news", "briefs", "research", "screener", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -879,7 +882,7 @@ Instructions:
   const [newListName, setNewListName] = useState("");
   const [newListIcon, setNewListIcon] = useState("📊");
   const [sleeveSort, setSleeveSort] = useState({}); // { [key]: "alpha" | "chgUp" | "chgDn" }
-  const [researchView, setResearchView] = useState("dividend"); // sleeve key
+  const [metricsView, setMetricsView] = useState("dividend"); // sleeve key
   const [metricSort, setMetricSort] = useState({ col: null, dir: "desc" }); // { col: "peTTM", dir: "asc"|"desc" }
   const [metricsEditMode, setMetricsEditMode] = useState(false);
   const [peerSymbol, setPeerSymbol] = useState(null); // for peer comparison overlay
@@ -2074,6 +2077,8 @@ Instructions:
       fetchNews();
       fetchFundamentals();
       fetchCalendar();
+      // Fetch research reports index
+      fetch(`${import.meta.env.BASE_URL || "/"}research/index.json?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setResearchReports(d); }).catch(() => {});
       // Preload ExcelJS for export
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
@@ -2342,12 +2347,11 @@ Instructions:
   const navItems = [
     { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
     { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
-    { id: "research", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
-    { id: "calendar", label: "Calendar", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
+    { id: "metrics", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
     { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg> },
+    { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /><line x1="6" y1="8" x2="6" y2="8" /><line x1="6" y1="12" x2="6" y2="12" /></svg> },
     { id: "screener", label: "Screener", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
-    { id: "clients", label: "Clients", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
 
@@ -2434,7 +2438,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "research" ? "Metrics" : tab === "calendar" ? "Calendar" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "screener" ? "Screener" : tab === "clients" ? "Clients" : "Settings"}
+            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "screener" ? "Screener" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -3399,16 +3403,16 @@ Instructions:
         )}
 
         {/* ━━━ METRICS ━━━ */}
-        {tab === "research" && (
+        {tab === "metrics" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Metrics</div>}
             {/* Portfolio selector — all sleeves */}
             <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
               {Object.entries(sleeves).map(([k, sl]) => (
-                <button key={k} onClick={() => { setResearchView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
-                  flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${researchView === k ? C.borderActive : C.border}`,
-                  background: researchView === k ? C.accentSoft : "transparent",
-                  color: researchView === k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                <button key={k} onClick={() => { setMetricsView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
+                  flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${metricsView === k ? C.borderActive : C.border}`,
+                  background: metricsView === k ? C.accentSoft : "transparent",
+                  color: metricsView === k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
                   cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                 }}>{sl.icon} {sl.name}</button>
               ))}
@@ -3427,7 +3431,7 @@ Instructions:
 
             {/* ── PERFORMANCE ATTRIBUTION ── */}
             {metricsSubView === "attribution" && (() => {
-              const syms = sleeves[researchView]?.symbols || [];
+              const syms = sleeves[metricsView]?.symbols || [];
               const contributions = syms
                 .map(s => {
                   const d = fundamentals[s] || {};
@@ -3485,7 +3489,7 @@ Instructions:
 
             {/* ── PEER COMPARISON ── */}
             {metricsSubView === "peers" && (() => {
-              const syms = sleeves[researchView]?.symbols || [];
+              const syms = sleeves[metricsView]?.symbols || [];
               // If no peer selected, show selector
               if (!peerSymbol || !syms.includes(peerSymbol)) {
                 return (
@@ -3533,7 +3537,7 @@ Instructions:
                 { l: "ROE", k: "roe", fmt: v => v != null ? `${v.toFixed(1)}%` : "—" },
                 { l: "D/E", k: "de", fmt: v => v != null ? v.toFixed(1) : "—", lower: true },
               ];
-              if (researchView === "dividend") {
+              if (metricsView === "dividend") {
                 metrics.splice(2, 0, { l: "Yield", k: "yieldFwd", fmt: v => v != null ? `${v.toFixed(2)}%` : "—" });
                 metrics.splice(3, 0, { l: "Payout", k: "payoutRatio", fmt: v => v != null ? `${v.toFixed(0)}%` : "—" });
               }
@@ -3615,13 +3619,13 @@ Instructions:
             {metricsSubView === "table" && (<>
             {/* Edit toggle + download + add ticker */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[researchView]?.symbols?.length || 0} stocks</div>
+              <div style={{ fontSize: 13, color: C.t4 }}>{sleeves[metricsView]?.symbols?.length || 0} stocks</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={async () => {
                   try {
-                  const syms = sleeves[researchView]?.symbols || [];
-                  const isDivView = researchView === "dividend";
-                  const slName = sleeves[researchView]?.name || researchView;
+                  const syms = sleeves[metricsView]?.symbols || [];
+                  const isDivView = metricsView === "dividend";
+                  const slName = sleeves[metricsView]?.name || metricsView;
                   const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
                   // ExcelJS should be preloaded; if not, try loading now
@@ -3804,9 +3808,9 @@ Instructions:
             {metricsEditMode && (
               <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                 <input type="text" value={metricsTickerInput} onChange={e => setMetricsTickerInput(e.target.value.toUpperCase())}
-                  onKeyDown={e => { if (e.key === "Enter" && metricsTickerInput) { addSymbol(researchView, metricsTickerInput); setMetricsTickerInput(""); } }}
+                  onKeyDown={e => { if (e.key === "Enter" && metricsTickerInput) { addSymbol(metricsView, metricsTickerInput); setMetricsTickerInput(""); } }}
                   placeholder="Add ticker…" style={{ flex: 1, padding: "10px 14px", background: C.bg, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 14, fontWeight: 600, outline: "none", fontFamily: "inherit", letterSpacing: 1 }} />
-                <button onClick={() => { if (metricsTickerInput) { addSymbol(researchView, metricsTickerInput); setMetricsTickerInput(""); } }} style={{ padding: "10px 16px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Add</button>
+                <button onClick={() => { if (metricsTickerInput) { addSymbol(metricsView, metricsTickerInput); setMetricsTickerInput(""); } }} style={{ padding: "10px 16px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Add</button>
               </div>
             )}
             {Object.keys(fundamentals).length <= 1 && (
@@ -3817,7 +3821,7 @@ Instructions:
             )}
             {/* Seeking Alpha-style scrollable table */}
             {(() => {
-              const syms = sleeves[researchView]?.symbols || [];
+              const syms = sleeves[metricsView]?.symbols || [];
               const fmtV = v => v == null ? "—" : Number(v).toFixed(1);
               const fmtP = v => v == null ? "—" : `${Number(v).toFixed(1)}%`;
 
@@ -3881,7 +3885,7 @@ Instructions:
                 { l: "ROE", w: 58, k: "roe", fn: d => fmtP(d.roe) },
                 { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
               ];
-              const cols = (researchView === "dividend") ? divCols : groCols;
+              const cols = (metricsView === "dividend") ? divCols : groCols;
 
               // Sort
               const sorted = [...syms].sort((a, b) => {
@@ -3916,7 +3920,7 @@ Instructions:
                       const nm = names[s] || "";
                       const dc = dayChg(s);
                       const isExp = expandedMetric === s;
-                      const keyMetrics = researchView === "dividend"
+                      const keyMetrics = metricsView === "dividend"
                         ? [
                           { l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" },
                           { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn },
@@ -3938,7 +3942,7 @@ Instructions:
                           <div onClick={() => setExpandedMetric(prev => prev === s ? null : s)} style={{ cursor: "pointer" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {metricsEditMode && <div onClick={e => { e.stopPropagation(); removeSymbol(researchView, s); }} style={{ width: 20, height: 20, borderRadius: 10, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></div>}
+                                {metricsEditMode && <div onClick={e => { e.stopPropagation(); removeSymbol(metricsView, s); }} style={{ width: 20, height: 20, borderRadius: 10, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></div>}
                                 <div>
                                   <span onClick={e => { e.stopPropagation(); openStock(s); }} style={{ fontSize: 15, fontWeight: 800, color: C.accent }}>{s}</span>
                                   <div style={{ fontSize: 11, color: C.t4 }}>{nm}</div>
@@ -4017,7 +4021,7 @@ Instructions:
                               <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.card, padding: "10px 12px", borderRight: `1px solid ${C.border}` }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                   {metricsEditMode && (
-                                    <div onClick={() => removeSymbol(researchView, s)} style={{ width: 22, height: 22, borderRadius: 11, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                                    <div onClick={() => removeSymbol(metricsView, s)} style={{ width: 22, height: 22, borderRadius: 11, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                                     </div>
                                   )}
@@ -4081,24 +4085,25 @@ Instructions:
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, display: "flex", flexDirection: "column", height: briefView ? "calc(100dvh - 140px)" : "auto" }}>
               {!isDesktop && !briefView && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
-              
-              {/* Toggle pills — always visible */}
-              <div style={{ display: "flex", gap: 6, marginBottom: briefView ? 0 : 16, flexShrink: 0, overflowX: "auto", paddingBottom: 4 }}>
-                {BRIEFS.map(b => (
-                  <button key={b.id} onClick={() => setBriefView(briefView === b.id ? null : b.id)} style={{
+
+              {/* Back button when viewing a brief */}
+              {briefView && (
+                <div style={{ display: "flex", gap: 6, marginBottom: 0, flexShrink: 0, paddingBottom: 4 }}>
+                  <button onClick={() => setBriefView(null)} style={{
                     flex: "0 0 auto", padding: "10px 16px", borderRadius: 12,
-                    border: `1px solid ${briefView === b.id ? b.color + "66" : C.border}`,
-                    background: briefView === b.id ? b.color + "15" : C.card,
+                    border: `1px solid ${C.border}`,
+                    background: C.card,
                     cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8,
                     transition: "all 0.2s",
                   }}>
-                    <span style={{ fontSize: 18 }}>{b.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: briefView === b.id ? C.t1 : C.t3 }}>{b.title}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.t3 }}>Back</span>
                   </button>
-                ))}
-              </div>
+                  <span style={{ padding: "10px 16px", fontSize: 13, fontWeight: 700, color: C.t1, display: "flex", alignItems: "center" }}>{active?.title}</span>
+                </div>
+              )}
 
-              {/* Content: cards only — shown when no brief is active */}
+              {/* Brief cards — shown when no brief is active */}
               {!briefView && <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
                   <div key={b.id} onClick={() => setBriefView(b.id)} style={{
@@ -4128,6 +4133,124 @@ Instructions:
                   </div>
                 ))}
               </div>}
+            </div>
+          );
+        })()}
+
+        {/* ━━━ RESEARCH ━━━ */}
+        {tab === "research" && (() => {
+          const renderMarkdown = (md) => {
+            if (!md) return null;
+            const lines = md.split("\n");
+            const elements = [];
+            let inList = false;
+            let listItems = [];
+            const flushList = () => {
+              if (listItems.length > 0) {
+                elements.push(<ul key={`ul-${elements.length}`} style={{ margin: "12px 0", paddingLeft: 24, color: C.t2 }}>{listItems}</ul>);
+                listItems = [];
+                inList = false;
+              }
+            };
+            const renderInline = (text) => {
+              // Bold, italic, inline code, links
+              return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/).map((part, i) => {
+                if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+                if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
+                if (part.startsWith("`") && part.endsWith("`")) return <code key={i} style={{ background: C.card, padding: "2px 6px", borderRadius: 4, fontSize: "0.9em" }}>{part.slice(1, -1)}</code>;
+                const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+                if (linkMatch) return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: theme === "dark" ? "#60A5FA" : "#2563EB" }}>{linkMatch[1]}</a>;
+                return part;
+              });
+            };
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i];
+              if (line.startsWith("# ")) { flushList(); elements.push(<h1 key={i} style={{ fontSize: 28, fontWeight: 800, color: C.t1, margin: "24px 0 12px" }}>{renderInline(line.slice(2))}</h1>); }
+              else if (line.startsWith("## ")) { flushList(); elements.push(<h2 key={i} style={{ fontSize: 22, fontWeight: 700, color: C.t1, margin: "20px 0 10px" }}>{renderInline(line.slice(3))}</h2>); }
+              else if (line.startsWith("### ")) { flushList(); elements.push(<h3 key={i} style={{ fontSize: 18, fontWeight: 700, color: C.t1, margin: "16px 0 8px" }}>{renderInline(line.slice(4))}</h3>); }
+              else if (line.startsWith("- ") || line.startsWith("* ")) { inList = true; listItems.push(<li key={i} style={{ marginBottom: 6, lineHeight: 1.6 }}>{renderInline(line.slice(2))}</li>); }
+              else if (line.trim() === "") { flushList(); }
+              else if (line.startsWith("---")) { flushList(); elements.push(<hr key={i} style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: "20px 0" }} />); }
+              else { flushList(); elements.push(<p key={i} style={{ margin: "10px 0", lineHeight: 1.7, color: C.t2 }}>{renderInline(line)}</p>); }
+            }
+            flushList();
+            return elements;
+          };
+
+          const activeReport = researchReports.find(r => r.id === researchView);
+
+          return (
+            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+              {!isDesktop && !researchView && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Research</div>}
+
+              {researchView ? (
+                <div>
+                  <button onClick={() => { setResearchView(null); setResearchContent(""); }} style={{
+                    background: "none", border: `1px solid ${C.border}`, borderRadius: 10,
+                    padding: "8px 16px", color: C.t3, fontSize: 13, fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+                    marginBottom: 20,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    Back to reports
+                  </button>
+                  {activeReport && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 4 }}>
+                        {activeReport.date} {activeReport.category && <span style={{ marginLeft: 8, padding: "2px 8px", background: C.accentSoft, borderRadius: 6, fontSize: 10, fontWeight: 600 }}>{activeReport.category}</span>}
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: isDesktop ? "32px 40px" : "20px 18px", maxWidth: 800 }}>
+                    {researchContent ? renderMarkdown(researchContent) : <div style={{ color: C.t4, padding: 20, textAlign: "center" }}>Loading report...</div>}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {researchReports.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "60px 20px", color: C.t4 }}>
+                      <div style={{ fontSize: 48, marginBottom: 16 }}>📄</div>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: C.t3, marginBottom: 8 }}>No research reports yet</div>
+                      <div style={{ fontSize: 13 }}>Reports will appear here as they are published.</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {researchReports.map(report => (
+                        <div key={report.id} onClick={() => {
+                          setResearchView(report.id);
+                          setResearchContent("");
+                          fetch(`${import.meta.env.BASE_URL || "/"}research/${report.file}?t=${Math.floor(Date.now() / 60000)}`)
+                            .then(r => r.ok ? r.text() : "Failed to load report.")
+                            .then(setResearchContent)
+                            .catch(() => setResearchContent("Failed to load report."));
+                        }} style={{
+                          background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
+                          padding: isDesktop ? "24px 28px" : "18px 16px",
+                          cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
+                        }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = theme === "dark" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 6 }}>{report.title}</div>
+                              {report.summary && <div style={{ fontSize: 13, color: C.t4, lineHeight: 1.5, marginBottom: 8 }}>{report.summary}</div>}
+                              <div style={{ display: "flex", gap: 12, fontSize: 11, color: C.t4 }}>
+                                <span>{report.date}</span>
+                                {report.author && <span>{report.author}</span>}
+                                {report.category && <span style={{ padding: "1px 8px", background: C.accentSoft, borderRadius: 6, fontWeight: 600 }}>{report.category}</span>}
+                              </div>
+                            </div>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
+                              <polyline points="9 18 15 12 9 6" />
+                            </svg>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -5215,7 +5338,7 @@ Instructions:
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {["home", "performance", "research", "calendar", "clients"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
+        {["home", "performance", "metrics", "news", "briefs"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
           <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
