@@ -796,7 +796,7 @@ Instructions:
   const [researchContent, setResearchContent] = useState("");
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "performance", "metrics", "news", "briefs", "research", "screener", "settings"];
+  const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "screener", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -832,6 +832,8 @@ Instructions:
   const [openSleeves, setOpenSleeves] = useState({});
   const [chartSymbol, setChartSymbol] = useState(null);
   const [profileInitTab, setProfileInitTab] = useState("overview");
+  const [chartsActiveSym, setChartsActiveSym] = useState(null); // for Charts tab
+  const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
 
   // Open stock profile with specific tab
@@ -2348,6 +2350,7 @@ Instructions:
     { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
     { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
     { id: "metrics", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
+    { id: "charts", label: "Charts", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg> },
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
     { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" /><line x1="10" y1="8" x2="18" y2="8" /><line x1="10" y1="12" x2="18" y2="12" /><line x1="10" y1="16" x2="14" y2="16" /></svg> },
     { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
@@ -2438,7 +2441,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "screener" ? "Screener" : "Settings"}
+            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "charts" ? "Charts" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "screener" ? "Screener" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -4330,6 +4333,134 @@ Instructions:
           );
         })()}
 
+        {/* ━━━ CHARTS ━━━ */}
+        {tab === "charts" && (() => {
+          const isDark = theme === "dark";
+          const activeSym = chartsActiveSym || coreSyms[0] || "SPY";
+          const liveQ = quotesRef.current?.[activeSym];
+          const livePrice = liveQ?.p;
+          const prevClose = barsRef.current?.[activeSym]?.pc;
+          const dayChg = livePrice && prevClose ? ((livePrice - prevClose) / prevClose * 100) : null;
+
+          // Group symbols by sleeve
+          const groups = Object.entries(sleeves).map(([k, sl]) => ({
+            key: k, name: sl.name, icon: sl.icon, symbols: sl.symbols,
+          }));
+
+          const WatchlistItem = ({ sym }) => {
+            const q = quotesRef.current?.[sym];
+            const pc = barsRef.current?.[sym]?.pc;
+            const price = q?.p;
+            const chg = price && pc ? ((price - pc) / pc * 100) : null;
+            const isActive = sym === activeSym;
+            return (
+              <div onClick={() => { setChartsActiveSym(sym); setChartsMobileList(false); }} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "10px 14px", cursor: "pointer", borderRadius: 10,
+                background: isActive ? C.accentSoft : "transparent",
+                borderLeft: isActive ? `3px solid ${C.accent}` : "3px solid transparent",
+                transition: "all 0.15s",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                  <StockLogo symbol={sym} size={28} logoUrl={fundamentals[sym]?.logo} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: isActive ? C.t1 : C.t2 }}>{sym}</div>
+                    <div style={{ fontSize: 10, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>{names[sym] || ""}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{price ? `$${price.toFixed(2)}` : "—"}</div>
+                  {chg != null && <div style={{ fontSize: 10, fontWeight: 700, color: chg >= 0 ? C.up : C.dn }}>{chg >= 0 ? "+" : ""}{chg.toFixed(2)}%</div>}
+                </div>
+              </div>
+            );
+          };
+
+          const Sidebar = ({ style }) => (
+            <div style={{ display: "flex", flexDirection: "column", height: "100%", ...style }}>
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 6px" }}>
+                {groups.map(g => (
+                  <div key={g.key} style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, padding: "6px 14px", textTransform: "uppercase", letterSpacing: 0.5 }}>{g.icon} {g.name}</div>
+                    {g.symbols.map(s => <WatchlistItem key={s} sym={s} />)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+
+          return isDesktop ? (
+            // DESKTOP: chart left, watchlist right
+            <div style={{ display: "flex", height: "calc(100dvh - 60px)", animation: "fadeIn 0.3s ease" }}>
+              {/* Chart area */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+                {/* Symbol header */}
+                <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                  <StockLogo symbol={activeSym} size={36} logoUrl={fundamentals[activeSym]?.logo} />
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
+                    <div style={{ fontSize: 12, color: C.t4 }}>{names[activeSym] || fundamentals[activeSym]?.companyName || ""}</div>
+                  </div>
+                  {livePrice && <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
+                    {dayChg != null && <div style={{ fontSize: 13, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
+                  </div>}
+                </div>
+                {/* TradingView chart */}
+                <iframe
+                  key={activeSym}
+                  src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_main&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
+                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+                  title={`${activeSym} Chart`}
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                />
+              </div>
+              {/* Watchlist sidebar */}
+              <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, overflow: "hidden" }}>
+                <div style={{ padding: "14px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1 }}>Watchlist</div>
+                <Sidebar />
+              </div>
+            </div>
+          ) : (
+            // MOBILE: full-screen chart with bottom watchlist toggle
+            <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 140px)", animation: "fadeIn 0.3s ease" }}>
+              {/* Symbol header with watchlist toggle */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", flexShrink: 0 }}>
+                <StockLogo symbol={activeSym} size={30} logoUrl={fundamentals[activeSym]?.logo} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
+                  <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || ""}</div>
+                </div>
+                {livePrice && <div style={{ textAlign: "right", marginRight: 8 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
+                  {dayChg != null && <div style={{ fontSize: 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
+                </div>}
+                <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
+                  background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
+                  borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                </button>
+              </div>
+              {/* Chart or watchlist */}
+              {chartsMobileList ? (
+                <div style={{ flex: 1, overflowY: "auto" }}>
+                  <Sidebar style={{ height: "auto" }} />
+                </div>
+              ) : (
+                <iframe
+                  key={activeSym}
+                  src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_mob&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
+                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+                  title={`${activeSym} Chart`}
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                />
+              )}
+            </div>
+          );
+        })()}
+
         {/* ━━━ SCREENER ━━━ */}
         {tab === "screener" && null}
 
@@ -5413,7 +5544,7 @@ Instructions:
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {["home", "performance", "metrics", "briefs", "research"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
+        {["home", "performance", "charts", "briefs", "research"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
           <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
