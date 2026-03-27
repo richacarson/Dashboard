@@ -4387,20 +4387,19 @@ Instructions:
             );
           };
 
-          const Sidebar = ({ style }) => (
-            <div style={{ display: "flex", flexDirection: "column", height: "100%", ...style }}>
-              <div style={{ flex: 1, overflowY: "auto", padding: "8px 6px" }}>
-                {groups.map(g => (
-                  <div key={g.key} style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, padding: "6px 14px", textTransform: "uppercase", letterSpacing: 0.5 }}>{g.icon} {g.name}</div>
-                    {g.symbols.map(s => <WatchlistItem key={s} sym={s} />)}
-                  </div>
-                ))}
-              </div>
+          const Sidebar = ({ asList }) => (
+            <div style={{ padding: "8px 6px" }}>
+              {groups.map(g => (
+                <div key={g.key} style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, padding: "6px 14px", textTransform: "uppercase", letterSpacing: 0.5 }}>{g.icon} {g.name}</div>
+                  {g.symbols.map(s => <WatchlistItem key={s} sym={s} />)}
+                </div>
+              ))}
             </div>
           );
 
-          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`;
+          const chartBg = isDark ? "0C1018" : "F5F5F0";
+          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
 
           return (
             <div style={{
@@ -4439,8 +4438,8 @@ Instructions:
                 </div>
                 {/* Chart or mobile watchlist */}
                 {!isDesktop && chartsMobileList ? (
-                  <div style={{ flex: 1, overflowY: "auto", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}>
-                    <Sidebar style={{ height: "auto" }} />
+                  <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}>
+                    <Sidebar asList />
                   </div>
                 ) : (
                   <iframe
@@ -4454,9 +4453,9 @@ Instructions:
               </div>
               {/* Desktop watchlist sidebar */}
               {isDesktop && (
-                <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                  <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1 }}>Watchlist</div>
-                  <div style={{ flex: 1, overflowY: "auto" }}>
+                <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                  <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1, flexShrink: 0 }}>Watchlist</div>
+                  <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
                     <Sidebar />
                   </div>
                 </div>
