@@ -855,18 +855,29 @@ Instructions:
   };
   const [refresh, setRefresh] = useState(null); // null = smart auto
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState(() => {
+  const getAutoTheme = () => {
     try {
-      const saved = localStorage.getItem("iown_theme");
-      if (saved) return saved;
-      // Default: dark after 4pm ET (3pm CST / market close), light during market hours
       const now = new Date();
       const etHour = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" })).getHours();
+      // Light during market hours (7 AM - 4 PM ET), dark otherwise
       return (etHour >= 16 || etHour < 7) ? "dark" : "light";
+    } catch { return "dark"; }
+  };
+  const [theme, setTheme] = useState(() => {
+    try {
+      // "iown_theme_locked" = user explicitly chose a default; "iown_theme" = session toggle
+      const locked = localStorage.getItem("iown_theme_locked");
+      if (locked) return locked;
+      return getAutoTheme();
     } catch { return "dark"; }
   });
   C = theme === "light" ? LIGHT : DARK;
-  const toggleTheme = (t) => { setTheme(t); try { localStorage.setItem("iown_theme", t); } catch {} };
+  // Toggle theme for this session only (doesn't change default)
+  const toggleTheme = (t) => { setTheme(t); };
+  // Lock theme as permanent default
+  const lockTheme = (t) => { setTheme(t); try { localStorage.setItem("iown_theme_locked", t); } catch {} };
+  // Reset to auto (market-hours based)
+  const resetThemeAuto = () => { try { localStorage.removeItem("iown_theme_locked"); } catch {} setTheme(getAutoTheme()); };
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -4389,73 +4400,66 @@ Instructions:
             </div>
           );
 
-          return isDesktop ? (
-            // DESKTOP: chart left, watchlist right
-            <div style={{ display: "flex", height: "calc(100dvh - 60px)", animation: "fadeIn 0.3s ease" }}>
+          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`;
+
+          return (
+            <div style={{
+              position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
+              display: "flex", flexDirection: isDesktop ? "row" : "column",
+              paddingTop: "env(safe-area-inset-top, 0px)",
+            }}>
               {/* Chart area */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
                 {/* Symbol header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                  <StockLogo symbol={activeSym} size={36} logoUrl={fundamentals[activeSym]?.logo} />
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
-                    <div style={{ fontSize: 12, color: C.t4 }}>{names[activeSym] || fundamentals[activeSym]?.companyName || ""}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: isDesktop ? 14 : 10, padding: isDesktop ? "10px 20px" : "8px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                  <button onClick={() => setTab("home")} style={{
+                    background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4,
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  </button>
+                  <StockLogo symbol={activeSym} size={isDesktop ? 34 : 28} logoUrl={fundamentals[activeSym]?.logo} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: isDesktop ? 17 : 15, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
+                    <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || fundamentals[activeSym]?.companyName || ""}</div>
                   </div>
                   {livePrice && <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
-                    {dayChg != null && <div style={{ fontSize: 13, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
+                    <div style={{ fontSize: isDesktop ? 18 : 15, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
+                    {dayChg != null && <div style={{ fontSize: isDesktop ? 13 : 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
                   </div>}
+                  {/* Mobile watchlist toggle */}
+                  {!isDesktop && (
+                    <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
+                      background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
+                      borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
+                      display: "flex", alignItems: "center", flexShrink: 0, marginLeft: 4,
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                    </button>
+                  )}
                 </div>
-                {/* TradingView chart */}
-                <iframe
-                  key={activeSym}
-                  src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_main&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
-                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
-                  title={`${activeSym} Chart`}
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                />
+                {/* Chart or mobile watchlist */}
+                {!isDesktop && chartsMobileList ? (
+                  <div style={{ flex: 1, overflowY: "auto", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}>
+                    <Sidebar style={{ height: "auto" }} />
+                  </div>
+                ) : (
+                  <iframe
+                    key={activeSym}
+                    src={chartUrl}
+                    style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+                    title={`${activeSym} Chart`}
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                  />
+                )}
               </div>
-              {/* Watchlist sidebar */}
-              <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, overflow: "hidden" }}>
-                <div style={{ padding: "14px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1 }}>Watchlist</div>
-                <Sidebar />
-              </div>
-            </div>
-          ) : (
-            // MOBILE: full-screen chart with bottom watchlist toggle
-            <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 140px)", animation: "fadeIn 0.3s ease" }}>
-              {/* Symbol header with watchlist toggle */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", flexShrink: 0 }}>
-                <StockLogo symbol={activeSym} size={30} logoUrl={fundamentals[activeSym]?.logo} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
-                  <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || ""}</div>
+              {/* Desktop watchlist sidebar */}
+              {isDesktop && (
+                <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                  <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1 }}>Watchlist</div>
+                  <div style={{ flex: 1, overflowY: "auto" }}>
+                    <Sidebar />
+                  </div>
                 </div>
-                {livePrice && <div style={{ textAlign: "right", marginRight: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
-                  {dayChg != null && <div style={{ fontSize: 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
-                </div>}
-                <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
-                  background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
-                  borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
-                  display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
-                </button>
-              </div>
-              {/* Chart or watchlist */}
-              {chartsMobileList ? (
-                <div style={{ flex: 1, overflowY: "auto" }}>
-                  <Sidebar style={{ height: "auto" }} />
-                </div>
-              ) : (
-                <iframe
-                  key={activeSym}
-                  src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_mob&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
-                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
-                  title={`${activeSym} Chart`}
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                />
               )}
             </div>
           );
@@ -5272,7 +5276,10 @@ Instructions:
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Settings</div>}
             <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined, gap: isDesktop ? 16 : 0 }}>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Appearance</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Appearance</div>
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>
+                {localStorage.getItem("iown_theme_locked") ? `Locked to ${localStorage.getItem("iown_theme_locked")} mode` : "Auto: light during market hours, dark after close"}
+              </div>
               <div style={{ display: "flex", gap: 6 }}>
                 {[{ v: "dark", l: "🌙 Dark" }, { v: "light", l: "☀️ Light" }].map(({ v, l }) => (
                   <button key={v} onClick={() => toggleTheme(v)} style={{
@@ -5283,6 +5290,21 @@ Instructions:
                     cursor: "pointer", fontFamily: "inherit",
                   }}>{l}</button>
                 ))}
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <button onClick={() => lockTheme(theme)} style={{
+                  flex: 1, padding: "8px 0", borderRadius: 10,
+                  border: `1px solid ${C.border}`, background: "transparent",
+                  color: C.t3, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>Set as Default</button>
+                <button onClick={resetThemeAuto} style={{
+                  flex: 1, padding: "8px 0", borderRadius: 10,
+                  border: `1px solid ${localStorage.getItem("iown_theme_locked") ? C.border : C.borderActive}`,
+                  background: localStorage.getItem("iown_theme_locked") ? "transparent" : C.accentSoft,
+                  color: localStorage.getItem("iown_theme_locked") ? C.t3 : C.t1, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>Auto</button>
               </div>
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
