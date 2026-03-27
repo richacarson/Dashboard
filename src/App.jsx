@@ -3406,17 +3406,56 @@ Instructions:
         {tab === "metrics" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Metrics</div>}
-            {/* Portfolio selector — all sleeves */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
-              {Object.entries(sleeves).map(([k, sl]) => (
-                <button key={k} onClick={() => { setMetricsView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
-                  flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${metricsView === k ? C.borderActive : C.border}`,
-                  background: metricsView === k ? C.accentSoft : "transparent",
-                  color: metricsView === k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-                }}>{sl.icon} {sl.name}</button>
-              ))}
-            </div>
+            {/* Portfolio selector — all sleeves with composite scores */}
+            {(() => {
+              // Composite score: 0-100 per stock, averaged across portfolio
+              // Components: Valuation (P/E, PEG), Growth (RevYoY, Rev5Y), Profitability (ROE, Margin), Leverage (D/E)
+              const stockScore = (sym) => {
+                const d = fundamentals[sym];
+                if (!d) return null;
+                const scores = [];
+                // Valuation: lower P/E is better (0-25 range mapped to 100-0, cap at 50)
+                if (d.peTTM != null && d.peTTM > 0) scores.push(Math.max(0, Math.min(100, 100 - (d.peTTM - 5) * 2)));
+                // PEG: <1 is great, >3 is poor
+                if (d.pegTTM != null && d.pegTTM > 0) scores.push(Math.max(0, Math.min(100, 100 - (d.pegTTM - 0.5) * 30)));
+                // Revenue growth YoY: higher is better (0% = 50, 30%+ = 100)
+                if (d.revenueYoY != null) scores.push(Math.max(0, Math.min(100, 50 + d.revenueYoY * 1.67)));
+                // Revenue growth 5Y: higher is better
+                if (d.revenue5Y != null) scores.push(Math.max(0, Math.min(100, 50 + d.revenue5Y * 2)));
+                // ROE: higher is better (0% = 30, 20%+ = 90)
+                if (d.roe != null) scores.push(Math.max(0, Math.min(100, 30 + d.roe * 3)));
+                // Profit margin: higher is better (0% = 30, 30%+ = 100)
+                if (d.profitMargin != null) scores.push(Math.max(0, Math.min(100, 30 + d.profitMargin * 2.3)));
+                // D/E: lower is better (0 = 100, 2+ = 0)
+                if (d.de != null && d.de >= 0) scores.push(Math.max(0, Math.min(100, 100 - d.de * 50)));
+                return scores.length >= 2 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+              };
+              const sleeveScores = {};
+              Object.entries(sleeves).forEach(([k, sl]) => {
+                const scores = sl.symbols.map(stockScore).filter(s => s != null);
+                sleeveScores[k] = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+              });
+              const scoreColor = (s) => s == null ? C.t4 : s >= 70 ? C.up : s >= 45 ? (theme === "dark" ? "#F59E0B" : "#D97706") : C.dn;
+              return (
+                <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
+                  {Object.entries(sleeves).map(([k, sl]) => {
+                    const sc = sleeveScores[k];
+                    return (
+                      <button key={k} onClick={() => { setMetricsView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
+                        flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${metricsView === k ? C.borderActive : C.border}`,
+                        background: metricsView === k ? C.accentSoft : "transparent",
+                        color: metricsView === k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                        cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                        display: "flex", alignItems: "center", gap: 8,
+                      }}>
+                        <span>{sl.icon} {sl.name}</span>
+                        {sc != null && <span style={{ fontSize: 11, fontWeight: 800, color: scoreColor(sc), background: scoreColor(sc) + "18", padding: "2px 6px", borderRadius: 6 }}>{sc.toFixed(0)}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
               {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }].map(({ v, l }) => (
