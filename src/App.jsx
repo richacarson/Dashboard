@@ -2573,7 +2573,7 @@ Instructions:
             {/* Spacer before lists */}
             <div style={{ marginTop: 16 }} />
 
-            {/* ━━━ HOLDINGS VIEW (moved to Performance tab) ━━━ */}
+            {/* ━━━ HOLDINGS VIEW (disabled on home — lives in Performance tab) ━━━ */}
             {false && (() => {
               const hPerfData = perfDataMap[holdingsSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
               if (!hPerfData) return null;
@@ -4927,132 +4927,168 @@ Instructions:
               ))}
             </div>
 
-            {/* ━━━ HOLDINGS VIEW ━━━ */}
+            {/* ━━━ HOLDINGS VIEW (full version) ━━━ */}
             {perfView === "holdings" && perfDataMap && Object.keys(perfDataMap).length > 0 && (() => {
               const hPerfData = perfDataMap[holdingsSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
               if (!hPerfData) return null;
               return (
               <div style={{ animation: "fadeIn 0.2s ease" }}>
-                {/* Sleeve selector for holdings */}
-                <div style={{ display: "none", gap: 6, marginBottom: 12 }}>
-                  {[{ k: "dividend", l: "💰 Dividend" }, { k: "growth", l: "🚀 Growth" }].filter(s => perfDataMap[s.k]).map(s => (
-                    <button key={s.k} onClick={() => setHoldingsSleeve(s.k)} style={{
-                      flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${holdingsSleeve === s.k ? C.borderActive : C.border}`,
-                      background: holdingsSleeve === s.k ? C.accentSoft : "transparent",
-                      color: holdingsSleeve === s.k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}>{s.l}</button>
+                {/* Portfolio Summary */}
+                <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
+                  {(() => {
+                    const totalVal = liveValue ? liveValue.value : 0;
+                    const cashVal = liveValue ? liveValue.cash : (hPerfData.cash || 0);
+                    const startVal = hPerfData.portfolio?.[0]?.value || (hPerfData.startBalance || 100000);
+                    const totalGain = totalVal - startVal;
+                    const totalGainPct = startVal > 0 ? ((totalVal / startVal) - 1) * 100 : 0;
+                    return [
+                      { label: "Portfolio Value", value: `$${totalVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+                      { label: "Cash", value: `$${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
+                      { label: "All-Time Gain/Loss", value: `${totalGain >= 0 ? "+$" : "-$"}${Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalGain >= 0 ? C.up : C.dn },
+                      { label: "All-Time %", value: `${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(1)}%`, color: totalGainPct >= 0 ? C.up : C.dn },
+                    ];
+                  })().map((s, i) => (
+                    <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px" }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{s.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
+                    </div>
                   ))}
                 </div>
 
-                {/* Portfolio Summary */}
-                {(() => {
-                  const totalVal = Object.entries(hPerfData.holdings || {}).reduce((s, [t, shares]) => {
-                    const q = quotesRef.current?.[t];
-                    return s + (q?.last || q?.close || 0) * shares;
-                  }, 0);
-                  const cash = hPerfData.cash || 0;
-                  const costBasis = Object.entries(hPerfData.holdings || {}).reduce((s, [t, shares]) => {
-                    const cb = hPerfData.costBasis?.[t];
-                    return s + (cb || 0) * shares;
-                  }, 0);
-                  const totalGain = totalVal - costBasis;
-                  const totalGainPct = costBasis > 0 ? (totalGain / costBasis) * 100 : 0;
-                  return (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
-                      <div style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}` }}>
-                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>Market Value</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>${(totalVal + cash).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                      </div>
-                      <div style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}` }}>
-                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>Total Gain/Loss</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: totalGain >= 0 ? C.up : C.dn }}>{totalGain >= 0 ? "+$" : "-$"}{Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                      </div>
-                      <div style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}` }}>
-                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>Return</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: totalGainPct >= 0 ? C.up : C.dn }}>{totalGainPct >= 0 ? "+" : ""}{totalGainPct.toFixed(1)}%</div>
-                      </div>
-                    </div>
-                  );
-                })()}
+                {/* Action buttons */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                  <button onClick={() => { setShowTxModal(true); setTxForm({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) }); }} style={{
+                    padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.borderActive}`,
+                    background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>+ Add Transaction</button>
+                  <button onClick={() => setShowRebalModal(true)} style={{
+                    padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.border}`,
+                    background: "transparent", color: C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>Rebalance</button>
+                  <button onClick={() => setShowTxHistory(!showTxHistory)} style={{
+                    padding: "8px 18px", borderRadius: 10, border: `1px solid ${C.border}`,
+                    background: showTxHistory ? C.accentSoft : "transparent", color: showTxHistory ? C.t1 : C.t3,
+                    fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  }}>{showTxHistory ? "Hide History" : "Transaction History"}</button>
+                </div>
 
-                {/* Holdings table — reuse same logic from original holdings view */}
+                {/* Transaction History Panel */}
+                {showTxHistory && hPerfData.transactions && (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, marginBottom: 16, maxHeight: 400, overflow: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                      <thead>
+                        <tr style={{ position: "sticky", top: 0, background: C.card, zIndex: 1 }}>
+                          {["Date", "Type", "Symbol", "Shares", "Price", "Amount"].map(h => (
+                            <th key={h} style={{ padding: "10px 12px", textAlign: h === "Date" || h === "Type" || h === "Symbol" ? "left" : "right", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, borderBottom: `1px solid ${C.border}` }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...hPerfData.transactions].sort((a, b) => b.date.localeCompare(a.date)).map((tx, i) => {
+                          const isStock = !!tx.ticker;
+                          const typeMap = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", "DIVIDEND REINVESTMENT": "DRIP", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
+                          const typeColor = tx.type === "PURCHASE" || tx.type === "DEPOSIT" || tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT" ? C.up : tx.type === "SALE" || tx.type === "WITHDRAWAL" ? C.dn : C.t2;
+                          return (
+                            <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "8px 12px", color: C.t2 }}>{tx.date}</td>
+                              <td style={{ padding: "8px 12px", color: typeColor, fontWeight: 600 }}>{typeMap[tx.type] || tx.type}</td>
+                              <td style={{ padding: "8px 12px", color: C.t1, fontWeight: 600 }}>{tx.ticker || "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? tx.shares?.toFixed(4) : "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t2 }}>{isStock ? `$${tx.price?.toFixed(2)}` : "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Holdings Table */}
                 {(() => {
+                  const totalVal = liveValue ? liveValue.value : 1;
+                  const cashVal = liveValue?.cash || hPerfData.cash || 0;
+                  const cashWeight = liveValue ? ((cashVal / liveValue.value) * 100) : 0;
                   const rows = Object.entries(hPerfData.holdings).map(([ticker, shares]) => {
                     const q = quotesRef.current?.[ticker];
-                    const price = q?.last || q?.close || 0;
-                    const value = price * shares;
-                    const cb = Number(hPerfData.costBasis?.[ticker]) || 0;
-                    const gainLoss = (price - cb) * shares;
-                    const gainLossPct = cb > 0 ? ((price - cb) / cb) * 100 : 0;
-                    const totalVal = Object.entries(hPerfData.holdings).reduce((s, [t, sh]) => {
-                      const qq = quotesRef.current?.[t];
-                      return s + (qq?.last || qq?.close || 0) * sh;
-                    }, 0) + (hPerfData.cash || 0);
-                    const weight = totalVal > 0 ? (value / totalVal) * 100 : 0;
-                    return { ticker, shares, price, value, cb, gainLoss, gainLossPct, weight, name: names[ticker] || fundamentals[ticker]?.companyName || ticker };
-                  }).sort((a, b) => {
-                    const m = holdingsSort.dir === "asc" ? 1 : -1;
-                    const av = a[holdingsSort.col], bv = b[holdingsSort.col];
-                    if (typeof av === "string") return av.localeCompare(bv) * m;
-                    return ((Number(av) || 0) - (Number(bv) || 0)) * m;
+                    const price = q?.p || 0;
+                    const pc = bars[ticker]?.pc || price;
+                    const dayChg = price - pc;
+                    const dayChgPct = pc > 0 ? (dayChg / pc) * 100 : 0;
+                    const mktValue = shares * price;
+                    const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
+                    const cb = hPerfData.costBasis[ticker] || {};
+                    const avgCost = cb.avg_cost || 0;
+                    const costBasis = cb.total_cost || 0;
+                    const gainLoss = mktValue - costBasis;
+                    const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+                    const name = names[ticker] || "";
+                    return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct };
                   });
-
+                  const { col: sc, dir: sd } = holdingsSort;
+                  const sortKey = { symbol: r => r.ticker, name: r => (r.name || "").toLowerCase(), shares: r => r.shares, price: r => r.price, dayChg: r => r.dayChg, dayChgPct: r => r.dayChgPct, mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost, costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct }[sc] || (r => r.weight);
+                  rows.sort((a, b) => { const av = sortKey(a), bv = sortKey(b); if (typeof av === "string") return sd === "asc" ? av.localeCompare(bv) : bv.localeCompare(av); return sd === "asc" ? av - bv : bv - av; });
+                  const totMktVal = rows.reduce((s, r) => s + r.mktValue, 0);
+                  const totCostBasis = rows.reduce((s, r) => s + r.costBasis, 0);
                   const totGainLoss = rows.reduce((s, r) => s + r.gainLoss, 0);
-                  const totCostBasis = rows.reduce((s, r) => s + r.cb * r.shares, 0);
                   const totGainLossPct = totCostBasis > 0 ? (totGainLoss / totCostBasis) * 100 : 0;
 
-                  const SortHeader = ({ col, children, align }) => (
-                    <th onClick={() => setHoldingsSort(prev => ({ col, dir: prev.col === col && prev.dir === "desc" ? "asc" : "desc" }))}
-                      style={{ padding: "10px 12px", textAlign: align || "right", fontSize: 11, fontWeight: 700, color: holdingsSort.col === col ? C.accent : C.t4, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap", borderBottom: `2px solid ${C.accent}`, background: C.surface }}>
-                      {children} {holdingsSort.col === col ? (holdingsSort.dir === "desc" ? "↓" : "↑") : ""}
-                    </th>
-                  );
-
                   return (
-                    <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden", overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 600 }}>
-                        <thead>
-                          <tr>
-                            <SortHeader col="ticker" align="left">Stock</SortHeader>
-                            <SortHeader col="shares">Shares</SortHeader>
-                            <SortHeader col="price">Price</SortHeader>
-                            <SortHeader col="value">Value</SortHeader>
-                            <SortHeader col="weight">Weight</SortHeader>
-                            <SortHeader col="cb">Cost Basis</SortHeader>
-                            <SortHeader col="gainLoss">Gain/Loss</SortHeader>
-                            <SortHeader col="gainLossPct">Return</SortHeader>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rows.map(r => (
-                            <tr key={r.ticker} {...stockContextHandlers(r.ticker)} style={{ cursor: "pointer", borderBottom: `1px solid ${C.border}` }}>
-                              <td style={{ padding: "10px 12px" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                  <StockLogo symbol={r.ticker} size={24} logoUrl={fundamentals[r.ticker]?.logo} />
-                                  <div>
-                                    <div style={{ fontWeight: 700, color: C.accent }}>{r.ticker}</div>
-                                    <div style={{ fontSize: 10, color: C.t4 }}>{r.name}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{Number(r.shares || 0).toFixed(2)}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${Number(r.price || 0).toFixed(2)}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${Number(r.value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{Number(r.weight || 0).toFixed(1)}%</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${Number(r.cb || 0).toFixed(2)}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(Number(r.gainLoss || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLossPct >= 0 ? "+" : ""}{Number(r.gainLossPct || 0).toFixed(1)}%</td>
-                            </tr>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums", minWidth: 800 }}>
+                      <thead>
+                        <tr>
+                          {[
+                            { key: "symbol", label: "Symbol", align: "left" }, { key: "shares", label: "Shares", align: "right" },
+                            { key: "price", label: "Price", align: "right" }, { key: "dayChgPct", label: "Day %", align: "right" },
+                            { key: "mktValue", label: "Mkt Value", align: "right" }, { key: "weight", label: "Weight", align: "right" },
+                            { key: "avgCost", label: "Avg Cost", align: "right" }, { key: "costBasis", label: "Cost Basis", align: "right" },
+                            { key: "gainLoss", label: "Gain/Loss", align: "right" }, { key: "gainLossPct", label: "G/L %", align: "right" },
+                          ].map(col => (
+                            <th key={col.key} onClick={() => setHoldingsSort(prev => ({ col: col.key, dir: prev.col === col.key && prev.dir === "desc" ? "asc" : "desc" }))}
+                              style={{ padding: "10px 12px", textAlign: col.align, fontSize: 10, fontWeight: 700, color: holdingsSort.col === col.key ? C.t1 : C.t4, textTransform: "uppercase", letterSpacing: 0.5, cursor: "pointer", whiteSpace: "nowrap", borderBottom: `1px solid ${C.border}`, userSelect: "none", background: C.card }}>
+                              {col.label} {holdingsSort.col === col.key ? (holdingsSort.dir === "desc" ? "▼" : "▲") : ""}
+                            </th>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map(r => (
+                          <tr key={r.ticker} {...stockContextHandlers(r.ticker)} style={{ cursor: "pointer", borderBottom: `1px solid ${C.border}` }}>
+                            <td style={{ padding: "10px 12px", fontWeight: 700, color: C.accent }}>{r.ticker}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{r.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.price.toFixed(2)}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: r.dayChgPct >= 0 ? C.up : C.dn }}>{r.dayChgPct >= 0 ? "+" : ""}{r.dayChgPct.toFixed(2)}%</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.mktValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1 }}>{r.weight.toFixed(1)}%</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.avgCost.toFixed(2)}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                        <tr style={{ borderTop: `2px solid ${C.accent}44`, background: C.accentSoft }}>
+                          <td style={{ padding: "10px 12px", fontWeight: 800, color: C.t1 }}>TOTALS</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t4, fontSize: 11 }}>{rows.length}</td>
+                          <td colSpan={2} />
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 800 }}>${totMktVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1 }}>100%</td>
+                          <td />
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${totCostBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: totGainLoss >= 0 ? C.up : C.dn, fontWeight: 800 }}>{totGainLoss >= 0 ? "+$" : "-$"}{Math.abs(totGainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ padding: "10px 12px", textAlign: "right", color: totGainLossPct >= 0 ? C.up : C.dn, fontWeight: 800 }}>{totGainLossPct >= 0 ? "+" : ""}{totGainLossPct.toFixed(1)}%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  </div>
                   );
                 })()}
               </div>
-              );
-            })()}
+              ); })()}
 
             {/* Chart view */}
             {perfView === "chart" && <>
