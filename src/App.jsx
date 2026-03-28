@@ -3480,7 +3480,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }, { v: "returnheat", l: "📅 Returns" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -3685,6 +3685,102 @@ Instructions:
                     <div style={{ flex: 1, textAlign: "center", fontSize: 10, color: C.t4, fontWeight: 600 }}>← Decline · Revenue Growth YoY · Growth →</div>
                     <div style={{ width: 56, textAlign: "right", fontSize: 10, color: C.t4, fontWeight: 600 }}>Rev %</div>
                     <div style={{ width: 40, textAlign: "right", fontSize: 10, color: C.t4, fontWeight: 600 }}>P/E</div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── QUARTERLY RETURNS HEATMAP ── */}
+            {metricsSubView === "returnheat" && (() => {
+              const syms = sleeves[metricsView]?.symbols || [];
+              const periods = [
+                { key: "lastQtr", label: "Last Qtr" },
+                { key: "thisQtr", label: "This Qtr" },
+                { key: "ytd", label: "YTD" },
+              ];
+              const rows = syms.map(s => {
+                const d = fundamentals[s] || {};
+                return { sym: s, lastQtr: d.lastQtr, thisQtr: d.thisQtr, ytd: d.ytd, name: names[s] || d.companyName || s };
+              }).filter(r => periods.some(p => r[p.key] != null));
+
+              if (!rows.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No returns data available. Refresh metrics first.</div>;
+
+              // Sort by YTD, then thisQtr
+              rows.sort((a, b) => (b.ytd ?? b.thisQtr ?? -999) - (a.ytd ?? a.thisQtr ?? -999));
+
+              // Color scale: deep green for strong positive, white/neutral for 0, deep red for negative
+              const allVals = rows.flatMap(r => periods.map(p => r[p.key]).filter(v => v != null && isFinite(v)));
+              const maxAbs = Math.max(...allVals.map(v => Math.abs(v)), 1);
+
+              const heatColor = v => {
+                if (v == null) return "transparent";
+                const intensity = Math.min(Math.abs(v) / Math.max(maxAbs * 0.6, 10), 1);
+                if (v > 0) return `rgba(22, 163, 74, ${0.15 + intensity * 0.55})`;
+                if (v < 0) return `rgba(220, 38, 38, ${0.15 + intensity * 0.55})`;
+                return C.border;
+              };
+
+              // Portfolio averages
+              const avgs = periods.map(p => {
+                const vals = rows.map(r => r[p.key]).filter(v => v != null && isFinite(v));
+                return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+              });
+
+              return (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Quarterly Returns</div>
+                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 16 }}>Performance heatmap across time periods</div>
+                  {/* Summary row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 18 }}>
+                    {periods.map((p, i) => (
+                      <div key={p.key} style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}`, textAlign: "center" }}>
+                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>{p.label} Avg</div>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: avgs[i] != null ? (avgs[i] >= 0 ? C.up : C.dn) : C.t4 }}>
+                          {avgs[i] != null ? `${avgs[i] >= 0 ? "+" : ""}${avgs[i].toFixed(1)}%` : "—"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Heatmap grid */}
+                  <div style={{ borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+                    {/* Header */}
+                    <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "140px 1fr 1fr 1fr" : "80px 1fr 1fr 1fr", background: C.surface, borderBottom: `2px solid ${C.accent}` }}>
+                      <div style={{ padding: "10px 10px", fontSize: 10, fontWeight: 700, color: C.t4 }}>Stock</div>
+                      {periods.map(p => (
+                        <div key={p.key} style={{ padding: "10px 6px", fontSize: 10, fontWeight: 700, color: C.t4, textAlign: "center" }}>{p.label}</div>
+                      ))}
+                    </div>
+                    {/* Rows */}
+                    {rows.map((r, i) => (
+                      <div key={r.sym} {...stockContextHandlers(r.sym)} style={{
+                        display: "grid", gridTemplateColumns: isDesktop ? "140px 1fr 1fr 1fr" : "80px 1fr 1fr 1fr",
+                        borderBottom: i < rows.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer",
+                      }}>
+                        <div style={{ padding: "10px 10px", display: "flex", alignItems: "center", gap: 8 }}>
+                          <StockLogo symbol={r.sym} size={20} logoUrl={fundamentals[r.sym]?.logo} />
+                          <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{r.sym}</span>
+                        </div>
+                        {periods.map(p => {
+                          const v = r[p.key];
+                          return (
+                            <div key={p.key} style={{
+                              padding: "10px 6px", textAlign: "center", fontVariantNumeric: "tabular-nums",
+                              background: heatColor(v),
+                              fontSize: 13, fontWeight: 700,
+                              color: v != null ? (v >= 0 ? "#15803d" : "#dc2626") : C.t4,
+                            }}>
+                              {v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "—"}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 10, fontSize: 11, color: C.t4, display: "flex", justifyContent: "center", gap: 12 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(22,163,74,0.5)" }} /> Strong gain</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(22,163,74,0.2)" }} /> Mild gain</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,38,38,0.2)" }} /> Mild loss</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,38,38,0.5)" }} /> Strong loss</span>
                   </div>
                 </div>
               );
