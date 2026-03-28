@@ -3446,14 +3446,14 @@ Instructions:
                 return scores.length >= 2 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
               };
               const sleeveScores = {};
-              Object.entries(sleeves).forEach(([k, sl]) => {
+              Object.entries(sleeves).filter(([k]) => k !== "sectors").forEach(([k, sl]) => {
                 const scores = sl.symbols.map(stockScore).filter(s => s != null);
                 sleeveScores[k] = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
               });
               const scoreColor = (s) => s == null ? C.t4 : s >= 70 ? C.up : s >= 45 ? (theme === "dark" ? "#F59E0B" : "#D97706") : C.dn;
               return (
                 <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
-                  {Object.entries(sleeves).map(([k, sl]) => {
+                  {Object.entries(sleeves).filter(([k]) => k !== "sectors").map(([k, sl]) => {
                     const sc = sleeveScores[k];
                     return (
                       <button key={k} onClick={() => { setMetricsView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
