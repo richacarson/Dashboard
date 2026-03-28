@@ -3472,7 +3472,7 @@ Instructions:
               const syms = sleeves[metricsView]?.symbols || [];
               const sectorCounts = {};
               syms.forEach(s => {
-                const sec = fundamentals[s]?.sector || "Unknown";
+                const sec = fundamentals[s]?.sector || fundamentals[s]?.industry || "Uncategorized";
                 sectorCounts[sec] = (sectorCounts[sec] || 0) + 1;
               });
               const total = syms.length;
@@ -3532,76 +3532,150 @@ Instructions:
             {/* ── VALUATION SCATTER PLOT ── */}
             {metricsSubView === "scatter" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
-              const pts = syms.map(s => {
+              const SECTOR_COLORS = { "Technology": "#2563EB", "Financials": "#059669", "Healthcare": "#7C3AED",
+                "Industrials": "#D97706", "Consumer Cyclical": "#DB2777", "Consumer Defensive": "#0891B2",
+                "Energy": "#DC2626", "Utilities": "#84CC16", "Real Estate": "#EA580C", "Basic Materials": "#6366F1",
+                "Communication Services": "#F59E0B" };
+              const allPts = syms.map(s => {
                 const d = fundamentals[s] || {};
-                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, mc: d.marketCap || d.avgVol || 1, name: d.companyName || s };
+                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, mc: d.marketCap || d.avgVol || 1, sector: d.sector || "Other", name: d.companyName || s };
               }).filter(p => p.pe != null && isFinite(p.pe) && p.rev != null && isFinite(p.rev));
 
-              if (!pts.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No valuation data available. Refresh metrics first.</div>;
+              if (!allPts.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No valuation data available. Refresh metrics first.</div>;
 
-              const W = isDesktop ? 600 : Math.min(window.innerWidth - 40, 500);
-              const H = isDesktop ? 400 : 320;
-              const pad = { t: 20, r: 20, b: 50, l: 55 };
+              // Clamp outlier P/E to 95th percentile for better spread
+              const sortedPE = [...allPts].sort((a, b) => a.pe - b.pe);
+              const p95 = sortedPE[Math.min(Math.floor(allPts.length * 0.95), allPts.length - 1)].pe;
+              const peClamp = Math.max(p95 * 1.2, 60);
+              const pts = allPts.map(p => ({ ...p, peDisplay: Math.min(p.pe, peClamp), clamped: p.pe > peClamp }));
+
+              const W = isDesktop ? 780 : Math.min(window.innerWidth - 40, 500);
+              const H = isDesktop ? 480 : 360;
+              const pad = { t: 30, r: 30, b: 55, l: 60 };
               const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
 
-              const peMin = Math.min(...pts.map(p => p.pe)), peMax = Math.max(...pts.map(p => p.pe));
-              const revMin = Math.min(...pts.map(p => p.rev)), revMax = Math.max(...pts.map(p => p.rev));
-              const peRange = peMax - peMin || 1, revRange = revMax - revMin || 1;
-              const pePad = peRange * 0.1, revPad = revRange * 0.1;
-              const xMin = peMin - pePad, xMax = peMax + pePad, yMin = revMin - revPad, yMax = revMax + revPad;
+              // Use nice round numbers for axes
+              const peVals = pts.map(p => p.peDisplay);
+              const revVals = pts.map(p => p.rev);
+              const xMin = Math.floor(Math.min(0, Math.min(...peVals) - 2) / 5) * 5;
+              const xMax = Math.ceil((Math.max(...peVals) + 2) / 5) * 5;
+              const yMin = Math.floor((Math.min(...revVals) - 2) / 5) * 5;
+              const yMax = Math.ceil((Math.max(...revVals) + 2) / 5) * 5;
 
               const toX = v => pad.l + ((v - xMin) / (xMax - xMin)) * pw;
               const toY = v => pad.t + ph - ((v - yMin) / (yMax - yMin)) * ph;
 
-              // Dot sizes based on market cap
+              // Dot sizes
               const mcVals = pts.map(p => p.mc);
-              const mcMin = Math.min(...mcVals), mcMax = Math.max(...mcVals);
-              const mcRange = mcMax - mcMin || 1;
-              const dotSize = p => 6 + ((p.mc - mcMin) / mcRange) * 14;
-
-              // Grid lines
-              const xTicks = 5, yTicks = 5;
-              const xStep = (xMax - xMin) / xTicks, yStep = (yMax - yMin) / yTicks;
+              const mcMin = Math.min(...mcVals), mcMax = Math.max(...mcVals), mcRange = mcMax - mcMin || 1;
+              const dotSize = p => 7 + ((p.mc - mcMin) / mcRange) * 12;
 
               // Median lines
-              const medPE = [...pts].sort((a, b) => a.pe - b.pe)[Math.floor(pts.length / 2)]?.pe;
-              const medRev = [...pts].sort((a, b) => a.rev - b.rev)[Math.floor(pts.length / 2)]?.rev;
+              const medPE = sortedPE[Math.floor(allPts.length / 2)]?.pe;
+              const medRev = [...allPts].sort((a, b) => a.rev - b.rev)[Math.floor(allPts.length / 2)]?.rev;
+
+              // Quadrant labels
+              const quadrants = medPE != null && medRev != null ? [
+                { label: "High Growth\nLow P/E", x: (xMin + Math.min(medPE, peClamp)) / 2, y: (medRev + yMax) / 2, color: C.up },
+                { label: "High Growth\nHigh P/E", x: (Math.min(medPE, peClamp) + xMax) / 2, y: (medRev + yMax) / 2, color: "#D97706" },
+                { label: "Low Growth\nLow P/E", x: (xMin + Math.min(medPE, peClamp)) / 2, y: (yMin + medRev) / 2, color: C.t4 },
+                { label: "Low Growth\nHigh P/E", x: (Math.min(medPE, peClamp) + xMax) / 2, y: (yMin + medRev) / 2, color: C.dn },
+              ] : [];
+
+              // Nice grid ticks
+              const xStep = xMax - xMin > 40 ? 10 : 5;
+              const yStep = yMax - yMin > 40 ? 10 : 5;
+              const xTicks = []; for (let v = xMin; v <= xMax; v += xStep) xTicks.push(v);
+              const yTicks = []; for (let v = yMin; v <= yMax; v += yStep) yTicks.push(v);
+
+              // Label collision avoidance: nudge labels that would overlap
+              const labelPositions = pts.map(p => {
+                const x = toX(p.peDisplay), y = toY(p.rev), sz = dotSize(p);
+                return { sym: p.sym, x, y: y - sz - 5, anchor: "middle" };
+              });
+              // Simple collision pass
+              for (let i = 0; i < labelPositions.length; i++) {
+                for (let j = i + 1; j < labelPositions.length; j++) {
+                  const a = labelPositions[i], b = labelPositions[j];
+                  const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+                  if (dx < 34 && dy < 12) {
+                    // Push apart vertically
+                    if (a.y < b.y) { a.y -= 7; b.y += 7; }
+                    else { b.y -= 7; a.y += 7; }
+                  }
+                }
+              }
+
+              // Unique sectors for legend
+              const usedSectors = [...new Set(pts.map(p => p.sector))].sort();
 
               return (
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Valuation Scatter Plot</div>
-                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 16 }}>P/E Ratio (x) vs Revenue Growth YoY (y) · Dot size = market cap</div>
+                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 12 }}>P/E Ratio vs Revenue Growth YoY · Dot size = market cap · Color = sector</div>
+                  {/* Sector legend */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+                    {usedSectors.map(s => (
+                      <div key={s} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: C.t3 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: SECTOR_COLORS[s] || C.accent, flexShrink: 0 }} />
+                        {s}
+                      </div>
+                    ))}
+                  </div>
                   <div style={{ overflowX: "auto" }}>
                     <svg width={W} height={H} style={{ display: "block", margin: "0 auto" }}>
+                      {/* Background quadrant fills */}
+                      {medPE != null && medRev != null && (() => {
+                        const mx = toX(Math.min(medPE, peClamp)), my = toY(medRev);
+                        return <>
+                          <rect x={pad.l} y={pad.t} width={mx - pad.l} height={my - pad.t} fill={C.up + "08"} />
+                          <rect x={mx} y={pad.t} width={pad.l + pw - mx} height={my - pad.t} fill="#D9770608" />
+                          <rect x={pad.l} y={my} width={mx - pad.l} height={pad.t + ph - my} fill={C.t4 + "08"} />
+                          <rect x={mx} y={my} width={pad.l + pw - mx} height={pad.t + ph - my} fill={C.dn + "08"} />
+                        </>;
+                      })()}
                       {/* Grid */}
-                      {Array.from({ length: xTicks + 1 }, (_, i) => {
-                        const v = xMin + i * xStep; const x = toX(v);
-                        return <g key={`xg${i}`}><line x1={x} y1={pad.t} x2={x} y2={pad.t + ph} stroke={C.border} strokeWidth={1} /><text x={x} y={H - 8} textAnchor="middle" fill={C.t4} fontSize={10}>{v.toFixed(0)}</text></g>;
+                      {xTicks.map(v => {
+                        const x = toX(v);
+                        return <g key={`xg${v}`}><line x1={x} y1={pad.t} x2={x} y2={pad.t + ph} stroke={C.border} strokeWidth={0.5} /><text x={x} y={H - 12} textAnchor="middle" fill={C.t4} fontSize={10} fontWeight={500}>{v}</text></g>;
                       })}
-                      {Array.from({ length: yTicks + 1 }, (_, i) => {
-                        const v = yMin + i * yStep; const y = toY(v);
-                        return <g key={`yg${i}`}><line x1={pad.l} y1={y} x2={pad.l + pw} y2={y} stroke={C.border} strokeWidth={1} /><text x={pad.l - 8} y={y + 4} textAnchor="end" fill={C.t4} fontSize={10}>{v.toFixed(0)}%</text></g>;
+                      {yTicks.map(v => {
+                        const y = toY(v);
+                        return <g key={`yg${v}`}><line x1={pad.l} y1={y} x2={pad.l + pw} y2={y} stroke={C.border} strokeWidth={0.5} /><text x={pad.l - 8} y={y + 3} textAnchor="end" fill={C.t4} fontSize={10} fontWeight={500}>{v}%</text></g>;
                       })}
                       {/* Median lines */}
-                      {medPE != null && <line x1={toX(medPE)} y1={pad.t} x2={toX(medPE)} y2={pad.t + ph} stroke={C.accent} strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />}
-                      {medRev != null && <line x1={pad.l} y1={toY(medRev)} x2={pad.l + pw} y2={toY(medRev)} stroke={C.accent} strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />}
+                      {medPE != null && <line x1={toX(Math.min(medPE, peClamp))} y1={pad.t} x2={toX(Math.min(medPE, peClamp))} y2={pad.t + ph} stroke={C.accent} strokeWidth={1.5} strokeDasharray="6 4" opacity={0.6} />}
+                      {medRev != null && <line x1={pad.l} y1={toY(medRev)} x2={pad.l + pw} y2={toY(medRev)} stroke={C.accent} strokeWidth={1.5} strokeDasharray="6 4" opacity={0.6} />}
+                      {/* Quadrant labels */}
+                      {quadrants.map((q, i) => (
+                        <text key={i} x={toX(q.x)} y={toY(q.y)} textAnchor="middle" fill={q.color} fontSize={10} fontWeight={600} opacity={0.5}>
+                          {q.label.split("\n").map((line, li) => <tspan key={li} x={toX(q.x)} dy={li === 0 ? 0 : 13}>{line}</tspan>)}
+                        </text>
+                      ))}
                       {/* Axis labels */}
-                      <text x={pad.l + pw / 2} y={H - 2} textAnchor="middle" fill={C.t3} fontSize={11} fontWeight={600}>P/E Ratio</text>
-                      <text x={14} y={pad.t + ph / 2} textAnchor="middle" fill={C.t3} fontSize={11} fontWeight={600} transform={`rotate(-90, 14, ${pad.t + ph / 2})`}>Rev Growth YoY %</text>
+                      <text x={pad.l + pw / 2} y={H - 1} textAnchor="middle" fill={C.t3} fontSize={11} fontWeight={700}>P/E Ratio →</text>
+                      <text x={14} y={pad.t + ph / 2} textAnchor="middle" fill={C.t3} fontSize={11} fontWeight={700} transform={`rotate(-90, 14, ${pad.t + ph / 2})`}>↑ Revenue Growth YoY</text>
                       {/* Dots */}
                       {pts.map((p, i) => {
-                        const x = toX(p.pe), y = toY(p.rev), sz = dotSize(p);
-                        const col = p.rev >= 0 ? C.up : C.dn;
+                        const x = toX(p.peDisplay), y = toY(p.rev), sz = dotSize(p);
+                        const col = SECTOR_COLORS[p.sector] || C.accent;
+                        const lbl = labelPositions[i];
                         return (
                           <g key={p.sym}>
-                            <circle cx={x} cy={y} r={sz} fill={col + "40"} stroke={col} strokeWidth={1.5} />
-                            <text x={x} y={y - sz - 3} textAnchor="middle" fill={C.t1} fontSize={10} fontWeight={700}>{p.sym}</text>
+                            <circle cx={x} cy={y} r={sz} fill={col + "35"} stroke={col} strokeWidth={2} />
+                            <text x={lbl.x} y={lbl.y} textAnchor={lbl.anchor} fill={C.t1} fontSize={10} fontWeight={700}>{p.sym}{p.clamped ? "→" : ""}</text>
                           </g>
                         );
                       })}
+                      {/* Chart border */}
+                      <rect x={pad.l} y={pad.t} width={pw} height={ph} fill="none" stroke={C.border} strokeWidth={1} />
                     </svg>
                   </div>
-                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4, textAlign: "center" }}>Dashed lines = median P/E ({medPE?.toFixed(1)}) and median Rev Growth ({medRev?.toFixed(1)}%)</div>
+                  <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 20, fontSize: 11, color: C.t4, flexWrap: "wrap" }}>
+                    <span>Median P/E: <b style={{ color: C.t2 }}>{medPE?.toFixed(1)}</b></span>
+                    <span>Median Rev Growth: <b style={{ color: C.t2 }}>{medRev?.toFixed(1)}%</b></span>
+                    {pts.some(p => p.clamped) && <span style={{ color: C.dn }}>→ = P/E clamped (outlier)</span>}
+                  </div>
                 </div>
               );
             })()}
