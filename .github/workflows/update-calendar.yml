@@ -166,7 +166,7 @@ jobs:
           # Portfolio holdings — always include from Finnhub even when FMP has data
           PORTFOLIO = {
               "ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO",
-              "AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","DOCU","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","LIN","MARA","MTH","NVDA","NXPI","OKE","PDD","HOOD","SMCI","SOFI","SYF","TSM","TOL","XYZ",
+              "AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL",
               "IBIT","ETHA",
           }
 
