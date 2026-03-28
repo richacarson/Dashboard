@@ -4404,43 +4404,46 @@ Instructions:
           return (
             <div style={{
               position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
-              display: isDesktop ? "flex" : "block",
-              flexDirection: isDesktop ? "row" : undefined,
+              display: "flex", flexDirection: isDesktop ? "row" : "column",
               paddingTop: "env(safe-area-inset-top, 0px)",
             }}>
-              {/* Symbol header */}
-              <div style={{ display: isDesktop ? "none" : "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderBottom: `1px solid ${C.border}` }}>
-                <button onClick={() => setTab("home")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                </button>
-                <StockLogo symbol={activeSym} size={28} logoUrl={fundamentals[activeSym]?.logo} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
-                  <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || ""}</div>
+              {/* Mobile header */}
+              {!isDesktop && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                  <button onClick={() => setTab("home")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  </button>
+                  <StockLogo symbol={activeSym} size={28} logoUrl={fundamentals[activeSym]?.logo} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
+                    <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || ""}</div>
+                  </div>
+                  {livePrice && <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
+                    {dayChg != null && <div style={{ fontSize: 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
+                  </div>}
+                  <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
+                    background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
+                    borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
+                    display: "flex", alignItems: "center", flexShrink: 0, marginLeft: 4,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                  </button>
                 </div>
-                {livePrice && <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
-                  {dayChg != null && <div style={{ fontSize: 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
-                </div>}
-                <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
-                  background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
-                  borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
-                  display: "flex", alignItems: "center", flexShrink: 0, marginLeft: 4,
-                }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
-                </button>
-              </div>
-              {/* Mobile: absolute-positioned content below header */}
+              )}
+              {/* Mobile content: chart (flex) or watchlist (absolute hack for iOS scroll) */}
               {!isDesktop && chartsMobileList ? (
-                <div style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, overflowY: "scroll", WebkitOverflowScrolling: "touch" }}>
-                  <Sidebar asList />
-                  <div style={{ height: 80 }} />
+                <div style={{ flex: 1, position: "relative" }}>
+                  <div style={{ position: "absolute", inset: 0, overflowY: "scroll", WebkitOverflowScrolling: "touch" }}>
+                    <Sidebar asList />
+                    <div style={{ height: 80 }} />
+                  </div>
                 </div>
               ) : !isDesktop ? (
                 <iframe
                   key={activeSym}
                   src={chartUrl}
-                  style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, width: "100%", border: "none", display: "block" }}
+                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
                   title={`${activeSym} Chart`}
                   sandbox="allow-scripts allow-same-origin allow-popups"
                 />
