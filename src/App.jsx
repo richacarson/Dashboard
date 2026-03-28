@@ -3511,25 +3511,16 @@ Instructions:
 
               const COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EF4444", "#A855F7", "#06B6D4", "#EC4899", "#10B981", "#F97316", "#8B5CF6", "#84CC16", "#14B8A6"];
 
-              // SVG donut with proper arc paths
-              const size = 280, cx = size / 2, cy = size / 2, outerR = 115, innerR = 78;
-              const gapAngle = sectors.length > 1 ? 1.5 * (Math.PI / 180) : 0; // 1.5° gap
-              let angleOffset = -Math.PI / 2; // start at top
-              const arcPath = (startAngle, endAngle, oR, iR) => {
-                const sx1 = cx + oR * Math.cos(startAngle), sy1 = cy + oR * Math.sin(startAngle);
-                const ex1 = cx + oR * Math.cos(endAngle), ey1 = cy + oR * Math.sin(endAngle);
-                const sx2 = cx + iR * Math.cos(endAngle), sy2 = cy + iR * Math.sin(endAngle);
-                const ex2 = cx + iR * Math.cos(startAngle), ey2 = cy + iR * Math.sin(startAngle);
-                const large = endAngle - startAngle > Math.PI ? 1 : 0;
-                return `M${sx1},${sy1} A${oR},${oR} 0 ${large} 1 ${ex1},${ey1} L${sx2},${sy2} A${iR},${iR} 0 ${large} 0 ${ex2},${ey2} Z`;
-              };
+              // Clean SVG donut
+              const size = 240, cx = size / 2, cy = size / 2, r = 90, strokeW = 28;
+              const circ = 2 * Math.PI * r;
+              let offset = 0;
               const arcs = sectors.map((s, i) => {
-                const sweep = (s.pct / 100) * 2 * Math.PI;
-                const start = angleOffset + gapAngle / 2;
-                const end = angleOffset + sweep - gapAngle / 2;
-                const path = sweep > 0.01 ? arcPath(start, end, outerR, innerR) : "";
-                angleOffset += sweep;
-                return { ...s, color: COLORS[i % COLORS.length], path };
+                const len = (s.pct / 100) * circ;
+                const gap = sectors.length > 1 ? 3 : 0;
+                const arc = { ...s, color: COLORS[i % COLORS.length], dasharray: `${Math.max(0, len - gap)} ${circ - Math.max(0, len - gap)}`, dashoffset: -offset };
+                offset += len;
+                return arc;
               });
 
               const toggleSector = name => setSectorExpanded(prev => ({ ...prev, [name]: !prev[name] }));
@@ -3540,28 +3531,19 @@ Instructions:
                     {/* Donut chart */}
                     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
                       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-                        <defs>
-                          {arcs.map((a, i) => (
-                            <radialGradient key={`rg${i}`} id={`rg${i}`} cx="50%" cy="50%" r="50%">
-                              <stop offset="60%" stopColor={a.color} stopOpacity="0.95" />
-                              <stop offset="100%" stopColor={a.color} stopOpacity="0.65" />
-                            </radialGradient>
-                          ))}
-                          <filter id="donutGlow">
-                            <feGaussianBlur stdDeviation="3" result="blur" />
-                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                          </filter>
-                        </defs>
-                        {/* Segments */}
-                        {arcs.map((a, i) => a.path && (
-                          <path key={i} d={a.path} fill={`url(#rg${i})`}
-                            stroke={theme === "dark" ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.6)"} strokeWidth={1.5}
-                            style={{ transition: "d 0.8s cubic-bezier(0.16,1,0.3,1)", filter: "url(#donutGlow)" }} />
+                        {/* Background track */}
+                        <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.border} strokeWidth={strokeW} opacity={0.4} />
+                        {/* Colored arcs */}
+                        {arcs.map((a, i) => (
+                          <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={a.color} strokeWidth={strokeW}
+                            strokeDasharray={a.dasharray} strokeDashoffset={a.dashoffset}
+                            strokeLinecap="butt" transform={`rotate(-90 ${cx} ${cy})`}
+                            style={{ transition: "stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease" }} />
                         ))}
                       </svg>
                       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ fontSize: 40, fontWeight: 800, color: C.t1, lineHeight: 1, letterSpacing: "-1px" }}>{total}</div>
-                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600, marginTop: 4, textTransform: "uppercase", letterSpacing: "1px" }}>holdings</div>
+                        <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{total}</div>
+                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600, marginTop: 3 }}>holdings</div>
                       </div>
                     </div>
                     {/* Legend with expandable stock lists */}
@@ -3875,20 +3857,35 @@ Instructions:
                 );
               }
 
-              // Find peers: same industry
+              // Find peers: use ALL holdings across all sleeves, not just current sleeve
               const d = fundamentals[peerSymbol] || {};
               const industry = d.industry;
-              const allSymsInSleeve = syms;
+              const allHoldings = coreSyms;
               let peers = industry
-                ? allSymsInSleeve.filter(s => s !== peerSymbol && fundamentals[s]?.industry === industry)
+                ? allHoldings.filter(s => s !== peerSymbol && fundamentals[s]?.industry === industry)
                 : [];
               // If not enough peers in same industry, grab closest by sector
               if (peers.length < 2) {
                 const sector = d.sector;
-                peers = allSymsInSleeve.filter(s => s !== peerSymbol && fundamentals[s]?.sector === sector).slice(0, 5);
+                const sectorPeers = allHoldings.filter(s => s !== peerSymbol && fundamentals[s]?.sector === sector);
+                peers = [...new Set([...peers, ...sectorPeers])].slice(0, 5);
               }
-              // Still not enough? Just use top 5 alphabetically (excluding self)
-              if (peers.length === 0) peers = allSymsInSleeve.filter(s => s !== peerSymbol).slice(0, 5);
+              // Still not enough? Use well-known sector benchmarks
+              if (peers.length < 2) {
+                const sectorBenchmarks = {
+                  "Technology": ["AAPL", "MSFT", "GOOGL"], "Financials": ["JPM", "GS", "BAC"],
+                  "Healthcare": ["JNJ", "UNH", "PFE"], "Energy": ["XOM", "COP", "SLB"],
+                  "Consumer": ["AMZN", "WMT", "COST"], "Industrials": ["HON", "UNP", "GE"],
+                  "Utilities": ["DUK", "SO", "D"], "Materials": ["APD", "ECL", "NEM"],
+                  "Communication": ["META", "GOOG", "DIS"],
+                };
+                const SO = { "ABT":"Healthcare","A":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","HUT":"Technology","MARA":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","MATX":"Industrials","STLD":"Industrials","PCAR":"Industrials","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","CHD":"Consumer","CL":"Consumer","GPC":"Consumer","PDD":"Consumer","TOL":"Consumer","ORI":"Financials","SYF":"Financials","FINV":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","AEM":"Materials","GFI":"Materials","ATAT":"Communication" };
+                const sec = SO[peerSymbol] || d.sector;
+                const benchPeers = (sectorBenchmarks[sec] || []).filter(s => s !== peerSymbol && fundamentals[s]);
+                peers = [...new Set([...peers, ...benchPeers])].slice(0, 5);
+              }
+              // Final fallback: use other holdings
+              if (peers.length === 0) peers = allHoldings.filter(s => s !== peerSymbol).slice(0, 5);
 
               const compareSyms = [peerSymbol, ...peers.slice(0, 5)];
               const metrics = [
@@ -4275,91 +4272,7 @@ Instructions:
                 else setMetricSort({ col: k, dir: "desc" });
               };
 
-              if (!isDesktop) {
-                // ── MOBILE: Metrics Cards ──
-                return (
-                  <div>
-                    {sorted.map(s => {
-                      const d = fundamentals[s] || {};
-                      const nm = names[s] || "";
-                      const dc = dayChg(s);
-                      const isExp = expandedMetric === s;
-                      const keyMetrics = metricsView === "dividend"
-                        ? [
-                          { l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" },
-                          { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn },
-                          { l: "Yield", v: d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
-                          { l: "Payout", v: d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
-                          { l: "ROE", v: d.roe != null ? `${d.roe.toFixed(1)}%` : "—" },
-                          { l: "D/E", v: d.de != null ? d.de.toFixed(2) : "—" },
-                        ]
-                        : [
-                          { l: "P/E", v: d.peTTM != null ? d.peTTM.toFixed(1) : "—" },
-                          { l: "YTD", v: d.ytd != null ? `${d.ytd >= 0 ? "+" : ""}${d.ytd.toFixed(1)}%` : "—", c: (d.ytd||0) >= 0 ? C.up : C.dn },
-                          { l: "Rev YoY", v: d.revenueYoY != null ? `${d.revenueYoY >= 0 ? "+" : ""}${d.revenueYoY.toFixed(1)}%` : "—", c: (d.revenueYoY||0) >= 0 ? C.up : C.dn },
-                          { l: "Margin", v: d.profitMargin != null ? `${d.profitMargin.toFixed(1)}%` : "—" },
-                          { l: "ROE", v: d.roe != null ? `${d.roe.toFixed(1)}%` : "—" },
-                          { l: "D/E", v: d.de != null ? d.de.toFixed(2) : "—" },
-                        ];
-                      return (
-                        <div key={s} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
-                          <div onClick={() => setExpandedMetric(prev => prev === s ? null : s)} style={{ cursor: "pointer" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {metricsEditMode && <div onClick={e => { e.stopPropagation(); removeSymbol(metricsView, s); }} style={{ width: 20, height: 20, borderRadius: 10, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg></div>}
-                                <div>
-                                  <span onClick={e => { e.stopPropagation(); openStock(s); }} style={{ fontSize: 15, fontWeight: 800, color: C.accent }}>{s}</span>
-                                  <div style={{ fontSize: 11, color: C.t4 }}>{nm}</div>
-                                </div>
-                              </div>
-                              <span data-metric-day={s} style={{ fontSize: 13, fontWeight: 700, color: dc > 0 ? C.up : dc < 0 ? C.dn : C.t3 }}>{dc != null ? `${dc >= 0 ? "+" : ""}${dc.toFixed(2)}%` : "—"}</span>
-                            </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "4px 12px" }}>
-                              {keyMetrics.map(m => (
-                                <div key={m.l}><span style={{ fontSize: 10, color: C.t4 }}>{m.l}</span><div style={{ fontSize: 12, fontWeight: 600, color: m.c || C.t2 }}>{m.v}</div></div>
-                              ))}
-                            </div>
-                          </div>
-                          {isExp && (
-                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}`, animation: "fadeIn 0.15s ease" }}>
-                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 12px", fontSize: 12 }}>
-                                {cols.filter(c => !["_day"].includes(c.k)).map(col => {
-                                  const val = col.fn(d, s);
-                                  const clr = col.color ? col.color(d, s) : C.t2;
-                                  return <div key={col.l}><span style={{ color: C.t4, fontSize: 10 }}>{col.l}</span><div style={{ fontWeight: 600, color: clr }}>{val}</div></div>;
-                                })}
-                              </div>
-                              <button onClick={() => openStock(s)} style={{ marginTop: 10, width: "100%", padding: "10px 0", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Profile</button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {/* Averages card */}
-                    {sorted.length > 0 && (
-                      <div style={{ background: C.card, border: `2px solid ${C.border}`, borderRadius: 12, padding: "14px 14px", marginTop: 4 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Averages</div>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px 12px", fontSize: 12 }}>
-                          {cols.filter(c => !c.noAvg).map(col => {
-                            let avg;
-                            if (col.k === "_day") {
-                              const dayVals = sorted.map(s => dayChg(s)).filter(v => v != null);
-                              avg = dayVals.length ? dayVals.reduce((a, b) => a + b, 0) / dayVals.length : null;
-                            } else {
-                              const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
-                              avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-                            }
-                            const val = avg != null ? col.fn({ [col.k]: avg }) : "—";
-                            return <div key={col.l}><span style={{ color: C.t4, fontSize: 10 }}>{col.l}</span><div style={{ fontWeight: 700, color: C.t1 }}>{val}</div></div>;
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // ── DESKTOP: Table Layout ──
+              // ── TABLE LAYOUT (both mobile and desktop — scrollable on mobile) ──
               return (
                 <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                   <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 280px)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
@@ -4755,7 +4668,7 @@ Instructions:
           );
 
           const chartBg = isDark ? "0C1018" : "F5F5F0";
-          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
+          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
 
           return (
             <div style={{
