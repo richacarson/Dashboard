@@ -13,6 +13,7 @@ const DEFAULT_SLEEVES = {
   dividend: { name: "Dividend Strategy", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
   growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","DOCU","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","LIN","MARA","MTH","NVDA","NXPI","OKE","PDD","HOOD","SMCI","SOFI","SYF","TSM","TOL","XYZ"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
+  sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLC","XLU","SPY","QQQ","DIA","IWM"], icon: "📊" },
 };
 const loadSleeves = () => {
   try {
@@ -29,7 +30,7 @@ const loadSleeves = () => {
 };
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
-const CORE_KEYS = ["dividend", "growth", "digital"];
+const CORE_KEYS = ["dividend", "growth", "digital", "sectors"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
   { sym: "IUSG", name: "IUSG" },
