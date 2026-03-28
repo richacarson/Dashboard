@@ -3493,7 +3493,6 @@ Instructions:
             {/* ── SECTOR BREAKDOWN ── */}
             {metricsSubView === "sector" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
-              // Display-time sector overrides to handle stale cache
               const SO = {
                 "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
                 "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology",
@@ -3518,39 +3517,53 @@ Instructions:
 
               if (!sectors.length || !total) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No sector data available. Refresh metrics first.</div>;
 
-              const COLORS = ["#4A6B25", "#2563EB", "#D97706", "#DC2626", "#7C3AED", "#0891B2", "#DB2777", "#059669", "#EA580C", "#6366F1", "#84CC16", "#F59E0B"];
+              const COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EF4444", "#A855F7", "#06B6D4", "#EC4899", "#10B981", "#F97316", "#8B5CF6", "#84CC16", "#14B8A6"];
 
-              // SVG donut
-              const size = 220, cx = size / 2, cy = size / 2, r = 80, strokeW = 36;
+              // SVG donut — larger, thinner, with rounded caps
+              const size = 260, cx = size / 2, cy = size / 2, r = 95, strokeW = 32;
               const circ = 2 * Math.PI * r;
               let offset = 0;
               const arcs = sectors.map((s, i) => {
                 const len = (s.pct / 100) * circ;
-                const gap = sectors.length > 1 ? 3 : 0;
+                const gap = sectors.length > 1 ? 4 : 0;
                 const arc = { ...s, color: COLORS[i % COLORS.length], dasharray: `${Math.max(0, len - gap)} ${circ - Math.max(0, len - gap)}`, dashoffset: -offset };
                 offset += len;
                 return arc;
               });
 
               const toggleSector = name => setSectorExpanded(prev => ({ ...prev, [name]: !prev[name] }));
+              const topSector = arcs[0];
 
               return (
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 20 }}>Sector Breakdown</div>
-                  <div style={{ display: "flex", flexDirection: isDesktop ? "row" : "column", alignItems: isDesktop ? "flex-start" : "center", gap: 30 }}>
+                  <div style={{ display: "flex", flexDirection: isDesktop ? "row" : "column", alignItems: isDesktop ? "flex-start" : "center", gap: isDesktop ? 40 : 24 }}>
                     {/* Donut chart */}
                     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
                       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                        <defs>
+                          {arcs.map((a, i) => (
+                            <linearGradient key={`g${i}`} id={`sg${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor={a.color} stopOpacity="1" />
+                              <stop offset="100%" stopColor={a.color} stopOpacity="0.7" />
+                            </linearGradient>
+                          ))}
+                          <filter id="donutShadow">
+                            <feDropShadow dx="0" dy="2" stdDeviation="6" floodOpacity="0.15" />
+                          </filter>
+                        </defs>
+                        {/* Shadow ring */}
+                        <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.border} strokeWidth={strokeW + 4} opacity="0.3" filter="url(#donutShadow)" />
+                        {/* Arcs */}
                         {arcs.map((a, i) => (
-                          <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={a.color} strokeWidth={strokeW}
+                          <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={`url(#sg${i})`} strokeWidth={strokeW}
                             strokeDasharray={a.dasharray} strokeDashoffset={a.dashoffset}
-                            strokeLinecap="butt" transform={`rotate(-90 ${cx} ${cy})`}
-                            style={{ transition: "stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease" }} />
+                            strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`}
+                            style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.16,1,0.3,1), stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)" }} />
                         ))}
                       </svg>
                       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: C.t1 }}>{total}</div>
-                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>stocks</div>
+                        <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{total}</div>
+                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600, marginTop: 2 }}>holdings</div>
                       </div>
                     </div>
                     {/* Legend with expandable stock lists */}
@@ -3559,15 +3572,22 @@ Instructions:
                         const isOpen = sectorExpanded[a.name];
                         return (
                           <div key={i}>
-                            <div onClick={() => toggleSector(a.name)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: (!isOpen && i < arcs.length - 1) ? `1px solid ${C.border}` : isOpen ? "none" : "none", cursor: "pointer", userSelect: "none" }}>
-                              <div style={{ width: 14, height: 14, borderRadius: 4, background: a.color, flexShrink: 0 }} />
+                            <div onClick={() => toggleSector(a.name)} style={{
+                              display: "flex", alignItems: "center", gap: 10, padding: "11px 0",
+                              borderBottom: (!isOpen && i < arcs.length - 1) ? `1px solid ${C.border}` : "none",
+                              cursor: "pointer", userSelect: "none",
+                            }}>
+                              <div style={{ width: 12, height: 12, borderRadius: "50%", background: a.color, flexShrink: 0, boxShadow: `0 0 6px ${a.color}40` }} />
                               <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.t1 }}>{a.name}</div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: C.t2, minWidth: 36, textAlign: "right" }}>{a.count}</div>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, minWidth: 48, textAlign: "right" }}>{a.pct.toFixed(1)}%</div>
-                              <div style={{ fontSize: 11, color: C.t4, marginLeft: 4, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: C.t3, minWidth: 24, textAlign: "right" }}>{a.count}</div>
+                              <div style={{ width: isDesktop ? 80 : 50, height: 6, borderRadius: 3, background: C.border, flexShrink: 0, overflow: "hidden" }}>
+                                <div style={{ height: "100%", borderRadius: 3, background: a.color, width: `${a.pct}%`, transition: "width 0.6s ease" }} />
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, minWidth: 48, textAlign: "right" }}>{a.pct.toFixed(1)}%</div>
+                              <div style={{ fontSize: 10, color: C.t4, marginLeft: 2, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</div>
                             </div>
                             {isOpen && (
-                              <div style={{ padding: "4px 0 10px 28px", borderBottom: i < arcs.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                              <div style={{ padding: "4px 0 10px 26px", borderBottom: i < arcs.length - 1 ? `1px solid ${C.border}` : "none" }}>
                                 {a.stocks.sort().map(sym => (
                                   <div key={sym} {...stockContextHandlers(sym)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", cursor: "pointer" }}>
                                     <StockLogo symbol={sym} size={20} logoUrl={fundamentals[sym]?.logo} />
