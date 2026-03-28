@@ -3480,7 +3480,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }, { v: "returnheat", l: "📅 Returns" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }, { v: "returnheat", l: "📅 Returns" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -3781,6 +3781,89 @@ Instructions:
                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(22,163,74,0.2)" }} /> Mild gain</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,38,38,0.2)" }} /> Mild loss</span>
                     <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,38,38,0.5)" }} /> Strong loss</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── GROWTH VS VALUE MATRIX ── */}
+            {metricsSubView === "matrix" && (() => {
+              const syms = sleeves[metricsView]?.symbols || [];
+              const SM = {
+                "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
+                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology",
+                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "MATX": "Industrials", "STLD": "Industrials", "PCAR": "Industrials",
+                "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities",
+                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy",
+                "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "PDD": "Consumer", "TOL": "Consumer",
+                "ORI": "Financials", "SYF": "Financials", "FINV": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials",
+                "AEM": "Materials", "GFI": "Materials", "ATAT": "Communication",
+                "IBIT": "Digital Assets", "ETHA": "Digital Assets",
+              };
+              const SC = { "Technology": "#2563EB", "Financials": "#059669", "Healthcare": "#7C3AED",
+                "Industrials": "#D97706", "Consumer": "#DB2777", "Energy": "#DC2626", "Utilities": "#84CC16",
+                "Materials": "#6366F1", "Communication": "#F59E0B", "Digital Assets": "#F97316", "Other": "#9CA3AF" };
+
+              const pts = syms.map(s => {
+                const d = fundamentals[s] || {};
+                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, sector: SM[s] || d.sector || "Other", name: names[s] || d.companyName || s };
+              }).filter(p => p.pe != null && isFinite(p.pe) && p.rev != null && isFinite(p.rev));
+
+              if (!pts.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No data available. Refresh metrics first.</div>;
+
+              // Median splits
+              const medPE = [...pts].sort((a, b) => a.pe - b.pe)[Math.floor(pts.length / 2)].pe;
+              const medRev = [...pts].sort((a, b) => a.rev - b.rev)[Math.floor(pts.length / 2)].rev;
+
+              const quadrants = [
+                { key: "star", label: "Stars", desc: "High Growth · Low P/E", icon: "⭐", color: C.up, stocks: pts.filter(p => p.rev >= medRev && p.pe < medPE).sort((a, b) => b.rev - a.rev) },
+                { key: "growth", label: "Growth", desc: "High Growth · High P/E", icon: "🚀", color: "#D97706", stocks: pts.filter(p => p.rev >= medRev && p.pe >= medPE).sort((a, b) => b.rev - a.rev) },
+                { key: "value", label: "Value", desc: "Low Growth · Low P/E", icon: "💎", color: "#2563EB", stocks: pts.filter(p => p.rev < medRev && p.pe < medPE).sort((a, b) => b.rev - a.rev) },
+                { key: "watch", label: "Watch", desc: "Low Growth · High P/E", icon: "⚠️", color: C.dn, stocks: pts.filter(p => p.rev < medRev && p.pe >= medPE).sort((a, b) => b.rev - a.rev) },
+              ];
+
+              return (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Growth vs Value Matrix</div>
+                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 6 }}>Stocks split by median P/E ({medPE.toFixed(1)}) and median Rev Growth ({medRev.toFixed(1)}%)</div>
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr", gap: 10, marginTop: 14 }}>
+                    {quadrants.map(q => (
+                      <div key={q.key} style={{
+                        background: q.color + "0A", borderRadius: 14, padding: "14px 14px",
+                        border: `1px solid ${q.color}30`,
+                      }}>
+                        {/* Quadrant header */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span style={{ fontSize: 18 }}>{q.icon}</span>
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{q.label}</div>
+                              <div style={{ fontSize: 10, color: C.t4 }}>{q.desc}</div>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 20, fontWeight: 800, color: q.color }}>{q.stocks.length}</div>
+                        </div>
+                        {/* Stock list */}
+                        {q.stocks.length === 0 ? (
+                          <div style={{ fontSize: 11, color: C.t4, padding: "8px 0", textAlign: "center" }}>No stocks</div>
+                        ) : q.stocks.map((p, i) => (
+                          <div key={p.sym} {...stockContextHandlers(p.sym)} style={{
+                            display: "flex", alignItems: "center", gap: 8, padding: "7px 0", cursor: "pointer",
+                            borderTop: i > 0 ? `1px solid ${C.border}` : "none",
+                          }}>
+                            <StockLogo symbol={p.sym} size={22} logoUrl={fundamentals[p.sym]?.logo} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{p.sym}</div>
+                              <div style={{ fontSize: 10, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                            </div>
+                            <div style={{ textAlign: "right", flexShrink: 0 }}>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: p.rev >= 0 ? C.up : C.dn }}>{p.rev >= 0 ? "+" : ""}{p.rev.toFixed(1)}%</div>
+                              <div style={{ fontSize: 10, color: C.t3 }}>{p.pe.toFixed(1)}x</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
               );
