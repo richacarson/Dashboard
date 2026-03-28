@@ -281,6 +281,14 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
     return () => { cancelled = true; };
   }, [symbol, domain, logoUrl]);
   if (fallback || (!src && !domain)) {
+    const sectorEmojis = { XLY: "🛍️", XLP: "🛒", XLE: "⛽", XLF: "🏦", XLV: "🏥", XLI: "🏗️", XLB: "⛏️", XLRE: "🏠", XLK: "💻", XLC: "📡", XLU: "💡" };
+    if (sectorEmojis[symbol]) {
+      return (
+        <div style={{ width: size, height: size, borderRadius: size / 2, background: C.card, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <span style={{ fontSize: size * 0.5 }}>{sectorEmojis[symbol]}</span>
+        </div>
+      );
+    }
     const colors = ["#4A6B25","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
     const bg = colors[symbol.charCodeAt(0) % colors.length];
     return (
