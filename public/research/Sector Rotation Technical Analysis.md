@@ -1,7 +1,6 @@
-
 # Sector Rotation — Technical Analysis for Sector Weighting
 
-> [!research] How moving averages and technical signals translate into sector allocation decisions
+*How moving averages and technical signals translate into sector allocation decisions*
 
 This note extends the Sector Tilt Signal Framework's "Technical Momentum" category (15% weight) into a standalone, implementable system. The goal: a repeatable process for using technical analysis — particularly moving averages — to influence sector weighting in IOWN's portfolios.
 
@@ -228,16 +227,6 @@ From the Sector Rotation Academic Review:
 - **DWS CROCI (live since 2015):** Combining valuation with momentum confirmation outperforms either signal alone.
 
 The evidence supports using technical analysis as a **confirmation and timing layer** on top of the fundamental scorecard — not as a standalone system.
-
----
-
-## Next Steps
-
-- [ ] Build a live sector RS ranking spreadsheet (quarterly update)
-- [ ] Set TradingView alerts for golden/death crosses on all 11 sector ETFs
-- [ ] Run the Technical Scoring Matrix on current data as a dry run
-- [ ] Compare technical scores vs. current IOWN sector weights — identify mismatches
-- [ ] Present the full TA overlay framework to Eric at next IC meeting
 
 ---
 

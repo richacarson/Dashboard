@@ -1,4 +1,3 @@
-
 # NVDA Optical Interconnects — Copper Replacement Play
 
 ## Thesis
@@ -173,16 +172,6 @@ The highest-conviction names in the optical supply chain that IOWN does NOT curr
 6. **Private company disruption.** Lightmatter ($4.4B valuation) and Ayar Labs ($1B+) hold potentially superior technology. If either IPOs or gets acquired into a competitor, the competitive landscape shifts.
 
 7. **China risk.** Chinese hyperscalers are building independent optical supply chains. Export controls could fragment the market and create parallel ecosystems.
-
-## Next Steps
-
-- [ ] **Committee discussion (next Tuesday):** Present optical interconnect thesis and discuss whether COHR, LITE, or MRVL warrant position sizing for Growth sleeve
-- [ ] **Deep dive on COHR vs. LITE:** Both received identical $2B NVDA investments, but LITE appears to have the stronger near-term moat (sole volume 200G EML supplier). Need to compare valuations, margin profiles, and customer concentration
-- [ ] **MRVL deep dive:** Celestial AI acquisition gives them a differentiated angle (Photonic Fabric vs. traditional CPO). $80B market cap with 50%+ interconnect growth guided — potentially better risk/reward than $50B LITE
-- [ ] **Monitor Lightmatter IPO signals:** CFO hire from NVIDIA IR is a classic pre-IPO move. Could be a 2026-2027 event. If it prices well, it's a pure-play optical bet
-- [ ] **Reassess copper theme:** The optical transition doesn't kill the copper bull case near-term (power delivery demand overwhelms interconnect substitution), but copper intensity per data center is declining. Factor this into any copper/critical metals positioning
-- [ ] **Track 1.6T transceiver shipment data quarterly:** The 2.5M to 20M+ unit ramp (2025-2026) is the key demand signal for the entire supply chain
-- [ ] **Check Inspire screening:** Verify COHR, LITE, MRVL, and AVGO pass faith-driven screens before any position recommendation
 
 ---
 

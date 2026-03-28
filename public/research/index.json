@@ -1,11 +1,29 @@
 [
   {
+    "id": "nvda-optical-interconnects",
+    "title": "NVDA Optical Interconnects — Copper Replacement Play",
+    "date": "2026-03-28",
+    "author": "IOWN Research",
+    "category": "Stock Analysis",
+    "summary": "NVIDIA's $4B bet on optical interconnects signals copper has hit its ceiling for AI data center networking. Analysis of the optical supply chain, key players (COHR, LITE, MRVL), and implications for IOWN holdings.",
+    "file": "Research - NVDA Optical Interconnects Copper Replacement.md"
+  },
+  {
+    "id": "sector-rotation-technical-analysis",
+    "title": "Sector Rotation — Technical Analysis for Sector Weighting",
+    "date": "2026-03-27",
+    "author": "IOWN Research",
+    "category": "Sector Rotation",
+    "summary": "How moving averages, relative strength, and technical signals translate into sector allocation decisions. Includes a scoring matrix and implementation framework.",
+    "file": "Sector Rotation Technical Analysis.md"
+  },
+  {
     "id": "sector-rotation-academic-review",
     "title": "Sector Rotation as a Source of Alpha: Academic & Practitioner Evidence",
     "date": "2026-03-26",
     "author": "IOWN Research",
-    "category": "Strategy",
-    "summary": "Comprehensive review of academic and practitioner evidence on sector rotation alpha. Covers business cycle rotation, momentum-based approaches, monetary policy signals, and valuation-driven frameworks with quantified return estimates.",
+    "category": "Sector Rotation",
+    "summary": "Comprehensive review of academic and practitioner evidence on sector rotation alpha. Covers business cycle rotation, momentum-based approaches, monetary policy signals, and valuation-driven frameworks.",
     "file": "Research - Sector Rotation Academic Review.md"
   }
 ]
