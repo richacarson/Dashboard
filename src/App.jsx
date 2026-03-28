@@ -4408,7 +4408,7 @@ Instructions:
               paddingTop: "env(safe-area-inset-top, 0px)",
             }}>
               {/* Chart area */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden" }}>
                 {/* Symbol header */}
                 <div style={{ display: "flex", alignItems: "center", gap: isDesktop ? 14 : 10, padding: isDesktop ? "10px 20px" : "8px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                   <button onClick={() => setTab("home")} style={{
@@ -4438,8 +4438,10 @@ Instructions:
                 </div>
                 {/* Chart or mobile watchlist */}
                 {!isDesktop && chartsMobileList ? (
-                  <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}>
-                    <Sidebar asList />
+                  <div style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", minHeight: 0, position: "relative", touchAction: "pan-y" }}>
+                    <div style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}>
+                      <Sidebar asList />
+                    </div>
                   </div>
                 ) : (
                   <iframe
