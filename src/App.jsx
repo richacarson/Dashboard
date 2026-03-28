@@ -4927,17 +4927,25 @@ Instructions:
               ))}
             </div>
 
-            {/* Portfolio sleeve selector */}
+            {/* Portfolio sleeve selector (dropdown) */}
             {Object.keys(perfDataMap).length > 1 && (
-              <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-                {[{ k: "dividend", l: "Dividend Strategy", icon: "💰" }, { k: "growth", l: "Growth Strategy", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
-                  <button key={s.k} onClick={() => { setPerfSleeve(s.k); setHoldingsSleeve(s.k); setPerfRange("ALL"); }} style={{
-                    flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${perfSleeve === s.k ? C.borderActive : C.border}`,
-                    background: perfSleeve === s.k ? C.accentSoft : "transparent",
-                    color: perfSleeve === s.k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
-                    cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  }}><span style={{ fontSize: 14 }}>{s.icon}</span>{s.l}</button>
-                ))}
+              <div style={{ marginBottom: 16 }}>
+                <select
+                  value={perfSleeve}
+                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("ALL"); }}
+                  style={{
+                    padding: "10px 36px 10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`,
+                    background: C.card, color: C.t1, fontSize: 14, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                    appearance: "none", WebkitAppearance: "none",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
+                  }}
+                >
+                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" }].filter(s => perfDataMap[s.k]).map(s => (
+                    <option key={s.k} value={s.k}>{s.l}</option>
+                  ))}
+                </select>
               </div>
             )}
 
