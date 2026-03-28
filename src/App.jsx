@@ -4361,7 +4361,7 @@ Instructions:
                       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                         {categories.map(cat => {
                           const reports = grouped[cat];
-                          const isOpen = researchOpenFolders[cat] !== false; // default open
+                          const isOpen = researchOpenFolders[cat] === true; // default closed
                           return showFolders ? (
                             <div key={cat}>
                               <div onClick={() => setResearchOpenFolders(prev => ({ ...prev, [cat]: !isOpen }))} style={{
