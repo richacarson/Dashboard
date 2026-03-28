@@ -26,6 +26,8 @@ const loadSleeves = () => {
       if (parsed[k] && oldIcons.includes(parsed[k].icon)) parsed[k].icon = def.icon;
       // Auto-add any new default sleeves that don't exist yet
       if (!parsed[k]) parsed[k] = def;
+      // Sync symbols with defaults: always use DEFAULT_SLEEVES symbols for core sleeves
+      if (parsed[k]) parsed[k].symbols = def.symbols;
     }
     return parsed;
   } catch { return DEFAULT_SLEEVES; }
@@ -3535,7 +3537,8 @@ Instructions:
               const SECTOR_COLORS = { "Technology": "#2563EB", "Financials": "#059669", "Healthcare": "#7C3AED",
                 "Industrials": "#D97706", "Consumer Cyclical": "#DB2777", "Consumer Defensive": "#0891B2",
                 "Energy": "#DC2626", "Utilities": "#84CC16", "Real Estate": "#EA580C", "Basic Materials": "#6366F1",
-                "Communication Services": "#F59E0B" };
+                "Communication Services": "#F59E0B", "Consumer": "#DB2777", "Staples": "#0891B2", "Materials": "#6366F1",
+                "Communication": "#F59E0B", "Digital Assets": "#F97316", "Other": "#9CA3AF" };
               const allPts = syms.map(s => {
                 const d = fundamentals[s] || {};
                 return { sym: s, pe: d.peTTM, rev: d.revenueYoY, mc: d.marketCap || d.avgVol || 1, sector: d.sector || "Other", name: d.companyName || s };
