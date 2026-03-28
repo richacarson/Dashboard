@@ -458,15 +458,26 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
     print(f"  Cash withdrawals: {sum(1 for c in cash_transactions if c['type'] == 'WITHDRAWAL')} entries, ${total_withdrawals:,.2f}")
 
     all_events = []
-    # Stock events — only affect holdings (share counts)
+
+    # Detect whether the initial start_balance deposit exists in cash transactions.
+    # "By Security" format has an explicit DEPOSIT matching start_balance — stock
+    # buys/sells don't move cash because Morningstar records both sides.
+    # "By Activity" format does NOT have the initial deposit — so stock buys/sells
+    # must move cash to keep the balance accurate.
+    has_initial_deposit = any(
+        ctx["type"] == "DEPOSIT" and abs(ctx["amount"] - start_balance) < 0.01
+        for ctx in cash_transactions
+    )
+    stock_moves_cash = not has_initial_deposit
+
+    # Stock events
     for tx in transactions:
-        all_events.append({"date": tx["date"], "kind": "stock", **tx})
-    # Cash events — ALL deposits and withdrawals affect cash balance
-    # Skip the initial deposit matching start_balance (handled by cash init)
-    initial_skipped = False
+        all_events.append({"date": tx["date"], "kind": "stock", "moves_cash": stock_moves_cash, **tx})
+    # Cash events
     for ctx in cash_transactions:
-        if not initial_skipped and ctx["type"] == "DEPOSIT" and abs(ctx["amount"] - start_balance) < 0.01:
-            initial_skipped = True
+        # Skip the initial deposit matching start_balance (handled by cash init)
+        if has_initial_deposit and ctx["type"] == "DEPOSIT" and abs(ctx["amount"] - start_balance) < 0.01:
+            has_initial_deposit = False  # Only skip first match
             continue
         all_events.append({"date": ctx["date"], "kind": "cash", **ctx})
     # Sort by date, then deposits/sales before withdrawals/purchases
@@ -510,10 +521,14 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             if evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
+                    if evt.get("moves_cash"):
+                        cash -= evt.get("amount", evt["shares"] * evt.get("price", 0))
                 elif evt["type"] == "SALE":
                     holdings[evt["ticker"]] -= evt["shares"]
                     if holdings[evt["ticker"]] <= 0.0001:
                         holdings[evt["ticker"]] = 0
+                    if evt.get("moves_cash"):
+                        cash += evt.get("amount", evt["shares"] * evt.get("price", 0))
                 elif evt["type"] == "DIVIDEND REINVESTMENT":
                     # Dividends go to cash, not reinvested as shares
                     cash += evt.get("amount", evt["shares"] * evt.get("price", 0))
