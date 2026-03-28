@@ -166,8 +166,8 @@ def _parse_by_activity(lines):
         elif tx["type"] == "SALE":
             holdings[t] -= tx["shares"]
         elif tx["type"] == "DIVIDEND REINVESTMENT":
-            # DRIPs add shares
-            holdings[t] += tx["shares"]
+            # Dividends go to cash, not reinvested as shares
+            pass
         last_price[t] = tx["price"]
 
     current_holdings = {}
@@ -590,11 +590,17 @@ def main():
                 })
                 # Update current_holdings for ground truth
                 t = utx["ticker"]
-                if utx["type"] in ("PURCHASE", "DIVIDEND REINVESTMENT"):
+                if utx["type"] == "PURCHASE":
                     if t in current_holdings:
                         current_holdings[t]["shares"] += utx.get("shares", 0)
                     else:
                         current_holdings[t] = {"shares": utx.get("shares", 0), "price": utx.get("price", 0), "value": utx.get("amount", 0)}
+                elif utx["type"] == "DIVIDEND REINVESTMENT":
+                    # Dividends go to cash, not reinvested as shares
+                    if isinstance(current_holdings.get("__CASH__"), (int, float)):
+                        current_holdings["__CASH__"] += utx.get("amount", 0)
+                    else:
+                        current_holdings["__CASH__"] = utx.get("amount", 0)
                 elif utx["type"] == "SALE" and t in current_holdings:
                     current_holdings[t]["shares"] -= utx.get("shares", 0)
                     if current_holdings[t]["shares"] <= 0:
