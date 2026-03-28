@@ -3456,16 +3456,78 @@ Instructions:
               ))}
             </div>
             {/* Sub-view toggle */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }].map(({ v, l }) => (
+            <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
-                  flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
+                  flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
                   color: metricsSubView === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "inherit",
+                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                 }}>{l}</button>
               ))}
             </div>
+
+            {/* ── SECTOR BREAKDOWN ── */}
+            {metricsSubView === "sector" && (() => {
+              const syms = sleeves[metricsView]?.symbols || [];
+              const sectorCounts = {};
+              syms.forEach(s => {
+                const sec = fundamentals[s]?.sector || "Unknown";
+                sectorCounts[sec] = (sectorCounts[sec] || 0) + 1;
+              });
+              const total = syms.length;
+              const sectors = Object.entries(sectorCounts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count, pct: total ? (count / total * 100) : 0 }));
+
+              if (!sectors.length || !total) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No sector data available. Refresh metrics first.</div>;
+
+              const COLORS = ["#4A6B25", "#2563EB", "#D97706", "#DC2626", "#7C3AED", "#0891B2", "#DB2777", "#059669", "#EA580C", "#6366F1", "#84CC16", "#F59E0B"];
+
+              // SVG donut
+              const size = 220, cx = size / 2, cy = size / 2, r = 80, strokeW = 36;
+              const circ = 2 * Math.PI * r;
+              let offset = 0;
+              const arcs = sectors.map((s, i) => {
+                const len = (s.pct / 100) * circ;
+                const gap = sectors.length > 1 ? 3 : 0;
+                const arc = { ...s, color: COLORS[i % COLORS.length], dasharray: `${Math.max(0, len - gap)} ${circ - Math.max(0, len - gap)}`, dashoffset: -offset };
+                offset += len;
+                return arc;
+              });
+
+              return (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 20 }}>Sector Breakdown</div>
+                  <div style={{ display: "flex", flexDirection: isDesktop ? "row" : "column", alignItems: "center", gap: 30 }}>
+                    {/* Donut chart */}
+                    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+                      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                        {arcs.map((a, i) => (
+                          <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={a.color} strokeWidth={strokeW}
+                            strokeDasharray={a.dasharray} strokeDashoffset={a.dashoffset}
+                            strokeLinecap="butt" transform={`rotate(-90 ${cx} ${cy})`}
+                            style={{ transition: "stroke-dasharray 0.6s ease, stroke-dashoffset 0.6s ease" }} />
+                        ))}
+                      </svg>
+                      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ fontSize: 28, fontWeight: 800, color: C.t1 }}>{total}</div>
+                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>stocks</div>
+                      </div>
+                    </div>
+                    {/* Legend */}
+                    <div style={{ flex: 1, width: "100%" }}>
+                      {arcs.map((a, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < arcs.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                          <div style={{ width: 14, height: 14, borderRadius: 4, background: a.color, flexShrink: 0 }} />
+                          <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.t1 }}>{a.name}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.t2, minWidth: 36, textAlign: "right" }}>{a.count}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, minWidth: 48, textAlign: "right" }}>{a.pct.toFixed(1)}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* ── PERFORMANCE ATTRIBUTION ── */}
             {metricsSubView === "attribution" && (() => {
