@@ -6,6 +6,9 @@ For All Time
 Done
 Add
 Date	Transaction	Shares	Share Price $	Amount $	 
+ 	03-25-26	
+DIVIDEND REINVESTMENTNXP Semiconductors NV
+0.0975	197.6100	19.27	Edit	 
  	03-17-26	
 DIVIDEND REINVESTMENTTaiwan Semiconductor Manufacturing Co Ltd ADR
 0.0387	345.9800	13.38	Edit	 
@@ -321,4 +324,4 @@ PURCHASETaiwan Semiconductor Manufacturing Co Ltd ADR
  	07-29-25	
 PURCHASEBlock Inc Class A
 51.0000	78.1800	3,987.18	Edit	 
-As of Mon 03-23-26 10:06 AM CSTDone
+As of Sat 03-28-26 05:45 PM CSTDone
