@@ -3519,20 +3519,28 @@ Instructions:
 
               const COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EF4444", "#A855F7", "#06B6D4", "#EC4899", "#10B981", "#F97316", "#8B5CF6", "#84CC16", "#14B8A6"];
 
-              // SVG donut — larger, thinner, with rounded caps
-              const size = 260, cx = size / 2, cy = size / 2, r = 95, strokeW = 32;
-              const circ = 2 * Math.PI * r;
-              let offset = 0;
+              // SVG donut with proper arc paths
+              const size = 280, cx = size / 2, cy = size / 2, outerR = 115, innerR = 78;
+              const gapAngle = sectors.length > 1 ? 1.5 * (Math.PI / 180) : 0; // 1.5° gap
+              let angleOffset = -Math.PI / 2; // start at top
+              const arcPath = (startAngle, endAngle, oR, iR) => {
+                const sx1 = cx + oR * Math.cos(startAngle), sy1 = cy + oR * Math.sin(startAngle);
+                const ex1 = cx + oR * Math.cos(endAngle), ey1 = cy + oR * Math.sin(endAngle);
+                const sx2 = cx + iR * Math.cos(endAngle), sy2 = cy + iR * Math.sin(endAngle);
+                const ex2 = cx + iR * Math.cos(startAngle), ey2 = cy + iR * Math.sin(startAngle);
+                const large = endAngle - startAngle > Math.PI ? 1 : 0;
+                return `M${sx1},${sy1} A${oR},${oR} 0 ${large} 1 ${ex1},${ey1} L${sx2},${sy2} A${iR},${iR} 0 ${large} 0 ${ex2},${ey2} Z`;
+              };
               const arcs = sectors.map((s, i) => {
-                const len = (s.pct / 100) * circ;
-                const gap = sectors.length > 1 ? 4 : 0;
-                const arc = { ...s, color: COLORS[i % COLORS.length], dasharray: `${Math.max(0, len - gap)} ${circ - Math.max(0, len - gap)}`, dashoffset: -offset };
-                offset += len;
-                return arc;
+                const sweep = (s.pct / 100) * 2 * Math.PI;
+                const start = angleOffset + gapAngle / 2;
+                const end = angleOffset + sweep - gapAngle / 2;
+                const path = sweep > 0.01 ? arcPath(start, end, outerR, innerR) : "";
+                angleOffset += sweep;
+                return { ...s, color: COLORS[i % COLORS.length], path };
               });
 
               const toggleSector = name => setSectorExpanded(prev => ({ ...prev, [name]: !prev[name] }));
-              const topSector = arcs[0];
 
               return (
                 <div>
@@ -3542,28 +3550,26 @@ Instructions:
                       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                         <defs>
                           {arcs.map((a, i) => (
-                            <linearGradient key={`g${i}`} id={`sg${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stopColor={a.color} stopOpacity="1" />
-                              <stop offset="100%" stopColor={a.color} stopOpacity="0.7" />
-                            </linearGradient>
+                            <radialGradient key={`rg${i}`} id={`rg${i}`} cx="50%" cy="50%" r="50%">
+                              <stop offset="60%" stopColor={a.color} stopOpacity="0.95" />
+                              <stop offset="100%" stopColor={a.color} stopOpacity="0.65" />
+                            </radialGradient>
                           ))}
-                          <filter id="donutShadow">
-                            <feDropShadow dx="0" dy="2" stdDeviation="6" floodOpacity="0.15" />
+                          <filter id="donutGlow">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                           </filter>
                         </defs>
-                        {/* Shadow ring */}
-                        <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.border} strokeWidth={strokeW + 4} opacity="0.3" filter="url(#donutShadow)" />
-                        {/* Arcs */}
-                        {arcs.map((a, i) => (
-                          <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={`url(#sg${i})`} strokeWidth={strokeW}
-                            strokeDasharray={a.dasharray} strokeDashoffset={a.dashoffset}
-                            strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`}
-                            style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.16,1,0.3,1), stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)" }} />
+                        {/* Segments */}
+                        {arcs.map((a, i) => a.path && (
+                          <path key={i} d={a.path} fill={`url(#rg${i})`}
+                            stroke={theme === "dark" ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.6)"} strokeWidth={1.5}
+                            style={{ transition: "d 0.8s cubic-bezier(0.16,1,0.3,1)", filter: "url(#donutGlow)" }} />
                         ))}
                       </svg>
                       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{total}</div>
-                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600, marginTop: 2 }}>holdings</div>
+                        <div style={{ fontSize: 40, fontWeight: 800, color: C.t1, lineHeight: 1, letterSpacing: "-1px" }}>{total}</div>
+                        <div style={{ fontSize: 11, color: C.t4, fontWeight: 600, marginTop: 4, textTransform: "uppercase", letterSpacing: "1px" }}>holdings</div>
                       </div>
                     </div>
                     {/* Legend with expandable stock lists */}
@@ -3634,10 +3640,16 @@ Instructions:
 
               const heatColor = v => {
                 if (v == null) return "transparent";
-                const intensity = Math.min(Math.abs(v) / Math.max(maxAbs * 0.6, 10), 1);
-                if (v > 0) return `rgba(22, 163, 74, ${0.15 + intensity * 0.55})`;
-                if (v < 0) return `rgba(220, 38, 38, ${0.15 + intensity * 0.55})`;
+                const intensity = Math.min(Math.abs(v) / Math.max(maxAbs * 0.5, 8), 1);
+                if (v > 0) return `rgba(34, 197, 94, ${0.12 + intensity * 0.38})`;
+                if (v < 0) return `rgba(239, 68, 68, ${0.12 + intensity * 0.38})`;
                 return C.border;
+              };
+              const heatText = v => {
+                if (v == null) return C.t4;
+                if (v > 0) return "#22C55E";
+                if (v < 0) return "#EF4444";
+                return C.t3;
               };
 
               // Portfolio averages
@@ -3685,9 +3697,9 @@ Instructions:
                           return (
                             <div key={p.key} style={{
                               padding: "10px 6px", textAlign: "center", fontVariantNumeric: "tabular-nums",
-                              background: heatColor(v),
+                              background: heatColor(v), borderRadius: 6, margin: "3px 2px",
                               fontSize: 13, fontWeight: 700,
-                              color: v != null ? (v >= 0 ? "#15803d" : "#dc2626") : C.t4,
+                              color: heatText(v),
                             }}>
                               {v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "—"}
                             </div>
@@ -3696,11 +3708,11 @@ Instructions:
                       </div>
                     ))}
                   </div>
-                  <div style={{ marginTop: 10, fontSize: 11, color: C.t4, display: "flex", justifyContent: "center", gap: 12 }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(22,163,74,0.5)" }} /> Strong gain</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(22,163,74,0.2)" }} /> Mild gain</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,38,38,0.2)" }} /> Mild loss</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(220,38,38,0.5)" }} /> Strong loss</span>
+                  <div style={{ marginTop: 10, fontSize: 11, color: C.t4, display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: "rgba(34,197,94,0.45)" }} /> Strong gain</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: "rgba(34,197,94,0.15)" }} /> Mild gain</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: "rgba(239,68,68,0.15)" }} /> Mild loss</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 12, height: 12, borderRadius: 4, background: "rgba(239,68,68,0.45)" }} /> Strong loss</span>
                   </div>
                 </div>
               );
