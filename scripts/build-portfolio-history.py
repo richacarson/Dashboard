@@ -561,19 +561,10 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             "num_holdings": len(held_tickers),
         })
 
-    # Override last point with file header ground truth
-    if current_holdings and history:
-        gt_cash = current_holdings.pop("__CASH__", None)
-        gt_stocks = sum(h["value"] for h in current_holdings.values())
-        if gt_cash is None:
-            gt_cash = cash
-        gt_total = gt_stocks + gt_cash
-        gt_holdings = len(current_holdings)
-        history[-1]["value"] = round(gt_total, 2)
-        history[-1]["stocks"] = round(gt_stocks, 2)
-        history[-1]["cash"] = round(gt_cash, 2)
-        history[-1]["num_holdings"] = gt_holdings
-        print(f"  Ground truth endpoint: ${gt_total:,.2f} (stocks=${gt_stocks:,.2f} cash=${gt_cash:,.2f}) {gt_holdings} holdings")
+    # Log endpoint info (no override — daily calculation is source of truth)
+    if history:
+        last = history[-1]
+        print(f"  Endpoint: ${last['value']:,.2f} (stocks=${last['stocks']:,.2f} cash=${last['cash']:,.2f}) {last['num_holdings']} holdings")
 
     return history
 
@@ -701,13 +692,17 @@ def main():
             print(f"  {sym}: {len(bm_points)} data points")
     print()
 
-    # Current holdings for live portfolio value calculation
-    # Re-parse to get fresh copy (current_holdings was consumed by ground truth override)
+    # Current holdings from simulation replay (accurate share counts)
+    # Re-parse to get the correct final share counts
     _, _, fresh_holdings, _ = parse_transactions(tx_file)
-    live_cash = fresh_holdings.pop("__CASH__", 0)
+    fresh_holdings.pop("__CASH__", None)
     holdings_map = {}
     for ticker, info in fresh_holdings.items():
-        holdings_map[ticker] = info["shares"]
+        if info["shares"] > 0.0001:
+            holdings_map[ticker] = info["shares"]
+
+    # Use simulation's final cash (includes dividends sent to cash)
+    live_cash = history[-1]["cash"] if history else 0
 
     # Annual return history by year
     annual_returns = {}
