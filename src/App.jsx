@@ -4404,63 +4404,80 @@ Instructions:
           return (
             <div style={{
               position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
-              display: "flex", flexDirection: isDesktop ? "row" : "column",
+              display: isDesktop ? "flex" : "block",
+              flexDirection: isDesktop ? "row" : undefined,
               paddingTop: "env(safe-area-inset-top, 0px)",
             }}>
-              {/* Chart area */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden" }}>
-                {/* Symbol header */}
-                <div style={{ display: "flex", alignItems: "center", gap: isDesktop ? 14 : 10, padding: isDesktop ? "10px 20px" : "8px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                  <button onClick={() => setTab("home")} style={{
-                    background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4,
-                  }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                  </button>
-                  <StockLogo symbol={activeSym} size={isDesktop ? 34 : 28} logoUrl={fundamentals[activeSym]?.logo} />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: isDesktop ? 17 : 15, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
-                    <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || fundamentals[activeSym]?.companyName || ""}</div>
-                  </div>
-                  {livePrice && <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                    <div style={{ fontSize: isDesktop ? 18 : 15, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
-                    {dayChg != null && <div style={{ fontSize: isDesktop ? 13 : 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
-                  </div>}
-                  {/* Mobile watchlist toggle */}
-                  {!isDesktop && (
-                    <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
-                      background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
-                      borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
-                      display: "flex", alignItems: "center", flexShrink: 0, marginLeft: 4,
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
-                    </button>
-                  )}
+              {/* Symbol header */}
+              <div style={{ display: isDesktop ? "none" : "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderBottom: `1px solid ${C.border}` }}>
+                <button onClick={() => setTab("home")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+                <StockLogo symbol={activeSym} size={28} logoUrl={fundamentals[activeSym]?.logo} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
+                  <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || ""}</div>
                 </div>
-                {/* Chart or mobile watchlist */}
-                {!isDesktop && chartsMobileList ? (
-                  <div style={{ flex: 1, overflowY: "scroll", WebkitOverflowScrolling: "touch", minHeight: 0, position: "relative", touchAction: "pan-y" }}>
-                    <div style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 70px)" }}>
-                      <Sidebar asList />
+                {livePrice && <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
+                  {dayChg != null && <div style={{ fontSize: 11, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
+                </div>}
+                <button onClick={() => setChartsMobileList(!chartsMobileList)} style={{
+                  background: chartsMobileList ? C.accentSoft : C.card, border: `1px solid ${chartsMobileList ? C.borderActive : C.border}`,
+                  borderRadius: 10, padding: "8px 12px", cursor: "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", flexShrink: 0, marginLeft: 4,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={chartsMobileList ? C.t1 : C.t3} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                </button>
+              </div>
+              {/* Mobile: absolute-positioned content below header */}
+              {!isDesktop && chartsMobileList ? (
+                <div style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, overflowY: "scroll", WebkitOverflowScrolling: "touch" }}>
+                  <Sidebar asList />
+                  <div style={{ height: 80 }} />
+                </div>
+              ) : !isDesktop ? (
+                <iframe
+                  key={activeSym}
+                  src={chartUrl}
+                  style={{ position: "absolute", top: 56, left: 0, right: 0, bottom: 0, width: "100%", border: "none", display: "block" }}
+                  title={`${activeSym} Chart`}
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                />
+              ) : null}
+              {/* Desktop layout */}
+              {isDesktop && (
+                <>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 20px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                      <button onClick={() => setTab("home")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                      </button>
+                      <StockLogo symbol={activeSym} size={34} logoUrl={fundamentals[activeSym]?.logo} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: C.t1 }}>{activeSym}</div>
+                        <div style={{ fontSize: 11, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[activeSym] || fundamentals[activeSym]?.companyName || ""}</div>
+                      </div>
+                      {livePrice && <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>${livePrice.toFixed(2)}</div>
+                        {dayChg != null && <div style={{ fontSize: 13, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
+                      </div>}
+                    </div>
+                    <iframe
+                      key={activeSym}
+                      src={chartUrl}
+                      style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+                      title={`${activeSym} Chart`}
+                      sandbox="allow-scripts allow-same-origin allow-popups"
+                    />
+                  </div>
+                  <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                    <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1, flexShrink: 0 }}>Watchlist</div>
+                    <div style={{ flex: 1, overflowY: "auto" }}>
+                      <Sidebar />
                     </div>
                   </div>
-                ) : (
-                  <iframe
-                    key={activeSym}
-                    src={chartUrl}
-                    style={{ flex: 1, width: "100%", border: "none", display: "block" }}
-                    title={`${activeSym} Chart`}
-                    sandbox="allow-scripts allow-same-origin allow-popups"
-                  />
-                )}
-              </div>
-              {/* Desktop watchlist sidebar */}
-              {isDesktop && (
-                <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-                  <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1, flexShrink: 0 }}>Watchlist</div>
-                  <div style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
-                    <Sidebar />
-                  </div>
-                </div>
+                </>
               )}
             </div>
           );
