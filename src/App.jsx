@@ -3480,7 +3480,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }, { v: "returnheat", l: "📅 Returns" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "returnheat", l: "📅 Returns" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -3589,106 +3589,6 @@ Instructions:
               );
             })()}
 
-            {/* ── VALUATION ── */}
-            {metricsSubView === "scatter" && (() => {
-              const syms = sleeves[metricsView]?.symbols || [];
-              const SM = {
-                "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
-                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology",
-                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "MATX": "Industrials", "STLD": "Industrials", "PCAR": "Industrials",
-                "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities",
-                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy",
-                "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "PDD": "Consumer", "TOL": "Consumer",
-                "ORI": "Financials", "SYF": "Financials", "FINV": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials",
-                "AEM": "Materials", "GFI": "Materials", "ATAT": "Communication",
-                "IBIT": "Digital Assets", "ETHA": "Digital Assets",
-              };
-              const data = syms.map(s => {
-                const d = fundamentals[s] || {};
-                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, sector: SM[s] || d.sector || "Other", name: names[s] || d.companyName || s };
-              }).filter(p => p.rev != null && isFinite(p.rev)).sort((a, b) => b.rev - a.rev);
-
-              if (!data.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No valuation data available. Refresh metrics first.</div>;
-
-              const maxAbsRev = Math.max(...data.map(p => Math.abs(p.rev)), 1);
-              const avgPE = data.filter(p => p.pe != null && isFinite(p.pe)).reduce((s, p, _, a) => s + p.pe / a.length, 0);
-              const avgRev = data.reduce((s, p) => s + p.rev, 0) / data.length;
-
-              return (
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Valuation Overview</div>
-                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 14 }}>Revenue growth ranked · P/E ratio comparison</div>
-                  {/* Summary cards */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
-                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${C.border}` }}>
-                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 4 }}>Avg P/E Ratio</div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: C.t1 }}>{avgPE.toFixed(1)}</div>
-                    </div>
-                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${C.border}` }}>
-                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 4 }}>Avg Rev Growth</div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: avgRev >= 0 ? C.up : C.dn }}>{avgRev >= 0 ? "+" : ""}{avgRev.toFixed(1)}%</div>
-                    </div>
-                  </div>
-                  {/* Horizontal bar chart */}
-                  {data.map((p, i) => {
-                    const barPct = Math.abs(p.rev) / maxAbsRev * 100;
-                    const isPos = p.rev >= 0;
-                    return (
-                      <div key={p.sym} {...stockContextHandlers(p.sym)} style={{
-                        display: "flex", alignItems: "center", gap: 8, padding: "9px 0", cursor: "pointer",
-                        borderBottom: i < data.length - 1 ? `1px solid ${C.border}` : "none",
-                      }}>
-                        <StockLogo symbol={p.sym} size={24} logoUrl={fundamentals[p.sym]?.logo} />
-                        <div style={{ width: 44, flexShrink: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{p.sym}</div>
-                        </div>
-                        {/* Rev Growth bar */}
-                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 0 }}>
-                          {/* Negative side */}
-                          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-                            {!isPos && (
-                              <div style={{
-                                height: 22, borderRadius: "4px 0 0 4px",
-                                background: `linear-gradient(to left, ${C.dn}60, ${C.dn}20)`,
-                                width: `${barPct}%`, minWidth: 4,
-                                transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)",
-                              }} />
-                            )}
-                          </div>
-                          {/* Center line */}
-                          <div style={{ width: 2, height: 26, background: C.t4 + "40", flexShrink: 0 }} />
-                          {/* Positive side */}
-                          <div style={{ flex: 1 }}>
-                            {isPos && (
-                              <div style={{
-                                height: 22, borderRadius: "0 4px 4px 0",
-                                background: `linear-gradient(to right, ${C.up}60, ${C.up}20)`,
-                                width: `${barPct}%`, minWidth: 4,
-                                transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)",
-                              }} />
-                            )}
-                          </div>
-                        </div>
-                        {/* Values */}
-                        <div style={{ width: 56, textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: isPos ? C.up : C.dn }}>{isPos ? "+" : ""}{p.rev.toFixed(1)}%</div>
-                        </div>
-                        <div style={{ width: 40, textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: 11, color: C.t3 }}>{p.pe != null && isFinite(p.pe) ? p.pe.toFixed(0) + "x" : "—"}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {/* Column labels */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 8, borderTop: `2px solid ${C.accent}`, marginTop: 4 }}>
-                    <div style={{ width: 76 }} />
-                    <div style={{ flex: 1, textAlign: "center", fontSize: 10, color: C.t4, fontWeight: 600 }}>← Decline · Revenue Growth YoY · Growth →</div>
-                    <div style={{ width: 56, textAlign: "right", fontSize: 10, color: C.t4, fontWeight: 600 }}>Rev %</div>
-                    <div style={{ width: 40, textAlign: "right", fontSize: 10, color: C.t4, fontWeight: 600 }}>P/E</div>
-                  </div>
-                </div>
-              );
-            })()}
 
             {/* ── QUARTERLY RETURNS HEATMAP ── */}
             {metricsSubView === "returnheat" && (() => {
