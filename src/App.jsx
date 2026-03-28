@@ -4916,7 +4916,7 @@ Instructions:
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
 
             {/* Chart / Holdings toggle */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
               {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setPerfView(v)} style={{
                   flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${perfView === v ? C.borderActive : C.border}`,
@@ -4927,9 +4927,23 @@ Instructions:
               ))}
             </div>
 
+            {/* Portfolio sleeve selector */}
+            {Object.keys(perfDataMap).length > 1 && (
+              <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+                {[{ k: "dividend", l: "Dividend Strategy", icon: "💰" }, { k: "growth", l: "Growth Strategy", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
+                  <button key={s.k} onClick={() => { setPerfSleeve(s.k); setHoldingsSleeve(s.k); setPerfRange("ALL"); }} style={{
+                    flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${perfSleeve === s.k ? C.borderActive : C.border}`,
+                    background: perfSleeve === s.k ? C.accentSoft : "transparent",
+                    color: perfSleeve === s.k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                  }}><span style={{ fontSize: 14 }}>{s.icon}</span>{s.l}</button>
+                ))}
+              </div>
+            )}
+
             {/* ━━━ HOLDINGS VIEW (full version) ━━━ */}
             {perfView === "holdings" && perfDataMap && Object.keys(perfDataMap).length > 0 && (() => {
-              const hPerfData = perfDataMap[holdingsSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
+              const hPerfData = perfDataMap[perfSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
               if (!hPerfData) return null;
               return (
               <div style={{ animation: "fadeIn 0.2s ease" }}>
