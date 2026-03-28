@@ -284,7 +284,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
     const sectorEmojis = { XLY: "🛍️", XLP: "🛒", XLE: "⛽", XLF: "🏦", XLV: "🏥", XLI: "🏗️", XLB: "⛏️", XLRE: "🏠", XLK: "💻", XLC: "📡", XLU: "💡" };
     if (sectorEmojis[symbol]) {
       return (
-        <div style={{ width: size, height: size, borderRadius: size / 2, background: C.card, border: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: size, height: size, borderRadius: size / 2, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <span style={{ fontSize: size * 0.5 }}>{sectorEmojis[symbol]}</span>
         </div>
       );
@@ -2169,8 +2169,20 @@ Instructions:
     );
   }
 
+  /* ━━━ LOADING (keys baked in, auth in progress) ━━━ */
+  if (!authed && EK && ES) {
+    return (
+      <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
+          <div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+        </div>
+      </div>
+    );
+  }
+
   /* ━━━ API KEY SCREEN ━━━ */
-  if (!authed) {
+  if (!authed && !(EK && ES)) {
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ width: "100%", maxWidth: 420, textAlign: "center", animation: "fadeIn 0.6s ease" }}>
