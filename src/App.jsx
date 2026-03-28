@@ -3457,7 +3457,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -3525,6 +3525,83 @@ Instructions:
                       ))}
                     </div>
                   </div>
+                </div>
+              );
+            })()}
+
+            {/* ── VALUATION SCATTER PLOT ── */}
+            {metricsSubView === "scatter" && (() => {
+              const syms = sleeves[metricsView]?.symbols || [];
+              const pts = syms.map(s => {
+                const d = fundamentals[s] || {};
+                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, mc: d.marketCap || d.avgVol || 1, name: d.companyName || s };
+              }).filter(p => p.pe != null && isFinite(p.pe) && p.rev != null && isFinite(p.rev));
+
+              if (!pts.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No valuation data available. Refresh metrics first.</div>;
+
+              const W = isDesktop ? 600 : Math.min(window.innerWidth - 40, 500);
+              const H = isDesktop ? 400 : 320;
+              const pad = { t: 20, r: 20, b: 50, l: 55 };
+              const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+
+              const peMin = Math.min(...pts.map(p => p.pe)), peMax = Math.max(...pts.map(p => p.pe));
+              const revMin = Math.min(...pts.map(p => p.rev)), revMax = Math.max(...pts.map(p => p.rev));
+              const peRange = peMax - peMin || 1, revRange = revMax - revMin || 1;
+              const pePad = peRange * 0.1, revPad = revRange * 0.1;
+              const xMin = peMin - pePad, xMax = peMax + pePad, yMin = revMin - revPad, yMax = revMax + revPad;
+
+              const toX = v => pad.l + ((v - xMin) / (xMax - xMin)) * pw;
+              const toY = v => pad.t + ph - ((v - yMin) / (yMax - yMin)) * ph;
+
+              // Dot sizes based on market cap
+              const mcVals = pts.map(p => p.mc);
+              const mcMin = Math.min(...mcVals), mcMax = Math.max(...mcVals);
+              const mcRange = mcMax - mcMin || 1;
+              const dotSize = p => 6 + ((p.mc - mcMin) / mcRange) * 14;
+
+              // Grid lines
+              const xTicks = 5, yTicks = 5;
+              const xStep = (xMax - xMin) / xTicks, yStep = (yMax - yMin) / yTicks;
+
+              // Median lines
+              const medPE = [...pts].sort((a, b) => a.pe - b.pe)[Math.floor(pts.length / 2)]?.pe;
+              const medRev = [...pts].sort((a, b) => a.rev - b.rev)[Math.floor(pts.length / 2)]?.rev;
+
+              return (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Valuation Scatter Plot</div>
+                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 16 }}>P/E Ratio (x) vs Revenue Growth YoY (y) · Dot size = market cap</div>
+                  <div style={{ overflowX: "auto" }}>
+                    <svg width={W} height={H} style={{ display: "block", margin: "0 auto" }}>
+                      {/* Grid */}
+                      {Array.from({ length: xTicks + 1 }, (_, i) => {
+                        const v = xMin + i * xStep; const x = toX(v);
+                        return <g key={`xg${i}`}><line x1={x} y1={pad.t} x2={x} y2={pad.t + ph} stroke={C.border} strokeWidth={1} /><text x={x} y={H - 8} textAnchor="middle" fill={C.t4} fontSize={10}>{v.toFixed(0)}</text></g>;
+                      })}
+                      {Array.from({ length: yTicks + 1 }, (_, i) => {
+                        const v = yMin + i * yStep; const y = toY(v);
+                        return <g key={`yg${i}`}><line x1={pad.l} y1={y} x2={pad.l + pw} y2={y} stroke={C.border} strokeWidth={1} /><text x={pad.l - 8} y={y + 4} textAnchor="end" fill={C.t4} fontSize={10}>{v.toFixed(0)}%</text></g>;
+                      })}
+                      {/* Median lines */}
+                      {medPE != null && <line x1={toX(medPE)} y1={pad.t} x2={toX(medPE)} y2={pad.t + ph} stroke={C.accent} strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />}
+                      {medRev != null && <line x1={pad.l} y1={toY(medRev)} x2={pad.l + pw} y2={toY(medRev)} stroke={C.accent} strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />}
+                      {/* Axis labels */}
+                      <text x={pad.l + pw / 2} y={H - 2} textAnchor="middle" fill={C.t3} fontSize={11} fontWeight={600}>P/E Ratio</text>
+                      <text x={14} y={pad.t + ph / 2} textAnchor="middle" fill={C.t3} fontSize={11} fontWeight={600} transform={`rotate(-90, 14, ${pad.t + ph / 2})`}>Rev Growth YoY %</text>
+                      {/* Dots */}
+                      {pts.map((p, i) => {
+                        const x = toX(p.pe), y = toY(p.rev), sz = dotSize(p);
+                        const col = p.rev >= 0 ? C.up : C.dn;
+                        return (
+                          <g key={p.sym}>
+                            <circle cx={x} cy={y} r={sz} fill={col + "40"} stroke={col} strokeWidth={1.5} />
+                            <text x={x} y={y - sz - 3} textAnchor="middle" fill={C.t1} fontSize={10} fontWeight={700}>{p.sym}</text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                  <div style={{ marginTop: 12, fontSize: 11, color: C.t4, textAlign: "center" }}>Dashed lines = median P/E ({medPE?.toFixed(1)}) and median Rev Growth ({medRev?.toFixed(1)}%)</div>
                 </div>
               );
             })()}
