@@ -705,9 +705,10 @@ def main():
     live_cash = history[-1]["cash"] if history else 0
 
     # Annual return history by year
+    # Skip the first partial year (portfolio started mid-year) — only include
+    # years where we have a full Jan 1 starting point from the prior year's close
     annual_returns = {}
-    if history and len(history) > 52:
-        # Group data points by year
+    if history and len(history) > 10:
         by_year = {}
         for h in history:
             yr = h["date"][:4]
@@ -715,13 +716,15 @@ def main():
                 by_year[yr] = []
             by_year[yr].append(h)
         years_sorted = sorted(by_year.keys())
+        start_year = history[0]["date"][:4]
         for i, yr in enumerate(years_sorted):
             pts = by_year[yr]
-            if i == 0:
-                # First year: start from first data point
+            if yr == start_year and history[0]["date"][5:] > "01-15":
+                # Skip first year if portfolio started after Jan 15 (partial year)
+                continue
+            if i == 0 or yr == start_year:
                 start_v = pts[0]["value"]
             else:
-                # Use last data point of previous year as start
                 prev_yr = years_sorted[i - 1]
                 start_v = by_year[prev_yr][-1]["value"]
             end_v = pts[-1]["value"]
