@@ -3457,7 +3457,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "scatter", l: "⚡ Valuation" }, { v: "yieldheat", l: "💰 Yield" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -3602,6 +3602,79 @@ Instructions:
                     </svg>
                   </div>
                   <div style={{ marginTop: 12, fontSize: 11, color: C.t4, textAlign: "center" }}>Dashed lines = median P/E ({medPE?.toFixed(1)}) and median Rev Growth ({medRev?.toFixed(1)}%)</div>
+                </div>
+              );
+            })()}
+
+            {/* ── YIELD VS PAYOUT HEATMAP ── */}
+            {metricsSubView === "yieldheat" && (() => {
+              const syms = sleeves[metricsView]?.symbols || [];
+              const pts = syms.map(s => {
+                const d = fundamentals[s] || {};
+                return { sym: s, yld: d.yieldFwd, payout: d.payoutRatio, name: d.companyName || s };
+              }).filter(p => p.yld != null && isFinite(p.yld) && p.payout != null && isFinite(p.payout))
+                .sort((a, b) => b.yld - a.yld);
+
+              if (!pts.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No yield/payout data available for this portfolio. Works best with the Dividend sleeve.</div>;
+
+              // Color: green for attractive (high yield, low payout), yellow mid, red for risky (low yield or very high payout)
+              const score = p => {
+                const yNorm = Math.min(p.yld / 6, 1); // 6% yield = max
+                const pSafe = Math.max(0, 1 - p.payout / 100); // lower payout = better
+                return (yNorm * 0.6 + pSafe * 0.4);
+              };
+              const cellColor = s => {
+                if (s > 0.65) return C.up + "50";
+                if (s > 0.4) return "#F59E0B40";
+                return C.dn + "35";
+              };
+
+              const maxYld = Math.max(...pts.map(p => p.yld));
+              const maxPayout = Math.max(...pts.map(p => p.payout));
+
+              return (
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Yield vs Payout Ratio</div>
+                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 16 }}>Forward yield and payout ratio for each holding · Green = attractive, Red = caution</div>
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(auto-fill, minmax(150px, 1fr))" : "repeat(2, 1fr)", gap: 8 }}>
+                    {pts.map(p => {
+                      const s = score(p);
+                      return (
+                        <div key={p.sym} style={{
+                          background: cellColor(s), borderRadius: 12, padding: "14px 12px",
+                          border: `1px solid ${C.border}`, position: "relative", overflow: "hidden",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                            <StockLogo symbol={p.sym} size={20} logoUrl={fundamentals[p.sym]?.logo} />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{p.sym}</span>
+                          </div>
+                          {/* Yield bar */}
+                          <div style={{ marginBottom: 6 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.t3, marginBottom: 3 }}>
+                              <span>Yield</span><span style={{ fontWeight: 700, color: C.t1 }}>{p.yld.toFixed(2)}%</span>
+                            </div>
+                            <div style={{ height: 6, borderRadius: 3, background: C.border }}>
+                              <div style={{ height: 6, borderRadius: 3, background: C.up, width: `${Math.min((p.yld / Math.max(maxYld, 1)) * 100, 100)}%`, transition: "width 0.4s ease" }} />
+                            </div>
+                          </div>
+                          {/* Payout bar */}
+                          <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.t3, marginBottom: 3 }}>
+                              <span>Payout</span><span style={{ fontWeight: 700, color: C.t1 }}>{p.payout.toFixed(0)}%</span>
+                            </div>
+                            <div style={{ height: 6, borderRadius: 3, background: C.border }}>
+                              <div style={{ height: 6, borderRadius: 3, background: p.payout > 80 ? C.dn : p.payout > 60 ? "#F59E0B" : C.accent, width: `${Math.min((p.payout / Math.max(maxPayout, 1)) * 100, 100)}%`, transition: "width 0.4s ease" }} />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ marginTop: 14, fontSize: 11, color: C.t4, display: "flex", gap: 16, flexWrap: "wrap" }}>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: C.up + "50", marginRight: 4, verticalAlign: "middle" }} />High yield, safe payout</span>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: "#F59E0B40", marginRight: 4, verticalAlign: "middle" }} />Moderate</span>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 3, background: C.dn + "35", marginRight: 4, verticalAlign: "middle" }} />Low yield or high payout</span>
+                  </div>
                 </div>
               );
             })()}
