@@ -928,6 +928,7 @@ Instructions:
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   // Performance tab state
+  const [perfView, setPerfView] = useState("chart"); // "chart" | "holdings"
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
@@ -2569,20 +2570,11 @@ Instructions:
                 {!isDesktop && <div style={{ height: 1, background: C.border }} />}
               </div>
             )}
-            {/* Holdings / Lists toggle */}
-            <div style={{ display: "flex", gap: 6, marginTop: 16, marginBottom: 4 }}>
-              {[{ v: "lists", l: "Lists" }, { v: "holdings", l: "Holdings" }].map(({ v, l }) => (
-                <button key={v} onClick={() => setHomeView(v)} style={{
-                  flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${homeView === v ? C.borderActive : C.border}`,
-                  background: homeView === v ? C.accentSoft : "transparent",
-                  color: homeView === v ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "inherit",
-                }}>{l}</button>
-              ))}
-            </div>
+            {/* Spacer before lists */}
+            <div style={{ marginTop: 16 }} />
 
-            {/* ━━━ HOLDINGS VIEW ━━━ */}
-            {homeView === "holdings" && perfDataMap && Object.keys(perfDataMap).length > 0 && (() => {
+            {/* ━━━ HOLDINGS VIEW (moved to Performance tab) ━━━ */}
+            {false && (() => {
               const hPerfData = perfDataMap[holdingsSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
               if (!hPerfData) return null;
               return (
@@ -2918,7 +2910,7 @@ Instructions:
             ); })()}
 
             {/* ━━━ LISTS VIEW ━━━ */}
-            {homeView === "lists" && (
+            {(
             <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 380px" : undefined, gap: isDesktop ? 32 : 0, marginTop: isDesktop ? 8 : 0 }}>
               {/* Left column: Lists */}
               <div>
@@ -5008,19 +5000,147 @@ Instructions:
         {/* ━━━ PERFORMANCE ━━━ */}
         {tab === "performance" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Performance</div>}
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
 
-            {/* Sleeve selector — hidden until Growth is validated */}
-            <div style={{ display: "none", gap: 6, marginBottom: 20 }}>
-              {[{ k: "dividend", l: "Dividend", icon: "💰" }, { k: "growth", l: "Growth", icon: "🚀" }].filter(s => perfDataMap[s.k]).map(s => (
-                <button key={s.k} onClick={() => { setPerfSleeve(s.k); setPerfRange("ALL"); }} style={{
-                  flex: 1, padding: "12px 0", borderRadius: 12, border: `1px solid ${perfSleeve === s.k ? C.borderActive : C.border}`,
-                  background: perfSleeve === s.k ? C.accentSoft : "transparent",
-                  color: perfSleeve === s.k ? C.t1 : C.t3, fontSize: 14, fontWeight: 700,
-                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                }}><span>{s.icon}</span>{s.l}</button>
+            {/* Chart / Holdings toggle */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].map(({ v, l }) => (
+                <button key={v} onClick={() => setPerfView(v)} style={{
+                  flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${perfView === v ? C.borderActive : C.border}`,
+                  background: perfView === v ? C.accentSoft : "transparent",
+                  color: perfView === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                }}>{l}</button>
               ))}
             </div>
+
+            {/* ━━━ HOLDINGS VIEW ━━━ */}
+            {perfView === "holdings" && perfDataMap && Object.keys(perfDataMap).length > 0 && (() => {
+              const hPerfData = perfDataMap[holdingsSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
+              if (!hPerfData) return null;
+              return (
+              <div style={{ animation: "fadeIn 0.2s ease" }}>
+                {/* Sleeve selector for holdings */}
+                <div style={{ display: "none", gap: 6, marginBottom: 12 }}>
+                  {[{ k: "dividend", l: "💰 Dividend" }, { k: "growth", l: "🚀 Growth" }].filter(s => perfDataMap[s.k]).map(s => (
+                    <button key={s.k} onClick={() => setHoldingsSleeve(s.k)} style={{
+                      flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${holdingsSleeve === s.k ? C.borderActive : C.border}`,
+                      background: holdingsSleeve === s.k ? C.accentSoft : "transparent",
+                      color: holdingsSleeve === s.k ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>{s.l}</button>
+                  ))}
+                </div>
+
+                {/* Portfolio Summary */}
+                {(() => {
+                  const totalVal = Object.entries(hPerfData.holdings || {}).reduce((s, [t, shares]) => {
+                    const q = quotesRef.current?.[t];
+                    return s + (q?.last || q?.close || 0) * shares;
+                  }, 0);
+                  const cash = hPerfData.cash || 0;
+                  const costBasis = Object.entries(hPerfData.holdings || {}).reduce((s, [t, shares]) => {
+                    const cb = hPerfData.costBasis?.[t];
+                    return s + (cb || 0) * shares;
+                  }, 0);
+                  const totalGain = totalVal - costBasis;
+                  const totalGainPct = costBasis > 0 ? (totalGain / costBasis) * 100 : 0;
+                  return (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 16 }}>
+                      <div style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}` }}>
+                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>Market Value</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>${(totalVal + cash).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                      </div>
+                      <div style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}` }}>
+                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>Total Gain/Loss</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: totalGain >= 0 ? C.up : C.dn }}>{totalGain >= 0 ? "+$" : "-$"}{Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                      </div>
+                      <div style={{ background: C.card, borderRadius: 12, padding: "12px 10px", border: `1px solid ${C.border}` }}>
+                        <div style={{ fontSize: 10, color: C.t4, fontWeight: 600, marginBottom: 4 }}>Return</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: totalGainPct >= 0 ? C.up : C.dn }}>{totalGainPct >= 0 ? "+" : ""}{totalGainPct.toFixed(1)}%</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Holdings table — reuse same logic from original holdings view */}
+                {(() => {
+                  const rows = Object.entries(hPerfData.holdings).map(([ticker, shares]) => {
+                    const q = quotesRef.current?.[ticker];
+                    const price = q?.last || q?.close || 0;
+                    const value = price * shares;
+                    const cb = hPerfData.costBasis?.[ticker] || 0;
+                    const gainLoss = (price - cb) * shares;
+                    const gainLossPct = cb > 0 ? ((price - cb) / cb) * 100 : 0;
+                    const totalVal = Object.entries(hPerfData.holdings).reduce((s, [t, sh]) => {
+                      const qq = quotesRef.current?.[t];
+                      return s + (qq?.last || qq?.close || 0) * sh;
+                    }, 0) + (hPerfData.cash || 0);
+                    const weight = totalVal > 0 ? (value / totalVal) * 100 : 0;
+                    return { ticker, shares, price, value, cb, gainLoss, gainLossPct, weight, name: names[ticker] || fundamentals[ticker]?.companyName || ticker };
+                  }).sort((a, b) => {
+                    const m = holdingsSort.dir === "asc" ? 1 : -1;
+                    return (a[holdingsSort.col] - b[holdingsSort.col]) * m;
+                  });
+
+                  const totGainLoss = rows.reduce((s, r) => s + r.gainLoss, 0);
+                  const totCostBasis = rows.reduce((s, r) => s + r.cb * r.shares, 0);
+                  const totGainLossPct = totCostBasis > 0 ? (totGainLoss / totCostBasis) * 100 : 0;
+
+                  const SortHeader = ({ col, children, align }) => (
+                    <th onClick={() => setHoldingsSort(prev => ({ col, dir: prev.col === col && prev.dir === "desc" ? "asc" : "desc" }))}
+                      style={{ padding: "10px 12px", textAlign: align || "right", fontSize: 11, fontWeight: 700, color: holdingsSort.col === col ? C.accent : C.t4, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap", borderBottom: `2px solid ${C.accent}`, background: C.surface }}>
+                      {children} {holdingsSort.col === col ? (holdingsSort.dir === "desc" ? "↓" : "↑") : ""}
+                    </th>
+                  );
+
+                  return (
+                    <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden", overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 600 }}>
+                        <thead>
+                          <tr>
+                            <SortHeader col="ticker" align="left">Stock</SortHeader>
+                            <SortHeader col="shares">Shares</SortHeader>
+                            <SortHeader col="price">Price</SortHeader>
+                            <SortHeader col="value">Value</SortHeader>
+                            <SortHeader col="weight">Weight</SortHeader>
+                            <SortHeader col="cb">Cost Basis</SortHeader>
+                            <SortHeader col="gainLoss">Gain/Loss</SortHeader>
+                            <SortHeader col="gainLossPct">Return</SortHeader>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map(r => (
+                            <tr key={r.ticker} {...stockContextHandlers(r.ticker)} style={{ cursor: "pointer", borderBottom: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "10px 12px" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                  <StockLogo symbol={r.ticker} size={24} logoUrl={fundamentals[r.ticker]?.logo} />
+                                  <div>
+                                    <div style={{ fontWeight: 700, color: C.accent }}>{r.ticker}</div>
+                                    <div style={{ fontSize: 10, color: C.t4 }}>{r.name}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{r.shares.toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.price.toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{r.weight.toFixed(1)}%</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.cb.toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+              </div>
+              );
+            })()}
+
+            {/* Chart view */}
+            {perfView === "chart" && <>
 
             {perfLoading && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 80 }}>
@@ -5652,6 +5772,8 @@ Instructions:
                 </>
               );
             })()}
+
+            </>}
           </div>
         )}
 
