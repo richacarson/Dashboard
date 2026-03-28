@@ -24,6 +24,8 @@ const loadSleeves = () => {
     const oldIcons = ["🏌️", "⏳", "💣"];
     for (const [k, def] of Object.entries(DEFAULT_SLEEVES)) {
       if (parsed[k] && oldIcons.includes(parsed[k].icon)) parsed[k].icon = def.icon;
+      // Auto-add any new default sleeves that don't exist yet
+      if (!parsed[k]) parsed[k] = def;
     }
     return parsed;
   } catch { return DEFAULT_SLEEVES; }
