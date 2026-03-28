@@ -3493,9 +3493,23 @@ Instructions:
             {/* ── SECTOR BREAKDOWN ── */}
             {metricsSubView === "sector" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
+              // Display-time sector overrides to handle stale cache
+              const SO = {
+                "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
+                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology",
+                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "MATX": "Industrials", "STLD": "Industrials", "PCAR": "Industrials",
+                "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities",
+                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy",
+                "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "PDD": "Consumer", "TOL": "Consumer",
+                "ORI": "Financials", "SYF": "Financials", "FINV": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials",
+                "AEM": "Materials", "GFI": "Materials",
+                "ATAT": "Communication",
+                "IBIT": "Digital Assets", "ETHA": "Digital Assets",
+              };
+              const getSector = s => SO[s] || fundamentals[s]?.sector || fundamentals[s]?.industry || "Uncategorized";
               const sectorGroups = {};
               syms.forEach(s => {
-                const sec = fundamentals[s]?.sector || fundamentals[s]?.industry || "Uncategorized";
+                const sec = getSector(s);
                 if (!sectorGroups[sec]) sectorGroups[sec] = [];
                 sectorGroups[sec].push(s);
               });
