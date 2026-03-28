@@ -3589,13 +3589,10 @@ Instructions:
               );
             })()}
 
-            {/* ── VALUATION SCATTER PLOT ── */}
+            {/* ── VALUATION ── */}
             {metricsSubView === "scatter" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
-              const SO = { "Technology": "#2563EB", "Financials": "#059669", "Healthcare": "#7C3AED",
-                "Industrials": "#D97706", "Consumer": "#DB2777", "Energy": "#DC2626", "Utilities": "#84CC16",
-                "Real Estate": "#EA580C", "Materials": "#6366F1", "Communication": "#F59E0B", "Digital Assets": "#F97316", "Other": "#9CA3AF" };
-              const SECTOR_MAP = {
+              const SM = {
                 "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
                 "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology",
                 "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "MATX": "Industrials", "STLD": "Industrials", "PCAR": "Industrials",
@@ -3606,130 +3603,88 @@ Instructions:
                 "AEM": "Materials", "GFI": "Materials", "ATAT": "Communication",
                 "IBIT": "Digital Assets", "ETHA": "Digital Assets",
               };
-              const allPts = syms.map(s => {
+              const data = syms.map(s => {
                 const d = fundamentals[s] || {};
-                const sector = SECTOR_MAP[s] || d.sector || "Other";
-                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, mc: d.marketCap || d.avgVol || 1, sector, name: names[s] || d.companyName || s };
-              }).filter(p => p.pe != null && isFinite(p.pe) && p.rev != null && isFinite(p.rev));
+                return { sym: s, pe: d.peTTM, rev: d.revenueYoY, sector: SM[s] || d.sector || "Other", name: names[s] || d.companyName || s };
+              }).filter(p => p.rev != null && isFinite(p.rev)).sort((a, b) => b.rev - a.rev);
 
-              if (!allPts.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No valuation data available. Refresh metrics first.</div>;
+              if (!data.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No valuation data available. Refresh metrics first.</div>;
 
-              // Sort table by rev growth descending
-              const tableData = [...allPts].sort((a, b) => b.rev - a.rev);
-
-              // Clamp outlier P/E
-              const sortedPE = [...allPts].sort((a, b) => a.pe - b.pe);
-              const p90 = sortedPE[Math.min(Math.floor(allPts.length * 0.9), allPts.length - 1)].pe;
-              const peClamp = Math.max(p90 * 1.3, 50);
-              const pts = allPts.map(p => ({ ...p, peDisplay: Math.min(p.pe, peClamp), clamped: p.pe > peClamp }));
-
-              const W = isDesktop ? 700 : Math.min(window.innerWidth - 32, 500);
-              const H = isDesktop ? 400 : 280;
-              const pad = { t: 16, r: 16, b: 40, l: 48 };
-              const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
-
-              const peVals = pts.map(p => p.peDisplay);
-              const revVals = pts.map(p => p.rev);
-              const xMin = Math.floor(Math.min(0, Math.min(...peVals) - 2) / 5) * 5;
-              const xMax = Math.ceil((Math.max(...peVals) + 2) / 10) * 10;
-              const yMin = Math.floor((Math.min(...revVals) - 2) / 10) * 10;
-              const yMax = Math.ceil((Math.max(...revVals) + 2) / 10) * 10;
-
-              const toX = v => pad.l + ((v - xMin) / (xMax - xMin)) * pw;
-              const toY = v => pad.t + ph - ((v - yMin) / (yMax - yMin)) * ph;
-
-              const medPE = sortedPE[Math.floor(allPts.length / 2)]?.pe;
-              const medRev = [...allPts].sort((a, b) => a.rev - b.rev)[Math.floor(allPts.length / 2)]?.rev;
-
-              // Grid
-              const xStep = (xMax - xMin) > 60 ? 20 : 10;
-              const yStep = (yMax - yMin) > 80 ? 20 : 10;
-              const xTicks = []; for (let v = xMin; v <= xMax; v += xStep) xTicks.push(v);
-              const yTicks = []; for (let v = yMin; v <= yMax; v += yStep) yTicks.push(v);
-
-              const usedSectors = [...new Set(pts.map(p => p.sector))].sort();
+              const maxAbsRev = Math.max(...data.map(p => Math.abs(p.rev)), 1);
+              const avgPE = data.filter(p => p.pe != null && isFinite(p.pe)).reduce((s, p, _, a) => s + p.pe / a.length, 0);
+              const avgRev = data.reduce((s, p) => s + p.rev, 0) / data.length;
 
               return (
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Valuation Map</div>
-                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 14 }}>P/E Ratio vs Revenue Growth · Dot size = market cap</div>
-                  {/* Sector chips */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-                    {usedSectors.map(s => (
-                      <div key={s} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: C.t3, background: (SO[s] || C.accent) + "18", padding: "3px 8px", borderRadius: 6 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: SO[s] || C.accent }} />
-                        {s}
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Valuation Overview</div>
+                  <div style={{ fontSize: 12, color: C.t4, marginBottom: 14 }}>Revenue growth ranked · P/E ratio comparison</div>
+                  {/* Summary cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
+                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 4 }}>Avg P/E Ratio</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: C.t1 }}>{avgPE.toFixed(1)}</div>
+                    </div>
+                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 4 }}>Avg Rev Growth</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: avgRev >= 0 ? C.up : C.dn }}>{avgRev >= 0 ? "+" : ""}{avgRev.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                  {/* Horizontal bar chart */}
+                  {data.map((p, i) => {
+                    const barPct = Math.abs(p.rev) / maxAbsRev * 100;
+                    const isPos = p.rev >= 0;
+                    return (
+                      <div key={p.sym} {...stockContextHandlers(p.sym)} style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "9px 0", cursor: "pointer",
+                        borderBottom: i < data.length - 1 ? `1px solid ${C.border}` : "none",
+                      }}>
+                        <StockLogo symbol={p.sym} size={24} logoUrl={fundamentals[p.sym]?.logo} />
+                        <div style={{ width: 44, flexShrink: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{p.sym}</div>
+                        </div>
+                        {/* Rev Growth bar */}
+                        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 0 }}>
+                          {/* Negative side */}
+                          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+                            {!isPos && (
+                              <div style={{
+                                height: 22, borderRadius: "4px 0 0 4px",
+                                background: `linear-gradient(to left, ${C.dn}60, ${C.dn}20)`,
+                                width: `${barPct}%`, minWidth: 4,
+                                transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)",
+                              }} />
+                            )}
+                          </div>
+                          {/* Center line */}
+                          <div style={{ width: 2, height: 26, background: C.t4 + "40", flexShrink: 0 }} />
+                          {/* Positive side */}
+                          <div style={{ flex: 1 }}>
+                            {isPos && (
+                              <div style={{
+                                height: 22, borderRadius: "0 4px 4px 0",
+                                background: `linear-gradient(to right, ${C.up}60, ${C.up}20)`,
+                                width: `${barPct}%`, minWidth: 4,
+                                transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)",
+                              }} />
+                            )}
+                          </div>
+                        </div>
+                        {/* Values */}
+                        <div style={{ width: 56, textAlign: "right", flexShrink: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: isPos ? C.up : C.dn }}>{isPos ? "+" : ""}{p.rev.toFixed(1)}%</div>
+                        </div>
+                        <div style={{ width: 40, textAlign: "right", flexShrink: 0 }}>
+                          <div style={{ fontSize: 11, color: C.t3 }}>{p.pe != null && isFinite(p.pe) ? p.pe.toFixed(0) + "x" : "—"}</div>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                  {/* Clean chart — no labels on dots */}
-                  <div style={{ overflowX: "auto", marginBottom: 20 }}>
-                    <svg width={W} height={H} style={{ display: "block", margin: "0 auto" }}>
-                      {/* Quadrant fills */}
-                      {medPE != null && medRev != null && (() => {
-                        const mx = toX(Math.min(medPE, peClamp)), my = toY(medRev);
-                        return <>
-                          <rect x={pad.l} y={pad.t} width={mx - pad.l} height={my - pad.t} fill={C.up + "0A"} />
-                          <rect x={mx} y={my} width={pad.l + pw - mx} height={pad.t + ph - my} fill={C.dn + "0A"} />
-                        </>;
-                      })()}
-                      {/* Grid */}
-                      {xTicks.map(v => <line key={`x${v}`} x1={toX(v)} y1={pad.t} x2={toX(v)} y2={pad.t + ph} stroke={C.border} strokeWidth={0.5} />)}
-                      {yTicks.map(v => <line key={`y${v}`} x1={pad.l} y1={toY(v)} x2={pad.l + pw} y2={toY(v)} stroke={C.border} strokeWidth={0.5} />)}
-                      {/* Axis labels */}
-                      {xTicks.map(v => <text key={`xl${v}`} x={toX(v)} y={H - 6} textAnchor="middle" fill={C.t4} fontSize={9}>{v}</text>)}
-                      {yTicks.map(v => <text key={`yl${v}`} x={pad.l - 6} y={toY(v) + 3} textAnchor="end" fill={C.t4} fontSize={9}>{v}%</text>)}
-                      <text x={pad.l + pw / 2} y={H} textAnchor="middle" fill={C.t4} fontSize={10} fontWeight={600}>P/E →</text>
-                      <text x={6} y={pad.t + ph / 2} textAnchor="middle" fill={C.t4} fontSize={10} fontWeight={600} transform={`rotate(-90,6,${pad.t + ph / 2})`}>Rev Growth %</text>
-                      {/* Median lines */}
-                      {medPE != null && <line x1={toX(Math.min(medPE, peClamp))} y1={pad.t} x2={toX(Math.min(medPE, peClamp))} y2={pad.t + ph} stroke={C.accent} strokeWidth={1} strokeDasharray="4 3" opacity={0.5} />}
-                      {medRev != null && <line x1={pad.l} y1={toY(medRev)} x2={pad.l + pw} y2={toY(medRev)} stroke={C.accent} strokeWidth={1} strokeDasharray="4 3" opacity={0.5} />}
-                      {/* Dots only — no text labels */}
-                      {pts.map(p => {
-                        const x = toX(p.peDisplay), y = toY(p.rev);
-                        const sz = 5 + ((p.mc - Math.min(...pts.map(q => q.mc))) / (Math.max(...pts.map(q => q.mc)) - Math.min(...pts.map(q => q.mc)) || 1)) * 10;
-                        const col = SO[p.sector] || C.accent;
-                        return <circle key={p.sym} cx={x} cy={y} r={sz} fill={col + "50"} stroke={col} strokeWidth={1.5} />;
-                      })}
-                      <rect x={pad.l} y={pad.t} width={pw} height={ph} fill="none" stroke={C.border} strokeWidth={1} />
-                    </svg>
-                  </div>
-                  {/* Data table below chart */}
-                  <div style={{ borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                      <thead>
-                        <tr style={{ background: C.surface }}>
-                          <th style={{ padding: "10px 10px", textAlign: "left", fontWeight: 700, color: C.t4, fontSize: 10, borderBottom: `2px solid ${C.accent}` }}>Stock</th>
-                          <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.t4, fontSize: 10, borderBottom: `2px solid ${C.accent}` }}>P/E</th>
-                          <th style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: C.t4, fontSize: 10, borderBottom: `2px solid ${C.accent}` }}>Rev YoY</th>
-                          <th style={{ padding: "10px 10px", textAlign: "left", fontWeight: 700, color: C.t4, fontSize: 10, borderBottom: `2px solid ${C.accent}` }}>Sector</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tableData.map((p, i) => (
-                          <tr key={p.sym} {...stockContextHandlers(p.sym)} style={{ cursor: "pointer", borderBottom: i < tableData.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                            <td style={{ padding: "8px 10px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <StockLogo symbol={p.sym} size={20} logoUrl={fundamentals[p.sym]?.logo} />
-                                <span style={{ fontWeight: 700, color: C.accent }}>{p.sym}</span>
-                              </div>
-                            </td>
-                            <td style={{ padding: "8px 8px", textAlign: "right", fontWeight: 600, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{p.pe.toFixed(1)}{p.pe > peClamp ? " ⚠" : ""}</td>
-                            <td style={{ padding: "8px 8px", textAlign: "right", fontWeight: 700, color: p.rev >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{p.rev >= 0 ? "+" : ""}{p.rev.toFixed(1)}%</td>
-                            <td style={{ padding: "8px 10px" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: SO[p.sector] || C.accent, flexShrink: 0 }} />
-                                <span style={{ fontSize: 11, color: C.t3 }}>{p.sector}</span>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div style={{ marginTop: 10, display: "flex", justifyContent: "center", gap: 16, fontSize: 11, color: C.t4, flexWrap: "wrap" }}>
-                    <span>Median P/E: <b style={{ color: C.t2 }}>{medPE?.toFixed(1)}</b></span>
-                    <span>Median Rev Growth: <b style={{ color: C.t2 }}>{medRev?.toFixed(1)}%</b></span>
+                    );
+                  })}
+                  {/* Column labels */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 8, borderTop: `2px solid ${C.accent}`, marginTop: 4 }}>
+                    <div style={{ width: 76 }} />
+                    <div style={{ flex: 1, textAlign: "center", fontSize: 10, color: C.t4, fontWeight: 600 }}>← Decline · Revenue Growth YoY · Growth →</div>
+                    <div style={{ width: 56, textAlign: "right", fontSize: 10, color: C.t4, fontWeight: 600 }}>Rev %</div>
+                    <div style={{ width: 40, textAlign: "right", fontSize: 10, color: C.t4, fontWeight: 600 }}>P/E</div>
                   </div>
                 </div>
               );
