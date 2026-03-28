@@ -4982,7 +4982,7 @@ Instructions:
                     const q = quotesRef.current?.[ticker];
                     const price = q?.last || q?.close || 0;
                     const value = price * shares;
-                    const cb = hPerfData.costBasis?.[ticker] || 0;
+                    const cb = Number(hPerfData.costBasis?.[ticker]) || 0;
                     const gainLoss = (price - cb) * shares;
                     const gainLossPct = cb > 0 ? ((price - cb) / cb) * 100 : 0;
                     const totalVal = Object.entries(hPerfData.holdings).reduce((s, [t, sh]) => {
@@ -4993,7 +4993,9 @@ Instructions:
                     return { ticker, shares, price, value, cb, gainLoss, gainLossPct, weight, name: names[ticker] || fundamentals[ticker]?.companyName || ticker };
                   }).sort((a, b) => {
                     const m = holdingsSort.dir === "asc" ? 1 : -1;
-                    return (a[holdingsSort.col] - b[holdingsSort.col]) * m;
+                    const av = a[holdingsSort.col], bv = b[holdingsSort.col];
+                    if (typeof av === "string") return av.localeCompare(bv) * m;
+                    return ((Number(av) || 0) - (Number(bv) || 0)) * m;
                   });
 
                   const totGainLoss = rows.reduce((s, r) => s + r.gainLoss, 0);
@@ -5034,13 +5036,13 @@ Instructions:
                                   </div>
                                 </div>
                               </td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{r.shares.toFixed(2)}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.price.toFixed(2)}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${r.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{r.weight.toFixed(1)}%</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.cb.toFixed(2)}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{Number(r.shares || 0).toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${Number(r.price || 0).toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t1, fontWeight: 600 }}>${Number(r.value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t2 }}>{Number(r.weight || 0).toFixed(1)}%</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${Number(r.cb || 0).toFixed(2)}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(Number(r.gainLoss || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                              <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.gainLossPct >= 0 ? "+" : ""}{Number(r.gainLossPct || 0).toFixed(1)}%</td>
                             </tr>
                           ))}
                         </tbody>
