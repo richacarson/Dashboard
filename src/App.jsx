@@ -913,7 +913,8 @@ Instructions:
   const [metricSort, setMetricSort] = useState({ col: null, dir: "desc" }); // { col: "peTTM", dir: "asc"|"desc" }
   const [metricsEditMode, setMetricsEditMode] = useState(false);
   const [peerSymbol, setPeerSymbol] = useState(null); // for peer comparison overlay
-  const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers"
+  const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers" | "sector" | "scatter" | "yieldheat"
+  const [sectorExpanded, setSectorExpanded] = useState({});
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
   const [homeView, setHomeView] = useState("lists"); // "holdings" | "lists"
   const [holdingsSleeve, setHoldingsSleeve] = useState("dividend"); // which sleeve to show in holdings
@@ -1231,21 +1232,41 @@ Instructions:
           profileIndustry = prof?.finnhubIndustry || null;
           profileName = prof?.name || null;
           profileLogo = prof?.logo || null;
-          // Map Finnhub industries to broader sectors
-          const ind = (profileIndustry || "").toLowerCase();
-          if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) profileSector = "Technology";
-          else if (ind.includes("bank") || ind.includes("financ") || ind.includes("insurance") || ind.includes("capital") || ind.includes("invest")) profileSector = "Financials";
-          else if (ind.includes("pharma") || ind.includes("biotech") || ind.includes("health") || ind.includes("medical")) profileSector = "Healthcare";
-          else if (ind.includes("oil") || ind.includes("gas") || ind.includes("energy") || ind.includes("coal") || ind.includes("solar")) profileSector = "Energy";
-          else if (ind.includes("retail") || ind.includes("consumer") || ind.includes("apparel") || ind.includes("auto") || ind.includes("restaurant") || ind.includes("entertainment") || ind.includes("media")) profileSector = "Consumer";
-          else if (ind.includes("industr") || ind.includes("aerospace") || ind.includes("defense") || ind.includes("machin") || ind.includes("construct")) profileSector = "Industrials";
-          else if (ind.includes("real estate") || ind.includes("reit")) profileSector = "Real Estate";
-          else if (ind.includes("metal") || ind.includes("mining") || ind.includes("steel") || ind.includes("chemical") || ind.includes("material")) profileSector = "Materials";
-          else if (ind.includes("telecom") || ind.includes("communication")) profileSector = "Communication";
-          else if (ind.includes("utilit") || ind.includes("electric") || ind.includes("water") || ind.includes("power")) profileSector = "Utilities";
-          else if (ind.includes("food") || ind.includes("beverage") || ind.includes("household") || ind.includes("tobacco")) profileSector = "Staples";
-          else if (ind.includes("crypto") || ind.includes("digital") || ind.includes("blockchain")) profileSector = "Digital Assets";
-          else profileSector = profileIndustry ? "Other" : null;
+          // Hardcoded sector overrides for holdings that Finnhub miscategorizes
+          const SECTOR_OVERRIDES = {
+            "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
+            "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
+            "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "MATX": "Industrials", "STLD": "Industrials", "PCAR": "Industrials",
+            "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "OKE": "Energy",
+            "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy",
+            "ORI": "Financials", "SYF": "Financials", "FINV": "Financials", "SUPV": "Financials",
+            "COIN": "Financials", "HOOD": "Financials", "SOFI": "Financials",
+            "PDD": "Consumer", "TOL": "Consumer", "MTH": "Consumer",
+            "AEM": "Materials", "GFI": "Materials",
+            "ATAT": "Communication", "HUT": "Technology", "MARA": "Technology",
+            "IBIT": "Digital Assets", "ETHA": "Digital Assets",
+          };
+          if (SECTOR_OVERRIDES[sym]) {
+            profileSector = SECTOR_OVERRIDES[sym];
+          } else {
+            // Map Finnhub industries to broader sectors
+            const ind = (profileIndustry || "").toLowerCase();
+            if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) profileSector = "Technology";
+            else if (ind.includes("bank") || ind.includes("financ") || ind.includes("insurance") || ind.includes("capital") || ind.includes("invest")) profileSector = "Financials";
+            else if (ind.includes("pharma") || ind.includes("biotech") || ind.includes("health") || ind.includes("medical")) profileSector = "Healthcare";
+            else if (ind.includes("oil") || ind.includes("gas") || ind.includes("energy") || ind.includes("coal") || ind.includes("solar")) profileSector = "Energy";
+            else if (ind.includes("retail") || ind.includes("consumer") || ind.includes("apparel") || ind.includes("auto") || ind.includes("restaurant") || ind.includes("entertainment") || ind.includes("media")) profileSector = "Consumer";
+            else if (ind.includes("industr") || ind.includes("aerospace") || ind.includes("defense") || ind.includes("machin") || ind.includes("construct")) profileSector = "Industrials";
+            else if (ind.includes("real estate") || ind.includes("reit")) profileSector = "Real Estate";
+            else if (ind.includes("metal") || ind.includes("mining") || ind.includes("steel") || ind.includes("chemical") || ind.includes("material")) profileSector = "Materials";
+            else if (ind.includes("telecom") || ind.includes("communication")) profileSector = "Communication";
+            else if (ind.includes("utilit") || ind.includes("electric") || ind.includes("water") || ind.includes("power")) profileSector = "Utilities";
+            else if (ind.includes("food") || ind.includes("beverage") || ind.includes("household") || ind.includes("tobacco")) profileSector = "Consumer";
+            else if (ind.includes("crypto") || ind.includes("digital") || ind.includes("blockchain")) profileSector = "Digital Assets";
+            else if (ind.includes("transport") || ind.includes("logistic") || ind.includes("shipping") || ind.includes("freight")) profileSector = "Industrials";
+            else if (ind.includes("service") || ind.includes("consult")) profileSector = "Industrials";
+            else profileSector = profileIndustry || "Uncategorized";
+          }
         }
 
         // Calculate quarter returns from Alpaca daily bars
@@ -3472,13 +3493,14 @@ Instructions:
             {/* ── SECTOR BREAKDOWN ── */}
             {metricsSubView === "sector" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
-              const sectorCounts = {};
+              const sectorGroups = {};
               syms.forEach(s => {
                 const sec = fundamentals[s]?.sector || fundamentals[s]?.industry || "Uncategorized";
-                sectorCounts[sec] = (sectorCounts[sec] || 0) + 1;
+                if (!sectorGroups[sec]) sectorGroups[sec] = [];
+                sectorGroups[sec].push(s);
               });
               const total = syms.length;
-              const sectors = Object.entries(sectorCounts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count, pct: total ? (count / total * 100) : 0 }));
+              const sectors = Object.entries(sectorGroups).sort((a, b) => b[1].length - a[1].length).map(([name, stocks]) => ({ name, stocks, count: stocks.length, pct: total ? (stocks.length / total * 100) : 0 }));
 
               if (!sectors.length || !total) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No sector data available. Refresh metrics first.</div>;
 
@@ -3496,10 +3518,12 @@ Instructions:
                 return arc;
               });
 
+              const toggleSector = name => setSectorExpanded(prev => ({ ...prev, [name]: !prev[name] }));
+
               return (
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 20 }}>Sector Breakdown</div>
-                  <div style={{ display: "flex", flexDirection: isDesktop ? "row" : "column", alignItems: "center", gap: 30 }}>
+                  <div style={{ display: "flex", flexDirection: isDesktop ? "row" : "column", alignItems: isDesktop ? "flex-start" : "center", gap: 30 }}>
                     {/* Donut chart */}
                     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
                       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -3515,16 +3539,36 @@ Instructions:
                         <div style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>stocks</div>
                       </div>
                     </div>
-                    {/* Legend */}
+                    {/* Legend with expandable stock lists */}
                     <div style={{ flex: 1, width: "100%" }}>
-                      {arcs.map((a, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: i < arcs.length - 1 ? `1px solid ${C.border}` : "none" }}>
-                          <div style={{ width: 14, height: 14, borderRadius: 4, background: a.color, flexShrink: 0 }} />
-                          <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.t1 }}>{a.name}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.t2, minWidth: 36, textAlign: "right" }}>{a.count}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, minWidth: 48, textAlign: "right" }}>{a.pct.toFixed(1)}%</div>
-                        </div>
-                      ))}
+                      {arcs.map((a, i) => {
+                        const isOpen = sectorExpanded[a.name];
+                        return (
+                          <div key={i}>
+                            <div onClick={() => toggleSector(a.name)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: (!isOpen && i < arcs.length - 1) ? `1px solid ${C.border}` : isOpen ? "none" : "none", cursor: "pointer", userSelect: "none" }}>
+                              <div style={{ width: 14, height: 14, borderRadius: 4, background: a.color, flexShrink: 0 }} />
+                              <div style={{ flex: 1, fontSize: 13, fontWeight: 600, color: C.t1 }}>{a.name}</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: C.t2, minWidth: 36, textAlign: "right" }}>{a.count}</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: C.accent, minWidth: 48, textAlign: "right" }}>{a.pct.toFixed(1)}%</div>
+                              <div style={{ fontSize: 11, color: C.t4, marginLeft: 4, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</div>
+                            </div>
+                            {isOpen && (
+                              <div style={{ padding: "4px 0 10px 28px", borderBottom: i < arcs.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                                {a.stocks.sort().map(sym => (
+                                  <div key={sym} {...stockContextHandlers(sym)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", cursor: "pointer" }}>
+                                    <StockLogo symbol={sym} size={20} logoUrl={fundamentals[sym]?.logo} />
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>{sym}</span>
+                                    <span style={{ fontSize: 11, color: C.t4, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[sym] || fundamentals[sym]?.companyName || ""}</span>
+                                    {fundamentals[sym]?.ytd != null && (
+                                      <span style={{ fontSize: 11, fontWeight: 700, color: fundamentals[sym].ytd >= 0 ? C.up : C.dn }}>{fundamentals[sym].ytd >= 0 ? "+" : ""}{fundamentals[sym].ytd.toFixed(1)}%</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
