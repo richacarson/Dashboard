@@ -5217,11 +5217,17 @@ Instructions:
                 if (!perfBmToggles[sym]) return;
                 const prices = Object.entries(priceMap).sort((a,b) => a[0].localeCompare(b[0]));
                 if (!prices.length) return;
-                // Find first price on or after portfolio start
+                // Find nearest price to portfolio start (forward first, then backward)
                 const startDate = filtered[0].date;
                 let basePrice = null;
                 for (const [d, p] of prices) {
                   if (d >= startDate) { basePrice = p; break; }
+                }
+                if (!basePrice) {
+                  // Fall back to nearest price before start date
+                  for (let j = prices.length - 1; j >= 0; j--) {
+                    if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; }
+                  }
                 }
                 if (!basePrice) return;
                 // Map benchmark dates to portfolio dates (nearest Friday match)
@@ -5585,11 +5591,7 @@ Instructions:
                       { label: "1-Month", days: 30 },
                       { label: "3-Month", days: 91 },
                       { label: "YTD", ytd: true },
-                      { label: "1-Year", days: 365 },
-                      { label: "3-Year", days: 365 * 3, ann: true },
-                      { label: "5-Year", days: 365 * 5, ann: true },
-                      { label: "10-Year", days: 365 * 10, ann: true },
-                      { label: "Since Inception", all: true, ann: true },
+                      { label: "Since Inception", all: true },
                     ];
 
                     const getReturn = (p) => {
@@ -5699,8 +5701,8 @@ Instructions:
                           </div>
                         </div>
 
-                        {/* ── Annual Return History ── */}
-                        {(() => {
+                        {/* ── Annual Return History (hidden for growth — only partial year) ── */}
+                        {perfSleeve !== "growth" && (() => {
                           const annReturns = perfData.annualReturns || {};
                           const bmAnnReturns = perfData.bmAnnualReturns || {};
                           const years = Object.keys(annReturns).sort();
