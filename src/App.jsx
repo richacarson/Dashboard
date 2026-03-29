@@ -4912,7 +4912,7 @@ Instructions:
 
         {/* ━━━ PERFORMANCE ━━━ */}
         {tab === "performance" && (
-          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, paddingBottom: 120 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
 
             {/* Chart / Holdings toggle */}
