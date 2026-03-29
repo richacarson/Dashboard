@@ -2024,7 +2024,7 @@ Instructions:
 
       // Fetch intraday benchmark bars
       // All benchmarks via Alpaca IEX feed
-      const allBmSyms = ["SPY", "DIA", "DVY", "IWS"];
+      const allBmSyms = ["SPY", "DIA", "DVY", "IWS", "IUSG", "QQQ"];
       const fetchBmBars = async (syms, timeframe, startDate) => {
         try {
           const url = `${BASE}/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
