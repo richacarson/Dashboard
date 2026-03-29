@@ -499,7 +499,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <iframe
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart`}
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=${encodeURIComponent("MASimple@tv-basicstudies,MASimple@tv-basicstudies")}&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides=${encodeURIComponent('{"Moving Average.length":50,"Moving Average.plot.color":"#2962FF","Moving Average#1.length":200,"Moving Average#1.plot.color":"#FF6D00"}')}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en&utm_source=&utm_medium=widget&utm_campaign=chart`}
             style={{ flex: 1, width: "100%", border: "none", display: "block" }}
             title={`${symbol} Chart`}
             sandbox="allow-scripts allow-same-origin allow-popups"
@@ -4668,7 +4668,9 @@ Instructions:
           );
 
           const chartBg = isDark ? "0C1018" : "F5F5F0";
-          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
+          const maStudies = encodeURIComponent("MASimple@tv-basicstudies,MASimple@tv-basicstudies");
+          const maOverrides = encodeURIComponent('{"Moving Average.length":50,"Moving Average.plot.color":"#2962FF","Moving Average#1.length":200,"Moving Average#1.plot.color":"#FF6D00"}');
+          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=${maStudies}&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides=${maOverrides}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
 
           return (
             <div style={{
