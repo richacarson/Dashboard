@@ -5586,12 +5586,12 @@ Instructions:
                     const endDate = new Date(end.date + "T12:00:00");
 
                     const trailingPeriods = [
-                      { label: "1-Day", oneDay: true },
-                      { label: "1-Week", days: 7 },
-                      { label: "1-Month", days: 30 },
-                      { label: "3-Month", days: 91 },
-                      { label: "YTD", ytd: true },
-                      { label: "Since Inception", all: true },
+                      { label: "1-Day", shortLabel: "1D", oneDay: true },
+                      { label: "1-Week", shortLabel: "1W", days: 7 },
+                      { label: "1-Month", shortLabel: "1M", days: 30 },
+                      { label: "3-Month", shortLabel: "3M", days: 91 },
+                      { label: "YTD", shortLabel: "YTD", ytd: true },
+                      { label: "Inception", shortLabel: "Incep.", all: true },
                     ];
 
                     const getReturn = (p) => {
@@ -5673,8 +5673,8 @@ Instructions:
                                 <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: C.t3, fontSize: 11 }}>Return</th>
                                   {trailingPeriods.map(p => (
-                                    <th key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: C.t4, fontSize: 11, whiteSpace: "nowrap" }}>
-                                      {p.label}{p.ann ? " (Ann.)" : ""}
+                                    <th key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, color: C.t4, fontSize: 11, whiteSpace: "nowrap" }}>
+                                      {isDesktop ? p.label : (p.shortLabel || p.label)}
                                     </th>
                                   ))}
                                 </tr>
@@ -5684,7 +5684,7 @@ Instructions:
                                   <td style={{ padding: "10px 14px", fontWeight: 700, color: C.accent, fontSize: 12 }}>Total</td>
                                   {trailingPeriods.map(p => {
                                     const v = getReturn(p);
-                                    return <td key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{fmtPct(v)}</td>;
+                                    return <td key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{fmtPct(v)}</td>;
                                   })}
                                 </tr>
                                 {activeBms.map(sym => (
@@ -5692,7 +5692,7 @@ Instructions:
                                     <td style={{ padding: "10px 14px", fontWeight: 600, color: bmColors[sym], fontSize: 12 }}>{sym}</td>
                                     {trailingPeriods.map(p => {
                                       const v = getBmReturn(sym, p);
-                                      return <td key={p.label} style={{ padding: "10px 10px", textAlign: "right", fontWeight: 600, color: pctColor(v) }}>{fmtPct(v)}</td>;
+                                      return <td key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, color: pctColor(v) }}>{fmtPct(v)}</td>;
                                     })}
                                   </tr>
                                 ))}
