@@ -499,7 +499,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <iframe
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A100%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%22moving%20average.plot.color%22%3A%22%232962FF%22%2C%22moving%20average.plot.linewidth%22%3A1%2C%22moving%20average%231.plot.color%22%3A%22%2322C55E%22%2C%22moving%20average%231.plot.linewidth%22%3A1%2C%22moving%20average%232.plot.color%22%3A%22%23FFD700%22%2C%22moving%20average%232.plot.linewidth%22%3A3%7D&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%2C%22styles%22%3A%7B%22plot%22%3A%7B%22color%22%3A%22%232962FF%22%2C%22linewidth%22%3A1%7D%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A100%7D%2C%22styles%22%3A%7B%22plot%22%3A%7B%22color%22%3A%22%2322C55E%22%2C%22linewidth%22%3A1%7D%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%2C%22styles%22%3A%7B%22plot%22%3A%7B%22color%22%3A%22%23FFD700%22%2C%22linewidth%22%3A3%7D%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
             style={{ flex: 1, width: "100%", border: "none", display: "block" }}
             title={`${symbol} Chart`}
             sandbox="allow-scripts allow-same-origin allow-popups"
@@ -4628,10 +4628,6 @@ Instructions:
           }));
 
           const WatchlistItem = ({ sym }) => {
-            const q = quotesRef.current?.[sym];
-            const pc = barsRef.current?.[sym]?.pc;
-            const price = q?.p;
-            const chg = price && pc ? ((price - pc) / pc * 100) : null;
             const isActive = sym === activeSym;
             return (
               <div onClick={() => { setChartsActiveSym(sym); setChartsMobileList(false); }} style={{
@@ -4639,7 +4635,6 @@ Instructions:
                 padding: "10px 14px", cursor: "pointer", borderRadius: 10,
                 background: isActive ? C.accentSoft : "transparent",
                 borderLeft: isActive ? `3px solid ${C.accent}` : "3px solid transparent",
-                transition: "background 0.15s, border-left 0.15s",
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                   <StockLogo symbol={sym} size={28} logoUrl={fundamentals[sym]?.logo} />
@@ -4648,9 +4643,9 @@ Instructions:
                     <div style={{ fontSize: 10, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 100 }}>{names[sym] || ""}</div>
                   </div>
                 </div>
-                <div style={{ textAlign: "right", flexShrink: 0, minWidth: 60, fontVariantNumeric: "tabular-nums" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{price ? `$${price.toFixed(2)}` : "—"}</div>
-                  {chg != null && <div style={{ fontSize: 10, fontWeight: 700, color: chg >= 0 ? C.up : C.dn }}>{chg >= 0 ? "+" : ""}{chg.toFixed(2)}%</div>}
+                <div style={{ textAlign: "right", flexShrink: 0, minWidth: 62, fontVariantNumeric: "tabular-nums" }}>
+                  <div ref={el => { if (el) { const q = quotesRef.current?.[sym]; el.textContent = q?.p ? `$${q.p.toFixed(2)}` : "—"; }}} style={{ fontSize: 12, fontWeight: 600, color: C.t2 }} />
+                  <div ref={el => { if (el) { const q = quotesRef.current?.[sym]; const pc = barsRef.current?.[sym]?.pc; if (q?.p && pc) { const chg = ((q.p - pc) / pc * 100); el.textContent = `${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`; el.style.color = chg >= 0 ? C.up : C.dn; } else { el.textContent = ""; }}}} style={{ fontSize: 10, fontWeight: 700 }} />
                 </div>
               </div>
             );
@@ -4668,7 +4663,7 @@ Instructions:
           );
 
           const chartBg = isDark ? "0C1018" : "F5F5F0";
-          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A100%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides=%7B%22moving%20average.plot.color%22%3A%22%232962FF%22%2C%22moving%20average.plot.linewidth%22%3A1%2C%22moving%20average%231.plot.color%22%3A%22%2322C55E%22%2C%22moving%20average%231.plot.linewidth%22%3A1%2C%22moving%20average%232.plot.color%22%3A%22%23FFD700%22%2C%22moving%20average%232.plot.linewidth%22%3A3%7D&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
+          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%2C%22styles%22%3A%7B%22plot%22%3A%7B%22color%22%3A%22%232962FF%22%2C%22linewidth%22%3A1%7D%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A100%7D%2C%22styles%22%3A%7B%22plot%22%3A%7B%22color%22%3A%22%2322C55E%22%2C%22linewidth%22%3A1%7D%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%2C%22styles%22%3A%7B%22plot%22%3A%7B%22color%22%3A%22%23FFD700%22%2C%22linewidth%22%3A3%7D%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
 
           return (
             <div style={{
