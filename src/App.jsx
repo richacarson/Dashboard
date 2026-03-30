@@ -507,7 +507,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
               new window.TradingView.widget({
                 container_id: "tv_chart_profile",
                 symbol: symbol,
-                interval: "W",
+                interval: "D",
                 timezone: "America/New_York",
                 theme: isDark ? "dark" : "light",
                 style: "1",
@@ -4700,7 +4700,7 @@ Instructions:
               new window.TradingView.widget({
                 container_id: containerId,
                 symbol: activeSym,
-                interval: "W",
+                interval: "D",
                 timezone: "America/New_York",
                 theme: isDark ? "dark" : "light",
                 style: "1",
