@@ -4627,10 +4627,10 @@ Instructions:
             key: k, name: sl.name, icon: sl.icon, symbols: sl.symbols,
           }));
 
-          const WatchlistItem = ({ sym }) => {
+          const renderWatchlistItem = (sym) => {
             const isActive = sym === activeSym;
             return (
-              <div onClick={() => { setChartsActiveSym(sym); setChartsMobileList(false); }} style={{
+              <div key={sym} onClick={() => { setChartsActiveSym(sym); setChartsMobileList(false); }} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "10px 14px", cursor: "pointer", borderRadius: 10,
                 background: isActive ? C.accentSoft : "transparent",
@@ -4644,19 +4644,19 @@ Instructions:
                   </div>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0, minWidth: 62, fontVariantNumeric: "tabular-nums" }}>
-                  <div ref={el => { if (el) { const q = quotesRef.current?.[sym]; el.textContent = q?.p ? `$${q.p.toFixed(2)}` : "—"; }}} style={{ fontSize: 12, fontWeight: 600, color: C.t2 }} />
-                  <div ref={el => { if (el) { const q = quotesRef.current?.[sym]; const pc = barsRef.current?.[sym]?.pc; if (q?.p && pc) { const chg = ((q.p - pc) / pc * 100); el.textContent = `${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`; el.style.color = chg >= 0 ? C.up : C.dn; } else { el.textContent = ""; }}}} style={{ fontSize: 10, fontWeight: 700 }} />
+                  <div data-wl-price={sym} style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{quotesRef.current?.[sym]?.p ? `$${quotesRef.current[sym].p.toFixed(2)}` : "—"}</div>
+                  <div data-wl-chg={sym} style={{ fontSize: 10, fontWeight: 700, color: (() => { const q = quotesRef.current?.[sym]; const pc = barsRef.current?.[sym]?.pc; return q?.p && pc ? ((q.p - pc) / pc * 100) >= 0 ? C.up : C.dn : C.t4; })() }}>{(() => { const q = quotesRef.current?.[sym]; const pc = barsRef.current?.[sym]?.pc; if (q?.p && pc) { const chg = ((q.p - pc) / pc * 100); return `${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`; } return ""; })()}</div>
                 </div>
               </div>
             );
           };
 
-          const Sidebar = ({ asList }) => (
+          const renderSidebar = (asList) => (
             <div style={{ padding: "8px 6px" }}>
               {groups.map(g => (
                 <div key={g.key} style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, padding: "6px 14px", textTransform: "uppercase", letterSpacing: 0.5 }}>{g.icon} {g.name}</div>
-                  {g.symbols.map(s => <WatchlistItem key={s} sym={s} />)}
+                  {g.symbols.map(s => renderWatchlistItem(s))}
                 </div>
               ))}
             </div>
@@ -4699,7 +4699,7 @@ Instructions:
               {!isDesktop && chartsMobileList ? (
                 <div style={{ flex: 1, position: "relative" }}>
                   <div style={{ position: "absolute", inset: 0, overflowY: "scroll", WebkitOverflowScrolling: "touch" }}>
-                    <Sidebar asList />
+                    {renderSidebar(true)}
                     <div style={{ height: 80 }} />
                   </div>
                 </div>
@@ -4741,7 +4741,7 @@ Instructions:
                   <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column" }}>
                     <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1, flexShrink: 0 }}>Watchlist</div>
                     <div style={{ flex: 1, overflowY: "auto" }}>
-                      <Sidebar />
+                      {renderSidebar(false)}
                     </div>
                   </div>
                 </>
