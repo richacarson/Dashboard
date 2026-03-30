@@ -498,35 +498,12 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       {/* CHART TAB — full screen */}
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          <div id="tv_chart_profile" style={{ flex: 1, width: "100%" }} ref={el => {
-            if (!el || el.dataset.init) return;
-            el.dataset.init = "1";
-            const s = document.createElement("script");
-            s.src = "https://s.tradingview.com/tv.js";
-            s.onload = () => {
-              new window.TradingView.widget({
-                container_id: "tv_chart_profile",
-                symbol: symbol,
-                interval: "W",
-                timezone: "America/New_York",
-                theme: isDark ? "dark" : "light",
-                style: "1",
-                locale: "en",
-                toolbar_bg: isDark ? "#171D2A" : "#F5F5F0",
-                enable_publishing: false,
-                hide_side_toolbar: true,
-                allow_symbol_change: false,
-                save_image: false,
-                autosize: true,
-                studies: [
-                  { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
-                  { id: "MASimple@tv-basicstudies", inputs: { length: 200 } },
-                ],
-              });
-            };
-            if (window.TradingView) s.onload();
-            else el.appendChild(s);
-          }} />
+          <iframe
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=en`}
+            style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+            title={`${symbol} Chart`}
+            sandbox="allow-scripts allow-same-origin allow-popups"
+          />
         </div>
       )}
 
@@ -4691,40 +4668,7 @@ Instructions:
           );
 
           const chartBg = isDark ? "0C1018" : "F5F5F0";
-          const tvWidgetRef = (containerId) => (el) => {
-            if (!el || el.dataset.tvInit === activeSym) return;
-            el.dataset.tvInit = activeSym;
-            el.innerHTML = "";
-            const loadWidget = () => {
-              if (!window.TradingView) return;
-              new window.TradingView.widget({
-                container_id: containerId,
-                symbol: activeSym,
-                interval: "W",
-                timezone: "America/New_York",
-                theme: isDark ? "dark" : "light",
-                style: "1",
-                locale: "en",
-                toolbar_bg: `#${chartBg}`,
-                enable_publishing: false,
-                hide_side_toolbar: true,
-                allow_symbol_change: false,
-                save_image: false,
-                autosize: true,
-                studies: [
-                  { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
-                  { id: "MASimple@tv-basicstudies", inputs: { length: 200 } },
-                ],
-              });
-            };
-            if (window.TradingView) { loadWidget(); }
-            else {
-              const s = document.createElement("script");
-              s.src = "https://s.tradingview.com/tv.js";
-              s.onload = loadWidget;
-              document.head.appendChild(s);
-            }
-          };
+          const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=W&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=[]&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=[]&disabled_features=[]&locale=en`;
 
           return (
             <div style={{
@@ -4765,7 +4709,13 @@ Instructions:
                   </div>
                 </div>
               ) : !isDesktop ? (
-                <div key={activeSym} id="tv_chart_mobile" ref={tvWidgetRef("tv_chart_mobile")} style={{ flex: 1, width: "100%" }} />
+                <iframe
+                  key={activeSym}
+                  src={chartUrl}
+                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+                  title={`${activeSym} Chart`}
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                />
               ) : null}
               {/* Desktop layout */}
               {isDesktop && (
@@ -4785,7 +4735,13 @@ Instructions:
                         {dayChg != null && <div style={{ fontSize: 13, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg >= 0 ? "+" : ""}{dayChg.toFixed(2)}%</div>}
                       </div>}
                     </div>
-                    <div key={activeSym} id="tv_chart_desktop" ref={tvWidgetRef("tv_chart_desktop")} style={{ flex: 1, width: "100%" }} />
+                    <iframe
+                      key={activeSym}
+                      src={chartUrl}
+                      style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+                      title={`${activeSym} Chart`}
+                      sandbox="allow-scripts allow-same-origin allow-popups"
+                    />
                   </div>
                   <div style={{ width: 260, borderLeft: `1px solid ${C.border}`, background: C.surface, flexShrink: 0, display: "flex", flexDirection: "column" }}>
                     <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 14, fontWeight: 700, color: C.t1, flexShrink: 0 }}>Watchlist</div>
