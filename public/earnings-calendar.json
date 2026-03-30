@@ -2050,16 +2050,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PII",
-    "date": "2026-03-25",
-    "hour": "",
-    "epsEstimate": -0.4311,
-    "epsActual": null,
-    "revenueEstimate": 1674477131,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "PIII",
     "date": "2026-03-25",
     "hour": "amc",
@@ -4282,7 +4272,7 @@
   {
     "symbol": "FRMI",
     "date": "2026-03-30",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0167,
     "epsActual": null,
     "revenueEstimate": 8421803,
@@ -5696,16 +5686,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "AES",
-    "date": "2026-03-31",
-    "hour": "",
-    "epsEstimate": 0.451,
-    "epsActual": null,
-    "revenueEstimate": 3118297906,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7220,16 +7200,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MAMA",
-    "date": "2026-04-06",
-    "hour": "amc",
-    "epsEstimate": 0.0391,
-    "epsActual": null,
-    "revenueEstimate": 53675286,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MAZE",
     "date": "2026-04-06",
     "hour": "",
@@ -7951,16 +7921,6 @@
   },
   {
     "symbol": "AXIL",
-    "date": "2026-04-09",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BIOQ",
     "date": "2026-04-09",
     "hour": "",
     "epsEstimate": null,
