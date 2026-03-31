@@ -2164,9 +2164,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.1326,
-    "epsActual": null,
+    "epsActual": -0.29,
     "revenueEstimate": 63820380,
-    "revenueActual": null,
+    "revenueActual": 61590000,
     "source": "finnhub"
   },
   {
@@ -2314,9 +2314,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.1836,
-    "epsActual": null,
+    "epsActual": -0.14,
     "revenueEstimate": 59945400,
-    "revenueActual": null,
+    "revenueActual": 49750000,
     "source": "finnhub"
   },
   {
@@ -2364,9 +2364,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": -0.02,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 11680000,
     "source": "finnhub"
   },
   {
@@ -2444,9 +2444,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.0153,
-    "epsActual": null,
+    "epsActual": -0.01,
     "revenueEstimate": 2355690,
-    "revenueActual": null,
+    "revenueActual": 2060000,
     "source": "finnhub"
   },
   {
@@ -2464,9 +2464,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": 0.2133,
-    "epsActual": null,
+    "epsActual": 0.37,
     "revenueEstimate": 150777868,
-    "revenueActual": null,
+    "revenueActual": 149670000,
     "source": "finnhub"
   },
   {
@@ -2474,9 +2474,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.3468,
-    "epsActual": null,
+    "epsActual": -0.52,
     "revenueEstimate": 1887000,
-    "revenueActual": null,
+    "revenueActual": 2270000,
     "source": "finnhub"
   },
   {
@@ -2504,9 +2504,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.5814,
-    "epsActual": null,
+    "epsActual": 3.14,
     "revenueEstimate": 0,
-    "revenueActual": null,
+    "revenueActual": 0,
     "source": "finnhub"
   },
   {
@@ -2574,9 +2574,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.0357,
-    "epsActual": null,
+    "epsActual": -0.06,
     "revenueEstimate": 14853750,
-    "revenueActual": null,
+    "revenueActual": 12700000,
     "source": "finnhub"
   },
   {
@@ -2724,9 +2724,9 @@
     "date": "2026-03-31",
     "hour": "amc",
     "epsEstimate": -0.2856,
-    "epsActual": null,
+    "epsActual": -0.19,
     "revenueEstimate": 5753820,
-    "revenueActual": null,
+    "revenueActual": 4530000,
     "source": "finnhub"
   },
   {
