@@ -3732,39 +3732,39 @@ Instructions:
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 4 }}>Growth vs Value Matrix</div>
                   <div style={{ fontSize: 12, color: C.t4, marginBottom: 6 }}>Stocks split by median P/E ({medPE.toFixed(1)}) and median Rev Growth ({medRev.toFixed(1)}%)</div>
-                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr", gap: 10, marginTop: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr 1fr", gap: isDesktop ? 10 : 6, marginTop: 14 }}>
                     {quadrants.map(q => (
                       <div key={q.key} style={{
-                        background: q.color + "0A", borderRadius: 14, padding: "14px 14px",
+                        background: q.color + "0A", borderRadius: isDesktop ? 14 : 10, padding: isDesktop ? "14px 14px" : "10px 10px",
                         border: `1px solid ${q.color}30`,
                       }}>
                         {/* Quadrant header */}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span style={{ fontSize: 18 }}>{q.icon}</span>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isDesktop ? 10 : 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: isDesktop ? 18 : 14 }}>{q.icon}</span>
                             <div>
-                              <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{q.label}</div>
-                              <div style={{ fontSize: 10, color: C.t4 }}>{q.desc}</div>
+                              <div style={{ fontSize: isDesktop ? 14 : 12, fontWeight: 700, color: C.t1 }}>{q.label}</div>
+                              <div style={{ fontSize: isDesktop ? 10 : 9, color: C.t4 }}>{q.desc}</div>
                             </div>
                           </div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: q.color }}>{q.stocks.length}</div>
+                          <div style={{ fontSize: isDesktop ? 20 : 16, fontWeight: 800, color: q.color }}>{q.stocks.length}</div>
                         </div>
                         {/* Stock list */}
                         {q.stocks.length === 0 ? (
-                          <div style={{ fontSize: 11, color: C.t4, padding: "8px 0", textAlign: "center" }}>No stocks</div>
+                          <div style={{ fontSize: 11, color: C.t4, padding: "6px 0", textAlign: "center" }}>No stocks</div>
                         ) : q.stocks.map((p, i) => (
                           <div key={p.sym} {...stockContextHandlers(p.sym)} style={{
-                            display: "flex", alignItems: "center", gap: 8, padding: "7px 0", cursor: "pointer",
+                            display: "flex", alignItems: "center", gap: isDesktop ? 8 : 6, padding: isDesktop ? "7px 0" : "5px 0", cursor: "pointer",
                             borderTop: i > 0 ? `1px solid ${C.border}` : "none",
                           }}>
-                            <StockLogo symbol={p.sym} size={22} logoUrl={fundamentals[p.sym]?.logo} />
+                            {isDesktop && <StockLogo symbol={p.sym} size={22} logoUrl={fundamentals[p.sym]?.logo} />}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{p.sym}</div>
-                              <div style={{ fontSize: 10, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                              <div style={{ fontSize: isDesktop ? 13 : 12, fontWeight: 700, color: C.accent }}>{p.sym}</div>
+                              {isDesktop && <div style={{ fontSize: 10, color: C.t4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>}
                             </div>
                             <div style={{ textAlign: "right", flexShrink: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: p.rev >= 0 ? C.up : C.dn }}>{p.rev >= 0 ? "+" : ""}{p.rev.toFixed(1)}%</div>
-                              <div style={{ fontSize: 10, color: C.t3 }}>{p.pe.toFixed(1)}x</div>
+                              <div style={{ fontSize: isDesktop ? 12 : 11, fontWeight: 700, color: p.rev >= 0 ? C.up : C.dn }}>{p.rev >= 0 ? "+" : ""}{p.rev.toFixed(1)}%</div>
+                              <div style={{ fontSize: isDesktop ? 10 : 9, color: C.t3 }}>{p.pe.toFixed(1)}x</div>
                             </div>
                           </div>
                         ))}
