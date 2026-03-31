@@ -5580,14 +5580,20 @@ Instructions:
                     const endVal = end.value;
                     const endDate = new Date(end.date + "T12:00:00");
 
-                    const trailingPeriods = [
+                    const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date + "T12:00:00") - new Date(portfolio[0].date + "T12:00:00")) / 86400000 : 0;
+                    const allPeriods = [
                       { label: "1-Day", shortLabel: "1D", oneDay: true, rangeKey: "1D" },
-                      { label: "1-Week", shortLabel: "1W", days: 7 },
-                      { label: "1-Month", shortLabel: "1M", days: 30 },
-                      { label: "3-Month", shortLabel: "3M", days: 91 },
                       { label: "YTD", shortLabel: "YTD", ytd: true, rangeKey: "YTD" },
+                      { label: "1-Year", shortLabel: "1Y", days: 365, rangeKey: "1Y" },
+                      { label: "3-Year", shortLabel: "3Y", days: 365 * 3, rangeKey: "3Y", ann: true },
+                      { label: "5-Year", shortLabel: "5Y", days: 365 * 5, rangeKey: "5Y", ann: true },
+                      { label: "10-Year", shortLabel: "10Y", days: 365 * 10, rangeKey: "10Y", ann: true },
                       { label: "Inception", shortLabel: "Incep.", all: true, rangeKey: "ALL" },
                     ];
+                    const trailingPeriods = allPeriods.filter(p => {
+                      if (p.oneDay || p.ytd || p.all) return true;
+                      return daysAvailable >= p.days * 0.9;
+                    });
 
                     const getReturn = (p) => {
                       if (p.oneDay) {
