@@ -5581,12 +5581,12 @@ Instructions:
                     const endDate = new Date(end.date + "T12:00:00");
 
                     const trailingPeriods = [
-                      { label: "1-Day", shortLabel: "1D", oneDay: true },
+                      { label: "1-Day", shortLabel: "1D", oneDay: true, rangeKey: "1D" },
                       { label: "1-Week", shortLabel: "1W", days: 7 },
                       { label: "1-Month", shortLabel: "1M", days: 30 },
                       { label: "3-Month", shortLabel: "3M", days: 91 },
-                      { label: "YTD", shortLabel: "YTD", ytd: true },
-                      { label: "Inception", shortLabel: "Incep.", all: true },
+                      { label: "YTD", shortLabel: "YTD", ytd: true, rangeKey: "YTD" },
+                      { label: "Inception", shortLabel: "Incep.", all: true, rangeKey: "ALL" },
                     ];
 
                     const getReturn = (p) => {
@@ -5667,11 +5667,20 @@ Instructions:
                               <thead>
                                 <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: C.t3, fontSize: 11 }}>Return</th>
-                                  {trailingPeriods.map(p => (
-                                    <th key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, color: C.t4, fontSize: 11, whiteSpace: "nowrap" }}>
-                                      {isDesktop ? p.label : (p.shortLabel || p.label)}
-                                    </th>
-                                  ))}
+                                  {trailingPeriods.map(p => {
+                                    const isActive = p.rangeKey === perfRange;
+                                    return (
+                                      <th key={p.label} onClick={() => p.rangeKey && setPerfRange(p.rangeKey)} style={{
+                                        padding: "10px 8px", textAlign: "right", fontWeight: isActive ? 800 : 600,
+                                        color: isActive ? C.accent : C.t4, fontSize: 11, whiteSpace: "nowrap",
+                                        background: isActive ? C.accentSoft : "transparent",
+                                        cursor: p.rangeKey ? "pointer" : "default",
+                                        borderBottom: isActive ? `2px solid ${C.accent}` : "none",
+                                      }}>
+                                        {isDesktop ? p.label : (p.shortLabel || p.label)}
+                                      </th>
+                                    );
+                                  })}
                                 </tr>
                               </thead>
                               <tbody>
@@ -5679,7 +5688,8 @@ Instructions:
                                   <td style={{ padding: "10px 14px", fontWeight: 700, color: C.accent, fontSize: 12 }}>Total</td>
                                   {trailingPeriods.map(p => {
                                     const v = getReturn(p);
-                                    return <td key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: pctColor(v) }}>{fmtPct(v)}</td>;
+                                    const isActive = p.rangeKey === perfRange;
+                                    return <td key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 700, color: pctColor(v), background: isActive ? C.accentSoft : "transparent" }}>{fmtPct(v)}</td>;
                                   })}
                                 </tr>
                                 {activeBms.map(sym => (
@@ -5687,7 +5697,8 @@ Instructions:
                                     <td style={{ padding: "10px 14px", fontWeight: 600, color: bmColors[sym], fontSize: 12 }}>{sym}</td>
                                     {trailingPeriods.map(p => {
                                       const v = getBmReturn(sym, p);
-                                      return <td key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, color: pctColor(v) }}>{fmtPct(v)}</td>;
+                                      const isActive = p.rangeKey === perfRange;
+                                      return <td key={p.label} style={{ padding: "10px 8px", textAlign: "right", fontWeight: 600, color: pctColor(v), background: isActive ? C.accentSoft : "transparent" }}>{fmtPct(v)}</td>;
                                     })}
                                   </tr>
                                 ))}
