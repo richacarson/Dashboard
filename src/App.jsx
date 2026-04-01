@@ -5911,7 +5911,8 @@ Instructions:
               }}>Open ↗</button>
             </div>
             <iframe
-              src={`${active.url}?t=${Math.floor(Date.now() / 60000)}`}
+              key={active.id}
+              src={active.url}
               title={active.title}
               style={{ flex: 1, width: "100%", border: "none", display: "block" }}
               sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
