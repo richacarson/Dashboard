@@ -6184,11 +6184,11 @@ function GS({ theme }) {
       * { -webkit-tap-highlight-color: transparent; }
       input::placeholder { color: ${isDark ? "#3A4A28" : "#9DAF88"} !important; }
       input:focus { border-color: rgba(${isDark ? "120,140,88" : "74,107,37"},0.30) !important; }
-      ::-webkit-scrollbar { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.2" : "80,100,60,0.2"}); border-radius: 6px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.35" : "80,100,60,0.35"}); }
-      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; }
+      ::-webkit-scrollbar { width: 10px; height: 8px; }
+      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(30,40,25,0.3)" : "rgba(200,210,190,0.3)"}; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.4" : "80,100,60,0.35"}); border-radius: 10px; min-height: 40px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.6" : "80,100,60,0.55"}); }
+      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "110,132,80,0.4" : "80,100,60,0.35"}) ${isDark ? "rgba(30,40,25,0.3)" : "rgba(200,210,190,0.3)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
