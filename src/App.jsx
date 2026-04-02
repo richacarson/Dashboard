@@ -5914,7 +5914,8 @@ Instructions:
               key={active.id}
               src={active.url}
               title={active.title}
-              style={{ flex: 1, width: "100%", border: "none", display: "block" }}
+              scrolling="yes"
+              style={{ flex: 1, width: "100%", border: "none", display: "block", overflow: "auto" }}
               sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
             />
           </div>
@@ -5949,7 +5950,8 @@ Instructions:
           <iframe
             src="https://richacarson.github.io/Stock-Screener/?embed=1"
             title="Stock Screener"
-            style={{ flex: 1, width: "100%", border: "none", display: "block", filter: theme === "dark" ? "invert(0.88) hue-rotate(180deg)" : "none" }}
+            scrolling="yes"
+            style={{ flex: 1, width: "100%", border: "none", display: "block", filter: theme === "dark" ? "invert(0.88) hue-rotate(180deg)" : "none", overflow: "auto" }}
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
           />
         </div>
