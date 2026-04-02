@@ -5949,7 +5949,7 @@ Instructions:
           <iframe
             src="https://richacarson.github.io/Stock-Screener/?embed=1"
             title="Stock Screener"
-            style={{ flex: 1, width: "100%", border: "none", display: "block", filter: isDark ? "invert(0.88) hue-rotate(180deg)" : "none" }}
+            style={{ flex: 1, width: "100%", border: "none", display: "block", filter: theme === "dark" ? "invert(0.88) hue-rotate(180deg)" : "none" }}
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
           />
         </div>
