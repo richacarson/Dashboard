@@ -3480,16 +3480,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SES",
-    "date": "2026-04-01",
-    "hour": "",
-    "epsEstimate": -0.0354,
-    "epsActual": null,
-    "revenueEstimate": 3692560,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SNYR",
     "date": "2026-04-01",
     "hour": "bmo",
