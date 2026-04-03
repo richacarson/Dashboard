@@ -4672,7 +4672,7 @@
   {
     "symbol": "BYRN",
     "date": "2026-04-09",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0791,
     "epsActual": null,
     "revenueEstimate": 30206688,
@@ -4802,7 +4802,7 @@
   {
     "symbol": "NEOG",
     "date": "2026-04-09",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0587,
     "epsActual": null,
     "revenueEstimate": 208581840,
@@ -4852,7 +4852,7 @@
   {
     "symbol": "SLP",
     "date": "2026-04-09",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.1995,
     "epsActual": null,
     "revenueEstimate": 21881650,
@@ -4902,7 +4902,7 @@
   {
     "symbol": "WDFC",
     "date": "2026-04-09",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.4535,
     "epsActual": null,
     "revenueEstimate": 157967400,
