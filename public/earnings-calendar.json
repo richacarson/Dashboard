@@ -4582,7 +4582,7 @@
   {
     "symbol": "RELL",
     "date": "2026-04-08",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0459,
     "epsActual": null,
     "revenueEstimate": 54187500,
@@ -4812,7 +4812,7 @@
   {
     "symbol": "NTIC",
     "date": "2026-04-09",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0204,
     "epsActual": null,
     "revenueEstimate": 21522000,
