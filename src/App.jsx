@@ -1323,6 +1323,7 @@ Instructions:
           profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
           roe: m.roeTTM ?? m.roeAnnual ?? null,
           de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
+          beta: m.beta ?? null,
           lastQtr: lastQtrCalc,
           thisQtr: thisQtrCalc ?? (curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null),
           ytd: ytdCalc ?? m["yearToDatePriceReturnDaily"] ?? null,
@@ -4229,6 +4230,7 @@ Instructions:
                 { l: "Rev 5Y", w: 62, k: "revenue5Y", fn: d => fmtP(d.revenue5Y), color: d => (d.revenue5Y||0) > 0 ? C.up : C.dn },
                 { l: "ROE", w: 58, k: "roe", fn: d => fmtP(d.roe) },
                 { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
+                { l: "Beta", w: 50, k: "beta", fn: d => d.beta != null ? d.beta.toFixed(2) : "—" },
               ];
               const groCols = [
                 textCol("Industry", "industry", 110),
@@ -4245,6 +4247,7 @@ Instructions:
                 { l: "Margin", w: 62, k: "profitMargin", fn: d => fmtP(d.profitMargin) },
                 { l: "ROE", w: 58, k: "roe", fn: d => fmtP(d.roe) },
                 { l: "D/E", w: 50, k: "de", fn: d => fmtV(d.de) },
+                { l: "Beta", w: 50, k: "beta", fn: d => d.beta != null ? d.beta.toFixed(2) : "—" },
               ];
               const cols = (metricsView === "dividend") ? divCols : groCols;
 
