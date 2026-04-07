@@ -3518,7 +3518,7 @@ Instructions:
               let offset = 0;
               const arcs = sectors.map((s, i) => {
                 const len = (s.pct / 100) * circ;
-                const gap = sectors.length > 1 ? 3 : 0;
+                const gap = sectors.length > 1 ? 2 : 0;
                 const arc = { ...s, color: COLORS[i % COLORS.length], dasharray: `${Math.max(0, len - gap)} ${circ - Math.max(0, len - gap)}`, dashoffset: -offset };
                 offset += len;
                 return arc;
