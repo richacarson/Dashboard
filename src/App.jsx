@@ -10,10 +10,14 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "
    ═══════════════════════════════════════════════════════════════════ */
 
 const DEFAULT_SLEEVES = {
-  dividend: { name: "Dividend Strategy", symbols: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
-  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","KEYS","MARA","NVDA","NXPI","OKE","PDD","HOOD","SYF","TSM","TOL"], icon: "🚀" },
+  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","CTRA","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
+  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
   sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLC","XLU"], icon: "📊" },
+};
+const TARGET_WEIGHTS = {
+  dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, CTRA:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
+  growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
 const loadSleeves = () => {
   try {
@@ -233,6 +237,7 @@ const LOGO_DOMAINS = {
   O:"realtyincome.com",STLD:"steeldynamics.com",VLO:"valero.com",CNX:"cnx.com",
   BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
   SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
+  NTR:"nutrien.com",CTRA:"coterra.com",FCX:"fcx.com",CRDO:"credosemi.com",VST:"vistracorp.com",MRVL:"marvell.com",
   DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
   IBIT:"ishares.com",ETHA:"ishares.com",
   A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
@@ -1238,13 +1243,13 @@ Instructions:
             "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
             "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
             "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "MATX": "Industrials", "STLD": "Industrials", "PCAR": "Industrials",
-            "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "OKE": "Energy",
-            "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy",
+            "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "OKE": "Energy", "VST": "Utilities",
+            "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
             "ORI": "Financials", "SYF": "Financials", "FINV": "Financials", "SUPV": "Financials",
             "COIN": "Financials", "HOOD": "Financials", "SOFI": "Financials",
             "PDD": "Consumer", "TOL": "Consumer", "MTH": "Consumer",
-            "AEM": "Materials", "GFI": "Materials",
-            "ATAT": "Communication", "HUT": "Technology", "MARA": "Technology",
+            "AEM": "Materials", "GFI": "Materials", "NTR": "Materials", "FCX": "Materials",
+            "ATAT": "Communication", "HUT": "Technology", "MARA": "Technology", "CRDO": "Technology", "MRVL": "Technology",
             "IBIT": "Digital Assets", "ETHA": "Digital Assets",
           };
           if (SECTOR_OVERRIDES[sym]) {
@@ -2232,11 +2237,12 @@ Instructions:
   /* ━━━ MAIN DASHBOARD ━━━ */
 
   /* ── Ticker Row — renders from external stable component ── */
-  const renderTickerRow = (s) => {
+  const renderTickerRow = (s, sleeveKey) => {
     const q = quotes[s], b = bars[s], c = chg(s);
     const nm = names[s] || "";
     const price = q?.p;
     const shortName = nm;
+    const tw = sleeveKey && TARGET_WEIGHTS[sleeveKey] ? TARGET_WEIGHTS[sleeveKey][s] : null;
     return (
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer", overflow: "hidden" }}>
@@ -2244,7 +2250,10 @@ Instructions:
           <StockLogo symbol={s} size={34} logoUrl={fundamentals[s]?.logo} />
         </div>
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden", marginRight: 6 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</span>
+            {tw != null && <span style={{ fontSize: 10, fontWeight: 700, color: C.accent, background: C.accentSoft, padding: "1px 6px", borderRadius: 4, flexShrink: 0 }}>{tw}%</span>}
+          </div>
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortName}</div>
         </div>
         <div data-ticker-price={s} style={{ fontSize: isDesktop ? 15 : 13, fontWeight: 600, color: C.t2, marginRight: isDesktop ? 10 : 6, fontVariantNumeric: "tabular-nums", width: isDesktop ? 80 : 62, textAlign: "right", flexShrink: 0 }}>{price != null ? `$${price.toFixed(2)}` : ""}</div>
@@ -2344,6 +2353,7 @@ Instructions:
                 { v: "alpha", l: "A–Z" },
                 { v: "chgDn", l: "% ↓" },
                 { v: "chgUp", l: "% ↑" },
+                { v: "weightDn", l: "Weight ↓" },
               ].map(({ v, l }) => {
                 const active = (sleeveSort[k] || "chgDn") === v;
                 return (
@@ -2361,6 +2371,7 @@ Instructions:
               const sorted = [...sleeve.symbols].sort((a, b) => {
                 if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
                 if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
+                if (sortMode === "weightDn") { const tw = TARGET_WEIGHTS[k] || {}; return (tw[b] ?? 0) - (tw[a] ?? 0); }
                 return a.localeCompare(b);
               });
               return sorted.map((s, i) => (
@@ -2371,7 +2382,7 @@ Instructions:
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.dn} strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
                       </div>
                     )}
-                    <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>{ renderTickerRow(s) }</div>
+                    <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>{ renderTickerRow(s, k) }</div>
                   </div>
                   {i < sorted.length - 1 && <div style={{ height: 1, background: C.border }} />}
                 </div>
