@@ -1881,6 +1881,15 @@ Instructions:
     if ((tab === "performance" || tab === "home") && authed && Object.keys(perfDataMap).length === 0 && !perfLoading) fetchPerfData();
   }, [tab, authed, perfDataMap, perfLoading, fetchPerfData]);
 
+  // Re-fetch quotes when perfDataMap loads (picks up old tickers not in DEFAULT_SLEEVES)
+  const perfDataLoadedRef = useRef(false);
+  useEffect(() => {
+    if (Object.keys(perfDataMap).length > 0 && !perfDataLoadedRef.current) {
+      perfDataLoadedRef.current = true;
+      fetchData();
+    }
+  }, [perfDataMap, fetchData]);
+
   // Compute live portfolio value from WebSocket prices every 2s
   useEffect(() => {
     if (!perfData?.holdings || !authed) return;
