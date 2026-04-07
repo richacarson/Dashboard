@@ -19,6 +19,9 @@ const TARGET_WEIGHTS = {
   dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, CTRA:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
   growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
+const REBALANCE_DATE = "2026-04-07";
+const loadAnchorPrices = () => { try { const s = localStorage.getItem("iown_anchor_prices"); return s ? JSON.parse(s) : null; } catch { return null; } };
+const saveAnchorPrices = (prices) => { try { localStorage.setItem("iown_anchor_prices", JSON.stringify(prices)); } catch {} };
 const loadSleeves = () => {
   try {
     const s = localStorage.getItem("iown_sleeves");
@@ -753,10 +756,53 @@ export default function App() {
   const [bmQuotes, setBmQuotes] = useState({});
   const [bmBars, setBmBars] = useState({});
   const [intradayPts, setIntradayPts] = useState({});
+  const [anchorPrices, setAnchorPrices] = useState(loadAnchorPrices);
+  const [liveWeights, setLiveWeights] = useState({});
   const [names, setNames] = useState({});
   const [sleeves, setSleeves] = useState(loadSleeves);
   const sleevesRef = useRef(sleeves);
   useEffect(() => { sleevesRef.current = sleeves; }, [sleeves]);
+
+  // Live weight tracking: capture anchor prices on first load, compute drifted weights
+  useEffect(() => {
+    const allTargetSyms = [...new Set([...Object.keys(TARGET_WEIGHTS.dividend || {}), ...Object.keys(TARGET_WEIGHTS.growth || {})])];
+    const quotedSyms = allTargetSyms.filter(s => quotes[s]?.p > 0);
+    if (quotedSyms.length < allTargetSyms.length * 0.8) return; // wait for most quotes
+    // Capture anchor prices if not yet saved
+    if (!anchorPrices) {
+      const anchors = {};
+      for (const s of allTargetSyms) { if (quotes[s]?.p) anchors[s] = quotes[s].p; }
+      setAnchorPrices(anchors);
+      saveAnchorPrices(anchors);
+    }
+    // Compute live weights per sleeve
+    const ap = anchorPrices || {};
+    const newLive = {};
+    for (const [sleeve, tw] of Object.entries(TARGET_WEIGHTS)) {
+      const syms = Object.keys(tw);
+      let totalDrifted = 0;
+      const drifted = {};
+      for (const s of syms) {
+        const anchor = ap[s] || quotes[s]?.p;
+        const current = quotes[s]?.p;
+        if (anchor && current) {
+          const growth = current / anchor;
+          drifted[s] = tw[s] * growth;
+          totalDrifted += drifted[s];
+        } else {
+          drifted[s] = tw[s];
+          totalDrifted += tw[s];
+        }
+      }
+      if (totalDrifted > 0) {
+        newLive[sleeve] = {};
+        for (const s of syms) {
+          newLive[sleeve][s] = Math.round((drifted[s] / totalDrifted) * 1000) / 10;
+        }
+      }
+    }
+    setLiveWeights(newLive);
+  }, [quotes, anchorPrices]);
   const [news, setNews] = useState([]);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [articleContent, setArticleContent] = useState(null);
@@ -2243,6 +2289,10 @@ Instructions:
     const price = q?.p;
     const shortName = nm;
     const tw = sleeveKey && TARGET_WEIGHTS[sleeveKey] ? TARGET_WEIGHTS[sleeveKey][s] : null;
+    const lw = sleeveKey && liveWeights[sleeveKey] ? liveWeights[sleeveKey][s] : null;
+    const displayW = lw != null ? lw : tw;
+    const drift = (tw != null && lw != null) ? lw - tw : null;
+    const driftColor = drift != null ? (Math.abs(drift) >= 0.5 ? (drift > 0 ? C.up : C.dn) : C.accent) : C.accent;
     return (
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
         style={{ display: "flex", alignItems: "center", padding: "14px 0", cursor: "pointer", overflow: "hidden" }}>
@@ -2252,7 +2302,7 @@ Instructions:
         <div style={{ flex: 1, minWidth: 0, overflow: "hidden", marginRight: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: C.t1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s}</span>
-            {tw != null && <span style={{ fontSize: 10, fontWeight: 700, color: C.accent, background: C.accentSoft, padding: "1px 6px", borderRadius: 4, flexShrink: 0 }}>{tw}%</span>}
+            {displayW != null && <span style={{ fontSize: 10, fontWeight: 700, color: driftColor, background: driftColor + "18", padding: "1px 6px", borderRadius: 4, flexShrink: 0 }}>{displayW.toFixed(1)}%</span>}
           </div>
           <div style={{ fontSize: 11, color: C.t4, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shortName}</div>
         </div>
@@ -2384,7 +2434,7 @@ Instructions:
               const sorted = [...sleeve.symbols].sort((a, b) => {
                 if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
                 if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
-                if (sortMode === "weightDn") { const tw = TARGET_WEIGHTS[k] || {}; return (tw[b] ?? 0) - (tw[a] ?? 0); }
+                if (sortMode === "weightDn") { const lw = liveWeights[k] || {}; const tw = TARGET_WEIGHTS[k] || {}; return (lw[b] ?? tw[b] ?? 0) - (lw[a] ?? tw[a] ?? 0); }
                 return a.localeCompare(b);
               });
               return sorted.map((s, i) => (
