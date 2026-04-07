@@ -20,8 +20,26 @@ const TARGET_WEIGHTS = {
   growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
 const REBALANCE_DATE = "2026-04-07";
+const GH_ANCHORS_PATH = "public/anchors.json";
 const loadAnchorPrices = () => { try { const s = localStorage.getItem("iown_anchor_prices"); return s ? JSON.parse(s) : null; } catch { return null; } };
 const saveAnchorPrices = (prices) => { try { localStorage.setItem("iown_anchor_prices", JSON.stringify(prices)); } catch {} };
+const fetchAnchorPricesFromRepo = async () => {
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/richacarson/Dashboard/main/${GH_ANCHORS_PATH}?t=${Date.now()}`);
+    if (r.ok) { const d = await r.json(); if (d && Object.keys(d).length > 10) return d; }
+  } catch {}
+  return null;
+};
+const pushAnchorPricesToRepo = async (prices, ghToken) => {
+  if (!ghToken) return;
+  try {
+    const ghHeaders = { Authorization: `token ${ghToken}`, Accept: "application/vnd.github.v3+json", "Content-Type": "application/json" };
+    const existing = await fetch(`https://api.github.com/repos/richacarson/Dashboard/contents/${GH_ANCHORS_PATH}`, { headers: ghHeaders });
+    const sha = existing.ok ? (await existing.json()).sha : undefined;
+    const body = { message: `Update anchor prices (${REBALANCE_DATE})`, content: btoa(JSON.stringify(prices, null, 2)), ...(sha && { sha }) };
+    await fetch(`https://api.github.com/repos/richacarson/Dashboard/contents/${GH_ANCHORS_PATH}`, { method: "PUT", headers: ghHeaders, body: JSON.stringify(body) });
+  } catch {}
+};
 const loadSleeves = () => {
   try {
     const s = localStorage.getItem("iown_sleeves");
@@ -764,6 +782,14 @@ export default function App() {
   useEffect(() => { sleevesRef.current = sleeves; }, [sleeves]);
 
   // Live weight tracking: capture anchor prices on first load, compute drifted weights
+  // Fallback: fetch from GitHub repo if localStorage is cleared
+  useEffect(() => {
+    if (!anchorPrices) {
+      fetchAnchorPricesFromRepo().then(remote => {
+        if (remote) { setAnchorPrices(remote); saveAnchorPrices(remote); }
+      });
+    }
+  }, []);
   useEffect(() => {
     const allTargetSyms = [...new Set([...Object.keys(TARGET_WEIGHTS.dividend || {}), ...Object.keys(TARGET_WEIGHTS.growth || {})])];
     const quotedSyms = allTargetSyms.filter(s => quotes[s]?.p > 0);
@@ -774,6 +800,8 @@ export default function App() {
       for (const s of allTargetSyms) { if (quotes[s]?.p) anchors[s] = quotes[s].p; }
       setAnchorPrices(anchors);
       saveAnchorPrices(anchors);
+      // Push to GitHub as durable backup
+      pushAnchorPricesToRepo(anchors, ghToken);
     }
     // Compute live weights per sleeve
     const ap = anchorPrices || {};
