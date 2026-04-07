@@ -345,7 +345,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       try {
         // Load static company description
         try {
-          const descR = await fetch(`${import.meta.env.BASE_URL}company-descriptions.json`);
+          const descR = await fetch(`${import.meta.env.BASE_URL}company-descriptions.json?v=${Date.now()}`);
           if (descR.ok) {
             const descs = await descR.json();
             if (descs[symbol]) setProfile(p => ({ ...p, description: descs[symbol] }));
