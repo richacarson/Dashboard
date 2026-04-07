@@ -2271,7 +2271,7 @@ Instructions:
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const renderSleeve = (k, sleeve) => {
     const isOpen = openSleeves[k];
-    // Calculate value-weighted change for this sleeve (uses position sizes when available)
+    // Calculate value-weighted change for this sleeve (uses position sizes when available, falls back to target weights)
     const holdings = perfData?.holdings;
     let avgChg = null;
     if (holdings) {
@@ -2287,6 +2287,19 @@ Instructions:
         }
       }
       avgChg = totalVal > 0 ? weightedChgSum / totalVal : null;
+    }
+    if (avgChg === null && TARGET_WEIGHTS[k]) {
+      // Use target weights for weighted daily change
+      let totalW = 0, weightedSum = 0;
+      for (const sym of sleeve.symbols) {
+        const c = chg(sym);
+        const w = TARGET_WEIGHTS[k][sym];
+        if (c !== null && w) {
+          totalW += w;
+          weightedSum += w * c;
+        }
+      }
+      avgChg = totalW > 0 ? weightedSum / totalW : null;
     }
     if (avgChg === null) {
       const changes = sleeve.symbols.map(chg).filter(c => c !== null);
