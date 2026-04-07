@@ -1289,16 +1289,17 @@ Instructions:
           profileLogo = prof?.logo || null;
           // Hardcoded sector overrides for holdings that Finnhub miscategorizes
           const SECTOR_OVERRIDES = {
-            "ABT": "Healthcare", "A": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
+            "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
             "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
             "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
-            "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "OKE": "Energy", "VST": "Utilities",
-            "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
-            "ORI": "Financials", "SYF": "Financials", "FINV": "Financials", "SUPV": "Financials",
-            "COIN": "Financials", "HOOD": "Financials", "SOFI": "Financials",
-            "PDD": "Consumer", "TOL": "Consumer", "MTH": "Consumer",
-            "AEM": "Materials", "GFI": "Materials", "NTR": "Materials", "FCX": "Materials", "STLD": "Materials",
-            "ATAT": "Communication", "HUT": "Technology", "MARA": "Technology", "CRDO": "Technology", "MRVL": "Technology",
+            "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
+            "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
+            "CHD": "Consumer Staples", "CL": "Consumer Staples",
+            "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
+            "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials",
+            "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
+            "AEM": "Materials", "NTR": "Materials", "FCX": "Materials", "STLD": "Materials",
+            "CRDO": "Technology", "MRVL": "Technology",
             "IBIT": "Digital Assets", "ETHA": "Digital Assets",
           };
           if (SECTOR_OVERRIDES[sym]) {
@@ -3565,14 +3566,14 @@ Instructions:
               const syms = sleeves[metricsView]?.symbols || [];
               const SO = {
                 "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
-                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology", "CRDO": "Technology", "MRVL": "Technology",
-                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "STLD": "Materials", "PCAR": "Industrials",
+                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology",
+                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
                 "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
                 "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
-                "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "TOL": "Consumer",
-                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials",
-                "AEM": "Materials", "FCX": "Materials", "NTR": "Materials",
-                "ATAT": "Communication",
+                "CHD": "Consumer Staples", "CL": "Consumer Staples",
+                "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
+                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
+                "AEM": "Materials", "FCX": "Materials", "NTR": "Materials", "STLD": "Materials",
                 "IBIT": "Digital Assets", "ETHA": "Digital Assets",
               };
               const getSector = s => SO[s] || fundamentals[s]?.sector || fundamentals[s]?.industry || "Uncategorized";
@@ -3782,17 +3783,18 @@ Instructions:
               const syms = sleeves[metricsView]?.symbols || [];
               const SM = {
                 "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
-                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "HUT": "Technology", "MARA": "Technology", "CRDO": "Technology", "MRVL": "Technology",
+                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology",
                 "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
                 "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
                 "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
-                "CHD": "Consumer", "CL": "Consumer", "GPC": "Consumer", "TOL": "Consumer",
-                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials",
-                "AEM": "Materials", "FCX": "Materials", "NTR": "Materials", "STLD": "Materials", "ATAT": "Communication",
+                "CHD": "Consumer Staples", "CL": "Consumer Staples",
+                "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
+                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
+                "AEM": "Materials", "FCX": "Materials", "NTR": "Materials", "STLD": "Materials",
                 "IBIT": "Digital Assets", "ETHA": "Digital Assets",
               };
               const SC = { "Technology": "#2563EB", "Financials": "#059669", "Healthcare": "#7C3AED",
-                "Industrials": "#D97706", "Consumer": "#DB2777", "Energy": "#DC2626", "Utilities": "#84CC16",
+                "Industrials": "#D97706", "Consumer Staples": "#DB2777", "Consumer Disc.": "#E879A0", "Energy": "#DC2626", "Utilities": "#84CC16",
                 "Materials": "#6366F1", "Communication": "#F59E0B", "Digital Assets": "#F97316", "Other": "#9CA3AF" };
 
               const pts = syms.map(s => {
@@ -3964,7 +3966,7 @@ Instructions:
                   "Utilities": ["DUK", "SO", "D"], "Materials": ["APD", "ECL", "NEM"],
                   "Communication": ["META", "GOOG", "DIS"],
                 };
-                const SO = { "ABT":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","HUT":"Technology","MARA":"Technology","CRDO":"Technology","MRVL":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","PCAR":"Industrials","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","VST":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","CTRA":"Energy","CHD":"Consumer","CL":"Consumer","GPC":"Consumer","TOL":"Consumer","ORI":"Financials","SYF":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","AEM":"Materials","FCX":"Materials","NTR":"Materials","STLD":"Materials","ATAT":"Communication","IBIT":"Digital Assets","ETHA":"Digital Assets" };
+                const SO = { "ABT":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","CRDO":"Technology","MRVL":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","PCAR":"Industrials","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","VST":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","CTRA":"Energy","CHD":"Consumer Staples","CL":"Consumer Staples","GPC":"Consumer Disc.","TOL":"Consumer Disc.","ATAT":"Consumer Disc.","ORI":"Financials","SYF":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","HUT":"Financials","MARA":"Financials","AEM":"Materials","FCX":"Materials","NTR":"Materials","STLD":"Materials","IBIT":"Digital Assets","ETHA":"Digital Assets" };
                 const sec = SO[peerSymbol] || d.sector;
                 const benchPeers = (sectorBenchmarks[sec] || []).filter(s => s !== peerSymbol && fundamentals[s]);
                 peers = [...new Set([...peers, ...benchPeers])].slice(0, 5);
