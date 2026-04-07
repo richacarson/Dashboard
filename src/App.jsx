@@ -999,7 +999,12 @@ Instructions:
   const wsRef = useRef(null);
   const fhWsRef = useRef(null);
 
-  const ALL = useMemo(() => getAllSyms(sleeves), [sleeves]);
+  const ALL = useMemo(() => {
+    const base = getAllSyms(sleeves);
+    // Also include tickers from performance holdings so live value calculator works even when holdings differ from DEFAULT_SLEEVES
+    const perfHoldings = Object.values(perfDataMap).flatMap(d => Object.keys(d.holdings || {}));
+    return [...new Set([...base, ...perfHoldings])];
+  }, [sleeves, perfDataMap]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
 
   // Persist sleeves changes
