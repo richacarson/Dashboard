@@ -4478,7 +4478,10 @@ Instructions:
                   for (const s of syms) mvWeights[s] = mvMap[s] ? (mvMap[s] / totalMV) * 100 : 0;
                 }
               }
-              const getW = (s) => mvWeights ? (mvWeights[s] || 0) : (liveWeights[metricsView]?.[s] ?? tw[s] ?? 0);
+              const getW = (s) => {
+                if (mvWeights && mvWeights[s] > 0) return mvWeights[s];
+                return liveWeights[metricsView]?.[s] ?? tw[s] ?? 0;
+              };
 
               // Daily returns
               let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayN = 0;
