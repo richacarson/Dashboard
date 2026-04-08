@@ -3879,29 +3879,32 @@ Instructions:
             {/* ── PERFORMANCE ATTRIBUTION ── */}
             {metricsSubView === "attribution" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
+              const sleeveKey = metricsView;
+              const tw = TARGET_WEIGHTS[sleeveKey] || {};
               const contributions = syms
                 .map(s => {
-                  const d = fundamentals[s] || {};
-                  const qtd = d.thisQtr ?? d.ytd ?? null;
-                  return { sym: s, qtd, name: names[s] || d.companyName || s };
+                  const c = chg(s);
+                  const w = tw[s] || (100 / syms.length);
+                  return { sym: s, dayChg: c, weight: w, name: names[s] || fundamentals[s]?.companyName || s };
                 })
-                .filter(c => c.qtd != null)
-                .sort((a, b) => b.qtd - a.qtd);
+                .filter(c => c.dayChg != null)
+                .sort((a, b) => b.dayChg - a.dayChg);
 
-              if (!contributions.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No performance data available. Refresh metrics first.</div>;
+              if (!contributions.length) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No live data available. Waiting for market prices.</div>;
 
-              const maxAbs = Math.max(...contributions.map(c => Math.abs(c.qtd)), 1);
-              const avgReturn = contributions.reduce((s, c) => s + c.qtd, 0) / contributions.length;
+              const maxAbs = Math.max(...contributions.map(c => Math.abs(c.dayChg)), 0.01);
+              const totalW = contributions.reduce((s, c) => s + c.weight, 0);
+              const weightedAvg = totalW > 0 ? contributions.reduce((s, c) => s + c.weight * c.dayChg, 0) / totalW : 0;
 
               return (
                 <div>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>Quarter-to-Date Attribution</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: avgReturn >= 0 ? C.up : C.dn }}>{avgReturn >= 0 ? "+" : ""}{avgReturn.toFixed(1)}% avg</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: C.t1 }}>Daily Attribution</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: weightedAvg >= 0 ? C.up : C.dn }}>{weightedAvg >= 0 ? "+" : ""}{weightedAvg.toFixed(2)}% weighted</div>
                   </div>
                   {contributions.map((c, i) => {
-                    const barWidth = Math.abs(c.qtd) / maxAbs * 100;
-                    const isPos = c.qtd >= 0;
+                    const barWidth = Math.abs(c.dayChg) / maxAbs * 100;
+                    const isPos = c.dayChg >= 0;
                     return (
                       <div key={c.sym} {...stockContextHandlers(c.sym)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", cursor: "pointer", borderBottom: i < contributions.length - 1 ? `1px solid ${C.border}` : "none" }}>
                         <div style={{ width: 48, fontSize: 13, fontWeight: 700, color: C.accent, flexShrink: 0 }}>{c.sym}</div>
@@ -3917,18 +3920,19 @@ Instructions:
                             {isPos && <div style={{ height: 20, borderRadius: 4, background: C.up + "30", border: `1px solid ${C.up}55`, width: `${barWidth}%`, minWidth: 4, transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)" }} />}
                           </div>
                         </div>
+                        <div style={{ width: 38, textAlign: "right", fontSize: 11, color: C.t4, flexShrink: 0 }}>{c.weight.toFixed(1)}%</div>
                         <div style={{ width: 58, textAlign: "right", fontSize: 13, fontWeight: 700, color: isPos ? C.up : C.dn, flexShrink: 0 }}>
-                          {isPos ? "+" : ""}{c.qtd.toFixed(1)}%
+                          {isPos ? "+" : ""}{c.dayChg.toFixed(2)}%
                         </div>
                       </div>
                     );
                   })}
                   <div style={{ marginTop: 16, padding: "14px 0", borderTop: `2px solid ${C.accent}`, display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>Portfolio Average</span>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: avgReturn >= 0 ? C.up : C.dn }}>{avgReturn >= 0 ? "+" : ""}{avgReturn.toFixed(2)}%</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>Weighted Average</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: weightedAvg >= 0 ? C.up : C.dn }}>{weightedAvg >= 0 ? "+" : ""}{weightedAvg.toFixed(2)}%</span>
                   </div>
                   <div style={{ marginTop: 8, fontSize: 11, color: C.t4 }}>
-                    Top: {contributions[0]?.sym} ({contributions[0]?.qtd >= 0 ? "+" : ""}{contributions[0]?.qtd.toFixed(1)}%) · Bottom: {contributions[contributions.length - 1]?.sym} ({contributions[contributions.length - 1]?.qtd >= 0 ? "+" : ""}{contributions[contributions.length - 1]?.qtd.toFixed(1)}%)
+                    Top: {contributions[0]?.sym} ({contributions[0]?.dayChg >= 0 ? "+" : ""}{contributions[0]?.dayChg.toFixed(2)}%) · Bottom: {contributions[contributions.length - 1]?.sym} ({contributions[contributions.length - 1]?.dayChg >= 0 ? "+" : ""}{contributions[contributions.length - 1]?.dayChg.toFixed(2)}%)
                   </div>
                 </div>
               );
