@@ -4462,16 +4462,30 @@ Instructions:
               const ew = syms.length ? 100 / syms.length : 0;
               const ap = anchorPrices?.prices || {};
 
-              // Use live drifted weights if available, otherwise target weights
-              // This matches the home screen which uses TARGET_WEIGHTS for daily calc
-              const getLiveW = (s) => liveWeights[metricsView]?.[s] ?? tw[s] ?? 0;
+              // Match home screen: use market-value weights from holdings when available
+              const holdings = (perfDataMap[metricsView] || perfData)?.holdings;
+              let mvWeights = null;
+              if (holdings) {
+                const mvMap = {};
+                let totalMV = 0;
+                for (const s of syms) {
+                  const q = quotes[s]?.p;
+                  const sh = holdings[s];
+                  if (q && sh) { mvMap[s] = sh * q; totalMV += sh * q; }
+                }
+                if (totalMV > 0 && Object.keys(mvMap).length >= syms.length * 0.5) {
+                  mvWeights = {};
+                  for (const s of syms) mvWeights[s] = mvMap[s] ? (mvMap[s] / totalMV) * 100 : 0;
+                }
+              }
+              const getW = (s) => mvWeights ? (mvWeights[s] || 0) : (liveWeights[metricsView]?.[s] ?? tw[s] ?? 0);
 
               // Daily returns
               let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayN = 0;
               const rows = [];
               for (const s of syms) {
                 const c = chg(s);
-                const w = getLiveW(s);
+                const w = getW(s);
                 const q = quotes[s]?.p;
                 const anc = ap[s];
                 const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
