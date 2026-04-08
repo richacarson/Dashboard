@@ -986,7 +986,7 @@ Instructions:
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
-  const [perfRange, setPerfRange] = useState("ALL"); // "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
+  const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
   const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
@@ -5275,6 +5275,13 @@ Instructions:
                 let cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0,10) : null;
                 if (perfRange === "1D") {
                   filtered = portfolio.slice(-2);
+                } else if (perfRange === "QTD") {
+                  const m = now.getMonth();
+                  const qtrStartMonth = Math.floor(m / 3) * 3;
+                  const qtrEnd = `${now.getFullYear()}-${String(qtrStartMonth).padStart(2, "0")}-01`;
+                  const prevQtrEnd = qtrStartMonth === 0 ? `${now.getFullYear() - 1}-12-31` : `${now.getFullYear()}-${String(qtrStartMonth).padStart(2, "0")}-01`;
+                  const qtdStart = [...portfolio].reverse().find(p => p.date < qtrEnd) || [...portfolio].reverse().find(p => p.date <= prevQtrEnd);
+                  filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio;
                 } else if (perfRange === "YTD") {
                   const yearEnd = `${now.getFullYear() - 1}-12-31`;
                   const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
@@ -5441,17 +5448,17 @@ Instructions:
               const years = isIntraday ? 0 : (new Date(filtered[filtered.length - 1].date) - new Date(filtered[0].date)) / (365.25 * 86400000);
               const cagr = years > 1 ? (Math.pow(endVal / startVal, 1 / years) - 1) * 100 : 0;
 
-              const periodLabel = { "1D": "Day", "YTD": "YTD" }[perfRange];
+              const periodLabel = { "1D": "Day", "QTD": "QTD", "YTD": "YTD" }[perfRange];
 
               return (
                 <>
                   {/* Summary cards */}
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
                     {[
-                      { label: (isIntraday || perfRange === "YTD") ? (perfRange === "1D" ? "Previous Close" : "Starting Value") : "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: (isIntraday || perfRange === "YTD" || perfRange === "QTD") ? (perfRange === "1D" ? "Previous Close" : "Starting Value") : "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
                       { label: liveValue ? "Live Value" : "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
                       { label: periodLabel ? `${periodLabel} Change` : "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
-                      (isIntraday || perfRange === "YTD" || years <= 1)
+                      (isIntraday || perfRange === "YTD" || perfRange === "QTD" || years <= 1)
                         ? { label: "$ Change", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
                         : { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn },
                     ].map((s, i) => (
@@ -5465,8 +5472,8 @@ Instructions:
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {["1D", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
-                        if (r === "1D" || r === "YTD" || r === "ALL") return true;
+                      {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
+                        if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
                         const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
                         const need = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 }[r] || 0;
                         return daysAvailable >= need * 0.9;
@@ -5687,6 +5694,7 @@ Instructions:
                     const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date + "T12:00:00") - new Date(portfolio[0].date + "T12:00:00")) / 86400000 : 0;
                     const allPeriods = [
                       { label: "1-Day", shortLabel: "1D", oneDay: true, rangeKey: "1D" },
+                      { label: "QTD", shortLabel: "QTD", qtd: true, rangeKey: "QTD" },
                       { label: "YTD", shortLabel: "YTD", ytd: true, rangeKey: "YTD" },
                       { label: "1-Year", shortLabel: "1Y", days: 365, rangeKey: "1Y" },
                       { label: "3-Year", shortLabel: "3Y", days: 365 * 3, rangeKey: "3Y", ann: true },
@@ -5695,7 +5703,7 @@ Instructions:
                       { label: "Inception", shortLabel: "Incep.", all: true, rangeKey: "ALL" },
                     ];
                     const trailingPeriods = allPeriods.filter(p => {
-                      if (p.oneDay || p.ytd || p.all) return true;
+                      if (p.oneDay || p.qtd || p.ytd || p.all) return true;
                       return daysAvailable >= p.days * 0.9;
                     });
 
@@ -5707,7 +5715,12 @@ Instructions:
                         return ((endVal / base) - 1) * 100;
                       }
                       let startPt;
-                      if (p.ytd) {
+                      if (p.qtd) {
+                        const m = now.getMonth();
+                        const qm = Math.floor(m / 3) * 3;
+                        const qtrStart = qm === 0 ? `${now.getFullYear() - 1}-12-31` : `${now.getFullYear()}-${String(qm).padStart(2, "0")}-01`;
+                        startPt = [...portfolio].reverse().find(pt => pt.date < `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01` && pt.date <= qtrStart) || [...portfolio].reverse().find(pt => pt.date <= qtrStart);
+                      } else if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
                         startPt = [...portfolio].reverse().find(pt => pt.date <= yearEnd);
                       } else if (p.all) {
@@ -5744,7 +5757,13 @@ Instructions:
                         return ((lastPrice / pc) - 1) * 100;
                       }
                       let startPrice;
-                      if (p.ytd) {
+                      if (p.qtd) {
+                        const m = now.getMonth();
+                        const qm = Math.floor(m / 3) * 3;
+                        const qtrStart = qm === 0 ? `${now.getFullYear() - 1}-12-31` : `${now.getFullYear()}-${String(qm).padStart(2, "0")}-01`;
+                        const found = [...prices].reverse().find(([d]) => d <= qtrStart);
+                        startPrice = found ? found[1] : null;
+                      } else if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
                         const found = [...prices].reverse().find(([d]) => d <= yearEnd);
                         startPrice = found ? found[1] : null;
