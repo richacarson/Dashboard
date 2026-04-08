@@ -4458,7 +4458,7 @@ Instructions:
               const lw = liveWeights[metricsView] || {};
               const ew = syms.length ? 100 / syms.length : 0;
               const ap = anchorPrices?.prices || {};
-              const holdings = perfData?.holdings;
+              const holdings = (perfDataMap[metricsView] || perfData)?.holdings;
 
               // Compute actual weight for each symbol (same cascade as home screen)
               // Try market-value weights from holdings, fall back to live drifted weights, then target weights
