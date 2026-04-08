@@ -3565,7 +3565,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "returnheat", l: "📅 Returns" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "peers", l: "🔍 Peer Compare" }, { v: "sector", l: "🥧 Sectors" }, { v: "returnheat", l: "📅 Returns" }, { v: "matrix", l: "⊞ G/V Matrix" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -4450,6 +4450,124 @@ Instructions:
               );
             })()}
             </>)}
+
+            {/* ── WEIGHT ALPHA ── */}
+            {metricsSubView === "weightcomp" && (() => {
+              const syms = sleeves[metricsView]?.symbols || [];
+              const tw = TARGET_WEIGHTS[metricsView] || {};
+              const ew = syms.length ? 100 / syms.length : 0;
+              const ap = anchorPrices?.prices || {};
+
+              // Daily returns
+              let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayN = 0;
+              const rows = [];
+              for (const s of syms) {
+                const c = chg(s);
+                const w = tw[s] || 0;
+                const q = quotes[s]?.p;
+                const anc = ap[s];
+                const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
+                if (c !== null) {
+                  wDaySum += w * c; wDayTot += w;
+                  eDaySum += c; eDayN++;
+                }
+                rows.push({ s, w, c, sinceReb, wContribDay: c !== null ? w * c / 100 : null, eContribDay: c !== null ? ew * c / 100 : null, wContribReb: sinceReb !== null ? w * sinceReb / 100 : null, eContribReb: sinceReb !== null ? ew * sinceReb / 100 : null });
+              }
+              const wDay = wDayTot > 0 ? wDaySum / wDayTot : null;
+              const eDay = eDayN > 0 ? eDaySum / eDayN : null;
+              const dayAlpha = (wDay !== null && eDay !== null) ? wDay - eDay : null;
+
+              // Since-rebalance returns
+              let wRebSum = 0, wRebTot = 0, eRebSum = 0, eRebN = 0;
+              for (const r of rows) {
+                if (r.sinceReb !== null) {
+                  wRebSum += r.w * r.sinceReb; wRebTot += r.w;
+                  eRebSum += r.sinceReb; eRebN++;
+                }
+              }
+              const wReb = wRebTot > 0 ? wRebSum / wRebTot : null;
+              const eReb = eRebN > 0 ? eRebSum / eRebN : null;
+              const rebAlpha = (wReb !== null && eReb !== null) ? wReb - eReb : null;
+
+              rows.sort((a, b) => Math.abs(b.wContribDay ?? 0) - Math.abs(a.wContribDay ?? 0));
+              const alphaColor = v => v > 0 ? C.up : v < 0 ? C.dn : C.t3;
+
+              return (
+                <div>
+                  {/* Summary cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                    {/* Daily */}
+                    <div style={{ background: C.card, borderRadius: 14, padding: 16, border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Today</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Weighted</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: wDay >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{wDay !== null ? pct(wDay) : "—"}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Equal Wt</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: eDay >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{eDay !== null ? pct(eDay) : "—"}</span>
+                      </div>
+                      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>Alpha</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: dayAlpha !== null ? alphaColor(dayAlpha) : C.t4, fontVariantNumeric: "tabular-nums" }}>{dayAlpha !== null ? `${dayAlpha >= 0 ? "+" : ""}${dayAlpha.toFixed(3)}%` : "—"}</span>
+                      </div>
+                    </div>
+                    {/* Since rebalance */}
+                    <div style={{ background: C.card, borderRadius: 14, padding: 16, border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Since Rebalance</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Weighted</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: wReb >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{wReb !== null ? pct(wReb) : "—"}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Equal Wt</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: eReb >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{eReb !== null ? pct(eReb) : "—"}</span>
+                      </div>
+                      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>Alpha</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: rebAlpha !== null ? alphaColor(rebAlpha) : C.t4, fontVariantNumeric: "tabular-nums" }}>{rebAlpha !== null ? `${rebAlpha >= 0 ? "+" : ""}${rebAlpha.toFixed(2)}%` : "—"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Per-stock breakdown */}
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Per-Stock Contribution (sorted by |weighted impact|)</div>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                      <thead>
+                        <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                          <th style={{ textAlign: "left", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Ticker</th>
+                          <th style={{ textAlign: "right", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase" }}>Wt %</th>
+                          <th style={{ textAlign: "right", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase" }}>EW %</th>
+                          <th style={{ textAlign: "right", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase" }}>Chg</th>
+                          <th style={{ textAlign: "right", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase" }}>Wt Contrib</th>
+                          <th style={{ textAlign: "right", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase" }}>EW Contrib</th>
+                          <th style={{ textAlign: "right", padding: "6px 8px", color: C.t4, fontWeight: 600, fontSize: 10, textTransform: "uppercase" }}>Diff</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r, i) => {
+                          const diff = (r.wContribDay !== null && r.eContribDay !== null) ? r.wContribDay - r.eContribDay : null;
+                          return (
+                            <tr key={r.s} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 ? C.bg : "transparent" }}>
+                              <td style={{ padding: "7px 8px", fontWeight: 700, color: C.t1 }}>{r.s}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", color: C.t2 }}>{r.w.toFixed(1)}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", color: C.t3 }}>{ew.toFixed(1)}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, color: r.c >= 0 ? C.up : C.dn }}>{r.c !== null ? pct(r.c) : "—"}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, color: r.wContribDay >= 0 ? C.up : C.dn }}>{r.wContribDay !== null ? `${r.wContribDay >= 0 ? "+" : ""}${r.wContribDay.toFixed(3)}` : "—"}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", color: r.eContribDay >= 0 ? C.up : C.dn }}>{r.eContribDay !== null ? `${r.eContribDay >= 0 ? "+" : ""}${r.eContribDay.toFixed(3)}` : "—"}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 700, color: diff !== null ? alphaColor(diff) : C.t4 }}>{diff !== null ? `${diff >= 0 ? "+" : ""}${diff.toFixed(3)}` : "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.t4, marginTop: 12, fontStyle: "italic" }}>
+                    Weighted uses target weights from IC proposal. Equal weight assigns {ew.toFixed(1)}% to each of {syms.length} holdings. Alpha = weighted return minus equal-weight return. Positive alpha means conviction weighting is outperforming.
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
