@@ -15,7 +15,6 @@ on:
     paths:
       - 'transactions/user_transactions.json'
       - 'transactions/*_strategy_transactions.txt'
-      - 'trigger.txt'
 
 permissions:
   contents: write
