@@ -5172,11 +5172,11 @@ Instructions:
 
         {/* ━━━ PERFORMANCE ━━━ */}
         {tab === "performance" && (
-          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, paddingBottom: 120 }}>
-            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Performance</div>}
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: isDesktop ? 20 : 10, paddingBottom: 120 }}>
+            {!isDesktop && <div style={{ fontSize: 22, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Performance</div>}
 
             {/* Chart / Holdings toggle */}
-            <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 6, marginBottom: isDesktop ? 12 : 6 }}>
               {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setPerfView(v)} style={{
                   flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${perfView === v ? C.borderActive : C.border}`,
@@ -5189,7 +5189,7 @@ Instructions:
 
             {/* Portfolio sleeve selector (dropdown) */}
             {Object.keys(perfDataMap).length > 1 && (
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: isDesktop ? 16 : 8 }}>
                 <select
                   value={perfSleeve}
                   onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("ALL"); }}
@@ -5616,24 +5616,24 @@ Instructions:
               return (
                 <>
                   {/* Summary cards */}
-                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 12, marginBottom: 20 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(4, 1fr)", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
                     {[
-                      { label: (isIntraday || perfRange === "YTD" || perfRange === "QTD") ? (perfRange === "1D" ? "Previous Close" : "Starting Value") : "Starting Value", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
-                      { label: liveValue ? "Live Value" : "Current Value", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
-                      { label: periodLabel ? `${periodLabel} Change` : "Total Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
+                      { label: (isIntraday || perfRange === "YTD" || perfRange === "QTD") ? (perfRange === "1D" ? "Prev Close" : "Start") : "Start", value: `$${startVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: liveValue ? "Live" : "Current", value: `$${endVal.toLocaleString(undefined, {maximumFractionDigits: 0})}` },
+                      { label: periodLabel ? `${periodLabel} Chg` : "Return", value: `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? C.up : C.dn },
                       (isIntraday || perfRange === "YTD" || perfRange === "QTD" || years <= 1)
-                        ? { label: "$ Change", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
+                        ? { label: "$ Chg", value: `${dollarChange >= 0 ? "+$" : "-$"}${Math.abs(dollarChange).toLocaleString(undefined, {maximumFractionDigits: 0})}`, color: dollarChange >= 0 ? C.up : C.dn }
                         : { label: "CAGR", value: `${cagr >= 0 ? "+" : ""}${cagr.toFixed(2)}%`, color: cagr >= 0 ? C.up : C.dn },
                     ].map((s, i) => (
-                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px" }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{s.label}</div>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
+                      <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: isDesktop ? 14 : 10, padding: isDesktop ? "16px 18px" : "10px 8px" }}>
+                        <div style={{ fontSize: isDesktop ? 11 : 9, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: isDesktop ? 6 : 3 }}>{s.label}</div>
+                        <div style={{ fontSize: isDesktop ? 20 : 14, fontWeight: 800, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Time range selector + benchmark toggles */}
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
                         if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
