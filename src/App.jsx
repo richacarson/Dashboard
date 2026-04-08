@@ -4562,9 +4562,7 @@ Instructions:
                       </tbody>
                     </table>
                   </div>
-                  <div style={{ fontSize: 11, color: C.t4, marginTop: 12, fontStyle: "italic" }}>
-                    Weighted uses target weights from IC proposal. Equal weight assigns {ew.toFixed(1)}% to each of {syms.length} holdings. Alpha = weighted return minus equal-weight return. Positive alpha means conviction weighting is outperforming.
-                  </div>
+
                 </div>
               );
             })()}
