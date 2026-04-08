@@ -20,8 +20,18 @@ const TARGET_WEIGHTS = {
   growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
 const REBALANCE_DATE = "2026-04-07";
-const loadAnchorPrices = () => { try { const s = localStorage.getItem("iown_anchor_prices"); if (!s) return null; const d = JSON.parse(s); return (d && d.prices && Object.keys(d.prices).length > 10) ? d : null; } catch { return null; } };
-const saveAnchorPrices = (prices) => { try { localStorage.setItem("iown_anchor_prices", JSON.stringify({ date: new Date().toISOString().slice(0, 10), prices })); } catch {} };
+const REBALANCE_ANCHORS = {
+  // 4/7/26 OPEN prices from Yahoo Finance — the moment of rebalance
+  ABT:101.83, ADI:323.79, ADP:203.89, ATO:187.81, BKH:71.30, CAT:719.59, CHD:93.05, CL:84.53, CTRA:34.93, DGX:199.49,
+  FAST:45.77, GD:349.47, GPC:104.56, LMT:635.60, LRCX:218.24, NEE:92.87, NTR:76.60, ORI:40.30, PCAR:117.68, QCOM:125.07,
+  SSNC:68.40, STLD:175.96, SYK:330.25, TEL:207.76, VLO:245.91,
+  AEM:207.42, AMD:218.26, ATAT:35.93, CNX:39.93, COIN:172.12, CRDO:101.73, CVX:199.97, CWAN:23.94, EIX:72.20, FCX:60.73,
+  FTNT:81.86, HOOD:68.30, HRMY:27.59, HUT:49.70, KEYS:290.64, MARA:8.66, MRVL:108.38, NVDA:175.73, NXPI:196.12, OKE:88.86,
+  SUPV:9.36, SYF:68.88, TOL:135.42, TSM:339.44, VST:151.07,
+  IBIT:79.00, ETHA:21.50,
+};
+const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
+const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
 const loadSleeves = () => {
   try {
     const s = localStorage.getItem("iown_sleeves");
@@ -763,23 +773,12 @@ export default function App() {
   const sleevesRef = useRef(sleeves);
   useEffect(() => { sleevesRef.current = sleeves; }, [sleeves]);
 
-  // Live weight tracking: capture anchor prices on first load, compute drifted weights
+  // Live weight tracking: compute drifted weights from hardcoded rebalance anchors
   useEffect(() => {
     const allTargetSyms = [...new Set([...Object.keys(TARGET_WEIGHTS.dividend || {}), ...Object.keys(TARGET_WEIGHTS.growth || {})])];
     const quotedSyms = allTargetSyms.filter(s => quotes[s]?.p > 0);
     if (quotedSyms.length < allTargetSyms.length * 0.8) return; // wait for most quotes
-    // Capture anchor prices if not yet saved
-    let ap = anchorPrices;
-    if (!ap) {
-      const anchors = {};
-      for (const s of allTargetSyms) { if (quotes[s]?.p) anchors[s] = quotes[s].p; }
-      const data = { date: new Date().toISOString().slice(0, 10), prices: anchors };
-      setAnchorPrices(data);
-      saveAnchorPrices(anchors);
-      ap = data;
-    }
-    // Compute live weights per sleeve
-    const prices = ap.prices || ap;
+    const prices = REBALANCE_ANCHORS;
     const newLive = {};
     for (const [sleeve, tw] of Object.entries(TARGET_WEIGHTS)) {
       const syms = Object.keys(tw);
