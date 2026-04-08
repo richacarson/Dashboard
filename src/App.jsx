@@ -5507,11 +5507,13 @@ Instructions:
                     bmPoints.push({ date: pt.date, val: ((prices[priceIdx][1] / basePrice) - 1) * 100 });
                   }
                 }
-                // Append live benchmark price for today if available
-                const liveQ = bmQuotes[sym];
-                if (liveQ?.p && filtered.length > 0) {
-                  const lastPortDate = filtered[filtered.length - 1].date;
-                  bmPoints.push({ date: lastPortDate, val: ((liveQ.p / basePrice) - 1) * 100 });
+                // Append live benchmark price for today if market is open
+                if (marketStatus.status === "open") {
+                  const liveQ = bmQuotes[sym];
+                  if (liveQ?.p && filtered.length > 0) {
+                    const lastPortDate = filtered[filtered.length - 1].date;
+                    bmPoints.push({ date: lastPortDate, val: ((liveQ.p / basePrice) - 1) * 100 });
+                  }
                 }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
               });
@@ -5907,8 +5909,8 @@ Instructions:
                       if (!bmPrices) return null;
                       const prices = Object.entries(bmPrices).sort((a, b) => a[0].localeCompare(b[0]));
                       if (!prices.length) return null;
-                      // Use live benchmark price if available, otherwise fall back to last historical price
-                      const liveQ = bmQuotes[sym];
+                      // Use live benchmark price when market is open, otherwise use historical close
+                      const liveQ = (marketStatus.status === "open") ? bmQuotes[sym] : null;
                       const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
                       const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                       if (p.oneDay) {
