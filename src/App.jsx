@@ -4459,6 +4459,7 @@ Instructions:
             { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme === "dark" ? "#F59E0B" : "#D97706" },
             { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme === "dark" ? "#34D399" : "#16A34A" },
             { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme === "dark" ? "#6366F1" : "#4F46E5" },
+            { id: "quarterly", title: "Quarterly Changes", icon: "📋", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme === "dark" ? "#A78BFA" : "#7C3AED" },
           ];
           const active = BRIEFS.find(b => b.id === briefView);
 
@@ -5986,6 +5987,7 @@ Instructions:
           { id: "morning", title: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme === "dark" ? "#F59E0B" : "#D97706" },
           { id: "commentary", title: "Market Commentary", url: "https://richacarson.github.io/iown-data", color: theme === "dark" ? "#34D399" : "#16A34A" },
           { id: "report", title: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme === "dark" ? "#6366F1" : "#4F46E5" },
+          { id: "quarterly", title: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme === "dark" ? "#A78BFA" : "#7C3AED" },
         ];
         const active = BRIEFS.find(b => b.id === briefView);
         if (!active) return null;
