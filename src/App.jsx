@@ -2339,36 +2339,32 @@ Instructions:
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const renderSleeve = (k, sleeve) => {
     const isOpen = openSleeves[k];
-    // Calculate value-weighted change for this sleeve (uses position sizes when available, falls back to target weights)
-    const holdings = perfData?.holdings;
+    // Calculate weighted daily change using DRIFTED weights from liveWeights
     let avgChg = null;
-    if (holdings) {
-      let totalVal = 0, weightedChgSum = 0;
-      for (const sym of sleeve.symbols) {
-        const c = chg(sym);
-        const q = quotes[sym];
-        const sh = holdings[sym];
-        if (c !== null && q && sh) {
-          const mv = sh * q.p;
-          totalVal += mv;
-          weightedChgSum += mv * c;
-        }
-      }
-      avgChg = totalVal > 0 ? weightedChgSum / totalVal : null;
-    }
-    if (avgChg === null && TARGET_WEIGHTS[k]) {
-      // Use target weights for weighted daily change
+    const lw = liveWeights[k];
+    if (lw && Object.keys(lw).length > 0) {
       let totalW = 0, weightedSum = 0;
       for (const sym of sleeve.symbols) {
         const c = chg(sym);
-        const w = TARGET_WEIGHTS[k][sym];
-        if (c !== null && w) {
+        const w = lw[sym];
+        if (c !== null && w > 0) {
           totalW += w;
           weightedSum += w * c;
         }
       }
       avgChg = totalW > 0 ? weightedSum / totalW : null;
     }
+    // Fallback to TARGET_WEIGHTS if liveWeights not yet computed
+    if (avgChg === null && TARGET_WEIGHTS[k]) {
+      let totalW = 0, weightedSum = 0;
+      for (const sym of sleeve.symbols) {
+        const c = chg(sym);
+        const w = TARGET_WEIGHTS[k][sym];
+        if (c !== null && w) { totalW += w; weightedSum += w * c; }
+      }
+      avgChg = totalW > 0 ? weightedSum / totalW : null;
+    }
+    // Final fallback to equal weight
     if (avgChg === null) {
       const changes = sleeve.symbols.map(chg).filter(c => c !== null);
       avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
@@ -4462,56 +4458,51 @@ Instructions:
               const ew = syms.length ? 100 / syms.length : 0;
               const ap = anchorPrices?.prices || {};
 
-              // Match home screen: use market-value weights from holdings when available
-              const holdings = (perfDataMap[metricsView] || perfData)?.holdings;
-              let mvWeights = null;
-              if (holdings) {
-                const mvMap = {};
-                let totalMV = 0;
-                for (const s of syms) {
-                  const q = quotes[s]?.p;
-                  const sh = holdings[s];
-                  if (q && sh) { mvMap[s] = sh * q; totalMV += sh * q; }
-                }
-                if (totalMV > 0 && Object.keys(mvMap).length >= syms.length * 0.5) {
-                  mvWeights = {};
-                  for (const s of syms) mvWeights[s] = mvMap[s] ? (mvMap[s] / totalMV) * 100 : 0;
-                }
+              // Use DRIFTED weights from liveWeights — matches home screen exactly
+              const getW = (s) => liveWeights[metricsView]?.[s] ?? tw[s] ?? 0;
+
+              // Compute drifted equal weights (each stock starts at ew%, drifts with price)
+              let eqDriftTotal = 0;
+              const eqDrift = {};
+              for (const s of syms) {
+                const anc = ap[s];
+                const cur = quotes[s]?.p;
+                const growth = (anc && cur) ? cur / anc : 1;
+                eqDrift[s] = ew * growth;
+                eqDriftTotal += eqDrift[s];
               }
-              const getW = (s) => {
-                if (mvWeights && mvWeights[s] > 0) return mvWeights[s];
-                return liveWeights[metricsView]?.[s] ?? tw[s] ?? 0;
-              };
+              const getEW = (s) => eqDriftTotal > 0 ? (eqDrift[s] / eqDriftTotal) * 100 : ew;
 
               // Daily returns
-              let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayN = 0;
+              let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayTot = 0;
               const rows = [];
               for (const s of syms) {
                 const c = chg(s);
                 const w = getW(s);
+                const ewD = getEW(s);
                 const q = quotes[s]?.p;
                 const anc = ap[s];
                 const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
                 if (c !== null) {
                   wDaySum += w * c; wDayTot += w;
-                  eDaySum += c; eDayN++;
+                  eDaySum += ewD * c; eDayTot += ewD;
                 }
-                rows.push({ s, w, c, sinceReb, wContribDay: c !== null ? w * c / 100 : null, eContribDay: c !== null ? ew * c / 100 : null, wContribReb: sinceReb !== null ? w * sinceReb / 100 : null, eContribReb: sinceReb !== null ? ew * sinceReb / 100 : null });
+                rows.push({ s, w, ewD, c, sinceReb, wContribDay: c !== null ? w * c / 100 : null, eContribDay: c !== null ? ewD * c / 100 : null, wContribReb: sinceReb !== null ? w * sinceReb / 100 : null, eContribReb: sinceReb !== null ? ewD * sinceReb / 100 : null });
               }
               const wDay = wDayTot > 0 ? wDaySum / wDayTot : null;
-              const eDay = eDayN > 0 ? eDaySum / eDayN : null;
+              const eDay = eDayTot > 0 ? eDaySum / eDayTot : null;
               const dayAlpha = (wDay !== null && eDay !== null) ? wDay - eDay : null;
 
               // Since-rebalance returns
-              let wRebSum = 0, wRebTot = 0, eRebSum = 0, eRebN = 0;
+              let wRebSum = 0, wRebTot = 0, eRebSum = 0, eRebTot = 0;
               for (const r of rows) {
                 if (r.sinceReb !== null) {
                   wRebSum += r.w * r.sinceReb; wRebTot += r.w;
-                  eRebSum += r.sinceReb; eRebN++;
+                  eRebSum += r.ewD * r.sinceReb; eRebTot += r.ewD;
                 }
               }
               const wReb = wRebTot > 0 ? wRebSum / wRebTot : null;
-              const eReb = eRebN > 0 ? eRebSum / eRebN : null;
+              const eReb = eRebTot > 0 ? eRebSum / eRebTot : null;
               const rebAlpha = (wReb !== null && eReb !== null) ? wReb - eReb : null;
 
               rows.sort((a, b) => Math.abs(b.wContribDay ?? 0) - Math.abs(a.wContribDay ?? 0));
@@ -4576,7 +4567,7 @@ Instructions:
                             <tr key={r.s} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 ? C.bg : "transparent" }}>
                               <td style={{ padding: "7px 8px", fontWeight: 700, color: C.t1 }}>{r.s}</td>
                               <td style={{ padding: "7px 8px", textAlign: "right", color: C.t2 }}>{r.w.toFixed(1)}</td>
-                              <td style={{ padding: "7px 8px", textAlign: "right", color: C.t3 }}>{ew.toFixed(1)}</td>
+                              <td style={{ padding: "7px 8px", textAlign: "right", color: C.t3 }}>{r.ewD.toFixed(1)}</td>
                               <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, color: r.c >= 0 ? C.up : C.dn }}>{r.c !== null ? pct(r.c) : "—"}</td>
                               <td style={{ padding: "7px 8px", textAlign: "right", fontWeight: 600, color: r.wContribDay >= 0 ? C.up : C.dn }}>{r.wContribDay !== null ? `${r.wContribDay >= 0 ? "+" : ""}${r.wContribDay.toFixed(3)}` : "—"}</td>
                               <td style={{ padding: "7px 8px", textAlign: "right", color: r.eContribDay >= 0 ? C.up : C.dn }}>{r.eContribDay !== null ? `${r.eContribDay >= 0 ? "+" : ""}${r.eContribDay.toFixed(3)}` : "—"}</td>
