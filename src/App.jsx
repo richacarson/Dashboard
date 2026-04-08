@@ -4455,13 +4455,12 @@ Instructions:
             {metricsSubView === "weightcomp" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
               const tw = TARGET_WEIGHTS[metricsView] || {};
-              const lw = liveWeights[metricsView] || {};
               const ew = syms.length ? 100 / syms.length : 0;
               const ap = anchorPrices?.prices || {};
               const holdings = (perfDataMap[metricsView] || perfData)?.holdings;
 
-              // Compute actual weight for each symbol (same cascade as home screen)
-              // Try market-value weights from holdings, fall back to live drifted weights, then target weights
+              // Compute weight for each symbol — same cascade as home screen renderSleeve
+              // 1) holdings market-value, 2) TARGET_WEIGHTS (not liveWeights — home screen uses target)
               let useHoldings = false;
               const mvMap = {};
               let totalMV = 0;
@@ -4479,7 +4478,7 @@ Instructions:
               const rows = [];
               for (const s of syms) {
                 const c = chg(s);
-                const w = useHoldings && mvMap[s] ? (mvMap[s] / totalMV) * 100 : (lw[s] || tw[s] || 0);
+                const w = useHoldings && mvMap[s] ? (mvMap[s] / totalMV) * 100 : (tw[s] || 0);
                 const q = quotes[s]?.p;
                 const anc = ap[s];
                 const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
