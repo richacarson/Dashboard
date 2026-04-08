@@ -4455,15 +4455,31 @@ Instructions:
             {metricsSubView === "weightcomp" && (() => {
               const syms = sleeves[metricsView]?.symbols || [];
               const tw = TARGET_WEIGHTS[metricsView] || {};
+              const lw = liveWeights[metricsView] || {};
               const ew = syms.length ? 100 / syms.length : 0;
               const ap = anchorPrices?.prices || {};
+              const holdings = perfData?.holdings;
+
+              // Compute actual weight for each symbol (same cascade as home screen)
+              // Try market-value weights from holdings, fall back to live drifted weights, then target weights
+              let useHoldings = false;
+              const mvMap = {};
+              let totalMV = 0;
+              if (holdings) {
+                for (const s of syms) {
+                  const q = quotes[s]?.p;
+                  const sh = holdings[s];
+                  if (q && sh) { mvMap[s] = sh * q; totalMV += sh * q; }
+                }
+                if (totalMV > 0 && Object.keys(mvMap).length >= syms.length * 0.5) useHoldings = true;
+              }
 
               // Daily returns
               let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayN = 0;
               const rows = [];
               for (const s of syms) {
                 const c = chg(s);
-                const w = tw[s] || 0;
+                const w = useHoldings && mvMap[s] ? (mvMap[s] / totalMV) * 100 : (lw[s] || tw[s] || 0);
                 const q = quotes[s]?.p;
                 const anc = ap[s];
                 const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
