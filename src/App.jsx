@@ -5276,11 +5276,11 @@ Instructions:
                 if (perfRange === "1D") {
                   filtered = portfolio.slice(-2);
                 } else if (perfRange === "QTD") {
-                  const m = now.getMonth();
-                  const qtrStartMonth = Math.floor(m / 3) * 3;
-                  const qtrEnd = `${now.getFullYear()}-${String(qtrStartMonth).padStart(2, "0")}-01`;
-                  const prevQtrEnd = qtrStartMonth === 0 ? `${now.getFullYear() - 1}-12-31` : `${now.getFullYear()}-${String(qtrStartMonth).padStart(2, "0")}-01`;
-                  const qtdStart = [...portfolio].reverse().find(p => p.date < qtrEnd) || [...portfolio].reverse().find(p => p.date <= prevQtrEnd);
+                  const m = now.getMonth(); // 0-indexed
+                  const qtrStartMonth = Math.floor(m / 3) * 3; // 0,3,6,9
+                  const qtrStartDate = `${now.getFullYear()}-${String(qtrStartMonth + 1).padStart(2, "0")}-01`; // 1-indexed for date string
+                  // Find last trading day before quarter start
+                  const qtdStart = [...portfolio].reverse().find(p => p.date < qtrStartDate);
                   filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio;
                 } else if (perfRange === "YTD") {
                   const yearEnd = `${now.getFullYear() - 1}-12-31`;
@@ -5718,8 +5718,8 @@ Instructions:
                       if (p.qtd) {
                         const m = now.getMonth();
                         const qm = Math.floor(m / 3) * 3;
-                        const qtrStart = qm === 0 ? `${now.getFullYear() - 1}-12-31` : `${now.getFullYear()}-${String(qm).padStart(2, "0")}-01`;
-                        startPt = [...portfolio].reverse().find(pt => pt.date < `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01` && pt.date <= qtrStart) || [...portfolio].reverse().find(pt => pt.date <= qtrStart);
+                        const qtrStartDate = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
+                        startPt = [...portfolio].reverse().find(pt => pt.date < qtrStartDate);
                       } else if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
                         startPt = [...portfolio].reverse().find(pt => pt.date <= yearEnd);
@@ -5760,8 +5760,8 @@ Instructions:
                       if (p.qtd) {
                         const m = now.getMonth();
                         const qm = Math.floor(m / 3) * 3;
-                        const qtrStart = qm === 0 ? `${now.getFullYear() - 1}-12-31` : `${now.getFullYear()}-${String(qm).padStart(2, "0")}-01`;
-                        const found = [...prices].reverse().find(([d]) => d <= qtrStart);
+                        const qtrStartDate = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
+                        const found = [...prices].reverse().find(([d]) => d < qtrStartDate);
                         startPrice = found ? found[1] : null;
                       } else if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
