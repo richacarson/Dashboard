@@ -418,6 +418,50 @@ def fetch_yahoo_prices(tickers, start_date, end_date):
     return all_prices
 
 
+def fetch_alpaca_prices(tickers, start_date, end_date):
+    """
+    Fetch daily close prices from Alpaca Markets API.
+    Uses ALPACA_KEY and ALPACA_SECRET env vars.
+    Returns {ticker: {date_str: close_price}} — same format as fetch_yahoo_prices.
+    """
+    import os
+    api_key = os.environ.get("ALPACA_KEY", "")
+    api_secret = os.environ.get("ALPACA_SECRET", "")
+    if not api_key or not api_secret:
+        print("    Warning: No Alpaca credentials, falling back to Yahoo")
+        return fetch_yahoo_prices(tickers, start_date, end_date)
+
+    all_prices = {}
+    base = "https://data.alpaca.markets"
+    headers = {
+        "APCA-API-KEY-ID": api_key,
+        "APCA-API-SECRET-KEY": api_secret,
+    }
+    start_str = (start_date - timedelta(days=7)).strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    for ticker in sorted(tickers):
+        try:
+            url = f"{base}/v2/stocks/bars?symbols={ticker}&timeframe=1Day&start={start_str}&end={end_str}&limit=10000&adjustment=split&feed=sip"
+            req = urllib.request.Request(url)
+            for k, v in headers.items():
+                req.add_header(k, v)
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode())
+            bars = data.get("bars", {}).get(ticker, [])
+            if bars:
+                all_prices[ticker] = {}
+                for bar in bars:
+                    d = bar["t"][:10]  # "2026-01-02T05:00:00Z" -> "2026-01-02"
+                    all_prices[ticker][d] = round(bar["c"], 4)
+        except Exception as e:
+            print(f"    Warning: Alpaca {ticker}: {e}")
+
+    total_pts = sum(len(v) for v in all_prices.values())
+    print(f"    Alpaca: {len(all_prices)}/{len(tickers)} tickers, {total_pts} data points")
+    return all_prices
+
+
 def get_price_on_date(prices, ticker, target_date, fridays_list=None):
     """Get the adjusted close price for a ticker on or near the target date."""
     date_str = target_date.strftime("%Y-%m-%d")
@@ -669,15 +713,20 @@ def main():
             print(f"  Note: {neg_cash_weeks} weeks with negative cash (temporary margin during rebalancing)")
     print()
 
-    # Benchmark data from Yahoo Finance
-    # Benchmark symbols per sleeve
+    # Benchmark data — prefer Alpaca (consistent with live feed), fall back to Yahoo
     SLEEVE_BENCHMARKS = {
         "dividend": ["SPY", "DIA", "IWS", "DVY"],
         "growth": ["IUSG", "QQQ", "SPY"],
     }
     benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
     print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")
-    bm_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
+    bm_prices = fetch_alpaca_prices(set(benchmark_syms), start_date, end_date)
+    # Fall back to Yahoo for any missing tickers
+    missing = [s for s in benchmark_syms if s not in bm_prices or not bm_prices[s]]
+    if missing:
+        print(f"    Falling back to Yahoo for: {', '.join(missing)}")
+        yahoo_bm = fetch_yahoo_prices(set(missing), start_date, end_date)
+        bm_prices.update(yahoo_bm)
 
     benchmarks = {}
     for sym in benchmark_syms:
