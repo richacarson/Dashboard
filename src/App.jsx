@@ -4508,6 +4508,34 @@ Instructions:
               rows.sort((a, b) => Math.abs(b.wContribDay ?? 0) - Math.abs(a.wContribDay ?? 0));
               const alphaColor = v => v > 0 ? C.up : v < 0 ? C.dn : C.t3;
 
+              // Build alpha explanation from DIFF data
+              const explainAlpha = (alpha, rowData, diffKey) => {
+                if (alpha === null || !rowData.length) return null;
+                const withDiff = rowData.map(r => ({ s: r.s, diff: r[diffKey] ?? 0, w: r.w, c: r.c, chgKey: diffKey === "diffDay" ? r.c : r.sinceReb })).filter(r => r.diff !== 0);
+                const helpers = withDiff.filter(r => r.diff > 0.01).sort((a, b) => b.diff - a.diff).slice(0, 3);
+                const hurters = withDiff.filter(r => r.diff < -0.01).sort((a, b) => a.diff - b.diff).slice(0, 3);
+                const isNeg = alpha < 0;
+                const parts = [];
+                if (isNeg && hurters.length) {
+                  parts.push(`Overweights that underperformed hurt: ${hurters.map(r => r.s).join(", ")}.`);
+                  if (helpers.length) parts.push(`Underweights that outperformed also cost alpha: ${helpers.map(r => r.s).join(", ")}.`);
+                } else if (!isNeg && helpers.length) {
+                  parts.push(`Overweights that outperformed helped: ${helpers.map(r => r.s).join(", ")}.`);
+                  if (hurters.length) parts.push(`Partially offset by: ${hurters.map(r => r.s).join(", ")}.`);
+                } else if (hurters.length) {
+                  parts.push(`Dragged by: ${hurters.map(r => r.s).join(", ")}.`);
+                }
+                return parts.join(" ");
+              };
+
+              // Add diff fields to rows for explanation
+              rows.forEach(r => {
+                r.diffDay = (r.wContribDay ?? 0) - (r.eContribDay ?? 0);
+                r.diffReb = (r.wContribReb ?? 0) - (r.eContribReb ?? 0);
+              });
+              const dayExplain = explainAlpha(dayAlpha, rows, "diffDay");
+              const rebExplain = explainAlpha(rebAlpha, rows, "diffReb");
+
               return (
                 <div>
                   {/* Summary cards */}
@@ -4527,6 +4555,7 @@ Instructions:
                         <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>Alpha</span>
                         <span style={{ fontSize: 16, fontWeight: 800, color: dayAlpha !== null ? alphaColor(dayAlpha) : C.t4, fontVariantNumeric: "tabular-nums" }}>{dayAlpha !== null ? `${dayAlpha >= 0 ? "+" : ""}${dayAlpha.toFixed(3)}%` : "—"}</span>
                       </div>
+                      {dayExplain && <div style={{ marginTop: 8, fontSize: 11, color: C.t4, lineHeight: 1.4 }}>{dayExplain}</div>}
                     </div>
                     {/* Since rebalance */}
                     <div style={{ background: C.card, borderRadius: 14, padding: 16, border: `1px solid ${C.border}` }}>
@@ -4543,6 +4572,7 @@ Instructions:
                         <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>Alpha</span>
                         <span style={{ fontSize: 16, fontWeight: 800, color: rebAlpha !== null ? alphaColor(rebAlpha) : C.t4, fontVariantNumeric: "tabular-nums" }}>{rebAlpha !== null ? `${rebAlpha >= 0 ? "+" : ""}${rebAlpha.toFixed(2)}%` : "—"}</span>
                       </div>
+                      {rebExplain && <div style={{ marginTop: 8, fontSize: 11, color: C.t4, lineHeight: 1.4 }}>{rebExplain}</div>}
                     </div>
                   </div>
                   {/* Per-stock breakdown */}
