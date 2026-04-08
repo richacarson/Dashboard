@@ -5520,7 +5520,7 @@ Instructions:
 
               // Chart dimensions
               const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
-              const H = isDesktop ? 480 : 320;
+              const H = isDesktop ? 380 : 300;
               const PAD = { top: 30, right: 70, bottom: 50, left: 66 };
               const cw = W - PAD.left - PAD.right;
               const ch = H - PAD.top - PAD.bottom;
