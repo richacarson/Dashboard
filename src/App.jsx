@@ -4461,28 +4461,17 @@ Instructions:
               const tw = TARGET_WEIGHTS[metricsView] || {};
               const ew = syms.length ? 100 / syms.length : 0;
               const ap = anchorPrices?.prices || {};
-              const holdings = (perfDataMap[metricsView] || perfData)?.holdings;
 
-              // Compute weight for each symbol — same cascade as home screen renderSleeve
-              // 1) holdings market-value, 2) TARGET_WEIGHTS (not liveWeights — home screen uses target)
-              let useHoldings = false;
-              const mvMap = {};
-              let totalMV = 0;
-              if (holdings) {
-                for (const s of syms) {
-                  const q = quotes[s]?.p;
-                  const sh = holdings[s];
-                  if (q && sh) { mvMap[s] = sh * q; totalMV += sh * q; }
-                }
-                if (totalMV > 0 && Object.keys(mvMap).length >= syms.length * 0.5) useHoldings = true;
-              }
+              // Use live drifted weights if available, otherwise target weights
+              // This matches the home screen which uses TARGET_WEIGHTS for daily calc
+              const getLiveW = (s) => liveWeights[metricsView]?.[s] ?? tw[s] ?? 0;
 
               // Daily returns
               let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayN = 0;
               const rows = [];
               for (const s of syms) {
                 const c = chg(s);
-                const w = useHoldings && mvMap[s] ? (mvMap[s] / totalMV) * 100 : (tw[s] || 0);
+                const w = getLiveW(s);
                 const q = quotes[s]?.p;
                 const anc = ap[s];
                 const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
