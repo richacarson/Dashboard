@@ -4416,8 +4416,8 @@ Instructions:
 
               // ── TABLE LAYOUT (both mobile and desktop — scrollable on mobile) ──
               return (
-                <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                  <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 280px)", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+                <div style={{ background: C.card, borderRadius: isDesktop ? 16 : 12, border: `1px solid ${C.border}`, overflow: "hidden", position: "relative" }}>
+                  <div style={{ overflowX: "scroll", maxHeight: isDesktop ? "calc(100vh - 280px)" : "calc(100vh - 240px)", overflowY: "auto", WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}>
                     <table style={{ borderCollapse: "collapse", minWidth: (metricsEditMode ? 180 : 140) + cols.reduce((s, c) => s + c.w, 0) }}>
                       {/* Header — sticky top + left */}
                       <thead style={{ position: "sticky", top: 0, zIndex: 3 }}>
