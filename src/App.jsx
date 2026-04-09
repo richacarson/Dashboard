@@ -4464,7 +4464,24 @@ Instructions:
                       </tbody>
                       {/* Averages footer */}
                       <tfoot style={{ position: "sticky", bottom: 0, zIndex: 3 }}>
+                        {/* Equal-weight average row */}
                         <tr style={{ borderTop: `2px solid ${C.accent}` }}>
+                          <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "8px 12px", borderRight: `1px solid ${C.border}`, fontSize: 11, fontWeight: 700, color: C.t3 }}>EW Avg</td>
+                          {cols.map(col => {
+                            if (col.noAvg) return <td key={`ew-${col.l}`} style={{ padding: "8px 8px", textAlign: "right", fontSize: 12, color: C.t4, background: C.surface }}>—</td>;
+                            if (col.k === "_day") {
+                              const vals = sorted.map(s => dayChg(s)).filter(v => v != null);
+                              const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                              return <td key={`ew-${col.l}`} style={{ padding: "8px 8px", textAlign: "right", fontSize: 12, fontWeight: 700, color: avg > 0 ? C.up : avg < 0 ? C.dn : C.t3, background: C.surface, fontVariantNumeric: "tabular-nums" }}>{avg != null ? `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%` : "—"}</td>;
+                            }
+                            const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
+                            const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                            const val = avg != null ? col.fn({ [col.k]: avg }) : "—";
+                            return <td key={`ew-${col.l}`} style={{ padding: "8px 8px", textAlign: "right", fontSize: 12, fontWeight: 700, color: C.t3, background: C.surface, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{val}</td>;
+                          })}
+                        </tr>
+                        {/* Weighted average row */}
+                        <tr style={{ borderTop: `1px solid ${C.border}` }}>
                           <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "10px 12px", borderRight: `1px solid ${C.border}`, fontSize: 12, fontWeight: 800, color: C.t1 }}>Wt Avg</td>
                           {cols.map(col => {
                             if (col.noAvg) return <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, color: C.t4, background: C.surface }}>—</td>;
