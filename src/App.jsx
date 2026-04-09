@@ -6355,7 +6355,7 @@ Instructions:
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
-        {["home", "performance", "charts", "briefs", "research"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
+        {["home", "performance", "charts", "briefs", "metrics"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
           <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
