@@ -5376,10 +5376,25 @@ Instructions:
                     const gainLoss = mktValue - costBasis;
                     const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
                     const name = names[ticker] || "";
-                    return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct };
+                    // Initial buy date for current holding period
+                    let initDate = null;
+                    if (hPerfData.transactions) {
+                      const txs = [...hPerfData.transactions].filter(t => t.ticker === ticker).sort((a, b) => a.date.localeCompare(b.date));
+                      let running = 0;
+                      for (const tx of txs) {
+                        if (tx.type === "PURCHASE") {
+                          if (running <= 0.001) initDate = tx.date;
+                          running += tx.shares || 0;
+                        } else if (tx.type === "SALE") {
+                          running -= tx.shares || 0;
+                          if (running <= 0.001) { running = 0; initDate = null; }
+                        }
+                      }
+                    }
+                    return { ticker, name, shares, price, dayChg, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct, initDate };
                   });
                   const { col: sc, dir: sd } = holdingsSort;
-                  const sortKey = { symbol: r => r.ticker, name: r => (r.name || "").toLowerCase(), shares: r => r.shares, price: r => r.price, dayChg: r => r.dayChg, dayChgPct: r => r.dayChgPct, mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost, costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct }[sc] || (r => r.weight);
+                  const sortKey = { symbol: r => r.ticker, name: r => (r.name || "").toLowerCase(), shares: r => r.shares, price: r => r.price, dayChg: r => r.dayChg, dayChgPct: r => r.dayChgPct, mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost, costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct, initDate: r => r.initDate || "" }[sc] || (r => r.weight);
                   rows.sort((a, b) => { const av = sortKey(a), bv = sortKey(b); if (typeof av === "string") return sd === "asc" ? av.localeCompare(bv) : bv.localeCompare(av); return sd === "asc" ? av - bv : bv - av; });
                   const totMktVal = rows.reduce((s, r) => s + r.mktValue, 0);
                   const totCostBasis = rows.reduce((s, r) => s + r.costBasis, 0);
@@ -5398,6 +5413,7 @@ Instructions:
                             { key: "mktValue", label: "Mkt Value", align: "right" }, { key: "weight", label: "Weight", align: "right" },
                             { key: "avgCost", label: "Avg Cost", align: "right" }, { key: "costBasis", label: "Cost Basis", align: "right" },
                             { key: "gainLoss", label: "Gain/Loss", align: "right" }, { key: "gainLossPct", label: "G/L %", align: "right" },
+                            { key: "initDate", label: "Buy Date", align: "right" },
                           ].map(col => (
                             <th key={col.key} onClick={() => setHoldingsSort(prev => ({ col: col.key, dir: prev.col === col.key && prev.dir === "desc" ? "asc" : "desc" }))}
                               style={{ padding: "10px 12px", textAlign: col.align, fontSize: 10, fontWeight: 700, color: holdingsSort.col === col.key ? C.t1 : C.t4, textTransform: "uppercase", letterSpacing: 0.5, cursor: "pointer", whiteSpace: "nowrap", borderBottom: `1px solid ${C.border}`, userSelect: "none", background: C.card }}>
@@ -5419,6 +5435,7 @@ Instructions:
                             <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                             <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                             <td style={{ padding: "10px 12px", textAlign: "right", color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
+                            <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3, fontSize: 11, whiteSpace: "nowrap" }}>{r.initDate ? new Date(r.initDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "—"}</td>
                           </tr>
                         ))}
                         <tr style={{ borderTop: `2px solid ${C.accent}44`, background: C.accentSoft }}>
@@ -5431,6 +5448,7 @@ Instructions:
                           <td style={{ padding: "10px 12px", textAlign: "right", color: C.t3 }}>${totCostBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                           <td style={{ padding: "10px 12px", textAlign: "right", color: totGainLoss >= 0 ? C.up : C.dn, fontWeight: 800 }}>{totGainLoss >= 0 ? "+$" : "-$"}{Math.abs(totGainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                           <td style={{ padding: "10px 12px", textAlign: "right", color: totGainLossPct >= 0 ? C.up : C.dn, fontWeight: 800 }}>{totGainLossPct >= 0 ? "+" : ""}{totGainLossPct.toFixed(1)}%</td>
+                          <td />
                         </tr>
                       </tbody>
                     </table>
