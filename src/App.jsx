@@ -4465,16 +4465,28 @@ Instructions:
                       {/* Averages footer */}
                       <tfoot style={{ position: "sticky", bottom: 0, zIndex: 3 }}>
                         <tr style={{ borderTop: `2px solid ${C.accent}` }}>
-                          <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "10px 12px", borderRight: `1px solid ${C.border}`, fontSize: 12, fontWeight: 800, color: C.t1 }}>Avg</td>
+                          <td style={{ position: "sticky", left: 0, zIndex: 4, background: C.surface, padding: "10px 12px", borderRight: `1px solid ${C.border}`, fontSize: 12, fontWeight: 800, color: C.t1 }}>Wt Avg</td>
                           {cols.map(col => {
                             if (col.noAvg) return <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, color: C.t4, background: C.surface }}>—</td>;
+                            const tw = TARGET_WEIGHTS[metricsView] || {};
+                            const lw = liveWeights[metricsView] || tw;
                             if (col.k === "_day") {
-                              const dayVals = sorted.map(s => dayChg(s)).filter(v => v != null);
-                              const avg = dayVals.length ? dayVals.reduce((a, b) => a + b, 0) / dayVals.length : null;
+                              let totalW = 0, weightedSum = 0;
+                              for (const s of sorted) {
+                                const v = dayChg(s);
+                                const w = lw[s] || tw[s] || 0;
+                                if (v != null && w > 0) { totalW += w; weightedSum += w * v; }
+                              }
+                              const avg = totalW > 0 ? weightedSum / totalW : null;
                               return <td key={col.l} style={{ padding: "10px 8px", textAlign: "right", fontSize: 13, fontWeight: 800, color: avg > 0 ? C.up : avg < 0 ? C.dn : C.t1, background: C.surface, fontVariantNumeric: "tabular-nums" }}>{avg != null ? `${avg >= 0 ? "+" : ""}${avg.toFixed(2)}%` : "—"}</td>;
                             }
-                            const vals = sorted.map(s => fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
-                            const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+                            let totalW = 0, weightedSum = 0;
+                            for (const s of sorted) {
+                              const v = fundamentals[s]?.[col.k];
+                              const w = lw[s] || tw[s] || 0;
+                              if (v != null && isFinite(v) && w > 0) { totalW += w; weightedSum += w * v; }
+                            }
+                            const avg = totalW > 0 ? weightedSum / totalW : null;
                             const avgD = { [col.k]: avg };
                             const val = avg != null ? col.fn(avgD) : "—";
                             return (
