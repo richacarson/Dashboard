@@ -1779,8 +1779,45 @@ Instructions:
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 2000);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
   }, [pollFinnhubBenchmarks]);
+
+  // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
+  const staleTimerRef = useRef(null);
+  const pollStaleStocks = useCallback(async () => {
+    if (!FH || marketStatus.status !== "open") return;
+    const now = Date.now();
+    const staleThreshold = 5 * 60 * 1000; // 5 minutes
+    const allSyms = getCoreSyms(sleevesRef.current);
+    const stale = allSyms.filter(s => {
+      const q = quotesRef.current[s];
+      if (!q) return true; // no quote at all
+      const tradeTime = q.t ? new Date(q.t).getTime() : 0;
+      return (now - tradeTime) > staleThreshold;
+    });
+    if (!stale.length) return;
+    // Only poll up to 10 at a time to stay under rate limits
+    const batch = stale.slice(0, 10);
+    const batchQ = {}, batchB = {};
+    for (const sym of batch) {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FH}`);
+        if (!r.ok) continue;
+        const q = await r.json();
+        if (!q.c) continue;
+        const quoteVal = { p: q.c, t: new Date().toISOString() };
+        quotesRef.current[sym] = quoteVal;
+        batchQ[sym] = quoteVal;
+        if (q.pc) {
+          const barVal = { ...barsRef.current[sym], pc: q.pc };
+          barsRef.current[sym] = barVal;
+          batchB[sym] = barVal;
+        }
+      } catch {}
+    }
+    if (Object.keys(batchQ).length) setQuotes(prev => ({ ...prev, ...batchQ }));
+    if (Object.keys(batchB).length) setBars(prev => ({ ...prev, ...batchB }));
+  }, [marketStatus.status]);
 
   // ── Performance tab: fetch portfolio history + benchmark bars ──
   const fetchPerfData = useCallback(async () => {
@@ -2202,6 +2239,9 @@ Instructions:
       connectWS();
       connectFinnhubWS();
       startFinnhubPolling();
+      // Poll for stale stocks every 30 seconds
+      pollStaleStocks();
+      staleTimerRef.current = setInterval(pollStaleStocks, 30000);
     } catch { setAuthErr("Invalid API keys."); }
   };
 
@@ -2222,7 +2262,7 @@ Instructions:
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
       return () => {
-        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current);
+        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
         try { wsRef.current?.close(); } catch {}
         try { fhWsRef.current?.close(); } catch {}
       };
