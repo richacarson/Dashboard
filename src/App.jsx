@@ -3600,7 +3600,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }, { v: "attribution", l: "📈 Attribution" }, { v: "sector", l: "🥧 Sectors" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }, { v: "qvq", l: "🔄 Q1 vs Q2" }, { v: "attribution", l: "📈 Attribution" }, { v: "sector", l: "🥧 Sectors" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -3906,6 +3906,168 @@ Instructions:
                         ))}
                       </div>
                     ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Q1 vs Q2 COMPARISON ── */}
+            {metricsSubView === "qvq" && (() => {
+              const Q1_STOCKS = {
+                dividend: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"],
+                growth: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","HOOD","KEYS","MARA","NVDA","NXPI","OKE","PDD","SYF","TSM","TOL"],
+              };
+              const sleeve = metricsView;
+              const q1Syms = Q1_STOCKS[sleeve] || [];
+              const q2Syms = sleeves[sleeve]?.symbols || [];
+              const tw = TARGET_WEIGHTS[sleeve] || {};
+              const ap = REBALANCE_ANCHORS;
+              const q1Ew = q1Syms.length ? 100 / q1Syms.length : 4;
+              const pct = v => v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}%` : "—";
+              const pctColor = v => v != null ? (v >= 0 ? C.up : C.dn) : C.t4;
+
+              // Q2 weighted daily + since-rebalance (same as home screen / weight alpha)
+              const calcPortfolio = (syms, getWeight) => {
+                let wDaySum = 0, wDayTot = 0, wRebSum = 0, wRebTot = 0;
+                const rows = [];
+                for (const s of syms) {
+                  const c = chg(s);
+                  const w = getWeight(s);
+                  const q = quotes[s]?.p;
+                  const anc = ap[s];
+                  const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
+                  if (c !== null && w > 0) { wDaySum += w * c; wDayTot += w; }
+                  if (sinceReb !== null && w > 0) { wRebSum += w * sinceReb; wRebTot += w; }
+                  rows.push({ s, w, c, sinceReb });
+                }
+                return {
+                  day: wDayTot > 0 ? wDaySum / wDayTot : null,
+                  reb: wRebTot > 0 ? wRebSum / wRebTot : null,
+                  rows,
+                };
+              };
+
+              // Q2: target-weighted with drift
+              const q2GetW = s => liveWeights[sleeve]?.[s] ?? tw[s] ?? 0;
+              const q2 = calcPortfolio(q2Syms, q2GetW);
+
+              // Q1: equal-weighted with drift from anchor
+              const q1Drift = {};
+              let q1DriftTotal = 0;
+              for (const s of q1Syms) {
+                const anc = ap[s];
+                const cur = quotes[s]?.p;
+                const growth = (anc && cur) ? cur / anc : 1;
+                q1Drift[s] = q1Ew * growth;
+                q1DriftTotal += q1Drift[s];
+              }
+              const q1GetW = s => q1DriftTotal > 0 ? (q1Drift[s] / q1DriftTotal) * 100 : q1Ew;
+              const q1 = calcPortfolio(q1Syms, q1GetW);
+
+              const dayAlpha = (q2.day !== null && q1.day !== null) ? q2.day - q1.day : null;
+              const rebAlpha = (q2.reb !== null && q1.reb !== null) ? q2.reb - q1.reb : null;
+
+              // Stocks added/removed
+              const added = q2Syms.filter(s => !q1Syms.includes(s));
+              const removed = q1Syms.filter(s => !q2Syms.includes(s));
+              const kept = q2Syms.filter(s => q1Syms.includes(s));
+
+              return (
+                <div>
+                  {/* Summary cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                    {/* Today */}
+                    <div style={{ background: C.card, borderRadius: 14, padding: 16, border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Today</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Q2 (Current)</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: pctColor(q2.day) }}>{pct(q2.day)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Q1 (Old EW)</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: pctColor(q1.day) }}>{pct(q1.day)}</span>
+                      </div>
+                      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>Rebalance Alpha</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: pctColor(dayAlpha) }}>{pct(dayAlpha)}</span>
+                      </div>
+                    </div>
+                    {/* Since rebalance */}
+                    <div style={{ background: C.card, borderRadius: 14, padding: 16, border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Since Rebalance</div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Q2 (Current)</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: pctColor(q2.reb) }}>{pct(q2.reb)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: C.t3 }}>Q1 (Old EW)</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: pctColor(q1.reb) }}>{pct(q1.reb)}</span>
+                      </div>
+                      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>Rebalance Alpha</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: pctColor(rebAlpha) }}>{pct(rebAlpha)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Changes summary */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                    {added.map(s => (
+                      <span key={s} style={{ fontSize: 11, fontWeight: 700, color: C.up, background: C.up + "15", padding: "3px 8px", borderRadius: 6 }}>+ {s}</span>
+                    ))}
+                    {removed.map(s => (
+                      <span key={s} style={{ fontSize: 11, fontWeight: 700, color: C.dn, background: C.dn + "15", padding: "3px 8px", borderRadius: 6 }}>- {s}</span>
+                    ))}
+                  </div>
+
+                  {/* Per-stock table: show all unique stocks */}
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Per-Stock Comparison</div>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums", minWidth: 500 }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 700, color: C.t4, fontSize: 10 }}>Ticker</th>
+                            <th style={{ padding: "8px 8px", textAlign: "center", fontWeight: 700, color: C.t4, fontSize: 10 }}>Status</th>
+                            <th style={{ padding: "8px 8px", textAlign: "right", fontWeight: 700, color: C.t4, fontSize: 10 }}>Q1 Wt%</th>
+                            <th style={{ padding: "8px 8px", textAlign: "right", fontWeight: 700, color: C.t4, fontSize: 10 }}>Q2 Wt%</th>
+                            <th style={{ padding: "8px 8px", textAlign: "right", fontWeight: 700, color: C.t4, fontSize: 10 }}>Day Chg</th>
+                            <th style={{ padding: "8px 8px", textAlign: "right", fontWeight: 700, color: C.t4, fontSize: 10 }}>Since Reb</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...new Set([...q2Syms, ...q1Syms])].sort((a, b) => {
+                            // Sort: added first, then removed, then kept — by since-reb impact
+                            const aAdded = added.includes(a), bAdded = added.includes(b);
+                            const aRemoved = removed.includes(a), bRemoved = removed.includes(b);
+                            if (aAdded && !bAdded) return -1; if (!aAdded && bAdded) return 1;
+                            if (aRemoved && !bRemoved) return -1; if (!aRemoved && bRemoved) return 1;
+                            const aReb = quotes[a]?.p && ap[a] ? ((quotes[a].p - ap[a]) / ap[a]) * 100 : 0;
+                            const bReb = quotes[b]?.p && ap[b] ? ((quotes[b].p - ap[b]) / ap[b]) * 100 : 0;
+                            return Math.abs(bReb) - Math.abs(aReb);
+                          }).map(s => {
+                            const isAdded = added.includes(s);
+                            const isRemoved = removed.includes(s);
+                            const c = chg(s);
+                            const sinceReb = (ap[s] && quotes[s]?.p) ? ((quotes[s].p - ap[s]) / ap[s]) * 100 : null;
+                            const q1w = q1Syms.includes(s) ? q1GetW(s) : null;
+                            const q2w = q2Syms.includes(s) ? q2GetW(s) : null;
+                            return (
+                              <tr key={s} style={{ borderBottom: `1px solid ${C.border}`, background: isAdded ? C.up + "08" : isRemoved ? C.dn + "08" : "transparent" }}>
+                                <td style={{ padding: "8px 12px", fontWeight: 700, color: C.accent }}>{s}</td>
+                                <td style={{ padding: "8px 8px", textAlign: "center", fontSize: 10, fontWeight: 700, color: isAdded ? C.up : isRemoved ? C.dn : C.t4 }}>
+                                  {isAdded ? "NEW" : isRemoved ? "OUT" : "KEPT"}
+                                </td>
+                                <td style={{ padding: "8px 8px", textAlign: "right", color: q1w != null ? C.t2 : C.t4 }}>{q1w != null ? q1w.toFixed(1) + "%" : "—"}</td>
+                                <td style={{ padding: "8px 8px", textAlign: "right", color: q2w != null ? C.t2 : C.t4 }}>{q2w != null ? q2w.toFixed(1) + "%" : "—"}</td>
+                                <td style={{ padding: "8px 8px", textAlign: "right", fontWeight: 600, color: pctColor(c) }}>{pct(c)}</td>
+                                <td style={{ padding: "8px 8px", textAlign: "right", fontWeight: 600, color: pctColor(sinceReb) }}>{sinceReb != null ? pct(sinceReb) : "—"}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               );
