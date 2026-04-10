@@ -29,6 +29,8 @@ const REBALANCE_ANCHORS = {
   FTNT:81.86, HOOD:68.30, HRMY:27.59, HUT:49.70, KEYS:290.64, MARA:8.66, MRVL:108.38, NVDA:175.73, NXPI:196.12, OKE:88.86,
   SUPV:9.36, SYF:68.88, TOL:135.42, TSM:339.44, VST:151.07,
   IBIT:79.00, ETHA:21.50,
+  // Q1 sold stocks — needed for Q1 vs Q2 comparison
+  A:113.94, MATX:166.48, GFI:46.48, FINV:5.05, PDD:100.41,
 };
 const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
 const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
