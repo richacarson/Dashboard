@@ -1002,7 +1002,9 @@ Instructions:
     const base = getAllSyms(sleeves);
     // Also include tickers from performance holdings so live value calculator works even when holdings differ from DEFAULT_SLEEVES
     const perfHoldings = Object.values(perfDataMap).flatMap(d => Object.keys(d.holdings || {}));
-    return [...new Set([...base, ...perfHoldings])];
+    // Include Q1 stocks for Q1 vs Q2 comparison (sold stocks still need quotes)
+    const q1Stocks = ["A","MATX","GFI","FINV","PDD"];
+    return [...new Set([...base, ...perfHoldings, ...q1Stocks])];
   }, [sleeves, perfDataMap]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
 
