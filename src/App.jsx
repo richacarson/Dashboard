@@ -6920,6 +6920,7 @@ Instructions:
           const [fsRange, setFsRange] = useState(perfRange);
           const [fsChartType, setFsChartType] = useState(perfChartType);
           const [fsBmToggles, setFsBmToggles] = useState({ ...perfBmToggles });
+          const [fsInterval, setFsInterval] = useState("1W"); // "1D" | "1W" | "1M" candle interval
 
           useEffect(() => {
             if (!chartContainerRef.current) return;
@@ -6971,9 +6972,7 @@ Instructions:
             const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
             const rangeDays = rangeMap[fsRange];
             let filtered;
-            if (fsRange === "1D") {
-              filtered = portfolio.slice(-2);
-            } else if (fsRange === "QTD") {
+            if (fsRange === "QTD") {
               const m = now.getMonth();
               const qtrStartMonth = Math.floor(m / 3) * 3;
               const qtrStartDate = `${now.getFullYear()}-${String(qtrStartMonth + 1).padStart(2, "0")}-01`;
@@ -6989,13 +6988,11 @@ Instructions:
             }
             if (!filtered.length) return;
 
-            // Convert dates to lightweight-charts format { time: "YYYY-MM-DD" }
             const toTime = (dateStr) => dateStr.slice(0, 10);
 
             if (fsChartType === "candle") {
-              // Aggregate into OHLC bars
-              const numDays = filtered.length;
-              const aggPeriod = numDays <= 90 ? "day" : numDays <= 365 * 2 ? "week" : "month";
+              // Aggregate based on user-selected interval
+              const aggPeriod = fsInterval === "1D" ? "day" : fsInterval === "1M" ? "month" : "week";
               let ohlcData = [];
 
               if (aggPeriod === "day") {
@@ -7051,7 +7048,7 @@ Instructions:
               });
               candleSeries.setData(ohlcData);
             } else {
-              // Area chart
+              // Area chart — always daily resolution
               const areaData = filtered.map(p => ({ time: toTime(p.date), value: p.value }));
               const areaSeries = chart.addAreaSeries({
                 topColor: isDk ? "rgba(110,132,80,0.4)" : "rgba(110,132,80,0.3)",
@@ -7085,7 +7082,6 @@ Instructions:
                   bmData.push({ time: ptDate, value: startPortVal * (prices[pIdx][1] / basePrice) });
                 }
               }
-              // Deduplicate by time (keep last value per date)
               const seen = {};
               const deduped = [];
               for (const p of bmData) {
@@ -7095,7 +7091,7 @@ Instructions:
                 const bmSeries = chart.addLineSeries({
                   color: bmColors_fs[sym] || "#888",
                   lineWidth: 1.5,
-                  lineStyle: 2, // dashed
+                  lineStyle: 2,
                   crosshairMarkerVisible: true,
                   title: sym,
                 });
@@ -7105,7 +7101,6 @@ Instructions:
 
             chart.timeScale().fitContent();
 
-            // Resize observer
             const ro = new ResizeObserver(() => {
               if (chartRef.current && container) {
                 chartRef.current.applyOptions({ width: container.clientWidth, height: container.clientHeight });
@@ -7114,7 +7109,7 @@ Instructions:
             ro.observe(container);
 
             return () => { ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
-          }, [fsRange, fsChartType, fsBmToggles, theme]);
+          }, [fsRange, fsChartType, fsInterval, fsBmToggles, theme]);
 
           const bmColors_ui = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
 
@@ -7129,7 +7124,7 @@ Instructions:
                 <button onClick={() => setShowPerfFullscreen(false)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                 </button>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>IOWN {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</div>
                   <div style={{ fontSize: 11, color: C.t4 }}>Portfolio Performance</div>
                 </div>
@@ -7149,28 +7144,45 @@ Instructions:
                 </div>
               </div>
 
-              {/* Time range pills */}
-              <div style={{ display: "flex", gap: 4, padding: "8px 14px", flexShrink: 0, overflowX: "auto", borderBottom: `1px solid ${C.border}` }}>
+              {/* Controls row: Time range | Candle interval | Benchmarks */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", flexShrink: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", borderBottom: `1px solid ${C.border}` }}>
+                {/* Time range */}
                 {["QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
                   if (r === "QTD" || r === "YTD" || r === "ALL") return true;
-                  const portfolio = perfData.portfolio;
-                  const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
+                  const p = perfData.portfolio;
+                  const daysAvail = p.length > 1 ? (new Date(p[p.length - 1].date) - new Date(p[0].date)) / 86400000 : 0;
                   const need = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 }[r] || 0;
-                  return daysAvailable >= need * 0.9;
+                  return daysAvail >= need * 0.9;
                 }).map(r => (
                   <button key={r} onClick={() => setFsRange(r)} style={{
-                    padding: "6px 14px", borderRadius: 8, border: `1px solid ${fsRange === r ? C.borderActive : C.border}`,
+                    padding: "6px 12px", borderRadius: 8, border: `1px solid ${fsRange === r ? C.borderActive : C.border}`,
                     background: fsRange === r ? C.accentSoft : "transparent",
                     color: fsRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                    whiteSpace: "nowrap", flexShrink: 0,
                   }}>{r}</button>
                 ))}
-                <div style={{ width: 1, background: C.border, margin: "2px 4px", flexShrink: 0 }} />
+
+                {/* Candle interval selector — only visible in candle mode */}
+                {fsChartType === "candle" && <>
+                  <div style={{ width: 1, height: 20, background: C.border, flexShrink: 0, margin: "0 2px" }} />
+                  {["1D", "1W", "1M"].map(iv => (
+                    <button key={iv} onClick={() => setFsInterval(iv)} style={{
+                      padding: "6px 10px", borderRadius: 8, border: `1px solid ${fsInterval === iv ? C.accent + "66" : C.border}`,
+                      background: fsInterval === iv ? C.accent + "18" : "transparent",
+                      color: fsInterval === iv ? C.accent : C.t4, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                      whiteSpace: "nowrap", flexShrink: 0,
+                    }}>{iv}</button>
+                  ))}
+                </>}
+
+                {/* Benchmarks */}
+                <div style={{ width: 1, height: 20, background: C.border, flexShrink: 0, margin: "0 2px" }} />
                 {Object.entries(bmColors_ui).filter(([sym]) => sym in fsBmToggles).map(([sym, color]) => (
                   <button key={sym} onClick={() => setFsBmToggles(prev => ({ ...prev, [sym]: !prev[sym] }))} style={{
                     padding: "5px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
                     border: `1px solid ${fsBmToggles[sym] ? color + "66" : C.border}`,
                     background: fsBmToggles[sym] ? color + "18" : "transparent",
-                    color: fsBmToggles[sym] ? color : C.t4, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                    color: fsBmToggles[sym] ? color : C.t4, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
                   }}>{sym}</button>
                 ))}
               </div>
