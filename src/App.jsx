@@ -753,11 +753,10 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 /* ═══════════════════════════════════════════════════════════════════
    FULLSCREEN INTERACTIVE PORTFOLIO CHART (Lightweight Charts)
    ═══════════════════════════════════════════════════════════════════ */
-const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveValue, theme, C, initRange, initChartType, initBmToggles, perfSleeve, onClose }) {
+const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveValue, theme, C, initChartType, initBmToggles, perfSleeve, onClose }) {
   const chartContainerRef = useRef(null);
   const chartRef = useRef(null);
-  const [fsRange, setFsRange] = useState(initRange || "YTD");
-  const [fsChartType, setFsChartType] = useState(initChartType || "area");
+  const [fsChartType, setFsChartType] = useState(initChartType || "candle");
   const [fsBmToggles, setFsBmToggles] = useState(initBmToggles || {});
   const [fsInterval, setFsInterval] = useState("1W");
 
@@ -792,43 +791,26 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
     });
     chartRef.current = chart;
 
-    // Build filtered data based on range
+    // Always use ALL data
     const basePortfolio = perfData.portfolio;
-    let portfolio = basePortfolio;
+    let filtered = basePortfolio;
     if (liveValue) {
       const today = new Date().toISOString().slice(0, 10);
       const lastDate = basePortfolio[basePortfolio.length - 1]?.date;
       if (today > lastDate) {
-        portfolio = [...basePortfolio, { date: today, value: liveValue.value }];
+        filtered = [...basePortfolio, { date: today, value: liveValue.value }];
       } else {
-        portfolio = [...basePortfolio.slice(0, -1), { ...basePortfolio[basePortfolio.length - 1], value: liveValue.value }];
+        filtered = [...basePortfolio.slice(0, -1), { ...basePortfolio[basePortfolio.length - 1], value: liveValue.value }];
       }
-    }
-
-    const now = new Date();
-    const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
-    const rangeDays = rangeMap[fsRange];
-    let filtered;
-    if (fsRange === "QTD") {
-      const m = now.getMonth();
-      const qtrStartMonth = Math.floor(m / 3) * 3;
-      const qtrStartDate = `${now.getFullYear()}-${String(qtrStartMonth + 1).padStart(2, "0")}-01`;
-      const qtdStart = [...portfolio].reverse().find(p => p.date < qtrStartDate);
-      filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio;
-    } else if (fsRange === "YTD") {
-      const yearEnd = `${now.getFullYear() - 1}-12-31`;
-      const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
-      filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
-    } else {
-      const cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0, 10) : null;
-      filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
     }
     if (!filtered.length) return;
 
     const toTime = (dateStr) => dateStr.slice(0, 10);
 
     if (fsChartType === "candle") {
-      const aggPeriod = fsInterval === "1D" ? "day" : fsInterval === "1M" ? "month" : "week";
+      // Aggregate based on user-selected interval
+      const aggMap = { "1D": "day", "1W": "week", "2W": "2week", "1M": "month", "1Q": "quarter" };
+      const aggPeriod = aggMap[fsInterval] || "week";
       let ohlcData = [];
 
       if (aggPeriod === "day") {
@@ -846,9 +828,17 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         for (const pt of filtered) {
           const d = new Date(pt.date + "T12:00:00");
           let key;
-          if (aggPeriod === "month") {
+          if (aggPeriod === "quarter") {
+            key = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+          } else if (aggPeriod === "month") {
             key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          } else if (aggPeriod === "2week") {
+            const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+            const yr = thu.getFullYear();
+            const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+            key = `${yr}-BW${String(Math.ceil(wk / 2)).padStart(2, "0")}`;
           } else {
+            // week
             const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
             const yr = thu.getFullYear();
             const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
@@ -944,7 +934,7 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
     ro.observe(container);
 
     return () => { ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
-  }, [fsRange, fsChartType, fsInterval, fsBmToggles, theme, perfData, liveValue]);
+  }, [fsChartType, fsInterval, fsBmToggles, theme, perfData, liveValue]);
 
   const bmColors_ui = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
 
@@ -979,36 +969,30 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         </div>
       </div>
 
-      {/* Controls row */}
+      {/* Controls row: Interval selector | Benchmarks */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", flexShrink: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", borderBottom: `1px solid ${C.border}` }}>
-        {["QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
-          if (r === "QTD" || r === "YTD" || r === "ALL") return true;
-          const p = perfData.portfolio;
-          const daysAvail = p.length > 1 ? (new Date(p[p.length - 1].date) - new Date(p[0].date)) / 86400000 : 0;
-          const need = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 }[r] || 0;
-          return daysAvail >= need * 0.9;
-        }).map(r => (
-          <button key={r} onClick={() => setFsRange(r)} style={{
-            padding: "6px 12px", borderRadius: 8, border: `1px solid ${fsRange === r ? (C.borderActive || C.border) : C.border}`,
-            background: fsRange === r ? (C.accentSoft || "rgba(110,132,80,0.15)") : "transparent",
-            color: fsRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-            whiteSpace: "nowrap", flexShrink: 0,
-          }}>{r}</button>
-        ))}
-
+        {/* Candle interval selector — visible in candle mode */}
         {fsChartType === "candle" && <>
-          <div style={{ width: 1, height: 20, background: C.border, flexShrink: 0, margin: "0 2px" }} />
-          {["1D", "1W", "1M"].map(iv => (
-            <button key={iv} onClick={() => setFsInterval(iv)} style={{
-              padding: "6px 10px", borderRadius: 8, border: `1px solid ${fsInterval === iv ? (C.accent || "#6E8450") + "66" : C.border}`,
-              background: fsInterval === iv ? (C.accent || "#6E8450") + "18" : "transparent",
-              color: fsInterval === iv ? (C.accent || "#6E8450") : C.t4, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+          <span style={{ fontSize: 11, color: C.t4, fontWeight: 600, flexShrink: 0 }}>Interval</span>
+          {[
+            { v: "1D", l: "1D" },
+            { v: "1W", l: "1W" },
+            { v: "2W", l: "2W" },
+            { v: "1M", l: "1M" },
+            { v: "1Q", l: "1Q" },
+          ].map(({ v, l }) => (
+            <button key={v} onClick={() => setFsInterval(v)} style={{
+              padding: "6px 12px", borderRadius: 8, border: `1px solid ${fsInterval === v ? (C.accent || "#6E8450") + "66" : C.border}`,
+              background: fsInterval === v ? (C.accent || "#6E8450") + "18" : "transparent",
+              color: fsInterval === v ? (C.accent || "#6E8450") : C.t4, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
               whiteSpace: "nowrap", flexShrink: 0,
-            }}>{iv}</button>
+            }}>{l}</button>
           ))}
+          <div style={{ width: 1, height: 20, background: C.border, flexShrink: 0, margin: "0 2px" }} />
         </>}
 
-        <div style={{ width: 1, height: 20, background: C.border, flexShrink: 0, margin: "0 2px" }} />
+        {/* Benchmarks */}
+        <span style={{ fontSize: 11, color: C.t4, fontWeight: 600, flexShrink: 0 }}>vs</span>
         {Object.entries(bmColors_ui).filter(([sym]) => sym in fsBmToggles).map(([sym, color]) => (
           <button key={sym} onClick={() => setFsBmToggles(prev => ({ ...prev, [sym]: !prev[sym] }))} style={{
             padding: "5px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
@@ -7194,7 +7178,6 @@ Instructions:
           liveValue={liveValue}
           theme={theme}
           C={C}
-          initRange={perfRange}
           initChartType={perfChartType}
           initBmToggles={perfBmToggles}
           perfSleeve={perfSleeve}
