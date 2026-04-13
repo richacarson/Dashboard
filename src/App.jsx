@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
+import { createChart, ColorType, CrosshairMode } from "lightweight-charts";
 
 /* ═══════════════════════════════════════════════════════════════════
    IOWN PORTFOLIO COMMAND CENTER v3
@@ -990,6 +991,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfChartType, setPerfChartType] = useState("area"); // "area" | "candle"
+  const [showPerfFullscreen, setShowPerfFullscreen] = useState(false); // fullscreen interactive chart overlay
   const [perfLoading, setPerfLoading] = useState(false);
   const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
@@ -5916,6 +5918,15 @@ Instructions:
                           }}>{icon}</button>
                         ))}
                       </div>}
+                      {/* Fullscreen expand button */}
+                      <button onClick={() => setShowPerfFullscreen(true)} style={{
+                        marginLeft: 4, padding: "5px 8px", border: `1px solid ${C.border}`, borderRadius: 8,
+                        background: "transparent", color: C.t4, cursor: "pointer", display: "flex", alignItems: "center",
+                      }} title="Full-screen interactive chart">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="10 2 14 2 14 6" /><polyline points="6 14 2 14 2 10" /><line x1="14" y1="2" x2="9.5" y2="6.5" /><line x1="2" y1="14" x2="6.5" y2="9.5" />
+                        </svg>
+                      </button>
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>vs</span>
@@ -6899,6 +6910,277 @@ Instructions:
             </div>
           </div>
         );
+      })()}
+
+      {/* ═══ FULLSCREEN INTERACTIVE PORTFOLIO CHART ═══ */}
+      {showPerfFullscreen && perfData && (() => {
+        const FullscreenPerfChart = () => {
+          const chartContainerRef = useRef(null);
+          const chartRef = useRef(null);
+          const [fsRange, setFsRange] = useState(perfRange);
+          const [fsChartType, setFsChartType] = useState(perfChartType);
+          const [fsBmToggles, setFsBmToggles] = useState({ ...perfBmToggles });
+
+          useEffect(() => {
+            if (!chartContainerRef.current) return;
+            const container = chartContainerRef.current;
+
+            // Clean up previous chart
+            if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
+
+            const isDk = theme === "dark";
+            const chart = createChart(container, {
+              width: container.clientWidth,
+              height: container.clientHeight,
+              layout: {
+                background: { type: ColorType.Solid, color: isDk ? "#0C1018" : "#F5F5F0" },
+                textColor: isDk ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                fontFamily: "'DM Sans', -apple-system, sans-serif",
+              },
+              grid: {
+                vertLines: { color: isDk ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
+                horzLines: { color: isDk ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
+              },
+              crosshair: { mode: CrosshairMode.Normal },
+              rightPriceScale: {
+                borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                scaleMargins: { top: 0.05, bottom: 0.05 },
+              },
+              timeScale: {
+                borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                timeVisible: false,
+              },
+              handleScroll: { vertTouchDrag: false },
+            });
+            chartRef.current = chart;
+
+            // Build filtered data based on range
+            const basePortfolio = perfData.portfolio;
+            let portfolio = basePortfolio;
+            if (liveValue) {
+              const today = new Date().toISOString().slice(0, 10);
+              const lastDate = basePortfolio[basePortfolio.length - 1]?.date;
+              if (today > lastDate) {
+                portfolio = [...basePortfolio, { date: today, value: liveValue.value }];
+              } else {
+                portfolio = [...basePortfolio.slice(0, -1), { ...basePortfolio[basePortfolio.length - 1], value: liveValue.value }];
+              }
+            }
+
+            const now = new Date();
+            const rangeMap = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 };
+            const rangeDays = rangeMap[fsRange];
+            let filtered;
+            if (fsRange === "1D") {
+              filtered = portfolio.slice(-2);
+            } else if (fsRange === "QTD") {
+              const m = now.getMonth();
+              const qtrStartMonth = Math.floor(m / 3) * 3;
+              const qtrStartDate = `${now.getFullYear()}-${String(qtrStartMonth + 1).padStart(2, "0")}-01`;
+              const qtdStart = [...portfolio].reverse().find(p => p.date < qtrStartDate);
+              filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio;
+            } else if (fsRange === "YTD") {
+              const yearEnd = `${now.getFullYear() - 1}-12-31`;
+              const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
+              filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
+            } else {
+              const cutoff = rangeDays ? new Date(now.getTime() - rangeDays * 86400000).toISOString().slice(0, 10) : null;
+              filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
+            }
+            if (!filtered.length) return;
+
+            // Convert dates to lightweight-charts format { time: "YYYY-MM-DD" }
+            const toTime = (dateStr) => dateStr.slice(0, 10);
+
+            if (fsChartType === "candle") {
+              // Aggregate into OHLC bars
+              const numDays = filtered.length;
+              const aggPeriod = numDays <= 90 ? "day" : numDays <= 365 * 2 ? "week" : "month";
+              let ohlcData = [];
+
+              if (aggPeriod === "day") {
+                for (let i = 0; i < filtered.length; i++) {
+                  const prev = i > 0 ? filtered[i - 1].value : filtered[i].value;
+                  const cur = filtered[i].value;
+                  ohlcData.push({
+                    time: toTime(filtered[i].date),
+                    open: prev, high: Math.max(prev, cur), low: Math.min(prev, cur), close: cur,
+                  });
+                }
+              } else {
+                let bucket = [];
+                let bucketKey = null;
+                for (const pt of filtered) {
+                  const d = new Date(pt.date + "T12:00:00");
+                  let key;
+                  if (aggPeriod === "month") {
+                    key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                  } else {
+                    const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+                    const yr = thu.getFullYear();
+                    const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+                    key = `${yr}-W${String(wk).padStart(2, "0")}`;
+                  }
+                  if (bucketKey && key !== bucketKey) {
+                    const vals = bucket.map(p => p.value);
+                    ohlcData.push({
+                      time: toTime(bucket[0].date),
+                      open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1],
+                    });
+                    bucket = [];
+                  }
+                  bucketKey = key;
+                  bucket.push(pt);
+                }
+                if (bucket.length) {
+                  const vals = bucket.map(p => p.value);
+                  ohlcData.push({
+                    time: toTime(bucket[0].date),
+                    open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1],
+                  });
+                }
+              }
+
+              const candleSeries = chart.addCandlestickSeries({
+                upColor: isDk ? "#34D399" : "#16A34A",
+                downColor: isDk ? "#F87171" : "#DC2626",
+                borderUpColor: isDk ? "#34D399" : "#16A34A",
+                borderDownColor: isDk ? "#F87171" : "#DC2626",
+                wickUpColor: isDk ? "#34D399" : "#16A34A",
+                wickDownColor: isDk ? "#F87171" : "#DC2626",
+              });
+              candleSeries.setData(ohlcData);
+            } else {
+              // Area chart
+              const areaData = filtered.map(p => ({ time: toTime(p.date), value: p.value }));
+              const areaSeries = chart.addAreaSeries({
+                topColor: isDk ? "rgba(110,132,80,0.4)" : "rgba(110,132,80,0.3)",
+                bottomColor: isDk ? "rgba(110,132,80,0.02)" : "rgba(110,132,80,0.02)",
+                lineColor: isDk ? "#6E8450" : "#6E8450",
+                lineWidth: 2,
+              });
+              areaSeries.setData(areaData);
+            }
+
+            // Add benchmark lines
+            const bmColors_fs = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+            const benchmarks_fs = perfData.benchmarks || {};
+            const startPortVal = filtered[0].value;
+            Object.entries(benchmarks_fs).forEach(([sym, priceMap]) => {
+              if (!fsBmToggles[sym]) return;
+              const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
+              if (!prices.length) return;
+              const startDate = filtered[0].date;
+              let basePrice = null;
+              for (const [d, p] of prices) { if (d >= startDate) { basePrice = p; break; } }
+              if (!basePrice) { for (let j = prices.length - 1; j >= 0; j--) { if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; } } }
+              if (!basePrice) return;
+
+              const bmData = [];
+              let pIdx = 0;
+              for (const pt of filtered) {
+                const ptDate = toTime(pt.date);
+                while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= ptDate) pIdx++;
+                if (prices[pIdx][0] <= ptDate || pIdx === 0) {
+                  bmData.push({ time: ptDate, value: startPortVal * (prices[pIdx][1] / basePrice) });
+                }
+              }
+              // Deduplicate by time (keep last value per date)
+              const seen = {};
+              const deduped = [];
+              for (const p of bmData) {
+                if (seen[p.time]) { deduped[deduped.length - 1] = p; } else { deduped.push(p); seen[p.time] = true; }
+              }
+              if (deduped.length > 1) {
+                const bmSeries = chart.addLineSeries({
+                  color: bmColors_fs[sym] || "#888",
+                  lineWidth: 1.5,
+                  lineStyle: 2, // dashed
+                  crosshairMarkerVisible: true,
+                  title: sym,
+                });
+                bmSeries.setData(deduped);
+              }
+            });
+
+            chart.timeScale().fitContent();
+
+            // Resize observer
+            const ro = new ResizeObserver(() => {
+              if (chartRef.current && container) {
+                chartRef.current.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+              }
+            });
+            ro.observe(container);
+
+            return () => { ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
+          }, [fsRange, fsChartType, fsBmToggles, theme]);
+
+          const bmColors_ui = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+
+          return (
+            <div style={{
+              position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
+              display: "flex", flexDirection: "column",
+              paddingTop: "env(safe-area-inset-top, 0px)",
+            }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                <button onClick={() => setShowPerfFullscreen(false)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>IOWN {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</div>
+                  <div style={{ fontSize: 11, color: C.t4 }}>Portfolio Performance</div>
+                </div>
+                {/* Chart type toggle */}
+                <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+                  {[
+                    { v: "area", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 9L14 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12L5 7L8 9L14 3V12H2Z" fill="currentColor" opacity="0.15"/></svg> },
+                    { v: "candle", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="4" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1"/><line x1="4.5" y1="10" x2="4.5" y2="13" stroke="currentColor" strokeWidth="1"/><rect x="10" y="6" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1"/><line x1="11.5" y1="11" x2="11.5" y2="14" stroke="currentColor" strokeWidth="1"/></svg> },
+                  ].map(({ v, icon }) => (
+                    <button key={v} onClick={() => setFsChartType(v)} style={{
+                      padding: "6px 10px", border: "none", cursor: "pointer", fontFamily: "inherit",
+                      background: fsChartType === v ? C.accentSoft : "transparent",
+                      color: fsChartType === v ? C.accent : C.t4, display: "flex", alignItems: "center",
+                      borderRight: v === "area" ? `1px solid ${C.border}` : "none",
+                    }}>{icon}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time range pills */}
+              <div style={{ display: "flex", gap: 4, padding: "8px 14px", flexShrink: 0, overflowX: "auto", borderBottom: `1px solid ${C.border}` }}>
+                {["QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
+                  if (r === "QTD" || r === "YTD" || r === "ALL") return true;
+                  const portfolio = perfData.portfolio;
+                  const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
+                  const need = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 }[r] || 0;
+                  return daysAvailable >= need * 0.9;
+                }).map(r => (
+                  <button key={r} onClick={() => setFsRange(r)} style={{
+                    padding: "6px 14px", borderRadius: 8, border: `1px solid ${fsRange === r ? C.borderActive : C.border}`,
+                    background: fsRange === r ? C.accentSoft : "transparent",
+                    color: fsRange === r ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                  }}>{r}</button>
+                ))}
+                <div style={{ width: 1, background: C.border, margin: "2px 4px", flexShrink: 0 }} />
+                {Object.entries(bmColors_ui).filter(([sym]) => sym in fsBmToggles).map(([sym, color]) => (
+                  <button key={sym} onClick={() => setFsBmToggles(prev => ({ ...prev, [sym]: !prev[sym] }))} style={{
+                    padding: "5px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                    border: `1px solid ${fsBmToggles[sym] ? color + "66" : C.border}`,
+                    background: fsBmToggles[sym] ? color + "18" : "transparent",
+                    color: fsBmToggles[sym] ? color : C.t4, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>{sym}</button>
+                ))}
+              </div>
+
+              {/* Chart container — fills remaining space */}
+              <div ref={chartContainerRef} style={{ flex: 1, minHeight: 0 }} />
+            </div>
+          );
+        };
+        return <FullscreenPerfChart />;
       })()}
 
       {/* MOBILE BOTTOM TAB BAR */}
