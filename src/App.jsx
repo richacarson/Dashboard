@@ -5935,43 +5935,83 @@ Instructions:
 
                   {/* ── CANDLESTICK CHART ── */}
                   {perfChartType === "candle" && !isIntraday && (() => {
-                    // Aggregate daily portfolio data into weekly OHLC bars
-                    const aggPeriod = filtered.length > 365 * 2 ? "month" : "week";
-                    const ohlcBars = [];
-                    let bucket = [];
-                    let bucketKey = null;
-                    for (const pt of filtered) {
-                      const d = new Date(pt.date.length > 10 ? pt.date : pt.date + "T12:00:00");
-                      let key;
-                      if (aggPeriod === "month") {
-                        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                      } else {
-                        // ISO week key
-                        const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-                        const yr = thu.getFullYear();
-                        const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-                        key = `${yr}-W${String(wk).padStart(2, "0")}`;
+                    // Smart aggregation: daily for short ranges, weekly for medium, monthly for long
+                    const numDays = filtered.length;
+                    const aggPeriod = numDays <= 90 ? "day" : numDays <= 365 * 2 ? "week" : "month";
+                    let ohlcBars = [];
+
+                    if (aggPeriod === "day") {
+                      // Daily candles — each day is its own bar
+                      ohlcBars = filtered.map(pt => ({ date: pt.date, dateEnd: pt.date, o: pt.value, h: pt.value, l: pt.value, c: pt.value }));
+                      // For daily, compute OHLC from neighboring days: open = prev close, high/low = max/min of open/close
+                      for (let i = 1; i < ohlcBars.length; i++) {
+                        ohlcBars[i].o = ohlcBars[i - 1].c;
+                        ohlcBars[i].h = Math.max(ohlcBars[i].o, ohlcBars[i].c);
+                        ohlcBars[i].l = Math.min(ohlcBars[i].o, ohlcBars[i].c);
                       }
-                      if (bucketKey && key !== bucketKey) {
+                    } else {
+                      let bucket = [];
+                      let bucketKey = null;
+                      for (const pt of filtered) {
+                        const d = new Date(pt.date.length > 10 ? pt.date : pt.date + "T12:00:00");
+                        let key;
+                        if (aggPeriod === "month") {
+                          key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                        } else {
+                          const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+                          const yr = thu.getFullYear();
+                          const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+                          key = `${yr}-W${String(wk).padStart(2, "0")}`;
+                        }
+                        if (bucketKey && key !== bucketKey) {
+                          const vals = bucket.map(p => p.value);
+                          ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
+                          bucket = [];
+                        }
+                        bucketKey = key;
+                        bucket.push(pt);
+                      }
+                      if (bucket.length) {
                         const vals = bucket.map(p => p.value);
                         ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
-                        bucket = [];
                       }
-                      bucketKey = key;
-                      bucket.push(pt);
-                    }
-                    if (bucket.length) {
-                      const vals = bucket.map(p => p.value);
-                      ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
                     }
 
                     if (ohlcBars.length < 2) return <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>Not enough data for candlestick view</div>;
 
+                    // Build benchmark lines scaled to portfolio dollar values
+                    const bmLines_c = {};
+                    const startPortVal = filtered[0].value;
+                    Object.entries(benchmarks).forEach(([sym, priceMap]) => {
+                      if (!perfBmToggles[sym]) return;
+                      const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
+                      if (!prices.length) return;
+                      const startDate = filtered[0].date;
+                      let basePrice = null;
+                      for (const [d, p] of prices) { if (d >= startDate) { basePrice = p; break; } }
+                      if (!basePrice) { for (let j = prices.length - 1; j >= 0; j--) { if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; } } }
+                      if (!basePrice) return;
+                      // Map benchmark to each candle bar's end date
+                      const pts = [];
+                      let pIdx = 0;
+                      for (let i = 0; i < ohlcBars.length; i++) {
+                        const barDate = ohlcBars[i].dateEnd;
+                        while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= barDate) pIdx++;
+                        if (prices[pIdx][0] <= barDate || pIdx === 0) {
+                          const bmVal = startPortVal * (prices[pIdx][1] / basePrice);
+                          pts.push({ i, val: bmVal });
+                        }
+                      }
+                      if (pts.length > 1) bmLines_c[sym] = pts;
+                    });
+
+                    // Y range: include benchmark values in range calculation
                     const allPrices = ohlcBars.flatMap(b => [b.h, b.l]);
+                    Object.values(bmLines_c).forEach(pts => pts.forEach(p => allPrices.push(p.val)));
                     const cMin = Math.min(...allPrices), cMax = Math.max(...allPrices);
                     const cRange = cMax - cMin || 1;
-                    const cPad = cRange * 0.05;
-                    const yMin_c = cMin - cPad, yMax_c = cMax + cPad;
+                    const cPad_v = cRange * 0.05;
+                    const yMin_c = cMin - cPad_v, yMax_c = cMax + cPad_v;
                     const yRange_c = yMax_c - yMin_c;
 
                     const cW_candle = W - PAD.left - PAD.right;
@@ -5982,7 +6022,7 @@ Instructions:
                     const toY_c = (v) => PAD.top + ((yMax_c - v) / yRange_c) * cH_candle;
 
                     // Y-axis ticks
-                    const yTickStep_c = yRange_c <= 10000 ? 1000 : yRange_c <= 50000 ? 5000 : yRange_c <= 100000 ? 10000 : yRange_c <= 200000 ? 20000 : yRange_c <= 500000 ? 50000 : 100000;
+                    const yTickStep_c = yRange_c <= 5000 ? 500 : yRange_c <= 10000 ? 1000 : yRange_c <= 50000 ? 5000 : yRange_c <= 100000 ? 10000 : yRange_c <= 200000 ? 20000 : yRange_c <= 500000 ? 50000 : 100000;
                     const yTicks_c = [];
                     for (let v = Math.ceil(yMin_c / yTickStep_c) * yTickStep_c; v <= yMax_c; v += yTickStep_c) yTicks_c.push(v);
 
@@ -5993,11 +6033,14 @@ Instructions:
                       const idx = Math.round((i / (labelCount_c - 1)) * (ohlcBars.length - 1));
                       if (idx < ohlcBars.length) {
                         const d = new Date(ohlcBars[idx].date + "T12:00:00");
-                        xLabels_c.push({ x: toX(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+                        const label = aggPeriod === "day"
+                          ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                          : d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+                        xLabels_c.push({ x: toX(idx), label });
                       }
                     }
 
-                    // Hover state for candlestick
+                    // Hover handler
                     const handleCandleMove = (e) => {
                       const svg = perfSvgRef.current;
                       if (!svg) return;
@@ -6009,6 +6052,12 @@ Instructions:
                         setPerfHover({ idx, x: toX(idx), y: toY_c(ohlcBars[idx].c), candle: ohlcBars[idx] });
                       }
                     };
+
+                    // Build benchmark SVG paths
+                    const bmPaths_c = {};
+                    Object.entries(bmLines_c).forEach(([sym, pts]) => {
+                      bmPaths_c[sym] = pts.map((p, j) => `${j === 0 ? "M" : "L"}${toX(p.i).toFixed(1)},${toY_c(p.val).toFixed(1)}`).join(" ");
+                    });
 
                     return (
                       <div style={{ position: "relative" }}>
@@ -6048,6 +6097,11 @@ Instructions:
                             <text key={i} x={l.x} y={H - 10} textAnchor="middle" fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">{l.label}</text>
                           ))}
 
+                          {/* Benchmark lines (behind candles) */}
+                          {Object.entries(bmPaths_c).map(([sym, path]) => (
+                            <path key={sym} d={path} fill="none" stroke={bmColors[sym]} strokeWidth="2" strokeLinejoin="round" opacity="0.8" />
+                          ))}
+
                           {/* Candlesticks */}
                           {ohlcBars.map((bar, i) => {
                             const x = toX(i);
@@ -6062,7 +6116,7 @@ Instructions:
                                 <line x1={x} y1={toY_c(bar.h)} x2={x} y2={toY_c(bar.l)} stroke={color} strokeWidth={Math.max(1, candleW * 0.15)} />
                                 {/* Body */}
                                 <rect x={x - candleW / 2} y={bodyTop} width={candleW} height={bodyH} rx={Math.min(1.5, candleW * 0.1)}
-                                  fill={isUp ? color : color} stroke={color} strokeWidth="0.5" />
+                                  fill={color} stroke={color} strokeWidth="0.5" />
                               </g>
                             );
                           })}
@@ -6074,6 +6128,25 @@ Instructions:
                               <line x1={PAD.left} y1={perfHover.y} x2={W - PAD.right} y2={perfHover.y} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.3" />
                             </g>
                           )}
+
+                          {/* Right-side labels for benchmarks */}
+                          {(() => {
+                            const labels = [];
+                            Object.entries(bmLines_c).forEach(([sym, pts]) => {
+                              if (pts.length) labels.push({ val: pts[pts.length - 1].val, color: bmColors[sym], sym });
+                            });
+                            labels.sort((a, b) => b.val - a.val);
+                            const positions = labels.map(l => toY_c(l.val) + 4);
+                            for (let i = 1; i < positions.length; i++) {
+                              if (positions[i] - positions[i - 1] < 12) positions[i] = positions[i - 1] + 12;
+                            }
+                            return labels.map((l, i) => (
+                              <text key={l.sym} x={W - PAD.right + 8} y={positions[i]}
+                                fill={l.color} fontSize="10" fontWeight="700" fontFamily="inherit">
+                                {l.sym}
+                              </text>
+                            ));
+                          })()}
                         </svg>
 
                         {/* Candle tooltip */}
@@ -6084,7 +6157,8 @@ Instructions:
                           const chgPct = bar.o > 0 ? (chg / bar.o) * 100 : 0;
                           const d = new Date(bar.date + "T12:00:00");
                           const dEnd = new Date(bar.dateEnd + "T12:00:00");
-                          const fmt = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+                          const fmtV = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+                          const sameDay = bar.date === bar.dateEnd;
                           return (
                             <div style={{
                               position: "absolute", top: 8, left: PAD.left,
@@ -6099,23 +6173,38 @@ Instructions:
                                 boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
                               }}>
                                 <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, marginBottom: 8 }}>
-                                  {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — {dEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                  {sameDay
+                                    ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    : `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — ${dEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                                  }
                                 </div>
                                 {[
-                                  { label: "Open", value: fmt(bar.o) },
-                                  { label: "High", value: fmt(bar.h) },
-                                  { label: "Low", value: fmt(bar.l) },
-                                  { label: "Close", value: fmt(bar.c) },
+                                  { label: "Open", value: fmtV(bar.o) },
+                                  { label: "High", value: fmtV(bar.h) },
+                                  { label: "Low", value: fmtV(bar.l) },
+                                  { label: "Close", value: fmtV(bar.c) },
                                 ].map(({ label, value }) => (
                                   <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                                     <span style={{ fontSize: 11, color: C.t4 }}>{label}</span>
                                     <span style={{ fontSize: 12, color: C.t1, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</span>
                                   </div>
                                 ))}
+                                {/* Benchmark values at this bar */}
+                                {Object.entries(bmLines_c).map(([sym, pts]) => {
+                                  const pt = pts.find(p => p.i === perfHover.idx);
+                                  if (!pt) return null;
+                                  const bmChg = ((pt.val / startPortVal) - 1) * 100;
+                                  return (
+                                    <div key={sym} style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                                      <span style={{ fontSize: 11, color: bmColors[sym], fontWeight: 600 }}>{sym}</span>
+                                      <span style={{ fontSize: 12, color: C.t2, fontVariantNumeric: "tabular-nums" }}>{fmtV(pt.val)} <span style={{ color: bmChg >= 0 ? C.up : C.dn, fontSize: 10 }}>{bmChg >= 0 ? "+" : ""}{bmChg.toFixed(1)}%</span></span>
+                                    </div>
+                                  );
+                                })}
                                 <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 6, paddingTop: 6, display: "flex", justifyContent: "space-between" }}>
                                   <span style={{ fontSize: 11, color: C.t4 }}>Change</span>
                                   <span style={{ fontSize: 12, fontWeight: 700, color: isUp ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
-                                    {chg >= 0 ? "+" : ""}{fmt(chg).replace("$-", "-$")} ({chgPct >= 0 ? "+" : ""}{chgPct.toFixed(2)}%)
+                                    {chg >= 0 ? "+" : ""}{fmtV(chg).replace("$-", "-$")} ({chgPct >= 0 ? "+" : ""}{chgPct.toFixed(2)}%)
                                   </span>
                                 </div>
                               </div>
