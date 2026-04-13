@@ -989,6 +989,7 @@ Instructions:
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
+  const [perfChartType, setPerfChartType] = useState("area"); // "area" | "candle"
   const [perfLoading, setPerfLoading] = useState(false);
   const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
@@ -5885,9 +5886,9 @@ Instructions:
                     ))}
                   </div>
 
-                  {/* Time range selector + benchmark toggles */}
+                  {/* Time range selector + chart type + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
                       {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
                         if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
                         const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
@@ -5901,6 +5902,20 @@ Instructions:
                           color: perfRange === r ? C.t1 : C.t3, cursor: "pointer", fontFamily: "inherit",
                         }}>{r}</button>
                       ))}
+                      {/* Chart type toggle */}
+                      {!isIntraday && <div style={{ display: "inline-flex", marginLeft: 8, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+                        {[
+                          { v: "area", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 9L14 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12L5 7L8 9L14 3V12H2Z" fill="currentColor" opacity="0.15"/></svg> },
+                          { v: "candle", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="4" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1"/><line x1="4.5" y1="10" x2="4.5" y2="13" stroke="currentColor" strokeWidth="1"/><rect x="10" y="6" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1"/><line x1="11.5" y1="11" x2="11.5" y2="14" stroke="currentColor" strokeWidth="1"/></svg> },
+                        ].map(({ v, icon }) => (
+                          <button key={v} onClick={() => setPerfChartType(v)} style={{
+                            padding: "5px 10px", border: "none", cursor: "pointer", fontFamily: "inherit",
+                            background: perfChartType === v ? C.accentSoft : "transparent",
+                            color: perfChartType === v ? C.accent : C.t4, display: "flex", alignItems: "center",
+                            borderRight: v === "area" ? `1px solid ${C.border}` : "none",
+                          }}>{icon}</button>
+                        ))}
+                      </div>}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>vs</span>
@@ -5917,6 +5932,202 @@ Instructions:
 
                   {/* Chart */}
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 24 : 12, overflow: "hidden" }}>
+
+                  {/* ── CANDLESTICK CHART ── */}
+                  {perfChartType === "candle" && !isIntraday && (() => {
+                    // Aggregate daily portfolio data into weekly OHLC bars
+                    const aggPeriod = filtered.length > 365 * 2 ? "month" : "week";
+                    const ohlcBars = [];
+                    let bucket = [];
+                    let bucketKey = null;
+                    for (const pt of filtered) {
+                      const d = new Date(pt.date.length > 10 ? pt.date : pt.date + "T12:00:00");
+                      let key;
+                      if (aggPeriod === "month") {
+                        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                      } else {
+                        // ISO week key
+                        const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+                        const yr = thu.getFullYear();
+                        const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+                        key = `${yr}-W${String(wk).padStart(2, "0")}`;
+                      }
+                      if (bucketKey && key !== bucketKey) {
+                        const vals = bucket.map(p => p.value);
+                        ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
+                        bucket = [];
+                      }
+                      bucketKey = key;
+                      bucket.push(pt);
+                    }
+                    if (bucket.length) {
+                      const vals = bucket.map(p => p.value);
+                      ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
+                    }
+
+                    if (ohlcBars.length < 2) return <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>Not enough data for candlestick view</div>;
+
+                    const allPrices = ohlcBars.flatMap(b => [b.h, b.l]);
+                    const cMin = Math.min(...allPrices), cMax = Math.max(...allPrices);
+                    const cRange = cMax - cMin || 1;
+                    const cPad = cRange * 0.05;
+                    const yMin_c = cMin - cPad, yMax_c = cMax + cPad;
+                    const yRange_c = yMax_c - yMin_c;
+
+                    const cW_candle = W - PAD.left - PAD.right;
+                    const cH_candle = H - PAD.top - PAD.bottom;
+                    const barW = cW_candle / ohlcBars.length;
+                    const candleW = Math.max(1, Math.min(barW * 0.65, 16));
+                    const toX = (i) => PAD.left + (i + 0.5) * barW;
+                    const toY_c = (v) => PAD.top + ((yMax_c - v) / yRange_c) * cH_candle;
+
+                    // Y-axis ticks
+                    const yTickStep_c = yRange_c <= 10000 ? 1000 : yRange_c <= 50000 ? 5000 : yRange_c <= 100000 ? 10000 : yRange_c <= 200000 ? 20000 : yRange_c <= 500000 ? 50000 : 100000;
+                    const yTicks_c = [];
+                    for (let v = Math.ceil(yMin_c / yTickStep_c) * yTickStep_c; v <= yMax_c; v += yTickStep_c) yTicks_c.push(v);
+
+                    // X-axis labels
+                    const xLabels_c = [];
+                    const labelCount_c = isDesktop ? 8 : 5;
+                    for (let i = 0; i < labelCount_c; i++) {
+                      const idx = Math.round((i / (labelCount_c - 1)) * (ohlcBars.length - 1));
+                      if (idx < ohlcBars.length) {
+                        const d = new Date(ohlcBars[idx].date + "T12:00:00");
+                        xLabels_c.push({ x: toX(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+                      }
+                    }
+
+                    // Hover state for candlestick
+                    const handleCandleMove = (e) => {
+                      const svg = perfSvgRef.current;
+                      if (!svg) return;
+                      const rect = svg.getBoundingClientRect();
+                      const scale = W / rect.width;
+                      const mx = (e.clientX - rect.left) * scale;
+                      const idx = Math.floor((mx - PAD.left) / barW);
+                      if (idx >= 0 && idx < ohlcBars.length) {
+                        setPerfHover({ idx, x: toX(idx), y: toY_c(ohlcBars[idx].c), candle: ohlcBars[idx] });
+                      }
+                    };
+
+                    return (
+                      <div style={{ position: "relative" }}>
+                        <svg
+                          ref={perfSvgRef}
+                          width={W} height={H}
+                          viewBox={`0 0 ${W} ${H}`}
+                          style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
+                          onMouseMove={handleCandleMove}
+                          onMouseLeave={() => setPerfHover(null)}
+                          onTouchMove={(e) => {
+                            const touch = e.touches[0];
+                            const svg = perfSvgRef.current;
+                            if (!svg) return;
+                            const rect = svg.getBoundingClientRect();
+                            const scale = W / rect.width;
+                            const mx = (touch.clientX - rect.left) * scale;
+                            const idx = Math.floor((mx - PAD.left) / barW);
+                            if (idx >= 0 && idx < ohlcBars.length) {
+                              setPerfHover({ idx, x: toX(idx), y: toY_c(ohlcBars[idx].c), candle: ohlcBars[idx] });
+                            }
+                          }}
+                          onTouchEnd={() => setPerfHover(null)}
+                        >
+                          {/* Grid lines */}
+                          {yTicks_c.map(v => (
+                            <g key={v}>
+                              <line x1={PAD.left} y1={toY_c(v)} x2={W - PAD.right} y2={toY_c(v)} stroke={C.border} strokeWidth="1" />
+                              <text x={PAD.left - 8} y={toY_c(v) + 4} textAnchor="end" fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">
+                                ${(v / 1000).toFixed(v >= 100000 ? 0 : 0)}k
+                              </text>
+                            </g>
+                          ))}
+
+                          {/* X labels */}
+                          {xLabels_c.map((l, i) => (
+                            <text key={i} x={l.x} y={H - 10} textAnchor="middle" fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">{l.label}</text>
+                          ))}
+
+                          {/* Candlesticks */}
+                          {ohlcBars.map((bar, i) => {
+                            const x = toX(i);
+                            const isUp = bar.c >= bar.o;
+                            const color = isUp ? C.up : C.dn;
+                            const bodyTop = toY_c(Math.max(bar.o, bar.c));
+                            const bodyBot = toY_c(Math.min(bar.o, bar.c));
+                            const bodyH = Math.max(bodyBot - bodyTop, 1);
+                            return (
+                              <g key={i}>
+                                {/* Wick */}
+                                <line x1={x} y1={toY_c(bar.h)} x2={x} y2={toY_c(bar.l)} stroke={color} strokeWidth={Math.max(1, candleW * 0.15)} />
+                                {/* Body */}
+                                <rect x={x - candleW / 2} y={bodyTop} width={candleW} height={bodyH} rx={Math.min(1.5, candleW * 0.1)}
+                                  fill={isUp ? color : color} stroke={color} strokeWidth="0.5" />
+                              </g>
+                            );
+                          })}
+
+                          {/* Hover crosshair */}
+                          {perfHover && perfHover.candle && (
+                            <g>
+                              <line x1={perfHover.x} y1={PAD.top} x2={perfHover.x} y2={PAD.top + cH_candle} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
+                              <line x1={PAD.left} y1={perfHover.y} x2={W - PAD.right} y2={perfHover.y} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.3" />
+                            </g>
+                          )}
+                        </svg>
+
+                        {/* Candle tooltip */}
+                        {perfHover && perfHover.candle && (() => {
+                          const bar = perfHover.candle;
+                          const isUp = bar.c >= bar.o;
+                          const chg = bar.c - bar.o;
+                          const chgPct = bar.o > 0 ? (chg / bar.o) * 100 : 0;
+                          const d = new Date(bar.date + "T12:00:00");
+                          const dEnd = new Date(bar.dateEnd + "T12:00:00");
+                          const fmt = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+                          return (
+                            <div style={{
+                              position: "absolute", top: 8, left: PAD.left,
+                              pointerEvents: "none", width: cW_candle, height: 0,
+                            }}>
+                              <div style={{
+                                position: "absolute",
+                                left: Math.min(Math.max((perfHover.x - PAD.left) - 90, 0), cW_candle - 200),
+                                top: 0,
+                                background: C.elevated || C.card, border: `1px solid ${C.border}`,
+                                borderRadius: 10, padding: "10px 14px", minWidth: 180,
+                                boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                              }}>
+                                <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, marginBottom: 8 }}>
+                                  {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — {dEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                </div>
+                                {[
+                                  { label: "Open", value: fmt(bar.o) },
+                                  { label: "High", value: fmt(bar.h) },
+                                  { label: "Low", value: fmt(bar.l) },
+                                  { label: "Close", value: fmt(bar.c) },
+                                ].map(({ label, value }) => (
+                                  <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                                    <span style={{ fontSize: 11, color: C.t4 }}>{label}</span>
+                                    <span style={{ fontSize: 12, color: C.t1, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+                                  </div>
+                                ))}
+                                <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 6, paddingTop: 6, display: "flex", justifyContent: "space-between" }}>
+                                  <span style={{ fontSize: 11, color: C.t4 }}>Change</span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: isUp ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                                    {chg >= 0 ? "+" : ""}{fmt(chg).replace("$-", "-$")} ({chgPct >= 0 ? "+" : ""}{chgPct.toFixed(2)}%)
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── AREA CHART (default) ── */}
+                  {(perfChartType === "area" || isIntraday) && (
                     <div style={{ position: "relative" }}>
                     <svg
                       ref={perfSvgRef}
@@ -6068,6 +6279,7 @@ Instructions:
                       </div>
                     )}
                     </div>
+                  )}
                   </div>
 
                   {/* Legend */}
