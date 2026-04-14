@@ -6515,8 +6515,8 @@ Instructions:
 
                     if (ohlcBars.length < 2) return <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>Not enough data for candlestick view</div>;
 
-                    // Build benchmark lines scaled to portfolio dollar values
-                    const bmLines_c = {};
+                    // Build benchmark OHLC candles scaled to portfolio dollar values
+                    const bmOhlc_c = {};
                     const startPortVal = filtered[0].value;
                     Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                       if (!perfBmToggles[sym]) return;
@@ -6527,23 +6527,57 @@ Instructions:
                       for (const [d, p] of prices) { if (d >= startDate) { basePrice = p; break; } }
                       if (!basePrice) { for (let j = prices.length - 1; j >= 0; j--) { if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; } } }
                       if (!basePrice) return;
-                      // Map benchmark to each candle bar's end date
-                      const pts = [];
+
+                      // Build daily benchmark values scaled to portfolio start
+                      const bmDaily = [];
                       let pIdx = 0;
-                      for (let i = 0; i < ohlcBars.length; i++) {
-                        const barDate = ohlcBars[i].dateEnd;
-                        while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= barDate) pIdx++;
-                        if (prices[pIdx][0] <= barDate || pIdx === 0) {
-                          const bmVal = startPortVal * (prices[pIdx][1] / basePrice);
-                          pts.push({ i, val: bmVal });
+                      for (const pt of filtered) {
+                        while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= pt.date) pIdx++;
+                        if (prices[pIdx][0] <= pt.date || pIdx === 0) {
+                          bmDaily.push({ date: pt.date, value: startPortVal * (prices[pIdx][1] / basePrice) });
                         }
                       }
-                      if (pts.length > 1) bmLines_c[sym] = pts;
+                      if (bmDaily.length < 2) return;
+
+                      // Aggregate into OHLC using same bucketing as portfolio
+                      let bmBars = [];
+                      if (aggPeriod === "day") {
+                        bmBars = bmDaily.map((pt, i) => {
+                          const prev = i > 0 ? bmDaily[i - 1].value : pt.value;
+                          return { o: prev, h: Math.max(prev, pt.value), l: Math.min(prev, pt.value), c: pt.value };
+                        });
+                      } else {
+                        let bkt = [], bktKey = null;
+                        for (const pt of bmDaily) {
+                          const d = new Date(pt.date + "T12:00:00");
+                          let key;
+                          if (aggPeriod === "month") {
+                            key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+                          } else {
+                            const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+                            const yr = thu.getFullYear();
+                            const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+                            key = `${yr}-W${String(wk).padStart(2, "0")}`;
+                          }
+                          if (bktKey && key !== bktKey) {
+                            const vals = bkt.map(p => p.value);
+                            bmBars.push({ o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
+                            bkt = [];
+                          }
+                          bktKey = key;
+                          bkt.push(pt);
+                        }
+                        if (bkt.length) {
+                          const vals = bkt.map(p => p.value);
+                          bmBars.push({ o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
+                        }
+                      }
+                      if (bmBars.length > 1) bmOhlc_c[sym] = bmBars;
                     });
 
-                    // Y range: include benchmark values in range calculation
+                    // Y range: include benchmark OHLC values
                     const allPrices = ohlcBars.flatMap(b => [b.h, b.l]);
-                    Object.values(bmLines_c).forEach(pts => pts.forEach(p => allPrices.push(p.val)));
+                    Object.values(bmOhlc_c).forEach(bars => bars.forEach(b => allPrices.push(b.h, b.l)));
                     const cMin = Math.min(...allPrices), cMax = Math.max(...allPrices);
                     const cRange = cMax - cMin || 1;
                     const cPad_v = cRange * 0.05;
@@ -6553,7 +6587,10 @@ Instructions:
                     const cW_candle = W - PAD.left - PAD.right;
                     const cH_candle = H - PAD.top - PAD.bottom;
                     const barW = cW_candle / ohlcBars.length;
-                    const candleW = Math.max(1, Math.min(barW * 0.65, 16));
+                    const activeBmCount = Object.keys(bmOhlc_c).length;
+                    const totalSeries = 1 + activeBmCount;
+                    const candleW = Math.max(1, Math.min(barW * 0.65 / totalSeries, 16));
+                    const groupW = candleW * totalSeries + (totalSeries - 1) * 1; // 1px gap between candles in group
                     const toX = (i) => PAD.left + (i + 0.5) * barW;
                     const toY_c = (v) => PAD.top + ((yMax_c - v) / yRange_c) * cH_candle;
 
@@ -6588,12 +6625,6 @@ Instructions:
                         setPerfHover({ idx, x: toX(idx), y: toY_c(ohlcBars[idx].c), candle: ohlcBars[idx] });
                       }
                     };
-
-                    // Build benchmark SVG paths
-                    const bmPaths_c = {};
-                    Object.entries(bmLines_c).forEach(([sym, pts]) => {
-                      bmPaths_c[sym] = pts.map((p, j) => `${j === 0 ? "M" : "L"}${toX(p.i).toFixed(1)},${toY_c(p.val).toFixed(1)}`).join(" ");
-                    });
 
                     return (
                       <div style={{ position: "relative" }}>
@@ -6633,14 +6664,31 @@ Instructions:
                             <text key={i} x={l.x} y={H - 10} textAnchor="middle" fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">{l.label}</text>
                           ))}
 
-                          {/* Benchmark lines (behind candles) */}
-                          {Object.entries(bmPaths_c).map(([sym, path]) => (
-                            <path key={sym} d={path} fill="none" stroke={bmColors[sym]} strokeWidth="2" strokeLinejoin="round" opacity="0.8" />
-                          ))}
+                          {/* Benchmark candles (behind portfolio candles) */}
+                          {Object.entries(bmOhlc_c).map(([sym, bars], sIdx) => {
+                            const color = bmColors[sym];
+                            const offset = -(groupW / 2) + candleW / 2 + (sIdx + 1) * (candleW + 1); // offset right of portfolio
+                            return bars.map((bar, i) => {
+                              if (i >= ohlcBars.length) return null;
+                              const x = toX(i) + offset - groupW / 2 + candleW / 2;
+                              const isUp = bar.c >= bar.o;
+                              const bodyTop = toY_c(Math.max(bar.o, bar.c));
+                              const bodyBot = toY_c(Math.min(bar.o, bar.c));
+                              const bodyH = Math.max(bodyBot - bodyTop, 1);
+                              return (
+                                <g key={`${sym}-${i}`} opacity="0.7">
+                                  <line x1={x} y1={toY_c(bar.h)} x2={x} y2={toY_c(bar.l)} stroke={color} strokeWidth={Math.max(0.5, candleW * 0.12)} />
+                                  <rect x={x - candleW / 2} y={bodyTop} width={candleW} height={bodyH} rx={Math.min(1, candleW * 0.1)}
+                                    fill={isUp ? color : color} stroke={color} strokeWidth="0.3" opacity={isUp ? 0.9 : 0.6} />
+                                </g>
+                              );
+                            });
+                          })}
 
-                          {/* Candlesticks */}
+                          {/* Candlesticks (portfolio — drawn on top) */}
                           {ohlcBars.map((bar, i) => {
-                            const x = toX(i);
+                            const portOffset = -(groupW / 2) + candleW / 2;
+                            const x = toX(i) + portOffset;
                             const isUp = bar.c >= bar.o;
                             const color = isUp ? C.up : C.dn;
                             const bodyTop = toY_c(Math.max(bar.o, bar.c));
@@ -6668,8 +6716,8 @@ Instructions:
                           {/* Right-side labels for benchmarks */}
                           {(() => {
                             const labels = [];
-                            Object.entries(bmLines_c).forEach(([sym, pts]) => {
-                              if (pts.length) labels.push({ val: pts[pts.length - 1].val, color: bmColors[sym], sym });
+                            Object.entries(bmOhlc_c).forEach(([sym, bars]) => {
+                              if (bars.length) labels.push({ val: bars[bars.length - 1].c, color: bmColors[sym], sym });
                             });
                             labels.sort((a, b) => b.val - a.val);
                             const positions = labels.map(l => toY_c(l.val) + 4);
@@ -6725,15 +6773,21 @@ Instructions:
                                     <span style={{ fontSize: 12, color: C.t1, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</span>
                                   </div>
                                 ))}
-                                {/* Benchmark values at this bar */}
-                                {Object.entries(bmLines_c).map(([sym, pts]) => {
-                                  const pt = pts.find(p => p.i === perfHover.idx);
-                                  if (!pt) return null;
-                                  const bmChg = ((pt.val / startPortVal) - 1) * 100;
+                                {/* Benchmark OHLC at this bar */}
+                                {Object.entries(bmOhlc_c).map(([sym, bars]) => {
+                                  const bmBar = bars[perfHover.idx];
+                                  if (!bmBar) return null;
+                                  const bmIsUp = bmBar.c >= bmBar.o;
+                                  const bmChg = ((bmBar.c / startPortVal) - 1) * 100;
                                   return (
-                                    <div key={sym} style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                                      <span style={{ fontSize: 11, color: bmColors[sym], fontWeight: 600 }}>{sym}</span>
-                                      <span style={{ fontSize: 12, color: C.t2, fontVariantNumeric: "tabular-nums" }}>{fmtV(pt.val)} <span style={{ color: bmChg >= 0 ? C.up : C.dn, fontSize: 10 }}>{bmChg >= 0 ? "+" : ""}{bmChg.toFixed(1)}%</span></span>
+                                    <div key={sym} style={{ marginTop: 4 }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 1 }}>
+                                        <span style={{ fontSize: 11, color: bmColors[sym], fontWeight: 700 }}>{sym}</span>
+                                        <span style={{ fontSize: 11, color: bmIsUp ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{bmChg >= 0 ? "+" : ""}{bmChg.toFixed(1)}%</span>
+                                      </div>
+                                      <div style={{ fontSize: 10, color: C.t4, fontVariantNumeric: "tabular-nums" }}>
+                                        O {fmtV(bmBar.o)} · H {fmtV(bmBar.h)} · L {fmtV(bmBar.l)} · C {fmtV(bmBar.c)}
+                                      </div>
                                     </div>
                                   );
                                 })}
