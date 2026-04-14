@@ -437,6 +437,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
   const tabs = [
     { id: "overview", label: "Overview" },
     { id: "chart", label: "Chart" },
+    { id: "report", label: "Report" },
   ];
 
   // Stat row helper
@@ -529,7 +530,7 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
       )}
 
       {/* OVERVIEW + FINANCIALS + NEWS — scrollable */}
-      {profileTab !== "chart" && (
+      {profileTab !== "chart" && profileTab !== "report" && (
       <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
         <div style={{ display: "grid", gridTemplateColumns: window.innerWidth >= 768 ? "1fr 1fr" : "1fr", gap: 12, alignItems: "stretch" }}>
 
@@ -746,6 +747,175 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
         </div>{/* end maxWidth wrapper */}
       </div>)}{/* end scrollable container + profileTab conditional */}
+
+      {/* REPORT TAB — AI Screener Analysis */}
+      {profileTab === "report" && (() => {
+        const ReportTab = () => {
+          const [report, setReport] = useState(null);
+          const [reportLoading, setReportLoading] = useState(false);
+          const [reportErr, setReportErr] = useState(null);
+
+          useEffect(() => {
+            const fetchReport = async () => {
+              setReportLoading(true);
+              setReportErr(null);
+              try {
+                // Gather available data for context
+                const fin = fundamentals[symbol] || {};
+                const q = quotesRef?.current?.[symbol];
+                const bar = barsRef?.current?.[symbol];
+                const price = q?.p || bar?.c || 0;
+                const name = names[symbol] || symbol;
+
+                const dataCtx = [
+                  `Symbol: ${symbol}`, `Company: ${name}`, `Price: $${price.toFixed(2)}`,
+                  fin.pe ? `P/E: ${fin.pe}` : null, fin.peFwd ? `Fwd P/E: ${fin.peFwd}` : null,
+                  fin.peg ? `PEG: ${fin.peg}` : null, fin.ps ? `P/S: ${fin.ps}` : null,
+                  fin.pb ? `P/B: ${fin.pb}` : null, fin.roe ? `ROE: ${fin.roe}%` : null,
+                  fin.de ? `D/E: ${fin.de}` : null, fin.divYield ? `Div Yield: ${fin.divYield}%` : null,
+                  fin.beta ? `Beta: ${fin.beta}` : null, fin.mktCap ? `Mkt Cap: $${(fin.mktCap / 1e9).toFixed(1)}B` : null,
+                  fin.revenue ? `Revenue: $${(fin.revenue / 1e9).toFixed(1)}B` : null,
+                  fin.revenueGrowth ? `Rev Growth: ${(fin.revenueGrowth * 100).toFixed(1)}%` : null,
+                  fin.grossMargin ? `Gross Margin: ${(fin.grossMargin * 100).toFixed(1)}%` : null,
+                  fin.netMargin ? `Net Margin: ${(fin.netMargin * 100).toFixed(1)}%` : null,
+                  fin["52wHigh"] ? `52W High: $${fin["52wHigh"]}` : null,
+                  fin["52wLow"] ? `52W Low: $${fin["52wLow"]}` : null,
+                ].filter(Boolean).join(" | ");
+
+                const apiKey = import.meta.env.VITE_ANTHROPIC_KEY;
+                if (!apiKey) { setReportErr("Anthropic API key not configured"); setReportLoading(false); return; }
+
+                const res = await fetch("https://api.anthropic.com/v1/messages", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+                  body: JSON.stringify({
+                    model: "claude-sonnet-4-20250514",
+                    max_tokens: 1500,
+                    messages: [{ role: "user", content: `You are an equity research analyst. Generate a concise screener report for this stock. Use the data provided and your knowledge. Format as JSON with these fields:
+{
+  "overallScore": (1-100),
+  "verdict": "Strong Buy|Buy|Hold|Sell|Strong Sell",
+  "scores": { "value": (1-100), "growth": (1-100), "quality": (1-100), "momentum": (1-100), "dividend": (1-100), "safety": (1-100) },
+  "summary": "2-3 sentence investment thesis",
+  "strengths": ["strength1", "strength2", "strength3"],
+  "risks": ["risk1", "risk2", "risk3"],
+  "fairValue": (estimated fair value price),
+  "sector": "sector name",
+  "style": "Value|Growth|Blend|Income"
+}
+
+Stock data: ${dataCtx}
+
+Return ONLY valid JSON, no markdown or explanation.` }],
+                  }),
+                });
+                const data = await res.json();
+                const text = data.content?.[0]?.text || "";
+                const clean = text.replace(/```json|```/g, "").trim();
+                const parsed = JSON.parse(clean);
+                setReport(parsed);
+              } catch (e) {
+                setReportErr("Failed to generate report: " + e.message);
+              }
+              setReportLoading(false);
+            };
+            fetchReport();
+          }, []);
+
+          const ScoreBar = ({ label, value, max = 100 }) => {
+            const pct = Math.min(value / max * 100, 100);
+            const color = value >= 70 ? (C.up || "#34D399") : value >= 40 ? "#F59E0B" : (C.dn || "#F87171");
+            return (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: C.t3, fontWeight: 600 }}>{label}</span>
+                  <span style={{ fontSize: 12, color: C.t1, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+                </div>
+                <div style={{ height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 3, transition: "width 0.5s ease" }} />
+                </div>
+              </div>
+            );
+          };
+
+          if (reportLoading) return (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 40 }}>
+              <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent || "#6E8450", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+              <span style={{ fontSize: 13, color: C.t3 }}>Generating AI screener report for {symbol}...</span>
+            </div>
+          );
+
+          if (reportErr) return (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
+              <span style={{ fontSize: 13, color: C.dn || "#F87171" }}>{reportErr}</span>
+            </div>
+          );
+
+          if (!report) return null;
+
+          const verdictColor = { "Strong Buy": C.up || "#34D399", "Buy": C.up || "#34D399", "Hold": "#F59E0B", "Sell": C.dn || "#F87171", "Strong Sell": C.dn || "#F87171" }[report.verdict] || C.t1;
+
+          return (
+            <div style={{ flex: 1, overflowY: "auto", padding: 16, paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
+              <div style={{ maxWidth: 600, margin: "0 auto" }}>
+                {/* Overall Score + Verdict */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20, padding: "16px 20px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 16 }}>
+                  <div style={{
+                    width: 64, height: 64, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                    background: `conic-gradient(${verdictColor} ${report.overallScore * 3.6}deg, ${C.border} 0deg)`,
+                    position: "relative",
+                  }}>
+                    <div style={{ width: 52, height: 52, borderRadius: "50%", background: C.card, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{report.overallScore}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: verdictColor }}>{report.verdict}</div>
+                    <div style={{ fontSize: 12, color: C.t4 }}>{report.style} · {report.sector}</div>
+                    {report.fairValue && <div style={{ fontSize: 12, color: C.t3, marginTop: 2 }}>Fair Value: <span style={{ fontWeight: 700, color: C.t1 }}>${report.fairValue}</span></div>}
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div style={{ fontSize: 14, color: C.t2, lineHeight: 1.6, marginBottom: 20 }}>{report.summary}</div>
+
+                {/* Score Breakdown */}
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 18px", marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Score Breakdown</div>
+                  {report.scores && Object.entries(report.scores).map(([k, v]) => (
+                    <ScoreBar key={k} label={k.charAt(0).toUpperCase() + k.slice(1)} value={v} />
+                  ))}
+                </div>
+
+                {/* Strengths & Risks */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.up || "#34D399", marginBottom: 10 }}>Strengths</div>
+                    {report.strengths?.map((s, i) => (
+                      <div key={i} style={{ fontSize: 12, color: C.t2, marginBottom: 6, paddingLeft: 12, position: "relative" }}>
+                        <span style={{ position: "absolute", left: 0, color: C.up || "#34D399" }}>+</span>
+                        {s}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.dn || "#F87171", marginBottom: 10 }}>Risks</div>
+                    {report.risks?.map((r, i) => (
+                      <div key={i} style={{ fontSize: 12, color: C.t2, marginBottom: 6, paddingLeft: 12, position: "relative" }}>
+                        <span style={{ position: "absolute", left: 0, color: C.dn || "#F87171" }}>−</span>
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 16, fontSize: 11, color: C.t4, textAlign: "center" }}>AI-generated analysis · Not financial advice</div>
+              </div>
+            </div>
+          );
+        };
+        return <ReportTab />;
+      })()}
     </div>
   );
 }
@@ -7161,6 +7331,77 @@ Instructions:
             style={{ flex: 1, width: "100%", border: "none", display: "block", filter: theme === "dark" ? "invert(0.88) hue-rotate(180deg)" : "none", overflow: "auto" }}
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
           />
+          {/* Floating chart lookup */}
+          {(() => {
+            const ScreenerChartBtn = () => {
+              const [showInput, setShowInput] = useState(false);
+              const [ticker, setTicker] = useState("");
+              return <>
+                {!showInput && (
+                  <button onClick={() => setShowInput(true)} style={{
+                    position: "absolute", bottom: 24, right: 16,
+                    width: 52, height: 52, borderRadius: "50%",
+                    background: C.accent || "#6E8450", border: "none", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                  }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                  </button>
+                )}
+                {showInput && (
+                  <div style={{
+                    position: "absolute", bottom: 24, right: 16, left: 16,
+                    display: "flex", gap: 8, background: C.card, border: `1px solid ${C.border}`,
+                    borderRadius: 14, padding: "10px 14px", boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                    alignItems: "center",
+                  }}>
+                    <input
+                      autoFocus
+                      value={ticker}
+                      onChange={e => setTicker(e.target.value.toUpperCase())}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" && ticker.trim()) {
+                          setChartSymbol(ticker.trim());
+                          setProfileInitTab("chart");
+                          setShowInput(false);
+                          setTicker("");
+                        } else if (e.key === "Escape") {
+                          setShowInput(false);
+                          setTicker("");
+                        }
+                      }}
+                      placeholder="Enter ticker (e.g. AAPL)"
+                      style={{
+                        flex: 1, background: C.surface || C.bg, border: `1px solid ${C.border}`, borderRadius: 10,
+                        padding: "10px 14px", color: C.t1, fontSize: 15, fontWeight: 700, fontFamily: "inherit",
+                        outline: "none", letterSpacing: 1,
+                      }}
+                    />
+                    <button onClick={() => {
+                      if (ticker.trim()) {
+                        setChartSymbol(ticker.trim());
+                        setProfileInitTab("chart");
+                        setShowInput(false);
+                        setTicker("");
+                      }
+                    }} style={{
+                      padding: "10px 18px", borderRadius: 10, border: "none",
+                      background: C.accent || "#6E8450", color: "#fff", fontSize: 13, fontWeight: 700,
+                      cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                    }}>Chart</button>
+                    <button onClick={() => { setShowInput(false); setTicker(""); }} style={{
+                      padding: "10px 12px", borderRadius: 10, border: `1px solid ${C.border}`,
+                      background: "transparent", color: C.t4, fontSize: 13, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>✕</button>
+                  </div>
+                )}
+              </>;
+            };
+            return <ScreenerChartBtn />;
+          })()}
         </div>
       )}
 
