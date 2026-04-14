@@ -759,6 +759,8 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
   const [fsChartType, setFsChartType] = useState(initChartType || "candle");
   const [fsBmToggles, setFsBmToggles] = useState(initBmToggles || {});
   const [fsInterval, setFsInterval] = useState("1W");
+  const [ohlcLegend, setOhlcLegend] = useState(null); // { o, h, l, c, time, chg, chgPct }
+  const ohlcDataRef = useRef([]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -778,16 +780,17 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         vertLines: { color: isDk ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
         horzLines: { color: isDk ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
       },
-      crosshair: { mode: CrosshairMode.Normal },
+      crosshair: { mode: CrosshairMode.Magnet },
       rightPriceScale: {
         borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-        scaleMargins: { top: 0.05, bottom: 0.05 },
+        scaleMargins: { top: 0.1, bottom: 0.05 },
       },
       timeScale: {
         borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
         timeVisible: false,
       },
-      handleScroll: { vertTouchDrag: false },
+      handleScroll: { vertTouchDrag: false, horzTouchDrag: true, mouseWheel: true, pressedMouseMove: true },
+      handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
     });
     chartRef.current = chart;
 
@@ -873,12 +876,41 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         wickDownColor: isDk ? "#F87171" : "#DC2626",
       });
       candleSeries.setData(ohlcData);
+      ohlcDataRef.current = ohlcData;
 
       // Fixed candle width: use ~3px bar spacing (matches daily candle density)
       // Then scroll to show the most recent candles
       const fixedBarSpacing = 3;
       chart.timeScale().applyOptions({ barSpacing: fixedBarSpacing, rightOffset: 5 });
       chart.timeScale().scrollToPosition(0, false);
+
+      // Subscribe to crosshair move for OHLC legend
+      chart.subscribeCrosshairMove((param) => {
+        if (!param || !param.time || !param.seriesData) {
+          // Show latest bar when no crosshair
+          const last = ohlcData[ohlcData.length - 1];
+          if (last) {
+            const chg = last.close - last.open;
+            const chgPct = last.open > 0 ? (chg / last.open) * 100 : 0;
+            setOhlcLegend({ o: last.open, h: last.high, l: last.low, c: last.close, time: last.time, chg, chgPct });
+          }
+          return;
+        }
+        const data = param.seriesData.get(candleSeries);
+        if (data && data.open !== undefined) {
+          const chg = data.close - data.open;
+          const chgPct = data.open > 0 ? (chg / data.open) * 100 : 0;
+          setOhlcLegend({ o: data.open, h: data.high, l: data.low, c: data.close, time: param.time, chg, chgPct });
+        }
+      });
+
+      // Set initial legend to latest bar
+      const lastBar = ohlcData[ohlcData.length - 1];
+      if (lastBar) {
+        const chg = lastBar.close - lastBar.open;
+        const chgPct = lastBar.open > 0 ? (chg / lastBar.open) * 100 : 0;
+        setOhlcLegend({ o: lastBar.open, h: lastBar.high, l: lastBar.low, c: lastBar.close, time: lastBar.time, chg, chgPct });
+      }
     } else {
       const areaData = filtered.map(p => ({ time: toTime(p.date), value: p.value }));
       const areaSeries = chart.addAreaSeries({
@@ -888,6 +920,23 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         lineWidth: 2,
       });
       areaSeries.setData(areaData);
+      ohlcDataRef.current = [];
+      setOhlcLegend(null);
+
+      // Subscribe for area value display
+      chart.subscribeCrosshairMove((param) => {
+        if (!param || !param.time || !param.seriesData) {
+          const last = areaData[areaData.length - 1];
+          if (last) setOhlcLegend({ value: last.value, time: last.time });
+          return;
+        }
+        const data = param.seriesData.get(areaSeries);
+        if (data && data.value !== undefined) {
+          setOhlcLegend({ value: data.value, time: param.time });
+        }
+      });
+      const lastPt = areaData[areaData.length - 1];
+      if (lastPt) setOhlcLegend({ value: lastPt.value, time: lastPt.time });
     }
 
     // Add benchmark lines
@@ -1011,8 +1060,47 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         ))}
       </div>
 
-      {/* Chart */}
-      <div ref={chartContainerRef} style={{ flex: 1, minHeight: 0 }} />
+      {/* Chart with OHLC legend overlay */}
+      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+        <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
+        {/* OHLC Legend — floating top-left of chart */}
+        {ohlcLegend && (
+          <div style={{
+            position: "absolute", top: 8, left: 12, zIndex: 2,
+            pointerEvents: "none", display: "flex", flexWrap: "wrap", gap: "4px 12px", alignItems: "center",
+          }}>
+            {ohlcLegend.o !== undefined ? <>
+              {/* Candle mode: O H L C + change */}
+              {(() => {
+                const isUp = ohlcLegend.c >= ohlcLegend.o;
+                const fmt = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+                return <>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
+                    O <span style={{ color: C.t1 }}>{fmt(ohlcLegend.o)}</span>
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
+                    H <span style={{ color: C.t1 }}>{fmt(ohlcLegend.h)}</span>
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
+                    L <span style={{ color: C.t1 }}>{fmt(ohlcLegend.l)}</span>
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
+                    C <span style={{ color: C.t1 }}>{fmt(ohlcLegend.c)}</span>
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: isUp ? (C.up || "#34D399") : (C.dn || "#F87171") }}>
+                    {ohlcLegend.chg >= 0 ? "+" : ""}{fmt(ohlcLegend.chg).replace("$-", "-$")} ({ohlcLegend.chgPct >= 0 ? "+" : ""}{ohlcLegend.chgPct.toFixed(2)}%)
+                  </span>
+                </>;
+              })()}
+            </> : <>
+              {/* Area mode: just value */}
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>
+                ${ohlcLegend.value?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </span>
+            </>}
+          </div>
+        )}
+      </div>
     </div>
   );
 });
