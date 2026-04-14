@@ -7402,7 +7402,7 @@ Instructions:
           liveValue={liveValue}
           theme={theme}
           C={C}
-          initChartType={perfChartType}
+          initChartType="candle"
           initBmToggles={perfBmToggles}
           perfSleeve={perfSleeve}
           onClose={() => setShowPerfFullscreen(false)}
