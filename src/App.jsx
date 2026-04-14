@@ -873,6 +873,12 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         wickDownColor: isDk ? "#F87171" : "#DC2626",
       });
       candleSeries.setData(ohlcData);
+
+      // Fixed candle width: use ~3px bar spacing (matches daily candle density)
+      // Then scroll to show the most recent candles
+      const fixedBarSpacing = 3;
+      chart.timeScale().applyOptions({ barSpacing: fixedBarSpacing, rightOffset: 5 });
+      chart.timeScale().scrollToPosition(0, false);
     } else {
       const areaData = filtered.map(p => ({ time: toTime(p.date), value: p.value }));
       const areaSeries = chart.addAreaSeries({
@@ -924,7 +930,9 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
       }
     });
 
-    chart.timeScale().fitContent();
+    if (fsChartType !== "candle") {
+      chart.timeScale().fitContent();
+    }
 
     const ro = new ResizeObserver(() => {
       if (chartRef.current && container) {
