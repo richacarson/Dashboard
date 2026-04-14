@@ -798,8 +798,8 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
         borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
         timeVisible: false,
       },
-      handleScroll: { vertTouchDrag: false, horzTouchDrag: true, mouseWheel: true, pressedMouseMove: true },
-      handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true },
+      handleScroll: { vertTouchDrag: true, horzTouchDrag: true, mouseWheel: true, pressedMouseMove: true },
+      handleScale: { axisPressedMouseMove: true, axisDoubleClickReset: true, mouseWheel: true, pinch: true },
     });
     chartRef.current = chart;
 
