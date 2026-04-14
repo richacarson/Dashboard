@@ -785,6 +785,14 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
       rightPriceScale: {
         borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
         scaleMargins: { top: 0.1, bottom: 0.05 },
+        entireTextOnly: true,
+      },
+      localization: {
+        priceFormatter: (price) => {
+          if (price >= 1000000) return '$' + (price / 1000000).toFixed(1) + 'M';
+          if (price >= 1000) return '$' + (price / 1000).toFixed(0) + 'K';
+          return '$' + price.toFixed(0);
+        },
       },
       timeScale: {
         borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
@@ -1093,7 +1101,7 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
       </div>
 
       {/* Controls row: Interval selector | Benchmarks */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", flexShrink: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", flexShrink: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", borderBottom: `1px solid ${C.border}`, touchAction: "pan-x", msOverflowStyle: "none", scrollbarWidth: "none" }}>
         {/* Candle interval selector — visible in candle mode */}
         {fsChartType === "candle" && <>
           <span style={{ fontSize: 11, color: C.t4, fontWeight: 600, flexShrink: 0 }}>Interval</span>
@@ -1127,7 +1135,7 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
       </div>
 
       {/* Chart with OHLC legend overlay */}
-      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+      <div style={{ flex: 1, minHeight: 0, position: "relative", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
         {/* OHLC Legend — floating top-left of chart */}
         {ohlcLegend && (
