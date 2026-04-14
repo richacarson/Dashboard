@@ -940,10 +940,12 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
       if (lastPt) setOhlcLegend({ value: lastPt.value, time: lastPt.time });
     }
 
-    // Add benchmark lines
+    // Add benchmarks — candlesticks when in candle mode, lines when in area
     const bmColorMap = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
     const benchmarks_fs = perfData.benchmarks || {};
     const startPortVal = filtered[0].value;
+    const aggMap = { "1D": "day", "1W": "week", "2W": "2week", "1M": "month", "1Q": "quarter" };
+
     Object.entries(benchmarks_fs).forEach(([sym, priceMap]) => {
       if (!fsBmToggles[sym]) return;
       const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
@@ -954,21 +956,84 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
       if (!basePrice) { for (let j = prices.length - 1; j >= 0; j--) { if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; } } }
       if (!basePrice) return;
 
-      const bmData = [];
+      // Build daily benchmark values scaled to portfolio start
+      const bmDaily = [];
       let pIdx = 0;
       for (const pt of filtered) {
         const ptDate = toTime(pt.date);
         while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= ptDate) pIdx++;
         if (prices[pIdx][0] <= ptDate || pIdx === 0) {
-          bmData.push({ time: ptDate, value: startPortVal * (prices[pIdx][1] / basePrice) });
+          bmDaily.push({ time: ptDate, value: startPortVal * (prices[pIdx][1] / basePrice) });
         }
       }
+      // Deduplicate
       const seen = {};
       const deduped = [];
-      for (const p of bmData) {
+      for (const p of bmDaily) {
         if (seen[p.time]) { deduped[deduped.length - 1] = p; } else { deduped.push(p); seen[p.time] = true; }
       }
-      if (deduped.length > 1) {
+      if (deduped.length < 2) return;
+
+      if (fsChartType === "candle") {
+        // Aggregate benchmark into OHLC using same interval as portfolio
+        const aggPeriod = aggMap[fsInterval] || "week";
+        let bmOhlc = [];
+
+        if (aggPeriod === "day") {
+          for (let i = 0; i < deduped.length; i++) {
+            const prev = i > 0 ? deduped[i - 1].value : deduped[i].value;
+            const cur = deduped[i].value;
+            bmOhlc.push({ time: deduped[i].time, open: prev, high: Math.max(prev, cur), low: Math.min(prev, cur), close: cur });
+          }
+        } else {
+          let bkt = [], bktKey = null;
+          for (const pt of deduped) {
+            const d = new Date(pt.time + "T12:00:00");
+            let key;
+            if (aggPeriod === "quarter") {
+              key = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+            } else if (aggPeriod === "month") {
+              key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+            } else if (aggPeriod === "2week") {
+              const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+              const yr = thu.getFullYear();
+              const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+              key = `${yr}-BW${String(Math.ceil(wk / 2)).padStart(2, "0")}`;
+            } else {
+              const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+              const yr = thu.getFullYear();
+              const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
+              key = `${yr}-W${String(wk).padStart(2, "0")}`;
+            }
+            if (bktKey && key !== bktKey) {
+              const vals = bkt.map(p => p.value);
+              bmOhlc.push({ time: bkt[0].time, open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1] });
+              bkt = [];
+            }
+            bktKey = key;
+            bkt.push(pt);
+          }
+          if (bkt.length) {
+            const vals = bkt.map(p => p.value);
+            bmOhlc.push({ time: bkt[0].time, open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1] });
+          }
+        }
+
+        if (bmOhlc.length > 1) {
+          const color = bmColorMap[sym] || "#888";
+          const bmCandleSeries = chart.addCandlestickSeries({
+            upColor: color,
+            downColor: color + "88",
+            borderUpColor: color,
+            borderDownColor: color + "88",
+            wickUpColor: color,
+            wickDownColor: color + "88",
+            title: sym,
+          });
+          bmCandleSeries.setData(bmOhlc);
+        }
+      } else {
+        // Area mode — use line series
         const bmSeries = chart.addLineSeries({
           color: bmColorMap[sym] || "#888",
           lineWidth: 1.5,
