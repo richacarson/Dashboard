@@ -114,18 +114,18 @@
     "date": "2026-04-15 11:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "6.42",
     "previous": "6.51",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Export Prices MoM",
     "date": "2026-04-15 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.5",
+    "actual": "1.6",
+    "previous": "1.9",
     "forecast": "1.5",
     "unit": "%"
   },
@@ -144,8 +144,8 @@
     "date": "2026-04-15 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.3",
+    "actual": "0.8",
+    "previous": "0.9",
     "forecast": "2",
     "unit": "%"
   },
@@ -154,7 +154,7 @@
     "date": "2026-04-15 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "11",
     "previous": "-0.2",
     "forecast": "-0.5",
     "unit": ""
@@ -164,7 +164,7 @@
     "date": "2026-04-15 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "34",
     "previous": "38",
     "forecast": "37",
     "unit": ""
@@ -176,7 +176,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "3.081",
-    "forecast": "2.1",
+    "forecast": "0.2",
     "unit": ""
   },
   {
@@ -186,7 +186,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-1.589",
-    "forecast": "",
+    "forecast": "-2.1",
     "unit": ""
   },
   {
@@ -305,7 +305,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "39",
     "forecast": "",
     "unit": ""
   },
@@ -375,7 +375,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.1",
     "forecast": "",
     "unit": ""
   },
@@ -385,7 +385,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.42",
     "forecast": "",
     "unit": ""
   },
