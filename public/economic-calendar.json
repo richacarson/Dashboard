@@ -20,16 +20,6 @@
     "unit": "%"
   },
   {
-    "title": "Monthly Budget Statement",
-    "date": "2026-04-13 18:00:00",
-    "country": "USD",
-    "impact": "Medium",
-    "actual": "",
-    "previous": "-308",
-    "forecast": "",
-    "unit": "$"
-  },
-  {
     "title": "Fed Miran Speech",
     "date": "2026-04-13 22:20:00",
     "country": "USD",
@@ -214,8 +204,8 @@
     "date": "2026-04-16 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "219",
+    "actual": "207",
+    "previous": "218",
     "forecast": "215",
     "unit": ""
   },
@@ -224,7 +214,7 @@
     "date": "2026-04-16 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "26.7",
     "previous": "18.1",
     "forecast": "10",
     "unit": ""
@@ -244,8 +234,8 @@
     "date": "2026-04-16 13:15:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.2",
+    "actual": "-0.5",
+    "previous": "0.7",
     "forecast": "0.1",
     "unit": "%"
   },
@@ -315,9 +305,9 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "0.5",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Retail Sales Ex Autos MoM",
@@ -357,7 +347,7 @@
     "actual": "",
     "previous": "1.8",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Pending Home Sales YoY",
@@ -367,7 +357,7 @@
     "actual": "",
     "previous": "-0.8",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "API Crude Oil Stock Change",
@@ -395,7 +385,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-0.913",
     "forecast": "",
     "unit": ""
   },
@@ -405,7 +395,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-6.328",
     "forecast": "",
     "unit": ""
   },
@@ -455,7 +445,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "49.8",
     "forecast": "",
     "unit": ""
   },
