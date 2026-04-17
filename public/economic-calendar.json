@@ -360,6 +360,16 @@
     "unit": "%"
   },
   {
+    "title": "Fed Waller Speech",
+    "date": "2026-04-21 18:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "API Crude Oil Stock Change",
     "date": "2026-04-21 20:30:00",
     "country": "USD",
@@ -415,7 +425,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "207",
     "forecast": "",
     "unit": ""
   },
