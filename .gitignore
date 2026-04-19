@@ -1,5 +1,7 @@
 node_modules/
 dist/
 .claude/
+__pycache__/
+*.pyc
 portfolio-history-*.json
 !public/portfolio-history-*.json

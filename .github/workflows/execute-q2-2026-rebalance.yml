@@ -1,0 +1,90 @@
+name: Execute Q2 2026 Rebalance
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: true
+        type: choice
+        default: 'dry-run'
+        options:
+          - dry-run
+          - execute
+      confirm:
+        description: 'Type EXECUTE to confirm live run (ignored for dry-run)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  rebalance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate confirmation for live run
+        if: ${{ inputs.mode == 'execute' }}
+        run: |
+          if [ "${{ inputs.confirm }}" != "EXECUTE" ]; then
+            echo "::error::Live execution requires confirm='EXECUTE'. Aborting."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run rebalance executor
+        env:
+          FMP_API_KEY: ${{ secrets.VITE_FMP_KEY }}
+          ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+        run: |
+          if [ "${{ inputs.mode }}" = "dry-run" ]; then
+            python3 -m scripts.q2_2026_rebalance.execute --dry-run | tee rebalance_output.log
+          else
+            python3 -m scripts.q2_2026_rebalance.execute | tee rebalance_output.log
+          fi
+
+      - name: Upload execution log
+        uses: actions/upload-artifact@v4
+        with:
+          name: rebalance-log-${{ inputs.mode }}
+          path: rebalance_output.log
+
+      - name: Upload execution report
+        uses: actions/upload-artifact@v4
+        with:
+          name: rebalance-report-${{ inputs.mode }}
+          path: public/research/Q2 2026 Rebalance Execution Report.md
+          if-no-files-found: ignore
+
+      - name: Show updated file summary
+        if: ${{ inputs.mode == 'execute' }}
+        run: |
+          echo "=== File sizes after rebalance ==="
+          wc -l transactions/*.txt
+          echo ""
+          echo "=== Report preview ==="
+          head -80 "public/research/Q2 2026 Rebalance Execution Report.md" || true
+
+      - name: Commit changes
+        if: ${{ inputs.mode == 'execute' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add transactions/ public/research/ scripts/
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Q2 2026 rebalance executed (dated 04-17-26)
+
+          - Dividend gap filled for both sleeves
+          - IC Proposal trades added (MATX,A exit; NTR,CTRA add in dividend)
+            (GFI,FINV,PDD exit; FCX,CRDO,VST,MRVL add in growth)
+          - Cash reconciled to 1% of sleeve value
+          - Execution report: public/research/Q2 2026 Rebalance Execution Report.md"
+          git pull --rebase origin main
+          git push origin main

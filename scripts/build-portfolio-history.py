@@ -27,10 +27,12 @@ NAME_TO_TICKER = {
     "Chevron Corp": "CVX",
     "Clearwater Analytics Holdings Inc Class A": "CWAN",
     "Coinbase Global Inc Ordinary Shares - Class A": "COIN",
+    "Credo Technology Group Holding Ltd": "CRDO",
     "Docusign Inc": "DOCU",
     "Edison International": "EIX",
     "FinVolution Group ADR": "FINV",
     "Fortinet Inc": "FTNT",
+    "Freeport-McMoRan Inc": "FCX",
     "Gold Fields Ltd ADR": "GFI",
     "Grupo Supervielle SA ADR": "SUPV",
     "Harmony Biosciences Holdings Inc Ordinary Shares": "HRMY",
@@ -38,6 +40,7 @@ NAME_TO_TICKER = {
     "Keysight Technologies Inc": "KEYS",
     "Linde PLC": "LIN",
     "MARA Holdings Inc": "MARA",
+    "Marvell Technology Inc": "MRVL",
     "Meritage Homes Corp": "MTH",
     "NVIDIA Corp": "NVDA",
     "NXP Semiconductors NV": "NXPI",
@@ -49,6 +52,7 @@ NAME_TO_TICKER = {
     "Synchrony Financial": "SYF",
     "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
     "Toll Brothers Inc": "TOL",
+    "Vistra Corp": "VST",
     "Cash": "__CASH__",
 }
 
