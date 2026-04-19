@@ -250,26 +250,6 @@
     "unit": ""
   },
   {
-    "title": "Building Permits MoM Prel",
-    "date": "2026-04-17 12:30:00",
-    "country": "USD",
-    "impact": "Medium",
-    "actual": "",
-    "previous": "",
-    "forecast": "",
-    "unit": ""
-  },
-  {
-    "title": "Building Permits Prel",
-    "date": "2026-04-17 12:30:00",
-    "country": "USD",
-    "impact": "High",
-    "actual": "",
-    "previous": "",
-    "forecast": "",
-    "unit": ""
-  },
-  {
     "title": "Fed Barkin Speech",
     "date": "2026-04-17 16:15:00",
     "country": "USD",
@@ -316,7 +296,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.5",
-    "forecast": "",
+    "forecast": "1",
     "unit": "%"
   },
   {
@@ -326,7 +306,7 @@
     "impact": "High",
     "actual": "",
     "previous": "0.6",
-    "forecast": "",
+    "forecast": "1.3",
     "unit": "%"
   },
   {
@@ -336,7 +316,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-0.1",
-    "forecast": "",
+    "forecast": "0.1",
     "unit": "%"
   },
   {
@@ -346,7 +326,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "1.8",
-    "forecast": "",
+    "forecast": "0.5",
     "unit": "%"
   },
   {
@@ -376,7 +356,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "6.1",
-    "forecast": "",
+    "forecast": "-1",
     "unit": ""
   },
   {
@@ -396,7 +376,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-0.913",
-    "forecast": "",
+    "forecast": "-1",
     "unit": ""
   },
   {
@@ -426,7 +406,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "207",
-    "forecast": "",
+    "forecast": "212",
     "unit": ""
   },
   {
@@ -446,7 +426,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "52.3",
-    "forecast": "",
+    "forecast": "52.5",
     "unit": ""
   },
   {
@@ -456,7 +436,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "49.8",
-    "forecast": "",
+    "forecast": "50.1",
     "unit": ""
   },
   {
@@ -467,6 +447,336 @@
     "actual": "",
     "previous": "53.3",
     "forecast": "47.6",
+    "unit": ""
+  },
+  {
+    "title": "Dallas Fed Manufacturing Index",
+    "date": "2026-04-27 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-0.2",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "ADP Employment Change Weekly",
+    "date": "2026-04-28 12:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "S&P/Case-Shiller Home Price YoY",
+    "date": "2026-04-28 13:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "1.2",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "CB Consumer Confidence",
+    "date": "2026-04-28 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "91.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "API Crude Oil Stock Change",
+    "date": "2026-04-28 20:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "MBA 30-Year Mortgage Rate",
+    "date": "2026-04-29 11:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Building Permits MoM Prel",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Building Permits Prel",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Durable Goods Orders Ex Transp MoM",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Durable Goods Orders MoM",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "-1.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Goods Trade Balance Adv",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-83.5",
+    "forecast": "",
+    "unit": "$"
+  },
+  {
+    "title": "Housing Starts",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Housing Starts MoM",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "7.2",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Retail Inventories Ex Autos MoM Adv",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Wholesale Inventories MoM Adv",
+    "date": "2026-04-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Crude Oil Stocks Change",
+    "date": "2026-04-29 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Gasoline Stocks Change",
+    "date": "2026-04-29 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Interest Rate Decision",
+    "date": "2026-04-29 18:00:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "3.75",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Press Conference",
+    "date": "2026-04-29 18:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Core PCE Price Index MoM",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Employment Cost - Benefits QoQ",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.7",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Employment Cost - Wages QoQ",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.7",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Employment Cost Index QoQ",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.7",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "GDP Growth Rate QoQ Adv",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.5",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "GDP Price Index QoQ Adv",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "3.7",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Initial Jobless Claims",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "PCE Price Index MoM",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "PCE Price Index YoY",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "2.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Personal Income MoM",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "-0.1",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Personal Spending MoM",
+    "date": "2026-04-30 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Chicago PMI",
+    "date": "2026-04-30 13:45:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "52.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "ISM Manufacturing Employment",
+    "date": "2026-05-01 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "48.7",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "ISM Manufacturing PMI",
+    "date": "2026-05-01 14:00:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "52.7",
+    "forecast": "",
     "unit": ""
   }
 ]
