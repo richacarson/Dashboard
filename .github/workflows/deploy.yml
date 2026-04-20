@@ -4,6 +4,14 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "Re-anchor rebalance constants"
+      - "Build Portfolio History"
+      - "Update Calendars"
+      - "Execute Q2 2026 Rebalance"
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
