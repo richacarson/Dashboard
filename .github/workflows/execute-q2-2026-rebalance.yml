@@ -50,6 +50,14 @@ jobs:
             python3 -m scripts.q2_2026_rebalance.execute | tee rebalance_output.log
           fi
 
+      - name: Print report to log
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "EXECUTION REPORT (copy this for review)"
+          echo "=========================================="
+          cat "public/research/Q2 2026 Rebalance Execution Report.md" || echo "Report not generated"
+
       - name: Upload execution log
         uses: actions/upload-artifact@v4
         with:
