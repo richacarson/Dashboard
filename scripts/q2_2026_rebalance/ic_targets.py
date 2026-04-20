@@ -53,6 +53,15 @@ GROWTH_TARGETS = {
 # Target cash reserve as fraction of total sleeve value (1%)
 CASH_TARGET = 0.01
 
+# Morningstar "ground truth" cash balances as of 4/17/26 snapshot.
+# These supersede the replayed cash values so the rebalance matches what
+# Eric sees in the brokerage. The delta is recorded as a one-time
+# WITHDRAWAL labeled "DRIP reconciliation" on 4/17/26.
+MORNINGSTAR_CASH = {
+    "dividend": 8147.33,
+    "growth":   1144.70,
+}
+
 # Company name mapping for NEW additions (needed for Growth "By Activity" format)
 # These must be added so the build-portfolio-history.py parser can resolve them
 NEW_COMPANY_NAMES = {

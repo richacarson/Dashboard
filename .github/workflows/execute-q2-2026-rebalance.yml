@@ -40,7 +40,7 @@ jobs:
 
       - name: Run rebalance executor
         env:
-          FMP_API_KEY: ${{ secrets.VITE_FMP_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API }}
           ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET: ${{ secrets.ALPACA_API_SECRET }}
         run: |

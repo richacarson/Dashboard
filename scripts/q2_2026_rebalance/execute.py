@@ -45,7 +45,7 @@ parse_transactions = _bph.parse_transactions
 
 from scripts.q2_2026_rebalance.ic_targets import (
     REBALANCE_DATE, DIVIDEND_TARGETS, GROWTH_TARGETS, CASH_TARGET,
-    DIVIDEND_EXITS, GROWTH_EXITS, NEW_COMPANY_NAMES,
+    DIVIDEND_EXITS, GROWTH_EXITS, NEW_COMPANY_NAMES, MORNINGSTAR_CASH,
 )
 
 REBALANCE_DATE_ISO = "2026-04-17"  # YYYY-MM-DD
@@ -279,13 +279,17 @@ def fetch_all_prices(tickers, target_date):
     return prices, missing
 
 
-def compute_rebalance_trades(state, targets, prices, new_deposits, sleeve_name):
+def compute_rebalance_trades(state, targets, prices, new_deposits, sleeve_name,
+                              override_cash=None):
     """
     Compute SALE/PURCHASE trades to hit IC Proposal targets with 1% cash.
 
+    If override_cash is provided, use it as the effective cash instead of the
+    app's replayed value (used when reconciling to Morningstar's ground truth).
+
     Process:
       1. Effective shares = current shares (dividend deposits already in cash)
-      2. Effective cash = current cash + sum(new dividend deposits)
+      2. Effective cash = override_cash OR (current cash + sum(new dividend deposits))
       3. Total sleeve value = Σ(shares × price) + effective_cash
       4. Investable value = total × (1 - CASH_TARGET)  (99%)
       5. For each position: target_$ = investable × position_weight
@@ -295,7 +299,11 @@ def compute_rebalance_trades(state, targets, prices, new_deposits, sleeve_name):
     print(f"\n[{sleeve_name}] Phase 3: Compute rebalance trades")
 
     eff_shares = dict(state["shares"])
-    eff_cash = state["cash"] + sum(d["amount"] for d in new_deposits)
+    if override_cash is not None:
+        eff_cash = override_cash
+        print(f"  Using override cash (Morningstar reconciled): ${eff_cash:,.2f}")
+    else:
+        eff_cash = state["cash"] + sum(d["amount"] for d in new_deposits)
 
     # Total sleeve value BEFORE rebalance (using rebalance-date prices)
     stock_value = 0.0
@@ -413,11 +421,12 @@ def format_morningstar_number(n, decimals=4):
     return f"{n:,.{decimals}f}"
 
 
-def append_to_dividend_file(filepath, dividend_deposits, trades):
+def append_to_dividend_file(filepath, dividend_deposits, trades, reconciliation=None):
     """
     Append entries to the 'By Security' format dividend file.
 
     For cash dividends: append to the CASH$ section (after the CASH$ header line).
+    For reconciliation: also append to CASH$ section.
     For trades: if ticker header exists, insert transaction after it.
                If not (new ticker), create new ticker section at end of file
                (before the trailing "As of" line).
@@ -434,20 +443,29 @@ def append_to_dividend_file(filepath, dividend_deposits, trades):
     if cash_header_idx is None:
         raise RuntimeError("Dividend file: no CASH$ header found")
 
-    # Build dividend deposit lines
-    # Format:   "  \tMM-DD-YY\tDEPOSIT\t--\t--\tamount\tEdit\t \n"
-    new_deposit_lines = []
+    # Build cash event lines (reconciliation first, then dividend deposits)
+    # Format:   "  \tMM-DD-YY\tTYPE\t--\t--\tamount\tEdit\t \n"
+    new_cash_lines = []
+
+    if reconciliation is not None:
+        y, m, day = reconciliation["date"].split("-")
+        short_date = f"{m}-{day}-{y[2:]}"
+        amt_str = format_morningstar_number(reconciliation["amount"], decimals=2)
+        new_cash_lines.append(
+            f"  \t{short_date}\t{reconciliation['type']}\t--\t--\t{amt_str}\tEdit\t \n"
+        )
+
     for d in dividend_deposits:
         y, m, day = d["date"].split("-")
         short_date = f"{m}-{day}-{y[2:]}"
         amt_str = format_morningstar_number(d["amount"], decimals=2)
-        new_deposit_lines.append(
+        new_cash_lines.append(
             f"  \t{short_date}\tDEPOSIT\t--\t--\t{amt_str}\tEdit\t \n"
         )
 
     # Insert after CASH$ header (index cash_header_idx + 1)
     insert_pos = cash_header_idx + 1
-    lines[insert_pos:insert_pos] = new_deposit_lines
+    lines[insert_pos:insert_pos] = new_cash_lines
 
     # ── Insert trades ──
     # Group trades by ticker
@@ -516,7 +534,7 @@ def _company_name_for(ticker):
     return reverse.get(ticker, ticker)
 
 
-def append_to_growth_file(filepath, dividend_deposits, trades):
+def append_to_growth_file(filepath, dividend_deposits, trades, reconciliation=None):
     """
     Append entries to the 'By Activity' format growth file.
 
@@ -525,9 +543,9 @@ def append_to_growth_file(filepath, dividend_deposits, trades):
       "TYPECompanyName\r\n"
       "shares\tprice\tamount\tEdit\t \r\n"
 
-    For cash deposits (dividends):
+    For cash deposits (dividends) and reconciliation:
       " \tMM-DD-YY\t\r\n"
-      "DEPOSITCash\r\n"
+      "DEPOSITCash\r\n"  (or WITHDRAWALCash)
       "--\t--\tamount\tEdit\t \r\n"
 
     Inserted right after the "Add\r\n" header line (beginning of transaction list).
@@ -557,6 +575,17 @@ def append_to_growth_file(filepath, dividend_deposits, trades):
 
     # Build the new entries (newest first, reverse chronological to match file)
     new_blocks = []
+
+    # Reconciliation (dated 4/17/26)
+    if reconciliation is not None:
+        y, m, day = reconciliation["date"].split("-")
+        short_date = f"{m}-{day}-{y[2:]}"
+        amt_str = format_morningstar_number(reconciliation["amount"], decimals=2)
+        new_blocks.extend([
+            f" \t{short_date}\t{eol}",
+            f"{reconciliation['type']}Cash{eol}",
+            f"--\t--\t{amt_str}\tEdit\t {eol}",
+        ])
 
     # Dividend deposits
     for d in sorted(dividend_deposits, key=lambda x: x["date"], reverse=True):
@@ -614,9 +643,28 @@ def write_report(div_result, grw_result, dry_run=False):
             "",
             "### Pre-rebalance state",
             f"- Last recorded cash inflow: **{r['pre']['last_inflow_date']}**",
-            f"- Cash (from replay): **${r['pre']['cash']:,.2f}**",
+            f"- App cash (replay): **${r['pre']['cash']:,.2f}**",
             f"- Holdings: **{len(r['pre']['shares'])}**",
             "",
+        ]
+
+        # Reconciliation block
+        if r.get("reconciliation"):
+            rec = r["reconciliation"]
+            report_lines += [
+                "### Phase 1.5 — Morningstar cash reconciliation",
+                f"**Book entry only — not a real cash movement.** A one-time "
+                f"**{rec['type']}** of **${rec['amount']:,.2f}** is recorded on "
+                f"{rec['date']} to align the app's replayed cash with the actual "
+                f"Morningstar brokerage balance. This absorbs historical DRIP-vs-cash "
+                f"drift (the app treats DRIP as cash; Morningstar reinvested into "
+                f"shares) and any dividends paid in the gap period (already in "
+                f"Morningstar's current balance). Eric does not actually deposit or "
+                f"withdraw this amount.",
+                "",
+            ]
+
+        report_lines += [
             "### Phase 1 — Dividend gap fill",
         ]
         if r["dividends"]:
@@ -630,6 +678,9 @@ def write_report(div_result, grw_result, dry_run=False):
                     f"| {d['date']} | {d['ticker']} | {d['shares']:.4f} | "
                     f"${d['dividend_per_share']:.4f} | ${d['amount']:,.2f} |"
                 )
+        elif r.get("reconciliation"):
+            report_lines.append("_Skipped — Morningstar reconciliation above already "
+                               "captures gap-period dividends._")
         else:
             report_lines.append("_No dividends found in gap period._")
         report_lines += [
@@ -686,8 +737,38 @@ def run_sleeve(sleeve_name, tx_file, targets):
     print(f"Holdings: {len(pre['shares'])}, Cash: ${pre['cash']:,.2f}, "
           f"Last inflow: {pre['last_inflow_date']}")
 
-    # Phase 1 — dividend gap
-    dividends = fill_dividend_gap(pre, sleeve_name)
+    # Phase 1 — dividend gap fill ONLY if we're not using Morningstar cash.
+    # (Morningstar's snapshot already contains any dividends paid, so filling
+    # the gap AND reconciling would double-count.)
+    ms_cash = MORNINGSTAR_CASH.get(sleeve_name)
+    if ms_cash is None:
+        dividends = fill_dividend_gap(pre, sleeve_name)
+    else:
+        print(f"\n[{sleeve_name}] Phase 1: Skipped — reconciling to Morningstar "
+              f"cash (${ms_cash:,.2f}) which already includes period dividends")
+        dividends = []
+
+    # Phase 1.5 — Morningstar cash reconciliation
+    # The app's replayed cash can drift from Morningstar due to historical
+    # DRIP-as-cash accounting. Record the delta as a one-time WITHDRAWAL or
+    # DEPOSIT dated 4/17/26 labeled as DRIP reconciliation. This also captures
+    # any dividends paid in the gap period (they're in Morningstar's cash).
+    app_cash = pre["cash"] + sum(d["amount"] for d in dividends)
+    reconciliation = None
+    if ms_cash is not None:
+        drift = app_cash - ms_cash
+        if abs(drift) > 1.00:
+            print(f"\n[{sleeve_name}] Phase 1.5: Morningstar cash reconciliation")
+            print(f"  App cash (replayed):  ${app_cash:,.2f}")
+            print(f"  Morningstar cash:     ${ms_cash:,.2f}")
+            print(f"  Drift to reconcile:   ${drift:+,.2f}")
+            reconciliation = {
+                "date": REBALANCE_DATE_ISO,
+                "amount": round(abs(drift), 2),
+                "type": "WITHDRAWAL" if drift > 0 else "DEPOSIT",
+                "note": "DRIP + gap-period dividend reconciliation to Morningstar",
+            }
+            print(f"  Recording {reconciliation['type']} of ${reconciliation['amount']:,.2f}")
 
     # Phase 2 — prices for all current + target tickers
     all_tickers = set(pre["shares"].keys()) | set(targets.keys())
@@ -696,17 +777,20 @@ def run_sleeve(sleeve_name, tx_file, targets):
     if missing:
         print(f"  ! MISSING PRICES: {missing}")
 
-    # Phase 3 — compute trades
+    # Phase 3 — compute trades using Morningstar cash as ground truth
+    effective_cash_for_rebalance = ms_cash if ms_cash is not None else app_cash
     trades, total_value = compute_rebalance_trades(
-        pre, targets, prices, dividends, sleeve_name
+        pre, targets, prices, dividends, sleeve_name,
+        override_cash=effective_cash_for_rebalance,
     )
 
     stock_value = sum(pre["shares"].get(t, 0) * prices.get(t, 0) for t in pre["shares"])
-    eff_cash = pre["cash"] + sum(d["amount"] for d in dividends)
 
     return {
-        "pre": pre, "dividends": dividends, "prices": prices, "trades": trades,
-        "stock_value": stock_value, "eff_cash": eff_cash, "total_value": total_value,
+        "pre": pre, "dividends": dividends, "reconciliation": reconciliation,
+        "prices": prices, "trades": trades,
+        "stock_value": stock_value, "eff_cash": effective_cash_for_rebalance,
+        "total_value": total_value,
     }
 
 
@@ -725,12 +809,14 @@ def main():
         print("PHASE 5: Writing changes to transaction files")
         print("="*70)
         append_to_dividend_file(
-            DIVIDEND_FILE, div_result["dividends"], div_result["trades"]
+            DIVIDEND_FILE, div_result["dividends"], div_result["trades"],
+            reconciliation=div_result.get("reconciliation"),
         )
         print(f"  ✓ Updated {DIVIDEND_FILE.name}")
 
         append_to_growth_file(
-            GROWTH_FILE, grw_result["dividends"], grw_result["trades"]
+            GROWTH_FILE, grw_result["dividends"], grw_result["trades"],
+            reconciliation=grw_result.get("reconciliation"),
         )
         print(f"  ✓ Updated {GROWTH_FILE.name}")
     else:
