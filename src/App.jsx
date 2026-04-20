@@ -29,6 +29,8 @@ const REBALANCE_ANCHORS = {
   AMD:278.29, CRDO:160.69, CWAN:24.10, FTNT:81.84, KEYS:334.43, MRVL:139.71, NVDA:201.67, NXPI:216, TSM:370.55, COIN:206.38,
   HOOD:90.80, HUT:74.85, MARA:11.60, SYF:78.41, SUPV:9.79, CNX:38.67, CVX:183.99, OKE:83.50, AEM:220.15, FCX:70.21,
   EIX:70.75, VST:163.47, ATAT:37.77, TOL:146.67, HRMY:30,
+  // Q1 sold stocks (kept for Q1 vs Q2 alpha comparison)
+  A:121.87, MATX:176.40, FINV:4.80, GFI:49.96, PDD:104.77,
 };
 const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
 const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
