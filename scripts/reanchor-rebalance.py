@@ -3,9 +3,10 @@
 Re-anchor REBALANCE_DATE / REBALANCE_ANCHORS in src/App.jsx.
 
 Fetches the specified session's close prices from Alpaca for every ticker in
-TARGET_WEIGHTS (dividend + growth sleeves) and rewrites the two constants in
-place. Run via GitHub Action (workflow_dispatch) or locally with
-ALPACA_API_KEY / ALPACA_API_SECRET in env.
+TARGET_WEIGHTS (dividend + growth sleeves) plus any Q1-sold tickers only
+present in Q1_STOCKS, and rewrites the two constants in place. Run via
+GitHub Action (workflow_dispatch), by pushing a change to this script, or
+locally with ALPACA_API_KEY / ALPACA_API_SECRET in env.
 
 Usage:
     python scripts/reanchor-rebalance.py                   # defaults to 2026-04-17 close

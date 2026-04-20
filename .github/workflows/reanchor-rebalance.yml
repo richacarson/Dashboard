@@ -1,8 +1,8 @@
 name: Re-anchor rebalance constants
 
-# Manually triggered. Fetches close prices for the given session date via
-# Alpaca, rewrites REBALANCE_DATE / REBALANCE_ANCHORS in src/App.jsx, and
-# commits to main.
+# Trigger: either manual dispatch with a chosen date, or a push that
+# modifies the reanchor script itself (which re-runs with the default
+# date). The latter lets us re-fire without access to the dispatch API.
 
 on:
   workflow_dispatch:
@@ -11,6 +11,10 @@ on:
         description: "Session date to anchor to (YYYY-MM-DD, must be a completed trading day)"
         required: true
         default: "2026-04-17"
+  push:
+    branches: [main]
+    paths:
+      - "scripts/reanchor-rebalance.py"
 
 permissions:
   contents: write
@@ -29,9 +33,12 @@ jobs:
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
-        run: python scripts/reanchor-rebalance.py "${{ inputs.date }}"
+          REANCHOR_DATE: ${{ inputs.date || '2026-04-17' }}
+        run: python scripts/reanchor-rebalance.py "$REANCHOR_DATE"
 
       - name: Commit and push
+        env:
+          REANCHOR_DATE: ${{ inputs.date || '2026-04-17' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -40,6 +47,6 @@ jobs:
             exit 0
           fi
           git add src/App.jsx
-          git commit -m "Re-anchor REBALANCE to ${{ inputs.date }} close"
+          git commit -m "Re-anchor REBALANCE to $REANCHOR_DATE close"
           git pull --rebase origin main
           git push origin main
