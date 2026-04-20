@@ -529,9 +529,25 @@ def append_to_dividend_file(filepath, dividend_deposits, trades, reconciliation=
 
 
 def _company_name_for(ticker):
-    """Best-effort company name for newly-added tickers."""
-    reverse = {v: k for k, v in NEW_COMPANY_NAMES.items()}
-    return reverse.get(ticker, ticker)
+    """
+    Return the company name for `ticker`. Used when writing to "By Activity"
+    format files where entries are `TYPECompanyName`, not `TYPETICKER`.
+
+    Source of truth: build-portfolio-history.py's NAME_TO_TICKER map (inverted),
+    augmented by NEW_COMPANY_NAMES for Q2 2026 additions.
+    """
+    # Invert the build-script's map so we can look up ticker → company name
+    bph_reverse = {v: k for k, v in _bph.NAME_TO_TICKER.items() if v != "__CASH__"}
+    new_reverse = {v: k for k, v in NEW_COMPANY_NAMES.items()}
+    # New additions take priority (they may not be in bph map yet)
+    combined = {**bph_reverse, **new_reverse}
+    if ticker in combined:
+        return combined[ticker]
+    raise RuntimeError(
+        f"No company name mapping for ticker '{ticker}'. "
+        f"Add it to scripts/build-portfolio-history.py NAME_TO_TICKER "
+        f"or ic_targets.py NEW_COMPANY_NAMES before running rebalance."
+    )
 
 
 def append_to_growth_file(filepath, dividend_deposits, trades, reconciliation=None):
