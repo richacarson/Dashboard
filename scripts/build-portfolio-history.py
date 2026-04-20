@@ -760,10 +760,10 @@ def main():
 
     # Benchmark data — prefer Alpaca (consistent with live feed), fall back to Yahoo
     SLEEVE_BENCHMARKS = {
-        "dividend": ["SPY", "DIA", "IWS", "DVY"],
+        "dividend": ["SPY", "DIA", "DVY"],
         "growth": ["IUSG", "QQQ", "SPY"],
     }
-    benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
+    benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "DVY"])
     print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")
     bm_prices = fetch_alpaca_prices(set(benchmark_syms), start_date, end_date)
     # Fall back to Yahoo for any missing tickers

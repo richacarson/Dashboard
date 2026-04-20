@@ -57,15 +57,14 @@ const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.
 const CORE_KEYS = ["dividend", "growth", "digital"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
-  { sym: "IUSG", name: "IUSG" },
-  { sym: "DVY", name: "DVY" },
-  { sym: "IWS", name: "IWS" },
   { sym: "SPY", name: "SPY" },
+  { sym: "DVY", name: "DVY" },
+  { sym: "IUSG", name: "IUSG" },
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
-const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
+const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -254,7 +253,7 @@ const LOGO_DOMAINS = {
   BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
   SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
   NTR:"nutrien.com",CTRA:"coterra.com",FCX:"fcx.com",CRDO:"credosemi.com",VST:"vistracorp.com",MRVL:"marvell.com",
-  DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
+  DVY:"ishares.com",IUSG:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
   IBIT:"ishares.com",ETHA:"ishares.com",
   A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
   CL:"colgatepalmolive.com",CWAN:"clearwateranalytics.com",DGX:"questdiagnostics.com",
@@ -949,7 +948,7 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
     }
 
     // Add benchmarks — candlesticks when in candle mode, lines when in area
-    const bmColorMap = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+    const bmColorMap = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
     const benchmarks_fs = perfData.benchmarks || {};
     const startPortVal = filtered[0].value;
     const aggMap = { "1D": "day", "1W": "week", "2W": "2week", "1M": "month", "1Q": "quarter" };
@@ -1067,7 +1066,7 @@ const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveVa
     return () => { ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
   }, [fsChartType, fsInterval, fsBmToggles, theme, perfData, liveValue]);
 
-  const bmColors_ui = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+  const bmColors_ui = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
 
   return (
     <div style={{
@@ -1422,7 +1421,7 @@ Instructions:
   const [perfChartType, setPerfChartType] = useState("area"); // "area" | "candle"
   const [showPerfFullscreen, setShowPerfFullscreen] = useState(false); // fullscreen interactive chart overlay
   const [perfLoading, setPerfLoading] = useState(false);
-  const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
@@ -2152,7 +2151,7 @@ Instructions:
     } catch {}
   }, [apiKey, apiSecret]);
 
-  // Finnhub WebSocket for real-time non-IEX benchmark streaming (DVY, IWS, IUSG)
+  // Finnhub WebSocket for real-time non-IEX benchmark streaming (DVY, IUSG)
   const connectFinnhubWS = useCallback(() => {
     if (!FH) return;
     try {
@@ -2273,7 +2272,7 @@ Instructions:
 
           // Use pre-computed benchmarks from JSON if available
           const jsonBm = pJson.benchmarks || {};
-          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["IWS", "DVY", "SPY", "DIA"]);
+          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["DVY", "SPY", "DIA"]);
           const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
 
           let benchmarks = {};
@@ -2566,7 +2565,7 @@ Instructions:
 
       // Fetch intraday benchmark bars
       // All benchmarks via Alpaca IEX feed
-      const allBmSyms = ["SPY", "DIA", "DVY", "IWS", "IUSG", "QQQ"];
+      const allBmSyms = ["SPY", "DIA", "DVY", "IUSG", "QQQ"];
       const fetchBmBars = async (syms, timeframe, startDate) => {
         try {
           const url = `${BASE}/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
@@ -6144,7 +6143,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
-              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+              const bmColors = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
@@ -6874,7 +6873,7 @@ Instructions:
                     {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 20, height: 3, borderRadius: 2, background: color }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100" }[sym]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100" }[sym]}</span>
                       </div>
                     ))}
                   </div>
