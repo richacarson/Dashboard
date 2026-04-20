@@ -38,6 +38,22 @@ def parse_target_weights(src: str) -> dict[str, list[str]]:
     return sleeve_tickers
 
 
+def parse_q1_stocks(src: str) -> dict[str, list[str]]:
+    """Extract tickers from the Q1_STOCKS block inside the Q1-vs-Q2 metrics subview.
+    Returns {} if not found — optional, script still works without it."""
+    m = re.search(
+        r"const Q1_STOCKS = \{\s*dividend:\s*\[([^\]]*)\],\s*growth:\s*\[([^\]]*)\]",
+        src,
+        flags=re.DOTALL,
+    )
+    if not m:
+        return {}
+    result = {}
+    for sleeve, body in (("dividend", m.group(1)), ("growth", m.group(2))):
+        result[sleeve] = re.findall(r'"([A-Z][A-Z0-9.\-]*)"', body)
+    return result
+
+
 def fetch_closes(tickers: list[str], date: str, key: str, secret: str) -> dict[str, float]:
     """Fetch 1-day close bars for all tickers for the given session date."""
     # Alpaca accepts comma-separated symbols, up to a reasonable URL length.
@@ -66,7 +82,11 @@ def fetch_closes(tickers: list[str], date: str, key: str, secret: str) -> dict[s
     return closes
 
 
-def format_anchors(closes: dict[str, float], sleeve_tickers: dict[str, list[str]]) -> str:
+def format_anchors(
+    closes: dict[str, float],
+    sleeve_tickers: dict[str, list[str]],
+    q1_only_tickers: list[str] | None = None,
+) -> str:
     """Format the REBALANCE_ANCHORS object body, grouped like the original."""
 
     def fmt_price(p: float) -> str:
@@ -89,6 +109,11 @@ def format_anchors(closes: dict[str, float], sleeve_tickers: dict[str, list[str]
     div_lines = fmt_group(sleeve_tickers["dividend"])
     grw_lines = fmt_group(sleeve_tickers["growth"])
     body_lines = ["  " + line for line in div_lines + grw_lines]
+    if q1_only_tickers:
+        q1_lines = fmt_group(q1_only_tickers)
+        if q1_lines:
+            body_lines.append("  // Q1 sold stocks (kept for Q1 vs Q2 alpha comparison)")
+            body_lines.extend("  " + line for line in q1_lines)
     return "\n".join(body_lines)
 
 
@@ -132,15 +157,28 @@ def main() -> int:
 
     src = APP_JSX.read_text()
     sleeve_tickers = parse_target_weights(src)
-    all_tickers = sleeve_tickers["dividend"] + sleeve_tickers["growth"]
+    q1_stocks = parse_q1_stocks(src)
+    q2_set = set(sleeve_tickers["dividend"]) | set(sleeve_tickers["growth"])
+    q1_only_tickers: list[str] = []
+    if q1_stocks:
+        q1_all = list(q1_stocks.get("dividend", [])) + list(q1_stocks.get("growth", []))
+        # Preserve order, drop dups, drop anything already in Q2 targets
+        seen = set()
+        for t in q1_all:
+            if t not in q2_set and t not in seen:
+                q1_only_tickers.append(t)
+                seen.add(t)
+    all_tickers = sleeve_tickers["dividend"] + sleeve_tickers["growth"] + q1_only_tickers
     print(f"Fetching {len(all_tickers)} tickers for close of {date}…")
+    if q1_only_tickers:
+        print(f"  (includes {len(q1_only_tickers)} Q1-sold: {', '.join(q1_only_tickers)})")
     closes = fetch_closes(all_tickers, date, key, secret)
     missing = [t for t in all_tickers if t not in closes]
     if missing:
         print(f"WARNING: no bar returned for: {', '.join(missing)}")
     print(f"  got prices for {len(closes)}/{len(all_tickers)} tickers")
 
-    anchors_body = format_anchors(closes, sleeve_tickers)
+    anchors_body = format_anchors(closes, sleeve_tickers, q1_only_tickers)
     new_src = rewrite(src, date, anchors_body)
     if new_src == src:
         sys.exit("ERROR: rewrite produced no change — check regexes")
