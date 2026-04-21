@@ -56,9 +56,9 @@ const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.
 const CORE_KEYS = ["dividend", "growth", "digital"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
-  { sym: "SPY", name: "SPY" },
   { sym: "DVY", name: "DVY" },
   { sym: "IUSG", name: "IUSG" },
+  { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
