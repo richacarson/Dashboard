@@ -45,7 +45,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "0.4",
-    "previous": "-0.1",
+    "previous": "0",
     "forecast": "0.3",
     "unit": "%"
   },
