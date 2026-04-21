@@ -5857,7 +5857,7 @@ Instructions:
               <div style={{ marginBottom: isDesktop ? 16 : 8 }}>
                 <select
                   value={perfSleeve}
-                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("ALL"); }}
+                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("YTD"); }}
                   style={{
                     padding: "10px 36px 10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`,
                     background: C.card, color: C.t1, fontSize: 14, fontWeight: 700,
