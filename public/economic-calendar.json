@@ -4,8 +4,8 @@
     "date": "2026-04-21 12:15:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "39",
+    "actual": "54.75",
+    "previous": "40.25",
     "forecast": "",
     "unit": ""
   },
@@ -14,8 +14,8 @@
     "date": "2026-04-21 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.5",
+    "actual": "0.7",
+    "previous": "0.6",
     "forecast": "0.2",
     "unit": "%"
   },
@@ -24,8 +24,8 @@
     "date": "2026-04-21 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.5",
+    "actual": "1.9",
+    "previous": "0.7",
     "forecast": "1.4",
     "unit": "%"
   },
@@ -34,8 +34,8 @@
     "date": "2026-04-21 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "0.6",
+    "actual": "1.7",
+    "previous": "0.7",
     "forecast": "1.4",
     "unit": "%"
   },
@@ -44,7 +44,7 @@
     "date": "2026-04-21 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.4",
     "previous": "-0.1",
     "forecast": "0.3",
     "unit": "%"
@@ -64,8 +64,8 @@
     "date": "2026-04-21 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.8",
+    "actual": "1.5",
+    "previous": "2.5",
     "forecast": "0.1",
     "unit": "%"
   },
@@ -74,7 +74,7 @@
     "date": "2026-04-21 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-1.1",
     "previous": "-0.8",
     "forecast": "",
     "unit": "%"
@@ -277,7 +277,7 @@
     "actual": "",
     "previous": "0.8",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Durable Goods Orders MoM",
@@ -335,9 +335,9 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "0.8",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "EIA Crude Oil Stocks Change",
@@ -366,8 +366,8 @@
     "impact": "High",
     "actual": "",
     "previous": "3.75",
-    "forecast": "",
-    "unit": ""
+    "forecast": "3.75",
+    "unit": "%"
   },
   {
     "title": "Fed Press Conference",
@@ -387,7 +387,7 @@
     "actual": "",
     "previous": "0.4",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Employment Cost - Benefits QoQ",
@@ -397,7 +397,7 @@
     "actual": "",
     "previous": "0.7",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Employment Cost - Wages QoQ",
@@ -407,7 +407,7 @@
     "actual": "",
     "previous": "0.7",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Employment Cost Index QoQ",
@@ -417,7 +417,7 @@
     "actual": "",
     "previous": "0.7",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "GDP Growth Rate QoQ Adv",
@@ -457,7 +457,7 @@
     "actual": "",
     "previous": "0.4",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "PCE Price Index YoY",
