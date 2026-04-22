@@ -114,7 +114,7 @@
     "date": "2026-04-22 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "1.925",
     "previous": "-0.913",
     "forecast": "-1.2",
     "unit": ""
@@ -124,7 +124,7 @@
     "date": "2026-04-22 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-4.57",
     "previous": "-6.328",
     "forecast": "-1.5",
     "unit": ""
