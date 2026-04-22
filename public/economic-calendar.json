@@ -104,10 +104,10 @@
     "date": "2026-04-22 11:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "6.35",
     "previous": "6.42",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "EIA Crude Oil Stocks Change",
@@ -116,7 +116,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-0.913",
-    "forecast": "-1",
+    "forecast": "-1.2",
     "unit": ""
   },
   {
@@ -126,7 +126,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-6.328",
-    "forecast": "",
+    "forecast": "-1.5",
     "unit": ""
   },
   {
@@ -205,7 +205,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "54.75",
     "forecast": "",
     "unit": ""
   },
@@ -235,7 +235,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-4.4",
     "forecast": "",
     "unit": ""
   },
@@ -245,7 +245,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.35",
     "forecast": "",
     "unit": ""
   },
