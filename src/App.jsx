@@ -2216,6 +2216,50 @@ Instructions:
     fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
   }, [pollFinnhubBenchmarks]);
 
+  // Yahoo Finance parallel poll for non-IEX benchmarks (DVY, IUSG)
+  // Runs alongside Finnhub WS+REST so whichever source ticks first wins.
+  // No API key required; CORS-accessible from browser.
+  const yfTimerRef = useRef(null);
+  const pollYahooBenchmarks = useCallback(async () => {
+    const batchQ = {}, batchB = {};
+    for (const sym of NON_IEX_BM) {
+      try {
+        const r = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=1d`
+        );
+        if (!r.ok) continue;
+        const j = await r.json();
+        const meta = j?.chart?.result?.[0]?.meta;
+        if (!meta) continue;
+        const price = meta.regularMarketPrice;
+        const pc = meta.chartPreviousClose ?? meta.previousClose;
+        const ts = (meta.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000;
+        if (!price) continue;
+        // Only overwrite if this Yahoo tick is fresher than what's in the ref
+        const existing = quotesRef.current[sym];
+        const existingTs = existing?.t ? new Date(existing.t).getTime() : 0;
+        if (ts <= existingTs) continue;
+        const quoteVal = { p: price, t: new Date(ts).toISOString() };
+        quotesRef.current[sym] = quoteVal;
+        batchQ[sym] = quoteVal;
+        if (pc) {
+          const barVal = { ...barsRef.current[sym], pc };
+          barsRef.current[sym] = barVal;
+          batchB[sym] = barVal;
+        }
+      } catch {}
+    }
+    if (Object.keys(batchQ).length) setBmQuotes(prev => ({ ...prev, ...batchQ }));
+    if (Object.keys(batchB).length) setBmBars(prev => ({ ...prev, ...batchB }));
+  }, []);
+  const startYahooPolling = useCallback(() => {
+    // Offset 2.5s from Finnhub so the two sources interleave
+    setTimeout(() => {
+      pollYahooBenchmarks();
+      yfTimerRef.current = setInterval(pollYahooBenchmarks, 5000);
+    }, 2500);
+  }, [pollYahooBenchmarks]);
+
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
   const staleTimerRef = useRef(null);
   const pollStaleStocks = useCallback(async () => {
@@ -2673,6 +2717,7 @@ Instructions:
       connectWS();
       connectFinnhubWS();
       startFinnhubPolling();
+      startYahooPolling();
       // Poll for stale stocks every 30 seconds
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
@@ -2696,7 +2741,7 @@ Instructions:
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
       return () => {
-        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
+        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(yfTimerRef.current); clearInterval(staleTimerRef.current);
         try { wsRef.current?.close(); } catch {}
         try { fhWsRef.current?.close(); } catch {}
       };
