@@ -134,8 +134,8 @@
     "date": "2026-04-23 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-0.11",
+    "actual": "-0.2",
+    "previous": "0.03",
     "forecast": "",
     "unit": ""
   },
@@ -144,8 +144,8 @@
     "date": "2026-04-23 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "207",
+    "actual": "214",
+    "previous": "208",
     "forecast": "212",
     "unit": ""
   },
@@ -154,7 +154,7 @@
     "date": "2026-04-23 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "52",
     "previous": "50.3",
     "forecast": "",
     "unit": ""
@@ -164,7 +164,7 @@
     "date": "2026-04-23 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "54",
     "previous": "52.3",
     "forecast": "52.5",
     "unit": ""
@@ -174,7 +174,7 @@
     "date": "2026-04-23 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "51.3",
     "previous": "49.8",
     "forecast": "50",
     "unit": ""
@@ -325,9 +325,9 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "0.3",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Wholesale Inventories MoM Adv",
@@ -345,7 +345,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "1.925",
     "forecast": "",
     "unit": ""
   },
@@ -355,7 +355,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-4.57",
     "forecast": "",
     "unit": ""
   },
