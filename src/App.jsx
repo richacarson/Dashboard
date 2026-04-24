@@ -58,13 +58,12 @@ const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.sy
 const BENCHMARKS = [
   { sym: "IUSG", name: "IUSG" },
   { sym: "DVY", name: "DVY" },
-  { sym: "IWS", name: "IWS" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
-const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
+const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -990,7 +989,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
-  const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
@@ -1841,7 +1840,7 @@ Instructions:
 
           // Use pre-computed benchmarks from JSON if available
           const jsonBm = pJson.benchmarks || {};
-          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["IWS", "DVY", "SPY", "DIA"]);
+          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["DVY", "SPY", "DIA"]);
           const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
 
           let benchmarks = {};
@@ -2134,7 +2133,7 @@ Instructions:
 
       // Fetch intraday benchmark bars
       // All benchmarks via Alpaca IEX feed
-      const allBmSyms = ["SPY", "DIA", "DVY", "IWS", "IUSG", "QQQ"];
+      const allBmSyms = ["SPY", "DIA", "DVY", "IUSG", "QQQ"];
       const fetchBmBars = async (syms, timeframe, startDate) => {
         try {
           const url = `${BASE}/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
@@ -5712,7 +5711,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
-              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+              const bmColors = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
