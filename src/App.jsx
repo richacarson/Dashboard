@@ -6167,8 +6167,9 @@ Instructions:
                       const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
                       const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                       if (p.oneDay) {
-                        // Use previous close as base, same as 1D chart
-                        const pc = bmBars[sym]?.pc;
+                        // Use previous close — from bmBars if available, otherwise second-to-last historical price
+                        let pc = bmBars[sym]?.pc;
+                        if (!pc && prices.length >= 2) pc = prices[prices.length - 2][1];
                         if (!pc || pc <= 0 || lastPrice <= 0) return null;
                         return ((lastPrice / pc) - 1) * 100;
                       }
