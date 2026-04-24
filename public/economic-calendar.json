@@ -187,7 +187,7 @@
     "date": "2026-04-24 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "49.8",
     "previous": "53.3",
     "forecast": "47.6",
     "unit": ""
@@ -289,8 +289,8 @@
     "impact": "High",
     "actual": "",
     "previous": "-1.4",
-    "forecast": "",
-    "unit": ""
+    "forecast": "0.5",
+    "unit": "%"
   },
   {
     "title": "Goods Trade Balance Adv",
@@ -448,7 +448,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "214",
     "forecast": "",
     "unit": ""
   },
