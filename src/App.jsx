@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
-import { createChart, ColorType, CrosshairMode } from "lightweight-charts";
 
 /* ═══════════════════════════════════════════════════════════════════
    IOWN PORTFOLIO COMMAND CENTER v3
@@ -20,17 +19,18 @@ const TARGET_WEIGHTS = {
   dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, CTRA:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
   growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
-const REBALANCE_DATE = "2026-04-17";
+const REBALANCE_DATE = "2026-04-08";
 const REBALANCE_ANCHORS = {
-  // 4/17/26 CLOSE prices from Alpaca (IEX feed)
-  CAT:794.54, FAST:45.79, GD:336.25, LMT:592.06, PCAR:126.26, ADI:371.49, ADP:200.47, LRCX:267.68, QCOM:136.18, SSNC:72.08,
-  TEL:246.22, STLD:200.34, NTR:70.62, CHD:96.88, CL:85.81, ATO:186.58, BKH:76.03, NEE:92.00, CTRA:30.89, VLO:223.66,
-  ABT:96.83, DGX:194.97, SYK:343.23, GPC:113.77, ORI:42.53,
-  AMD:278.29, CRDO:160.69, CWAN:24.10, FTNT:81.84, KEYS:334.43, MRVL:139.71, NVDA:201.67, NXPI:216, TSM:370.55, COIN:206.38,
-  HOOD:90.80, HUT:74.85, MARA:11.60, SYF:78.41, SUPV:9.79, CNX:38.67, CVX:183.99, OKE:83.50, AEM:220.15, FCX:70.21,
-  EIX:70.75, VST:163.47, ATAT:37.77, TOL:146.67, HRMY:30,
-  // Q1 sold stocks (kept for Q1 vs Q2 alpha comparison)
-  A:121.87, MATX:176.40, FINV:4.80, GFI:49.96, PDD:104.77,
+  // 4/8/26 OPEN prices from Yahoo Finance
+  ABT:103.13, ADI:345.81, ADP:204.51, ATO:186.7, BKH:73.03, CAT:764.62, CHD:93.0, CL:83.75, CTRA:32.41, DGX:196.18,
+  FAST:46.41, GD:346.86, GPC:106.62, LMT:612.27, LRCX:242.75, NEE:93.08, NTR:72.62, ORI:40.45, PCAR:120.3, QCOM:128.65,
+  SSNC:69.99, STLD:184.13, SYK:336.29, TEL:220.74, VLO:235.0,
+  AEM:220.35, AMD:232.12, ATAT:37.2, CNX:38.1, COIN:187.89, CRDO:113.87, CVX:191.41, CWAN:24.04, EIX:72.97, FCX:65.25,
+  FTNT:85.1, HOOD:76.8, HRMY:28.11, HUT:57.08, KEYS:312.75, MARA:9.51, MRVL:114.0, NVDA:184.5, NXPI:205.95, OKE:85.45,
+  SUPV:9.88, SYF:72.18, TOL:139.21, TSM:370.29, VST:160.75,
+  IBIT:41.08, ETHA:17.06,
+  // Q1 sold stocks
+  A:115.98, MATX:174.8, GFI:52.77, FINV:5.17, PDD:102.51,
 };
 const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
 const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
@@ -56,14 +56,15 @@ const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.
 const CORE_KEYS = ["dividend", "growth", "digital"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
-  { sym: "DVY", name: "DVY" },
   { sym: "IUSG", name: "IUSG" },
+  { sym: "DVY", name: "DVY" },
+  { sym: "IWS", name: "IWS" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
-const NON_IEX_BM = ["IUSG", "DVY"];
+const NON_IEX_BM = ["IUSG", "DVY", "IWS"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -252,7 +253,7 @@ const LOGO_DOMAINS = {
   BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
   SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
   NTR:"nutrien.com",CTRA:"coterra.com",FCX:"fcx.com",CRDO:"credosemi.com",VST:"vistracorp.com",MRVL:"marvell.com",
-  DVY:"ishares.com",IUSG:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
+  DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
   IBIT:"ishares.com",ETHA:"ishares.com",
   A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
   CL:"colgatepalmolive.com",CWAN:"clearwateranalytics.com",DGX:"questdiagnostics.com",
@@ -744,438 +745,9 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
 
         </div>{/* end maxWidth wrapper */}
       </div>)}{/* end scrollable container + profileTab conditional */}
-
     </div>
   );
 }
-
-/* ═══════════════════════════════════════════════════════════════════
-   FULLSCREEN INTERACTIVE PORTFOLIO CHART (Lightweight Charts)
-   ═══════════════════════════════════════════════════════════════════ */
-const FullscreenPerfChart = memo(function FullscreenPerfChart({ perfData, liveValue, theme, C, initChartType, initBmToggles, perfSleeve, onClose }) {
-  const chartContainerRef = useRef(null);
-  const chartRef = useRef(null);
-  const [fsChartType, setFsChartType] = useState(initChartType || "candle");
-  const [fsBmToggles, setFsBmToggles] = useState(initBmToggles || {});
-  const [fsInterval, setFsInterval] = useState("1W");
-  const [ohlcLegend, setOhlcLegend] = useState(null); // { o, h, l, c, time, chg, chgPct }
-  const ohlcDataRef = useRef([]);
-
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-    const container = chartContainerRef.current;
-    if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
-
-    const isDk = theme === "dark";
-    const chart = createChart(container, {
-      width: container.clientWidth,
-      height: container.clientHeight,
-      layout: {
-        background: { type: ColorType.Solid, color: isDk ? "#0C1018" : "#F5F5F0" },
-        textColor: isDk ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-        fontFamily: "'DM Sans', -apple-system, sans-serif",
-      },
-      grid: {
-        vertLines: { color: isDk ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
-        horzLines: { color: isDk ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" },
-      },
-      crosshair: { mode: CrosshairMode.Magnet },
-      rightPriceScale: {
-        borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-        scaleMargins: { top: 0.1, bottom: 0.05 },
-        entireTextOnly: true,
-      },
-      localization: {
-        priceFormatter: (price) => {
-          if (price >= 1000000) return '$' + (price / 1000000).toFixed(1) + 'M';
-          if (price >= 1000) return '$' + (price / 1000).toFixed(0) + 'K';
-          return '$' + price.toFixed(0);
-        },
-      },
-      timeScale: {
-        borderColor: isDk ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-        timeVisible: false,
-      },
-      handleScroll: { vertTouchDrag: true, horzTouchDrag: true, mouseWheel: true, pressedMouseMove: true },
-      handleScale: { axisPressedMouseMove: true, axisDoubleClickReset: true, mouseWheel: true, pinch: true },
-    });
-    chartRef.current = chart;
-
-    // Always use ALL data
-    const basePortfolio = perfData.portfolio;
-    let filtered = basePortfolio;
-    if (liveValue) {
-      const today = new Date().toISOString().slice(0, 10);
-      const lastDate = basePortfolio[basePortfolio.length - 1]?.date;
-      if (today > lastDate) {
-        filtered = [...basePortfolio, { date: today, value: liveValue.value }];
-      } else {
-        filtered = [...basePortfolio.slice(0, -1), { ...basePortfolio[basePortfolio.length - 1], value: liveValue.value }];
-      }
-    }
-    if (!filtered.length) return;
-
-    const toTime = (dateStr) => dateStr.slice(0, 10);
-
-    if (fsChartType === "candle") {
-      // Aggregate based on user-selected interval
-      const aggMap = { "1D": "day", "1W": "week", "2W": "2week", "1M": "month", "1Q": "quarter" };
-      const aggPeriod = aggMap[fsInterval] || "week";
-      let ohlcData = [];
-
-      if (aggPeriod === "day") {
-        for (let i = 0; i < filtered.length; i++) {
-          const prev = i > 0 ? filtered[i - 1].value : filtered[i].value;
-          const cur = filtered[i].value;
-          ohlcData.push({
-            time: toTime(filtered[i].date),
-            open: prev, high: Math.max(prev, cur), low: Math.min(prev, cur), close: cur,
-          });
-        }
-      } else {
-        let bucket = [];
-        let bucketKey = null;
-        for (const pt of filtered) {
-          const d = new Date(pt.date + "T12:00:00");
-          let key;
-          if (aggPeriod === "quarter") {
-            key = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
-          } else if (aggPeriod === "month") {
-            key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-          } else if (aggPeriod === "2week") {
-            const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-            const yr = thu.getFullYear();
-            const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-            key = `${yr}-BW${String(Math.ceil(wk / 2)).padStart(2, "0")}`;
-          } else {
-            // week
-            const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-            const yr = thu.getFullYear();
-            const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-            key = `${yr}-W${String(wk).padStart(2, "0")}`;
-          }
-          if (bucketKey && key !== bucketKey) {
-            const vals = bucket.map(p => p.value);
-            ohlcData.push({
-              time: toTime(bucket[0].date),
-              open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1],
-            });
-            bucket = [];
-          }
-          bucketKey = key;
-          bucket.push(pt);
-        }
-        if (bucket.length) {
-          const vals = bucket.map(p => p.value);
-          ohlcData.push({
-            time: toTime(bucket[0].date),
-            open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1],
-          });
-        }
-      }
-
-      const candleSeries = chart.addCandlestickSeries({
-        upColor: isDk ? "#34D399" : "#16A34A",
-        downColor: isDk ? "#F87171" : "#DC2626",
-        borderUpColor: isDk ? "#34D399" : "#16A34A",
-        borderDownColor: isDk ? "#F87171" : "#DC2626",
-        wickUpColor: isDk ? "#34D399" : "#16A34A",
-        wickDownColor: isDk ? "#F87171" : "#DC2626",
-      });
-      candleSeries.setData(ohlcData);
-      ohlcDataRef.current = ohlcData;
-
-      // Fixed candle width: use ~3px bar spacing (matches daily candle density)
-      // Then scroll to show the most recent candles
-      const fixedBarSpacing = 3;
-      chart.timeScale().applyOptions({ barSpacing: fixedBarSpacing, rightOffset: 5 });
-      chart.timeScale().scrollToPosition(0, false);
-
-      // Subscribe to crosshair move for OHLC legend
-      chart.subscribeCrosshairMove((param) => {
-        if (!param || !param.time || !param.seriesData) {
-          // Show latest bar when no crosshair
-          const last = ohlcData[ohlcData.length - 1];
-          if (last) {
-            const chg = last.close - last.open;
-            const chgPct = last.open > 0 ? (chg / last.open) * 100 : 0;
-            setOhlcLegend({ o: last.open, h: last.high, l: last.low, c: last.close, time: last.time, chg, chgPct });
-          }
-          return;
-        }
-        const data = param.seriesData.get(candleSeries);
-        if (data && data.open !== undefined) {
-          const chg = data.close - data.open;
-          const chgPct = data.open > 0 ? (chg / data.open) * 100 : 0;
-          setOhlcLegend({ o: data.open, h: data.high, l: data.low, c: data.close, time: param.time, chg, chgPct });
-        }
-      });
-
-      // Set initial legend to latest bar
-      const lastBar = ohlcData[ohlcData.length - 1];
-      if (lastBar) {
-        const chg = lastBar.close - lastBar.open;
-        const chgPct = lastBar.open > 0 ? (chg / lastBar.open) * 100 : 0;
-        setOhlcLegend({ o: lastBar.open, h: lastBar.high, l: lastBar.low, c: lastBar.close, time: lastBar.time, chg, chgPct });
-      }
-    } else {
-      const areaData = filtered.map(p => ({ time: toTime(p.date), value: p.value }));
-      const areaSeries = chart.addAreaSeries({
-        topColor: isDk ? "rgba(110,132,80,0.4)" : "rgba(110,132,80,0.3)",
-        bottomColor: isDk ? "rgba(110,132,80,0.02)" : "rgba(110,132,80,0.02)",
-        lineColor: isDk ? "#6E8450" : "#6E8450",
-        lineWidth: 2,
-      });
-      areaSeries.setData(areaData);
-      ohlcDataRef.current = [];
-      setOhlcLegend(null);
-
-      // Subscribe for area value display
-      chart.subscribeCrosshairMove((param) => {
-        if (!param || !param.time || !param.seriesData) {
-          const last = areaData[areaData.length - 1];
-          if (last) setOhlcLegend({ value: last.value, time: last.time });
-          return;
-        }
-        const data = param.seriesData.get(areaSeries);
-        if (data && data.value !== undefined) {
-          setOhlcLegend({ value: data.value, time: param.time });
-        }
-      });
-      const lastPt = areaData[areaData.length - 1];
-      if (lastPt) setOhlcLegend({ value: lastPt.value, time: lastPt.time });
-    }
-
-    // Add benchmarks — candlesticks when in candle mode, lines when in area
-    const bmColorMap = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
-    const benchmarks_fs = perfData.benchmarks || {};
-    const startPortVal = filtered[0].value;
-    const aggMap = { "1D": "day", "1W": "week", "2W": "2week", "1M": "month", "1Q": "quarter" };
-
-    Object.entries(benchmarks_fs).forEach(([sym, priceMap]) => {
-      if (!fsBmToggles[sym]) return;
-      const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
-      if (!prices.length) return;
-      const startDate = filtered[0].date;
-      let basePrice = null;
-      for (const [d, p] of prices) { if (d >= startDate) { basePrice = p; break; } }
-      if (!basePrice) { for (let j = prices.length - 1; j >= 0; j--) { if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; } } }
-      if (!basePrice) return;
-
-      // Build daily benchmark values scaled to portfolio start
-      const bmDaily = [];
-      let pIdx = 0;
-      for (const pt of filtered) {
-        const ptDate = toTime(pt.date);
-        while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= ptDate) pIdx++;
-        if (prices[pIdx][0] <= ptDate || pIdx === 0) {
-          bmDaily.push({ time: ptDate, value: startPortVal * (prices[pIdx][1] / basePrice) });
-        }
-      }
-      // Deduplicate
-      const seen = {};
-      const deduped = [];
-      for (const p of bmDaily) {
-        if (seen[p.time]) { deduped[deduped.length - 1] = p; } else { deduped.push(p); seen[p.time] = true; }
-      }
-      if (deduped.length < 2) return;
-
-      if (fsChartType === "candle") {
-        // Aggregate benchmark into OHLC using same interval as portfolio
-        const aggPeriod = aggMap[fsInterval] || "week";
-        let bmOhlc = [];
-
-        if (aggPeriod === "day") {
-          for (let i = 0; i < deduped.length; i++) {
-            const prev = i > 0 ? deduped[i - 1].value : deduped[i].value;
-            const cur = deduped[i].value;
-            bmOhlc.push({ time: deduped[i].time, open: prev, high: Math.max(prev, cur), low: Math.min(prev, cur), close: cur });
-          }
-        } else {
-          let bkt = [], bktKey = null;
-          for (const pt of deduped) {
-            const d = new Date(pt.time + "T12:00:00");
-            let key;
-            if (aggPeriod === "quarter") {
-              key = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
-            } else if (aggPeriod === "month") {
-              key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-            } else if (aggPeriod === "2week") {
-              const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-              const yr = thu.getFullYear();
-              const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-              key = `${yr}-BW${String(Math.ceil(wk / 2)).padStart(2, "0")}`;
-            } else {
-              const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-              const yr = thu.getFullYear();
-              const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-              key = `${yr}-W${String(wk).padStart(2, "0")}`;
-            }
-            if (bktKey && key !== bktKey) {
-              const vals = bkt.map(p => p.value);
-              bmOhlc.push({ time: bkt[0].time, open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1] });
-              bkt = [];
-            }
-            bktKey = key;
-            bkt.push(pt);
-          }
-          if (bkt.length) {
-            const vals = bkt.map(p => p.value);
-            bmOhlc.push({ time: bkt[0].time, open: vals[0], high: Math.max(...vals), low: Math.min(...vals), close: vals[vals.length - 1] });
-          }
-        }
-
-        if (bmOhlc.length > 1) {
-          const color = bmColorMap[sym] || "#888";
-          const bmCandleSeries = chart.addCandlestickSeries({
-            upColor: color,
-            downColor: color + "88",
-            borderUpColor: color,
-            borderDownColor: color + "88",
-            wickUpColor: color,
-            wickDownColor: color + "88",
-            title: sym,
-          });
-          bmCandleSeries.setData(bmOhlc);
-        }
-      } else {
-        // Area mode — use line series
-        const bmSeries = chart.addLineSeries({
-          color: bmColorMap[sym] || "#888",
-          lineWidth: 1.5,
-          lineStyle: 2,
-          crosshairMarkerVisible: true,
-          title: sym,
-        });
-        bmSeries.setData(deduped);
-      }
-    });
-
-    if (fsChartType !== "candle") {
-      chart.timeScale().fitContent();
-    }
-
-    const ro = new ResizeObserver(() => {
-      if (chartRef.current && container) {
-        chartRef.current.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-      }
-    });
-    ro.observe(container);
-
-    return () => { ro.disconnect(); if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; } };
-  }, [fsChartType, fsInterval, fsBmToggles, theme, perfData, liveValue]);
-
-  const bmColors_ui = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
-
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
-      display: "flex", flexDirection: "column",
-      paddingTop: "env(safe-area-inset-top, 0px)",
-    }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: 4 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-        </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>IOWN {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</div>
-          <div style={{ fontSize: 11, color: C.t4 }}>Portfolio Performance</div>
-        </div>
-        {/* Chart type toggle */}
-        <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
-          {[
-            { v: "area", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 9L14 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12L5 7L8 9L14 3V12H2Z" fill="currentColor" opacity="0.15"/></svg> },
-            { v: "candle", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="4" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1"/><line x1="4.5" y1="10" x2="4.5" y2="13" stroke="currentColor" strokeWidth="1"/><rect x="10" y="6" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1"/><line x1="11.5" y1="11" x2="11.5" y2="14" stroke="currentColor" strokeWidth="1"/></svg> },
-          ].map(({ v, icon }) => (
-            <button key={v} onClick={() => setFsChartType(v)} style={{
-              padding: "6px 10px", border: "none", cursor: "pointer", fontFamily: "inherit",
-              background: fsChartType === v ? (C.accentSoft || "rgba(110,132,80,0.15)") : "transparent",
-              color: fsChartType === v ? (C.accent || "#6E8450") : C.t4, display: "flex", alignItems: "center",
-              borderRight: v === "area" ? `1px solid ${C.border}` : "none",
-            }}>{icon}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* Controls row: Interval selector | Benchmarks */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", flexShrink: 0, overflowX: "auto", WebkitOverflowScrolling: "touch", borderBottom: `1px solid ${C.border}`, touchAction: "pan-x", msOverflowStyle: "none", scrollbarWidth: "none" }}>
-        {/* Candle interval selector — visible in candle mode */}
-        {fsChartType === "candle" && <>
-          <span style={{ fontSize: 11, color: C.t4, fontWeight: 600, flexShrink: 0 }}>Interval</span>
-          {[
-            { v: "1D", l: "1D" },
-            { v: "1W", l: "1W" },
-            { v: "2W", l: "2W" },
-            { v: "1M", l: "1M" },
-            { v: "1Q", l: "1Q" },
-          ].map(({ v, l }) => (
-            <button key={v} onClick={() => setFsInterval(v)} style={{
-              padding: "6px 12px", borderRadius: 8, border: `1px solid ${fsInterval === v ? (C.accent || "#6E8450") + "66" : C.border}`,
-              background: fsInterval === v ? (C.accent || "#6E8450") + "18" : "transparent",
-              color: fsInterval === v ? (C.accent || "#6E8450") : C.t4, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-              whiteSpace: "nowrap", flexShrink: 0,
-            }}>{l}</button>
-          ))}
-          <div style={{ width: 1, height: 20, background: C.border, flexShrink: 0, margin: "0 2px" }} />
-        </>}
-
-        {/* Benchmarks */}
-        <span style={{ fontSize: 11, color: C.t4, fontWeight: 600, flexShrink: 0 }}>vs</span>
-        {Object.entries(bmColors_ui).filter(([sym]) => sym in fsBmToggles).map(([sym, color]) => (
-          <button key={sym} onClick={() => setFsBmToggles(prev => ({ ...prev, [sym]: !prev[sym] }))} style={{
-            padding: "5px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-            border: `1px solid ${fsBmToggles[sym] ? color + "66" : C.border}`,
-            background: fsBmToggles[sym] ? color + "18" : "transparent",
-            color: fsBmToggles[sym] ? color : C.t4, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
-          }}>{sym}</button>
-        ))}
-      </div>
-
-      {/* Chart with OHLC legend overlay */}
-      <div style={{ flex: 1, minHeight: 0, position: "relative", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-        <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
-        {/* OHLC Legend — floating top-left of chart */}
-        {ohlcLegend && (
-          <div style={{
-            position: "absolute", top: 8, left: 12, zIndex: 2,
-            pointerEvents: "none", display: "flex", flexWrap: "wrap", gap: "4px 12px", alignItems: "center",
-          }}>
-            {ohlcLegend.o !== undefined ? <>
-              {/* Candle mode: O H L C + change */}
-              {(() => {
-                const isUp = ohlcLegend.c >= ohlcLegend.o;
-                const fmt = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-                return <>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
-                    O <span style={{ color: C.t1 }}>{fmt(ohlcLegend.o)}</span>
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
-                    H <span style={{ color: C.t1 }}>{fmt(ohlcLegend.h)}</span>
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
-                    L <span style={{ color: C.t1 }}>{fmt(ohlcLegend.l)}</span>
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>
-                    C <span style={{ color: C.t1 }}>{fmt(ohlcLegend.c)}</span>
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: isUp ? (C.up || "#34D399") : (C.dn || "#F87171") }}>
-                    {ohlcLegend.chg >= 0 ? "+" : ""}{fmt(ohlcLegend.chg).replace("$-", "-$")} ({ohlcLegend.chgPct >= 0 ? "+" : ""}{ohlcLegend.chgPct.toFixed(2)}%)
-                  </span>
-                </>;
-              })()}
-            </> : <>
-              {/* Area mode: just value */}
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>
-                ${ohlcLegend.value?.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </span>
-            </>}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function App() {
@@ -1417,10 +989,8 @@ Instructions:
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
-  const [perfChartType, setPerfChartType] = useState("area"); // "area" | "candle"
-  const [showPerfFullscreen, setShowPerfFullscreen] = useState(false); // fullscreen interactive chart overlay
   const [perfLoading, setPerfLoading] = useState(false);
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false } };
+  const SLEEVE_BM_DEFAULTS = { dividend: { IWS: true, DVY: true, SPY: false, DIA: false }, growth: { IUSG: true, QQQ: false, SPY: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
@@ -2150,7 +1720,7 @@ Instructions:
     } catch {}
   }, [apiKey, apiSecret]);
 
-  // Finnhub WebSocket for real-time non-IEX benchmark streaming (DVY, IUSG)
+  // Finnhub WebSocket for real-time non-IEX benchmark streaming (DVY, IWS, IUSG)
   const connectFinnhubWS = useCallback(() => {
     if (!FH) return;
     try {
@@ -2216,50 +1786,6 @@ Instructions:
     fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
   }, [pollFinnhubBenchmarks]);
 
-  // Yahoo Finance parallel poll for non-IEX benchmarks (DVY, IUSG)
-  // Runs alongside Finnhub WS+REST so whichever source ticks first wins.
-  // No API key required; CORS-accessible from browser.
-  const yfTimerRef = useRef(null);
-  const pollYahooBenchmarks = useCallback(async () => {
-    const batchQ = {}, batchB = {};
-    for (const sym of NON_IEX_BM) {
-      try {
-        const r = await fetch(
-          `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=1d`
-        );
-        if (!r.ok) continue;
-        const j = await r.json();
-        const meta = j?.chart?.result?.[0]?.meta;
-        if (!meta) continue;
-        const price = meta.regularMarketPrice;
-        const pc = meta.chartPreviousClose ?? meta.previousClose;
-        const ts = (meta.regularMarketTime ?? Math.floor(Date.now() / 1000)) * 1000;
-        if (!price) continue;
-        // Only overwrite if this Yahoo tick is fresher than what's in the ref
-        const existing = quotesRef.current[sym];
-        const existingTs = existing?.t ? new Date(existing.t).getTime() : 0;
-        if (ts <= existingTs) continue;
-        const quoteVal = { p: price, t: new Date(ts).toISOString() };
-        quotesRef.current[sym] = quoteVal;
-        batchQ[sym] = quoteVal;
-        if (pc) {
-          const barVal = { ...barsRef.current[sym], pc };
-          barsRef.current[sym] = barVal;
-          batchB[sym] = barVal;
-        }
-      } catch {}
-    }
-    if (Object.keys(batchQ).length) setBmQuotes(prev => ({ ...prev, ...batchQ }));
-    if (Object.keys(batchB).length) setBmBars(prev => ({ ...prev, ...batchB }));
-  }, []);
-  const startYahooPolling = useCallback(() => {
-    // Offset 2.5s from Finnhub so the two sources interleave
-    setTimeout(() => {
-      pollYahooBenchmarks();
-      yfTimerRef.current = setInterval(pollYahooBenchmarks, 5000);
-    }, 2500);
-  }, [pollYahooBenchmarks]);
-
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
   const staleTimerRef = useRef(null);
   const pollStaleStocks = useCallback(async () => {
@@ -2315,7 +1841,7 @@ Instructions:
 
           // Use pre-computed benchmarks from JSON if available
           const jsonBm = pJson.benchmarks || {};
-          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["DVY", "SPY", "DIA"]);
+          const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["IWS", "DVY", "SPY", "DIA"]);
           const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
 
           let benchmarks = {};
@@ -2608,7 +2134,7 @@ Instructions:
 
       // Fetch intraday benchmark bars
       // All benchmarks via Alpaca IEX feed
-      const allBmSyms = ["SPY", "DIA", "DVY", "IUSG", "QQQ"];
+      const allBmSyms = ["SPY", "DIA", "DVY", "IWS", "IUSG", "QQQ"];
       const fetchBmBars = async (syms, timeframe, startDate) => {
         try {
           const url = `${BASE}/v2/stocks/bars?symbols=${syms.join(",")}&timeframe=${timeframe}&start=${startDate}&limit=10000&adjustment=split&feed=iex`;
@@ -2717,7 +2243,6 @@ Instructions:
       connectWS();
       connectFinnhubWS();
       startFinnhubPolling();
-      startYahooPolling();
       // Poll for stale stocks every 30 seconds
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
@@ -2741,7 +2266,7 @@ Instructions:
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
       return () => {
-        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(yfTimerRef.current); clearInterval(staleTimerRef.current);
+        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
         try { wsRef.current?.close(); } catch {}
         try { fhWsRef.current?.close(); } catch {}
       };
@@ -4079,7 +3604,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "attribution", l: "📈 Attribution" }, { v: "qvq", l: "🔀 Q1 v Q2" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }, { v: "sector", l: "🥧 Sectors" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }, { v: "qvq", l: "🔄 Q1 vs Q2" }, { v: "attribution", l: "📈 Attribution" }, { v: "sector", l: "🥧 Sectors" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -5902,7 +5427,7 @@ Instructions:
               <div style={{ marginBottom: isDesktop ? 16 : 8 }}>
                 <select
                   value={perfSleeve}
-                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("YTD"); }}
+                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("ALL"); }}
                   style={{
                     padding: "10px 36px 10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`,
                     background: C.card, color: C.t1, fontSize: 14, fontWeight: 700,
@@ -6187,7 +5712,7 @@ Instructions:
               const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
-              const bmColors = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+              const bmColors = { IWS: "#4CAF50", DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
               const bmNorm = {};
               if (isIntraday) {
                 // Use intraday benchmark bars
@@ -6360,9 +5885,9 @@ Instructions:
                     ))}
                   </div>
 
-                  {/* Time range selector + chart type + benchmark toggles */}
+                  {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
                         if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
                         const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
@@ -6376,29 +5901,6 @@ Instructions:
                           color: perfRange === r ? C.t1 : C.t3, cursor: "pointer", fontFamily: "inherit",
                         }}>{r}</button>
                       ))}
-                      {/* Chart type toggle */}
-                      {!isIntraday && <div style={{ display: "inline-flex", marginLeft: 8, border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
-                        {[
-                          { v: "area", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7L8 9L14 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 12L5 7L8 9L14 3V12H2Z" fill="currentColor" opacity="0.15"/></svg> },
-                          { v: "candle", icon: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="4" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="4.5" y1="2" x2="4.5" y2="4" stroke="currentColor" strokeWidth="1"/><line x1="4.5" y1="10" x2="4.5" y2="13" stroke="currentColor" strokeWidth="1"/><rect x="10" y="6" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.8"/><line x1="11.5" y1="3" x2="11.5" y2="6" stroke="currentColor" strokeWidth="1"/><line x1="11.5" y1="11" x2="11.5" y2="14" stroke="currentColor" strokeWidth="1"/></svg> },
-                        ].map(({ v, icon }) => (
-                          <button key={v} onClick={() => setPerfChartType(v)} style={{
-                            padding: "5px 10px", border: "none", cursor: "pointer", fontFamily: "inherit",
-                            background: perfChartType === v ? C.accentSoft : "transparent",
-                            color: perfChartType === v ? C.accent : C.t4, display: "flex", alignItems: "center",
-                            borderRight: v === "area" ? `1px solid ${C.border}` : "none",
-                          }}>{icon}</button>
-                        ))}
-                      </div>}
-                      {/* Fullscreen expand button */}
-                      <button onClick={() => setShowPerfFullscreen(true)} style={{
-                        marginLeft: 4, padding: "5px 8px", border: `1px solid ${C.border}`, borderRadius: 8,
-                        background: "transparent", color: C.t4, cursor: "pointer", display: "flex", alignItems: "center",
-                      }} title="Full-screen interactive chart">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="10 2 14 2 14 6" /><polyline points="6 14 2 14 2 10" /><line x1="14" y1="2" x2="9.5" y2="6.5" /><line x1="2" y1="14" x2="6.5" y2="9.5" />
-                        </svg>
-                      </button>
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>vs</span>
@@ -6415,345 +5917,6 @@ Instructions:
 
                   {/* Chart */}
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 24 : 12, overflow: "hidden" }}>
-
-                  {/* ── CANDLESTICK CHART ── */}
-                  {perfChartType === "candle" && !isIntraday && (() => {
-                    // Smart aggregation: daily for short ranges, weekly for medium, monthly for long
-                    const numDays = filtered.length;
-                    const aggPeriod = numDays <= 90 ? "day" : numDays <= 365 * 2 ? "week" : "month";
-                    let ohlcBars = [];
-
-                    if (aggPeriod === "day") {
-                      // Daily candles — each day is its own bar
-                      ohlcBars = filtered.map(pt => ({ date: pt.date, dateEnd: pt.date, o: pt.value, h: pt.value, l: pt.value, c: pt.value }));
-                      // For daily, compute OHLC from neighboring days: open = prev close, high/low = max/min of open/close
-                      for (let i = 1; i < ohlcBars.length; i++) {
-                        ohlcBars[i].o = ohlcBars[i - 1].c;
-                        ohlcBars[i].h = Math.max(ohlcBars[i].o, ohlcBars[i].c);
-                        ohlcBars[i].l = Math.min(ohlcBars[i].o, ohlcBars[i].c);
-                      }
-                    } else {
-                      let bucket = [];
-                      let bucketKey = null;
-                      for (const pt of filtered) {
-                        const d = new Date(pt.date.length > 10 ? pt.date : pt.date + "T12:00:00");
-                        let key;
-                        if (aggPeriod === "month") {
-                          key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                        } else {
-                          const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-                          const yr = thu.getFullYear();
-                          const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-                          key = `${yr}-W${String(wk).padStart(2, "0")}`;
-                        }
-                        if (bucketKey && key !== bucketKey) {
-                          const vals = bucket.map(p => p.value);
-                          ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
-                          bucket = [];
-                        }
-                        bucketKey = key;
-                        bucket.push(pt);
-                      }
-                      if (bucket.length) {
-                        const vals = bucket.map(p => p.value);
-                        ohlcBars.push({ date: bucket[0].date, dateEnd: bucket[bucket.length - 1].date, o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
-                      }
-                    }
-
-                    if (ohlcBars.length < 2) return <div style={{ padding: 40, textAlign: "center", color: C.t4 }}>Not enough data for candlestick view</div>;
-
-                    // Build benchmark OHLC candles scaled to portfolio dollar values
-                    const bmOhlc_c = {};
-                    const startPortVal = filtered[0].value;
-                    Object.entries(benchmarks).forEach(([sym, priceMap]) => {
-                      if (!perfBmToggles[sym]) return;
-                      const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
-                      if (!prices.length) return;
-                      const startDate = filtered[0].date;
-                      let basePrice = null;
-                      for (const [d, p] of prices) { if (d >= startDate) { basePrice = p; break; } }
-                      if (!basePrice) { for (let j = prices.length - 1; j >= 0; j--) { if (prices[j][0] <= startDate) { basePrice = prices[j][1]; break; } } }
-                      if (!basePrice) return;
-
-                      // Build daily benchmark values scaled to portfolio start
-                      const bmDaily = [];
-                      let pIdx = 0;
-                      for (const pt of filtered) {
-                        while (pIdx < prices.length - 1 && prices[pIdx + 1][0] <= pt.date) pIdx++;
-                        if (prices[pIdx][0] <= pt.date || pIdx === 0) {
-                          bmDaily.push({ date: pt.date, value: startPortVal * (prices[pIdx][1] / basePrice) });
-                        }
-                      }
-                      if (bmDaily.length < 2) return;
-
-                      // Aggregate into OHLC using same bucketing as portfolio
-                      let bmBars = [];
-                      if (aggPeriod === "day") {
-                        bmBars = bmDaily.map((pt, i) => {
-                          const prev = i > 0 ? bmDaily[i - 1].value : pt.value;
-                          return { o: prev, h: Math.max(prev, pt.value), l: Math.min(prev, pt.value), c: pt.value };
-                        });
-                      } else {
-                        let bkt = [], bktKey = null;
-                        for (const pt of bmDaily) {
-                          const d = new Date(pt.date + "T12:00:00");
-                          let key;
-                          if (aggPeriod === "month") {
-                            key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-                          } else {
-                            const thu = new Date(d); thu.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
-                            const yr = thu.getFullYear();
-                            const wk = Math.ceil((((thu - new Date(yr, 0, 4)) / 86400000) + 1) / 7);
-                            key = `${yr}-W${String(wk).padStart(2, "0")}`;
-                          }
-                          if (bktKey && key !== bktKey) {
-                            const vals = bkt.map(p => p.value);
-                            bmBars.push({ o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
-                            bkt = [];
-                          }
-                          bktKey = key;
-                          bkt.push(pt);
-                        }
-                        if (bkt.length) {
-                          const vals = bkt.map(p => p.value);
-                          bmBars.push({ o: vals[0], h: Math.max(...vals), l: Math.min(...vals), c: vals[vals.length - 1] });
-                        }
-                      }
-                      if (bmBars.length > 1) bmOhlc_c[sym] = bmBars;
-                    });
-
-                    // Y range: include benchmark OHLC values
-                    const allPrices = ohlcBars.flatMap(b => [b.h, b.l]);
-                    Object.values(bmOhlc_c).forEach(bars => bars.forEach(b => allPrices.push(b.h, b.l)));
-                    const cMin = Math.min(...allPrices), cMax = Math.max(...allPrices);
-                    const cRange = cMax - cMin || 1;
-                    const cPad_v = cRange * 0.05;
-                    const yMin_c = cMin - cPad_v, yMax_c = cMax + cPad_v;
-                    const yRange_c = yMax_c - yMin_c;
-
-                    const cW_candle = W - PAD.left - PAD.right;
-                    const cH_candle = H - PAD.top - PAD.bottom;
-                    const barW = cW_candle / ohlcBars.length;
-                    const activeBmCount = Object.keys(bmOhlc_c).length;
-                    const totalSeries = 1 + activeBmCount;
-                    const candleW = Math.max(1, Math.min(barW * 0.65 / totalSeries, 16));
-                    const groupW = candleW * totalSeries + (totalSeries - 1) * 1; // 1px gap between candles in group
-                    const toX = (i) => PAD.left + (i + 0.5) * barW;
-                    const toY_c = (v) => PAD.top + ((yMax_c - v) / yRange_c) * cH_candle;
-
-                    // Y-axis ticks
-                    const yTickStep_c = yRange_c <= 5000 ? 500 : yRange_c <= 10000 ? 1000 : yRange_c <= 50000 ? 5000 : yRange_c <= 100000 ? 10000 : yRange_c <= 200000 ? 20000 : yRange_c <= 500000 ? 50000 : 100000;
-                    const yTicks_c = [];
-                    for (let v = Math.ceil(yMin_c / yTickStep_c) * yTickStep_c; v <= yMax_c; v += yTickStep_c) yTicks_c.push(v);
-
-                    // X-axis labels
-                    const xLabels_c = [];
-                    const labelCount_c = isDesktop ? 8 : 5;
-                    for (let i = 0; i < labelCount_c; i++) {
-                      const idx = Math.round((i / (labelCount_c - 1)) * (ohlcBars.length - 1));
-                      if (idx < ohlcBars.length) {
-                        const d = new Date(ohlcBars[idx].date + "T12:00:00");
-                        const label = aggPeriod === "day"
-                          ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                          : d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-                        xLabels_c.push({ x: toX(idx), label });
-                      }
-                    }
-
-                    // Hover handler
-                    const handleCandleMove = (e) => {
-                      const svg = perfSvgRef.current;
-                      if (!svg) return;
-                      const rect = svg.getBoundingClientRect();
-                      const scale = W / rect.width;
-                      const mx = (e.clientX - rect.left) * scale;
-                      const idx = Math.floor((mx - PAD.left) / barW);
-                      if (idx >= 0 && idx < ohlcBars.length) {
-                        setPerfHover({ idx, x: toX(idx), y: toY_c(ohlcBars[idx].c), candle: ohlcBars[idx] });
-                      }
-                    };
-
-                    return (
-                      <div style={{ position: "relative" }}>
-                        <svg
-                          ref={perfSvgRef}
-                          width={W} height={H}
-                          viewBox={`0 0 ${W} ${H}`}
-                          style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
-                          onMouseMove={handleCandleMove}
-                          onMouseLeave={() => setPerfHover(null)}
-                          onTouchMove={(e) => {
-                            const touch = e.touches[0];
-                            const svg = perfSvgRef.current;
-                            if (!svg) return;
-                            const rect = svg.getBoundingClientRect();
-                            const scale = W / rect.width;
-                            const mx = (touch.clientX - rect.left) * scale;
-                            const idx = Math.floor((mx - PAD.left) / barW);
-                            if (idx >= 0 && idx < ohlcBars.length) {
-                              setPerfHover({ idx, x: toX(idx), y: toY_c(ohlcBars[idx].c), candle: ohlcBars[idx] });
-                            }
-                          }}
-                          onTouchEnd={() => setPerfHover(null)}
-                        >
-                          {/* Grid lines */}
-                          {yTicks_c.map(v => (
-                            <g key={v}>
-                              <line x1={PAD.left} y1={toY_c(v)} x2={W - PAD.right} y2={toY_c(v)} stroke={C.border} strokeWidth="1" />
-                              <text x={PAD.left - 8} y={toY_c(v) + 4} textAnchor="end" fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">
-                                ${(v / 1000).toFixed(v >= 100000 ? 0 : 0)}k
-                              </text>
-                            </g>
-                          ))}
-
-                          {/* X labels */}
-                          {xLabels_c.map((l, i) => (
-                            <text key={i} x={l.x} y={H - 10} textAnchor="middle" fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">{l.label}</text>
-                          ))}
-
-                          {/* Benchmark candles (behind portfolio candles) */}
-                          {Object.entries(bmOhlc_c).map(([sym, bars], sIdx) => {
-                            const color = bmColors[sym];
-                            const offset = -(groupW / 2) + candleW / 2 + (sIdx + 1) * (candleW + 1); // offset right of portfolio
-                            return bars.map((bar, i) => {
-                              if (i >= ohlcBars.length) return null;
-                              const x = toX(i) + offset - groupW / 2 + candleW / 2;
-                              const isUp = bar.c >= bar.o;
-                              const bodyTop = toY_c(Math.max(bar.o, bar.c));
-                              const bodyBot = toY_c(Math.min(bar.o, bar.c));
-                              const bodyH = Math.max(bodyBot - bodyTop, 1);
-                              return (
-                                <g key={`${sym}-${i}`} opacity="0.7">
-                                  <line x1={x} y1={toY_c(bar.h)} x2={x} y2={toY_c(bar.l)} stroke={color} strokeWidth={Math.max(0.5, candleW * 0.12)} />
-                                  <rect x={x - candleW / 2} y={bodyTop} width={candleW} height={bodyH} rx={Math.min(1, candleW * 0.1)}
-                                    fill={isUp ? color : color} stroke={color} strokeWidth="0.3" opacity={isUp ? 0.9 : 0.6} />
-                                </g>
-                              );
-                            });
-                          })}
-
-                          {/* Candlesticks (portfolio — drawn on top) */}
-                          {ohlcBars.map((bar, i) => {
-                            const portOffset = -(groupW / 2) + candleW / 2;
-                            const x = toX(i) + portOffset;
-                            const isUp = bar.c >= bar.o;
-                            const color = isUp ? C.up : C.dn;
-                            const bodyTop = toY_c(Math.max(bar.o, bar.c));
-                            const bodyBot = toY_c(Math.min(bar.o, bar.c));
-                            const bodyH = Math.max(bodyBot - bodyTop, 1);
-                            return (
-                              <g key={i}>
-                                {/* Wick */}
-                                <line x1={x} y1={toY_c(bar.h)} x2={x} y2={toY_c(bar.l)} stroke={color} strokeWidth={Math.max(1, candleW * 0.15)} />
-                                {/* Body */}
-                                <rect x={x - candleW / 2} y={bodyTop} width={candleW} height={bodyH} rx={Math.min(1.5, candleW * 0.1)}
-                                  fill={color} stroke={color} strokeWidth="0.5" />
-                              </g>
-                            );
-                          })}
-
-                          {/* Hover crosshair */}
-                          {perfHover && perfHover.candle && (
-                            <g>
-                              <line x1={perfHover.x} y1={PAD.top} x2={perfHover.x} y2={PAD.top + cH_candle} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
-                              <line x1={PAD.left} y1={perfHover.y} x2={W - PAD.right} y2={perfHover.y} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.3" />
-                            </g>
-                          )}
-
-                          {/* Right-side labels for benchmarks */}
-                          {(() => {
-                            const labels = [];
-                            Object.entries(bmOhlc_c).forEach(([sym, bars]) => {
-                              if (bars.length) labels.push({ val: bars[bars.length - 1].c, color: bmColors[sym], sym });
-                            });
-                            labels.sort((a, b) => b.val - a.val);
-                            const positions = labels.map(l => toY_c(l.val) + 4);
-                            for (let i = 1; i < positions.length; i++) {
-                              if (positions[i] - positions[i - 1] < 12) positions[i] = positions[i - 1] + 12;
-                            }
-                            return labels.map((l, i) => (
-                              <text key={l.sym} x={W - PAD.right + 8} y={positions[i]}
-                                fill={l.color} fontSize="10" fontWeight="700" fontFamily="inherit">
-                                {l.sym}
-                              </text>
-                            ));
-                          })()}
-                        </svg>
-
-                        {/* Candle tooltip */}
-                        {perfHover && perfHover.candle && (() => {
-                          const bar = perfHover.candle;
-                          const isUp = bar.c >= bar.o;
-                          const chg = bar.c - bar.o;
-                          const chgPct = bar.o > 0 ? (chg / bar.o) * 100 : 0;
-                          const d = new Date(bar.date + "T12:00:00");
-                          const dEnd = new Date(bar.dateEnd + "T12:00:00");
-                          const fmtV = (v) => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-                          const sameDay = bar.date === bar.dateEnd;
-                          return (
-                            <div style={{
-                              position: "absolute", top: 8, left: PAD.left,
-                              pointerEvents: "none", width: cW_candle, height: 0,
-                            }}>
-                              <div style={{
-                                position: "absolute",
-                                left: Math.min(Math.max((perfHover.x - PAD.left) - 90, 0), cW_candle - 200),
-                                top: 0,
-                                background: C.elevated || C.card, border: `1px solid ${C.border}`,
-                                borderRadius: 10, padding: "10px 14px", minWidth: 180,
-                                boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-                              }}>
-                                <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, marginBottom: 8 }}>
-                                  {sameDay
-                                    ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                                    : `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} — ${dEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                                  }
-                                </div>
-                                {[
-                                  { label: "Open", value: fmtV(bar.o) },
-                                  { label: "High", value: fmtV(bar.h) },
-                                  { label: "Low", value: fmtV(bar.l) },
-                                  { label: "Close", value: fmtV(bar.c) },
-                                ].map(({ label, value }) => (
-                                  <div key={label} style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                                    <span style={{ fontSize: 11, color: C.t4 }}>{label}</span>
-                                    <span style={{ fontSize: 12, color: C.t1, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{value}</span>
-                                  </div>
-                                ))}
-                                {/* Benchmark OHLC at this bar */}
-                                {Object.entries(bmOhlc_c).map(([sym, bars]) => {
-                                  const bmBar = bars[perfHover.idx];
-                                  if (!bmBar) return null;
-                                  const bmIsUp = bmBar.c >= bmBar.o;
-                                  const bmChg = ((bmBar.c / startPortVal) - 1) * 100;
-                                  return (
-                                    <div key={sym} style={{ marginTop: 4 }}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 1 }}>
-                                        <span style={{ fontSize: 11, color: bmColors[sym], fontWeight: 700 }}>{sym}</span>
-                                        <span style={{ fontSize: 11, color: bmIsUp ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{bmChg >= 0 ? "+" : ""}{bmChg.toFixed(1)}%</span>
-                                      </div>
-                                      <div style={{ fontSize: 10, color: C.t4, fontVariantNumeric: "tabular-nums" }}>
-                                        O {fmtV(bmBar.o)} · H {fmtV(bmBar.h)} · L {fmtV(bmBar.l)} · C {fmtV(bmBar.c)}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                                <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 6, paddingTop: 6, display: "flex", justifyContent: "space-between" }}>
-                                  <span style={{ fontSize: 11, color: C.t4 }}>Change</span>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: isUp ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
-                                    {chg >= 0 ? "+" : ""}{fmtV(chg).replace("$-", "-$")} ({chgPct >= 0 ? "+" : ""}{chgPct.toFixed(2)}%)
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    );
-                  })()}
-
-                  {/* ── AREA CHART (default) ── */}
-                  {(perfChartType === "area" || isIntraday) && (
                     <div style={{ position: "relative" }}>
                     <svg
                       ref={perfSvgRef}
@@ -6905,7 +6068,6 @@ Instructions:
                       </div>
                     )}
                     </div>
-                  )}
                   </div>
 
                   {/* Legend */}
@@ -6917,7 +6079,7 @@ Instructions:
                     {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 20, height: 3, borderRadius: 2, background: color }} />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100" }[sym]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.t3 }}>{{ IWS: "iShares Mid-Cap Value", DVY: "iShares Dividend", SPY: "S&P 500", DIA: "Dow Jones", IUSG: "iShares Core Growth", QQQ: "Nasdaq 100" }[sym]}</span>
                       </div>
                     ))}
                   </div>
@@ -7005,8 +6167,9 @@ Instructions:
                       const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
                       const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                       if (p.oneDay) {
-                        // Use previous close as base, same as 1D chart
-                        const pc = bmBars[sym]?.pc;
+                        // Use previous close — from bmBars if available, otherwise second-to-last historical price
+                        let pc = bmBars[sym]?.pc;
+                        if (!pc && prices.length >= 2) pc = prices[prices.length - 2][1];
                         if (!pc || pc <= 0 || lastPrice <= 0) return null;
                         return ((lastPrice / pc) - 1) * 100;
                       }
@@ -7437,20 +6600,6 @@ Instructions:
           </div>
         );
       })()}
-
-      {/* ═══ FULLSCREEN INTERACTIVE PORTFOLIO CHART ═══ */}
-      {showPerfFullscreen && perfData && (
-        <FullscreenPerfChart
-          perfData={perfData}
-          liveValue={liveValue}
-          theme={theme}
-          C={C}
-          initChartType="candle"
-          initBmToggles={perfBmToggles}
-          perfSleeve={perfSleeve}
-          onClose={() => setShowPerfFullscreen(false)}
-        />
-      )}
 
       {/* MOBILE BOTTOM TAB BAR */}
       {!isDesktop && (

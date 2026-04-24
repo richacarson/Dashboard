@@ -27,12 +27,10 @@ NAME_TO_TICKER = {
     "Chevron Corp": "CVX",
     "Clearwater Analytics Holdings Inc Class A": "CWAN",
     "Coinbase Global Inc Ordinary Shares - Class A": "COIN",
-    "Credo Technology Group Holding Ltd": "CRDO",
     "Docusign Inc": "DOCU",
     "Edison International": "EIX",
     "FinVolution Group ADR": "FINV",
     "Fortinet Inc": "FTNT",
-    "Freeport-McMoRan Inc": "FCX",
     "Gold Fields Ltd ADR": "GFI",
     "Grupo Supervielle SA ADR": "SUPV",
     "Harmony Biosciences Holdings Inc Ordinary Shares": "HRMY",
@@ -40,7 +38,6 @@ NAME_TO_TICKER = {
     "Keysight Technologies Inc": "KEYS",
     "Linde PLC": "LIN",
     "MARA Holdings Inc": "MARA",
-    "Marvell Technology Inc": "MRVL",
     "Meritage Homes Corp": "MTH",
     "NVIDIA Corp": "NVDA",
     "NXP Semiconductors NV": "NXPI",
@@ -52,7 +49,6 @@ NAME_TO_TICKER = {
     "Synchrony Financial": "SYF",
     "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
     "Toll Brothers Inc": "TOL",
-    "Vistra Corp": "VST",
     "Cash": "__CASH__",
 }
 
@@ -296,47 +292,6 @@ def parse_transactions(filepath):
             split_schedule[tx["ticker"]].append((tx["date"], tx["ratio"]))
     for ticker in split_schedule:
         split_schedule[ticker].sort()
-
-    # ── Replay transactions to compute authoritative final holdings ──
-    # The Morningstar-provided ticker header row shows shares as of the EXPORT
-    # DATE, but we may have appended trades AFTER the export (e.g., a rebalance).
-    # Replay everything chronologically so current_holdings reflects the true
-    # current state.
-    #
-    # NOTE: Do NOT apply SPLIT events in replay. Morningstar's transaction share
-    # counts are already split-adjusted (they show the post-split equivalents of
-    # historical trades), so applying splits again would double-count.
-    replay_shares = defaultdict(float)
-    last_price = {}
-    for tx in transactions:
-        t = tx["ticker"]
-        if tx["type"] == "PURCHASE":
-            replay_shares[t] += tx["shares"]
-        elif tx["type"] == "SALE":
-            replay_shares[t] -= tx["shares"]
-        elif tx["type"] == "DIVIDEND REINVESTMENT":
-            # DRIP flows to cash under current policy, not shares
-            pass
-        # SPLIT intentionally skipped — see note above
-        if tx.get("price", 0) > 0:
-            last_price[t] = tx["price"]
-
-    # Override current_holdings with replayed values (preserves __CASH__ key).
-    # Use a permissive threshold (0.5 shares) to suppress sub-share residuals
-    # from DRIP rounding, which Morningstar tracks in its ticker header but
-    # aren't reflected in the parsed transactions when DRIP → cash policy is
-    # active. A position with < 0.5 shares after replay is treated as fully
-    # exited.
-    cash_snapshot = current_holdings.get("__CASH__")
-    current_holdings = {}
-    if cash_snapshot is not None:
-        current_holdings["__CASH__"] = cash_snapshot
-    for t, s in replay_shares.items():
-        if s > 0.5:
-            p = last_price.get(t, 0)
-            current_holdings[t] = {
-                "shares": round(s, 6), "price": p, "value": round(s * p, 2),
-            }
 
     return transactions, cash_transactions, current_holdings, split_schedule
 
@@ -760,10 +715,10 @@ def main():
 
     # Benchmark data — prefer Alpaca (consistent with live feed), fall back to Yahoo
     SLEEVE_BENCHMARKS = {
-        "dividend": ["SPY", "DIA", "DVY"],
+        "dividend": ["SPY", "DIA", "IWS", "DVY"],
         "growth": ["IUSG", "QQQ", "SPY"],
     }
-    benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "DVY"])
+    benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
     print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")
     bm_prices = fetch_alpaca_prices(set(benchmark_syms), start_date, end_date)
     # Fall back to Yahoo for any missing tickers

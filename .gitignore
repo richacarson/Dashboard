@@ -1,7 +1,10 @@
 node_modules/
 dist/
 .claude/
+<<<<<<< HEAD
+=======
 __pycache__/
 *.pyc
+>>>>>>> origin/main
 portfolio-history-*.json
 !public/portfolio-history-*.json
