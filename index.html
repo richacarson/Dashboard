@@ -41,23 +41,6 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-<<<<<<< HEAD
-      // Auto-reload standalone PWA when a new version is deployed
-      if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
-        document.addEventListener('visibilitychange', function() {
-          if (document.visibilityState === 'visible') {
-            fetch(location.href, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
-              .then(function(r) { return r.text(); })
-              .then(function(html) {
-                var match = html.match(/index-[A-Za-z0-9_-]+\.js/);
-                if (match && !document.querySelector('script[src*="' + match[0] + '"]')) {
-                  location.reload();
-                }
-              }).catch(function() {});
-          }
-        });
-      }
-=======
       // Auto-reload when a new version is deployed (works in browser AND standalone PWA)
       (function() {
         function checkForUpdate() {
@@ -83,7 +66,6 @@
         // Check 5s after first load (catches deploys completed mid-session)
         setTimeout(checkForUpdate, 5000);
       })();
->>>>>>> origin/main
     </script>
   </body>
 </html>
