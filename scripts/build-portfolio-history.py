@@ -27,10 +27,12 @@ NAME_TO_TICKER = {
     "Chevron Corp": "CVX",
     "Clearwater Analytics Holdings Inc Class A": "CWAN",
     "Coinbase Global Inc Ordinary Shares - Class A": "COIN",
+    "Credo Technology Group Holding Ltd": "CRDO",
     "Docusign Inc": "DOCU",
     "Edison International": "EIX",
     "FinVolution Group ADR": "FINV",
     "Fortinet Inc": "FTNT",
+    "Freeport-McMoRan Inc": "FCX",
     "Gold Fields Ltd ADR": "GFI",
     "Grupo Supervielle SA ADR": "SUPV",
     "Harmony Biosciences Holdings Inc Ordinary Shares": "HRMY",
@@ -38,6 +40,7 @@ NAME_TO_TICKER = {
     "Keysight Technologies Inc": "KEYS",
     "Linde PLC": "LIN",
     "MARA Holdings Inc": "MARA",
+    "Marvell Technology Inc": "MRVL",
     "Meritage Homes Corp": "MTH",
     "NVIDIA Corp": "NVDA",
     "NXP Semiconductors NV": "NXPI",
@@ -49,6 +52,7 @@ NAME_TO_TICKER = {
     "Synchrony Financial": "SYF",
     "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
     "Toll Brothers Inc": "TOL",
+    "Vistra Corp": "VST",
     "Cash": "__CASH__",
 }
 
@@ -142,9 +146,15 @@ def _parse_by_activity(lines):
         if nums_m and company_name:
             ticker = NAME_TO_TICKER.get(company_name.strip())
             if not ticker:
-                print(f"  WARNING: Unknown company name: '{company_name.strip()}' — skipping")
-                i += 3
-                continue
+                # FAIL LOUDLY — silently skipping a transaction means we under-report
+                # purchases (cash strands, positions missing) or sales (positions overstate).
+                # Both corrupt the portfolio. Better to fail the build than to publish
+                # wrong numbers. To fix: add the company to NAME_TO_TICKER above.
+                raise ValueError(
+                    f"Unknown company name in transaction: '{company_name.strip()}' "
+                    f"on {d} ({tx_type} for ${nums_m.group(3)}). "
+                    f"Add this company to NAME_TO_TICKER in scripts/build-portfolio-history.py."
+                )
             transactions.append({
                 "date": d, "ticker": ticker, "type": tx_type,
                 "shares": float(nums_m.group(1).replace(",", "")),
