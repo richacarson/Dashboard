@@ -741,14 +741,28 @@ def main():
             print(f"  {sym}: {len(bm_points)} data points")
     print()
 
-    # Current holdings from simulation replay (accurate share counts)
-    # Re-parse to get the correct final share counts
-    _, _, fresh_holdings, _ = parse_transactions(tx_file)
-    fresh_holdings.pop("__CASH__", None)
+    # Current holdings from simulation replay (accurate share counts).
+    # IMPORTANT: For "By Security" exports, the per-ticker header rows in the
+    # Morningstar file reflect the file's "As of <date>" timestamp, which can
+    # lag behind the most recent transactions (e.g., a rebalance executed
+    # after the export's "as of" date will appear in the transaction list
+    # but NOT in the headers). Trusting the headers caused new positions
+    # (CTRA, NTR after the 4/17/26 dividend rebalance) to be omitted from
+    # `holdings` while fully-closed positions (e.g., A) lingered. Always
+    # replay the transactions to get the true current share counts —
+    # this matches the logic in `build_portfolio_history` and `_parse_by_activity`.
+    sim_holdings = defaultdict(float)
+    for tx in sorted(transactions, key=lambda x: x["date"]):
+        t = tx["ticker"]
+        if tx["type"] == "PURCHASE":
+            sim_holdings[t] += tx["shares"]
+        elif tx["type"] == "SALE":
+            sim_holdings[t] -= tx["shares"]
+        # DIVIDEND REINVESTMENT goes to cash, not shares (matches build_portfolio_history)
     holdings_map = {}
-    for ticker, info in fresh_holdings.items():
-        if info["shares"] > 0.0001:
-            holdings_map[ticker] = info["shares"]
+    for ticker, shares in sim_holdings.items():
+        if shares > 0.0001:
+            holdings_map[ticker] = round(shares, 6)
 
     # Use simulation's final cash (includes dividends sent to cash)
     live_cash = history[-1]["cash"] if history else 0
