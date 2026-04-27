@@ -194,7 +194,7 @@
     "date": "2026-04-27 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-2.3",
     "previous": "-0.2",
     "forecast": "",
     "unit": ""
@@ -216,7 +216,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "1.2",
-    "forecast": "1",
+    "forecast": "1.1",
     "unit": "%"
   },
   {
@@ -226,7 +226,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "91.8",
-    "forecast": "89.5",
+    "forecast": "89.2",
     "unit": ""
   },
   {
@@ -296,7 +296,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-83.5",
-    "forecast": "",
+    "forecast": "-86",
     "unit": "$"
   },
   {
@@ -426,7 +426,7 @@
     "impact": "High",
     "actual": "",
     "previous": "0.5",
-    "forecast": "2.1",
+    "forecast": "2.2",
     "unit": "%"
   },
   {
@@ -456,7 +456,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.4",
-    "forecast": "",
+    "forecast": "0.7",
     "unit": "%"
   },
   {
@@ -466,8 +466,8 @@
     "impact": "Medium",
     "actual": "",
     "previous": "2.8",
-    "forecast": "",
-    "unit": ""
+    "forecast": "3.5",
+    "unit": "%"
   },
   {
     "title": "Personal Income MoM",
@@ -496,7 +496,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "52.8",
-    "forecast": "55.3",
+    "forecast": "53",
     "unit": ""
   },
   {
@@ -516,7 +516,7 @@
     "impact": "High",
     "actual": "",
     "previous": "52.7",
-    "forecast": "53.2",
+    "forecast": "53",
     "unit": ""
   },
   {
