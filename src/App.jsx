@@ -1116,9 +1116,11 @@ Instructions:
         if (chg < 0) return `rgb(${Math.round(40+intensity*130)},${Math.round(14+intensity*12)},${Math.round(18+intensity*14)})`;
         return C.card;
       };
-      // Store in refs for WebSocket callbacks
-      quotesRef.current = nq;
-      barsRef.current = { ...prevB, ...nb };
+      // Store in refs for WebSocket callbacks — preserve benchmark refs from Finnhub
+      for (const s of Object.keys(nq)) {
+        quotesRef.current[s] = nq[s];
+      }
+      barsRef.current = { ...barsRef.current, ...nb };
 
       // Always update React state — let React own the DOM
       const pq = {}, pb = {}, bmq = {}, bmb = {};
