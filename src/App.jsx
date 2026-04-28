@@ -1706,11 +1706,15 @@ Instructions:
           const msgs = JSON.parse(evt.data);
           for (const msg of msgs) {
             if (msg.T === "success" && msg.msg === "authenticated") {
-              ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...IEX_BM] }));
+              ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...BM_SYMS] }));
             }
             if (msg.T === "t" && msg.S && msg.p) {
               // Update refs only — React state syncs on next poll cycle (every 1s)
               quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
+              // Also update bmQuotes for benchmark symbols so homepage bar updates
+              if (BM_SYMS.includes(msg.S)) {
+                setBmQuotes(prev => ({ ...prev, [msg.S]: { p: msg.p, t: msg.t } }));
+              }
             }
           }
         } catch {}
