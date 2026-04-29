@@ -54,28 +54,28 @@
     "date": "2026-04-29 11:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "6.37",
     "previous": "6.35",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Building Permits MoM Prel",
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "",
+    "actual": "-10.8",
+    "previous": "10.9",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Building Permits Prel",
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "",
+    "actual": "1.372",
+    "previous": "1.538",
     "forecast": "1.39",
     "unit": ""
   },
@@ -84,8 +84,8 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.8",
+    "actual": "0.9",
+    "previous": "1.2",
     "forecast": "0.4",
     "unit": "%"
   },
@@ -94,8 +94,8 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "-1.4",
+    "actual": "0.8",
+    "previous": "-1.2",
     "forecast": "0.5",
     "unit": "%"
   },
@@ -104,7 +104,7 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-87.87",
     "previous": "-83.5",
     "forecast": "-87",
     "unit": "$"
@@ -114,8 +114,8 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "",
+    "actual": "1.502",
+    "previous": "1.356",
     "forecast": "1.4",
     "unit": ""
   },
@@ -124,8 +124,8 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "7.2",
+    "actual": "-3",
+    "previous": "1.8",
     "forecast": "",
     "unit": "%"
   },
@@ -134,7 +134,7 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.5",
     "previous": "0.3",
     "forecast": "",
     "unit": "%"
@@ -144,9 +144,9 @@
     "date": "2026-04-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.8",
-    "forecast": "",
+    "actual": "1.4",
+    "previous": "0.9",
+    "forecast": "0.4",
     "unit": "%"
   },
   {
@@ -154,9 +154,9 @@
     "date": "2026-04-29 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-6.233",
     "previous": "1.925",
-    "forecast": "0.3",
+    "forecast": "-0.2",
     "unit": ""
   },
   {
@@ -164,9 +164,9 @@
     "date": "2026-04-29 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-6.075",
     "previous": "-4.57",
-    "forecast": "",
+    "forecast": "-2.1",
     "unit": ""
   },
   {
@@ -425,7 +425,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-1.79",
     "forecast": "",
     "unit": ""
   },
@@ -435,7 +435,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.37",
     "forecast": "",
     "unit": ""
   },
