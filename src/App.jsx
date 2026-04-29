@@ -2387,24 +2387,23 @@ Instructions:
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const renderSleeve = (k, sleeve) => {
     const isOpen = openSleeves[k];
-    // Calculate weighted daily change — use actual holdings (market-value weighted)
-    // to match Performance tab calculation exactly
+    // Calculate daily change matching Performance tab: (current_total / prev_total - 1)
+    // Includes cash in both to match liveValue calculation exactly
     let avgChg = null;
     const holdings = perfDataMap[k]?.holdings;
     if (holdings) {
-      let totalVal = 0, weightedChgSum = 0;
+      const cash = perfDataMap[k]?.cash || 0;
+      let currentTotal = cash, prevTotal = cash; // cash doesn't change day-to-day
       for (const sym of sleeve.symbols) {
         const q = quotesRef.current[sym] || quotes[sym];
         const sh = holdings[sym];
         if (q?.p && sh) {
-          const mv = sh * q.p;
-          totalVal += mv;
+          currentTotal += sh * q.p;
           const pc = (barsRef.current[sym] || bars[sym])?.pc;
-          const c = pc > 0 ? ((q.p - pc) / pc) * 100 : 0;
-          weightedChgSum += mv * c;
+          prevTotal += sh * (pc > 0 ? pc : q.p);
         }
       }
-      avgChg = totalVal > 0 ? weightedChgSum / totalVal : null;
+      avgChg = prevTotal > 0 ? ((currentTotal / prevTotal) - 1) * 100 : null;
     }
     // Fallback to liveWeights (drifted target weights)
     if (avgChg === null) {
@@ -6197,7 +6196,10 @@ Instructions:
                         const found = [...prices].reverse().find(([d]) => d <= yearEnd);
                         startPrice = found ? found[1] : null;
                       } else if (p.all) {
-                        startPrice = prices[0][1];
+                        // Use benchmark price at portfolio start date, not first available
+                        const portfolioStart = portfolio[0]?.date || prices[0][0];
+                        const found = prices.find(([d]) => d >= portfolioStart);
+                        startPrice = found ? found[1] : prices[0][1];
                       } else {
                         const cutoffDate = new Date(lastDate.getTime() - p.days * 86400000).toISOString().slice(0, 10);
                         const found = prices.find(([d]) => d >= cutoffDate);
@@ -6206,7 +6208,8 @@ Instructions:
                       if (!startPrice || startPrice <= 0) return null;
                       const raw = (lastPrice / startPrice - 1) * 100;
                       if (p.ann) {
-                        const years = (lastDate - new Date((p.all ? prices[0][0] : new Date(lastDate.getTime() - p.days * 86400000).toISOString().slice(0, 10)) + "T12:00:00")) / (365.25 * 86400000);
+                        const bmStartDate = p.all ? (portfolio[0]?.date || prices[0][0]) : new Date(lastDate.getTime() - p.days * 86400000).toISOString().slice(0, 10);
+                        const years = (lastDate - new Date(bmStartDate + "T12:00:00")) / (365.25 * 86400000);
                         return years > 1 ? (Math.pow(lastPrice / startPrice, 1 / years) - 1) * 100 : raw;
                       }
                       return raw;
