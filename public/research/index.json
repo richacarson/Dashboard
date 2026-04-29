@@ -1,5 +1,14 @@
 [
   {
+    "id": "dividend-capture-ratio-beta",
+    "title": "Dividend Portfolio Capture Ratio Optimization via Dynamic Beta Management",
+    "date": "2026-04-25",
+    "author": "IOWN Research",
+    "category": "Portfolio Strategy",
+    "summary": "Framework for optimizing upside/downside capture ratios in the dividend portfolio through dynamic beta management and sector rotation.",
+    "file": "Research - Dividend Portfolio Capture Ratio Optimization via Dynamic Beta Management.md"
+  },
+  {
     "id": "q2-2026-rebalance-execution",
     "title": "Q2 2026 Rebalance — Execution Report",
     "date": "2026-04-20",
