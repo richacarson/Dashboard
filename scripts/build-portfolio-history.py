@@ -452,7 +452,7 @@ def fetch_alpaca_prices(tickers, start_date, end_date):
 
     for ticker in sorted(tickers):
         try:
-            url = f"{base}/v2/stocks/bars?symbols={ticker}&timeframe=1Day&start={start_str}&end={end_str}&limit=10000&adjustment=split&feed=sip"
+            url = f"{base}/v2/stocks/bars?symbols={ticker}&timeframe=1Day&start={start_str}&end={end_str}&limit=10000&adjustment=split&feed=iex"
             req = urllib.request.Request(url)
             for k, v in headers.items():
                 req.add_header(k, v)
