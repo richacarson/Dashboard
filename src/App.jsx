@@ -5712,11 +5712,9 @@ Instructions:
               if (!filtered.length) return null;
 
               // Normalize portfolio to % change from first point (starts at 0%)
-              // Use stocks-only value (excludes cash) to match home screen calculation
               // For 1D, use liveValue.prevClose as base so chart matches the Day Change card
-              const getStocksVal = p => p.stocks != null ? p.stocks : p.value;
-              const baseVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : getStocksVal(filtered[0]);
-              const portNorm = filtered.map(p => ({ date: p.date, val: ((getStocksVal(p) / baseVal) - 1) * 100, raw: p.value }));
+              const baseVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : filtered[0].value;
+              const portNorm = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100, raw: p.value }));
 
               // Normalize benchmarks to % change from portfolio start (base 0)
               const bmColors = { DVY: "#FF9800", SPY: "#6B8DE3", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
@@ -5861,9 +5859,9 @@ Instructions:
                 }
               };
 
-              // Summary stats — use stocks-only value to match home screen
-              const startVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : getStocksVal(filtered[0]);
-              const endVal = liveValue ? liveValue.stocks : getStocksVal(filtered[filtered.length - 1]);
+              // Summary stats — for 1D use liveValue.prevClose for accurate % (matched stock universe)
+              const startVal = (isIntraday && perfRange === "1D" && liveValue?.prevClose) ? liveValue.prevClose : filtered[0].value;
+              const endVal = liveValue ? liveValue.value : filtered[filtered.length - 1].value;
               const totalReturn = (isIntraday && perfRange === "1D" && liveValue?.prevClose)
                 ? ((endVal / liveValue.prevClose) - 1) * 100
                 : ((endVal / startVal) - 1) * 100;
