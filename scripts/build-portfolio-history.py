@@ -731,18 +731,21 @@ def main():
 
     # Benchmark data — prefer Alpaca (consistent with live feed), fall back to Yahoo
     SLEEVE_BENCHMARKS = {
-        "dividend": ["SPY", "DIA", "IWS", "DVY"],
+        "dividend": ["SPY", "DVY", "DIA"],
         "growth": ["IUSG", "QQQ", "SPY"],
     }
     benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
     print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")
     bm_prices = fetch_alpaca_prices(set(benchmark_syms), start_date, end_date)
-    # Fall back to Yahoo for any missing tickers
-    missing = [s for s in benchmark_syms if s not in bm_prices or not bm_prices[s]]
-    if missing:
-        print(f"    Falling back to Yahoo for: {', '.join(missing)}")
-        yahoo_bm = fetch_yahoo_prices(set(missing), start_date, end_date)
-        bm_prices.update(yahoo_bm)
+    # Always fetch Yahoo too for historical coverage (Alpaca IEX only goes back a few years)
+    yahoo_bm = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date)
+    # Merge: use Yahoo as base, overlay Alpaca on top (Alpaca takes priority for recent dates)
+    for sym in benchmark_syms:
+        if sym in yahoo_bm and yahoo_bm[sym]:
+            if sym not in bm_prices:
+                bm_prices[sym] = {}
+            merged = {**yahoo_bm[sym], **bm_prices.get(sym, {})}
+            bm_prices[sym] = merged
 
     benchmarks = {}
     for sym in benchmark_syms:
