@@ -694,9 +694,15 @@ def main():
     print(f"  Date range: {start_date.date()} to {end_date.date()}")
     print()
 
-    # Fetch prices from Yahoo Finance (daily close, no API key needed)
-    print("Fetching daily prices from Yahoo Finance...")
-    prices = fetch_yahoo_prices(all_tickers, start_date, end_date)
+    # Fetch prices — prefer Alpaca (consistent with live feed), fall back to Yahoo
+    print("Fetching daily prices...")
+    prices = fetch_alpaca_prices(all_tickers, start_date, end_date)
+    # Fall back to Yahoo for any missing tickers
+    missing_price = [t for t in all_tickers if t not in prices or not prices[t]]
+    if missing_price:
+        print(f"  Falling back to Yahoo for {len(missing_price)} tickers: {', '.join(sorted(missing_price))}")
+        yahoo_prices = fetch_yahoo_prices(set(missing_price), start_date, end_date)
+        prices.update(yahoo_prices)
     total_pts = sum(len(v) for v in prices.values())
     tickers_with_data = sum(1 for v in prices.values() if v)
     missing = sorted(t for t in all_tickers if not prices.get(t))
