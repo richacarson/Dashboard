@@ -2394,12 +2394,13 @@ Instructions:
     if (holdings) {
       let totalVal = 0, weightedChgSum = 0;
       for (const sym of sleeve.symbols) {
-        const c = chg(sym);
         const q = quotesRef.current[sym] || quotes[sym];
         const sh = holdings[sym];
-        if (c !== null && q?.p && sh) {
+        if (q?.p && sh) {
           const mv = sh * q.p;
           totalVal += mv;
+          const pc = (barsRef.current[sym] || bars[sym])?.pc;
+          const c = pc > 0 ? ((q.p - pc) / pc) * 100 : 0;
           weightedChgSum += mv * c;
         }
       }
