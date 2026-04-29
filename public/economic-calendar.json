@@ -174,7 +174,7 @@
     "date": "2026-04-29 18:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "3.75",
     "previous": "3.75",
     "forecast": "3.75",
     "unit": "%"
