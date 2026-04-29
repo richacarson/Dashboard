@@ -2387,36 +2387,30 @@ Instructions:
   /* ── Robinhood-style Sleeve Section (collapsible) ── */
   const renderSleeve = (k, sleeve) => {
     const isOpen = openSleeves[k];
-    // Calculate weighted daily change using actual holdings (market-value weighted)
-    // This matches the Performance tab which uses shares × price
+    // Calculate weighted daily change using DRIFTED weights from liveWeights
     let avgChg = null;
-    const holdings = perfDataMap[k]?.holdings;
-    if (holdings) {
-      let totalVal = 0, weightedChgSum = 0;
+    const lw = liveWeights[k];
+    if (lw && Object.keys(lw).length > 0) {
+      let totalW = 0, weightedSum = 0;
       for (const sym of sleeve.symbols) {
         const c = chg(sym);
-        const q = quotesRef.current[sym] || quotes[sym];
-        const sh = holdings[sym];
-        if (c !== null && q?.p && sh) {
-          const mv = sh * q.p;
-          totalVal += mv;
-          weightedChgSum += mv * c;
+        const w = lw[sym];
+        if (c !== null && w > 0) {
+          totalW += w;
+          weightedSum += w * c;
         }
       }
-      avgChg = totalVal > 0 ? weightedChgSum / totalVal : null;
+      avgChg = totalW > 0 ? weightedSum / totalW : null;
     }
-    // Fallback to liveWeights if no holdings data
-    if (avgChg === null) {
-      const lw = liveWeights[k];
-      if (lw && Object.keys(lw).length > 0) {
-        let totalW = 0, weightedSum = 0;
-        for (const sym of sleeve.symbols) {
-          const c = chg(sym);
-          const w = lw[sym];
-          if (c !== null && w > 0) { totalW += w; weightedSum += w * c; }
-        }
-        avgChg = totalW > 0 ? weightedSum / totalW : null;
+    // Fallback to TARGET_WEIGHTS if liveWeights not yet computed
+    if (avgChg === null && TARGET_WEIGHTS[k]) {
+      let totalW = 0, weightedSum = 0;
+      for (const sym of sleeve.symbols) {
+        const c = chg(sym);
+        const w = TARGET_WEIGHTS[k][sym];
+        if (c !== null && w) { totalW += w; weightedSum += w * c; }
       }
+      avgChg = totalW > 0 ? weightedSum / totalW : null;
     }
     // Final fallback to equal weight
     if (avgChg === null) {
