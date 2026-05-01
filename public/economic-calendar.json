@@ -324,7 +324,7 @@
     "date": "2026-05-01 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "46.4",
     "previous": "48.7",
     "forecast": "49",
     "unit": ""
@@ -334,7 +334,7 @@
     "date": "2026-05-01 14:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "52.7",
     "previous": "52.7",
     "forecast": "53",
     "unit": ""
@@ -346,6 +346,16 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Williams Speech",
+    "date": "2026-05-04 16:50:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -380,13 +390,23 @@
     "unit": "$"
   },
   {
+    "title": "Fed Bowman Speech",
+    "date": "2026-05-05 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "ISM Services PMI",
     "date": "2026-05-05 14:00:00",
     "country": "USD",
     "impact": "High",
     "actual": "",
     "previous": "54",
-    "forecast": "",
+    "forecast": "54",
     "unit": ""
   },
   {
@@ -420,6 +440,16 @@
     "unit": "%"
   },
   {
+    "title": "Fed Barr Speech",
+    "date": "2026-05-05 16:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "API Crude Oil Stock Change",
     "date": "2026-05-05 20:30:00",
     "country": "USD",
@@ -446,6 +476,16 @@
     "impact": "Medium",
     "actual": "",
     "previous": "62",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Musalem Speech",
+    "date": "2026-05-06 13:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -480,12 +520,22 @@
     "unit": ""
   },
   {
+    "title": "Fed Hammack Speech",
+    "date": "2026-05-06 17:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "Initial Jobless Claims",
     "date": "2026-05-07 12:30:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "189",
     "forecast": "",
     "unit": ""
   },
@@ -520,13 +570,33 @@
     "unit": ""
   },
   {
+    "title": "Fed Williams Speech",
+    "date": "2026-05-07 19:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Cook Speech",
+    "date": "2026-05-08 09:45:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "Average Hourly Earnings MoM",
     "date": "2026-05-08 12:30:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
     "previous": "0.2",
-    "forecast": "",
+    "forecast": "0.3",
     "unit": "%"
   },
   {
@@ -546,7 +616,7 @@
     "impact": "High",
     "actual": "",
     "previous": "178",
-    "forecast": "",
+    "forecast": "73",
     "unit": ""
   },
   {
@@ -566,7 +636,7 @@
     "impact": "High",
     "actual": "",
     "previous": "4.3",
-    "forecast": "",
+    "forecast": "4.3",
     "unit": "%"
   },
   {
@@ -576,6 +646,16 @@
     "impact": "High",
     "actual": "",
     "previous": "49.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Bowman Speech",
+    "date": "2026-05-08 23:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -591,6 +671,16 @@
   },
   {
     "title": "Fed Goolsbee Speech",
+    "date": "2026-05-08 23:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Waller Speech",
     "date": "2026-05-08 23:30:00",
     "country": "USD",
     "impact": "Medium",
