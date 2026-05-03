@@ -346,8 +346,8 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0",
-    "forecast": "",
-    "unit": ""
+    "forecast": "0.4",
+    "unit": "%"
   },
   {
     "title": "Fed Williams Speech",
@@ -366,7 +366,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-57.3",
-    "forecast": "",
+    "forecast": "-59",
     "unit": "$"
   },
   {
@@ -406,7 +406,7 @@
     "impact": "High",
     "actual": "",
     "previous": "54",
-    "forecast": "54",
+    "forecast": "53.8",
     "unit": ""
   },
   {
@@ -416,7 +416,7 @@
     "impact": "High",
     "actual": "",
     "previous": "6.882",
-    "forecast": "",
+    "forecast": "6.87",
     "unit": ""
   },
   {
@@ -426,7 +426,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "",
-    "forecast": "",
+    "forecast": "0.668",
     "unit": ""
   },
   {
@@ -476,7 +476,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "62",
-    "forecast": "",
+    "forecast": "79",
     "unit": ""
   },
   {
@@ -536,7 +536,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "189",
-    "forecast": "",
+    "forecast": "199",
     "unit": ""
   },
   {
@@ -646,7 +646,7 @@
     "impact": "High",
     "actual": "",
     "previous": "49.8",
-    "forecast": "",
+    "forecast": "49.5",
     "unit": ""
   },
   {
@@ -686,6 +686,256 @@
     "impact": "Medium",
     "actual": "",
     "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Existing Home Sales",
+    "date": "2026-05-11 14:00:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "3.98",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Existing Home Sales MoM",
+    "date": "2026-05-11 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-3.6",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "ADP Employment Change Weekly",
+    "date": "2026-05-12 12:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "39.25",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Core Inflation Rate MoM",
+    "date": "2026-05-12 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.2",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Core Inflation Rate YoY",
+    "date": "2026-05-12 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "2.6",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "CPI",
+    "date": "2026-05-12 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "330.21",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "CPI s.a",
+    "date": "2026-05-12 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "330.293",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Inflation Rate MoM",
+    "date": "2026-05-12 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.9",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Inflation Rate YoY",
+    "date": "2026-05-12 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "3.3",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Monthly Budget Statement",
+    "date": "2026-05-12 18:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-164.1",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "API Crude Oil Stock Change",
+    "date": "2026-05-12 20:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "MBA 30-Year Mortgage Rate",
+    "date": "2026-05-13 11:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Core PPI MoM",
+    "date": "2026-05-13 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.1",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "PPI MoM",
+    "date": "2026-05-13 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.5",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Crude Oil Stocks Change",
+    "date": "2026-05-13 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Gasoline Stocks Change",
+    "date": "2026-05-13 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Export Prices MoM",
+    "date": "2026-05-14 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "1.6",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Import Prices MoM",
+    "date": "2026-05-14 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Initial Jobless Claims",
+    "date": "2026-05-14 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Retail Sales Control Group MoM",
+    "date": "2026-05-14 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.7",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Retail Sales Ex Autos MoM",
+    "date": "2026-05-14 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "1.9",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Retail Sales MoM",
+    "date": "2026-05-14 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "1.7",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Business Inventories MoM",
+    "date": "2026-05-14 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "NY Empire State Manufacturing Index",
+    "date": "2026-05-15 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "11",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Industrial Production MoM",
+    "date": "2026-05-15 13:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.2",
     "forecast": "",
     "unit": ""
   }
