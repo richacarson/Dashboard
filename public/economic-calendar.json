@@ -24,9 +24,9 @@
     "date": "2026-05-05 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-57.3",
-    "forecast": "-60.5",
+    "actual": "-60.3",
+    "previous": "-57.8",
+    "forecast": "-60.9",
     "unit": "$"
   },
   {
@@ -34,8 +34,8 @@
     "date": "2026-05-05 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "314.8",
+    "actual": "320.9",
+    "previous": "314.7",
     "forecast": "",
     "unit": "$"
   },
@@ -44,8 +44,8 @@
     "date": "2026-05-05 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "372.1",
+    "actual": "381.2",
+    "previous": "372.4",
     "forecast": "",
     "unit": "$"
   },
@@ -64,7 +64,7 @@
     "date": "2026-05-05 14:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "53.6",
     "previous": "54",
     "forecast": "53.7",
     "unit": ""
@@ -74,9 +74,9 @@
     "date": "2026-05-05 14:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "6.882",
-    "forecast": "6.83",
+    "actual": "6.866",
+    "previous": "6.922",
+    "forecast": "6.84",
     "unit": ""
   },
   {
@@ -84,9 +84,9 @@
     "date": "2026-05-05 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "",
-    "forecast": "0.668",
+    "actual": "0.682",
+    "previous": "0.635",
+    "forecast": "0.65",
     "unit": ""
   },
   {
@@ -94,8 +94,8 @@
     "date": "2026-05-05 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-17.6",
+    "actual": "8.9",
+    "previous": "-19.9",
     "forecast": "",
     "unit": "%"
   },
@@ -156,7 +156,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-6.233",
-    "forecast": "",
+    "forecast": "-2.8",
     "unit": ""
   },
   {
@@ -166,7 +166,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-6.075",
-    "forecast": "",
+    "forecast": "-1.7",
     "unit": ""
   },
   {
@@ -387,7 +387,7 @@
     "actual": "",
     "previous": "0.2",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Core Inflation Rate YoY",
@@ -397,7 +397,7 @@
     "actual": "",
     "previous": "2.6",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "CPI",
@@ -427,7 +427,7 @@
     "actual": "",
     "previous": "0.9",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Inflation Rate YoY",
@@ -437,7 +437,7 @@
     "actual": "",
     "previous": "3.3",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Monthly Budget Statement",

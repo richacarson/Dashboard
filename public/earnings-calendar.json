@@ -7480,6 +7480,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "DYNC",
+    "date": "2026-05-12",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "ECTM",
     "date": "2026-05-12",
     "hour": "",
@@ -7590,16 +7600,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "ETHM",
-    "date": "2026-05-12",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "ETOR",
     "date": "2026-05-12",
     "hour": "",
@@ -7636,6 +7636,16 @@
     "epsEstimate": 1.355,
     "epsActual": null,
     "revenueEstimate": 2668804316,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FABC",
+    "date": "2026-05-12",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8860,16 +8870,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SBLX",
-    "date": "2026-05-12",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SCLX",
     "date": "2026-05-12",
     "hour": "",
@@ -9856,6 +9856,16 @@
     "epsEstimate": -0.1173,
     "epsActual": null,
     "revenueEstimate": 10455000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "BGDE",
+    "date": "2026-05-13",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11771,16 +11781,6 @@
   },
   {
     "symbol": "MGRX",
-    "date": "2026-05-13",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "MIGI",
     "date": "2026-05-13",
     "hour": "",
     "epsEstimate": null,
@@ -13900,16 +13900,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "COEP",
-    "date": "2026-05-14",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CSIQ",
     "date": "2026-05-14",
     "hour": "",
@@ -14736,6 +14726,16 @@
     "epsEstimate": -1.53,
     "epsActual": null,
     "revenueEstimate": 5391720,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ZSQR",
+    "date": "2026-05-14",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
