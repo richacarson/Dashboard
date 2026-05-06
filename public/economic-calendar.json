@@ -114,7 +114,17 @@
     "date": "2026-05-05 20:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-8.1",
+    "previous": "-1.79",
+    "forecast": "-2.8",
+    "unit": ""
+  },
+  {
+    "title": "API Crude Oil Stock Change",
+    "date": "2026-05-05 21:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "-8.1",
     "previous": "-1.79",
     "forecast": "-2.8",
     "unit": ""
