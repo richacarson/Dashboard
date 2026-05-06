@@ -1,5 +1,14 @@
 [
   {
+    "id": "peter-lynch-dilemma",
+    "title": "Portfolio Capacity & The Path Beyond 25 Stocks",
+    "date": "2026-04-29",
+    "author": "Carson Rich",
+    "category": "Portfolio Strategy",
+    "summary": "Analysis of portfolio capacity constraints, the Peter Lynch dilemma of concentration vs diversification, and the strategic path beyond 25 holdings.",
+    "file": "The Peter Lynch Dellima"
+  },
+  {
     "id": "dividend-capture-ratio-beta",
     "title": "Dividend Portfolio Capture Ratio Optimization via Dynamic Beta Management",
     "date": "2026-04-25",
