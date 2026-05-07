@@ -204,8 +204,8 @@
     "date": "2026-05-07 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "189",
+    "actual": "200",
+    "previous": "190",
     "forecast": "205",
     "unit": ""
   },
@@ -214,8 +214,8 @@
     "date": "2026-05-07 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.8",
+    "actual": "0.8",
+    "previous": "1.6",
     "forecast": "1.4",
     "unit": "%"
   },
@@ -224,8 +224,8 @@
     "date": "2026-05-07 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "4.4",
+    "actual": "2.3",
+    "previous": "4.6",
     "forecast": "2.6",
     "unit": "%"
   },
@@ -377,7 +377,7 @@
     "actual": "",
     "previous": "-3.6",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "ADP Employment Change Weekly",
@@ -457,7 +457,7 @@
     "actual": "",
     "previous": "-164.1",
     "forecast": "",
-    "unit": ""
+    "unit": "$"
   },
   {
     "title": "API Crude Oil Stock Change",
@@ -487,7 +487,7 @@
     "actual": "",
     "previous": "0.1",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "PPI MoM",
@@ -497,7 +497,7 @@
     "actual": "",
     "previous": "0.5",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "EIA Crude Oil Stocks Change",
@@ -505,7 +505,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-2.314",
     "forecast": "",
     "unit": ""
   },
@@ -515,7 +515,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-2.504",
     "forecast": "",
     "unit": ""
   },
@@ -527,7 +527,7 @@
     "actual": "",
     "previous": "1.6",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Import Prices MoM",
@@ -537,7 +537,7 @@
     "actual": "",
     "previous": "0.8",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Initial Jobless Claims",
@@ -567,7 +567,7 @@
     "actual": "",
     "previous": "1.9",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Retail Sales MoM",
@@ -577,7 +577,7 @@
     "actual": "",
     "previous": "1.7",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Business Inventories MoM",
@@ -587,7 +587,7 @@
     "actual": "",
     "previous": "0.4",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "NY Empire State Manufacturing Index",
@@ -605,8 +605,8 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "0.2",
+    "previous": "-0.5",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   }
 ]
