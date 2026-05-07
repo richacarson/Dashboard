@@ -53,6 +53,44 @@ NAME_TO_TICKER = {
     "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
     "Toll Brothers Inc": "TOL",
     "Vistra Corp": "VST",
+    # FCI 100 / FCI Values names
+    "ASML Holding NV": "ASML", "Adobe Inc": "ADBE", "Alamos Gold Inc": "AGI",
+    "Alphabet Inc Class A": "GOOGL", "Alphabet Inc Class C": "GOOG", "Amazon.com Inc": "AMZN",
+    "American Water Works Co Inc": "AWK", "Amgen Inc": "AMGN", "Amphenol Corp": "APH",
+    "Analog Devices Inc": "ADI", "Apple Inc": "AAPL", "Applied Materials Inc": "AMAT",
+    "Arista Networks Inc": "ANET", "Arm Holdings PLC": "ARM", "Astera Labs Inc": "ALAB",
+    "AstraZeneca PLC": "AZN", "Bentley Systems Inc": "BSY", "Bloom Energy Corp": "BE",
+    "Broadcom Inc": "AVGO", "Brookfield Asset Management Ltd": "BAM",
+    "Cadence Design Systems Inc": "CDNS", "Canadian National Railway Co": "CNI",
+    "Canadian Pacific Kansas City Ltd": "CP", "Caterpillar Inc": "CAT", "Celestica Inc": "CLS",
+    "Cellebrite DI Ltd": "CLBT", "Charles Schwab Corp": "SCHW", "Cheniere Energy Inc": "LNG",
+    "Chubb Limited": "CB", "Cisco Systems Inc": "CSCO", "Clear Secure Inc": "YOU",
+    "Constellation Energy Corp": "CEG", "Copart Inc": "CPRT", "Corning Inc": "GLW",
+    "Costco Wholesale Corp": "COST", "Datadog Inc": "DDOG", "Deckers Outdoor Corp": "DECK",
+    "Deere and Co": "DE", "Dover Corp": "DOV", "Dynatrace Inc": "DT", "Eaton Corp PLC": "ETN",
+    "Ecolab Inc": "ECL", "Eli Lilly and Co": "LLY", "Embraer SA": "EMBJ", "Figma Inc": "FIG",
+    "GE Aerospace": "GE", "GE Vernova Inc": "GEV", "Genmab AS": "GMAB",
+    "Hilton Worldwide Holdings Inc": "HLT", "Home Depot Inc": "HD", "ICICI Bank Limited": "IBN",
+    "Innodata Inc": "INOD", "Intercontinental Exchange Inc": "ICE", "Intuit Inc": "INTU",
+    "Intuitive Surgical Inc": "ISRG", "JPMorgan Chase and Co": "JPM", "Johnson and Johnson": "JNJ",
+    "KKR and Co Inc": "KKR", "KLA Corp": "KLAC", "Kratos Defense and Security Solutions Inc": "KTOS",
+    "Lam Research Corp": "LRCX", "Lemonade Inc": "LMND", "Lumentum Holdings Inc": "LITE",
+    "MDA Space Ltd": "MDA", "Mastercard Inc": "MA", "McDonalds Corp": "MCD",
+    "Meta Platforms Inc": "META", "Micron Technology Inc": "MU", "Microsoft Corp": "MSFT",
+    "Mobileye Global Inc": "MBLY", "Modine Manufacturing Co": "MOD", "Motorola Solutions Inc": "MSI",
+    "NRG Energy Inc": "NRG", "Netflix Inc": "NFLX", "Neurocrine Biosciences Inc": "NBIX",
+    "NextEra Energy Inc": "NEE", "Nextpower Inc": "NXT", "Nu Holdings Ltd": "NU",
+    "Oracle Corp": "ORCL", "PTC Inc": "PTC", "Palantir Technologies Inc": "PLTR",
+    "Palo Alto Networks Inc": "PANW", "Pinnacle Financial Partners Inc": "PNFP",
+    "Progressive Corp": "PGR", "QUALCOMM Inc": "QCOM", "Quanta Services Inc": "PWR",
+    "Rambus Inc": "RMBS", "ResMed Inc": "RMD", "Royal Caribbean Cruises Ltd": "RCL",
+    "S&P Global Inc": "SPGI", "SAP SE": "SAP", "Salesforce Inc": "CRM", "Sea Limited": "SE",
+    "Serve Robotics Inc": "SERV", "ServiceNow Inc": "NOW", "Shopify Inc": "SHOP",
+    "Stryker Corp": "SYK", "Synopsys Inc": "SNPS", "TTM Technologies Inc": "TTMI",
+    "Texas Instruments Inc": "TXN", "Toast Inc": "TOST", "Veeva Systems Inc": "VEEV",
+    "Vertex Pharmaceuticals Inc": "VRTX", "Vertiv Holdings Co": "VRT",
+    "Vista Energy SAB de CV": "VIST", "Western Digital Corp": "WDC", "Xylem Inc": "XYL",
+    "Yum China Holdings Inc": "YUMC", "Zscaler Inc": "ZS", "nVent Electric PLC": "NVT",
     "Cash": "__CASH__",
 }
 
@@ -716,7 +754,9 @@ def main():
 
     # Build portfolio history
     print("Building portfolio history...")
-    history = build_portfolio_history(transactions, cash_transactions, prices, current_holdings=current_holdings)
+    total_purchased = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "PURCHASE")
+    computed_start = max(100000, int(round(total_purchased / 1000) * 1000))
+    history = build_portfolio_history(transactions, cash_transactions, prices, start_balance=computed_start, current_holdings=current_holdings)
     print(f"  Daily data points: {len(history)}")
     if history:
         print(f"  Start: ${history[0]['value']:,.2f}")
@@ -733,6 +773,8 @@ def main():
     SLEEVE_BENCHMARKS = {
         "dividend": ["SPY", "DVY", "DIA"],
         "growth": ["IUSG", "QQQ", "SPY"],
+        "fci100": ["SPY"],
+        "fciValues": ["SPY"],
     }
     benchmark_syms = SLEEVE_BENCHMARKS.get(sleeve_name, ["SPY", "DIA", "IWS", "DVY"])
     print(f"Fetching benchmark data ({', '.join(benchmark_syms)})...")
@@ -880,10 +922,14 @@ def main():
         })
     all_tx.sort(key=lambda x: x["date"], reverse=True)
 
+    # Compute start balance from total purchases if it exceeds the default
+    total_purchased = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "PURCHASE")
+    computed_start = max(100000, int(round(total_purchased / 1000) * 1000))
+
     output = {
         "sleeve": sleeve_name,
         "generated": datetime.now().isoformat(),
-        "start_balance": 100000,
+        "start_balance": computed_start,
         "start_date": start_date.strftime("%Y-%m-%d"),
         "end_date": end_date.strftime("%Y-%m-%d"),
         "portfolio": history,
