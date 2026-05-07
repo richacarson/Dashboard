@@ -3110,7 +3110,7 @@ Instructions:
             <div style={{ paddingTop: 28 }}>
               <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Top Movers</div>
               <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: "0 16px" }}>
-                {coreSyms.filter(s => chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 6).map((s, i, arr) => (
+                {coreSyms.filter(s => (sleeves.dividend?.symbols?.includes(s) || sleeves.growth?.symbols?.includes(s)) && chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 6).map((s, i, arr) => (
                   <div key={s}>
                     { renderTickerRow(s) }
                     {i < arr.length - 1 && <div style={{ height: 1, background: C.border }} />}
@@ -3126,7 +3126,7 @@ Instructions:
             {Object.keys(quotes).length > 0 && (
               <div style={{ paddingTop: 28, paddingBottom: 20 }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
-                <Heatmap sleeves={Object.fromEntries(CORE_KEYS.filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} onContext={(s, x, y) => setCtxMenu({ sym: s, x, y })} />
+                <Heatmap sleeves={Object.fromEntries(["dividend","growth"].filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} onContext={(s, x, y) => setCtxMenu({ sym: s, x, y })} />
               </div>
             )}
             {/* Add Transaction Modal */}
