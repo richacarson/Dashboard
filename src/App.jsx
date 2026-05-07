@@ -14,6 +14,8 @@ const DEFAULT_SLEEVES = {
   growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
   sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLC","XLU"], icon: "📊" },
+  fci100: { name: "FCI 100", symbols: ["NVDA","MSFT","GOOGL","TSM","META","CDNS","QCOM","AMD","MRVL","GOOG","KLAC","AMAT","GE","BAM","AAPL","CRM","NOW","KEYS","AZN","SHOP","LLY","VRT","ASML","XYL","CRDO","NEE","AMZN","APH","CEG","NVT","JPM","COST","ETN","RMBS","AGI","RCL","MCD","KKR","MA","CLS","HLT","NRG","MU","ZS","JNJ","ANET","LRCX","SAP","ISRG","VRTX","RMD","MSI","PLTR","NU","INTU","DDOG","CSCO","AVGO","PTC","ADI","LNG","CB","SYK","LITE","PNFP","GEV","AEM","EMBJ","ECL","VEEV","GLW","SNPS","VIST","GMAB","TTMI","ICE","BE","NBIX","ALAB","NXT","FCX","MOD","SCHW","ORCL","ADBE","CPRT","FIG","HD","ARM","SPGI","LMND","INOD","PANW","YUMC","AMGN","LIN","CAT","SE","NFLX","MDA"], icon: "🏆" },
+  fciValues: { name: "FCI Values 100", symbols: ["NVDA","TSM","CDNS","QCOM","MRVL","KLAC","AMAT","GE","BAM","NOW","KEYS","SHOP","LLY","VRT","ASML","XYL","CRDO","NEE","APH","CEG","NVT","ETN","RMBS","AGI","RCL","MCD","CLS","NRG","MU","ZS","ANET","LRCX","SAP","ISRG","RMD","MSI","PLTR","NU","DDOG","CSCO","AVGO","PTC","ADI","LNG","CB","SYK","LITE","PNFP","GEV","AEM","EMBJ","VEEV","GLW","SNPS","VIST","GMAB","TTMI","ICE","BE","NBIX","ALAB","NXT","FCX","MOD","SCHW","CPRT","FIG","HD","ARM","SPGI","LMND","INOD","YUMC","AMGN","LIN","CAT","SE","MDA","DECK","CLBT","WDC","PGR","SERV","YOU","IBN","AWK","DT","BSY","DE","KTOS","TOST","VST","DOV","PWR","CNI","FTNT","CP","MBLY","TXN"], icon: "✝️" },
 };
 const TARGET_WEIGHTS = {
   dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, CTRA:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
@@ -53,7 +55,7 @@ const loadSleeves = () => {
 };
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
-const CORE_KEYS = ["dividend", "growth", "digital"];
+const CORE_KEYS = ["dividend", "growth", "digital", "fci100", "fciValues"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
   { sym: "IUSG", name: "IUSG" },
@@ -989,7 +991,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false } };
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
@@ -1833,7 +1835,7 @@ Instructions:
     if (Object.keys(perfDataMap).length > 0 || perfLoading) return;
     setPerfLoading(true);
     try {
-      const sleevesToLoad = ["dividend", "growth"];
+      const sleevesToLoad = ["dividend", "growth", "fci100", "fciValues"];
       const newMap = {};
 
       for (const sleeve of sleevesToLoad) {
@@ -3604,7 +3606,7 @@ Instructions:
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Metrics</div>}
             {/* Portfolio selector */}
             <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
-              {Object.entries(sleeves).filter(([k]) => k !== "sectors").map(([k, sl]) => (
+              {Object.entries(sleeves).filter(([k]) => k !== "sectors" && k !== "digital").map(([k, sl]) => (
                 <button key={k} onClick={() => { setMetricsView(k); setMetricSort({ col: null, dir: "desc" }); }} style={{
                   flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${metricsView === k ? C.borderActive : C.border}`,
                   background: metricsView === k ? C.accentSoft : "transparent",
@@ -5448,7 +5450,7 @@ Instructions:
                     backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
                   }}
                 >
-                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" }].filter(s => perfDataMap[s.k]).map(s => (
+                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" }, { k: "fci100", l: "🏆 FCI 100" }, { k: "fciValues", l: "✝️ FCI Values 100" }].filter(s => perfDataMap[s.k]).map(s => (
                     <option key={s.k} value={s.k}>{s.l}</option>
                   ))}
                 </select>

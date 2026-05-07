@@ -1,0 +1,309 @@
+Your Transactions
+FCI 100
+All Transactions
+By Activity
+For All Time
+Done
+Add
+Date	Transaction	Shares	Share Price $	Amount $	 
+ 	05-06-26	
+PURCHASENVIDIA Corp
+19.4316	205.8500	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEMicrosoft Corp
+9.6977	412.4700	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEAlphabet Inc Class A
+10.0733	397.0900	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASETaiwan Semiconductor Manufacturing Co Ltd ADR
+9.6334	415.2200	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASEMeta Platforms Inc
+6.5582	609.9200	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASECadence Design Systems Inc
+11.2819	354.5500	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEQUALCOMM Inc
+20.7018	193.2200	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAdvanced Micro Devices Inc
+9.5598	418.4200	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEMarvell Technology Inc
+23.2207	172.2600	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAlphabet Inc Class C
+10.1587	393.7500	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEKLA Corp
+2.2119	1808.3900	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASEApplied Materials Inc
+9.3740	426.7100	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASEGE Aerospace
+13.1372	304.4800	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEBrookfield Asset Management Ltd
+82.0176	48.7700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEApple Inc
+13.9806	286.1100	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASESalesforce Inc
+21.9455	182.2700	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEServiceNow Inc
+44.5981	89.6900	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEKeysight Technologies Inc
+10.9586	365.0100	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAstraZeneca PLC
+21.6427	184.8200	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEShopify Inc
+37.6541	106.2300	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEEli Lilly and Co
+4.0481	988.1200	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEVertiv Holdings Co
+11.2020	357.0800	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEASML Holding NV
+2.6070	1534.3300	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEXylem Inc
+33.7638	118.4700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASECredo Technology Group Holding Ltd
+20.1816	198.2000	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASENextEra Energy Inc
+41.8541	95.5700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAmazon.com Inc
+14.5741	274.4600	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEAmphenol Corp
+28.9122	138.3500	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEConstellation Energy Corp
+12.4150	322.1900	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEnVent Electric PLC
+23.1428	172.8400	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEJPMorgan Chase and Co
+12.7372	314.0400	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASECostco Wholesale Corp
+4.0014	999.6400	3,999.96	Edit	 
+ 	05-06-26	
+PURCHASEEaton Corp PLC
+9.4778	422.0400	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASERambus Inc
+31.0559	128.8000	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAlamos Gold Inc
+95.8773	41.7200	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASERoyal Caribbean Cruises Ltd
+14.0193	285.3200	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEMcDonalds Corp
+14.0415	284.8700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEKKR and Co Inc
+39.4283	101.4500	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEMastercard Inc
+8.1021	493.7000	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASECelestica Inc
+9.5831	417.4000	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEHilton Worldwide Holdings Inc
+12.4758	320.6200	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASENRG Energy Inc
+26.4428	151.2700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEMicron Technology Inc
+6.0147	665.0400	4,000.02	Edit	 
+ 	05-06-26	
+PURCHASEZscaler Inc
+28.8184	138.8000	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEJohnson and Johnson
+17.7952	224.7800	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEArista Networks Inc
+26.9288	148.5400	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASELam Research Corp
+13.5763	294.6300	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASESAP SE
+22.9226	174.5000	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEIntuitive Surgical Inc
+8.8554	451.7000	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASEVertex Pharmaceuticals Inc
+9.3809	426.4000	4,000.02	Edit	 
+ 	05-06-26	
+PURCHASEResMed Inc
+19.1378	209.0100	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEMotorola Solutions Inc
+9.2166	434.0000	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEPalantir Technologies Inc
+29.9021	133.7700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASENu Holdings Ltd
+276.2431	14.4800	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEIntuit Inc
+10.2852	388.9100	4,000.02	Edit	 
+ 	05-06-26	
+PURCHASEDatadog Inc
+27.8338	143.7100	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASECisco Systems Inc
+43.5303	91.8900	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEBroadcom Inc
+9.3464	427.9700	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASEPTC Inc
+29.3083	136.4800	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAnalog Devices Inc
+9.6876	412.9000	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASECheniere Energy Inc
+15.3104	261.2600	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEChubb Limited
+12.4131	322.2400	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEStryker Corp
+13.6217	293.6500	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASELumentum Holdings Inc
+4.1788	957.2100	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEPinnacle Financial Partners Inc
+40.1043	99.7400	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEGE Vernova Inc
+3.5787	1117.7200	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASEAgnico Eagle Mines Ltd
+21.1338	189.2700	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEEmbraer SA
+58.9362	67.8700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEEcolab Inc
+15.2103	262.9800	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEVeeva Systems Inc
+23.8436	167.7600	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASECorning Inc
+21.7960	183.5200	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASESynopsys Inc
+7.9291	504.4700	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEVista Energy SAB de CV
+58.1987	68.7300	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEGenmab AS
+143.8332	27.8100	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASETTM Technologies Inc
+24.2822	164.7300	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEIntercontinental Exchange Inc
+25.9960	153.8700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEBloom Energy Corp
+13.8480	288.8500	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASENeurocrine Biosciences Inc
+27.1168	147.5100	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAstera Labs Inc
+18.3596	217.8700	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASENextpower Inc
+31.7990	125.7900	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEFreeport-McMoRan Inc
+65.7678	60.8200	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEModine Manufacturing Co
+14.5629	274.6700	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASECharles Schwab Corp
+43.3839	92.2000	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEOracle Corp
+20.8257	192.0700	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEAdobe Inc
+15.9598	250.6300	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASECopart Inc
+120.1562	33.2900	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEFigma Inc
+207.1466	19.3100	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEHome Depot Inc
+12.3923	322.7800	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASEArm Holdings PLC
+16.9506	235.9800	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASES&P Global Inc
+9.4511	423.2300	3,999.99	Edit	 
+ 	05-06-26	
+PURCHASELemonade Inc
+73.9782	54.0700	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEInnodata Inc
+86.4678	46.2600	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEPalo Alto Networks Inc
+21.8735	182.8700	4,000.01	Edit	 
+ 	05-06-26	
+PURCHASEYum China Holdings Inc
+82.1018	48.7200	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEAmgen Inc
+12.0988	330.6100	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASELinde PLC
+7.9875	500.7800	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASECaterpillar Inc
+4.3310	923.5700	3,999.98	Edit	 
+ 	05-06-26	
+PURCHASESea Limited
+44.9035	89.0800	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASENetflix Inc
+45.4597	87.9900	4,000.00	Edit	 
+ 	05-06-26	
+PURCHASEMDA Space Ltd
+125.9049	31.7700	4,000.00	Edit	 
+As of Wed 05-07-26 07:00 AM CSTDone
