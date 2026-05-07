@@ -754,8 +754,13 @@ def main():
 
     # Build portfolio history
     print("Building portfolio history...")
-    total_purchased = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "PURCHASE")
-    computed_start = max(100000, int(round(total_purchased / 1000) * 1000))
+    # For FCI portfolios (100 stocks × $4K each), start balance needs to match total purchases
+    # For dividend/growth, always use $100K (the actual starting capital)
+    if sleeve_name in ("fci100", "fciValues"):
+        total_purchased = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "PURCHASE")
+        computed_start = max(100000, int(round(total_purchased / 1000) * 1000))
+    else:
+        computed_start = 100000
     history = build_portfolio_history(transactions, cash_transactions, prices, start_balance=computed_start, current_holdings=current_holdings)
     print(f"  Daily data points: {len(history)}")
     if history:
@@ -921,10 +926,6 @@ def main():
             "date": ctx["date"], "type": ctx["type"], "amount": ctx["amount"],
         })
     all_tx.sort(key=lambda x: x["date"], reverse=True)
-
-    # Compute start balance from total purchases if it exceeds the default
-    total_purchased = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "PURCHASE")
-    computed_start = max(100000, int(round(total_purchased / 1000) * 1000))
 
     output = {
         "sleeve": sleeve_name,
