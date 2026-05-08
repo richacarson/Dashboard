@@ -2285,6 +2285,21 @@ Instructions:
 
   const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+  const sleeveActualDay = (k) => {
+    const h = perfDataMap[k]?.holdings;
+    if (!h) return null;
+    const cash = perfDataMap[k]?.cash || 0;
+    let cur = cash, prev = cash;
+    for (const [sym, sh] of Object.entries(h)) {
+      const q = quotesRef.current[sym] || quotes[sym];
+      if (q?.p && sh) {
+        cur += sh * q.p;
+        const pc = (barsRef.current[sym] || bars[sym])?.pc;
+        prev += sh * (pc > 0 ? pc : q.p);
+      }
+    }
+    return prev > 0 ? ((cur / prev) - 1) * 100 : null;
+  };
 
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
 
@@ -3967,9 +3982,11 @@ Instructions:
                 };
               };
 
-              // Q2: target-weighted with drift
+              // Q2: target-weighted with drift for rows, actual portfolio return for headline
               const q2GetW = s => liveWeights[sleeve]?.[s] ?? tw[s] ?? 0;
               const q2 = calcPortfolio(q2Syms, q2GetW);
+              const q2ActualDay = sleeveActualDay(sleeve);
+              if (q2ActualDay !== null) q2.day = q2ActualDay;
 
               // Q1: equal-weighted with drift from anchor
               const q1Drift = {};
@@ -4739,7 +4756,7 @@ Instructions:
                 }
                 rows.push({ s, w, ewD, c, sinceReb, wContribDay: c !== null ? w * c / 100 : null, eContribDay: c !== null ? ewD * c / 100 : null, wContribReb: sinceReb !== null ? w * sinceReb / 100 : null, eContribReb: sinceReb !== null ? ewD * sinceReb / 100 : null });
               }
-              const wDay = wDayTot > 0 ? wDaySum / wDayTot : null;
+              const wDay = sleeveActualDay(metricsView) ?? (wDayTot > 0 ? wDaySum / wDayTot : null);
               const eDay = eDayTot > 0 ? eDaySum / eDayTot : null;
               const dayAlpha = (wDay !== null && eDay !== null) ? wDay - eDay : null;
 
