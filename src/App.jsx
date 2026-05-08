@@ -1841,7 +1841,7 @@ Instructions:
 
       for (const sleeve of sleevesToLoad) {
         try {
-          const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-${sleeve}.json`);
+          const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-${sleeve}.json?v=${Date.now()}`);
           if (!pRes.ok) continue;
           const pJson = await pRes.json();
           const portfolio = pJson.portfolio || [];
