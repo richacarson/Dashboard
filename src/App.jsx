@@ -1799,16 +1799,17 @@ Instructions:
     if (!FH || marketStatus.status !== "open") return;
     const now = Date.now();
     const staleThreshold = 5 * 60 * 1000; // 5 minutes
-    const allSyms = getCoreSyms(sleevesRef.current);
-    const stale = allSyms.filter(s => {
+    // Only poll dividend + growth stocks — FCI stocks are high-volume and work fine on IEX
+    const divGrowthSyms = [...new Set([...(sleevesRef.current.dividend?.symbols || []), ...(sleevesRef.current.growth?.symbols || [])])];
+    const stale = divGrowthSyms.filter(s => {
       const q = quotesRef.current[s];
       if (!q) return true; // no quote at all
       const tradeTime = q.t ? new Date(q.t).getTime() : 0;
       return (now - tradeTime) > staleThreshold;
     });
     if (!stale.length) return;
-    // Only poll up to 10 at a time to stay under rate limits
-    const batch = stale.slice(0, 10);
+    // Only poll up to 5 at a time to leave room for benchmark polling
+    const batch = stale.slice(0, 5);
     const batchQ = {}, batchB = {};
     for (const sym of batch) {
       try {
