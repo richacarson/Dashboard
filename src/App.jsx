@@ -2250,10 +2250,6 @@ Instructions:
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
       connectFinnhubWS();
-      startFinnhubPolling();
-      // Poll for stale stocks every 30 seconds
-      pollStaleStocks();
-      staleTimerRef.current = setInterval(pollStaleStocks, 30000);
     } catch { setAuthErr("Invalid API keys."); }
   };
 
@@ -2273,6 +2269,12 @@ Instructions:
       const newsTimer = setInterval(() => { fetchNews(); }, 60000);
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
+      // Finnhub benchmark polling (DVY, IUSG) — every 5s
+      pollFinnhubBenchmarks();
+      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
+      // Stale stock polling — every 30s
+      pollStaleStocks();
+      staleTimerRef.current = setInterval(pollStaleStocks, 30000);
       return () => {
         clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
         try { wsRef.current?.close(); } catch {}
