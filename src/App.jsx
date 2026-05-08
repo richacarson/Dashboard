@@ -10,7 +10,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "
    ═══════════════════════════════════════════════════════════════════ */
 
 const DEFAULT_SLEEVES = {
-  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","CTRA","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
+  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","DVN","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
   growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
   sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLC","XLU"], icon: "📊" },
@@ -18,13 +18,13 @@ const DEFAULT_SLEEVES = {
   fciValues: { name: "FCI Values 100", symbols: ["NVDA","TSM","CDNS","QCOM","MRVL","KLAC","AMAT","GE","BAM","NOW","KEYS","SHOP","LLY","VRT","ASML","XYL","CRDO","NEE","APH","CEG","NVT","ETN","RMBS","AGI","RCL","MCD","CLS","NRG","MU","ZS","ANET","LRCX","SAP","ISRG","RMD","MSI","PLTR","NU","DDOG","CSCO","AVGO","PTC","ADI","LNG","CB","SYK","LITE","PNFP","GEV","AEM","EMBJ","VEEV","GLW","SNPS","VIST","GMAB","TTMI","ICE","BE","NBIX","ALAB","NXT","FCX","MOD","SCHW","CPRT","FIG","HD","ARM","SPGI","LMND","INOD","PANW","YUMC","AMGN","LIN","CAT","SE","MDA","DECK","CLBT","WDC","PGR","SERV","YOU","IBN","AWK","DT","BSY","DE","KTOS","TOST","VST","DOV","PWR","CNI","FTNT","CP","MBLY","TXN"], icon: "✝️" },
 };
 const TARGET_WEIGHTS = {
-  dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, CTRA:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
+  dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, DVN:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
   growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
 const REBALANCE_DATE = "2026-04-08";
 const REBALANCE_ANCHORS = {
   // 4/8/26 OPEN prices from Yahoo Finance
-  ABT:103.13, ADI:345.81, ADP:204.51, ATO:186.7, BKH:73.03, CAT:764.62, CHD:93.0, CL:83.75, CTRA:32.41, DGX:196.18,
+  ABT:103.13, ADI:345.81, ADP:204.51, ATO:186.7, BKH:73.03, CAT:764.62, CHD:93.0, CL:83.75, DVN:46.30, DGX:196.18,
   FAST:46.41, GD:346.86, GPC:106.62, LMT:612.27, LRCX:242.75, NEE:93.08, NTR:72.62, ORI:40.45, PCAR:120.3, QCOM:128.65,
   SSNC:69.99, STLD:184.13, SYK:336.29, TEL:220.74, VLO:235.0,
   AEM:220.35, AMD:232.12, ATAT:37.2, CNX:38.1, COIN:187.89, CRDO:113.87, CVX:191.41, CWAN:24.04, EIX:72.97, FCX:65.25,
@@ -253,7 +253,7 @@ const LOGO_DOMAINS = {
   O:"realtyincome.com",STLD:"steeldynamics.com",VLO:"valero.com",CNX:"cnx.com",
   BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
   SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
-  NTR:"nutrien.com",CTRA:"coterra.com",FCX:"fcx.com",CRDO:"credosemi.com",VST:"vistracorp.com",MRVL:"marvell.com",
+  NTR:"nutrien.com",DVN:"devonenergy.com",FCX:"fcx.com",CRDO:"credosemi.com",VST:"vistracorp.com",MRVL:"marvell.com",
   DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
   IBIT:"ishares.com",ETHA:"ishares.com",
   A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
@@ -1304,7 +1304,7 @@ Instructions:
             "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
             "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
             "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
-            "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
+            "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
             "CHD": "Consumer Staples", "CL": "Consumer Staples",
             "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
             "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials",
@@ -3636,7 +3636,7 @@ Instructions:
                 "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology",
                 "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
                 "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
-                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
+                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
                 "CHD": "Consumer Staples", "CL": "Consumer Staples",
                 "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
                 "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
@@ -3853,7 +3853,7 @@ Instructions:
                 "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology",
                 "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
                 "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
-                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "CTRA": "Energy",
+                "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
                 "CHD": "Consumer Staples", "CL": "Consumer Staples",
                 "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
                 "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
@@ -4199,7 +4199,7 @@ Instructions:
                   "Utilities": ["DUK", "SO", "D"], "Materials": ["APD", "ECL", "NEM"],
                   "Communication": ["META", "GOOG", "DIS"],
                 };
-                const SO = { "ABT":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","CRDO":"Technology","MRVL":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","PCAR":"Industrials","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","VST":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","CTRA":"Energy","CHD":"Consumer Staples","CL":"Consumer Staples","GPC":"Consumer Disc.","TOL":"Consumer Disc.","ATAT":"Consumer Disc.","ORI":"Financials","SYF":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","HUT":"Financials","MARA":"Financials","AEM":"Materials","FCX":"Materials","NTR":"Materials","STLD":"Materials","IBIT":"Digital Assets","ETHA":"Digital Assets" };
+                const SO = { "ABT":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","CRDO":"Technology","MRVL":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","PCAR":"Industrials","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","VST":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","DVN":"Energy","CHD":"Consumer Staples","CL":"Consumer Staples","GPC":"Consumer Disc.","TOL":"Consumer Disc.","ATAT":"Consumer Disc.","ORI":"Financials","SYF":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","HUT":"Financials","MARA":"Financials","AEM":"Materials","FCX":"Materials","NTR":"Materials","STLD":"Materials","IBIT":"Digital Assets","ETHA":"Digital Assets" };
                 const sec = SO[peerSymbol] || d.sector;
                 const benchPeers = (sectorBenchmarks[sec] || []).filter(s => s !== peerSymbol && fundamentals[s]);
                 peers = [...new Set([...peers, ...benchPeers])].slice(0, 5);
