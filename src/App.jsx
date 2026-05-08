@@ -1844,13 +1844,13 @@ Instructions:
           const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-${sleeve}.json?v=${Date.now()}`);
           if (!pRes.ok) continue;
           const pJson = await pRes.json();
-          const portfolio = pJson.portfolio || [];
+          const portfolio = (pJson.portfolio || []).sort((a, b) => a.date.localeCompare(b.date));
           if (!portfolio.length) continue;
 
           // Use pre-computed benchmarks from JSON if available
           const jsonBm = pJson.benchmarks || {};
           const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["DVY", "SPY", "DIA"]);
-          const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 10);
+          const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 1);
 
           let benchmarks = {};
 
