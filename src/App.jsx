@@ -5902,6 +5902,8 @@ Instructions:
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                       {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
+                        const isFCI = perfSleeve === "fci100" || perfSleeve === "fciValues";
+                        if (isFCI) return r === "1D" || r === "ALL";
                         if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
                         const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
                         const need = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 }[r] || 0;
