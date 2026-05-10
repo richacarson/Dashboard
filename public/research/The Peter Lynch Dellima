@@ -1,0 +1,346 @@
+# Portfolio Capacity & The Path Beyond 25 Stocks
+
+**Prepared for:** Eric Dunavant, Founder & CIO
+**Prepared by:** Carson Rich, Research Analyst
+**Firm:** Intentional Ownership (IOWN) — Paradiem
+**Date:** May 10, 2026 *(v2 — strategy-level reframe per Eric’s review)*
+**Classification:** Internal — Investment Committee
+
+-----
+
+## Executive Summary
+
+IOWN runs two concentrated equity strategies across three model wrappers, with a combined ~$406.5M in equity AUM. The Dividend strategy holds 25 names and is implemented identically in Model 7A (~$385M) and Model 7 (~$17M), for a combined ~$402M Dividend book. The Growth Hybrid strategy holds 25 names in Model BT (~$4.5M). Eric has asked whether — and at what level of AUM — the 25-stock structure stops being viable. The instinctive reference point is Peter Lynch’s Fidelity Magellan Fund, which famously grew from $18M to $14B in 13 years and was eventually closed to new investors in 1997 because size was eroding alpha.
+
+This report does three things:
+
+1. **Tells the Magellan story accurately**, with primary sources, including the part most retellings get wrong: the fund didn’t shut down because Lynch couldn’t trade — it shut down years after he left because size made it structurally hard to outperform.
+1. **Builds an explicit capacity framework** anchored to the CFA Institute position-size standard (≤2× 3-month ADV), the Almgren-Chriss / square-root law of market impact, and academic research on diseconomies of scale in active management (Berk-Green 2004, Pástor-Stambaugh-Taylor 2020).
+1. **Recommends a path forward** — specifically, a tiered “core + extension” architecture with explicit capacity gates at $1B, $3B, and $10B AUM milestones, plus a cultural/identity discussion about what “Think Like an Owner” means at scale.
+
+**Bottom line:** The Dividend strategy at ~$402M effective AUM has already implicitly excluded any name with average daily volume below roughly $10–15M — meaning the bottom half of the “$1M–$30M ADV sweet spot” is already off the table. As AUM grows, IOWN needs to either (a) accept a higher ADV floor (large-cap drift), (b) add positions to the existing strategies, or (c) launch a separate small/mid-cap-extension sleeve. The third option preserves the concentrated identity of the two existing strategies while creating real headroom.
+
+**Note on framing (v2):** An earlier draft of this report treated Models 7, 7A, and BT as three independent capacity questions because that’s how they appear in Orion and Schwab. Since Models 7 and 7A run the identical 25-stock Dividend book, capacity binds at the strategy level, not the model level. This version consolidates accordingly. Substantive conclusions are unchanged; framing is cleaner.
+
+-----
+
+## 1. The Peter Lynch Case Study
+
+### 1.1 The numbers
+
+Peter Lynch took over Fidelity Magellan in May 1977, when the fund held roughly $18–20M in assets and approximately 40 stocks. By the time he resigned in May 1990, Magellan held more than $14 billion in assets across hundreds of names. The fund averaged a 29.2% annual return over his tenure — versus 15.8% for the S&P 500 — making it the best-performing actively managed mutual fund of its era.
+
+|Period                             |AUM        |Approx. Holdings|Annualized Return|
+|-----------------------------------|-----------|----------------|-----------------|
+|May 1977 (Lynch takeover)          |~$18M      |~40             |—                |
+|1977–1990 (Lynch tenure)           |$18M → $14B|40 → ~1,200     |29.2%            |
+|1990 (Lynch retirement)            |~$14B      |~1,200          |—                |
+|Sept 1997 (closed to new investors)|~$60B      |hundreds        |—                |
+|Late 1990s peak                    |$100B+     |hundreds        |—                |
+
+*Sources: Wikipedia, Fidelity Magellan Fund article; Wikipedia, Peter Lynch article; QuantifiedStrategies.com.*
+
+### 1.2 What the standard retelling gets wrong
+
+Most popular versions of the Magellan story collapse into “Lynch’s fund got too big to trade and had to be shut down.” That is technically false on two counts:
+
+**First, Lynch’s portfolio bloat was a deliberate choice, not a forced one.** When he took over, Magellan held about 40 stocks and Lynch was advised to trim it to 25–30. He did the opposite. Joel Tillinghast — hired by Fidelity on Lynch’s recommendation, later the long-running manager of Fidelity Low-Priced Stock — explained that Lynch held hundreds of names because he felt it was “bad form” to stay in regular contact with a company without owning at least a small position in its stock. The 1,200-name end-state was a research/relationship management strategy, not a market-impact accommodation.
+
+**Second, the fund didn’t shut down — it closed to new investors, and not until 1997, seven years after Lynch left.** Fidelity’s stated rationale: “the size of the fund was beginning to make it difficult to beat the market.” That language matters. It’s not “we can’t execute trades” — it’s “alpha decays as size grows.” The fund continued to operate, was later reopened in 2008, and exists today.
+
+### 1.3 The actual lesson
+
+The real Magellan lesson is more subtle and more useful for IOWN:
+
+1. **Concentration is a function of conviction, not a fixed number.** Lynch could have stayed at 25–30 stocks. He didn’t, because his information-gathering style required broader contact with management teams. The optimal stock count depends on how research is sourced, not on a universal rule.
+1. **Diseconomies of scale are real but mostly express through alpha decay, not trading mechanics.** The Pástor-Stambaugh-Taylor (2020) study “Fund Tradeoffs” provides convincing evidence of decreasing returns to scale in active management, with the effect strongest for funds trading larger portions of their portfolio or holding less liquid securities. Magellan checked both boxes.
+1. **The breakpoint for a concentrated manager is when your Nth-best idea is statistically indistinguishable from your (N+30)th-best idea.** That’s an alpha problem, not a trading problem. By 1997 Magellan was reportedly holding hundreds of low-conviction “tracking” positions that contributed nothing to returns but absorbed assets.
+
+For IOWN, this means the conversation should not be “when are we forced to add stocks because we can’t trade” — it should be “when does adding stocks improve our information ratio rather than dilute it?”
+
+-----
+
+## 2. The Capacity Math Framework
+
+### 2.1 The single equation
+
+The constraint binding portfolio capacity to stock count is:
+
+```
+Position Size ≤ k × ADV(stock)
+```
+
+Where:
+
+- `Position Size` = AUM ÷ N (assuming roughly equal-weight)
+- `ADV` = 3-month average daily dollar trading volume of the smallest stock you want to be able to fully own
+- `k` = institutional position-cap multiplier (1× = comfortable, 2× = stretch)
+
+Rearranged for AUM:
+
+```
+Max AUM = N × k × ADV(floor)
+```
+
+Or, solving for stocks needed at a given AUM:
+
+```
+N(min) = AUM ÷ (k × ADV(floor))
+```
+
+### 2.2 Where the multipliers come from
+
+**The 2× ADV cap (CFA institutional standard):** The CFA Institute Level III curriculum on portfolio construction explicitly cites “no position shall exceed twice the 3-month average daily trading volume” as a heuristic risk constraint widely used by institutional asset managers. This is the upper bound of acceptable position size relative to liquidity.
+
+**The 1× ADV cap (comfortable / our recommendation):** Below 1× ADV, a full-position liquidation can be completed in roughly 10 trading days at a 10% participation rate of daily volume — a level at which empirical market impact research consistently shows price drift remains within bid-ask noise.
+
+**The square-root law (why participation rate matters):** Empirical work dating back to Torre (1997) and formalized by Almgren et al. (2003) finds that market impact `I(Q)` of a metaorder of size `Q` against daily volume `V` follows:
+
+```
+I(Q) = Y × σ × √(Q/V)
+```
+
+Where σ is daily volatility and Y is a constant of order one. This relationship is “surprisingly universal” — independent of venue, asset class, time period, and geographic region. Doubling order size only increases impact by ~41%; quadrupling it only doubles impact. The good news: trading is more forgiving than naïve linear models suggest. The bad news: impact is non-zero at every size and grows monotonically.
+
+### 2.3 The “ADV floor” question
+
+The framework is only useful if we know what ADV stocks IOWN actually wants to be able to hold. The working assumption — the “$1M–$30M ADV sweet spot” — is the classic small-cap-alpha range. This is where:
+
+- Sell-side analyst coverage thins out
+- Institutional ownership has not yet saturated
+- Pricing inefficiencies persist long enough to be exploited
+- A “Research Reveals Opportunities” methodology has the highest expected payoff
+
+We will run capacity tables at five ADV floor levels:
+
+|ADV Floor|Universe Description         |Approximate Equivalent Market Cap|
+|---------|-----------------------------|---------------------------------|
+|$1M      |Deep small-cap               |~$200M–$800M                     |
+|$5M      |Small-cap                    |~$800M–$2B                       |
+|$10M     |Lower mid-cap                |~$2B–$5B                         |
+|$30M     |Mid-cap (top of “sweet spot”)|~$5B–$15B                        |
+|$100M    |Large-cap                    |~$20B+                           |
+
+*Note: Market cap to ADV ratios vary widely by sector and float; these are directional anchors, not exact mappings.*
+
+-----
+
+## 3. Capacity Tables
+
+### 3.1 Maximum AUM at 25 stocks (current strategy structure)
+
+If IOWN holds the 25-stock count fixed, here is the maximum AUM the model can absorb at each ADV floor under the comfortable (1×) and stretch (2×) standards:
+
+|ADV Floor|Position Size at Cap|Comfortable Max AUM (1× ADV)|Stretch Max AUM (2× ADV)|
+|---------|--------------------|----------------------------|------------------------|
+|$1M      |$1M                 |**$25M**                    |$50M                    |
+|$5M      |$5M                 |**$125M**                   |$250M                   |
+|$10M     |$10M                |**$250M**                   |$500M                   |
+|$20M     |$20M                |**$500M**                   |$1.0B                   |
+|$30M     |$30M                |**$750M**                   |$1.5B                   |
+|$50M     |$50M                |**$1.25B**                  |$2.5B                   |
+|$100M    |$100M               |**$2.5B**                   |$5.0B                   |
+|$250M    |$250M               |**$6.25B**                  |$12.5B                  |
+
+**Key reading:** The Dividend strategy at ~$402M effective AUM today is already past the comfortable threshold for any stock with under ~$16M ADV, and past the stretch threshold for anything under ~$8M ADV. The bottom of the “sweet spot” is structurally inaccessible at current size. The Growth Hybrid strategy at $4.5M has effectively unlimited capacity headroom at 25 stocks.
+
+### 3.2 Stocks required at each AUM milestone
+
+Rotating the table to answer “how many stocks do we need to hold the small-cap floor open at each AUM tier”:
+
+|AUM  |$1M ADV floor  |$5M ADV floor|$10M ADV floor|$30M ADV floor|$100M ADV floor|
+|-----|---------------|-------------|--------------|--------------|---------------|
+|$500M|500 / 250      |100 / 50     |50 / 25       |**17 / 9**    |5 / 3          |
+|$1B  |1,000 / 500    |200 / 100    |100 / 50      |33 / 17       |**10 / 5**     |
+|$3B  |3,000 / 1,500  |600 / 300    |300 / 150     |100 / 50      |**30 / 15**    |
+|$5B  |5,000 / 2,500  |1,000 / 500  |500 / 250     |167 / 83      |**50 / 25**    |
+|$10B |10,000 / 5,000 |2,000 / 1,000|1,000 / 500   |333 / 167     |**100 / 50**   |
+|$25B |25,000 / 12,500|5,000 / 2,500|2,500 / 1,250 |833 / 417     |**250 / 125**  |
+
+*Format: `comfortable / stretch` minimum stock count. Bold cells indicate roughly where 25 stocks remains workable.*
+
+### 3.3 What IOWN actually owns today
+
+The “ADV floor” question is somewhat academic if we look at actual holdings. The Q2 2026 rebalance added new names to both strategies. Splitting by strategy:
+
+**Dividend strategy additions (Models 7 and 7A):**
+
+|Ticker|Name          |Approx. 3M ADV (USD)|
+|------|--------------|--------------------|
+|NTR   |Nutrien       |~$200M              |
+|CTRA  |Coterra Energy|~$250M              |
+
+**Growth Hybrid strategy additions (Model BT):**
+
+|Ticker|Name              |Approx. 3M ADV (USD)|
+|------|------------------|--------------------|
+|FCX   |Freeport-McMoRan  |~$700M              |
+|VST   |Vistra            |~$900M              |
+|MRVL  |Marvell Technology|~$800M              |
+|CRDO  |Credo Technology  |~$200M              |
+
+*Approximate ADV figures; exact 3-month rolling ADV should be pulled from Bloomberg or Schwab Advisor Center for committee documentation.*
+
+The implicit message: **the actual binding constraint at IOWN today is not capacity — it’s the rubric.** The Excellence/AI Resilience/Infinite Game scoring framework, by design, tilts toward large, well-capitalized, dividend-paying or high-quality-growth franchises. None of those names sit in the deep small-cap pond. The “sweet spot” question is therefore really asking: *as we grow, do we want to keep optionality on small/mid-cap names, or do we accept a structural large-cap tilt?*
+
+-----
+
+## 4. Where IOWN Sits on the Curve
+
+### 4.1 Current position
+
+|Metric                |Dividend Strategy (Models 7 + 7A)|Growth Hybrid Strategy (Model BT)|Firm Total|
+|----------------------|---------------------------------|---------------------------------|----------|
+|AUM                   |~$402M                           |~$4.5M                           |~$406.5M  |
+|Stocks (target)       |25                               |25                               |52 unique*|
+|Position size (avg)   |~$16.1M                          |~$0.18M                          |—         |
+|Implied ADV floor (1×)|~$16M                            |<$1M                             |—         |
+|Implied ADV floor (2×)|~$8M                             |<$1M                             |—         |
+
+*52 unique tickers = 25 Dividend + 25 Growth Hybrid + 2 digital asset ETFs (IBIT, ETHA).*
+
+The Dividend strategy is already in the “mid-cap and up only” zone under the comfortable standard. Growth Hybrid retains full small-cap optionality but won’t drive the firm’s AUM trajectory at current size.
+
+### 4.2 The growth trajectory question
+
+Three plausible AUM trajectories over the next 5 years (rough, for committee discussion). Numbers refer to the Dividend strategy, since it’s the binding capacity question at IOWN today.
+
+|Scenario                            |2031 Dividend AUM|Implied Position Size at 25 stocks|ADV floor required (1×)|
+|------------------------------------|-----------------|----------------------------------|-----------------------|
+|Base (10% organic + market 8%)      |~$700M           |$28M                              |$28M                   |
+|Bull (Paradiem flywheel works)      |~$1.5B           |$60M                              |$60M                   |
+|Aspirational (institutional channel)|~$5B             |$200M                             |$200M                  |
+
+The bull and aspirational cases push the Dividend strategy entirely into large/mega-cap territory at 25 stocks. That is an identity question as much as a math question.
+
+-----
+
+## 5. Path Forward
+
+### 5.1 Three architecture options
+
+**Option A — Stay at 25 stocks per strategy, accept large-cap drift**
+
+Keep the stock count fixed at 25 names per strategy and let the rubric naturally select up-cap as AUM grows. Communicate this clearly to clients as a deliberate concentration philosophy.
+
+- *Pros:* Operational simplicity, narrative consistency (“Think Like an Owner”), no rebalance complexity, lowest research overhead.
+- *Cons:* Forfeits small/mid-cap alpha permanently above ~$1B AUM. Increasingly correlated to S&P 500 by construction. Becomes harder to differentiate from other large-cap concentrated managers.
+- *Best for:* AUM trajectories under $1.5B over 5 years.
+
+**Option B — Expand to 50–75 stocks within the existing strategies**
+
+Add holdings linearly with AUM, targeting roughly 1 new position per $20–30M of AUM growth in the binding strategy.
+
+- *Pros:* Preserves small/mid-cap optionality. Two strategies, one operational footprint per strategy. Gradual transition.
+- *Cons:* Dilutes concentration narrative. “25 high-conviction names” is a marketable story; “65 names” is harder to differentiate from a smart-beta or factor strategy. Research workload scales linearly with stock count.
+- *Best for:* AUM trajectories of $1B–$5B with continued small/mid-cap mandate.
+
+**Option C — Tiered “Two Cores + Extension” architecture (recommended)**
+
+Maintain the Dividend and Growth Hybrid strategies at 25 stocks each as the high-conviction cores. Launch a third strategy — call it the Extension sleeve — that holds 50–75 small/mid-cap names the cores can’t accommodate at scale. Clients are allocated across the three based on suitability and account size.
+
+- *Pros:* Preserves the IOWN concentrated identity in both existing strategies. Creates explicit capacity headroom (the extension sleeve can absorb $500M–$2B by itself before needing further expansion). Mirrors the Fidelity Contrafund / Low-Priced Stock approach that worked structurally for 30+ years post-Lynch. Allows selective small-cap expression without diluting either flagship.
+- *Cons:* Three-strategy operational complexity (versus today’s two). Requires separate research process and allocation policy. Tax-lot management at the household level becomes more involved. Marketing nuance: “two concentrated cores plus a diversified extension” is a more sophisticated story.
+- *Best for:* AUM trajectories above $1B where small/mid-cap optionality is strategically valuable.
+
+### 5.2 Recommended capacity gates
+
+Regardless of architecture chosen, the investment committee should adopt explicit capacity gates with pre-defined responses. Trigger AUM levels refer to the Dividend strategy, since it’s the binding capacity question.
+
+|Trigger AUM (Dividend)|Action Required                                                                                                  |
+|----------------------|-----------------------------------------------------------------------------------------------------------------|
+|$750M                 |Re-run this analysis; confirm Dividend strategy is still inside the 1× ADV cap on every name held.               |
+|$1B                   |Decision point: commit to Option A, B, or C. Begin extension-sleeve research universe build if Option C.         |
+|$1.5B                 |If still 25 stocks: formal large-cap-only mandate disclosure. If extension launched: capacity test the extension.|
+|$3B                   |Review whether to soft-close Dividend strategy to new accounts; consider institutional share class structure.    |
+|$5B                   |Hard re-evaluation. Add a third strategy or soft-close. The Magellan threshold begins here.                      |
+
+### 5.3 Why the tiered approach maps to IOWN’s identity
+
+The four ownership principles — Think Like an Owner, Simplicity Over Complexity, Research Reveals Opportunities, Avoid Erosion — can each be re-read through the capacity question:
+
+- **Think Like an Owner:** A real owner doesn’t dilute their best 25 ideas to accommodate new capital. The two cores stay concentrated.
+- **Simplicity Over Complexity:** Two clearly-defined cores plus a discrete extension sleeve is simpler than constantly-expanding strategies with shifting selection criteria.
+- **Research Reveals Opportunities:** The research opportunities at $5M–$50M ADV are real and persistent; an extension sleeve is the only way to express them at scale.
+- **Avoid Erosion:** The Magellan lesson is that uncontrolled growth without architectural response *is* the erosion. Capacity gates are the antidote.
+
+### 5.4 Open questions for committee discussion
+
+1. **Identity:** Does “Think Like an Owner” require a specific stock count, or is concentration relative to the available universe? (Lynch’s view: relative.)
+1. **Faith alignment:** Does the Inspire Insight screening universe meaningfully shrink at the small-cap end? If yes, the small-cap optionality question may be partly moot.
+1. **Client suitability:** What does the typical Paradiem family-capital client *want* — concentration story or returns story? These can be the same up to ~$1B AUM.
+1. **Operational readiness:** Can Orion + Schwab support a two-sleeve allocation policy without manual reconciliation overhead?
+1. **Research bandwidth:** Adding a 50-name extension sleeve roughly doubles research workload. Does the team scale that way, or does it require Tillinghast-style “low-conviction tracking” positions (the bad version of Magellan)?
+
+-----
+
+## 6. Methodology Notes & Assumptions
+
+### 6.1 Equal-weight assumption
+
+All capacity calculations assume roughly equal-weight construction (Position = AUM ÷ N). IOWN’s actual models are not strictly equal-weight, but deviation is bounded enough that this is a reasonable first-order approximation. A weighted-by-conviction model would relax constraints on the largest positions and tighten them on smaller positions — net effect on capacity is small.
+
+### 6.2 ADV floor versus ADV average
+
+The framework uses the *floor* — the smallest ADV stock you want access to — because that’s the binding constraint. Once you can hold the smallest name, every larger-ADV name fits comfortably. Using ADV averages would overstate capacity.
+
+### 6.3 Trading horizon
+
+Implicit in the 1× ADV / 2× ADV framework is an assumed liquidation/build window of 5–20 trading days. Faster windows tighten capacity; slower windows (a quarter-long entry) loosen it. IOWN’s quarterly rebalance cadence aligns roughly with the 10–20 day build assumption.
+
+### 6.4 What the framework does *not* capture
+
+- **Correlation across rebalance trades:** When IOWN exits multiple energy names simultaneously, it’s not just trading against per-stock liquidity but against sector-level liquidity. Real market impact is higher than the per-stock calculation suggests.
+- **Information leakage:** A predictable quarterly rebalance signature can be front-run by HFT. This is a small but real cost above modeled impact.
+- **Volatility adjustment:** The square-root law includes a σ term. High-volatility names cost more to trade per dollar than low-volatility names of identical ADV.
+- **Regime dependence:** ADV in a market stress event can be 50–80% lower than the trailing 3-month average. Capacity tables built on calm-market ADV understate stress-period constraints.
+
+These all argue for staying *inside* the 1× ADV comfortable line rather than relying on the 2× stretch line in real-world execution planning.
+
+-----
+
+## 7. Recommended Next Steps
+
+1. **Pull actual 3-month ADV** for every Dividend strategy holding (Models 7 and 7A) from Bloomberg or a Schwab data export. Confirm none are currently above 1× position size at the combined ~$402M Dividend AUM. (Estimated 1 hour.)
+1. **Decision memo to Eric** — Option A, B, or C — by next investment committee meeting, with this report as supporting backup.
+1. **If Option C selected:** Begin building the extension-sleeve research universe using existing rubric, screened to $5M–$50M ADV range. Initial target: 100-name watchlist, 50-name model portfolio.
+1. **Capacity gate adoption:** Add the $750M / $1B / $1.5B / $3B / $5B Dividend-strategy trigger AUM table to the firm’s investment policy statement.
+1. **Annual capacity review:** Add a standing item to the Q4 investment committee agenda: re-run this analysis with current AUM and current holdings.
+
+-----
+
+## Sources & References
+
+### Primary historical sources
+
+1. **Wikipedia — Peter Lynch** (https://en.wikipedia.org/wiki/Peter_Lynch). Lynch tenure dates, AUM growth, 29.2% return figure, holdings count.
+1. **Wikipedia — Fidelity Magellan Fund** (https://en.wikipedia.org/wiki/Fidelity_Magellan_Fund). 1997 closure date and stated rationale, AUM peak data.
+1. **QuantifiedStrategies.com — Peter Lynch Strategy and Portfolio** (https://www.quantifiedstrategies.com/peter-lynch-strategy/). Holdings count progression (40 → 1,200), career timeline.
+1. **Roth & Co — Fighting the Last War** (https://rothcocpa.com/trend/fighting-the-last-war/). Magellan investor outcome study (the “average investor lost money” finding).
+
+### Institutional position-sizing standards
+
+1. **AnalystPrep — CFA Level III Portfolio Construction** (https://analystprep.com/study-notes/cfa-level-iii/portfolio-construction-4/). Heuristic risk constraints including the 2× ADV position cap.
+
+### Market impact research
+
+1. **Almgren, R., Thum, C., Hauptmann, E., & Li, H. (2005).** “Direct estimation of equity market impact.” *Risk*. Foundational empirical work establishing the square-root law.
+1. **Donier, J. & Bouchaud, J.-P. (2015).** “Square root law for price impact: Empirical evidence and theory.” Imperial College London. Comprehensive review of the universality of the square-root law across asset classes, venues, and time periods.
+1. **Tóth, B., et al. (2011).** “Anomalous price impact and the critical nature of liquidity in financial markets.” *Physical Review X*. Latent liquidity model underlying the square-root impact relationship.
+1. **Brokmann, X., et al. (2014).** Empirical metaorder analysis of impact functions with ~1.6M trades.
+
+### Fund size and active management research
+
+1. **Berk, J. & Green, R. (2004).** “Mutual Fund Flows and Performance in Rational Markets.” *Journal of Political Economy*. The foundational diseconomies-of-scale model.
+1. **Pástor, L., Stambaugh, R., & Taylor, L. (2020).** “Fund Tradeoffs.” *Journal of Financial Economics*. Decreasing returns to scale, with effect strongest for funds trading larger portions of the portfolio or holding less liquid securities.
+1. **Pástor, L. & Stambaugh, R. (2014).** “Scale and Skill in Active Management.” NBER Working Paper 19891 (https://www.nber.org/system/files/working_papers/w19891/w19891.pdf).
+1. **Alpha Architect — Diseconomies of Scale in Investing** (https://alphaarchitect.com/scale-in-investing/). Practitioner-readable summary of the academic literature.
+1. **Adams, J. C., Hayunga, D. K., Mansi, S., & Reeb, D. M. (2021).** “Scale and Performance in Active Management Are Not Negatively Related.” *Critical Finance Review*. The contrarian view — useful as a counterargument to keep in mind.
+
+### Additional context
+
+1. **Retirement Researcher — One of the Most Successful Active Managers Shows Why Active Management Doesn’t Work** (https://retirementresearcher.com/occams-razor-one-of-the-most-successful-active-managers-of-all-time-shows-why-active-management-doesnt-work/). Three-factor regression analysis of Lynch’s monthly returns; finding of ~10% annualized alpha after factor-adjustment.
+
+-----
+
+*This report was prepared as an internal research deliverable. All figures and projections are estimates based on publicly available data and stated methodological assumptions. Capacity calculations are directional, not prescriptive — actual execution costs depend on real-time market conditions, sector correlations, and trading style. For any decision with policy implications, ADV figures should be re-pulled from primary data sources (Bloomberg, Schwab Advisor Center) within the prior 30 days.*
