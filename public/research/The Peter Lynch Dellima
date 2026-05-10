@@ -3,14 +3,14 @@
 **Prepared for:** Eric Dunavant, Founder & CIO
 **Prepared by:** Carson Rich, Research Analyst
 **Firm:** Intentional Ownership (IOWN) — Paradiem
-**Date:** May 6, 2026
+**Date:** May 10, 2026 *(v2 — strategy-level reframe per Eric’s review)*
 **Classification:** Internal — Investment Committee
 
 -----
 
 ## Executive Summary
 
-IOWN currently runs three concentrated equity models against a combined ~$516M AUM, with the flagship Model 7A at ~$385M held in a 25-stock portfolio. Eric has asked whether — and at what level of AUM — that 25-stock structure stops being viable. The instinctive reference point is Peter Lynch’s Fidelity Magellan Fund, which famously grew from $18M to $14B in 13 years and was eventually closed to new investors in 1997 because size was eroding alpha.
+IOWN runs two concentrated equity strategies across three model wrappers, with a combined ~$406.5M in equity AUM. The Dividend strategy holds 25 names and is implemented identically in Model 7A (~$385M) and Model 7 (~$17M), for a combined ~$402M Dividend book. The Growth Hybrid strategy holds 25 names in Model BT (~$4.5M). Eric has asked whether — and at what level of AUM — the 25-stock structure stops being viable. The instinctive reference point is Peter Lynch’s Fidelity Magellan Fund, which famously grew from $18M to $14B in 13 years and was eventually closed to new investors in 1997 because size was eroding alpha.
 
 This report does three things:
 
@@ -18,7 +18,9 @@ This report does three things:
 1. **Builds an explicit capacity framework** anchored to the CFA Institute position-size standard (≤2× 3-month ADV), the Almgren-Chriss / square-root law of market impact, and academic research on diseconomies of scale in active management (Berk-Green 2004, Pástor-Stambaugh-Taylor 2020).
 1. **Recommends a path forward** — specifically, a tiered “core + extension” architecture with explicit capacity gates at $1B, $3B, and $10B AUM milestones, plus a cultural/identity discussion about what “Think Like an Owner” means at scale.
 
-**Bottom line:** At today’s $385M AUM, the 25-stock Model 7A has already implicitly excluded any name with average daily volume below roughly $10–15M — meaning the bottom half of Carson’s “$1M–$30M ADV sweet spot” is already off the table. As AUM grows, IOWN needs to either (a) accept a higher ADV floor (large-cap drift), (b) add positions to the existing models, or (c) launch a separate small/mid-cap-extension sleeve. The third option preserves the concentrated identity at the top of the house while creating real headroom.
+**Bottom line:** The Dividend strategy at ~$402M effective AUM has already implicitly excluded any name with average daily volume below roughly $10–15M — meaning the bottom half of the “$1M–$30M ADV sweet spot” is already off the table. As AUM grows, IOWN needs to either (a) accept a higher ADV floor (large-cap drift), (b) add positions to the existing strategies, or (c) launch a separate small/mid-cap-extension sleeve. The third option preserves the concentrated identity of the two existing strategies while creating real headroom.
+
+**Note on framing (v2):** An earlier draft of this report treated Models 7, 7A, and BT as three independent capacity questions because that’s how they appear in Orion and Schwab. Since Models 7 and 7A run the identical 25-stock Dividend book, capacity binds at the strategy level, not the model level. This version consolidates accordingly. Substantive conclusions are unchanged; framing is cleaner.
 
 -----
 
@@ -102,7 +104,7 @@ Where σ is daily volatility and Y is a constant of order one. This relationship
 
 ### 2.3 The “ADV floor” question
 
-The framework is only useful if we know what ADV stocks IOWN actually wants to be able to hold. Carson’s working assumption — the “$1M–$30M ADV sweet spot” — is the classic small-cap-alpha range. This is where:
+The framework is only useful if we know what ADV stocks IOWN actually wants to be able to hold. The working assumption — the “$1M–$30M ADV sweet spot” — is the classic small-cap-alpha range. This is where:
 
 - Sell-side analyst coverage thins out
 - Institutional ownership has not yet saturated
@@ -125,7 +127,7 @@ We will run capacity tables at five ADV floor levels:
 
 ## 3. Capacity Tables
 
-### 3.1 Maximum AUM at 25 stocks (current Model 7A structure)
+### 3.1 Maximum AUM at 25 stocks (current strategy structure)
 
 If IOWN holds the 25-stock count fixed, here is the maximum AUM the model can absorb at each ADV floor under the comfortable (1×) and stretch (2×) standards:
 
@@ -140,7 +142,7 @@ If IOWN holds the 25-stock count fixed, here is the maximum AUM the model can ab
 |$100M    |$100M               |**$2.5B**                   |$5.0B                   |
 |$250M    |$250M               |**$6.25B**                  |$12.5B                  |
 
-**Key reading:** Model 7A at $385M today is already past the comfortable threshold for any stock with under ~$15M ADV, and past the stretch threshold for anything under ~$8M ADV. The bottom of the “sweet spot” is structurally inaccessible at current size.
+**Key reading:** The Dividend strategy at ~$402M effective AUM today is already past the comfortable threshold for any stock with under ~$16M ADV, and past the stretch threshold for anything under ~$8M ADV. The bottom of the “sweet spot” is structurally inaccessible at current size. The Growth Hybrid strategy at $4.5M has effectively unlimited capacity headroom at 25 stocks.
 
 ### 3.2 Stocks required at each AUM milestone
 
@@ -159,12 +161,19 @@ Rotating the table to answer “how many stocks do we need to hold the small-cap
 
 ### 3.3 What IOWN actually owns today
 
-The “ADV floor” question is somewhat academic if we look at actual holdings. The Q2 2026 rebalance added NTR, CTRA, FCX, CRDO, VST, and MRVL. Approximate 3-month ADVs as of recent quarter:
+The “ADV floor” question is somewhat academic if we look at actual holdings. The Q2 2026 rebalance added new names to both strategies. Splitting by strategy:
+
+**Dividend strategy additions (Models 7 and 7A):**
+
+|Ticker|Name          |Approx. 3M ADV (USD)|
+|------|--------------|--------------------|
+|NTR   |Nutrien       |~$200M              |
+|CTRA  |Coterra Energy|~$250M              |
+
+**Growth Hybrid strategy additions (Model BT):**
 
 |Ticker|Name              |Approx. 3M ADV (USD)|
 |------|------------------|--------------------|
-|NTR   |Nutrien           |~$200M              |
-|CTRA  |Coterra Energy    |~$250M              |
 |FCX   |Freeport-McMoRan  |~$700M              |
 |VST   |Vistra            |~$900M              |
 |MRVL  |Marvell Technology|~$800M              |
@@ -180,27 +189,29 @@ The implicit message: **the actual binding constraint at IOWN today is not capac
 
 ### 4.1 Current position
 
-|Metric                |Model 7A|Model 7|Model BT|Firm Total|
-|----------------------|--------|-------|--------|----------|
-|AUM                   |~$385M  |~$17M  |~$4.5M  |~$406.5M  |
-|Stocks (target)       |25      |25     |25      |52 unique |
-|Position size (avg)   |~$15.4M |~$0.7M |~$0.2M  |—         |
-|Implied ADV floor (1×)|~$15M   |~$1M   |<$1M    |—         |
-|Implied ADV floor (2×)|~$7.5M  |<$1M   |<$1M    |—         |
+|Metric                |Dividend Strategy (Models 7 + 7A)|Growth Hybrid Strategy (Model BT)|Firm Total|
+|----------------------|---------------------------------|---------------------------------|----------|
+|AUM                   |~$402M                           |~$4.5M                           |~$406.5M  |
+|Stocks (target)       |25                               |25                               |52 unique*|
+|Position size (avg)   |~$16.1M                          |~$0.18M                          |—         |
+|Implied ADV floor (1×)|~$16M                            |<$1M                             |—         |
+|Implied ADV floor (2×)|~$8M                             |<$1M                             |—         |
 
-Model 7A is already in the “mid-cap and up only” zone under the comfortable standard. The smaller models retain full small-cap optionality but won’t drive the firm’s AUM trajectory.
+*52 unique tickers = 25 Dividend + 25 Growth Hybrid + 2 digital asset ETFs (IBIT, ETHA).*
+
+The Dividend strategy is already in the “mid-cap and up only” zone under the comfortable standard. Growth Hybrid retains full small-cap optionality but won’t drive the firm’s AUM trajectory at current size.
 
 ### 4.2 The growth trajectory question
 
-Three plausible AUM trajectories over the next 5 years (rough, for committee discussion):
+Three plausible AUM trajectories over the next 5 years (rough, for committee discussion). Numbers refer to the Dividend strategy, since it’s the binding capacity question at IOWN today.
 
-|Scenario                            |2031 AUM|Implied Position Size at 25 stocks|ADV floor required (1×)|
-|------------------------------------|--------|----------------------------------|-----------------------|
-|Base (10% organic + market 8%)      |~$700M  |$28M                              |$28M                   |
-|Bull (Paradiem flywheel works)      |~$1.5B  |$60M                              |$60M                   |
-|Aspirational (institutional channel)|~$5B    |$200M                             |$200M                  |
+|Scenario                            |2031 Dividend AUM|Implied Position Size at 25 stocks|ADV floor required (1×)|
+|------------------------------------|-----------------|----------------------------------|-----------------------|
+|Base (10% organic + market 8%)      |~$700M           |$28M                              |$28M                   |
+|Bull (Paradiem flywheel works)      |~$1.5B           |$60M                              |$60M                   |
+|Aspirational (institutional channel)|~$5B             |$200M                             |$200M                  |
 
-The bull and aspirational cases push Model 7A entirely into large/mega-cap territory at 25 stocks. That is an identity question as much as a math question.
+The bull and aspirational cases push the Dividend strategy entirely into large/mega-cap territory at 25 stocks. That is an identity question as much as a math question.
 
 -----
 
@@ -208,48 +219,48 @@ The bull and aspirational cases push Model 7A entirely into large/mega-cap terri
 
 ### 5.1 Three architecture options
 
-**Option A — Stay at 25 stocks, accept large-cap drift**
+**Option A — Stay at 25 stocks per strategy, accept large-cap drift**
 
-Keep the model count fixed and let the rubric naturally select up-cap as AUM grows. Communicate this clearly to clients as a deliberate concentration philosophy.
+Keep the stock count fixed at 25 names per strategy and let the rubric naturally select up-cap as AUM grows. Communicate this clearly to clients as a deliberate concentration philosophy.
 
 - *Pros:* Operational simplicity, narrative consistency (“Think Like an Owner”), no rebalance complexity, lowest research overhead.
 - *Cons:* Forfeits small/mid-cap alpha permanently above ~$1B AUM. Increasingly correlated to S&P 500 by construction. Becomes harder to differentiate from other large-cap concentrated managers.
 - *Best for:* AUM trajectories under $1.5B over 5 years.
 
-**Option B — Expand to 50–75 stocks in the existing models**
+**Option B — Expand to 50–75 stocks within the existing strategies**
 
-Add holdings linearly with AUM, targeting roughly 1 new position per $20–30M of AUM growth.
+Add holdings linearly with AUM, targeting roughly 1 new position per $20–30M of AUM growth in the binding strategy.
 
-- *Pros:* Preserves small/mid-cap optionality. One model, one operational footprint. Gradual transition.
+- *Pros:* Preserves small/mid-cap optionality. Two strategies, one operational footprint per strategy. Gradual transition.
 - *Cons:* Dilutes concentration narrative. “25 high-conviction names” is a marketable story; “65 names” is harder to differentiate from a smart-beta or factor strategy. Research workload scales linearly with stock count.
 - *Best for:* AUM trajectories of $1B–$5B with continued small/mid-cap mandate.
 
-**Option C — Tiered “Core + Extension” architecture (recommended)**
+**Option C — Tiered “Two Cores + Extension” architecture (recommended)**
 
-Maintain Model 7A at 25 stocks as the high-conviction core. Launch a new sleeve — call it Model 7E (Extension) — that holds 50–75 small/mid-cap names that the core can’t accommodate at scale. Clients are allocated between the two based on suitability and account size.
+Maintain the Dividend and Growth Hybrid strategies at 25 stocks each as the high-conviction cores. Launch a third strategy — call it the Extension sleeve — that holds 50–75 small/mid-cap names the cores can’t accommodate at scale. Clients are allocated across the three based on suitability and account size.
 
-- *Pros:* Preserves the IOWN concentrated identity at the top of the house. Creates explicit capacity headroom (the extension sleeve can absorb $500M–$2B by itself before needing further expansion). Mirrors the Fidelity Contrafund / Low-Priced Stock approach that worked structurally for 30+ years post-Lynch. Allows selective small-cap expression without diluting the flagship.
-- *Cons:* Two-portfolio operational complexity. Requires separate research process and allocation policy. Tax-lot management at the household level becomes more involved. Marketing nuance: “concentrated core, diversified extension” is a more sophisticated story.
+- *Pros:* Preserves the IOWN concentrated identity in both existing strategies. Creates explicit capacity headroom (the extension sleeve can absorb $500M–$2B by itself before needing further expansion). Mirrors the Fidelity Contrafund / Low-Priced Stock approach that worked structurally for 30+ years post-Lynch. Allows selective small-cap expression without diluting either flagship.
+- *Cons:* Three-strategy operational complexity (versus today’s two). Requires separate research process and allocation policy. Tax-lot management at the household level becomes more involved. Marketing nuance: “two concentrated cores plus a diversified extension” is a more sophisticated story.
 - *Best for:* AUM trajectories above $1B where small/mid-cap optionality is strategically valuable.
 
 ### 5.2 Recommended capacity gates
 
-Regardless of architecture chosen, the investment committee should adopt explicit capacity gates with pre-defined responses:
+Regardless of architecture chosen, the investment committee should adopt explicit capacity gates with pre-defined responses. Trigger AUM levels refer to the Dividend strategy, since it’s the binding capacity question.
 
-|Trigger AUM|Action Required                                                                                                  |
-|-----------|-----------------------------------------------------------------------------------------------------------------|
-|$750M      |Re-run this analysis; confirm Model 7A is still inside the 1× ADV cap on every name held.                        |
-|$1B        |Decision point: commit to Option A, B, or C. Begin extension-sleeve research universe build if Option C.         |
-|$1.5B      |If still 25 stocks: formal large-cap-only mandate disclosure. If extension launched: capacity test the extension.|
-|$3B        |Review whether to soft-close Model 7A to new accounts; consider institutional share class structure.             |
-|$5B        |Hard re-evaluation. Add a third strategy or soft-close. The Magellan threshold begins here.                      |
+|Trigger AUM (Dividend)|Action Required                                                                                                  |
+|----------------------|-----------------------------------------------------------------------------------------------------------------|
+|$750M                 |Re-run this analysis; confirm Dividend strategy is still inside the 1× ADV cap on every name held.               |
+|$1B                   |Decision point: commit to Option A, B, or C. Begin extension-sleeve research universe build if Option C.         |
+|$1.5B                 |If still 25 stocks: formal large-cap-only mandate disclosure. If extension launched: capacity test the extension.|
+|$3B                   |Review whether to soft-close Dividend strategy to new accounts; consider institutional share class structure.    |
+|$5B                   |Hard re-evaluation. Add a third strategy or soft-close. The Magellan threshold begins here.                      |
 
 ### 5.3 Why the tiered approach maps to IOWN’s identity
 
 The four ownership principles — Think Like an Owner, Simplicity Over Complexity, Research Reveals Opportunities, Avoid Erosion — can each be re-read through the capacity question:
 
-- **Think Like an Owner:** A real owner doesn’t dilute their best 25 ideas to accommodate new capital. The core stays concentrated.
-- **Simplicity Over Complexity:** Two clearly-defined portfolios is simpler than one constantly-expanding portfolio with shifting selection criteria.
+- **Think Like an Owner:** A real owner doesn’t dilute their best 25 ideas to accommodate new capital. The two cores stay concentrated.
+- **Simplicity Over Complexity:** Two clearly-defined cores plus a discrete extension sleeve is simpler than constantly-expanding strategies with shifting selection criteria.
 - **Research Reveals Opportunities:** The research opportunities at $5M–$50M ADV are real and persistent; an extension sleeve is the only way to express them at scale.
 - **Avoid Erosion:** The Magellan lesson is that uncontrolled growth without architectural response *is* the erosion. Capacity gates are the antidote.
 
@@ -290,10 +301,10 @@ These all argue for staying *inside* the 1× ADV comfortable line rather than re
 
 ## 7. Recommended Next Steps
 
-1. **Pull actual 3-month ADV** for every Model 7A holding from Bloomberg or a Schwab data export. Confirm none are currently above 1× position size. (Estimated 1 hour.)
+1. **Pull actual 3-month ADV** for every Dividend strategy holding (Models 7 and 7A) from Bloomberg or a Schwab data export. Confirm none are currently above 1× position size at the combined ~$402M Dividend AUM. (Estimated 1 hour.)
 1. **Decision memo to Eric** — Option A, B, or C — by next investment committee meeting, with this report as supporting backup.
 1. **If Option C selected:** Begin building the extension-sleeve research universe using existing rubric, screened to $5M–$50M ADV range. Initial target: 100-name watchlist, 50-name model portfolio.
-1. **Capacity gate adoption:** Add the $750M / $1B / $1.5B / $3B / $5B trigger AUM table to the firm’s investment policy statement.
+1. **Capacity gate adoption:** Add the $750M / $1B / $1.5B / $3B / $5B Dividend-strategy trigger AUM table to the firm’s investment policy statement.
 1. **Annual capacity review:** Add a standing item to the Q4 investment committee agenda: re-run this analysis with current AUM and current holdings.
 
 -----
