@@ -384,8 +384,8 @@
     "date": "2026-05-11 14:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "3.98",
+    "actual": "4.02",
+    "previous": "4.01",
     "forecast": "4.05",
     "unit": ""
   },
@@ -394,8 +394,8 @@
     "date": "2026-05-11 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-3.6",
+    "actual": "0.2",
+    "previous": "-2.9",
     "forecast": "",
     "unit": "%"
   },
@@ -436,7 +436,7 @@
     "impact": "High",
     "actual": "",
     "previous": "2.6",
-    "forecast": "",
+    "forecast": "2.7",
     "unit": "%"
   },
   {
@@ -476,7 +476,7 @@
     "impact": "High",
     "actual": "",
     "previous": "3.3",
-    "forecast": "3.4",
+    "forecast": "3.7",
     "unit": "%"
   },
   {
@@ -536,7 +536,7 @@
     "impact": "High",
     "actual": "",
     "previous": "0.5",
-    "forecast": "0.4",
+    "forecast": "0.5",
     "unit": "%"
   },
   {
@@ -596,7 +596,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "1.6",
-    "forecast": "",
+    "forecast": "1.1",
     "unit": "%"
   },
   {
@@ -606,7 +606,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.8",
-    "forecast": "1.1",
+    "forecast": "0.9",
     "unit": "%"
   },
   {
@@ -646,7 +646,7 @@
     "impact": "High",
     "actual": "",
     "previous": "1.7",
-    "forecast": "0.6",
+    "forecast": "0.5",
     "unit": "%"
   },
   {
@@ -696,7 +696,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "11",
-    "forecast": "8.1",
+    "forecast": "7.8",
     "unit": ""
   },
   {
@@ -706,7 +706,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-0.5",
-    "forecast": "0.2",
+    "forecast": "0.3",
     "unit": "%"
   },
   {
