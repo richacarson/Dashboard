@@ -4224,7 +4224,7 @@
     "date": "2026-05-12",
     "hour": "",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.77,
     "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
