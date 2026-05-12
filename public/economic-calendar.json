@@ -114,8 +114,8 @@
     "date": "2026-05-12 18:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-164.1",
+    "actual": "215",
+    "previous": "-164",
     "forecast": "220",
     "unit": "$"
   },
