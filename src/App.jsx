@@ -5303,6 +5303,10 @@ Instructions:
           const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
 
           const BEAR_MARKETS = [
+            { name: "Great Depression", peakDate: "1929-09", troughDate: "1932-06", drawdown: -86.2, durationMo: 33.0, recoveryMo: 267.0 },
+            { name: "1937-38 Recession", peakDate: "1937-03", troughDate: "1938-03", drawdown: -54.5, durationMo: 12.8, recoveryMo: 95.6 },
+            { name: "WWII / Pearl Harbor", peakDate: "1940-11", troughDate: "1942-04", drawdown: -34.5, durationMo: 17.6, recoveryMo: 25.2 },
+            { name: "Post-WWII Crash", peakDate: "1946-05", troughDate: "1947-05", drawdown: -28.8, durationMo: 11.6, recoveryMo: 39.5 },
             { name: "Eisenhower Recession", peakDate: "1956-08", troughDate: "1957-10", drawdown: -21.6, durationMo: 14.7, recoveryMo: 11.0 },
             { name: "Kennedy Slide", peakDate: "1961-12", troughDate: "1962-06", drawdown: -28.0, durationMo: 6.5, recoveryMo: 14.3 },
             { name: "Credit Crunch", peakDate: "1966-02", troughDate: "1966-10", drawdown: -22.2, durationMo: 7.9, recoveryMo: 6.9 },
@@ -5316,6 +5320,10 @@ Instructions:
             { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
           ];
           const BULL_MARKETS = [
+            { period: "1932-1937", gain: 324.8, durationMo: 57.0 },
+            { period: "1938-1938", gain: 62.2, durationMo: 7.3 },
+            { period: "1942-1946", gain: 157.7, durationMo: 49.0 },
+            { period: "1947-1956", gain: 267.0, durationMo: 86.0 },
             { period: "1957-1961", gain: 86.3, durationMo: 49.7 },
             { period: "1962-1966", gain: 79.8, durationMo: 43.5 },
             { period: "1966-1968", gain: 48.0, durationMo: 25.7 },
@@ -5328,21 +5336,18 @@ Instructions:
             { period: "2020-2022", gain: 114.4, durationMo: 21.3 },
             { period: "2022-present", gain: Math.round(pctFromTrough * 10) / 10, durationMo: Math.round(((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)) * 10) / 10 },
           ];
-          const avgBullGain = 177.1;
-          const medBullGain = 107.2;
-          const avgBearDraw = -34.7;
-          const avgBearDur = 13.6;
-          const avgRecovery = 24.6;
+          const avgBullGain = 189.4;
+          const medBullGain = 125.6;
+          const avgBearDraw = -39.1;
+          const avgBearDur = 15.0;
+          const avgRecovery = 46.5;
           const medRecovery = 15.3;
 
           const TRIM_TIERS = [
             { pctAboveTrough: 75, trimPct: 3, note: "Early expansion" },
             { pctAboveTrough: 100, trimPct: 5, note: "At median bull gain" },
-            { pctAboveTrough: 125, trimPct: 8, note: "Above median" },
-            { pctAboveTrough: 150, trimPct: 10, note: "Extended bull" },
-            { pctAboveTrough: 175, trimPct: 13, note: "At average gain" },
-            { pctAboveTrough: 200, trimPct: 15, note: "Well above average" },
-            { pctAboveTrough: 250, trimPct: 18, note: "Exceptional bull" },
+            { pctAboveTrough: 150, trimPct: 8, note: "Extended bull" },
+            { pctAboveTrough: 200, trimPct: 10, note: "Max cash — at average gain" },
           ];
           const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
 
@@ -5550,7 +5555,7 @@ Instructions:
 
                   {/* Bear markets table */}
                   <div style={cardStyle}>
-                    {sectionTitle("S&P 500 Bear Markets Since 1950")}
+                    {sectionTitle("S&P 500 Bear Markets Since 1929")}
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 500 }}>
                         <thead>
@@ -5585,7 +5590,7 @@ Instructions:
 
                   {/* Bull markets table */}
                   <div style={cardStyle}>
-                    {sectionTitle("S&P 500 Bull Markets Since 1950")}
+                    {sectionTitle("S&P 500 Bull Markets Since 1929")}
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 400 }}>
                         <thead>
@@ -5609,7 +5614,7 @@ Instructions:
                           <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
                             <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+{avgBullGain}%</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>62.5 mo</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>60.3 mo</td>
                           </tr>
                         </tbody>
                       </table>
