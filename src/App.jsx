@@ -866,7 +866,7 @@ Instructions:
   const [researchOpenFolders, setResearchOpenFolders] = useState({}); // { category: true/false }
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "screener", "settings"];
+  const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "playbook", "screener", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -991,6 +991,7 @@ Instructions:
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
+  const [pbView, setPbView] = useState("regime");
   const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
@@ -2576,6 +2577,7 @@ Instructions:
     { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
     { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" /><line x1="10" y1="8" x2="18" y2="8" /><line x1="10" y1="12" x2="18" y2="12" /><line x1="10" y1="16" x2="14" y2="16" /></svg> },
     { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
+    { id: "playbook", label: "Playbook", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><path d="M12 6v7l3-2 3 2V6" /></svg> },
     { id: "screener", label: "Screener", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
@@ -2663,7 +2665,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "charts" ? "Charts" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "screener" ? "Screener" : "Settings"}
+            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "charts" ? "Charts" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "playbook" ? "Playbook" : tab === "screener" ? "Screener" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -5278,6 +5280,387 @@ Instructions:
                     </div>
                   </div>
                 </>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* ━━━ PLAYBOOK ━━━ */}
+        {tab === "playbook" && (() => {
+          const SP_TROUGH = { date: "2022-10-12", level: 3577.03, label: "Inflation / Rate Hikes" };
+          const SP_ATH = { date: "2026-05-11", level: 7412.84 };
+          const spyQ = bmQuotes.SPY || quotesRef.current?.SPY;
+          const spyPrice = spyQ?.p || 0;
+          const spyPc = (bmBars.SPY || barsRef.current?.SPY)?.pc || 0;
+          const spyRatio = spyPrice && SP_ATH.level ? spyPrice / (SP_ATH.level / 10) : 0;
+          const currentSP = spyPrice ? spyPrice * 10 : SP_ATH.level;
+          const pctFromTrough = ((currentSP / SP_TROUGH.level) - 1) * 100;
+          const pctFromATH = ((currentSP / SP_ATH.level) - 1) * 100;
+          const drawdown = Math.min(pctFromATH, 0);
+          const isBear = drawdown <= -20;
+          const regime = isBear ? "BEAR" : "BULL";
+          const regimeColor = isBear ? C.dn : C.up;
+          const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
+
+          const BEAR_MARKETS = [
+            { name: "Eisenhower Recession", peakDate: "1956-08", troughDate: "1957-10", drawdown: -21.6, durationMo: 14.7, recoveryMo: 11.0 },
+            { name: "Kennedy Slide", peakDate: "1961-12", troughDate: "1962-06", drawdown: -28.0, durationMo: 6.5, recoveryMo: 14.3 },
+            { name: "Credit Crunch", peakDate: "1966-02", troughDate: "1966-10", drawdown: -22.2, durationMo: 7.9, recoveryMo: 6.9 },
+            { name: "Vietnam / Recession", peakDate: "1968-11", troughDate: "1970-05", drawdown: -36.1, durationMo: 17.9, recoveryMo: 21.4 },
+            { name: "OPEC Oil Embargo", peakDate: "1973-01", troughDate: "1974-10", drawdown: -48.2, durationMo: 20.7, recoveryMo: 69.5 },
+            { name: "Volcker Tightening", peakDate: "1980-11", troughDate: "1982-08", drawdown: -27.1, durationMo: 20.5, recoveryMo: 2.8 },
+            { name: "Black Monday", peakDate: "1987-08", troughDate: "1987-12", drawdown: -33.5, durationMo: 3.3, recoveryMo: 19.7 },
+            { name: "Dot-Com Bust", peakDate: "2000-03", troughDate: "2002-10", drawdown: -49.1, durationMo: 30.5, recoveryMo: 55.6 },
+            { name: "Global Financial Crisis", peakDate: "2007-10", troughDate: "2009-03", drawdown: -56.8, durationMo: 17.0, recoveryMo: 48.8 },
+            { name: "COVID-19 Crash", peakDate: "2020-02", troughDate: "2020-03", drawdown: -33.9, durationMo: 1.1, recoveryMo: 4.9 },
+            { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
+          ];
+          const BULL_MARKETS = [
+            { period: "1957-1961", gain: 86.3, durationMo: 49.7 },
+            { period: "1962-1966", gain: 79.8, durationMo: 43.5 },
+            { period: "1966-1968", gain: 48.0, durationMo: 25.7 },
+            { period: "1970-1973", gain: 73.5, durationMo: 31.5 },
+            { period: "1974-1980", gain: 125.6, durationMo: 73.9 },
+            { period: "1982-1987", gain: 228.8, durationMo: 60.4 },
+            { period: "1987-2000", gain: 582.0, durationMo: 147.6 },
+            { period: "2002-2007", gain: 101.5, durationMo: 60.0 },
+            { period: "2009-2020", gain: 400.5, durationMo: 131.4 },
+            { period: "2020-2022", gain: 114.4, durationMo: 21.3 },
+            { period: "2022-present", gain: Math.round(pctFromTrough * 10) / 10, durationMo: Math.round(((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)) * 10) / 10 },
+          ];
+          const avgBullGain = 177.1;
+          const medBullGain = 107.2;
+          const avgBearDraw = -34.7;
+          const avgBearDur = 13.6;
+          const avgRecovery = 24.6;
+          const medRecovery = 15.3;
+
+          const TRIM_TIERS = [
+            { pctAboveTrough: 75, trimPct: 3, note: "Early expansion" },
+            { pctAboveTrough: 100, trimPct: 5, note: "At median bull gain" },
+            { pctAboveTrough: 125, trimPct: 8, note: "Above median" },
+            { pctAboveTrough: 150, trimPct: 10, note: "Extended bull" },
+            { pctAboveTrough: 175, trimPct: 13, note: "At average gain" },
+            { pctAboveTrough: 200, trimPct: 15, note: "Well above average" },
+            { pctAboveTrough: 250, trimPct: 18, note: "Exceptional bull" },
+          ];
+          const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
+
+          const BEAR_TRANCHES = [
+            { drawdownTrigger: -20, action: "Sell 1/3 of Year-5 bonds", deploy: "Deploy to IOWN equities" },
+            { drawdownTrigger: -25, action: "Sell 1/3 of Year-5 bonds", deploy: "Deploy to IOWN equities" },
+            { drawdownTrigger: -30, action: "Sell remaining Year-5 bonds", deploy: "Deploy to IOWN equities" },
+          ];
+
+          const peakToRecovery = BEAR_MARKETS.map(b => b.durationMo + b.recoveryMo);
+          const avgP2R = peakToRecovery.reduce((a, b) => a + b, 0) / peakToRecovery.length;
+          const medP2R = [...peakToRecovery].sort((a, b) => a - b)[Math.floor(peakToRecovery.length / 2)];
+          const maxP2R = Math.max(...peakToRecovery);
+          const bondYearsNeeded = Math.ceil(avgP2R / 12);
+          const bondYearsWorstCase = Math.ceil(maxP2R / 12);
+
+          const cardStyle = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "20px 18px", marginBottom: 14 };
+          const sectionTitle = (t) => <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 14 }}>{t}</div>;
+          const statBox = (label, val, color) => (
+            <div style={{ background: C.bg, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: color || C.t1, fontVariantNumeric: "tabular-nums" }}>{val}</div>
+            </div>
+          );
+
+          return (
+            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Playbook</div>}
+
+              {/* Sub-nav */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Rules" }, { v: "bear", l: "Bear Playbook" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Analysis" }].map(({ v, l }) => (
+                  <button key={v} onClick={() => setPbView(v)} style={{
+                    flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${pbView === v ? C.borderActive : C.border}`,
+                    background: pbView === v ? C.accentSoft : "transparent",
+                    color: pbView === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>{l}</button>
+                ))}
+              </div>
+
+              {/* ── LIVE REGIME TRACKER ── */}
+              {pbView === "regime" && (
+                <div>
+                  {/* Regime badge */}
+                  <div style={{ ...cardStyle, textAlign: "center", position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: regimeColor }} />
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Current Market Regime</div>
+                    <div style={{ fontSize: 42, fontWeight: 900, color: regimeColor, letterSpacing: 4, marginBottom: 4 }}>{regime}</div>
+                    <div style={{ fontSize: 13, color: C.t3 }}>S&P 500 est. {currentSP.toLocaleString(undefined, { maximumFractionDigits: 0 })} {spyDayChg !== 0 && <span style={{ color: spyDayChg >= 0 ? C.up : C.dn, fontWeight: 700 }}>{spyDayChg >= 0 ? "+" : ""}{spyDayChg.toFixed(2)}%</span>}</div>
+                  </div>
+
+                  {/* Key metrics */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                    {statBox("From Trough", `+${pctFromTrough.toFixed(1)}%`, C.up)}
+                    {statBox("From ATH", `${pctFromATH >= 0 ? "+" : ""}${pctFromATH.toFixed(1)}%`, pctFromATH >= 0 ? C.up : C.dn)}
+                    {statBox("Bull Duration", `${Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000))} mo`, C.t1)}
+                    {statBox("Avg Bull", `${avgBullGain}% / ${Math.round(62.5)} mo`, C.t3)}
+                  </div>
+
+                  {/* Progress bar: where are we in the average bull? */}
+                  <div style={cardStyle}>
+                    {sectionTitle("Bull Market Progress")}
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 10 }}>Current gain from trough vs. historical bull market gains</div>
+                    <div style={{ position: "relative", height: 32, background: C.bg, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.min(pctFromTrough / (avgBullGain * 1.5) * 100, 100)}%`, background: `linear-gradient(90deg, ${C.up}40, ${C.up})`, borderRadius: 8, transition: "width 0.5s" }} />
+                      {/* Median marker */}
+                      <div style={{ position: "absolute", left: `${medBullGain / (avgBullGain * 1.5) * 100}%`, top: 0, bottom: 0, width: 2, background: C.accent, opacity: 0.8 }} />
+                      {/* Average marker */}
+                      <div style={{ position: "absolute", left: `${avgBullGain / (avgBullGain * 1.5) * 100}%`, top: 0, bottom: 0, width: 2, background: "#FBBF24", opacity: 0.8 }} />
+                      <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 800, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>+{pctFromTrough.toFixed(0)}%</div>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}>
+                      <span>Trough</span>
+                      <span style={{ color: C.accent }}>Median +{medBullGain}%</span>
+                      <span style={{ color: "#FBBF24" }}>Avg +{avgBullGain}%</span>
+                    </div>
+                  </div>
+
+                  {/* Current trim status */}
+                  {currentTrimTier && (
+                    <div style={{ ...cardStyle, border: `1px solid ${C.accent}44` }}>
+                      {sectionTitle("Active Trim Level")}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: 13, color: C.t3 }}>At +{pctFromTrough.toFixed(0)}% from trough</div>
+                          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, BT, C, D</div>
+                        </div>
+                        <div style={{ fontSize: 28, fontWeight: 900, color: C.accent }}>{currentTrimTier.trimPct}%</div>
+                      </div>
+                      <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>of total portfolio balance should be in cash</div>
+                    </div>
+                  )}
+
+                  {/* Bear market distance */}
+                  <div style={cardStyle}>
+                    {sectionTitle("Distance to Bear Market")}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                      {statBox("Current", currentSP.toLocaleString(undefined, { maximumFractionDigits: 0 }), C.t1)}
+                      {statBox("-20% Level", Math.round(SP_ATH.level * 0.8).toLocaleString(), C.dn)}
+                      {statBox("Distance", `${(((currentSP / (SP_ATH.level * 0.8)) - 1) * 100).toFixed(1)}%`, pctFromATH > -10 ? C.up : C.dn)}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── BULL MARKET TRIM RULES ── */}
+              {pbView === "bull" && (
+                <div>
+                  <div style={cardStyle}>
+                    {sectionTitle("Bull Market Cash Trim Rules")}
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D (non-bond clients). Trim portfolio to cash at each tier. Based on historical average bull market gain of +{avgBullGain}% and median of +{medBullGain}%.</div>
+                    <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ background: C.bg }}>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>S&P From Trough</th>
+                            <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>Cash Target</th>
+                            <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>Context</th>
+                            <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {TRIM_TIERS.map((t, i) => {
+                            const active = pctFromTrough >= t.pctAboveTrough;
+                            const isCurrent = currentTrimTier === t;
+                            return (
+                              <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: isCurrent ? C.accentSoft : "transparent" }}>
+                                <td style={{ padding: "10px 12px", fontWeight: 700, color: isCurrent ? C.t1 : C.t2 }}>+{t.pctAboveTrough}%</td>
+                                <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: 800, color: isCurrent ? C.accent : C.t2 }}>{t.trimPct}%</td>
+                                <td style={{ padding: "10px 12px", color: C.t3 }}>{t.note}</td>
+                                <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                  {active ? <span style={{ color: C.up, fontWeight: 700 }}>Active</span> : <span style={{ color: C.t4 }}>Pending</span>}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div style={cardStyle}>
+                    {sectionTitle("How It Works")}
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
+                      <p style={{ marginBottom: 10 }}>As the S&P 500 rises further above the last bear market trough, the probability of a correction increases. These tiers define how much of the portfolio should be held in cash as a defensive buffer.</p>
+                      <p style={{ marginBottom: 10 }}>Tiers are <strong style={{ color: C.t1 }}>cumulative targets</strong>, not incremental. When the market crosses +125% from trough, the total cash position should be 8% — not an additional 8% on top of the prior tier.</p>
+                      <p>When a bear market is confirmed (-20% from peak), stop trimming and switch to the <strong style={{ color: C.t1 }}>Bear Market Playbook</strong> for deployment rules.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── BEAR MARKET BOND PLAYBOOK ── */}
+              {pbView === "bear" && (
+                <div>
+                  <div style={cardStyle}>
+                    {sectionTitle("Bear Market Deployment Tranches")}
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>For bond-ladder clients: sell Year-5 bonds at each drawdown tranche and deploy into IOWN equity portfolios. Rebuild Year-5 when market recovers.</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {BEAR_TRANCHES.map((t, i) => {
+                        const triggered = drawdown <= t.drawdownTrigger;
+                        return (
+                          <div key={i} style={{ background: triggered ? (C.dn + "18") : C.bg, border: `1px solid ${triggered ? C.dn + "44" : C.border}`, borderRadius: 12, padding: 16 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <span style={{ fontSize: 22, fontWeight: 900, color: triggered ? C.dn : C.t2 }}>{t.drawdownTrigger}%</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: triggered ? C.dn : C.t4, padding: "4px 10px", borderRadius: 6, background: triggered ? C.dn + "20" : C.card }}>{triggered ? "TRIGGERED" : "STANDBY"}</span>
+                            </div>
+                            <div style={{ fontSize: 12, color: C.t3 }}>{t.action}</div>
+                            <div style={{ fontSize: 11, color: C.accent, marginTop: 2 }}>{t.deploy}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={cardStyle}>
+                    {sectionTitle("5-Year Bond Ladder Structure")}
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
+                      <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
+                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Selling in thirds across three tranches (-20%, -25%, -30%) ensures dollar-cost averaging into the downturn.</p>
+                      <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
+                      <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, BT, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── HISTORICAL BULL/BEAR MARKETS ── */}
+              {pbView === "history" && (
+                <div>
+                  {/* Summary stats */}
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
+                    {statBox("Avg Bear Drawdown", `${avgBearDraw}%`, C.dn)}
+                    {statBox("Avg Bear Duration", `${avgBearDur} mo`, C.t1)}
+                    {statBox("Avg Recovery", `${avgRecovery} mo`, C.t1)}
+                    {statBox("Avg Bull Gain", `+${avgBullGain}%`, C.up)}
+                  </div>
+
+                  {/* Bear markets table */}
+                  <div style={cardStyle}>
+                    {sectionTitle("S&P 500 Bear Markets Since 1950")}
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 500 }}>
+                        <thead>
+                          <tr style={{ background: C.bg }}>
+                            {["Event", "Peak", "Trough", "Drawdown", "Duration", "Recovery"].map(h => (
+                              <th key={h} style={{ padding: "8px 10px", textAlign: h === "Event" ? "left" : "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {BEAR_MARKETS.map((b, i) => (
+                            <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "8px 10px", fontWeight: 600, color: C.t2, whiteSpace: "nowrap" }}>{b.name}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.peakDate}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.troughDate}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: C.dn }}>{b.drawdown}%</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.durationMo} mo</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.recoveryMo} mo</td>
+                            </tr>
+                          ))}
+                          <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
+                            <td colSpan={2} />
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.dn }}>{avgBearDraw}%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgBearDur} mo</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgRecovery} mo</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Bull markets table */}
+                  <div style={cardStyle}>
+                    {sectionTitle("S&P 500 Bull Markets Since 1950")}
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 400 }}>
+                        <thead>
+                          <tr style={{ background: C.bg }}>
+                            {["Period", "Total Gain", "Duration"].map(h => (
+                              <th key={h} style={{ padding: "8px 10px", textAlign: h === "Period" ? "left" : "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {BULL_MARKETS.map((b, i) => {
+                            const isCurrent = b.period.includes("present");
+                            return (
+                              <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: isCurrent ? C.accentSoft : "transparent" }}>
+                                <td style={{ padding: "8px 10px", fontWeight: 600, color: isCurrent ? C.t1 : C.t2 }}>{b.period} {isCurrent && <span style={{ fontSize: 9, color: C.accent, fontWeight: 700 }}>CURRENT</span>}</td>
+                                <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: C.up }}>+{b.gain}%</td>
+                                <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.durationMo} mo</td>
+                              </tr>
+                            );
+                          })}
+                          <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+{avgBullGain}%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>62.5 mo</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── BOND DURATION ANALYSIS ── */}
+              {pbView === "bonds" && (
+                <div>
+                  <div style={cardStyle}>
+                    {sectionTitle("How Many Years of Bonds Do You Actually Need?")}
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7, marginBottom: 14 }}>
+                      <p style={{ marginBottom: 10 }}>The bond ladder must cover the worst-case time from market peak through the bear trough and back to the prior peak. If bonds run out before recovery, the client is forced to sell equities at a loss.</p>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
+                      {statBox("Avg Peak-to-Recovery", `${avgP2R.toFixed(0)} mo`, C.t1)}
+                      {statBox("Median Peak-to-Recovery", `${medP2R.toFixed(0)} mo`, C.t1)}
+                      {statBox("Worst Case", `${maxP2R.toFixed(0)} mo`, C.dn)}
+                      {statBox("Recommended", `${bondYearsNeeded} years`, C.accent)}
+                    </div>
+                  </div>
+
+                  <div style={cardStyle}>
+                    {sectionTitle("Peak-to-Recovery by Bear Market")}
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Total months from market peak through bear trough to full recovery of prior highs.</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {BEAR_MARKETS.map((b, i) => {
+                        const total = b.durationMo + b.recoveryMo;
+                        const years = total / 12;
+                        const maxTotal = maxP2R;
+                        return (
+                          <div key={i}>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
+                              <span style={{ color: C.t2, fontWeight: 600 }}>{b.name}</span>
+                              <span style={{ color: C.t3 }}>{total.toFixed(0)} mo ({years.toFixed(1)} yr)</span>
+                            </div>
+                            <div style={{ height: 8, background: C.bg, borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ height: "100%", width: `${(total / maxTotal) * 100}%`, background: years > 5 ? C.dn : years > 3 ? "#FBBF24" : C.up, borderRadius: 4 }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div style={cardStyle}>
+                    {sectionTitle("Recommendation")}
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
+                      <p style={{ marginBottom: 10 }}>Based on 11 bear markets since 1950, the average peak-to-recovery period is <strong style={{ color: C.t1 }}>{avgP2R.toFixed(0)} months ({(avgP2R / 12).toFixed(1)} years)</strong>. The median is <strong style={{ color: C.t1 }}>{medP2R.toFixed(0)} months ({(medP2R / 12).toFixed(1)} years)</strong>.</p>
+                      <p style={{ marginBottom: 10 }}>A <strong style={{ color: C.accent }}>{bondYearsNeeded}-year bond ladder</strong> covers the average scenario. However, the two worst cases — Dot-Com ({(BEAR_MARKETS[7].durationMo + BEAR_MARKETS[7].recoveryMo).toFixed(0)} months) and OPEC ({(BEAR_MARKETS[4].durationMo + BEAR_MARKETS[4].recoveryMo).toFixed(0)} months) — exceeded 7 years.</p>
+                      <p style={{ marginBottom: 10 }}>The current <strong style={{ color: C.t1 }}>5-year standard covers {Math.round(BEAR_MARKETS.filter(b => (b.durationMo + b.recoveryMo) <= 60).length / BEAR_MARKETS.length * 100)}%</strong> of historical bear markets. Only the OPEC Embargo ({(BEAR_MARKETS[4].durationMo + BEAR_MARKETS[4].recoveryMo / 12).toFixed(1)} yr total), Dot-Com Bust ({((BEAR_MARKETS[7].durationMo + BEAR_MARKETS[7].recoveryMo) / 12).toFixed(1)} yr), and GFC ({((BEAR_MARKETS[8].durationMo + BEAR_MARKETS[8].recoveryMo) / 12).toFixed(1)} yr) breached the 5-year window.</p>
+                      <p><strong style={{ color: C.t1 }}>Dynamic rule:</strong> hold {bondYearsNeeded} years as the baseline. Consider extending to {bondYearsNeeded + 1}-{bondYearsWorstCase} years when yield curve inverts or leading indicators signal elevated recession risk.</p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           );
