@@ -144,18 +144,18 @@
     "date": "2026-05-13 11:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "6.46",
     "previous": "6.45",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Core PPI MoM",
     "date": "2026-05-13 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.1",
+    "actual": "1",
+    "previous": "0.2",
     "forecast": "0.3",
     "unit": "%"
   },
@@ -164,8 +164,8 @@
     "date": "2026-05-13 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "0.5",
+    "actual": "1.4",
+    "previous": "0.7",
     "forecast": "0.5",
     "unit": "%"
   },
@@ -174,9 +174,9 @@
     "date": "2026-05-13 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-2.314",
-    "forecast": "-2",
+    "actual": "-4.306",
+    "previous": "-2.313",
+    "forecast": "-2.1",
     "unit": ""
   },
   {
@@ -184,9 +184,9 @@
     "date": "2026-05-13 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-4.084",
     "previous": "-2.504",
-    "forecast": "-2.55",
+    "forecast": "-2.85",
     "unit": ""
   },
   {
@@ -236,7 +236,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.8",
-    "forecast": "0.9",
+    "forecast": "1",
     "unit": "%"
   },
   {
@@ -256,7 +256,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.7",
-    "forecast": "",
+    "forecast": "0.4",
     "unit": "%"
   },
   {
@@ -286,7 +286,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.4",
-    "forecast": "0.3",
+    "forecast": "0.8",
     "unit": "%"
   },
   {
@@ -326,7 +326,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "11",
-    "forecast": "7.8",
+    "forecast": "7.5",
     "unit": ""
   },
   {
@@ -375,7 +375,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "33",
     "forecast": "",
     "unit": ""
   },
@@ -387,7 +387,7 @@
     "actual": "",
     "previous": "1.5",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Pending Home Sales YoY",
@@ -397,7 +397,7 @@
     "actual": "",
     "previous": "-1.1",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "API Crude Oil Stock Change",
@@ -405,7 +405,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-2.188",
     "forecast": "",
     "unit": ""
   },
@@ -435,7 +435,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.46",
     "forecast": "",
     "unit": ""
   },
@@ -475,9 +475,9 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-11.4",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Building Permits Prel",
@@ -507,7 +507,7 @@
     "actual": "",
     "previous": "10.8",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Initial Jobless Claims",
@@ -535,7 +535,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "51.7",
     "forecast": "",
     "unit": ""
   },
@@ -545,7 +545,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "54.5",
     "forecast": "",
     "unit": ""
   },
