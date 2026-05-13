@@ -5302,10 +5302,17 @@ Instructions:
           const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
 
           const BEAR_MARKETS = [
-            { name: "Great Depression", peakDate: "1929-09", troughDate: "1932-06", drawdown: -86.2, durationMo: 33.0, recoveryMo: 267.0 },
+            { name: "1929 Crash", peakDate: "1929-09", troughDate: "1929-11", drawdown: -44.7, durationMo: 2.2, recoveryMo: 5.0 },
+            { name: "Great Depression", peakDate: "1930-04", troughDate: "1932-06", drawdown: -83.0, durationMo: 25.7, recoveryMo: 267.0 },
+            { name: "1932-33 Decline", peakDate: "1932-09", troughDate: "1933-02", drawdown: -40.6, durationMo: 5.7, recoveryMo: 1.8 },
+            { name: "1933 Decline", peakDate: "1933-07", troughDate: "1933-10", drawdown: -29.8, durationMo: 3.1, recoveryMo: 17.2 },
+            { name: "1934-35 Decline", peakDate: "1934-02", troughDate: "1935-03", drawdown: -31.8, durationMo: 13.2, recoveryMo: 12.8 },
             { name: "1937-38 Recession", peakDate: "1937-03", troughDate: "1938-03", drawdown: -54.5, durationMo: 12.8, recoveryMo: 95.6 },
+            { name: "1938-39 War Fears", peakDate: "1938-11", troughDate: "1939-04", drawdown: -26.2, durationMo: 4.9, recoveryMo: 6.9 },
+            { name: "1939-40 Fall of France", peakDate: "1939-10", troughDate: "1940-06", drawdown: -31.9, durationMo: 7.5, recoveryMo: 13.2 },
             { name: "WWII / Pearl Harbor", peakDate: "1940-11", troughDate: "1942-04", drawdown: -34.5, durationMo: 17.6, recoveryMo: 25.2 },
             { name: "Post-WWII Crash", peakDate: "1946-05", troughDate: "1947-05", drawdown: -28.8, durationMo: 11.6, recoveryMo: 39.5 },
+            { name: "1948-49 Recession", peakDate: "1948-06", troughDate: "1949-06", drawdown: -20.6, durationMo: 11.9, recoveryMo: 12.0 },
             { name: "Eisenhower Recession", peakDate: "1956-08", troughDate: "1957-10", drawdown: -21.6, durationMo: 14.7, recoveryMo: 11.0 },
             { name: "Kennedy Slide", peakDate: "1961-12", troughDate: "1962-06", drawdown: -28.0, durationMo: 6.5, recoveryMo: 14.3 },
             { name: "Credit Crunch", peakDate: "1966-02", troughDate: "1966-10", drawdown: -22.2, durationMo: 7.9, recoveryMo: 6.9 },
@@ -5319,10 +5326,17 @@ Instructions:
             { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
           ];
           const BULL_MARKETS = [
-            { period: "1932-1937", gain: 324.8, durationMo: 57.0 },
-            { period: "1938-1938", gain: 62.2, durationMo: 7.3 },
+            { period: "1929-1930", gain: 46.8, durationMo: 5.0 },
+            { period: "1932-1932", gain: 111.6, durationMo: 3.0 },
+            { period: "1933-1933", gain: 120.6, durationMo: 5.0 },
+            { period: "1933-1934", gain: 37.9, durationMo: 4.0 },
+            { period: "1935-1937", gain: 131.8, durationMo: 24.0 },
+            { period: "1938-1938", gain: 62.2, durationMo: 8.0 },
+            { period: "1939-1939", gain: 29.8, durationMo: 6.0 },
+            { period: "1940-1940", gain: 26.8, durationMo: 5.0 },
             { period: "1942-1946", gain: 157.7, durationMo: 49.0 },
-            { period: "1947-1956", gain: 267.0, durationMo: 86.0 },
+            { period: "1947-1948", gain: 20.8, durationMo: 13.0 },
+            { period: "1949-1956", gain: 267.0, durationMo: 86.0 },
             { period: "1957-1961", gain: 86.3, durationMo: 49.7 },
             { period: "1962-1966", gain: 79.8, durationMo: 43.5 },
             { period: "1966-1968", gain: 48.0, durationMo: 25.7 },
@@ -5335,12 +5349,12 @@ Instructions:
             { period: "2020-2022", gain: 114.4, durationMo: 21.3 },
             { period: "2022-present", gain: Math.round(pctFromTrough * 10) / 10, durationMo: Math.round(((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)) * 10) / 10 },
           ];
-          const avgBullGain = 189.4;
-          const medBullGain = 125.6;
-          const avgBearDraw = -39.1;
-          const avgBearDur = 15.0;
-          const avgRecovery = 46.5;
-          const medRecovery = 21.4;
+          const avgBullGain = 135.9;
+          const medBullGain = 101.5;
+          const avgBearDraw = -36.7;
+          const avgBearDur = 12.1;
+          const avgRecovery = 34.8;
+          const medRecovery = 15.3;
 
           const TRIM_TIERS = [
             { pctAboveTrough: 75, trimPct: 1, note: "Scout tier — minimal drag, catches short bulls" },
@@ -5705,7 +5719,7 @@ Instructions:
                           <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
                             <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+{avgBullGain}%</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>60.3 mo</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>40.6 mo</td>
                           </tr>
                         </tbody>
                       </table>
