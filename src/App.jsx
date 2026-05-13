@@ -5292,7 +5292,6 @@ Instructions:
           const spyQ = bmQuotes.SPY || quotesRef.current?.SPY;
           const spyPrice = spyQ?.p || 0;
           const spyPc = (bmBars.SPY || barsRef.current?.SPY)?.pc || 0;
-          const spyRatio = spyPrice && SP_ATH.level ? spyPrice / (SP_ATH.level / 10) : 0;
           const currentSP = spyPrice ? spyPrice * 10 : SP_ATH.level;
           const pctFromTrough = ((currentSP / SP_TROUGH.level) - 1) * 100;
           const pctFromATH = ((currentSP / SP_ATH.level) - 1) * 100;
@@ -5341,13 +5340,13 @@ Instructions:
           const avgBearDraw = -39.1;
           const avgBearDur = 15.0;
           const avgRecovery = 46.5;
-          const medRecovery = 15.3;
+          const medRecovery = 21.4;
 
           const TRIM_TIERS = [
             { pctAboveTrough: 80, trimPct: 2, note: "71% of bulls reach — minimal drag (22 bps/yr)" },
             { pctAboveTrough: 120, trimPct: 5, note: "50% of bulls reach — mid-cycle inflection" },
             { pctAboveTrough: 175, trimPct: 8, note: "36% of bulls reach — extended territory" },
-            { pctAboveTrough: 250, trimPct: 12, note: "29% of bulls — all followed by >33% bears" },
+            { pctAboveTrough: 250, trimPct: 12, note: "29% of bulls — 75% followed by >33% bears" },
           ];
           const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
 
@@ -5402,10 +5401,10 @@ Instructions:
 
                   {/* Key metrics */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                    {statBox("From Trough", `+${pctFromTrough.toFixed(1)}%`, C.up)}
+                    {statBox("From Trough", `${pctFromTrough >= 0 ? "+" : ""}${pctFromTrough.toFixed(1)}%`, pctFromTrough >= 0 ? C.up : C.dn)}
                     {statBox("From ATH", `${pctFromATH >= 0 ? "+" : ""}${pctFromATH.toFixed(1)}%`, pctFromATH >= 0 ? C.up : C.dn)}
                     {statBox("Bull Duration", `${Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000))} mo`, C.t1)}
-                    {statBox("Avg Bull", `${avgBullGain}% / ${Math.round(62.5)} mo`, C.t3)}
+                    {statBox("Avg Bull", `${avgBullGain}% / 60 mo`, C.t3)}
                   </div>
 
                   {/* Progress bar: where are we in the average bull? */}
@@ -5452,7 +5451,9 @@ Instructions:
                       return (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                           {statBox("Bear Threshold", Math.round(bearLevel).toLocaleString(), C.dn)}
-                          {statBox("Drop Needed", `-${dropNeeded.toFixed(1)}%`, dropNeeded > 15 ? C.up : dropNeeded > 8 ? "#FBBF24" : C.dn)}
+                          {dropNeeded > 0
+                            ? statBox("Drop Needed", `-${dropNeeded.toFixed(1)}%`, dropNeeded > 15 ? C.up : dropNeeded > 8 ? "#FBBF24" : C.dn)
+                            : statBox("Status", "In Bear Market", C.dn)}
                         </div>
                       );
                     })()}
@@ -5500,7 +5501,7 @@ Instructions:
                     {sectionTitle("How It Works")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
                       <p style={{ marginBottom: 10 }}>As the S&P 500 rises further above the last bear market trough, the probability of a correction increases. These tiers define how much of the portfolio should be held in cash as a defensive buffer.</p>
-                      <p style={{ marginBottom: 10 }}>Tiers are <strong style={{ color: C.t1 }}>cumulative targets</strong>, not incremental. When the market crosses +125% from trough, the total cash position should be 8% — not an additional 8% on top of the prior tier.</p>
+                      <p style={{ marginBottom: 10 }}>Tiers are <strong style={{ color: C.t1 }}>cumulative targets</strong>, not incremental. When the market crosses +175% from trough, the total cash position should be 8% — not an additional 8% on top of the prior tier.</p>
                       <p>When a bear market is confirmed (-20% from peak), stop trimming and switch to the <strong style={{ color: C.t1 }}>Bear Market Playbook</strong> for deployment rules.</p>
                     </div>
                   </div>
@@ -5630,13 +5631,13 @@ Instructions:
                 const coveragePct5yr = Math.round(bearsCovered5yr / BEAR_MARKETS.length * 100);
                 const riskLevel = pctFromTrough > 150 ? "elevated" : pctFromTrough > 100 ? "moderate" : "low";
                 const riskColor = riskLevel === "elevated" ? C.dn : riskLevel === "moderate" ? "#FBBF24" : C.up;
-                const recommendedYears = riskLevel === "elevated" ? 6 : 5;
+                const recommendedYears = riskLevel === "elevated" ? 6 : riskLevel === "moderate" ? 5 : 4;
                 const LADDER_YEARS = [
                   { year: 1, purpose: "Current-year living expenses", action: "Matures annually — fund withdrawals" },
                   { year: 2, purpose: "Next-year living expenses", action: "Rolls to Year 1 on maturity" },
                   { year: 3, purpose: "Buffer year", action: "Rolls to Year 2 on maturity" },
                   { year: 4, purpose: "Buffer year", action: "Rolls to Year 3 on maturity" },
-                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-20/-25/-30%)" },
+                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-20/-30/-40%)" },
                 ];
                 if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Extended buffer", action: "Added when cycle risk is elevated" });
 
@@ -5656,7 +5657,7 @@ Instructions:
                     {/* Why this number */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                       {statBox("Bull Age", `${Math.round(bullAgeMo)} mo`, C.t1)}
-                      {statBox("From Trough", `+${pctFromTrough.toFixed(0)}%`, C.up)}
+                      {statBox("From Trough", `${pctFromTrough >= 0 ? "+" : ""}${pctFromTrough.toFixed(0)}%`, pctFromTrough >= 0 ? C.up : C.dn)}
                       {statBox("5yr Coverage", `${coveragePct5yr}%`, coveragePct5yr >= 70 ? C.up : "#FBBF24")}
                       {statBox("Avg Recovery", `${avgRecovery.toFixed(0)} mo`, C.t1)}
                     </div>
