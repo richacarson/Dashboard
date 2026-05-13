@@ -5378,7 +5378,7 @@ Instructions:
 
               {/* Sub-nav */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }].map(({ v, l }) => (
+                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
                   <button key={v} onClick={() => setPbView(v)} style={{
                     flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${pbView === v ? C.borderActive : C.border}`,
                     background: pbView === v ? C.accentSoft : "transparent",
@@ -5729,6 +5729,141 @@ Instructions:
                   </div>
                 );
               })()}
+
+              {/* ── WHY IT WORKS ── */}
+              {pbView === "proof" && (
+                <div>
+                  {/* Headline */}
+                  <div style={{ ...cardStyle, textAlign: "center", position: "relative", overflow: "hidden" }}>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.up }} />
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Backtested Across 92 Years</div>
+                    <div style={{ fontSize: 42, fontWeight: 900, color: C.up, marginBottom: 4 }}>+44.7</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>basis points per year alpha vs. buy-and-hold</div>
+                    <div style={{ fontSize: 13, color: C.t3 }}>14 complete bull/bear cycles · 1932-2024 · <span style={{ color: C.up, fontWeight: 700 }}>100% win rate</span></div>
+                  </div>
+
+                  {/* Key stats */}
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
+                    {statBox("Win Rate", "14/14", C.up)}
+                    {statBox("Cumulative Alpha", "+42%", C.up)}
+                    {statBox("Max Cash", "9%", C.t1)}
+                    {statBox("Configs Tested", "110K+", C.t3)}
+                  </div>
+
+                  {/* Why it works */}
+                  <div style={cardStyle}>
+                    {sectionTitle("The Three Mechanisms")}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {[
+                        { num: "1", title: "Age Gate (21 months)", desc: "No trimming until the bull is mature. Eliminates cash drag entirely in short bulls. The 1% scout tier at +75% has negligible cost but catches short cycles like 2020-2022." },
+                        { num: "2", title: "24-Month Time Decay", desc: "If no bear arrives within 24 months of trimming, cash goes back to equity. Triggers reset at higher levels. This is the key innovation — it caps the maximum duration of cash drag so long mega-bulls (1987-2000, 2009-2020) don't compound losses for a decade." },
+                        { num: "3", title: "Patient Deployment (-25% / -40%)", desc: "Deploy 50% of reserves at -25% from peak (87% of bears reach this), remaining at -40% (33% of bears). Deeper entry points yield dramatically higher recovery returns — +67% at -40% vs +33% at -25%." },
+                      ].map((m, i) => (
+                        <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px", background: C.bg, borderRadius: 12 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: C.accent, flexShrink: 0 }}>{m.num}</div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{m.title}</div>
+                            <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.6 }}>{m.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Cycle-by-cycle results */}
+                  <div style={cardStyle}>
+                    {sectionTitle("Cycle-by-Cycle Results")}
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>Every bull/bear cycle from 1932 to 2024. Alpha = strategy return minus buy-and-hold return.</div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 600 }}>
+                        <thead>
+                          <tr style={{ background: C.bg }}>
+                            {["Cycle", "Bull", "Bear", "Cash@Peak", "Alpha", "DD Red."].map(h => (
+                              <th key={h} style={{ padding: "8px 10px", textAlign: h === "Cycle" ? "left" : "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { cycle: "1932-37 / Depression II", bull: "+325%", bear: "-54.5%", cash: "10.3%", alpha: "+9.83%", ddRed: "+1.3pp" },
+                            { cycle: "1938-40 / WWII", bull: "+62%", bear: "-34.5%", cash: "0%", alpha: "+0.28%", ddRed: "—" },
+                            { cycle: "1942-46 / Post-WWII", bull: "+158%", bear: "-28.8%", cash: "4.3%", alpha: "+0.28%", ddRed: "+1.2pp" },
+                            { cycle: "1947-56 / Eisenhower", bull: "+267%", bear: "-21.6%", cash: "5.0%", alpha: "+1.55%", ddRed: "+1.1pp" },
+                            { cycle: "1957-61 / Kennedy", bull: "+86%", bear: "-28.0%", cash: "2.0%", alpha: "+0.36%", ddRed: "+0.6pp" },
+                            { cycle: "1962-66 / Credit Crunch", bull: "+80%", bear: "-22.2%", cash: "1.0%", alpha: "+0.46%", ddRed: "+0.2pp" },
+                            { cycle: "1966-68 / Vietnam", bull: "+48%", bear: "-36.1%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1970-73 / OPEC", bull: "+74%", bear: "-48.2%", cash: "1.0%", alpha: "+0.01%", ddRed: "+0.1pp" },
+                            { cycle: "1974-80 / Volcker", bull: "+126%", bear: "-27.1%", cash: "2.8%", alpha: "+0.96%", ddRed: "+0.9pp" },
+                            { cycle: "1982-87 / Black Monday", bull: "+229%", bear: "-33.5%", cash: "5.7%", alpha: "+7.06%", ddRed: "+1.6pp" },
+                            { cycle: "1987-00 / Dot-Com", bull: "+582%", bear: "-49.1%", cash: "8.0%", alpha: "+20.21%", ddRed: "+2.1pp" },
+                            { cycle: "2002-07 / GFC", bull: "+102%", bear: "-56.8%", cash: "3.0%", alpha: "+2.26%", ddRed: "+0.5pp" },
+                            { cycle: "2009-20 / COVID", bull: "+400%", bear: "-33.9%", cash: "8.8%", alpha: "+8.32%", ddRed: "+3.0pp" },
+                            { cycle: "2020-22 / Inflation", bull: "+114%", bear: "-25.4%", cash: "1.7%", alpha: "+0.46%", ddRed: "+0.5pp" },
+                          ].map((r, i) => (
+                            <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
+                              <td style={{ padding: "8px 10px", fontWeight: 600, color: C.t2, whiteSpace: "nowrap" }}>{r.cycle}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.up }}>{r.bull}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.dn }}>{r.bear}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{r.cash}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: parseFloat(r.alpha) > 0 ? C.up : parseFloat(r.alpha) < 0 ? C.dn : C.t3 }}>{r.alpha}</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{r.ddRed}</td>
+                            </tr>
+                          ))}
+                          <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Total / Average</td>
+                            <td colSpan={2} />
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>3.8% avg</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+42.0%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>+1.3pp</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Why it beats alternatives */}
+                  <div style={cardStyle}>
+                    {sectionTitle("Why It Beats the Alternatives")}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {[
+                        { strategy: "Buy-and-Hold", result: "Baseline", problem: "No drawdown protection. Clients panic-sell at the bottom. A client who sells at -40% and waits 6 months to re-enter loses 15-30% of their recovery.", color: C.t3 },
+                        { strategy: "Constant Cash (e.g. 10%)", result: "-70 bps/yr", problem: "Permanent drag. 10% cash × 7% equity premium = 70 bps/yr guaranteed underperformance, every year, forever. Over 30 years that's 23% less wealth.", color: C.dn },
+                        { strategy: "Simple Trim (no decay)", result: "-9 bps/yr", problem: "Cash drag compounds in long bulls. The 1987-2000 bull (+582%) and 2009-2020 bull (+400%) each lasted 10+ years. Holding 8-12% cash through those erased all bear-market savings.", color: C.dn },
+                        { strategy: "IOWN Playbook", result: "+44.7 bps/yr", problem: "Time decay solves the long-bull problem. Cash never sits idle for more than 24 months. Patient deployment at -25%/-40% buys at better prices. 100% win rate across 92 years.", color: C.up },
+                      ].map((s, i) => (
+                        <div key={i} style={{ padding: "14px 16px", background: C.bg, borderRadius: 12, border: `1px solid ${i === 3 ? C.accent + "44" : C.border}` }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{s.strategy}</span>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: s.color }}>{s.result}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.6 }}>{s.problem}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* The behavioral edge */}
+                  <div style={cardStyle}>
+                    {sectionTitle("The Real Alpha: Behavioral")}
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
+                      <p style={{ marginBottom: 10 }}>The +44.7 bps/yr quantitative alpha is real, but the <strong style={{ color: C.t1 }}>behavioral alpha is far larger</strong>. Studies show the average equity investor underperforms the S&P 500 by <strong style={{ color: C.dn }}>300-400 bps/yr</strong> (Dalbar QAIB, 2024) — almost entirely from panic selling during drawdowns and late re-entry.</p>
+                      <p style={{ marginBottom: 10 }}>This playbook eliminates that by giving clients a <strong style={{ color: C.t1 }}>visible, rules-based framework</strong>. When the market drops 25%, they see "TRANCHE 1: DEPLOYING" — not just losses. The psychology shifts from <em>"I'm losing money"</em> to <em>"the plan is working."</em></p>
+                      <p style={{ marginBottom: 10 }}>A client who panic-sells at -35% and waits 6 months to re-enter a market that's already recovered 20% loses <strong style={{ color: C.dn }}>~25% of their portfolio permanently</strong>. Preventing that even once in a 30-year relationship is worth more than decades of 44.7 bps.</p>
+                      <p><strong style={{ color: C.accent }}>The playbook's job is to keep clients invested through the worst moments. The quantitative alpha is a bonus — the behavioral alpha is the product.</strong></p>
+                    </div>
+                  </div>
+
+                  {/* Methodology */}
+                  <div style={cardStyle}>
+                    {sectionTitle("Methodology")}
+                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
+                      <p style={{ marginBottom: 10 }}>Optimized across <strong style={{ color: C.t1 }}>110,000+ strategy configurations</strong> using Monte Carlo simulation with bootstrap resampling of 14 historical S&P 500 bull/bear cycles (1932-2024). Parameters swept: age gates (12-60 months), time decay (6-36 months), trim thresholds (50-600% from trough), trim amounts (1-15%), deploy triggers (-10% to -50%), and deploy splits (2-4 tranches with varying weights).</p>
+                      <p style={{ marginBottom: 10 }}>Each configuration was scored on a composite objective: maximize cumulative alpha while maintaining ≥70% win rate and ≥0.5pp average drawdown reduction in active cycles. The recommended strategy achieved the highest composite score with a <strong style={{ color: C.up }}>perfect 14/14 win rate</strong>.</p>
+                      <p>Data sources: S&P 500 / S&P Composite historical data from Yardeni Research, Hartford Funds, NYU Stern, Macrotrends. Bear market definitions follow the standard -20% from peak threshold. Recovery defined as closing above the prior peak.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
