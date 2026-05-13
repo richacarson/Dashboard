@@ -5456,9 +5456,7 @@ Instructions:
                           <text x={cx + (R + 34) * Math.cos(avgAngle)} y={cy - (R + 34) * Math.sin(avgAngle)} fill="#FBBF24" fontSize={8} fontWeight={700} textAnchor="middle">AVG</text>
 
                           {/* Needle */}
-                          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round">
-                            <animateTransform attributeName="transform" type="rotate" from={`${-(startAngle * 180 / Math.PI - 90)} ${cx} ${cy}`} to={`${-(needleAngle * 180 / Math.PI - 90)} ${cx} ${cy}`} dur="1.2s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1" />
-                          </line>
+                          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round" />
                           <circle cx={cx} cy={cy} r={6} fill={regimeColor} />
                           <circle cx={cx} cy={cy} r={3} fill={theme === "dark" ? C.card : "#fff"} />
 
@@ -5510,7 +5508,7 @@ Instructions:
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <div>
                                 <div style={{ fontSize: 13, color: C.t3 }}>At +{pctFromTrough.toFixed(0)}% from trough, {bullAgeMo} months old</div>
-                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, BT, C, D</div>
+                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, C, D</div>
                               </div>
                               <div style={{ fontSize: 28, fontWeight: 900, color: C.accent }}>{activeTier.trimPct}%</div>
                             </div>
@@ -5552,7 +5550,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bull Market Cash Trim Rules")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D. 21-month age gate with 24-month time decay. Optimized across 110,000+ configurations and 14 historical cycles. Produces <strong style={{ color: C.up }}>+44.7 bps/yr alpha</strong> with 100% win rate (14/14 cycles).</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, C, D. 21-month age gate with 24-month time decay. Optimized across 110,000+ configurations and 14 historical cycles. Produces <strong style={{ color: C.up }}>+44.7 bps/yr alpha</strong> with 100% win rate (14/14 cycles).</div>
                     <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                         <thead>
@@ -5629,7 +5627,7 @@ Instructions:
                       <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
                       <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 50% of reserves at -25% from peak (87% of bears reach this), and the remaining 50% at -40% (33% of bears). Patient entry at deeper levels yields higher recovery returns.</p>
                       <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
-                      <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, BT, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
+                      <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
                     </div>
                   </div>
                 </div>
