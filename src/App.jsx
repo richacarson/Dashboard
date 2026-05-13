@@ -5320,10 +5320,15 @@ Instructions:
             { name: "OPEC Oil Embargo", peakDate: "1973-01", troughDate: "1974-10", drawdown: -48.2, durationMo: 20.7, recoveryMo: 69.5 },
             { name: "Volcker Tightening", peakDate: "1980-11", troughDate: "1982-08", drawdown: -27.1, durationMo: 20.5, recoveryMo: 2.8 },
             { name: "Black Monday", peakDate: "1987-08", troughDate: "1987-12", drawdown: -33.5, durationMo: 3.3, recoveryMo: 19.7 },
+            { name: "Gulf War", peakDate: "1990-07", troughDate: "1990-10", drawdown: -19.9, durationMo: 2.9, recoveryMo: 4.4, nearBear: true, intradayDraw: -20.3, note: "Crossed -20% intraday; -19.9% closing" },
+            { name: "LTCM / Russia Crisis", peakDate: "1998-07", troughDate: "1998-08", drawdown: -19.3, durationMo: 1.5, recoveryMo: 2.9, nearBear: true, intradayDraw: -19.5, note: "45-day plunge; peak 1186.75, trough 957.28" },
             { name: "Dot-Com Bust", peakDate: "2000-03", troughDate: "2002-10", drawdown: -49.1, durationMo: 30.5, recoveryMo: 55.6 },
             { name: "Global Financial Crisis", peakDate: "2007-10", troughDate: "2009-03", drawdown: -56.8, durationMo: 17.0, recoveryMo: 48.8 },
+            { name: "Euro Debt / Downgrade", peakDate: "2011-04", troughDate: "2011-10", drawdown: -19.4, durationMo: 5.2, recoveryMo: 5.7, nearBear: true, intradayDraw: -21.6, note: "Intraday low 1074.77 = -21.6%; closing -19.4%" },
+            { name: "Fed Tightening / Trade War", peakDate: "2018-09", troughDate: "2018-12", drawdown: -19.8, durationMo: 3.1, recoveryMo: 3.9, nearBear: true, intradayDraw: -20.2, note: "Breached -20% intraday on Christmas Eve" },
             { name: "COVID-19 Crash", peakDate: "2020-02", troughDate: "2020-03", drawdown: -33.9, durationMo: 1.1, recoveryMo: 4.9 },
             { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
+            { name: "Tariff Crash", peakDate: "2025-02", troughDate: "2025-04", drawdown: -17.6, durationMo: 1.6, recoveryMo: 2.8, nearBear: true, intradayDraw: -21.3, note: "Intraday low 4835 = -21.3%; closing low 5074 = -17.6%" },
           ];
           const BULL_MARKETS = [
             { period: "1929-1930", gain: 46.8, durationMo: 5.0 },
@@ -5351,10 +5356,15 @@ Instructions:
           ];
           const avgBullGain = 135.9;
           const medBullGain = 101.5;
-          const avgBearDraw = -36.7;
-          const avgBearDur = 12.1;
-          const avgRecovery = 34.8;
+          const officialBears = BEAR_MARKETS.filter(b => !b.nearBear);
+          const avgBearDraw = Math.round(officialBears.reduce((s, b) => s + b.drawdown, 0) / officialBears.length * 10) / 10;
+          const avgBearDur = Math.round(officialBears.reduce((s, b) => s + b.durationMo, 0) / officialBears.length * 10) / 10;
+          const avgRecovery = Math.round(officialBears.reduce((s, b) => s + b.recoveryMo, 0) / officialBears.length * 10) / 10;
           const medRecovery = 15.3;
+          const allDeclines = BEAR_MARKETS;
+          const avgAllDraw = Math.round(allDeclines.reduce((s, b) => s + b.drawdown, 0) / allDeclines.length * 10) / 10;
+          const avgAllDur = Math.round(allDeclines.reduce((s, b) => s + b.durationMo, 0) / allDeclines.length * 10) / 10;
+          const avgAllRecovery = Math.round(allDeclines.reduce((s, b) => s + b.recoveryMo, 0) / allDeclines.length * 10) / 10;
 
           const TRIM_TIERS = [
             { pctAboveTrough: 75, trimPct: 1, note: "Scout tier — minimal drag, catches short bulls" },
@@ -5370,7 +5380,7 @@ Instructions:
             { drawdownTrigger: -40, pctReserves: 50, action: "Deploy remaining 50%", deploy: "33% of bears reach — avg +67% return to peak" },
           ];
 
-          const peakToRecovery = BEAR_MARKETS.map(b => b.durationMo + b.recoveryMo);
+          const peakToRecovery = officialBears.map(b => b.durationMo + b.recoveryMo);
           const avgP2R = peakToRecovery.reduce((a, b) => a + b, 0) / peakToRecovery.length;
           const medP2R = [...peakToRecovery].sort((a, b) => a - b)[Math.floor(peakToRecovery.length / 2)];
           const maxP2R = Math.max(...peakToRecovery);
@@ -5660,33 +5670,49 @@ Instructions:
 
                   {/* Bear markets table */}
                   <div style={cardStyle}>
-                    {sectionTitle("S&P 500 Bear Markets Since 1929")}
+                    {sectionTitle("S&P 500 Bear Markets & Near-Bear Corrections Since 1929")}
+                    <div style={{ fontSize: 11, color: C.t3, marginBottom: 10, lineHeight: 1.5 }}>
+                      Includes all declines of -20%+ (bear markets) plus near-bear corrections (-19% to -21% intraday) that clients experienced as bear-market-level panic. <span style={{ color: "#FBBF24", fontWeight: 700 }}>Yellow rows</span> = near-bear corrections that breached or nearly breached -20%.
+                    </div>
                     <div style={{ overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 500 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 600 }}>
                         <thead>
                           <tr style={{ background: C.bg }}>
-                            {["Event", "Peak", "Trough", "Drawdown", "Duration", "Recovery"].map(h => (
+                            {["Event", "Peak", "Trough", "Close", "Intraday", "Duration", "Recovery"].map(h => (
                               <th key={h} style={{ padding: "8px 10px", textAlign: h === "Event" ? "left" : "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {BEAR_MARKETS.map((b, i) => (
-                            <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
-                              <td style={{ padding: "8px 10px", fontWeight: 600, color: C.t2, whiteSpace: "nowrap" }}>{b.name}</td>
+                            <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: b.nearBear ? "#FBBF2410" : "transparent" }}>
+                              <td style={{ padding: "8px 10px", fontWeight: 600, color: b.nearBear ? "#FBBF24" : C.t2, whiteSpace: "nowrap" }}>
+                                {b.name}
+                                {b.nearBear && <span style={{ fontSize: 8, color: "#FBBF24", fontWeight: 700, marginLeft: 4, verticalAlign: "super" }}>NEAR</span>}
+                              </td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.peakDate}</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.troughDate}</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: C.dn }}>{b.drawdown}%</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: b.intradayDraw ? C.dn : C.t4 }}>{b.intradayDraw ? `${b.intradayDraw}%` : "--"}</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.durationMo} mo</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.recoveryMo} mo</td>
                             </tr>
                           ))}
                           <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
-                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Avg (bears only)</td>
                             <td colSpan={2} />
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.dn }}>{avgBearDraw}%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", color: C.t4 }}>--</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgBearDur} mo</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgRecovery} mo</td>
+                          </tr>
+                          <tr style={{ borderTop: `1px solid ${C.border}`, background: C.bg }}>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: "#FBBF24" }}>Avg (all declines)</td>
+                            <td colSpan={2} />
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.dn }}>{avgAllDraw}%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", color: C.t4 }}>--</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgAllDur} mo</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgAllRecovery} mo</td>
                           </tr>
                         </tbody>
                       </table>
@@ -5731,8 +5757,8 @@ Instructions:
               {/* ── BOND DURATION ANALYSIS ── */}
               {pbView === "bonds" && (() => {
                 const bullAgeMo = (Date.now() - new Date("2022-10-12")) / (30.44 * 86400000);
-                const bearsCovered5yr = BEAR_MARKETS.filter(b => (b.durationMo + b.recoveryMo) <= 60).length;
-                const coveragePct5yr = Math.round(bearsCovered5yr / BEAR_MARKETS.length * 100);
+                const bearsCovered5yr = officialBears.filter(b => (b.durationMo + b.recoveryMo) <= 60).length;
+                const coveragePct5yr = Math.round(bearsCovered5yr / officialBears.length * 100);
                 const riskLevel = pctFromTrough > 150 ? "elevated" : pctFromTrough > 100 ? "moderate" : "low";
                 const riskColor = riskLevel === "elevated" ? C.dn : riskLevel === "moderate" ? "#FBBF24" : C.up;
                 const recommendedYears = riskLevel === "elevated" ? 6 : riskLevel === "moderate" ? 5 : 4;
