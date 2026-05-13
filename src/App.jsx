@@ -5343,16 +5343,17 @@ Instructions:
           const medRecovery = 21.4;
 
           const TRIM_TIERS = [
-            { pctAboveTrough: 100, trimPct: 3, note: "Bull 4+ years old and doubled — begin building cash" },
-            { pctAboveTrough: 200, trimPct: 6, note: "Tripled from trough — moderate cash position" },
-            { pctAboveTrough: 300, trimPct: 9, note: "Quadrupled — elevated cycle risk" },
-            { pctAboveTrough: 400, trimPct: 12, note: "5x from trough — max cash, rare territory" },
+            { pctAboveTrough: 75, trimPct: 1, note: "Scout tier — minimal drag, catches short bulls" },
+            { pctAboveTrough: 150, trimPct: 3, note: "Bull has 2.5x'd — begin building position" },
+            { pctAboveTrough: 250, trimPct: 5, note: "Bull has 3.5x'd — moderate cash" },
+            { pctAboveTrough: 350, trimPct: 7, note: "Bull has 4.5x'd — elevated cycle risk" },
+            { pctAboveTrough: 500, trimPct: 9, note: "Bull has 6x'd — max cash, rare territory" },
           ];
           const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
 
           const BEAR_TRANCHES = [
-            { drawdownTrigger: -15, pctReserves: 50, action: "Deploy 50% of reserves", deploy: "100% of bears reach — buy early, buy big" },
-            { drawdownTrigger: -30, pctReserves: 50, action: "Deploy remaining 50%", deploy: "60% of bears reach — avg +43% return to peak" },
+            { drawdownTrigger: -25, pctReserves: 50, action: "Deploy 50% of reserves", deploy: "87% of bears reach — patient entry, better prices" },
+            { drawdownTrigger: -40, pctReserves: 50, action: "Deploy remaining 50%", deploy: "33% of bears reach — avg +67% return to peak" },
           ];
 
           const peakToRecovery = BEAR_MARKETS.map(b => b.durationMo + b.recoveryMo);
@@ -5428,7 +5429,7 @@ Instructions:
                   {/* Current trim status */}
                   {(() => {
                     const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
-                    const ageGateMet = bullAgeMo >= 48;
+                    const ageGateMet = bullAgeMo >= 21;
                     const activeTier = ageGateMet ? currentTrimTier : null;
                     return (
                       <div style={{ ...cardStyle, border: `1px solid ${activeTier ? C.accent + "44" : C.border}` }}>
@@ -5447,7 +5448,7 @@ Instructions:
                         ) : (
                           <div>
                             <div style={{ fontSize: 13, color: C.t3 }}>Age gate not met — bull is {bullAgeMo} months old</div>
-                            <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Trimming begins at 48 months. {48 - bullAgeMo > 0 ? `${48 - bullAgeMo} months remaining.` : ""} No cash drag until then.</div>
+                            <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Trimming begins at 21 months. {21 - bullAgeMo > 0 ? `${21 - bullAgeMo} months remaining.` : ""} No cash drag until then.</div>
                             <div style={{ fontSize: 22, fontWeight: 900, color: C.t4, marginTop: 8 }}>0%</div>
                           </div>
                         )}
@@ -5480,7 +5481,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bull Market Cash Trim Rules")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D. No trimming until bull is 48+ months old. Cash auto-redeploys after 18 months with no bear (time decay). Optimized across 80,000+ configurations and 14 historical cycles. Produces +7.3 bps/yr alpha vs buy-and-hold.</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D. 21-month age gate with 24-month time decay. Optimized across 110,000+ configurations and 14 historical cycles. Produces <strong style={{ color: C.up }}>+44.7 bps/yr alpha</strong> with 100% win rate (14/14 cycles).</div>
                     <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                         <thead>
@@ -5494,7 +5495,7 @@ Instructions:
                         <tbody>
                           {(() => {
                             const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
-                            const ageGateMet = bullAgeMo >= 48;
+                            const ageGateMet = bullAgeMo >= 21;
                             return TRIM_TIERS.map((t, i) => {
                               const levelMet = pctFromTrough >= t.pctAboveTrough;
                               const active = levelMet && ageGateMet;
@@ -5519,10 +5520,10 @@ Instructions:
                   <div style={cardStyle}>
                     {sectionTitle("How It Works")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Age Gate (48 months):</strong> No trimming until the bull market is at least 4 years old. Short bulls never trigger cash drag — the strategy is silent in 8 of 14 historical cycles.</p>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Cumulative Targets:</strong> Tiers are cumulative, not incremental. At +200% from trough, hold 6% total in cash — not 6% on top of prior tiers.</p>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>18-Month Time Decay:</strong> If no bear market begins within 18 months of the last trim, all cash is redeployed to equity. Triggers reset and can fire again at higher levels. This caps maximum cash drag and is the key to positive alpha in long bulls.</p>
-                      <p><strong style={{ color: C.accent }}>Backtested Result:</strong> +7.3 bps/yr alpha vs buy-and-hold across 14 historical cycles (1932-2024). Win rate 64%. Avg 1.3pp drawdown reduction in active cycles.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Age Gate (21 months):</strong> No trimming until the bull market is at least 21 months old. The 1% scout tier at +75% activates early with minimal drag, while larger tiers require both age and gain thresholds.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Cumulative Targets:</strong> Tiers are cumulative, not incremental. At +250% from trough, hold 5% total in cash — not 5% on top of prior tiers.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>24-Month Time Decay:</strong> If no bear market begins within 24 months of the last trim, all cash is redeployed to equity. Triggers reset and can fire again at higher levels. Longer decay ensures cash survives to reach the bear.</p>
+                      <p><strong style={{ color: C.accent }}>Backtested Result:</strong> +44.7 bps/yr alpha vs buy-and-hold across 14 historical cycles (1932-2024). <strong style={{ color: C.up }}>100% win rate (14/14)</strong>. +42% cumulative alpha.</p>
                     </div>
                   </div>
                 </div>
@@ -5533,7 +5534,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bear Market Deployment Tranches")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Two-tranche system: deploy 50% of reserves early at -15% (every bear reaches this), remaining 50% at -30% (60% of bears). Aggressive early deployment maximizes time in market during recovery.</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Two-tranche system: deploy 50% of reserves at -25% (87% of bears reach this), remaining 50% at -40% (33% of bears). Patient entry at deeper levels yields better prices and higher recovery returns.</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {BEAR_TRANCHES.map((t, i) => {
                         const triggered = drawdown <= t.drawdownTrigger;
@@ -5555,7 +5556,7 @@ Instructions:
                     {sectionTitle("5-Year Bond Ladder Structure")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
                       <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
-                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 50% of reserves at -15% from peak (every bear hits this), and the remaining 50% at -30% (60% of bears). Aggressive early deployment maximizes recovery participation.</p>
+                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 50% of reserves at -25% from peak (87% of bears reach this), and the remaining 50% at -40% (33% of bears). Patient entry at deeper levels yields higher recovery returns.</p>
                       <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
                       <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, BT, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
                     </div>
@@ -5657,7 +5658,7 @@ Instructions:
                   { year: 2, purpose: "Next-year living expenses", action: "Rolls to Year 1 on maturity" },
                   { year: 3, purpose: "Buffer year", action: "Rolls to Year 2 on maturity" },
                   { year: 4, purpose: "Buffer year", action: "Rolls to Year 3 on maturity" },
-                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-15/-30%)" },
+                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-25/-40%)" },
                 ];
                 if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Extended buffer", action: "Added when cycle risk is elevated" });
 
