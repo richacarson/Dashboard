@@ -5391,38 +5391,109 @@ Instructions:
               {/* ── LIVE REGIME TRACKER ── */}
               {pbView === "regime" && (
                 <div>
-                  {/* Regime badge */}
-                  <div style={{ ...cardStyle, textAlign: "center", position: "relative", overflow: "hidden" }}>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: regimeColor }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Current Market Regime</div>
-                    <div style={{ fontSize: 42, fontWeight: 900, color: regimeColor, letterSpacing: 4, marginBottom: 4 }}>{regime}</div>
-                    <div style={{ fontSize: 13, color: C.t3 }}>S&P 500 est. {currentSP.toLocaleString(undefined, { maximumFractionDigits: 0 })} {spyDayChg !== 0 && <span style={{ color: spyDayChg >= 0 ? C.up : C.dn, fontWeight: 700 }}>{spyDayChg >= 0 ? "+" : ""}{spyDayChg.toFixed(2)}%</span>}</div>
-                  </div>
+                  {/* Gauge */}
+                  <div style={{ ...cardStyle, textAlign: "center", paddingTop: 28, paddingBottom: 20 }}>
+                    {(() => {
+                      const W = isDesktop ? 420 : Math.min(window.innerWidth - 72, 360);
+                      const H = W * 0.58;
+                      const cx = W / 2, cy = H * 0.82;
+                      const R = W * 0.4;
+                      const startAngle = Math.PI * 1.15;
+                      const endAngle = Math.PI * -0.15;
+                      const totalArc = startAngle - endAngle;
+                      const maxGain = avgBullGain * 1.8;
+                      const clampedPct = Math.max(0, Math.min(pctFromTrough, maxGain));
+                      const needleAngle = startAngle - (clampedPct / maxGain) * totalArc;
+                      const bearZoneStart = 0;
+                      const bearZoneEnd = 0;
+                      const segments = 60;
 
-                  {/* Key metrics */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                    {statBox("From Trough", `${pctFromTrough >= 0 ? "+" : ""}${pctFromTrough.toFixed(1)}%`, pctFromTrough >= 0 ? C.up : C.dn)}
-                    {statBox("From ATH", `${pctFromATH >= 0 ? "+" : ""}${pctFromATH.toFixed(1)}%`, pctFromATH >= 0 ? C.up : C.dn)}
-                    {statBox("Bull Duration", `${Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000))} mo`, C.t1)}
-                    {statBox("Avg Bull", `${avgBullGain}% / 60 mo`, C.t3)}
-                  </div>
+                      const arcPath = (r, a1, a2) => {
+                        const x1 = cx + r * Math.cos(a1), y1 = cy - r * Math.sin(a1);
+                        const x2 = cx + r * Math.cos(a2), y2 = cy - r * Math.sin(a2);
+                        const large = (a1 - a2) > Math.PI ? 1 : 0;
+                        return `M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2}`;
+                      };
 
-                  {/* Progress bar: where are we in the average bull? */}
-                  <div style={cardStyle}>
-                    {sectionTitle("Bull Market Progress")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 10 }}>Current gain from trough vs. historical bull market gains</div>
-                    <div style={{ position: "relative", height: 32, background: C.bg, borderRadius: 8, overflow: "hidden", marginBottom: 8 }}>
-                      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${Math.min(pctFromTrough / (avgBullGain * 1.5) * 100, 100)}%`, background: `linear-gradient(90deg, ${C.up}40, ${C.up})`, borderRadius: 8, transition: "width 0.5s" }} />
-                      {/* Median marker */}
-                      <div style={{ position: "absolute", left: `${medBullGain / (avgBullGain * 1.5) * 100}%`, top: 0, bottom: 0, width: 2, background: C.accent, opacity: 0.8 }} />
-                      {/* Average marker */}
-                      <div style={{ position: "absolute", left: `${avgBullGain / (avgBullGain * 1.5) * 100}%`, top: 0, bottom: 0, width: 2, background: "#FBBF24", opacity: 0.8 }} />
-                      <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 800, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>+{pctFromTrough.toFixed(0)}%</div>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}>
-                      <span>Trough</span>
-                      <span style={{ color: C.accent }}>Median +{medBullGain}%</span>
-                      <span style={{ color: "#FBBF24" }}>Avg +{avgBullGain}%</span>
+                      const tickMarks = [0, 50, 100, 150, 200, 250, 300, 350, maxGain];
+                      const medianAngle = startAngle - (medBullGain / maxGain) * totalArc;
+                      const avgAngle = startAngle - (avgBullGain / maxGain) * totalArc;
+                      const nx = cx + (R - 12) * Math.cos(needleAngle);
+                      const ny = cy - (R - 12) * Math.sin(needleAngle);
+                      const bullDurMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+
+                      return (
+                        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block", margin: "0 auto" }}>
+                          {/* Gauge arc segments */}
+                          {Array.from({ length: segments }).map((_, i) => {
+                            const a1 = startAngle - (i / segments) * totalArc;
+                            const a2 = startAngle - ((i + 1) / segments) * totalArc;
+                            const pctPos = i / segments;
+                            const r = pctPos < 0.3 ? 40 : pctPos < 0.5 ? Math.round(40 + (pctPos - 0.3) * 500) : pctPos < 0.7 ? Math.round(140 + (pctPos - 0.5) * 300) : Math.min(255, Math.round(200 + (pctPos - 0.7) * 183));
+                            const g = pctPos < 0.3 ? Math.round(180 + pctPos * 200) : pctPos < 0.6 ? Math.round(240 - (pctPos - 0.3) * 400) : Math.round(100 - (pctPos - 0.6) * 200);
+                            const b = 40;
+                            const filled = i / segments <= clampedPct / maxGain;
+                            return <path key={i} d={arcPath(R, a1, a2)} fill="none" stroke={filled ? `rgb(${r},${g},${b})` : (theme === "dark" ? "#1E2536" : "#E5E7EB")} strokeWidth={14} strokeLinecap="butt" />;
+                          })}
+
+                          {/* Tick marks */}
+                          {tickMarks.filter(v => v <= maxGain).map((v, i) => {
+                            const a = startAngle - (v / maxGain) * totalArc;
+                            const ox = cx + (R + 14) * Math.cos(a), oy = cy - (R + 14) * Math.sin(a);
+                            const ix = cx + (R + 8) * Math.cos(a), iy = cy - (R + 8) * Math.sin(a);
+                            return <g key={i}>
+                              <line x1={ix} y1={iy} x2={ox} y2={oy} stroke={C.t4} strokeWidth={1.5} />
+                              {v > 0 && v < maxGain && <text x={cx + (R + 24) * Math.cos(a)} y={cy - (R + 24) * Math.sin(a)} fill={C.t4} fontSize={9} fontWeight={600} textAnchor="middle" dominantBaseline="middle">+{v}%</text>}
+                            </g>;
+                          })}
+
+                          {/* Median marker */}
+                          <line x1={cx + (R - 10) * Math.cos(medianAngle)} y1={cy - (R - 10) * Math.sin(medianAngle)} x2={cx + (R + 10) * Math.cos(medianAngle)} y2={cy - (R + 10) * Math.sin(medianAngle)} stroke={C.accent} strokeWidth={2.5} strokeLinecap="round" />
+                          <text x={cx + (R + 34) * Math.cos(medianAngle)} y={cy - (R + 34) * Math.sin(medianAngle)} fill={C.accent} fontSize={8} fontWeight={700} textAnchor="middle">MEDIAN</text>
+
+                          {/* Average marker */}
+                          <line x1={cx + (R - 10) * Math.cos(avgAngle)} y1={cy - (R - 10) * Math.sin(avgAngle)} x2={cx + (R + 10) * Math.cos(avgAngle)} y2={cy - (R + 10) * Math.sin(avgAngle)} stroke="#FBBF24" strokeWidth={2.5} strokeLinecap="round" />
+                          <text x={cx + (R + 34) * Math.cos(avgAngle)} y={cy - (R + 34) * Math.sin(avgAngle)} fill="#FBBF24" fontSize={8} fontWeight={700} textAnchor="middle">AVG</text>
+
+                          {/* Needle */}
+                          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round">
+                            <animateTransform attributeName="transform" type="rotate" from={`${-(startAngle * 180 / Math.PI - 90)} ${cx} ${cy}`} to={`${-(needleAngle * 180 / Math.PI - 90)} ${cx} ${cy}`} dur="1.2s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1" />
+                          </line>
+                          <circle cx={cx} cy={cy} r={6} fill={regimeColor} />
+                          <circle cx={cx} cy={cy} r={3} fill={theme === "dark" ? C.card : "#fff"} />
+
+                          {/* Needle glow */}
+                          <circle cx={nx} cy={ny} r={4} fill={regimeColor} opacity={0.6}>
+                            <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite" />
+                          </circle>
+
+                          {/* Center text */}
+                          <text x={cx} y={cy - 42} fill={regimeColor} fontSize={28} fontWeight={900} textAnchor="middle" letterSpacing="4">{regime}</text>
+                          <text x={cx} y={cy - 22} fill={C.t3} fontSize={12} fontWeight={600} textAnchor="middle">S&P 500 est. {currentSP.toLocaleString(undefined, { maximumFractionDigits: 0 })}</text>
+                          <text x={cx} y={cy - 6} fill={spyDayChg >= 0 ? C.up : C.dn} fontSize={11} fontWeight={700} textAnchor="middle">{spyDayChg >= 0 ? "+" : ""}{spyDayChg.toFixed(2)}% today</text>
+
+                          {/* Bottom labels */}
+                          <text x={cx - R * 0.7} y={cy + 20} fill={C.t4} fontSize={9} fontWeight={600} textAnchor="middle">TROUGH</text>
+                          <text x={cx + R * 0.7} y={cy + 20} fill={C.t4} fontSize={9} fontWeight={600} textAnchor="middle">EXTENDED</text>
+                        </svg>
+                      );
+                    })()}
+
+                    {/* Stats below gauge */}
+                    <div style={{ display: "flex", justifyContent: "center", gap: isDesktop ? 40 : 20, marginTop: 8 }}>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>From Trough</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: pctFromTrough >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{pctFromTrough >= 0 ? "+" : ""}{pctFromTrough.toFixed(1)}%</div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>From ATH</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: pctFromATH >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{pctFromATH >= 0 ? "+" : ""}{pctFromATH.toFixed(1)}%</div>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>Duration</div>
+                        <div style={{ fontSize: 20, fontWeight: 900, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000))} mo</div>
+                      </div>
                     </div>
                   </div>
 
