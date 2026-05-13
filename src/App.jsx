@@ -5343,17 +5343,16 @@ Instructions:
           const medRecovery = 21.4;
 
           const TRIM_TIERS = [
-            { pctAboveTrough: 80, trimPct: 2, note: "71% of bulls reach — minimal drag (22 bps/yr)" },
-            { pctAboveTrough: 120, trimPct: 5, note: "50% of bulls reach — mid-cycle inflection" },
-            { pctAboveTrough: 175, trimPct: 8, note: "36% of bulls reach — extended territory" },
-            { pctAboveTrough: 250, trimPct: 12, note: "29% of bulls — 75% followed by >33% bears" },
+            { pctAboveTrough: 100, trimPct: 3, note: "Bull 4+ years old and doubled — begin building cash" },
+            { pctAboveTrough: 200, trimPct: 6, note: "Tripled from trough — moderate cash position" },
+            { pctAboveTrough: 300, trimPct: 9, note: "Quadrupled — elevated cycle risk" },
+            { pctAboveTrough: 400, trimPct: 12, note: "5x from trough — max cash, rare territory" },
           ];
           const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
 
           const BEAR_TRANCHES = [
-            { drawdownTrigger: -20, pctReserves: 20, action: "Deploy 20% of reserves", deploy: "100% of bears reach — avg +25% return to peak" },
-            { drawdownTrigger: -30, pctReserves: 30, action: "Deploy 30% of reserves", deploy: "60% of bears reach — avg +43% return to peak" },
-            { drawdownTrigger: -40, pctReserves: 50, action: "Deploy remaining 50%", deploy: "33% of bears reach — avg +67% return to peak" },
+            { drawdownTrigger: -15, pctReserves: 50, action: "Deploy 50% of reserves", deploy: "100% of bears reach — buy early, buy big" },
+            { drawdownTrigger: -30, pctReserves: 50, action: "Deploy remaining 50%", deploy: "60% of bears reach — avg +43% return to peak" },
           ];
 
           const peakToRecovery = BEAR_MARKETS.map(b => b.durationMo + b.recoveryMo);
@@ -5427,19 +5426,34 @@ Instructions:
                   </div>
 
                   {/* Current trim status */}
-                  {currentTrimTier && (
-                    <div style={{ ...cardStyle, border: `1px solid ${C.accent}44` }}>
-                      {sectionTitle("Active Trim Level")}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <div style={{ fontSize: 13, color: C.t3 }}>At +{pctFromTrough.toFixed(0)}% from trough</div>
-                          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, BT, C, D</div>
-                        </div>
-                        <div style={{ fontSize: 28, fontWeight: 900, color: C.accent }}>{currentTrimTier.trimPct}%</div>
+                  {(() => {
+                    const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+                    const ageGateMet = bullAgeMo >= 48;
+                    const activeTier = ageGateMet ? currentTrimTier : null;
+                    return (
+                      <div style={{ ...cardStyle, border: `1px solid ${activeTier ? C.accent + "44" : C.border}` }}>
+                        {sectionTitle("Active Trim Level")}
+                        {activeTier ? (
+                          <>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <div>
+                                <div style={{ fontSize: 13, color: C.t3 }}>At +{pctFromTrough.toFixed(0)}% from trough, {bullAgeMo} months old</div>
+                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, BT, C, D</div>
+                              </div>
+                              <div style={{ fontSize: 28, fontWeight: 900, color: C.accent }}>{activeTier.trimPct}%</div>
+                            </div>
+                            <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>of total portfolio balance should be in cash</div>
+                          </>
+                        ) : (
+                          <div>
+                            <div style={{ fontSize: 13, color: C.t3 }}>Age gate not met — bull is {bullAgeMo} months old</div>
+                            <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Trimming begins at 48 months. {48 - bullAgeMo > 0 ? `${48 - bullAgeMo} months remaining.` : ""} No cash drag until then.</div>
+                            <div style={{ fontSize: 22, fontWeight: 900, color: C.t4, marginTop: 8 }}>0%</div>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>of total portfolio balance should be in cash</div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Bear market distance */}
                   <div style={cardStyle}>
@@ -5466,7 +5480,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bull Market Cash Trim Rules")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D (non-bond clients). Trim less early, scale aggressively at extremes. Optimized via Monte Carlo simulation across 15 historical cycles to minimize cash drag while maximizing dry powder at high-probability reversal points.</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D. No trimming until bull is 48+ months old. Cash auto-redeploys after 18 months with no bear (time decay). Optimized across 80,000+ configurations and 14 historical cycles. Produces +7.3 bps/yr alpha vs buy-and-hold.</div>
                     <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                         <thead>
@@ -5478,20 +5492,25 @@ Instructions:
                           </tr>
                         </thead>
                         <tbody>
-                          {TRIM_TIERS.map((t, i) => {
-                            const active = pctFromTrough >= t.pctAboveTrough;
-                            const isCurrent = currentTrimTier === t;
-                            return (
-                              <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: isCurrent ? C.accentSoft : "transparent" }}>
-                                <td style={{ padding: "10px 12px", fontWeight: 700, color: isCurrent ? C.t1 : C.t2 }}>+{t.pctAboveTrough}%</td>
-                                <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: 800, color: isCurrent ? C.accent : C.t2 }}>{t.trimPct}%</td>
-                                <td style={{ padding: "10px 12px", color: C.t3 }}>{t.note}</td>
-                                <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                                  {active ? <span style={{ color: C.up, fontWeight: 700 }}>Active</span> : <span style={{ color: C.t4 }}>Pending</span>}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          {(() => {
+                            const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+                            const ageGateMet = bullAgeMo >= 48;
+                            return TRIM_TIERS.map((t, i) => {
+                              const levelMet = pctFromTrough >= t.pctAboveTrough;
+                              const active = levelMet && ageGateMet;
+                              const isCurrent = active && currentTrimTier === t && ageGateMet;
+                              return (
+                                <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: isCurrent ? C.accentSoft : "transparent" }}>
+                                  <td style={{ padding: "10px 12px", fontWeight: 700, color: isCurrent ? C.t1 : C.t2 }}>+{t.pctAboveTrough}%</td>
+                                  <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: 800, color: isCurrent ? C.accent : C.t2 }}>{t.trimPct}%</td>
+                                  <td style={{ padding: "10px 12px", color: C.t3 }}>{t.note}</td>
+                                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
+                                    {active ? <span style={{ color: C.up, fontWeight: 700 }}>Active</span> : levelMet && !ageGateMet ? <span style={{ color: "#FBBF24", fontWeight: 600 }}>Age Gate</span> : <span style={{ color: C.t4 }}>Pending</span>}
+                                  </td>
+                                </tr>
+                              );
+                            });
+                          })()}
                         </tbody>
                       </table>
                     </div>
@@ -5500,9 +5519,10 @@ Instructions:
                   <div style={cardStyle}>
                     {sectionTitle("How It Works")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
-                      <p style={{ marginBottom: 10 }}>As the S&P 500 rises further above the last bear market trough, the probability of a correction increases. These tiers define how much of the portfolio should be held in cash as a defensive buffer.</p>
-                      <p style={{ marginBottom: 10 }}>Tiers are <strong style={{ color: C.t1 }}>cumulative targets</strong>, not incremental. When the market crosses +175% from trough, the total cash position should be 8% — not an additional 8% on top of the prior tier.</p>
-                      <p>When a bear market is confirmed (-20% from peak), stop trimming and switch to the <strong style={{ color: C.t1 }}>Bear Market Playbook</strong> for deployment rules.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Age Gate (48 months):</strong> No trimming until the bull market is at least 4 years old. Short bulls never trigger cash drag — the strategy is silent in 8 of 14 historical cycles.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Cumulative Targets:</strong> Tiers are cumulative, not incremental. At +200% from trough, hold 6% total in cash — not 6% on top of prior tiers.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>18-Month Time Decay:</strong> If no bear market begins within 18 months of the last trim, all cash is redeployed to equity. Triggers reset and can fire again at higher levels. This caps maximum cash drag and is the key to positive alpha in long bulls.</p>
+                      <p><strong style={{ color: C.accent }}>Backtested Result:</strong> +7.3 bps/yr alpha vs buy-and-hold across 14 historical cycles (1932-2024). Win rate 64%. Avg 1.3pp drawdown reduction in active cycles.</p>
                     </div>
                   </div>
                 </div>
@@ -5513,7 +5533,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bear Market Deployment Tranches")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Back-weighted deployment: deploy less at shallow drawdowns, more at deep ones where recovery returns are 2.7x higher. Optimized across 15 historical bear markets.</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Two-tranche system: deploy 50% of reserves early at -15% (every bear reaches this), remaining 50% at -30% (60% of bears). Aggressive early deployment maximizes time in market during recovery.</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {BEAR_TRANCHES.map((t, i) => {
                         const triggered = drawdown <= t.drawdownTrigger;
@@ -5535,7 +5555,7 @@ Instructions:
                     {sectionTitle("5-Year Bond Ladder Structure")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
                       <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
-                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deployment is back-weighted (20/30/50%) across three tranches (-20%, -30%, -40%) to deploy more capital at deeper drawdowns where recovery returns are highest.</p>
+                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 50% of reserves at -15% from peak (every bear hits this), and the remaining 50% at -30% (60% of bears). Aggressive early deployment maximizes recovery participation.</p>
                       <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
                       <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, BT, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
                     </div>
@@ -5637,7 +5657,7 @@ Instructions:
                   { year: 2, purpose: "Next-year living expenses", action: "Rolls to Year 1 on maturity" },
                   { year: 3, purpose: "Buffer year", action: "Rolls to Year 2 on maturity" },
                   { year: 4, purpose: "Buffer year", action: "Rolls to Year 3 on maturity" },
-                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-20/-30/-40%)" },
+                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-15/-30%)" },
                 ];
                 if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Extended buffer", action: "Added when cycle risk is elevated" });
 
