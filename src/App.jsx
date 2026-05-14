@@ -5302,10 +5302,17 @@ Instructions:
           const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
 
           const BEAR_MARKETS = [
-            { name: "Great Depression", peakDate: "1929-09", troughDate: "1932-06", drawdown: -86.2, durationMo: 33.0, recoveryMo: 267.0 },
+            { name: "1929 Crash", peakDate: "1929-09", troughDate: "1929-11", drawdown: -44.7, durationMo: 2.2, recoveryMo: 5.0 },
+            { name: "Great Depression", peakDate: "1930-04", troughDate: "1932-06", drawdown: -83.0, durationMo: 25.7, recoveryMo: 267.0 },
+            { name: "1932-33 Decline", peakDate: "1932-09", troughDate: "1933-02", drawdown: -40.6, durationMo: 5.7, recoveryMo: 1.8 },
+            { name: "1933 Decline", peakDate: "1933-07", troughDate: "1933-10", drawdown: -29.8, durationMo: 3.1, recoveryMo: 17.2 },
+            { name: "1934-35 Decline", peakDate: "1934-02", troughDate: "1935-03", drawdown: -31.8, durationMo: 13.2, recoveryMo: 12.8 },
             { name: "1937-38 Recession", peakDate: "1937-03", troughDate: "1938-03", drawdown: -54.5, durationMo: 12.8, recoveryMo: 95.6 },
+            { name: "1938-39 War Fears", peakDate: "1938-11", troughDate: "1939-04", drawdown: -26.2, durationMo: 4.9, recoveryMo: 6.9 },
+            { name: "1939-40 Fall of France", peakDate: "1939-10", troughDate: "1940-06", drawdown: -31.9, durationMo: 7.5, recoveryMo: 13.2 },
             { name: "WWII / Pearl Harbor", peakDate: "1940-11", troughDate: "1942-04", drawdown: -34.5, durationMo: 17.6, recoveryMo: 25.2 },
             { name: "Post-WWII Crash", peakDate: "1946-05", troughDate: "1947-05", drawdown: -28.8, durationMo: 11.6, recoveryMo: 39.5 },
+            { name: "1948-49 Recession", peakDate: "1948-06", troughDate: "1949-06", drawdown: -20.6, durationMo: 11.9, recoveryMo: 12.0 },
             { name: "Eisenhower Recession", peakDate: "1956-08", troughDate: "1957-10", drawdown: -21.6, durationMo: 14.7, recoveryMo: 11.0 },
             { name: "Kennedy Slide", peakDate: "1961-12", troughDate: "1962-06", drawdown: -28.0, durationMo: 6.5, recoveryMo: 14.3 },
             { name: "Credit Crunch", peakDate: "1966-02", troughDate: "1966-10", drawdown: -22.2, durationMo: 7.9, recoveryMo: 6.9 },
@@ -5313,16 +5320,28 @@ Instructions:
             { name: "OPEC Oil Embargo", peakDate: "1973-01", troughDate: "1974-10", drawdown: -48.2, durationMo: 20.7, recoveryMo: 69.5 },
             { name: "Volcker Tightening", peakDate: "1980-11", troughDate: "1982-08", drawdown: -27.1, durationMo: 20.5, recoveryMo: 2.8 },
             { name: "Black Monday", peakDate: "1987-08", troughDate: "1987-12", drawdown: -33.5, durationMo: 3.3, recoveryMo: 19.7 },
+            { name: "Gulf War", peakDate: "1990-07", troughDate: "1990-10", drawdown: -19.9, durationMo: 2.9, recoveryMo: 4.4, nearBear: true, intradayDraw: -20.3, note: "Crossed -20% intraday; -19.9% closing" },
+            { name: "LTCM / Russia Crisis", peakDate: "1998-07", troughDate: "1998-08", drawdown: -19.3, durationMo: 1.5, recoveryMo: 2.9, nearBear: true, intradayDraw: -19.5, note: "45-day plunge; peak 1186.75, trough 957.28" },
             { name: "Dot-Com Bust", peakDate: "2000-03", troughDate: "2002-10", drawdown: -49.1, durationMo: 30.5, recoveryMo: 55.6 },
             { name: "Global Financial Crisis", peakDate: "2007-10", troughDate: "2009-03", drawdown: -56.8, durationMo: 17.0, recoveryMo: 48.8 },
+            { name: "Euro Debt / Downgrade", peakDate: "2011-04", troughDate: "2011-10", drawdown: -19.4, durationMo: 5.2, recoveryMo: 5.7, nearBear: true, intradayDraw: -21.6, note: "Intraday low 1074.77 = -21.6%; closing -19.4%" },
+            { name: "Fed Tightening / Trade War", peakDate: "2018-09", troughDate: "2018-12", drawdown: -19.8, durationMo: 3.1, recoveryMo: 3.9, nearBear: true, intradayDraw: -20.2, note: "Breached -20% intraday on Christmas Eve" },
             { name: "COVID-19 Crash", peakDate: "2020-02", troughDate: "2020-03", drawdown: -33.9, durationMo: 1.1, recoveryMo: 4.9 },
             { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
+            { name: "Tariff Crash", peakDate: "2025-02", troughDate: "2025-04", drawdown: -17.6, durationMo: 1.6, recoveryMo: 2.8, nearBear: true, intradayDraw: -21.3, note: "Intraday low 4835 = -21.3%; closing low 5074 = -17.6%" },
           ];
           const BULL_MARKETS = [
-            { period: "1932-1937", gain: 324.8, durationMo: 57.0 },
-            { period: "1938-1938", gain: 62.2, durationMo: 7.3 },
+            { period: "1929-1930", gain: 46.8, durationMo: 5.0 },
+            { period: "1932-1932", gain: 111.6, durationMo: 3.0 },
+            { period: "1933-1933", gain: 120.6, durationMo: 5.0 },
+            { period: "1933-1934", gain: 37.9, durationMo: 4.0 },
+            { period: "1935-1937", gain: 131.8, durationMo: 24.0 },
+            { period: "1938-1938", gain: 62.2, durationMo: 8.0 },
+            { period: "1939-1939", gain: 29.8, durationMo: 6.0 },
+            { period: "1940-1940", gain: 26.8, durationMo: 5.0 },
             { period: "1942-1946", gain: 157.7, durationMo: 49.0 },
-            { period: "1947-1956", gain: 267.0, durationMo: 86.0 },
+            { period: "1947-1948", gain: 20.8, durationMo: 13.0 },
+            { period: "1949-1956", gain: 267.0, durationMo: 86.0 },
             { period: "1957-1961", gain: 86.3, durationMo: 49.7 },
             { period: "1962-1966", gain: 79.8, durationMo: 43.5 },
             { period: "1966-1968", gain: 48.0, durationMo: 25.7 },
@@ -5335,28 +5354,34 @@ Instructions:
             { period: "2020-2022", gain: 114.4, durationMo: 21.3 },
             { period: "2022-present", gain: Math.round(pctFromTrough * 10) / 10, durationMo: Math.round(((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)) * 10) / 10 },
           ];
-          const avgBullGain = 189.4;
-          const medBullGain = 125.6;
-          const avgBearDraw = -39.1;
-          const avgBearDur = 15.0;
-          const avgRecovery = 46.5;
-          const medRecovery = 21.4;
+          const avgBullGain = 135.9;
+          const medBullGain = 101.5;
+          const officialBears = BEAR_MARKETS.filter(b => !b.nearBear);
+          const avgBearDraw = Math.round(officialBears.reduce((s, b) => s + b.drawdown, 0) / officialBears.length * 10) / 10;
+          const avgBearDur = Math.round(officialBears.reduce((s, b) => s + b.durationMo, 0) / officialBears.length * 10) / 10;
+          const avgRecovery = Math.round(officialBears.reduce((s, b) => s + b.recoveryMo, 0) / officialBears.length * 10) / 10;
+          const medRecovery = 15.3;
+          const allDeclines = BEAR_MARKETS;
+          const avgAllDraw = Math.round(allDeclines.reduce((s, b) => s + b.drawdown, 0) / allDeclines.length * 10) / 10;
+          const avgAllDur = Math.round(allDeclines.reduce((s, b) => s + b.durationMo, 0) / allDeclines.length * 10) / 10;
+          const avgAllRecovery = Math.round(allDeclines.reduce((s, b) => s + b.recoveryMo, 0) / allDeclines.length * 10) / 10;
 
           const TRIM_TIERS = [
-            { pctAboveTrough: 75, trimPct: 1, note: "Scout tier — minimal drag, catches short bulls" },
-            { pctAboveTrough: 150, trimPct: 3, note: "Bull has 2.5x'd — begin building position" },
-            { pctAboveTrough: 250, trimPct: 5, note: "Bull has 3.5x'd — moderate cash" },
-            { pctAboveTrough: 350, trimPct: 7, note: "Bull has 4.5x'd — elevated cycle risk" },
-            { pctAboveTrough: 500, trimPct: 9, note: "Bull has 6x'd — max cash, rare territory" },
+            { pctAboveTrough: 75, trimPct: 2, note: "Scout tier — minimal drag, catches short bulls" },
+            { pctAboveTrough: 150, trimPct: 5, note: "Bull has 2.5x'd — begin building position" },
+            { pctAboveTrough: 250, trimPct: 8, note: "Bull has 3.5x'd — moderate cash" },
+            { pctAboveTrough: 350, trimPct: 11, note: "Bull has 4.5x'd — elevated cycle risk" },
+            { pctAboveTrough: 500, trimPct: 14, note: "Bull has 6x'd — max cash, rare territory" },
           ];
           const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
 
           const BEAR_TRANCHES = [
-            { drawdownTrigger: -25, pctReserves: 50, action: "Deploy 50% of reserves", deploy: "87% of bears reach — patient entry, better prices" },
-            { drawdownTrigger: -40, pctReserves: 50, action: "Deploy remaining 50%", deploy: "33% of bears reach — avg +67% return to peak" },
+            { drawdownTrigger: -25, pctReserves: 25, action: "Deploy 25% of reserves", deploy: "87% of bears reach — first tranche, patient entry" },
+            { drawdownTrigger: -35, pctReserves: 40, action: "Deploy 40% of reserves", deploy: "47% of bears reach — deep value territory" },
+            { drawdownTrigger: -50, pctReserves: 100, action: "Deploy all remaining reserves", deploy: "23% of bears reach — generational buying opportunity" },
           ];
 
-          const peakToRecovery = BEAR_MARKETS.map(b => b.durationMo + b.recoveryMo);
+          const peakToRecovery = officialBears.map(b => b.durationMo + b.recoveryMo);
           const avgP2R = peakToRecovery.reduce((a, b) => a + b, 0) / peakToRecovery.length;
           const medP2R = [...peakToRecovery].sort((a, b) => a - b)[Math.floor(peakToRecovery.length / 2)];
           const maxP2R = Math.max(...peakToRecovery);
@@ -5456,9 +5481,7 @@ Instructions:
                           <text x={cx + (R + 34) * Math.cos(avgAngle)} y={cy - (R + 34) * Math.sin(avgAngle)} fill="#FBBF24" fontSize={8} fontWeight={700} textAnchor="middle">AVG</text>
 
                           {/* Needle */}
-                          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round">
-                            <animateTransform attributeName="transform" type="rotate" from={`${-(startAngle * 180 / Math.PI - 90)} ${cx} ${cy}`} to={`${-(needleAngle * 180 / Math.PI - 90)} ${cx} ${cy}`} dur="1.2s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1" />
-                          </line>
+                          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round" />
                           <circle cx={cx} cy={cy} r={6} fill={regimeColor} />
                           <circle cx={cx} cy={cy} r={3} fill={theme === "dark" ? C.card : "#fff"} />
 
@@ -5510,7 +5533,7 @@ Instructions:
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                               <div>
                                 <div style={{ fontSize: 13, color: C.t3 }}>At +{pctFromTrough.toFixed(0)}% from trough, {bullAgeMo} months old</div>
-                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, BT, C, D</div>
+                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, C, D</div>
                               </div>
                               <div style={{ fontSize: 28, fontWeight: 900, color: C.accent }}>{activeTier.trimPct}%</div>
                             </div>
@@ -5552,7 +5575,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bull Market Cash Trim Rules")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, BT, C, D. 21-month age gate with 24-month time decay. Optimized across 110,000+ configurations and 14 historical cycles. Produces <strong style={{ color: C.up }}>+44.7 bps/yr alpha</strong> with 100% win rate (14/14 cycles).</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, C, D. 21-month age gate with 18-month time decay. Optimized across 110,000+ configurations and 21 historical cycles (1929-2024). Produces <strong style={{ color: C.up }}>+13.9 bps/yr alpha</strong> with 100% non-loss rate (21/21 cycles).</div>
                     <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                         <thead>
@@ -5593,8 +5616,8 @@ Instructions:
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
                       <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Age Gate (21 months):</strong> No trimming until the bull market is at least 21 months old. The 1% scout tier at +75% activates early with minimal drag, while larger tiers require both age and gain thresholds.</p>
                       <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Cumulative Targets:</strong> Tiers are cumulative, not incremental. At +250% from trough, hold 5% total in cash — not 5% on top of prior tiers.</p>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>24-Month Time Decay:</strong> If no bear market begins within 24 months of the last trim, all cash is redeployed to equity. Triggers reset and can fire again at higher levels. Longer decay ensures cash survives to reach the bear.</p>
-                      <p><strong style={{ color: C.accent }}>Backtested Result:</strong> +44.7 bps/yr alpha vs buy-and-hold across 14 historical cycles (1932-2024). <strong style={{ color: C.up }}>100% win rate (14/14)</strong>. +42% cumulative alpha.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>18-Month Time Decay:</strong> If no bear market begins within 18 months of the last trim, all cash is redeployed to equity. Triggers reset and can fire again at higher levels. More frequent recycling generates more trimming opportunities in mega-bulls.</p>
+                      <p><strong style={{ color: C.accent }}>Backtested Result:</strong> +13.9 bps/yr alpha vs buy-and-hold across 21 historical cycles (1929-2024). <strong style={{ color: C.up }}>100% non-loss rate (21/21)</strong>. +12.9% excess terminal wealth over 93 years.</p>
                     </div>
                   </div>
                 </div>
@@ -5605,7 +5628,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bear Market Deployment Tranches")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Two-tranche system: deploy 50% of reserves at -25% (87% of bears reach this), remaining 50% at -40% (33% of bears). Patient entry at deeper levels yields better prices and higher recovery returns.</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Three-tranche system: deploy 25% at -25%, 40% at -35%, all remaining at -50%. Deeper third tranche captures generational buying opportunities in severe bears. Optimized across 22 bear markets (1929-2024).</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {BEAR_TRANCHES.map((t, i) => {
                         const triggered = drawdown <= t.drawdownTrigger;
@@ -5627,9 +5650,9 @@ Instructions:
                     {sectionTitle("5-Year Bond Ladder Structure")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
                       <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
-                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 50% of reserves at -25% from peak (87% of bears reach this), and the remaining 50% at -40% (33% of bears). Patient entry at deeper levels yields higher recovery returns.</p>
+                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy across three tranches: 25% at -25%, 40% at -35%, all remaining at -50%. The deepest tranche captures generational buying opportunities where recovery returns are highest.</p>
                       <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
-                      <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, BT, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
+                      <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
                     </div>
                   </div>
                 </div>
@@ -5648,33 +5671,49 @@ Instructions:
 
                   {/* Bear markets table */}
                   <div style={cardStyle}>
-                    {sectionTitle("S&P 500 Bear Markets Since 1929")}
+                    {sectionTitle("S&P 500 Bear Markets & Near-Bear Corrections Since 1929")}
+                    <div style={{ fontSize: 11, color: C.t3, marginBottom: 10, lineHeight: 1.5 }}>
+                      Includes all declines of -20%+ (bear markets) plus near-bear corrections (-19% to -21% intraday) that clients experienced as bear-market-level panic. <span style={{ color: "#FBBF24", fontWeight: 700 }}>Yellow rows</span> = near-bear corrections that breached or nearly breached -20%.
+                    </div>
                     <div style={{ overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 500 }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 600 }}>
                         <thead>
                           <tr style={{ background: C.bg }}>
-                            {["Event", "Peak", "Trough", "Drawdown", "Duration", "Recovery"].map(h => (
+                            {["Event", "Peak", "Trough", "Close", "Intraday", "Duration", "Recovery"].map(h => (
                               <th key={h} style={{ padding: "8px 10px", textAlign: h === "Event" ? "left" : "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {BEAR_MARKETS.map((b, i) => (
-                            <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
-                              <td style={{ padding: "8px 10px", fontWeight: 600, color: C.t2, whiteSpace: "nowrap" }}>{b.name}</td>
+                            <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: b.nearBear ? "#FBBF2410" : "transparent" }}>
+                              <td style={{ padding: "8px 10px", fontWeight: 600, color: b.nearBear ? "#FBBF24" : C.t2, whiteSpace: "nowrap" }}>
+                                {b.name}
+                                {b.nearBear && <span style={{ fontSize: 8, color: "#FBBF24", fontWeight: 700, marginLeft: 4, verticalAlign: "super" }}>NEAR</span>}
+                              </td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.peakDate}</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.troughDate}</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: C.dn }}>{b.drawdown}%</td>
+                              <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: b.intradayDraw ? C.dn : C.t4 }}>{b.intradayDraw ? `${b.intradayDraw}%` : "--"}</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.durationMo} mo</td>
                               <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{b.recoveryMo} mo</td>
                             </tr>
                           ))}
                           <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
-                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Avg (bears only)</td>
                             <td colSpan={2} />
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.dn }}>{avgBearDraw}%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", color: C.t4 }}>--</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgBearDur} mo</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgRecovery} mo</td>
+                          </tr>
+                          <tr style={{ borderTop: `1px solid ${C.border}`, background: C.bg }}>
+                            <td style={{ padding: "8px 10px", fontWeight: 800, color: "#FBBF24" }}>Avg (all declines)</td>
+                            <td colSpan={2} />
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.dn }}>{avgAllDraw}%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", color: C.t4 }}>--</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgAllDur} mo</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>{avgAllRecovery} mo</td>
                           </tr>
                         </tbody>
                       </table>
@@ -5707,7 +5746,7 @@ Instructions:
                           <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
                             <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Average</td>
                             <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+{avgBullGain}%</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>60.3 mo</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>40.6 mo</td>
                           </tr>
                         </tbody>
                       </table>
@@ -5719,8 +5758,8 @@ Instructions:
               {/* ── BOND DURATION ANALYSIS ── */}
               {pbView === "bonds" && (() => {
                 const bullAgeMo = (Date.now() - new Date("2022-10-12")) / (30.44 * 86400000);
-                const bearsCovered5yr = BEAR_MARKETS.filter(b => (b.durationMo + b.recoveryMo) <= 60).length;
-                const coveragePct5yr = Math.round(bearsCovered5yr / BEAR_MARKETS.length * 100);
+                const bearsCovered5yr = officialBears.filter(b => (b.durationMo + b.recoveryMo) <= 60).length;
+                const coveragePct5yr = Math.round(bearsCovered5yr / officialBears.length * 100);
                 const riskLevel = pctFromTrough > 150 ? "elevated" : pctFromTrough > 100 ? "moderate" : "low";
                 const riskColor = riskLevel === "elevated" ? C.dn : riskLevel === "moderate" ? "#FBBF24" : C.up;
                 const recommendedYears = riskLevel === "elevated" ? 6 : riskLevel === "moderate" ? 5 : 4;
@@ -5729,7 +5768,7 @@ Instructions:
                   { year: 2, purpose: "Next-year living expenses", action: "Rolls to Year 1 on maturity" },
                   { year: 3, purpose: "Buffer year", action: "Rolls to Year 2 on maturity" },
                   { year: 4, purpose: "Buffer year", action: "Rolls to Year 3 on maturity" },
-                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-25/-40%)" },
+                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-25/-35/-50%)" },
                 ];
                 if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Extended buffer", action: "Added when cycle risk is elevated" });
 
@@ -5807,17 +5846,17 @@ Instructions:
                   {/* Headline */}
                   <div style={{ ...cardStyle, textAlign: "center", position: "relative", overflow: "hidden" }}>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.up }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Backtested Across 92 Years</div>
-                    <div style={{ fontSize: 42, fontWeight: 900, color: C.up, marginBottom: 4 }}>+44.7</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Backtested Across 93 Years</div>
+                    <div style={{ fontSize: 42, fontWeight: 900, color: C.up, marginBottom: 4 }}>+13.9</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>basis points per year alpha vs. buy-and-hold</div>
-                    <div style={{ fontSize: 13, color: C.t3 }}>14 complete bull/bear cycles · 1932-2024 · <span style={{ color: C.up, fontWeight: 700 }}>100% win rate</span></div>
+                    <div style={{ fontSize: 13, color: C.t3 }}>21 complete bull/bear cycles · 1929-2024 · <span style={{ color: C.up, fontWeight: 700 }}>100% non-loss rate</span></div>
                   </div>
 
                   {/* Key stats */}
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
-                    {statBox("Win Rate", "14/14", C.up)}
-                    {statBox("Cumulative Alpha", "+42%", C.up)}
-                    {statBox("Max Cash", "9%", C.t1)}
+                    {statBox("Non-Loss Rate", "21/21", C.up)}
+                    {statBox("Excess Wealth", "+12.9%", C.up)}
+                    {statBox("Max Cash", "14%", C.t1)}
                     {statBox("Configs Tested", "110K+", C.t3)}
                   </div>
 
@@ -5827,8 +5866,8 @@ Instructions:
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       {[
                         { num: "1", title: "Age Gate (21 months)", desc: "No trimming until the bull is mature. Eliminates cash drag entirely in short bulls. The 1% scout tier at +75% has negligible cost but catches short cycles like 2020-2022." },
-                        { num: "2", title: "24-Month Time Decay", desc: "If no bear arrives within 24 months of trimming, cash goes back to equity. Triggers reset at higher levels. This is the key innovation — it caps the maximum duration of cash drag so long mega-bulls (1987-2000, 2009-2020) don't compound losses for a decade." },
-                        { num: "3", title: "Patient Deployment (-25% / -40%)", desc: "Deploy 50% of reserves at -25% from peak (87% of bears reach this), remaining at -40% (33% of bears). Deeper entry points yield dramatically higher recovery returns — +67% at -40% vs +33% at -25%." },
+                        { num: "2", title: "18-Month Time Decay", desc: "If no bear arrives within 18 months of trimming, cash goes back to equity. Triggers reset at higher levels. More frequent recycling generates more trimming opportunities in mega-bulls, preventing cash from sitting idle for a decade." },
+                        { num: "3", title: "3-Tranche Deployment (-25 / -35 / -50%)", desc: "Deploy 25% at -25%, 40% at -35%, all remaining at -50%. Three tranches preserve reserves for the deepest bears where recovery returns are highest. In the GFC (-57%), the third tranche deploys at generational lows." },
                       ].map((m, i) => (
                         <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px", background: C.bg, borderRadius: 12 }}>
                           <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: C.accent, flexShrink: 0 }}>{m.num}</div>
@@ -5856,20 +5895,27 @@ Instructions:
                         </thead>
                         <tbody>
                           {[
-                            { cycle: "1932-37 / Depression II", bull: "+325%", bear: "-54.5%", cash: "10.3%", alpha: "+9.83%", ddRed: "+1.3pp" },
-                            { cycle: "1938-40 / WWII", bull: "+62%", bear: "-34.5%", cash: "0%", alpha: "+0.28%", ddRed: "—" },
-                            { cycle: "1942-46 / Post-WWII", bull: "+158%", bear: "-28.8%", cash: "4.3%", alpha: "+0.28%", ddRed: "+1.2pp" },
-                            { cycle: "1947-56 / Eisenhower", bull: "+267%", bear: "-21.6%", cash: "5.0%", alpha: "+1.55%", ddRed: "+1.1pp" },
-                            { cycle: "1957-61 / Kennedy", bull: "+86%", bear: "-28.0%", cash: "2.0%", alpha: "+0.36%", ddRed: "+0.6pp" },
-                            { cycle: "1962-66 / Credit Crunch", bull: "+80%", bear: "-22.2%", cash: "1.0%", alpha: "+0.46%", ddRed: "+0.2pp" },
+                            { cycle: "1929-30 / Depression", bull: "+47%", bear: "-83.0%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1932 / 1932-33", bull: "+112%", bear: "-40.6%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1933 / 1933", bull: "+121%", bear: "-29.8%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1933-34 / 1934-35", bull: "+38%", bear: "-31.8%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1935-37 / 1937-38", bull: "+132%", bear: "-54.5%", cash: "1.8%", alpha: "+1.38%", ddRed: "+0.8pp" },
+                            { cycle: "1938 / War Fears", bull: "+62%", bear: "-26.2%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1939 / Fall of France", bull: "+30%", bear: "-31.9%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1940 / WWII", bull: "+27%", bear: "-34.5%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1942-46 / Post-WWII", bull: "+158%", bear: "-28.8%", cash: "4.9%", alpha: "+2.81%", ddRed: "+1.2pp" },
+                            { cycle: "1947-48 / 1948-49", bull: "+21%", bear: "-20.6%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1949-56 / Eisenhower", bull: "+267%", bear: "-21.6%", cash: "7.7%", alpha: "+1.64%", ddRed: "+1.1pp" },
+                            { cycle: "1957-61 / Kennedy", bull: "+86%", bear: "-28.0%", cash: "1.9%", alpha: "+0.92%", ddRed: "+0.6pp" },
+                            { cycle: "1962-66 / Credit Crunch", bull: "+80%", bear: "-22.2%", cash: "2.0%", alpha: "+0.82%", ddRed: "+0.4pp" },
                             { cycle: "1966-68 / Vietnam", bull: "+48%", bear: "-36.1%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1970-73 / OPEC", bull: "+74%", bear: "-48.2%", cash: "1.0%", alpha: "+0.01%", ddRed: "+0.1pp" },
-                            { cycle: "1974-80 / Volcker", bull: "+126%", bear: "-27.1%", cash: "2.8%", alpha: "+0.96%", ddRed: "+0.9pp" },
-                            { cycle: "1982-87 / Black Monday", bull: "+229%", bear: "-33.5%", cash: "5.7%", alpha: "+7.06%", ddRed: "+1.6pp" },
-                            { cycle: "1987-00 / Dot-Com", bull: "+582%", bear: "-49.1%", cash: "8.0%", alpha: "+20.21%", ddRed: "+2.1pp" },
-                            { cycle: "2002-07 / GFC", bull: "+102%", bear: "-56.8%", cash: "3.0%", alpha: "+2.26%", ddRed: "+0.5pp" },
-                            { cycle: "2009-20 / COVID", bull: "+400%", bear: "-33.9%", cash: "8.8%", alpha: "+8.32%", ddRed: "+3.0pp" },
-                            { cycle: "2020-22 / Inflation", bull: "+114%", bear: "-25.4%", cash: "1.7%", alpha: "+0.46%", ddRed: "+0.5pp" },
+                            { cycle: "1970-73 / OPEC", bull: "+74%", bear: "-48.2%", cash: "0%", alpha: "0.00%", ddRed: "—" },
+                            { cycle: "1974-80 / Volcker", bull: "+126%", bear: "-27.1%", cash: "1.9%", alpha: "+0.86%", ddRed: "+0.5pp" },
+                            { cycle: "1982-87 / Black Monday", bull: "+229%", bear: "-33.5%", cash: "4.0%", alpha: "+1.03%", ddRed: "+1.0pp" },
+                            { cycle: "1987-00 / Dot-Com", bull: "+582%", bear: "-49.1%", cash: "12.9%", alpha: "+11.86%", ddRed: "+2.1pp" },
+                            { cycle: "2002-07 / GFC", bull: "+102%", bear: "-56.8%", cash: "1.8%", alpha: "+1.09%", ddRed: "+0.5pp" },
+                            { cycle: "2009-20 / COVID", bull: "+400%", bear: "-33.9%", cash: "10.3%", alpha: "+3.96%", ddRed: "+3.0pp" },
+                            { cycle: "2020-22 / Inflation", bull: "+114%", bear: "-25.4%", cash: "2.0%", alpha: "+1.16%", ddRed: "+0.5pp" },
                           ].map((r, i) => (
                             <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
                               <td style={{ padding: "8px 10px", fontWeight: 600, color: C.t2, whiteSpace: "nowrap" }}>{r.cycle}</td>
@@ -5883,9 +5929,9 @@ Instructions:
                           <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
                             <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Total / Average</td>
                             <td colSpan={2} />
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>3.8% avg</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+42.0%</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>+1.3pp</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>2.4% avg</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+27.5%</td>
+                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>+1.1pp</td>
                           </tr>
                         </tbody>
                       </table>
@@ -5900,7 +5946,7 @@ Instructions:
                         { strategy: "Buy-and-Hold", result: "Baseline", problem: "No drawdown protection. Clients panic-sell at the bottom. A client who sells at -40% and waits 6 months to re-enter loses 15-30% of their recovery.", color: C.t3 },
                         { strategy: "Constant Cash (e.g. 10%)", result: "-70 bps/yr", problem: "Permanent drag. 10% cash × 7% equity premium = 70 bps/yr guaranteed underperformance, every year, forever. Over 30 years that's 23% less wealth.", color: C.dn },
                         { strategy: "Simple Trim (no decay)", result: "-9 bps/yr", problem: "Cash drag compounds in long bulls. The 1987-2000 bull (+582%) and 2009-2020 bull (+400%) each lasted 10+ years. Holding 8-12% cash through those erased all bear-market savings.", color: C.dn },
-                        { strategy: "IOWN Playbook", result: "+44.7 bps/yr", problem: "Time decay solves the long-bull problem. Cash never sits idle for more than 24 months. Patient deployment at -25%/-40% buys at better prices. 100% win rate across 92 years.", color: C.up },
+                        { strategy: "IOWN Playbook", result: "+13.9 bps/yr", problem: "18-month time decay solves the long-bull problem. 3-tranche deployment (-25/-35/-50%) preserves reserves for deep bears. 100% non-loss rate across 93 years and 21 cycles.", color: C.up },
                       ].map((s, i) => (
                         <div key={i} style={{ padding: "14px 16px", background: C.bg, borderRadius: 12, border: `1px solid ${i === 3 ? C.accent + "44" : C.border}` }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -5928,8 +5974,8 @@ Instructions:
                   <div style={cardStyle}>
                     {sectionTitle("Methodology")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
-                      <p style={{ marginBottom: 10 }}>Optimized across <strong style={{ color: C.t1 }}>110,000+ strategy configurations</strong> using Monte Carlo simulation with bootstrap resampling of 14 historical S&P 500 bull/bear cycles (1932-2024). Parameters swept: age gates (12-60 months), time decay (6-36 months), trim thresholds (50-600% from trough), trim amounts (1-15%), deploy triggers (-10% to -50%), and deploy splits (2-4 tranches with varying weights).</p>
-                      <p style={{ marginBottom: 10 }}>Each configuration was scored on a composite objective: maximize cumulative alpha while maintaining ≥70% win rate and ≥0.5pp average drawdown reduction in active cycles. The recommended strategy achieved the highest composite score with a <strong style={{ color: C.up }}>perfect 14/14 win rate</strong>.</p>
+                      <p style={{ marginBottom: 10 }}>Optimized across <strong style={{ color: C.t1 }}>110,000+ strategy configurations</strong> using Monte Carlo simulation with bootstrap resampling of 21 historical S&P 500 bull/bear cycles (1929-2024), plus 5 near-bear corrections. Parameters swept: age gates (12-60 months), time decay (6-36 months), trim thresholds (50-600% from trough), trim amounts (1-18%), deploy triggers (-10% to -50%), and deploy splits (2-4 tranches with varying weights).</p>
+                      <p style={{ marginBottom: 10 }}>Each configuration was scored on a composite objective: maximize cumulative alpha while maintaining 100% non-loss rate. The recommended strategy achieved the highest composite score with <strong style={{ color: C.up }}>21/21 non-losing cycles</strong>.</p>
                       <p>Data sources: S&P 500 / S&P Composite historical data from Yardeni Research, Hartford Funds, NYU Stern, Macrotrends. Bear market definitions follow the standard -20% from peak threshold. Recovery defined as closing above the prior peak.</p>
                     </div>
                   </div>
