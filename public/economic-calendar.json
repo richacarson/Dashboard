@@ -224,8 +224,8 @@
     "date": "2026-05-14 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.6",
+    "actual": "3.3",
+    "previous": "1.5",
     "forecast": "1.1",
     "unit": "%"
   },
@@ -234,8 +234,8 @@
     "date": "2026-05-14 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.8",
+    "actual": "1.9",
+    "previous": "0.9",
     "forecast": "1",
     "unit": "%"
   },
@@ -244,8 +244,8 @@
     "date": "2026-05-14 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "200",
+    "actual": "211",
+    "previous": "199",
     "forecast": "205",
     "unit": ""
   },
@@ -254,8 +254,8 @@
     "date": "2026-05-14 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.7",
+    "actual": "0.5",
+    "previous": "0.8",
     "forecast": "0.4",
     "unit": "%"
   },
@@ -264,7 +264,7 @@
     "date": "2026-05-14 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.7",
     "previous": "1.9",
     "forecast": "0.6",
     "unit": "%"
@@ -274,8 +274,8 @@
     "date": "2026-05-14 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "1.7",
+    "actual": "0.5",
+    "previous": "1.6",
     "forecast": "0.5",
     "unit": "%"
   },
@@ -284,10 +284,30 @@
     "date": "2026-05-14 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.9",
     "previous": "0.4",
     "forecast": "0.8",
     "unit": "%"
+  },
+  {
+    "title": "Fed Schmid Speech",
+    "date": "2026-05-14 14:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Bowman Speech",
+    "date": "2026-05-14 17:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
   },
   {
     "title": "Fed Hammack Speech",
@@ -421,6 +441,16 @@
   },
   {
     "title": "Fed Venable Speech",
+    "date": "2026-05-19 23:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Venable Speech",
     "date": "2026-05-19 23:45:00",
     "country": "USD",
     "impact": "Medium",
@@ -445,7 +475,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-4.306",
     "forecast": "",
     "unit": ""
   },
@@ -455,7 +485,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-4.084",
     "forecast": "",
     "unit": ""
   },
