@@ -992,6 +992,8 @@ Instructions:
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   const [perfLoading, setPerfLoading] = useState(false);
   const [pbView, setPbView] = useState("regime");
+  const [pbSimDrop, setPbSimDrop] = useState(30);
+  const [pbSimValue, setPbSimValue] = useState(1000000);
   const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
@@ -5403,7 +5405,7 @@ Instructions:
 
               {/* Sub-nav */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
+                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
                   <button key={v} onClick={() => setPbView(v)} style={{
                     flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${pbView === v ? C.borderActive : C.border}`,
                     background: pbView === v ? C.accentSoft : "transparent",
@@ -5657,6 +5659,282 @@ Instructions:
                   </div>
                 </div>
               )}
+
+              {/* ── SCENARIO SIMULATOR ── */}
+              {pbView === "simulator" && (() => {
+                const portfolioVal = pbSimValue;
+                const dropPct = pbSimDrop;
+                const currentCashPct = (() => {
+                  const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+                  if (bullAgeMo < 21) return 0;
+                  const tier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
+                  return tier ? tier.trimPct : 0;
+                })();
+                const cashReserves = portfolioVal * (currentCashPct / 100);
+                const equityVal = portfolioVal - cashReserves;
+                const trancheResults = [];
+                let remainingCash = cashReserves;
+                let totalDeployed = 0;
+                let deployedAtLevels = [];
+                for (const t of BEAR_TRANCHES) {
+                  if (dropPct >= Math.abs(t.drawdownTrigger)) {
+                    const deployAmt = cashReserves * (t.pctReserves / 100);
+                    const actualDeploy = Math.min(deployAmt, remainingCash);
+                    remainingCash -= actualDeploy;
+                    totalDeployed += actualDeploy;
+                    deployedAtLevels.push({ level: t.drawdownTrigger, amount: actualDeploy });
+                    trancheResults.push({ ...t, deployed: actualDeploy, triggered: true });
+                  } else {
+                    trancheResults.push({ ...t, deployed: 0, triggered: false });
+                  }
+                }
+                const equityAfterDrop = equityVal * (1 - dropPct / 100);
+                const portfolioAtBottom = equityAfterDrop + remainingCash + totalDeployed * (1 - dropPct / 100) * (1 / (1 - Math.abs(deployedAtLevels[0]?.level || dropPct) / 100));
+                const portfolioAtBottomSimple = equityAfterDrop + remainingCash;
+                const bhAtBottom = portfolioVal * (1 - dropPct / 100);
+                const saved = portfolioAtBottomSimple - bhAtBottom;
+                const recoveryGain = dropPct / (100 - dropPct) * 100;
+                const portfolioAtRecovery = equityVal + cashReserves;
+                let deploymentAlpha = 0;
+                for (const d of deployedAtLevels) {
+                  const buyDiscount = Math.abs(d.level);
+                  const returnToRecovery = buyDiscount / (100 - buyDiscount) * 100;
+                  deploymentAlpha += d.amount * (returnToRecovery / 100);
+                }
+                const portfolioAfterRecovery = portfolioVal + deploymentAlpha;
+
+                return (
+                  <div>
+                    <div style={cardStyle}>
+                      {sectionTitle("What If The Market Drops...")}
+                      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: 200 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Portfolio Value</div>
+                          <input type="text" value={`$${portfolioVal.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v > 0) setPbSimValue(v); }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 16, fontWeight: 700, fontFamily: "inherit" }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 200 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Market Drop: -{dropPct}%</div>
+                          <input type="range" min={10} max={60} value={dropPct} onChange={e => setPbSimDrop(Number(e.target.value))} style={{ width: "100%", accentColor: C.dn }} />
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}><span>-10%</span><span>-20%</span><span>-30%</span><span>-40%</span><span>-50%</span><span>-60%</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Waterfall */}
+                    <div style={cardStyle}>
+                      {sectionTitle("At The Bottom")}
+                      <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : "1fr", gap: 10, marginBottom: 14 }}>
+                        <div style={{ background: C.dn + "12", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${C.dn}30` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Buy & Hold Value</div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: C.dn }}>${bhAtBottom.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                          <div style={{ fontSize: 11, color: C.dn }}>-${(portfolioVal - bhAtBottom).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                        </div>
+                        <div style={{ background: C.up + "12", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${C.up}30` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Playbook Value</div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: C.t1 }}>${portfolioAtBottomSimple.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                          <div style={{ fontSize: 11, color: C.up }}>+${saved.toLocaleString(undefined, { maximumFractionDigits: 0 })} protected</div>
+                        </div>
+                        <div style={{ background: C.accent + "12", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${C.accent}30` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Cash Deployed</div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: C.accent }}>${totalDeployed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                          <div style={{ fontSize: 11, color: C.t3 }}>buying at a discount</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tranche walkthrough */}
+                    <div style={cardStyle}>
+                      {sectionTitle("Tranche Deployment Walkthrough")}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {trancheResults.map((t, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", background: t.triggered ? C.up + "10" : C.bg, borderRadius: 12, border: `1px solid ${t.triggered ? C.up + "30" : C.border}` }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 12, background: t.triggered ? C.dn + "20" : C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 900, color: t.triggered ? C.dn : C.t4, flexShrink: 0 }}>{t.drawdownTrigger}%</div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: t.triggered ? C.t1 : C.t4 }}>{t.action}</div>
+                              <div style={{ fontSize: 11, color: C.t4 }}>{t.triggered ? `Deploys $${t.deployed.toLocaleString(undefined, { maximumFractionDigits: 0 })} into equities` : "Not triggered at this drop level"}</div>
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: t.triggered ? C.up : C.t4 }}>{t.triggered ? "FIRED" : "—"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recovery */}
+                    <div style={cardStyle}>
+                      {sectionTitle("After Full Recovery")}
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>When the market returns to its prior peak, the deployed cash has earned the recovery return.</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        {statBox("Buy & Hold", `$${portfolioVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.t3)}
+                        {statBox("Playbook", `$${portfolioAfterRecovery.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.up)}
+                        {statBox("Deployment Alpha", `+$${deploymentAlpha.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.accent)}
+                        {statBox("Recovery Needed", `+${recoveryGain.toFixed(0)}%`, C.t1)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── BEAR PROBABILITY INDICATOR ── */}
+              {pbView === "probability" && (() => {
+                const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+                const bullsData = BULL_MARKETS.filter(b => !b.period.includes("present"));
+                const totalBulls = bullsData.length;
+
+                const probWithin = (months) => {
+                  const survived = bullsData.filter(b => b.durationMo > bullAgeMo + months).length;
+                  const atRisk = bullsData.filter(b => b.durationMo > bullAgeMo).length;
+                  return atRisk > 0 ? Math.round((1 - survived / atRisk) * 100) : 100;
+                };
+                const probBullEndsWithin6 = probWithin(6);
+                const probBullEndsWithin12 = probWithin(12);
+                const probBullEndsWithin24 = probWithin(24);
+                const bullsShorterThanCurrent = bullsData.filter(b => b.durationMo <= bullAgeMo).length;
+                const percentileAge = Math.round(bullsShorterThanCurrent / totalBulls * 100);
+
+                const gainPercentile = Math.round(bullsData.filter(b => b.gain <= pctFromTrough).length / totalBulls * 100);
+
+                const survivalCurve = [];
+                for (let m = 0; m <= 180; m += 3) {
+                  const alive = bullsData.filter(b => b.durationMo > m).length;
+                  survivalCurve.push({ month: m, pct: Math.round(alive / totalBulls * 100) });
+                }
+
+                const W = isDesktop ? 700 : Math.min(window.innerWidth - 72, 500);
+                const H = 200;
+                const PAD = { top: 20, right: 20, bottom: 30, left: 40 };
+
+                return (
+                  <div>
+                    <div style={cardStyle}>
+                      {sectionTitle("Bear Market Probability")}
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Based on the current bull's age ({bullAgeMo} months) and gain (+{pctFromTrough.toFixed(0)}%), what's the historical probability of a bear market starting soon?</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
+                        <div style={{ background: probBullEndsWithin6 > 40 ? C.dn + "15" : probBullEndsWithin6 > 20 ? "#FBBF2415" : C.up + "15", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${probBullEndsWithin6 > 40 ? C.dn : probBullEndsWithin6 > 20 ? "#FBBF24" : C.up}30` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Within 6 Mo</div>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: probBullEndsWithin6 > 40 ? C.dn : probBullEndsWithin6 > 20 ? "#FBBF24" : C.up }}>{probBullEndsWithin6}%</div>
+                        </div>
+                        <div style={{ background: probBullEndsWithin12 > 40 ? C.dn + "15" : probBullEndsWithin12 > 20 ? "#FBBF2415" : C.up + "15", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${probBullEndsWithin12 > 40 ? C.dn : probBullEndsWithin12 > 20 ? "#FBBF24" : C.up}30` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Within 12 Mo</div>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: probBullEndsWithin12 > 40 ? C.dn : probBullEndsWithin12 > 20 ? "#FBBF24" : C.up }}>{probBullEndsWithin12}%</div>
+                        </div>
+                        <div style={{ background: probBullEndsWithin24 > 40 ? C.dn + "15" : probBullEndsWithin24 > 20 ? "#FBBF2415" : C.up + "15", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${probBullEndsWithin24 > 40 ? C.dn : probBullEndsWithin24 > 20 ? "#FBBF24" : C.up}30` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Within 24 Mo</div>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: probBullEndsWithin24 > 40 ? C.dn : probBullEndsWithin24 > 20 ? "#FBBF24" : C.up }}>{probBullEndsWithin24}%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={cardStyle}>
+                      {sectionTitle("Where This Bull Stands")}
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                        {statBox("Age Percentile", `${percentileAge}th`, percentileAge > 70 ? C.dn : percentileAge > 40 ? "#FBBF24" : C.up)}
+                        {statBox("Gain Percentile", `${gainPercentile}th`, gainPercentile > 70 ? C.dn : gainPercentile > 40 ? "#FBBF24" : C.up)}
+                        {statBox("Bulls Shorter", `${bullsShorterThanCurrent}/${totalBulls}`, C.t1)}
+                        {statBox("Bulls Smaller", `${bullsData.filter(b => b.gain <= pctFromTrough).length}/${totalBulls}`, C.t1)}
+                      </div>
+                    </div>
+
+                    {/* Survival curve */}
+                    <div style={cardStyle}>
+                      {sectionTitle("Bull Market Survival Curve")}
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>% of historical bull markets still alive at each age. Vertical line = current bull ({bullAgeMo} months).</div>
+                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
+                        {/* Grid lines */}
+                        {[25, 50, 75, 100].map(v => {
+                          const y = PAD.top + ((100 - v) / 100) * (H - PAD.top - PAD.bottom);
+                          return <g key={v}><line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke={C.border} strokeWidth={1} /><text x={PAD.left - 6} y={y + 3} fill={C.t4} fontSize={9} textAnchor="end">{v}%</text></g>;
+                        })}
+                        {/* Curve */}
+                        <path d={survivalCurve.map((p, i) => {
+                          const x = PAD.left + (p.month / 180) * (W - PAD.left - PAD.right);
+                          const y = PAD.top + ((100 - p.pct) / 100) * (H - PAD.top - PAD.bottom);
+                          return `${i === 0 ? "M" : "L"}${x},${y}`;
+                        }).join(" ")} fill="none" stroke={C.up} strokeWidth={2.5} />
+                        {/* Fill */}
+                        <path d={survivalCurve.map((p, i) => {
+                          const x = PAD.left + (p.month / 180) * (W - PAD.left - PAD.right);
+                          const y = PAD.top + ((100 - p.pct) / 100) * (H - PAD.top - PAD.bottom);
+                          return `${i === 0 ? "M" : "L"}${x},${y}`;
+                        }).join(" ") + ` L${PAD.left + (survivalCurve[survivalCurve.length - 1].month / 180) * (W - PAD.left - PAD.right)},${H - PAD.bottom} L${PAD.left},${H - PAD.bottom} Z`} fill={C.up + "15"} />
+                        {/* Current position */}
+                        {(() => {
+                          const x = PAD.left + (bullAgeMo / 180) * (W - PAD.left - PAD.right);
+                          return <><line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom} stroke={C.accent} strokeWidth={2} strokeDasharray="4,3" /><text x={x} y={PAD.top - 4} fill={C.accent} fontSize={9} fontWeight={700} textAnchor="middle">NOW ({bullAgeMo}mo)</text></>;
+                        })()}
+                        {/* X axis labels */}
+                        {[0, 24, 48, 72, 96, 120, 144, 168].map(m => <text key={m} x={PAD.left + (m / 180) * (W - PAD.left - PAD.right)} y={H - PAD.bottom + 14} fill={C.t4} fontSize={9} textAnchor="middle">{m}mo</text>)}
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── CLIENT COMMUNICATION SCRIPTS ── */}
+              {pbView === "scripts" && (() => {
+                const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+                const scripts = [
+                  {
+                    regime: "Bull Market — Early/Mid Cycle",
+                    condition: "S&P < +100% from trough",
+                    active: pctFromTrough < 100,
+                    subject: "Portfolio Update: Staying the Course",
+                    body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. At this stage of the bull market, our playbook calls for staying fully invested — history shows that trimming too early costs more in missed upside than it saves in protection.\n\nWe're monitoring the market cycle closely and have clear rules for when to start building a cash buffer. For now, the plan is simple: stay invested and let compounding work.`,
+                  },
+                  {
+                    regime: "Bull Market — Extended",
+                    condition: "S&P > +100% from trough, trimming active",
+                    active: pctFromTrough >= 100 && pctFromTrough < 200,
+                    subject: "Portfolio Update: Building a Cash Cushion",
+                    body: `The S&P 500 has more than doubled from the October 2022 low (+${pctFromTrough.toFixed(0)}%). While the bull market may continue, history tells us that the further we go, the closer we get to the next correction.\n\nPer our investment playbook, we've begun setting aside a small cash position — currently targeting around ${(TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop()?.trimPct || 0)}% of your portfolio. This isn't a call that the market is about to drop — it's a systematic rule that's been backtested across 93 years of market history with positive results.\n\nIf no correction materializes within 18 months, this cash goes right back to work. Think of it as inexpensive insurance.`,
+                  },
+                  {
+                    regime: "Correction — Down 10-20%",
+                    condition: "S&P down 10-20% from peak",
+                    active: drawdown <= -10 && drawdown > -20,
+                    subject: "Market Update: Correction in Progress — The Plan Is Working",
+                    body: `The S&P 500 is down approximately ${Math.abs(drawdown).toFixed(0)}% from its recent high. I want you to know: this is normal, and we have a plan for exactly this situation.\n\nAt this level, our playbook says to hold. We haven't hit our first deployment threshold (-25%), so we're watching and waiting. The cash cushion we built is doing its job — protecting a portion of your portfolio from the decline.\n\nHistorically, the market has experienced 27 declines of -15% or more since 1929. Every single one eventually recovered. Corrections are uncomfortable but they are the price of admission for long-term equity returns.`,
+                  },
+                  {
+                    regime: "Bear Market — Tranche 1",
+                    condition: "S&P down 25%+ from peak",
+                    active: drawdown <= -25 && drawdown > -35,
+                    subject: "DEPLOYING: First Tranche Into the Market",
+                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak — we've hit our first deployment threshold.\n\nPer our investment playbook, we're deploying 25% of your cash reserves back into equities at these levels. This is the plan working exactly as designed. We're buying stocks at a significant discount while others are panicking.\n\n87% of historical bear markets have reached this level. We still have 75% of our reserves held back in case the market falls further. If it doesn't, we've already started buying at a great price.\n\nI know this feels uncomfortable. But the data is clear: deploying cash systematically during bear markets is the single highest-value action an investor can take. Across 93 years and 21 market cycles, this approach has outperformed buy-and-hold every single time.`,
+                  },
+                  {
+                    regime: "Bear Market — Tranche 2",
+                    condition: "S&P down 35%+ from peak",
+                    active: drawdown <= -35 && drawdown > -50,
+                    subject: "DEPLOYING: Second Tranche — Deep Value Territory",
+                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. This level of decline has only occurred in about half of all bear markets — we are in historically deep territory.\n\nWe're deploying our second tranche — 40% of remaining reserves — into equities. Stocks purchased at -35% from peak have historically delivered +54% returns by the time the market recovers to its prior high.\n\nWe still have reserves held back for an even deeper decline, but statistically, we're likely near the bottom. The average bear market falls 37%. The key now is patience — recoveries take time (average 35 months), but they always come.\n\nThis is the moment that separates disciplined investors from everyone else. Stay the course.`,
+                  },
+                  {
+                    regime: "Bear Market — Tranche 3",
+                    condition: "S&P down 50%+ from peak",
+                    active: drawdown <= -50,
+                    subject: "DEPLOYING: All Remaining Reserves — Generational Opportunity",
+                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. Only 5 bear markets in 95 years have reached this depth. This is a generational buying opportunity.\n\nWe're deploying all remaining cash reserves into equities. Stocks purchased at -50% from peak have historically delivered +100% returns by recovery — your deployed cash doubles.\n\nI know this is the hardest moment to invest. Every headline is negative. But this is precisely when the greatest fortunes are made. Buffett's famous quote applies: "Be fearful when others are greedy, and greedy when others are fearful."\n\nThe plan has worked for 93 years. Trust the process.`,
+                  },
+                ];
+
+                return (
+                  <div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Pre-written client communications for each market regime. The <span style={{ color: C.accent, fontWeight: 700 }}>active</span> script matches current conditions. Click to copy.</div>
+                    {scripts.map((s, i) => (
+                      <div key={i} style={{ ...cardStyle, border: `1px solid ${s.active ? C.accent + "44" : C.border}`, position: "relative" }}>
+                        {s.active && <div style={{ position: "absolute", top: 12, right: 14, fontSize: 9, fontWeight: 700, color: C.accent, padding: "3px 8px", borderRadius: 4, background: C.accent + "20", textTransform: "uppercase" }}>Active Now</div>}
+                        <div style={{ fontSize: 11, fontWeight: 700, color: s.active ? C.accent : C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{s.regime}</div>
+                        <div style={{ fontSize: 10, color: C.t4, marginBottom: 10 }}>{s.condition}</div>
+                        <div style={{ background: C.bg, borderRadius: 10, padding: 14, marginBottom: 8 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Subject: {s.subject}</div>
+                          <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{s.body}</div>
+                        </div>
+                        <button onClick={() => { navigator.clipboard.writeText(`Subject: ${s.subject}\n\n${s.body}`); }} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Copy to Clipboard</button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* ── HISTORICAL BULL/BEAR MARKETS ── */}
               {pbView === "history" && (
