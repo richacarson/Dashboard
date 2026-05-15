@@ -5451,7 +5451,7 @@ Instructions:
                       const medianAngle = startAngle - (medBullGain / maxGain) * totalArc;
                       const avgAngle = startAngle - (avgBullGain / maxGain) * totalArc;
                       const needleOuter = R - 10;
-                      const needleInner = R * 0.45;
+                      const needleInner = R * 0.62;
                       const nx = cx + needleOuter * Math.cos(needleAngle);
                       const ny = cy - needleOuter * Math.sin(needleAngle);
                       const nsx = cx + needleInner * Math.cos(needleAngle);
