@@ -5874,16 +5874,16 @@ Instructions:
                 const md = macroData;
 
                 // Factor 1: Yield Curve (10Y-2Y) — strongest single recession predictor
-                // Estrella & Mishkin (1998): inverted curve preceded every recession since 1955
+                // Estrella & Mishkin (1998) used 10Y-3M; 10Y-2Y is the practitioner convention with comparable power
                 if (md.yieldSpread != null) {
-                  const score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 55], [0.25, 40], [0.5, 30], [1.0, 18], [1.5, 10], [2.5, 5]]);
-                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%`, score, weight: 25, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Estrella & Mishkin (1998)" });
+                  const score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 48], [0.25, 38], [0.5, 28], [1.0, 18], [1.5, 10], [2.5, 5]]);
+                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%`, score, weight: 25, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-2Y (cf. Estrella & Mishkin 1998)" });
                 }
 
-                // Factor 2: Valuation (P/E) — Shiller (2000): high CAPE = poor forward returns
+                // Factor 2: Valuation (P/E) — steepened curve: GFC started at 21x, 2022 bear at 23x
                 if (md.spyPE != null) {
-                  const score = interp(md.spyPE, [[12, 5], [16, 12], [20, 22], [24, 35], [28, 48], [32, 58], [36, 68], [40, 78]]);
-                  factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, detail: "SPY trailing P/E", score, weight: 20, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Shiller (2000)" });
+                  const score = interp(md.spyPE, [[12, 5], [16, 15], [19, 30], [21, 42], [24, 52], [28, 62], [32, 72], [36, 80], [40, 85]]);
+                  factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, detail: "SPY trailing P/E (GFC started at 21x, 2022 bear at 23x)", score, weight: 20, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Shiller (2000)" });
                 }
 
                 // Factor 3: Bull Duration — conditional survival from 21 historical bulls
@@ -5912,9 +5912,12 @@ Instructions:
                   factors.push({ name: "Volatility", value: `VIX ${md.vix.toFixed(1)}`, detail: "CBOE Volatility Index", score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "CBOE" });
                 }
 
-                // Composite: weighted average, reweighted to available factors
+                // Composite: weighted average + concordance bonus for multi-factor stress
                 const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
-                const composite = totalWeight > 0 ? Math.round(factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0)) : null;
+                const baseComposite = totalWeight > 0 ? factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0) : null;
+                const elevatedCount = factors.filter(f => f.score >= 50).length;
+                const concordanceBonus = elevatedCount >= 5 ? 15 : elevatedCount >= 4 ? 10 : elevatedCount >= 3 ? 5 : 0;
+                const composite = baseComposite != null ? Math.min(95, Math.round(baseComposite + concordanceBonus)) : null;
                 const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
                 const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
@@ -5932,7 +5935,7 @@ Instructions:
                       {composite != null ? (<>
                         <div style={{ fontSize: 56, fontWeight: 900, color: compositeColor, lineHeight: 1 }}>{composite}%</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: compositeColor, marginTop: 6, letterSpacing: 2 }}>{riskLabel}</div>
-                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite model / {totalWeight}% weight coverage</div>
+                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} factors elevated)` : ""}</div>
                       </>) : (
                         <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
                       )}
@@ -5966,13 +5969,14 @@ Instructions:
                     <div style={cardStyle}>
                       {sectionTitle("Methodology")}
                       <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.8 }}>
-                        <div><strong style={{ color: C.t1 }}>Yield Curve (25%)</strong> — 10Y minus 2Y Treasury spread. Inversion has preceded every U.S. recession since 1955 (Estrella & Mishkin, 1998). The most reliable single predictor of economic downturns.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (20%)</strong> — SPY trailing P/E ratio. Elevated valuations (&gt;30x) have historically coincided with below-average forward returns and increased drawdown risk (Shiller, 2000). Not a timing signal, but a severity amplifier.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (15%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Given the current bull has lasted {bullAgeMo} months, what percentage of comparable bulls ended within the next 12 months? Sample: {atRisk.length} bulls lasted longer than {bullAgeMo} months.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Stress (15%)</strong> — HYG high-yield bond ETF distance from 52-week high. Widening credit spreads signal deteriorating financial conditions and precede equity drawdowns by 3-6 months (Gilchrist & Zakrajsek, 2012).</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Momentum (15%)</strong> — SPY price vs its 200-day moving average. Breakdown below the 200-day SMA is a widely-tracked regime signal. A close below the 200-day preceded 18 of 21 bear markets.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (10%)</strong> — CBOE VIX Index. Elevated VIX (&gt;25) reflects market stress. Lowest weight because VIX is reactive (rises during declines) rather than predictive.</div>
-                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Composite models estimate risk, not certainty. Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are based on published research, not optimized to fit historical data (which would overfit). The bull duration factor is conditional on n={atRisk.length} comparable periods.</div>
+                        <div><strong style={{ color: C.t1 }}>Yield Curve (25%)</strong> — 10Y minus 2Y Treasury spread. Yield curve inversion has preceded every U.S. recession since 1955, with 1-2 false positives (1966, arguably 1998). The original academic work (Estrella & Mishkin, 1998) used 10Y minus 3-month T-bill; the 10Y-2Y practitioner convention has comparable predictive power. Note: the 2022-2024 deep inversion (-1.08%) has not yet produced a recession — either a false positive or very long lag.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (20%)</strong> — SPY trailing P/E ratio. Scoring calibrated to actual pre-bear P/E levels: the 2007 GFC began at 21x, the 2022 bear at 23x, the dot-com crash at 28x (Shiller, 2000). Not a timing signal, but a severity amplifier — high P/E markets fall further.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (15%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Of the {atRisk.length} bulls that lasted longer than {bullAgeMo} months, {atRisk.length - survived12.length} ended within the next 12 months. 95% confidence interval: {Math.max(0, Math.round((durationProb / 100 - 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% to {Math.min(100, Math.round((durationProb / 100 + 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% — wide range due to small sample.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Stress (15%)</strong> — HYG high-yield bond ETF distance from 52-week high, used as a proxy for credit spreads. Academic basis: the excess bond premium has significant predictive power for real activity and equity returns (Gilchrist & Zakrajsek, 2012). HYG fell ~13% in the 2022 bear, ~21% in COVID, ~34% in the GFC.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Momentum (15%)</strong> — SPY price vs its 200-day moving average. Sustained breakdown below the 200-day SMA has accompanied or preceded most major bear markets, though in rapid crashes (COVID, 1987) the breakdown was concurrent with, not before, the decline.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (10%)</strong> — CBOE VIX Index. Lowest weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Concordance Bonus</strong> — When 3+ factors score above 50, a bonus of 5-15 points is added. Simultaneous stress across multiple indicators is disproportionately dangerous: the 2000 and 2007 crashes both had yield curve inversion + elevated valuations + credit stress simultaneously.</div>
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> This model uses only financial market indicators. It has no real-economy data (unemployment claims, ISM PMI, Conference Board LEI) which could detect slow-developing recessions that precede market declines. Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide confidence interval). The model estimates risk, not certainty.</div>
                       </div>
                     </div>
 
