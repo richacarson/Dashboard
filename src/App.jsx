@@ -5290,11 +5290,12 @@ Instructions:
         {/* ━━━ PLAYBOOK ━━━ */}
         {tab === "playbook" && (() => {
           const SP_TROUGH = { date: "2022-10-12", level: 3577.03, label: "Inflation / Rate Hikes" };
-          const SP_ATH = { date: "2026-05-11", level: 7412.84 };
+          const SP_ATH_STORED = { date: "2026-05-11", level: 7412.84 };
           const spyQ = bmQuotes.SPY || quotesRef.current?.SPY;
           const spyPrice = spyQ?.p || 0;
           const spyPc = (bmBars.SPY || barsRef.current?.SPY)?.pc || 0;
-          const currentSP = spyPrice ? spyPrice * 10 : SP_ATH.level;
+          const currentSP = spyPrice ? spyPrice * 10 : SP_ATH_STORED.level;
+          const SP_ATH = currentSP > SP_ATH_STORED.level ? { date: new Date().toISOString().slice(0, 10), level: currentSP } : SP_ATH_STORED;
           const pctFromTrough = ((currentSP / SP_TROUGH.level) - 1) * 100;
           const pctFromATH = ((currentSP / SP_ATH.level) - 1) * 100;
           const drawdown = Math.min(pctFromATH, 0);
@@ -5445,11 +5446,12 @@ Instructions:
                       const tickMarks = [0, 50, 100, 150, 200, 250, 300, 350, maxGain];
                       const medianAngle = startAngle - (medBullGain / maxGain) * totalArc;
                       const avgAngle = startAngle - (avgBullGain / maxGain) * totalArc;
-                      const nx = cx + (R - 12) * Math.cos(needleAngle);
-                      const ny = cy - (R - 12) * Math.sin(needleAngle);
-                      const hubY = cy - 58;
-                      const nsx = cx + 28 * Math.cos(needleAngle);
-                      const nsy = hubY - 28 * Math.sin(needleAngle);
+                      const needleOuter = R - 10;
+                      const needleInner = R * 0.45;
+                      const nx = cx + needleOuter * Math.cos(needleAngle);
+                      const ny = cy - needleOuter * Math.sin(needleAngle);
+                      const nsx = cx + needleInner * Math.cos(needleAngle);
+                      const nsy = cy - needleInner * Math.sin(needleAngle);
                       const bullDurMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
 
                       return (
@@ -5487,8 +5489,7 @@ Instructions:
 
                           {/* Needle */}
                           <line x1={nsx} y1={nsy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round" />
-                          <circle cx={cx} cy={hubY} r={6} fill={regimeColor} />
-                          <circle cx={cx} cy={hubY} r={3} fill={theme === "dark" ? C.card : "#fff"} />
+                          <circle cx={nsx} cy={nsy} r={5} fill={regimeColor} />
 
                           {/* Needle glow */}
                           <circle cx={nx} cy={ny} r={4} fill={regimeColor} opacity={0.6}>
