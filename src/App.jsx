@@ -5558,16 +5558,19 @@ Instructions:
                   {/* Bear market distance */}
                   <div style={cardStyle}>
                     {sectionTitle("Distance to Bear Market")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 10 }}>How far the S&P 500 must fall from its current level to enter a bear market (-20% from ATH of {SP_ATH.level.toLocaleString()}).</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 10 }}>A bear market is declared at -20% from the all-time high ({SP_ATH.level.toLocaleString()}).</div>
                     {(() => {
                       const bearLevel = SP_ATH.level * 0.8;
-                      const dropNeeded = ((currentSP - bearLevel) / currentSP) * 100;
+                      const fromATH = ((currentSP / SP_ATH.level) - 1) * 100;
+                      const cushion = 20 - Math.abs(Math.min(fromATH, 0));
+                      const inBear = fromATH <= -20;
                       return (
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                          {statBox("Bear Threshold", Math.round(bearLevel).toLocaleString(), C.dn)}
-                          {dropNeeded > 0
-                            ? statBox("Drop Needed", `-${dropNeeded.toFixed(1)}%`, dropNeeded > 15 ? C.up : dropNeeded > 8 ? "#FBBF24" : C.dn)
-                            : statBox("Status", "In Bear Market", C.dn)}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                          {statBox("From ATH", `${fromATH >= 0 ? "+" : ""}${fromATH.toFixed(1)}%`, fromATH >= 0 ? C.up : C.dn)}
+                          {statBox("Bear at", Math.round(bearLevel).toLocaleString(), C.dn)}
+                          {inBear
+                            ? statBox("Status", "BEAR", C.dn)
+                            : statBox("Cushion", `${cushion.toFixed(1)}%`, cushion > 15 ? C.up : cushion > 8 ? "#FBBF24" : C.dn)}
                         </div>
                       );
                     })()}
