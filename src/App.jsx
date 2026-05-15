@@ -5447,6 +5447,9 @@ Instructions:
                       const avgAngle = startAngle - (avgBullGain / maxGain) * totalArc;
                       const nx = cx + (R - 12) * Math.cos(needleAngle);
                       const ny = cy - (R - 12) * Math.sin(needleAngle);
+                      const hubY = cy - 58;
+                      const nsx = cx + 28 * Math.cos(needleAngle);
+                      const nsy = hubY - 28 * Math.sin(needleAngle);
                       const bullDurMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
 
                       return (
@@ -5483,9 +5486,9 @@ Instructions:
                           <text x={cx + (R + 34) * Math.cos(avgAngle)} y={cy - (R + 34) * Math.sin(avgAngle)} fill="#FBBF24" fontSize={8} fontWeight={700} textAnchor="middle">AVG</text>
 
                           {/* Needle */}
-                          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round" />
-                          <circle cx={cx} cy={cy} r={6} fill={regimeColor} />
-                          <circle cx={cx} cy={cy} r={3} fill={theme === "dark" ? C.card : "#fff"} />
+                          <line x1={nsx} y1={nsy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round" />
+                          <circle cx={cx} cy={hubY} r={6} fill={regimeColor} />
+                          <circle cx={cx} cy={hubY} r={3} fill={theme === "dark" ? C.card : "#fff"} />
 
                           {/* Needle glow */}
                           <circle cx={nx} cy={ny} r={4} fill={regimeColor} opacity={0.6}>
