@@ -5291,13 +5291,16 @@ Instructions:
         {tab === "playbook" && (() => {
           const SPY_TROUGH = { date: "2022-10-12", level: 357.70 };
           const spyQ = bmQuotes.SPY || quotesRef.current?.SPY;
+          const spyBar = bmBars.SPY || barsRef.current?.SPY || {};
           const spyPrice = spyQ?.p || 0;
-          const spyPc = (bmBars.SPY || barsRef.current?.SPY)?.pc || 0;
+          const spyPc = spyBar?.pc || 0;
+          const spyDailyHigh = spyBar?.h || 0;
           const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
           const storedATH = (() => { try { return parseFloat(localStorage.getItem("iown_spy_ath")) || 0; } catch { return 0; } })();
-          const seedATH = 741.28;
-          const liveATH = Math.max(spyPrice, storedATH, seedATH);
-          if (spyPrice > 0 && spyPrice >= liveATH) { try { localStorage.setItem("iown_spy_ath", String(spyPrice)); } catch {} }
+          const seedATH = 749.53;
+          const bestPrice = Math.max(spyPrice, spyDailyHigh);
+          const liveATH = Math.max(bestPrice, storedATH, seedATH);
+          if (bestPrice > 0 && bestPrice >= liveATH) { try { localStorage.setItem("iown_spy_ath", String(bestPrice)); } catch {} }
           const pctFromTrough = spyPrice > 0 ? ((spyPrice / SPY_TROUGH.level) - 1) * 100 : 0;
           const pctFromATH = spyPrice > 0 ? ((spyPrice / liveATH) - 1) * 100 : 0;
           const drawdown = Math.min(pctFromATH, 0);
