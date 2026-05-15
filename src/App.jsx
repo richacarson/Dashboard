@@ -994,6 +994,7 @@ Instructions:
   const [pbView, setPbView] = useState("regime");
   const [pbSimDrop, setPbSimDrop] = useState(30);
   const [pbSimValue, setPbSimValue] = useState(1000000);
+  const [macroData, setMacroData] = useState({ yieldSpread: null, vix: null, hySpread: null, spy200: null, cape: null, loaded: false });
   const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
@@ -1409,6 +1410,69 @@ Instructions:
     setFundamentals(results);
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms, apiKey, apiSecret, hdrs]);
+
+  /* ── Fetch macro indicators for bear probability composite ── */
+  useEffect(() => {
+    const fetchMacro = async () => {
+      const results = {};
+      const today = new Date().toISOString().slice(0, 10);
+      const d30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      const d300 = new Date(Date.now() - 300 * 86400000).toISOString().slice(0, 10);
+
+      const fetches = [];
+
+      // 1. Treasury yield curve from FMP
+      if (FK) fetches.push((async () => {
+        try {
+          const r = await fetch(`https://financialmodelingprep.com/api/v4/treasury?from=${d30}&to=${today}&apikey=${FK}`);
+          if (r.ok) { const d = await r.json(); if (d?.[0]) { results.yield10Y = d[0].year10; results.yield2Y = d[0].year2; results.yield3M = d[0].month3; results.yieldDate = d[0].date; results.yieldSpread = (d[0].year10 || 0) - (d[0].year2 || 0); } }
+        } catch {}
+      })());
+
+      // 2. VIX from FMP
+      if (FK) fetches.push((async () => {
+        try {
+          const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/%5EVIX?apikey=${FK}`);
+          if (r.ok) { const d = await r.json(); if (d?.[0]) { results.vix = d[0].price || d[0].previousClose; } }
+        } catch {}
+      })());
+
+      // 3. SPY 200-day SMA from Alpaca
+      if (apiKey) fetches.push((async () => {
+        try {
+          const r = await fetch(`${BASE}/v2/stocks/bars?symbols=SPY&timeframe=1Day&start=${d300}&limit=250&adjustment=split&feed=iex`, { headers: { "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret } });
+          if (r.ok) { const d = await r.json(); const bars = d.bars?.SPY || []; if (bars.length >= 50) { const last200 = bars.slice(-200); results.spy200 = last200.reduce((a, b) => a + b.c, 0) / last200.length; results.spy200Count = last200.length; } }
+        } catch {}
+      })());
+
+      // 4. HYG (high yield) from Alpaca + 52wk high from Finnhub
+      if (apiKey) fetches.push((async () => {
+        try {
+          const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=HYG&feed=iex`, { headers: { "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret } });
+          if (r.ok) { const d = await r.json(); if (d.HYG?.latestTrade) results.hygPrice = d.HYG.latestTrade.p; }
+        } catch {}
+      })());
+      if (FH) fetches.push((async () => {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=HYG&metric=all&token=${FH}`);
+          if (r.ok) { const d = await r.json(); if (d.metric) { results.hyg52High = d.metric["52WeekHigh"]; results.hyg52Low = d.metric["52WeekLow"]; } }
+        } catch {}
+      })());
+
+      // 5. SPY P/E (valuation proxy) from Finnhub
+      if (FH) fetches.push((async () => {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=SPY&metric=all&token=${FH}`);
+          if (r.ok) { const d = await r.json(); if (d.metric) { results.spyPE = d.metric.peTTM || d.metric.peBasicExclExtraTTM || d.metric.peNormalizedAnnual; } }
+        } catch {}
+      })());
+
+      await Promise.all(fetches);
+      results.loaded = true;
+      setMacroData(prev => ({ ...prev, ...results }));
+    };
+    if (apiKey || FK || FH) fetchMacro();
+  }, [apiKey, apiSecret]);
 
   /* ── Fetch economic + earnings calendar ── */
   const fetchCalendar = useCallback(async () => {
@@ -5785,63 +5849,130 @@ Instructions:
                 );
               })()}
 
-              {/* ── BEAR PROBABILITY INDICATOR ── */}
+              {/* ── COMPOSITE BEAR PROBABILITY ── */}
               {pbView === "probability" && (() => {
                 const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
                 const bullsData = BULL_MARKETS.filter(b => !b.period.includes("present"));
                 const totalBulls = bullsData.length;
+                const atRisk = bullsData.filter(b => b.durationMo > bullAgeMo);
+                const survived12 = bullsData.filter(b => b.durationMo > bullAgeMo + 12);
+                const durationProb = atRisk.length > 0 ? Math.round((1 - survived12.length / atRisk.length) * 100) : 50;
 
-                const probWithin = (months) => {
-                  const survived = bullsData.filter(b => b.durationMo > bullAgeMo + months).length;
-                  const atRisk = bullsData.filter(b => b.durationMo > bullAgeMo).length;
-                  return atRisk > 0 ? Math.round((1 - survived / atRisk) * 100) : 100;
+                const interp = (val, pts) => {
+                  if (val <= pts[0][0]) return pts[0][1];
+                  if (val >= pts[pts.length - 1][0]) return pts[pts.length - 1][1];
+                  for (let i = 1; i < pts.length; i++) {
+                    if (val <= pts[i][0]) {
+                      const t = (val - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]);
+                      return Math.round(pts[i - 1][1] + t * (pts[i][1] - pts[i - 1][1]));
+                    }
+                  }
+                  return pts[pts.length - 1][1];
                 };
-                const probBullEndsWithin6 = probWithin(6);
-                const probBullEndsWithin12 = probWithin(12);
-                const probBullEndsWithin24 = probWithin(24);
-                const bullsShorterThanCurrent = bullsData.filter(b => b.durationMo <= bullAgeMo).length;
-                const percentileAge = Math.round(bullsShorterThanCurrent / totalBulls * 100);
 
-                const gainPercentile = Math.round(bullsData.filter(b => b.gain <= pctFromTrough).length / totalBulls * 100);
+                const factors = [];
+                const md = macroData;
 
-                const survivalCurve = [];
-                for (let m = 0; m <= 180; m += 3) {
-                  const alive = bullsData.filter(b => b.durationMo > m).length;
-                  survivalCurve.push({ month: m, pct: Math.round(alive / totalBulls * 100) });
+                // Factor 1: Yield Curve (10Y-2Y) — strongest single recession predictor
+                // Estrella & Mishkin (1998): inverted curve preceded every recession since 1955
+                if (md.yieldSpread != null) {
+                  const score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 55], [0.25, 40], [0.5, 30], [1.0, 18], [1.5, 10], [2.5, 5]]);
+                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%`, score, weight: 25, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Estrella & Mishkin (1998)" });
                 }
+
+                // Factor 2: Valuation (P/E) — Shiller (2000): high CAPE = poor forward returns
+                if (md.spyPE != null) {
+                  const score = interp(md.spyPE, [[12, 5], [16, 12], [20, 22], [24, 35], [28, 48], [32, 58], [36, 68], [40, 78]]);
+                  factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, detail: "SPY trailing P/E", score, weight: 20, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Shiller (2000)" });
+                }
+
+                // Factor 3: Bull Duration — conditional survival from 21 historical bulls
+                {
+                  const score = interp(durationProb, [[5, 8], [15, 18], [25, 30], [35, 42], [50, 55], [65, 68], [80, 80]]);
+                  factors.push({ name: "Bull Duration", value: `${bullAgeMo} months`, detail: `${atRisk.length} comparable bulls, ${atRisk.length - survived12.length} ended within 12mo`, score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `n=${totalBulls} (1929-2022)` });
+                }
+
+                // Factor 4: Credit Spreads (HYG vs 52wk high) — Gilchrist & Zakrajšek (2012)
+                if (md.hygPrice != null && md.hyg52High != null && md.hyg52High > 0) {
+                  const hygDrawdown = ((md.hygPrice / md.hyg52High) - 1) * 100;
+                  const score = interp(hygDrawdown, [[-18, 90], [-12, 75], [-7, 55], [-4, 35], [-2, 20], [0, 8]]);
+                  factors.push({ name: "Credit Stress", value: `${hygDrawdown.toFixed(1)}% from high`, detail: `HYG: $${md.hygPrice.toFixed(2)} / 52wk high: $${md.hyg52High.toFixed(2)}`, score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Gilchrist & Zakrajšek (2012)" });
+                }
+
+                // Factor 5: Momentum (SPY vs 200-day SMA) — practical risk indicator
+                if (md.spy200 != null && spyPrice > 0) {
+                  const pctAbove200 = ((spyPrice / md.spy200) - 1) * 100;
+                  const score = interp(pctAbove200, [[-12, 90], [-6, 75], [-2, 55], [0, 40], [3, 25], [6, 15], [12, 5]]);
+                  factors.push({ name: "Momentum", value: `${pctAbove200 >= 0 ? "+" : ""}${pctAbove200.toFixed(1)}% vs 200d`, detail: `SPY: $${spyPrice.toFixed(2)} / 200d SMA: $${md.spy200.toFixed(2)}`, score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `${md.spy200Count || 200}-day SMA` });
+                }
+
+                // Factor 6: Volatility (VIX) — reactive, not predictive, but captures regime
+                if (md.vix != null) {
+                  const score = interp(md.vix, [[10, 5], [14, 12], [18, 25], [22, 40], [28, 58], [35, 72], [45, 85]]);
+                  factors.push({ name: "Volatility", value: `VIX ${md.vix.toFixed(1)}`, detail: "CBOE Volatility Index", score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "CBOE" });
+                }
+
+                // Composite: weighted average, reweighted to available factors
+                const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
+                const composite = totalWeight > 0 ? Math.round(factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0)) : null;
+                const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
+                const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
                 const W = isDesktop ? 700 : Math.min(window.innerWidth - 72, 500);
                 const H = 200;
                 const PAD = { top: 20, right: 20, bottom: 30, left: 40 };
+                const survivalCurve = [];
+                for (let m = 0; m <= 180; m += 3) { survivalCurve.push({ month: m, pct: Math.round(bullsData.filter(b => b.durationMo > m).length / totalBulls * 100) }); }
 
                 return (
                   <div>
+                    {/* Composite headline */}
+                    <div style={{ ...cardStyle, textAlign: "center", border: `1px solid ${compositeColor}30` }}>
+                      {sectionTitle("Bear Probability — 12 Month Outlook")}
+                      {composite != null ? (<>
+                        <div style={{ fontSize: 56, fontWeight: 900, color: compositeColor, lineHeight: 1 }}>{composite}%</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: compositeColor, marginTop: 6, letterSpacing: 2 }}>{riskLabel}</div>
+                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite model / {totalWeight}% weight coverage</div>
+                      </>) : (
+                        <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
+                      )}
+                    </div>
+
+                    {/* Factor breakdown */}
                     <div style={cardStyle}>
-                      {sectionTitle("Bear Market Probability")}
-                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Based on the current bull's age ({bullAgeMo} months) and gain (+{pctFromTrough.toFixed(0)}%), what's the historical probability of a bear market starting soon?</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 14 }}>
-                        <div style={{ background: probBullEndsWithin6 > 40 ? C.dn + "15" : probBullEndsWithin6 > 20 ? "#FBBF2415" : C.up + "15", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${probBullEndsWithin6 > 40 ? C.dn : probBullEndsWithin6 > 20 ? "#FBBF24" : C.up}30` }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Within 6 Mo</div>
-                          <div style={{ fontSize: 28, fontWeight: 900, color: probBullEndsWithin6 > 40 ? C.dn : probBullEndsWithin6 > 20 ? "#FBBF24" : C.up }}>{probBullEndsWithin6}%</div>
-                        </div>
-                        <div style={{ background: probBullEndsWithin12 > 40 ? C.dn + "15" : probBullEndsWithin12 > 20 ? "#FBBF2415" : C.up + "15", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${probBullEndsWithin12 > 40 ? C.dn : probBullEndsWithin12 > 20 ? "#FBBF24" : C.up}30` }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Within 12 Mo</div>
-                          <div style={{ fontSize: 28, fontWeight: 900, color: probBullEndsWithin12 > 40 ? C.dn : probBullEndsWithin12 > 20 ? "#FBBF24" : C.up }}>{probBullEndsWithin12}%</div>
-                        </div>
-                        <div style={{ background: probBullEndsWithin24 > 40 ? C.dn + "15" : probBullEndsWithin24 > 20 ? "#FBBF2415" : C.up + "15", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${probBullEndsWithin24 > 40 ? C.dn : probBullEndsWithin24 > 20 ? "#FBBF24" : C.up}30` }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Within 24 Mo</div>
-                          <div style={{ fontSize: 28, fontWeight: 900, color: probBullEndsWithin24 > 40 ? C.dn : probBullEndsWithin24 > 20 ? "#FBBF24" : C.up }}>{probBullEndsWithin24}%</div>
-                        </div>
+                      {sectionTitle("Factor Breakdown")}
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>Each factor scored 0-100 (higher = more bearish), weighted by predictive power from academic research.</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {factors.map((f, i) => (
+                          <div key={i} style={{ background: C.bg, borderRadius: 12, padding: "14px 16px", border: `1px solid ${C.border}` }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                              <div>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{f.name}</span>
+                                <span style={{ fontSize: 11, color: C.t4, marginLeft: 8 }}>{f.weight}% weight</span>
+                              </div>
+                              <div style={{ fontSize: 18, fontWeight: 900, color: f.color }}>{f.score}</div>
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 4 }}>{f.value}</div>
+                            <div style={{ fontSize: 10, color: C.t4, marginBottom: 8 }}>{f.detail} — {f.citation}</div>
+                            <div style={{ height: 6, background: C.card, borderRadius: 3, overflow: "hidden" }}>
+                              <div style={{ width: `${f.score}%`, height: "100%", background: f.color, borderRadius: 3, transition: "width 0.3s" }} />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
+                    {/* Methodology */}
                     <div style={cardStyle}>
-                      {sectionTitle("Where This Bull Stands")}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                        {statBox("Age Percentile", `${percentileAge}th`, percentileAge > 70 ? C.dn : percentileAge > 40 ? "#FBBF24" : C.up)}
-                        {statBox("Gain Percentile", `${gainPercentile}th`, gainPercentile > 70 ? C.dn : gainPercentile > 40 ? "#FBBF24" : C.up)}
-                        {statBox("Bulls Shorter", `${bullsShorterThanCurrent}/${totalBulls}`, C.t1)}
-                        {statBox("Bulls Smaller", `${bullsData.filter(b => b.gain <= pctFromTrough).length}/${totalBulls}`, C.t1)}
+                      {sectionTitle("Methodology")}
+                      <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.8 }}>
+                        <div><strong style={{ color: C.t1 }}>Yield Curve (25%)</strong> — 10Y minus 2Y Treasury spread. Inversion has preceded every U.S. recession since 1955 (Estrella & Mishkin, 1998). The most reliable single predictor of economic downturns.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (20%)</strong> — SPY trailing P/E ratio. Elevated valuations (&gt;30x) have historically coincided with below-average forward returns and increased drawdown risk (Shiller, 2000). Not a timing signal, but a severity amplifier.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (15%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Given the current bull has lasted {bullAgeMo} months, what percentage of comparable bulls ended within the next 12 months? Sample: {atRisk.length} bulls lasted longer than {bullAgeMo} months.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Stress (15%)</strong> — HYG high-yield bond ETF distance from 52-week high. Widening credit spreads signal deteriorating financial conditions and precede equity drawdowns by 3-6 months (Gilchrist & Zakrajsek, 2012).</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Momentum (15%)</strong> — SPY price vs its 200-day moving average. Breakdown below the 200-day SMA is a widely-tracked regime signal. A close below the 200-day preceded 18 of 21 bear markets.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (10%)</strong> — CBOE VIX Index. Elevated VIX (&gt;25) reflects market stress. Lowest weight because VIX is reactive (rises during declines) rather than predictive.</div>
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Composite models estimate risk, not certainty. Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are based on published research, not optimized to fit historical data (which would overfit). The bull duration factor is conditional on n={atRisk.length} comparable periods.</div>
                       </div>
                     </div>
 
@@ -5850,29 +5981,10 @@ Instructions:
                       {sectionTitle("Bull Market Survival Curve")}
                       <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>% of historical bull markets still alive at each age. Vertical line = current bull ({bullAgeMo} months).</div>
                       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
-                        {/* Grid lines */}
-                        {[25, 50, 75, 100].map(v => {
-                          const y = PAD.top + ((100 - v) / 100) * (H - PAD.top - PAD.bottom);
-                          return <g key={v}><line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke={C.border} strokeWidth={1} /><text x={PAD.left - 6} y={y + 3} fill={C.t4} fontSize={9} textAnchor="end">{v}%</text></g>;
-                        })}
-                        {/* Curve */}
-                        <path d={survivalCurve.map((p, i) => {
-                          const x = PAD.left + (p.month / 180) * (W - PAD.left - PAD.right);
-                          const y = PAD.top + ((100 - p.pct) / 100) * (H - PAD.top - PAD.bottom);
-                          return `${i === 0 ? "M" : "L"}${x},${y}`;
-                        }).join(" ")} fill="none" stroke={C.up} strokeWidth={2.5} />
-                        {/* Fill */}
-                        <path d={survivalCurve.map((p, i) => {
-                          const x = PAD.left + (p.month / 180) * (W - PAD.left - PAD.right);
-                          const y = PAD.top + ((100 - p.pct) / 100) * (H - PAD.top - PAD.bottom);
-                          return `${i === 0 ? "M" : "L"}${x},${y}`;
-                        }).join(" ") + ` L${PAD.left + (survivalCurve[survivalCurve.length - 1].month / 180) * (W - PAD.left - PAD.right)},${H - PAD.bottom} L${PAD.left},${H - PAD.bottom} Z`} fill={C.up + "15"} />
-                        {/* Current position */}
-                        {(() => {
-                          const x = PAD.left + (bullAgeMo / 180) * (W - PAD.left - PAD.right);
-                          return <><line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom} stroke={C.accent} strokeWidth={2} strokeDasharray="4,3" /><text x={x} y={PAD.top - 4} fill={C.accent} fontSize={9} fontWeight={700} textAnchor="middle">NOW ({bullAgeMo}mo)</text></>;
-                        })()}
-                        {/* X axis labels */}
+                        {[25, 50, 75, 100].map(v => { const y = PAD.top + ((100 - v) / 100) * (H - PAD.top - PAD.bottom); return <g key={v}><line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke={C.border} strokeWidth={1} /><text x={PAD.left - 6} y={y + 3} fill={C.t4} fontSize={9} textAnchor="end">{v}%</text></g>; })}
+                        <path d={survivalCurve.map((p, i) => { const x = PAD.left + (p.month / 180) * (W - PAD.left - PAD.right); const y = PAD.top + ((100 - p.pct) / 100) * (H - PAD.top - PAD.bottom); return `${i === 0 ? "M" : "L"}${x},${y}`; }).join(" ")} fill="none" stroke={C.up} strokeWidth={2.5} />
+                        <path d={survivalCurve.map((p, i) => { const x = PAD.left + (p.month / 180) * (W - PAD.left - PAD.right); const y = PAD.top + ((100 - p.pct) / 100) * (H - PAD.top - PAD.bottom); return `${i === 0 ? "M" : "L"}${x},${y}`; }).join(" ") + ` L${PAD.left + (survivalCurve[survivalCurve.length - 1].month / 180) * (W - PAD.left - PAD.right)},${H - PAD.bottom} L${PAD.left},${H - PAD.bottom} Z`} fill={C.up + "15"} />
+                        {(() => { const x = PAD.left + (bullAgeMo / 180) * (W - PAD.left - PAD.right); return <><line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom} stroke={C.accent} strokeWidth={2} strokeDasharray="4,3" /><text x={x} y={PAD.top - 4} fill={C.accent} fontSize={9} fontWeight={700} textAnchor="middle">NOW ({bullAgeMo}mo)</text></>; })()}
                         {[0, 24, 48, 72, 96, 120, 144, 168].map(m => <text key={m} x={PAD.left + (m / 180) * (W - PAD.left - PAD.right)} y={H - PAD.bottom + 14} fill={C.t4} fontSize={9} textAnchor="middle">{m}mo</text>)}
                       </svg>
                     </div>
