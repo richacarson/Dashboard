@@ -344,7 +344,7 @@
     "date": "2026-05-15 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "19.6",
     "previous": "11",
     "forecast": "7.5",
     "unit": ""
@@ -354,8 +354,8 @@
     "date": "2026-05-15 13:15:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-0.5",
+    "actual": "0.7",
+    "previous": "-0.3",
     "forecast": "0.3",
     "unit": "%"
   },
@@ -545,7 +545,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "211",
     "forecast": "",
     "unit": ""
   },
