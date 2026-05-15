@@ -5289,19 +5289,21 @@ Instructions:
 
         {/* ━━━ PLAYBOOK ━━━ */}
         {tab === "playbook" && (() => {
-          const SP_TROUGH = { date: "2022-10-12", level: 3577.03, label: "Inflation / Rate Hikes" };
-          const SP_ATH = { date: "2026-05-11", level: 7412.84 };
+          const SPY_TROUGH = { date: "2022-10-12", level: 357.70 };
           const spyQ = bmQuotes.SPY || quotesRef.current?.SPY;
           const spyPrice = spyQ?.p || 0;
           const spyPc = (bmBars.SPY || barsRef.current?.SPY)?.pc || 0;
-          const currentSP = spyPrice ? spyPrice * 10 : SP_ATH.level;
-          const pctFromTrough = ((currentSP / SP_TROUGH.level) - 1) * 100;
-          const pctFromATH = ((currentSP / SP_ATH.level) - 1) * 100;
+          const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
+          const storedATH = (() => { try { return parseFloat(localStorage.getItem("iown_spy_ath")) || 0; } catch { return 0; } })();
+          const seedATH = 741.28;
+          const liveATH = Math.max(spyPrice, storedATH, seedATH);
+          if (spyPrice > 0 && spyPrice >= liveATH) { try { localStorage.setItem("iown_spy_ath", String(spyPrice)); } catch {} }
+          const pctFromTrough = spyPrice > 0 ? ((spyPrice / SPY_TROUGH.level) - 1) * 100 : 0;
+          const pctFromATH = spyPrice > 0 ? ((spyPrice / liveATH) - 1) * 100 : 0;
           const drawdown = Math.min(pctFromATH, 0);
           const isBear = drawdown <= -20;
           const regime = isBear ? "BEAR" : "BULL";
           const regimeColor = isBear ? C.dn : C.up;
-          const spyDayChg = spyPc > 0 ? ((spyPrice - spyPc) / spyPc) * 100 : 0;
 
           const BEAR_MARKETS = [
             { name: "1929 Crash", peakDate: "1929-09", troughDate: "1929-11", drawdown: -44.7, durationMo: 2.2, recoveryMo: 5.0 },
@@ -5445,11 +5447,12 @@ Instructions:
                       const tickMarks = [0, 50, 100, 150, 200, 250, 300, 350, maxGain];
                       const medianAngle = startAngle - (medBullGain / maxGain) * totalArc;
                       const avgAngle = startAngle - (avgBullGain / maxGain) * totalArc;
-                      const nx = cx + (R - 12) * Math.cos(needleAngle);
-                      const ny = cy - (R - 12) * Math.sin(needleAngle);
-                      const hubY = cy - 58;
-                      const nsx = cx + 28 * Math.cos(needleAngle);
-                      const nsy = hubY - 28 * Math.sin(needleAngle);
+                      const needleOuter = R - 10;
+                      const needleInner = R * 0.45;
+                      const nx = cx + needleOuter * Math.cos(needleAngle);
+                      const ny = cy - needleOuter * Math.sin(needleAngle);
+                      const nsx = cx + needleInner * Math.cos(needleAngle);
+                      const nsy = cy - needleInner * Math.sin(needleAngle);
                       const bullDurMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
 
                       return (
@@ -5487,8 +5490,7 @@ Instructions:
 
                           {/* Needle */}
                           <line x1={nsx} y1={nsy} x2={nx} y2={ny} stroke={regimeColor} strokeWidth={3} strokeLinecap="round" />
-                          <circle cx={cx} cy={hubY} r={6} fill={regimeColor} />
-                          <circle cx={cx} cy={hubY} r={3} fill={theme === "dark" ? C.card : "#fff"} />
+                          <circle cx={nsx} cy={nsy} r={5} fill={regimeColor} />
 
                           {/* Needle glow */}
                           <circle cx={nx} cy={ny} r={4} fill={regimeColor} opacity={0.6}>
@@ -5498,7 +5500,7 @@ Instructions:
 
                           {/* Center text */}
                           <text x={cx} y={cy - 42} fill={regimeColor} fontSize={28} fontWeight={900} textAnchor="middle" letterSpacing="4">{regime}</text>
-                          <text x={cx} y={cy - 22} fill={C.t3} fontSize={12} fontWeight={600} textAnchor="middle">S&P 500 est. {currentSP.toLocaleString(undefined, { maximumFractionDigits: 0 })}</text>
+                          <text x={cx} y={cy - 22} fill={C.t3} fontSize={12} fontWeight={600} textAnchor="middle">SPY ${spyPrice.toFixed(2)}</text>
                           <text x={cx} y={cy - 6} fill={spyDayChg >= 0 ? C.up : C.dn} fontSize={11} fontWeight={700} textAnchor="middle">{spyDayChg >= 0 ? "+" : ""}{spyDayChg.toFixed(2)}% today</text>
 
                           {/* Bottom labels */}
@@ -5558,16 +5560,16 @@ Instructions:
                   {/* Bear market distance */}
                   <div style={cardStyle}>
                     {sectionTitle("Distance to Bear Market")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 10 }}>A bear market is declared at -20% from the all-time high ({SP_ATH.level.toLocaleString()}).</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 10 }}>A bear market is declared at -20% from SPY's all-time high (${liveATH.toFixed(2)}).</div>
                     {(() => {
-                      const bearLevel = SP_ATH.level * 0.8;
-                      const fromATH = ((currentSP / SP_ATH.level) - 1) * 100;
+                      const bearLevel = liveATH * 0.8;
+                      const fromATH = pctFromATH;
                       const cushion = 20 - Math.abs(Math.min(fromATH, 0));
                       const inBear = fromATH <= -20;
                       return (
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                           {statBox("From ATH", `${fromATH >= 0 ? "+" : ""}${fromATH.toFixed(1)}%`, fromATH >= 0 ? C.up : C.dn)}
-                          {statBox("Bear at", Math.round(bearLevel).toLocaleString(), C.dn)}
+                          {statBox("Bear at", `$${bearLevel.toFixed(2)}`, C.dn)}
                           {inBear
                             ? statBox("Status", "BEAR", C.dn)
                             : statBox("Cushion", `${cushion.toFixed(1)}%`, cushion > 15 ? C.up : cushion > 8 ? "#FBBF24" : C.dn)}
