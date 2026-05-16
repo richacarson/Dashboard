@@ -867,7 +867,7 @@ Instructions:
   const [researchOpenFolders, setResearchOpenFolders] = useState({}); // { category: true/false }
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
-  const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "playbook", "screener", "settings"];
+  const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "playbook", "screener", "opportunities", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
     if (isDesktop) return;
@@ -906,6 +906,16 @@ Instructions:
   const [chartsActiveSym, setChartsActiveSym] = useState(null); // for Charts tab
   const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
+  const [screenerData, setScreenerData] = useState([]);
+  const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
+  const [screenerSearch, setScreenerSearch] = useState("");
+  const [screenerDetail, setScreenerDetail] = useState(null); // full report object
+  const [screenerDetailLoading, setScreenerDetailLoading] = useState(false);
+  const screenerFetched = useRef(false);
+  const [opportunities, setOpportunities] = useState([]);
+  const [oppExpandedThesis, setOppExpandedThesis] = useState({});
+  const [oppExpandedRisks, setOppExpandedRisks] = useState({});
+  const oppFetched = useRef(false);
 
   // Open stock profile with specific tab
   const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
@@ -2344,6 +2354,35 @@ Instructions:
     }
   }, [authed, refresh, fetchData, fetchNews, marketStatus.status]);
 
+  // Fetch screener manifest on first visit
+  useEffect(() => {
+    if (tab !== "screener" || screenerFetched.current || screenerData.length) return;
+    screenerFetched.current = true;
+    fetch("https://richacarson.github.io/Stock-Screener/manifest.json")
+      .then(r => r.json())
+      .then(d => {
+        setScreenerData(d);
+        if (screenerSleeve === null) {
+          const match = perfSleeve === "dividend" ? "Dividend" : perfSleeve === "growth" ? "Growth" : null;
+          setScreenerSleeve(match || "All");
+        }
+      })
+      .catch(() => {});
+  }, [tab]);
+
+  // Fetch opportunities on first visit
+  useEffect(() => {
+    if (tab !== "opportunities" || oppFetched.current || opportunities.length) return;
+    oppFetched.current = true;
+    const ids = ["ai-power-bottleneck","ai-optical-interconnects","ai-cybersecurity-demand","copper-datacenter-demand","aluminum-supply-shock","aluminum-hormuz-supply-shock","iran-ammonia-disruption","rare-earth-magnet-independence","us-ethane-polymer-windfall"];
+    Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null)))
+      .then(results => setOpportunities(results.filter(Boolean).sort((a, b) => {
+        if (a.conviction === "High" && b.conviction !== "High") return -1;
+        if (b.conviction === "High" && a.conviction !== "High") return 1;
+        return (b.date_identified || "").localeCompare(a.date_identified || "");
+      })));
+  }, [tab]);
+
   const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const sleeveActualDay = (k) => {
@@ -2639,6 +2678,7 @@ Instructions:
     { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
     { id: "playbook", label: "Playbook", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><path d="M12 6v7l3-2 3 2V6" /></svg> },
     { id: "screener", label: "Screener", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
+    { id: "opportunities", label: "Opportunities", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
 
@@ -2725,7 +2765,7 @@ Instructions:
           position: "sticky", top: 0, zIndex: 100,
         }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "charts" ? "Charts" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "playbook" ? "Playbook" : tab === "screener" ? "Screener" : "Settings"}
+            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "charts" ? "Charts" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "playbook" ? "Playbook" : tab === "screener" ? "Screener" : tab === "opportunities" ? "Opportunities" : "Settings"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -6423,8 +6463,67 @@ Instructions:
           );
         })()}
 
-        {/* ━━━ SCREENER ━━━ */}
+        {/* ━���━ SCREENER ━━━ */}
         {tab === "screener" && null}
+
+        {/* ━━━ OPPORTUNITIES ━━━ */}
+        {tab === "opportunities" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
+            {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
+            <div style={{ fontSize: 12, color: C.t3, marginBottom: 18 }}>Thematic investment ideas backed by research</div>
+            {!opportunities.length ? (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+                <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
+              </div>
+            ) : opportunities.map(opp => (
+              <div key={opp.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                  {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High" ? C.upSoft : "#2563EB20", color: opp.conviction === "High" ? C.up : "#2563EB" }}>{opp.conviction} Conviction</span>
+                  {opp.status && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: C.surface, color: C.t3 }}>{opp.status}</span>}
+                </div>
+                {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, marginBottom: 10, lineHeight: 1.5 }}>{opp.catalyst}</div>}
+                {opp.thesis && (
+                  <div style={{ fontSize: 12, color: C.t3, marginBottom: 10, lineHeight: 1.6 }}>
+                    {oppExpandedThesis[opp.id] ? opp.thesis : opp.thesis.slice(0, 150)}
+                    {opp.thesis.length > 150 && (
+                      <span onClick={() => setOppExpandedThesis(p => ({ ...p, [opp.id]: !p[opp.id] }))} style={{ color: C.accent, fontWeight: 600, cursor: "pointer", marginLeft: 4 }}>
+                        {oppExpandedThesis[opp.id] ? " Show less" : "... Read more"}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {opp.tickers?.length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                    {opp.tickers.map(t => (
+                      <span key={t} onClick={() => { setTab("screener"); setTimeout(() => { setScreenerSearch(t); const match = screenerData.find(s => s.ticker === t); if (match) { setScreenerDetailLoading(true); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : null).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => setScreenerDetailLoading(false)); } }, 100); }} style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 20, background: C.accentSoft, border: `1px solid ${C.borderHover}`, color: C.t1, cursor: "pointer" }}>{t}</span>
+                    ))}
+                  </div>
+                )}
+                {opp.risks?.length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div onClick={() => setOppExpandedRisks(p => ({ ...p, [opp.id]: !p[opp.id] }))} style={{ fontSize: 12, fontWeight: 700, color: C.t3, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" style={{ transform: oppExpandedRisks[opp.id] ? "rotate(90deg)" : "rotate(0deg)", transition: "0.15s" }}><polyline points="9 18 15 12 9 6" /></svg>
+                      Risks ({opp.risks.length})
+                    </div>
+                    {oppExpandedRisks[opp.id] && (
+                      <div style={{ paddingLeft: 16 }}>
+                        {opp.risks.map((r, i) => <div key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.6, marginBottom: 4 }}>{typeof r === "string" ? `• ${r}` : `• ${r.description || r.risk || JSON.stringify(r)}`}</div>)}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 12, fontSize: 11, color: C.t4 }}>
+                  {opp.date_identified && <span>Identified: {opp.date_identified}</span>}
+                  {opp.timeframe && <span>Timeframe: {opp.timeframe}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ━━━ CLIENTS (REDTAIL CRM) ━━━ */}
         {tab === "clients" && (
@@ -7644,36 +7743,103 @@ Instructions:
 
       {/* SCREENER FULL-PAGE OVERLAY */}
       {tab === "screener" && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
-          display: "flex", flexDirection: "column",
-          paddingTop: "env(safe-area-inset-top, 0px)",
-        }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
-          }}>
-            <button onClick={() => setTab("home")} style={{
-              background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
-              cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-              Back
-            </button>
-            <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>Stock Screener</span>
-            <button onClick={() => window.open("https://richacarson.github.io/Stock-Screener/", "_blank")} style={{
-              background: "none", border: `1px solid ${C.border}`, borderRadius: 8,
-              padding: "5px 12px", color: C.t3, fontSize: 11, fontWeight: 600,
-              cursor: "pointer", fontFamily: "inherit",
-            }}>Open ↗</button>
-          </div>
-          <iframe
-            src="https://richacarson.github.io/Stock-Screener/?embed=1"
-            title="Stock Screener"
-            scrolling="yes"
-            style={{ flex: 1, width: "100%", border: "none", display: "block", filter: theme === "dark" ? "invert(0.88) hue-rotate(180deg)" : "none", overflow: "auto" }}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
-          />
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          {screenerDetail ? (
+            // Detail view
+            screenerDetailLoading ? (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+                <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
+                <div style={{ fontSize: 13, color: C.t4 }}>Loading report...</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                  <button onClick={() => setScreenerDetail(null)} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    Back
+                  </button>
+                  <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{screenerDetail.ticker || screenerDetail.symbol}</div>
+                  <div style={{ fontSize: 14, color: C.t3, marginBottom: 14 }}>{screenerDetail.name || screenerDetail.company_name}</div>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 18 }}>
+                    {screenerDetail.recommendation && <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 20, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[screenerDetail.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[screenerDetail.recommendation] || C.t2 }}>{screenerDetail.recommendation}</span>}
+                    {screenerDetail.overall_score != null && <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{screenerDetail.overall_score}</span>}
+                  </div>
+                  {(screenerDetail.investment_thesis || screenerDetail.thesis_continued) && (
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Investment Thesis</div>
+                      <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7 }}>{screenerDetail.investment_thesis}{screenerDetail.thesis_continued ? ` ${screenerDetail.thesis_continued}` : ""}</div>
+                    </div>
+                  )}
+                  {screenerDetail.key_catalysts?.length > 0 && (
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Key Catalysts</div>
+                      {screenerDetail.key_catalysts.map((c, i) => <div key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 6 }}>{typeof c === "string" ? `• ${c}` : `• ${c.catalyst || c.description || JSON.stringify(c)}`}</div>)}
+                    </div>
+                  )}
+                  {screenerDetail.key_risks?.length > 0 && (
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Key Risks</div>
+                      {screenerDetail.key_risks.map((r, i) => <div key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 6 }}>{typeof r === "string" ? `• ${r}` : `• ${r.risk || r.description || JSON.stringify(r)}`}</div>)}
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          ) : (
+            // List view
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                <button onClick={() => setTab("home")} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  Back
+                </button>
+                <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>Stock Screener</span>
+                <div style={{ width: 50 }} />
+              </div>
+              {/* Sub-tabs */}
+              <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                {["Dividend", "Growth", "All"].map(s => (
+                  <button key={s} onClick={() => setScreenerSleeve(s)} style={{ flex: 1, padding: "10px 0", background: screenerSleeve === s ? C.accentSoft : "transparent", border: "none", borderBottom: screenerSleeve === s ? `2px solid ${C.accent}` : "2px solid transparent", color: screenerSleeve === s ? C.t1 : C.t3, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{s}</button>
+                ))}
+              </div>
+              {/* Search */}
+              <div style={{ padding: "10px 16px", flexShrink: 0 }}>
+                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              {/* List */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
+                {!screenerData.length ? (
+                  <div style={{ textAlign: "center", padding: 40 }}>
+                    <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+                    <div style={{ fontSize: 13, color: C.t4 }}>Loading screener data...</div>
+                  </div>
+                ) : (() => {
+                  const q = screenerSearch.toLowerCase();
+                  const filtered = screenerData.filter(s => {
+                    if (screenerSleeve !== "All" && s.sleeve !== screenerSleeve) return false;
+                    if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
+                    return true;
+                  }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
+                  return filtered.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>
+                  ) : filtered.map(s => (
+                    <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 8, cursor: "pointer" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
+                        <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                        {s.screen_date && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.screen_date}</div>}
+                      </div>
+                      {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
+                      {s.overall_score != null && <div style={{ fontSize: 18, fontWeight: 800, color: C.t1, minWidth: 36, textAlign: "right" }}>{s.overall_score}</div>}
+                    </div>
+                  ));
+                })()}
+              </div>
+            </>
+          )}
         </div>
       )}
 
