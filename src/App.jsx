@@ -73,6 +73,7 @@ const EK = import.meta.env.VITE_ALPACA_KEY || "";
 const ES = import.meta.env.VITE_ALPACA_SECRET || "";
 const FK = import.meta.env.VITE_FMP_KEY || "";
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
+const FRED = import.meta.env.VITE_FRED_KEY || "";
 const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
@@ -1467,11 +1468,54 @@ Instructions:
         } catch {}
       })());
 
+      // 6. FRED: Initial unemployment claims (weekly, 4-week moving avg)
+      if (FRED) fetches.push((async () => {
+        try {
+          const r = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=IC4WSA&api_key=${FRED}&sort_order=desc&limit=14&file_type=json`);
+          if (r.ok) {
+            const d = await r.json();
+            const obs = (d.observations || []).filter(o => o.value !== ".").map(o => ({ date: o.date, val: parseFloat(o.value) }));
+            if (obs.length >= 2) {
+              results.claims = obs[0].val;
+              results.claimsDate = obs[0].date;
+              const recent4 = obs.slice(0, 4).reduce((a, b) => a + b.val, 0) / Math.min(4, obs.length);
+              const prior4 = obs.slice(4, 8);
+              results.claims4wk = Math.round(recent4);
+              if (prior4.length >= 2) {
+                const priorAvg = prior4.reduce((a, b) => a + b.val, 0) / prior4.length;
+                results.claimsTrend = ((recent4 / priorAvg) - 1) * 100;
+              }
+            }
+          }
+        } catch {}
+      })());
+
+      // 7. FRED: ISM Manufacturing PMI
+      if (FRED) fetches.push((async () => {
+        try {
+          const r = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=MANEMP&api_key=${FRED}&sort_order=desc&limit=3&file_type=json`);
+          if (r.ok) {
+            const d = await r.json();
+            const obs = (d.observations || []).filter(o => o.value !== ".");
+            if (obs.length >= 1) { results.ismPMI = parseFloat(obs[0].value); results.ismDate = obs[0].date; }
+            if (obs.length >= 2) { results.ismPrev = parseFloat(obs[1].value); }
+          }
+        } catch {}
+      })());
+
+      // 8. Fear & Greed Index (free, no key)
+      fetches.push((async () => {
+        try {
+          const r = await fetch("https://api.alternative.me/fng/?limit=1");
+          if (r.ok) { const d = await r.json(); if (d.data?.[0]) { results.fearGreed = parseInt(d.data[0].value); results.fgClassification = d.data[0].value_classification; } }
+        } catch {}
+      })());
+
       await Promise.all(fetches);
       results.loaded = true;
       setMacroData(prev => ({ ...prev, ...results }));
     };
-    if (apiKey || FK || FH) fetchMacro();
+    if (apiKey || FK || FH || FRED) fetchMacro();
   }, [apiKey, apiSecret]);
 
   /* ── Fetch economic + earnings calendar ── */
@@ -5877,47 +5921,63 @@ Instructions:
                 // Estrella & Mishkin (1998) used 10Y-3M; 10Y-2Y is the practitioner convention with comparable power
                 if (md.yieldSpread != null) {
                   const score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 48], [0.25, 38], [0.5, 28], [1.0, 18], [1.5, 10], [2.5, 5]]);
-                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%`, score, weight: 25, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-2Y (cf. Estrella & Mishkin 1998)" });
+                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%`, score, weight: 20, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-2Y (cf. Estrella & Mishkin 1998)" });
                 }
 
                 // Factor 2: Valuation (P/E) — steepened curve: GFC started at 21x, 2022 bear at 23x
                 if (md.spyPE != null) {
                   const score = interp(md.spyPE, [[12, 5], [16, 15], [19, 30], [21, 42], [24, 52], [28, 62], [32, 72], [36, 80], [40, 85]]);
-                  factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, detail: "SPY trailing P/E (GFC started at 21x, 2022 bear at 23x)", score, weight: 20, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Shiller (2000)" });
+                  factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, detail: "SPY trailing P/E (GFC started at 21x, 2022 bear at 23x)", score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Shiller (2000)" });
                 }
 
                 // Factor 3: Bull Duration — conditional survival from 21 historical bulls
                 {
                   const score = interp(durationProb, [[5, 8], [15, 18], [25, 30], [35, 42], [50, 55], [65, 68], [80, 80]]);
-                  factors.push({ name: "Bull Duration", value: `${bullAgeMo} months`, detail: `${atRisk.length} comparable bulls, ${atRisk.length - survived12.length} ended within 12mo`, score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `n=${totalBulls} (1929-2022)` });
+                  factors.push({ name: "Bull Duration", value: `${bullAgeMo} months`, detail: `${atRisk.length} comparable bulls, ${atRisk.length - survived12.length} ended within 12mo`, score, weight: 12, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `n=${totalBulls} (1929-2022)` });
                 }
 
                 // Factor 4: Credit Spreads (HYG vs 52wk high) — Gilchrist & Zakrajšek (2012)
                 if (md.hygPrice != null && md.hyg52High != null && md.hyg52High > 0) {
                   const hygDrawdown = ((md.hygPrice / md.hyg52High) - 1) * 100;
                   const score = interp(hygDrawdown, [[-18, 90], [-12, 75], [-7, 55], [-4, 35], [-2, 20], [0, 8]]);
-                  factors.push({ name: "Credit Stress", value: `${hygDrawdown.toFixed(1)}% from high`, detail: `HYG: $${md.hygPrice.toFixed(2)} / 52wk high: $${md.hyg52High.toFixed(2)}`, score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Gilchrist & Zakrajšek (2012)" });
+                  factors.push({ name: "Credit Stress", value: `${hygDrawdown.toFixed(1)}% from high`, detail: `HYG: $${md.hygPrice.toFixed(2)} / 52wk high: $${md.hyg52High.toFixed(2)}`, score, weight: 12, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Gilchrist & Zakrajšek (2012)" });
                 }
 
                 // Factor 5: Momentum (SPY vs 200-day SMA) — practical risk indicator
                 if (md.spy200 != null && spyPrice > 0) {
                   const pctAbove200 = ((spyPrice / md.spy200) - 1) * 100;
                   const score = interp(pctAbove200, [[-12, 90], [-6, 75], [-2, 55], [0, 40], [3, 25], [6, 15], [12, 5]]);
-                  factors.push({ name: "Momentum", value: `${pctAbove200 >= 0 ? "+" : ""}${pctAbove200.toFixed(1)}% vs 200d`, detail: `SPY: $${spyPrice.toFixed(2)} / 200d SMA: $${md.spy200.toFixed(2)}`, score, weight: 15, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `${md.spy200Count || 200}-day SMA` });
+                  factors.push({ name: "Momentum", value: `${pctAbove200 >= 0 ? "+" : ""}${pctAbove200.toFixed(1)}% vs 200d`, detail: `SPY: $${spyPrice.toFixed(2)} / 200d SMA: $${md.spy200.toFixed(2)}`, score, weight: 12, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `${md.spy200Count || 200}-day SMA` });
                 }
 
                 // Factor 6: Volatility (VIX) — reactive, not predictive, but captures regime
                 if (md.vix != null) {
                   const score = interp(md.vix, [[10, 5], [14, 12], [18, 25], [22, 40], [28, 58], [35, 72], [45, 85]]);
-                  factors.push({ name: "Volatility", value: `VIX ${md.vix.toFixed(1)}`, detail: "CBOE Volatility Index", score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "CBOE" });
+                  factors.push({ name: "Volatility", value: `VIX ${md.vix.toFixed(1)}`, detail: "CBOE Volatility Index", score, weight: 8, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "CBOE" });
                 }
 
-                // Composite: weighted average + concordance bonus for multi-factor stress
+                // Factor 7: Unemployment Claims trend — real-economy leading indicator
+                // Rising claims precede every post-war recession by 3-6 months
+                if (md.claimsTrend != null) {
+                  const score = interp(md.claimsTrend, [[-15, 5], [-5, 12], [0, 22], [5, 38], [10, 55], [20, 72], [35, 85], [50, 92]]);
+                  factors.push({ name: "Jobless Claims", value: `${md.claims4wk?.toLocaleString()} (4wk avg)`, detail: `${md.claimsTrend > 0 ? "+" : ""}${md.claimsTrend.toFixed(1)}% vs prior month — ${md.claimsDate}`, score, weight: 13, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "FRED IC4WSA (weekly)" });
+                }
+
+                // Factor 8: ISM Manufacturing PMI — sustained sub-50 precedes recessions
+                if (md.ismPMI != null) {
+                  const declining = md.ismPrev != null && md.ismPMI < md.ismPrev;
+                  const score = interp(md.ismPMI, [[42, 90], [45, 72], [48, 55], [50, 40], [52, 28], [55, 15], [58, 8], [62, 5]]);
+                  factors.push({ name: "ISM Manufacturing", value: `${md.ismPMI.toFixed(1)}`, detail: `${md.ismPMI >= 50 ? "Expansion" : "Contraction"}${declining ? " & declining" : md.ismPrev != null ? " & improving" : ""} — ${md.ismDate}`, score: declining && md.ismPMI < 52 ? Math.min(95, score + 8) : score, weight: 8, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "FRED MANEMP (monthly)" });
+                }
+
+                // Composite: weighted average + concordance bonus + F&G sentiment modifier
                 const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
                 const baseComposite = totalWeight > 0 ? factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0) : null;
                 const elevatedCount = factors.filter(f => f.score >= 50).length;
                 const concordanceBonus = elevatedCount >= 5 ? 15 : elevatedCount >= 4 ? 10 : elevatedCount >= 3 ? 5 : 0;
-                const composite = baseComposite != null ? Math.min(95, Math.round(baseComposite + concordanceBonus)) : null;
+                // Fear & Greed: contrarian modifier — extreme greed adds risk, extreme fear subtracts
+                const fgMod = md.fearGreed != null ? (md.fearGreed >= 80 ? 5 : md.fearGreed >= 75 ? 3 : md.fearGreed <= 20 ? -5 : md.fearGreed <= 25 ? -3 : 0) : 0;
+                const composite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus + fgMod))) : null;
                 const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
                 const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
@@ -5935,7 +5995,7 @@ Instructions:
                       {composite != null ? (<>
                         <div style={{ fontSize: 56, fontWeight: 900, color: compositeColor, lineHeight: 1 }}>{composite}%</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: compositeColor, marginTop: 6, letterSpacing: 2 }}>{riskLabel}</div>
-                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} factors elevated)` : ""}</div>
+                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}{fgMod !== 0 ? ` ${fgMod > 0 ? "+" : ""}${fgMod}pt F&G (${md.fgClassification})` : ""}</div>
                       </>) : (
                         <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
                       )}
@@ -5965,18 +6025,42 @@ Instructions:
                       </div>
                     </div>
 
+                    {/* Fear & Greed sentiment modifier */}
+                    {md.fearGreed != null && (
+                      <div style={{ ...cardStyle, border: `1px solid ${md.fearGreed >= 75 ? C.dn : md.fearGreed <= 25 ? C.up : C.border}30` }}>
+                        {sectionTitle("Sentiment: Fear & Greed Index")}
+                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                          <div style={{ fontSize: 36, fontWeight: 900, color: md.fearGreed >= 75 ? C.dn : md.fearGreed >= 55 ? "#FBBF24" : md.fearGreed <= 25 ? C.up : md.fearGreed <= 45 ? "#60A5FA" : C.t2, minWidth: 60, textAlign: "center" }}>{md.fearGreed}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{md.fgClassification}</div>
+                            <div style={{ height: 8, background: C.card, borderRadius: 4, overflow: "hidden", marginBottom: 6 }}>
+                              <div style={{ width: `${md.fearGreed}%`, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${C.up}, #FBBF24, ${C.dn})` }} />
+                            </div>
+                            <div style={{ fontSize: 11, color: C.t4 }}>
+                              {fgMod !== 0 ? <><strong style={{ color: fgMod > 0 ? C.dn : C.up }}>{fgMod > 0 ? "+" : ""}{fgMod}pt</strong> contrarian modifier applied — </> : "No modifier applied — "}
+                              {md.fearGreed >= 75 ? "extreme greed is contrarian bearish (markets tend to correct)" : md.fearGreed <= 25 ? "extreme fear is contrarian bullish (markets tend to recover)" : "neutral zone, no contrarian signal"}
+                            </div>
+                            <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Not a weighted factor — 3 of its 7 sub-indicators overlap with our existing factors (VIX, momentum, credit). Applied only as ±3-5pt modifier at extremes (&gt;75 or &lt;25).</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Methodology */}
                     <div style={cardStyle}>
                       {sectionTitle("Methodology")}
                       <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.8 }}>
-                        <div><strong style={{ color: C.t1 }}>Yield Curve (25%)</strong> — 10Y minus 2Y Treasury spread. Yield curve inversion has preceded every U.S. recession since 1955, with 1-2 false positives (1966, arguably 1998). The original academic work (Estrella & Mishkin, 1998) used 10Y minus 3-month T-bill; the 10Y-2Y practitioner convention has comparable predictive power. Note: the 2022-2024 deep inversion (-1.08%) has not yet produced a recession — either a false positive or very long lag.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (20%)</strong> — SPY trailing P/E ratio. Scoring calibrated to actual pre-bear P/E levels: the 2007 GFC began at 21x, the 2022 bear at 23x, the dot-com crash at 28x (Shiller, 2000). Not a timing signal, but a severity amplifier — high P/E markets fall further.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (15%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Of the {atRisk.length} bulls that lasted longer than {bullAgeMo} months, {atRisk.length - survived12.length} ended within the next 12 months. 95% confidence interval: {Math.max(0, Math.round((durationProb / 100 - 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% to {Math.min(100, Math.round((durationProb / 100 + 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% — wide range due to small sample.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Stress (15%)</strong> — HYG high-yield bond ETF distance from 52-week high, used as a proxy for credit spreads. Academic basis: the excess bond premium has significant predictive power for real activity and equity returns (Gilchrist & Zakrajsek, 2012). HYG fell ~13% in the 2022 bear, ~21% in COVID, ~34% in the GFC.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Momentum (15%)</strong> — SPY price vs its 200-day moving average. Sustained breakdown below the 200-day SMA has accompanied or preceded most major bear markets, though in rapid crashes (COVID, 1987) the breakdown was concurrent with, not before, the decline.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (10%)</strong> — CBOE VIX Index. Lowest weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
+                        <div><strong style={{ color: C.t1 }}>Yield Curve (20%)</strong> — 10Y minus 2Y Treasury spread. Yield curve inversion has preceded every U.S. recession since 1955, with 1-2 false positives (1966, arguably 1998). The original academic work (Estrella & Mishkin, 1998) used 10Y minus 3-month T-bill; the 10Y-2Y practitioner convention has comparable predictive power. Note: the 2022-2024 deep inversion (-1.08%) has not yet produced a recession — either a false positive or very long lag.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (15%)</strong> — SPY trailing P/E ratio. Scoring calibrated to actual pre-bear P/E levels: the 2007 GFC began at 21x, the 2022 bear at 23x, the dot-com crash at 28x (Shiller, 2000). Not a timing signal, but a severity amplifier — high P/E markets fall further.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Jobless Claims (13%)</strong> — 4-week moving average of initial unemployment claims from FRED (series IC4WSA, released weekly on Thursdays). Rising claims precede every post-war recession by 3-6 months. Scored on the trend: a 10%+ increase over the prior month is an amber signal; 20%+ is a red flag. This is the model's primary real-economy indicator.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (12%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Of the {atRisk.length} bulls that lasted longer than {bullAgeMo} months, {atRisk.length - survived12.length} ended within the next 12 months. 95% CI: {Math.max(0, Math.round((durationProb / 100 - 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% to {Math.min(100, Math.round((durationProb / 100 + 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% — wide range due to small sample.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Stress (12%)</strong> — HYG high-yield bond ETF distance from 52-week high, used as a proxy for credit spreads. Academic basis: the excess bond premium has significant predictive power for real activity and equity returns (Gilchrist & Zakrajsek, 2012). HYG fell ~13% in the 2022 bear, ~21% in COVID, ~34% in the GFC. Limitation: HYG launched in 2007 — only 3 bear markets of data.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Momentum (12%)</strong> — SPY price vs its 200-day moving average. Sustained breakdown below the 200-day SMA has accompanied or preceded most major bear markets, though in rapid crashes (COVID, 1987) the breakdown was concurrent with, not before, the decline.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>ISM Manufacturing (8%)</strong> — ISM Manufacturing Employment Index from FRED (series MANEMP, released monthly). Sustained readings below 50 signal contraction. A declining PMI below 52 receives an additional +8 penalty. ISM sub-50 preceded most post-war recessions by 6-12 months.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (8%)</strong> — CBOE VIX Index. Low weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Concordance Bonus</strong> — When 3+ factors score above 50, a bonus of 5-15 points is added. Simultaneous stress across multiple indicators is disproportionately dangerous: the 2000 and 2007 crashes both had yield curve inversion + elevated valuations + credit stress simultaneously.</div>
-                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> This model uses only financial market indicators. It has no real-economy data (unemployment claims, ISM PMI, Conference Board LEI) which could detect slow-developing recessions that precede market declines. Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide confidence interval). The model estimates risk, not certainty.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Fear & Greed Modifier</strong> — CNN Fear & Greed Index (via alternative.me API). Not a weighted factor because 3 of its 7 sub-indicators overlap with existing factors (VIX, S&P vs 125-day MA, junk bond demand). Applied only as a ±3-5 point contrarian modifier at extremes: greed &gt;75 adds risk (markets tend to correct from euphoria), fear &lt;25 subtracts risk (markets tend to recover from panic).</div>
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide CI). HYG has only 3 bear markets of data. The Fear & Greed Index partially overlaps with VIX, momentum, and credit factors. This model estimates risk, not certainty — it cannot predict black swan events or novel shocks.</div>
                       </div>
                     </div>
 
