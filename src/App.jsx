@@ -324,7 +324,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
   if (!src) return <div style={{ width: size, height: size, borderRadius: size / 2, background: C.surface, flexShrink: 0 }} />;
   return <img src={src} alt={symbol} onError={() => { delete logoCache[symbol]; setFallback(true); }} style={{ width: size, height: size, borderRadius: size / 2, objectFit: "contain", flexShrink: 0, background: "#fff" }} />;
 });
-function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
+function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
   const [profileTab, setProfileTab] = useState(initTab || "overview");
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -493,12 +493,15 @@ function StockProfile({ symbol, initTab, onClose, hdrs, names, theme, quotesRef,
               <div style={{ fontSize: 12, color: C.t4, marginTop: 1 }}>{names?.[symbol] || profile?.name || ""}</div>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
-            border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {onViewReport && <button onClick={() => onViewReport(symbol)} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 12px", color: C.t1, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Screener Report</button>}
+            <button onClick={onClose} style={{
+              width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
+              border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
         </div>
         {/* Tab bar — scrolls to section */}
         <div style={{ display: "flex", gap: 0 }}>
@@ -7758,7 +7761,13 @@ Instructions:
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                     Back
                   </button>
-                  <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
+                    <a href={`https://richacarson.github.io/Stock-Screener/docx/${screenerDetail.ticker}_IOWN_Report.docx`} download style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Download
+                    </a>
+                  </div>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
                   {(() => {
@@ -7789,8 +7798,11 @@ Instructions:
                     return (<>
                       {/* Header */}
                       <div style={{ marginBottom: 24 }}>
-                        <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, letterSpacing: -0.5, lineHeight: 1.1 }}>
-                          {a.ticker} <span style={{ fontSize: 20, fontWeight: 400, color: C.t3 }}>{a.name}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                          <img src={`https://financialmodelingprep.com/image-stock/${a.ticker}.png`} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, border: `1px solid ${C.border}` }} onError={(e) => { e.target.style.display = "none"; }} />
+                          <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, letterSpacing: -0.5, lineHeight: 1.1 }}>
+                            {a.ticker} <span style={{ fontSize: 20, fontWeight: 400, color: C.t3 }}>{a.name}</span>
+                          </div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
                           <span>{a.sleeve?.toUpperCase()} SLEEVE</span>
@@ -7949,6 +7961,7 @@ Instructions:
                     <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>
                   ) : filtered.map(s => (
                     <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 8, cursor: "pointer" }}>
+                      <img src={`https://financialmodelingprep.com/image-stock/${s.ticker}.png`} alt="" style={{ width: 24, height: 24, borderRadius: 6, objectFit: "contain", background: "#fff", marginRight: 10, flexShrink: 0 }} onError={(e) => { e.target.style.display = "none"; }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
                         <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
@@ -8174,7 +8187,7 @@ Instructions:
         </>
       )}
 
-      {chartSymbol && <StockProfile symbol={chartSymbol} initTab={profileInitTab} onClose={() => { setChartSymbol(null); setProfileInitTab("overview"); }} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
+      {chartSymbol && <StockProfile symbol={chartSymbol} initTab={profileInitTab} onClose={() => { setChartSymbol(null); setProfileInitTab("overview"); }} onViewReport={(sym) => { setChartSymbol(null); setProfileInitTab("overview"); setTab("screener"); setScreenerDetailLoading(true); fetch(`https://richacarson.github.io/Stock-Screener/reports/${sym}.json`).then(r => r.ok ? r.json() : null).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => setScreenerDetailLoading(false)); }} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
       <GS theme={theme} />
     </div>
   );
