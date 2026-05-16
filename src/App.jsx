@@ -6502,7 +6502,7 @@ Instructions:
                 {opp.tickers?.length > 0 && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
                     {opp.tickers.map(t => (
-                      <span key={t} onClick={() => { setTab("screener"); setTimeout(() => { setScreenerSearch(t); const match = screenerData.find(s => s.ticker === t); if (match) { setScreenerDetailLoading(true); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : null).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => setScreenerDetailLoading(false)); } }, 100); }} style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 20, background: C.accentSoft, border: `1px solid ${C.borderHover}`, color: C.t1, cursor: "pointer" }}>{t}</span>
+                      <span key={t} onClick={() => { setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 20, background: C.accentSoft, border: `1px solid ${C.borderHover}`, color: C.t1, cursor: "pointer" }}>{t}</span>
                     ))}
                   </div>
                 )}
@@ -7763,10 +7763,30 @@ Instructions:
                   </button>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
-                    <a href={`https://richacarson.github.io/Stock-Screener/docx/${screenerDetail.ticker}_IOWN_Report.docx`} download style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+                    <button onClick={() => {
+                      const a = screenerDetail;
+                      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#1A2010;line-height:1.6}h1{font-size:24pt;margin:0}h2{font-size:14pt;color:#4A6B25;border-bottom:2px solid #B8860B;padding-bottom:4px;margin:24px 0 12px}h3{font-size:12pt;margin:16px 0 4px}.meta{font-size:9pt;color:#6E8450;text-transform:uppercase;letter-spacing:1px}.score{font-size:10pt;margin:4px 0 8px}.rec{display:inline-block;font-size:10pt;font-weight:bold;padding:2px 10px;border-radius:4px;background:#f0f0f0}.thesis{font-size:11pt;line-height:1.7;margin-bottom:12px}ol{margin:8px 0 16px 20px}ol li{margin-bottom:8px}.footer{text-align:center;font-size:8pt;color:#9DAF88;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}</style></head><body>`
+                      + `<h1>${a.ticker} <span style="font-size:16pt;font-weight:normal;color:#6E8450">${a.name || ""}</span></h1>`
+                      + `<p class="meta">${a.sleeve || ""} SLEEVE · ${a.screen_date || ""}${a.faith_alignment?.inspire_impact_score != null ? ` · Inspire: ${a.faith_alignment.inspire_impact_score}` : ""}${a.infinite_game?.mindset ? ` · ${a.infinite_game.mindset}` : ""}</p>`
+                      + `<p><span class="rec">${a.recommendation || ""}</span> <span style="font-size:24pt;font-weight:bold;margin-left:12px">${a.overall_score || ""}</span><span style="color:#9DAF88"> / 100</span></p>`
+                      + (a.profile ? `<h2>Company Profile</h2><p class="meta">${[a.profile.sector,a.profile.industry,a.profile.exchange,a.profile.country].filter(Boolean).join(" · ")}${a.profile.employees ? ` · ${Number(a.profile.employees).toLocaleString()} Employees` : ""}</p>${a.profile.description ? `<p class="thesis">${a.profile.description}</p>` : ""}` : "")
+                      + (a.excellence_evaluation ? `<h2>Excellence Evaluation (50%)</h2>` + ["innovation","inspiration","infrastructure"].map(k => { const v = a.excellence_evaluation[k]; return v ? `<h3>${k.charAt(0).toUpperCase()+k.slice(1)} — ${v.score}/10 (${v.label || ""})</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
+                      + (a.infinite_game ? `<h2>Finite vs Infinite Game (25%)</h2><p><strong>Mindset:</strong> ${a.infinite_game.mindset} · <strong>Overall:</strong> ${a.infinite_game.overall}/10</p>${a.infinite_game.summary ? `<blockquote style="border-left:3px solid #ccc;padding-left:12px;font-style:italic;color:#3A4A28">${a.infinite_game.summary}</blockquote>` : ""}` + ["just_cause","trusting_teams","worthy_rivals","existential_flexibility","courage_to_lead"].map(k => { const v = a.infinite_game[k]; return v ? `<h3>${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())} — ${v.score}/10</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
+                      + (a.investment_thesis ? `<h2>Investment Thesis</h2><p class="thesis">${a.investment_thesis}</p>${a.thesis_continued ? `<p class="thesis">${a.thesis_continued}</p>` : ""}` : "")
+                      + (a.key_catalysts?.length ? `<h2>Key Catalysts</h2><ol>${a.key_catalysts.map(c => `<li>${typeof c === "string" ? c : c.catalyst || c.description || ""}</li>`).join("")}</ol>` : "")
+                      + (a.key_risks?.length ? `<h2>Key Risks</h2><ol>${a.key_risks.map(r => `<li>${typeof r === "string" ? r : r.risk || r.description || ""}</li>`).join("")}</ol>` : "")
+                      + (a.ai_resilience ? `<h2>AI Resilience (25%)</h2><p class="score">${a.ai_resilience.score}/10 — ${a.ai_resilience.label || ""}</p><p class="thesis">${a.ai_resilience.analysis || ""}</p>` : "")
+                      + (a.faith_alignment ? `<h2>Faith Alignment</h2><p>Inspire Impact Score: <strong style="font-size:18pt">${a.faith_alignment.inspire_impact_score}</strong></p>${a.faith_alignment.negative_attributions?.length ? `<p style="color:#DC2626">Negative: ${a.faith_alignment.negative_attributions.join(", ")}</p>` : ""}${a.faith_alignment.positive_attributions?.length ? `<p style="color:#16A34A">Positive: ${a.faith_alignment.positive_attributions.join(", ")}</p>` : ""}` : "")
+                      + (a.sources?.length ? `<h2>Resources</h2><ol>${a.sources.map(s => `<li style="font-size:9pt">${typeof s === "string" ? s : s.title || ""}</li>`).join("")}</ol>` : "")
+                      + `<p class="footer">Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</p></body></html>`;
+                      const blob = new Blob([html], { type: "application/msword" });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement("a"); link.href = url; link.download = `${a.ticker}_IOWN_Report.doc`; link.click();
+                      URL.revokeObjectURL(url);
+                    }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                       Download
-                    </a>
+                    </button>
                   </div>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
@@ -7934,9 +7954,9 @@ Instructions:
                 <div style={{ width: 50 }} />
               </div>
               {/* Sub-tabs */}
-              <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                {["Dividend", "Growth", "All"].map(s => (
-                  <button key={s} onClick={() => setScreenerSleeve(s)} style={{ flex: 1, padding: "10px 0", background: screenerSleeve === s ? C.accentSoft : "transparent", border: "none", borderBottom: screenerSleeve === s ? `2px solid ${C.accent}` : "2px solid transparent", color: screenerSleeve === s ? C.t1 : C.t3, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{s}</button>
+              <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflowX: "auto" }}>
+                {["Dividend", "Growth", "FCI 100", "FCI Values", "All"].map(s => (
+                  <button key={s} onClick={() => setScreenerSleeve(s)} style={{ flex: "0 0 auto", padding: "10px 14px", background: screenerSleeve === s ? C.accentSoft : "transparent", border: "none", borderBottom: screenerSleeve === s ? `2px solid ${C.accent}` : "2px solid transparent", color: screenerSleeve === s ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{s}</button>
                 ))}
               </div>
               {/* Search */}
@@ -7952,8 +7972,12 @@ Instructions:
                   </div>
                 ) : (() => {
                   const q = screenerSearch.toLowerCase();
+                  const portfolioMap = { "Dividend": sleeves.dividend?.symbols || [], "Growth": sleeves.growth?.symbols || [], "FCI 100": sleeves.fci100?.symbols || [], "FCI Values": sleeves.fciValues?.symbols || [] };
                   const filtered = screenerData.filter(s => {
-                    if (screenerSleeve !== "All" && s.sleeve !== screenerSleeve) return false;
+                    if (screenerSleeve !== "All") {
+                      const holdings = portfolioMap[screenerSleeve];
+                      if (!holdings || !holdings.includes(s.ticker)) return false;
+                    }
                     if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                     return true;
                   }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
@@ -8187,7 +8211,7 @@ Instructions:
         </>
       )}
 
-      {chartSymbol && <StockProfile symbol={chartSymbol} initTab={profileInitTab} onClose={() => { setChartSymbol(null); setProfileInitTab("overview"); }} onViewReport={(sym) => { setChartSymbol(null); setProfileInitTab("overview"); setTab("screener"); setScreenerDetailLoading(true); fetch(`https://richacarson.github.io/Stock-Screener/reports/${sym}.json`).then(r => r.ok ? r.json() : null).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => setScreenerDetailLoading(false)); }} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
+      {chartSymbol && <StockProfile symbol={chartSymbol} initTab={profileInitTab} onClose={() => { setChartSymbol(null); setProfileInitTab("overview"); }} onViewReport={(sym) => { setChartSymbol(null); setProfileInitTab("overview"); setScreenerDetail({ ticker: sym, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${sym}.json`).then(r => r.ok ? r.json() : { ticker: sym }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: sym }); setScreenerDetailLoading(false); }); }} hdrs={hdrs} names={names} theme={theme} quotesRef={quotesRef} barsRef={barsRef} fundamentals={fundamentals} news={[...news, ...broadNews]} coreSyms={coreSyms} />}
       <GS theme={theme} />
     </div>
   );
