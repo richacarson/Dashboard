@@ -1930,7 +1930,7 @@ Instructions:
               const end = new Date();
               while (yearStart < end) {
                 const yearEnd = new Date(Math.min(yearStart.getTime() + 365 * 24 * 60 * 60 * 1000, end.getTime()));
-                const alpacaEnd = new Date(Math.min(yearEnd.getTime(), new Date("2024-12-31").getTime()));
+                const alpacaEnd = yearEnd;
                 if (yearStart <= alpacaEnd) {
                   try {
                     const url = `${BASE}/v2/stocks/bars?symbols=${sym}&timeframe=1Week&start=${yearStart.toISOString().slice(0,10)}&end=${alpacaEnd.toISOString().slice(0,10)}&limit=10000&adjustment=split`;
@@ -6933,8 +6933,8 @@ Instructions:
                     bmPoints.push({ date: pt.date, val: ((prices[priceIdx][1] / basePrice) - 1) * 100 });
                   }
                 }
-                // Append live benchmark price for today if market is open
-                if (marketStatus.status === "open") {
+                // Append live/latest benchmark price
+                {
                   const liveQ = bmQuotes[sym];
                   if (liveQ?.p && filtered.length > 0) {
                     const lastPortDate = filtered[filtered.length - 1].date;
