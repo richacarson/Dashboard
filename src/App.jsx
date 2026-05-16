@@ -7761,92 +7761,152 @@ Instructions:
                   <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
                 </div>
                 <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{screenerDetail.ticker || screenerDetail.symbol}</div>
-                  <div style={{ fontSize: 14, color: C.t3, marginBottom: 4 }}>{screenerDetail.name || screenerDetail.company_name}</div>
-                  {screenerDetail.profile && <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>{[screenerDetail.profile.industry, screenerDetail.profile.sector, screenerDetail.profile.exchange].filter(Boolean).join(" · ")}{screenerDetail.profile.employees ? ` · ${Number(screenerDetail.profile.employees).toLocaleString()} employees` : ""}</div>}
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 18 }}>
-                    {screenerDetail.recommendation && <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 20, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[screenerDetail.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[screenerDetail.recommendation] || C.t2 }}>{screenerDetail.recommendation}</span>}
-                    {screenerDetail.overall_score != null && <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{screenerDetail.overall_score}<span style={{ fontSize: 12, color: C.t4 }}>/100</span></span>}
-                    {screenerDetail.screen_date && <span style={{ fontSize: 11, color: C.t4 }}>Screened {screenerDetail.screen_date}</span>}
-                  </div>
-                  {screenerDetail.profile?.description && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Company Overview</div>
-                      <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>{screenerDetail.profile.description}</div>
-                    </div>
-                  )}
-                  {/* Scoring cards */}
-                  {(screenerDetail.excellence_evaluation || screenerDetail.ai_resilience || screenerDetail.infinite_game || screenerDetail.faith_alignment) && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-                      {screenerDetail.excellence_evaluation && (() => { const e = screenerDetail.excellence_evaluation; const avg = Math.round(([e.innovation?.score, e.inspiration?.score, e.infrastructure?.score].filter(v => v != null).reduce((a, b) => a + b, 0)) / 3); return (
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>Excellence</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: avg >= 8 ? C.up : avg >= 5 ? "#D97706" : C.dn }}>{avg}<span style={{ fontSize: 11, color: C.t4 }}>/10</span></div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>Inn {e.innovation?.score} · Ins {e.inspiration?.score} · Inf {e.infrastructure?.score}</div>
+                  {(() => {
+                    const a = screenerDetail;
+                    const scoreColor = s => s >= 7 ? C.up : s >= 4 ? "#B8860B" : C.dn;
+                    const scoreLabel = s => s >= 7 ? "green" : s >= 4 ? "gold" : "red";
+                    const ScoreRow = ({ title, score, label, analysis }) => (
+                      <div style={{ marginBottom: 20 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>{title}</span>
+                          {label && <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1, textTransform: "uppercase" }}>{label}</span>}
                         </div>
-                      ); })()}
-                      {screenerDetail.ai_resilience && (
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>AI Resilience</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: screenerDetail.ai_resilience.score >= 7 ? C.up : screenerDetail.ai_resilience.score >= 4 ? "#D97706" : C.dn }}>{screenerDetail.ai_resilience.score}<span style={{ fontSize: 11, color: C.t4 }}>/10</span></div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{screenerDetail.ai_resilience.label}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <div style={{ flex: 1, height: 8, background: C.border + "40", borderRadius: 4, overflow: "hidden" }}>
+                            <div style={{ width: `${score * 10}%`, height: "100%", borderRadius: 4, background: scoreColor(score) }} />
+                          </div>
+                          <span style={{ fontSize: 16, fontWeight: 800, minWidth: 20, textAlign: "right", color: scoreColor(score) }}>{score}</span>
                         </div>
-                      )}
-                      {screenerDetail.infinite_game && (
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>Infinite Game</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: screenerDetail.infinite_game.overall >= 7 ? C.up : screenerDetail.infinite_game.overall >= 4 ? "#D97706" : C.dn }}>{screenerDetail.infinite_game.overall}<span style={{ fontSize: 11, color: C.t4 }}>/10</span></div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{screenerDetail.infinite_game.mindset}</div>
+                        {analysis && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.5 }}>{analysis}</div>}
+                      </div>
+                    );
+                    const SectionHeader = ({ children, color }) => (
+                      <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 16px", paddingBottom: 4, borderBottom: `2px solid ${color || "#B8860B"}` }}>{children}</div>
+                    );
+                    const recColors = { BUY: { bg: "rgba(22,163,74,0.10)", fg: C.up }, HOLD: { bg: "rgba(217,119,6,0.10)", fg: "#D97706" }, SELL: { bg: "rgba(220,38,38,0.10)", fg: C.dn }, WATCH: { bg: "rgba(37,99,235,0.10)", fg: "#2563EB" } };
+                    const rc = recColors[a.recommendation] || recColors.HOLD;
+
+                    return (<>
+                      {/* Header */}
+                      <div style={{ marginBottom: 24 }}>
+                        <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, letterSpacing: -0.5, lineHeight: 1.1 }}>
+                          {a.ticker} <span style={{ fontSize: 20, fontWeight: 400, color: C.t3 }}>{a.name}</span>
                         </div>
-                      )}
-                      {screenerDetail.faith_alignment && (
-                        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>Inspire & Impact</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: screenerDetail.faith_alignment.inspire_impact_score >= 0 ? C.up : C.dn }}>{screenerDetail.faith_alignment.inspire_impact_score}</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{screenerDetail.faith_alignment.label}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
+                          <span>{a.sleeve?.toUpperCase()} SLEEVE</span>
+                          <span style={{ color: C.border }}>·</span>
+                          <span>{a.screen_date}</span>
+                          {a.faith_alignment?.inspire_impact_score != null && <><span style={{ color: C.border }}>·</span><span style={{ color: a.faith_alignment.inspire_impact_score < 0 ? C.dn : "#B8860B" }}>Inspire: {a.faith_alignment.inspire_impact_score}</span></>}
+                          {a.infinite_game?.mindset && <><span style={{ color: C.border }}>·</span><span style={{ color: "#B8860B" }}>{a.infinite_game.mindset}</span></>}
                         </div>
-                      )}
-                    </div>
-                  )}
-                  {(screenerDetail.investment_thesis || screenerDetail.thesis_continued) && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Investment Thesis</div>
-                      <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7 }}>{screenerDetail.investment_thesis}{screenerDetail.thesis_continued ? ` ${screenerDetail.thesis_continued}` : ""}</div>
-                    </div>
-                  )}
-                  {screenerDetail.key_catalysts?.length > 0 && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Key Catalysts</div>
-                      {screenerDetail.key_catalysts.map((c, i) => <div key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 6 }}>{typeof c === "string" ? `• ${c}` : `• ${c.catalyst || c.description || JSON.stringify(c)}`}</div>)}
-                    </div>
-                  )}
-                  {screenerDetail.key_risks?.length > 0 && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Key Risks</div>
-                      {screenerDetail.key_risks.map((r, i) => <div key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 6 }}>{typeof r === "string" ? `• ${r}` : `• ${r.risk || r.description || JSON.stringify(r)}`}</div>)}
-                    </div>
-                  )}
-                  {/* AI Resilience analysis */}
-                  {screenerDetail.ai_resilience?.analysis && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>AI Resilience Analysis</div>
-                      <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>{screenerDetail.ai_resilience.analysis}</div>
-                    </div>
-                  )}
-                  {/* Infinite Game summary */}
-                  {screenerDetail.infinite_game?.summary && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Infinite Game Assessment</div>
-                      <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>{screenerDetail.infinite_game.summary}</div>
-                    </div>
-                  )}
-                  {/* Sources */}
-                  {screenerDetail.sources?.length > 0 && (
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "16px 14px", marginBottom: 14 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Sources</div>
-                      {screenerDetail.sources.map((s, i) => <div key={i} style={{ fontSize: 11, color: C.t4, lineHeight: 1.6, marginBottom: 4 }}>{typeof s === "string" ? s : s.title || s.source || JSON.stringify(s)}</div>)}
-                    </div>
-                  )}
+                        <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span style={{ display: "inline-block", fontSize: 13, fontWeight: 800, padding: "4px 14px", borderRadius: 8, letterSpacing: 1, textTransform: "uppercase", background: rc.bg, color: rc.fg }}>{a.recommendation}</span>
+                          <div><span style={{ fontSize: 48, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{a.overall_score}</span><span style={{ fontSize: 18, fontWeight: 400, color: C.t4 }}> / 100</span></div>
+                        </div>
+                      </div>
+
+                      {/* Company Profile */}
+                      {a.profile && (<>
+                        <SectionHeader>Company Profile</SectionHeader>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
+                          {a.profile.sector && <span>{a.profile.sector}</span>}
+                          {a.profile.industry && <><span style={{ color: C.border }}>·</span><span>{a.profile.industry}</span></>}
+                          {a.profile.exchange && <><span style={{ color: C.border }}>·</span><span>{a.profile.exchange}</span></>}
+                          {a.profile.country && <><span style={{ color: C.border }}>·</span><span>{a.profile.country}</span></>}
+                        </div>
+                        {a.profile.description && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginTop: 12 }}>{a.profile.description}</div>}
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                          {a.profile.employees && <span>{Number(a.profile.employees).toLocaleString()} Employees</span>}
+                          {a.profile.website && <><span style={{ color: C.border }}>·</span><span style={{ color: C.accent }}>{a.profile.website.replace(/https?:\/\//, "")}</span></>}
+                        </div>
+                      </>)}
+
+                      {/* Excellence Evaluation */}
+                      {a.excellence_evaluation && (<>
+                        <SectionHeader color={C.up}>Excellence Evaluation — Think Like an Owner (50%)</SectionHeader>
+                        <ScoreRow title="Innovation" score={a.excellence_evaluation.innovation?.score} label={a.excellence_evaluation.innovation?.label} analysis={a.excellence_evaluation.innovation?.analysis} />
+                        <ScoreRow title="Inspiration" score={a.excellence_evaluation.inspiration?.score} label={a.excellence_evaluation.inspiration?.label} analysis={a.excellence_evaluation.inspiration?.analysis} />
+                        <ScoreRow title="Infrastructure" score={a.excellence_evaluation.infrastructure?.score} label={a.excellence_evaluation.infrastructure?.label} analysis={a.excellence_evaluation.infrastructure?.analysis} />
+                      </>)}
+
+                      {/* Infinite Game */}
+                      {a.infinite_game && (<>
+                        <SectionHeader color={C.up}>Finite vs Infinite Game — Sinek (25%)</SectionHeader>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 12 }}>
+                          <span style={{ fontSize: 14, color: C.t2 }}>Mindset:</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: "#B8860B", textTransform: "uppercase" }}>{a.infinite_game.mindset}</span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: C.t2 }}>Overall: <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{a.infinite_game.overall}</span> /10</span>
+                        </div>
+                        {a.infinite_game.summary && <div style={{ borderLeft: `3px solid ${C.border}`, paddingLeft: 16, margin: "12px 0 20px", fontSize: 12, fontStyle: "italic", color: C.t2, lineHeight: 1.6 }}>{a.infinite_game.summary}</div>}
+                        {a.infinite_game.just_cause && <ScoreRow title="Just Cause" score={a.infinite_game.just_cause.score} analysis={a.infinite_game.just_cause.analysis} />}
+                        {a.infinite_game.trusting_teams && <ScoreRow title="Trusting Teams" score={a.infinite_game.trusting_teams.score} analysis={a.infinite_game.trusting_teams.analysis} />}
+                        {a.infinite_game.worthy_rivals && <ScoreRow title="Worthy Rivals" score={a.infinite_game.worthy_rivals.score} analysis={a.infinite_game.worthy_rivals.analysis} />}
+                        {a.infinite_game.existential_flexibility && <ScoreRow title="Existential Flexibility" score={a.infinite_game.existential_flexibility.score} analysis={a.infinite_game.existential_flexibility.analysis} />}
+                        {a.infinite_game.courage_to_lead && <ScoreRow title="Courage to Lead" score={a.infinite_game.courage_to_lead.score} analysis={a.infinite_game.courage_to_lead.analysis} />}
+                      </>)}
+
+                      {/* Investment Thesis */}
+                      {(a.investment_thesis || a.thesis_continued) && (<>
+                        <SectionHeader>Investment Thesis</SectionHeader>
+                        {a.investment_thesis && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.investment_thesis}</div>}
+                        {a.thesis_continued && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.thesis_continued}</div>}
+                      </>)}
+
+                      {/* Key Catalysts */}
+                      {a.key_catalysts?.length > 0 && (<>
+                        <SectionHeader color={C.up}>Key Catalysts</SectionHeader>
+                        <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
+                          {a.key_catalysts.map((c, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof c === "string" ? c : c.catalyst || c.description || JSON.stringify(c)}</li>)}
+                        </ol>
+                      </>)}
+
+                      {/* Key Risks */}
+                      {a.key_risks?.length > 0 && (<>
+                        <SectionHeader color={C.dn}>Key Risks</SectionHeader>
+                        <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
+                          {a.key_risks.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.risk || r.description || JSON.stringify(r)}</li>)}
+                        </ol>
+                      </>)}
+
+                      {/* AI Resilience */}
+                      {a.ai_resilience && (<>
+                        <SectionHeader>AI Resilience (25%)</SectionHeader>
+                        <ScoreRow title="AI Resilience" score={a.ai_resilience.score} label={a.ai_resilience.label} analysis={a.ai_resilience.analysis} />
+                      </>)}
+
+                      {/* Faith Alignment / Inspire Impact */}
+                      {a.faith_alignment && (<>
+                        <SectionHeader color={C.dn}>Faith Alignment — Inspire Insight</SectionHeader>
+                        <div style={{ marginBottom: 12 }}>
+                          <span style={{ fontSize: 14, color: C.t2 }}>Inspire Impact Score: </span>
+                          <span style={{ fontSize: 28, fontWeight: 800, color: a.faith_alignment.inspire_impact_score >= 0 ? C.up : C.dn }}>{a.faith_alignment.inspire_impact_score}</span>
+                        </div>
+                        {a.faith_alignment.negative_attributions?.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.dn, marginRight: 4 }}>Negative:</span>
+                            {a.faith_alignment.negative_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(220,38,38,0.08)", color: C.dn }}>{attr}</span>)}
+                          </div>
+                        )}
+                        {a.faith_alignment.positive_attributions?.length > 0 && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.up, marginRight: 4 }}>Positive:</span>
+                            {a.faith_alignment.positive_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(22,163,74,0.08)", color: C.up }}>{attr}</span>)}
+                          </div>
+                        )}
+                        {a.faith_alignment.source && <div style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Source: {a.faith_alignment.source}</div>}
+                      </>)}
+
+                      {/* Sources */}
+                      {a.sources?.length > 0 && (<>
+                        <SectionHeader>Resources</SectionHeader>
+                        <ol style={{ margin: "8px 0", paddingLeft: 28, listStyle: "none", counterReset: "src" }}>
+                          {a.sources.map((s, i) => <li key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.5, marginBottom: 8, counterIncrement: "src", position: "relative", paddingLeft: 0 }}><span style={{ fontWeight: 800, fontSize: 10, color: C.accent, marginRight: 8 }}>{i + 1}.</span>{typeof s === "string" ? s : s.title || s.source || JSON.stringify(s)}</li>)}
+                        </ol>
+                      </>)}
+
+                      <div style={{ textAlign: "center", fontSize: 10, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 40, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</div>
+                    </>);
+                  })()}
                 </div>
               </>
             )
