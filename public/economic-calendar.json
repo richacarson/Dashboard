@@ -376,7 +376,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "34",
-    "forecast": "",
+    "forecast": "34",
     "unit": ""
   },
   {
@@ -400,13 +400,23 @@
     "unit": ""
   },
   {
+    "title": "Fed Waller Speech",
+    "date": "2026-05-19 13:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "Pending Home Sales MoM",
     "date": "2026-05-19 14:00:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
     "previous": "1.5",
-    "forecast": "",
+    "forecast": "1.6",
     "unit": "%"
   },
   {
@@ -470,6 +480,26 @@
     "unit": ""
   },
   {
+    "title": "Fed Paulson Speech",
+    "date": "2026-05-20 12:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Barr Speech",
+    "date": "2026-05-20 14:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "EIA Crude Oil Stocks Change",
     "date": "2026-05-20 14:30:00",
     "country": "USD",
@@ -516,7 +546,7 @@
     "impact": "High",
     "actual": "",
     "previous": "1.363",
-    "forecast": "",
+    "forecast": "1.38",
     "unit": ""
   },
   {
@@ -526,7 +556,7 @@
     "impact": "High",
     "actual": "",
     "previous": "1.502",
-    "forecast": "",
+    "forecast": "1.42",
     "unit": ""
   },
   {
@@ -546,7 +576,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "211",
-    "forecast": "",
+    "forecast": "210",
     "unit": ""
   },
   {
@@ -556,7 +586,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "26.7",
-    "forecast": "",
+    "forecast": "15.5",
     "unit": ""
   },
   {
@@ -576,7 +606,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "54.5",
-    "forecast": "",
+    "forecast": "53.8",
     "unit": ""
   },
   {
@@ -586,7 +616,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "51",
-    "forecast": "",
+    "forecast": "51.3",
     "unit": ""
   },
   {
@@ -597,6 +627,16 @@
     "actual": "",
     "previous": "49.8",
     "forecast": "48.2",
+    "unit": ""
+  },
+  {
+    "title": "Fed Waller Speech",
+    "date": "2026-05-22 15:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
     "unit": ""
   }
 ]
