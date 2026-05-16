@@ -5333,23 +5333,22 @@ Instructions:
                   </button>
                 </div>
               )}
-              {/* Mobile content: chart (flex) or watchlist (absolute hack for iOS scroll) */}
-              {!isDesktop && chartsMobileList ? (
+              {/* Mobile content: chart + watchlist both rendered, layered to preserve scroll */}
+              {!isDesktop && (
                 <div style={{ flex: 1, position: "relative" }}>
-                  <div style={{ position: "absolute", inset: 0, overflowY: "scroll", WebkitOverflowScrolling: "touch" }}>
+                  {chartsMobileList && <div style={{ position: "absolute", inset: 0, overflowY: "scroll", WebkitOverflowScrolling: "touch", zIndex: 1, background: C.bg }}>
                     {renderSidebar(true)}
                     <div style={{ height: 80 }} />
-                  </div>
-                </div>
-              ) : !isDesktop ? (
-                <iframe
-                  key={activeSym}
-                  src={chartUrl}
-                  style={{ flex: 1, width: "100%", border: "none", display: "block" }}
-                  title={`${activeSym} Chart`}
+                  </div>}
+                  <iframe
+                    key={activeSym}
+                    src={chartUrl}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: "block" }}
+                    title={`${activeSym} Chart`}
                   sandbox="allow-scripts allow-same-origin allow-popups"
                 />
-              ) : null}
+                </div>
+              )}
               {/* Desktop layout */}
               {isDesktop && (
                 <>
@@ -7747,8 +7746,10 @@ Instructions:
       {/* SCREENER FULL-PAGE OVERLAY */}
       {tab === "screener" && (
         <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          {screenerDetail ? (
-            // Detail view
+          {/* Detail overlay — layered on top, list stays mounted underneath */}
+          {screenerDetail && (
+          <div style={{ display: "flex", flexDirection: "column", position: "absolute", inset: 0, background: C.bg, zIndex: 1, paddingTop: "env(safe-area-inset-top, 0px)" }}>
+          {(
             screenerDetailLoading ? (
               <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
                 <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
@@ -7942,8 +7943,10 @@ Instructions:
                 </div>
               </>
             )
-          ) : (
-            // List view
+          )}
+          </div>
+          )}
+          {/* List view — always rendered to preserve scroll position */}
             <>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                 <button onClick={() => setTab("home")} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
@@ -7998,7 +8001,6 @@ Instructions:
                 })()}
               </div>
             </>
-          )}
         </div>
       )}
 
