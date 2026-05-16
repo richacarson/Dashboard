@@ -261,19 +261,17 @@ jobs:
                   print(f"  WARN: {e}", file=sys.stderr)
                   return None
 
-          # 1. FRED: Initial Claims 4-week avg
+          # 1. FRED: Initial Claims 4-week avg (IC4WSA is already smoothed)
           if fred:
-              d = fetch(f'https://api.stlouisfed.org/fred/series/observations?series_id=IC4WSA&api_key={fred}&sort_order=desc&limit=14&file_type=json')
+              d = fetch(f'https://api.stlouisfed.org/fred/series/observations?series_id=IC4WSA&api_key={fred}&sort_order=desc&limit=10&file_type=json')
               if d:
                   obs = [{'date': o['date'], 'val': float(o['value'])} for o in d.get('observations', []) if o['value'] != '.']
                   if len(obs) >= 2:
                       data['claims'] = obs[0]['val']
                       data['claimsDate'] = obs[0]['date']
-                      r4 = sum(o['val'] for o in obs[:4]) / min(4, len(obs))
-                      data['claims4wk'] = round(r4)
-                      if len(obs) >= 8:
-                          p4 = sum(o['val'] for o in obs[4:8]) / min(4, len(obs[4:8]))
-                          data['claimsTrend'] = round((r4 / p4 - 1) * 100, 2)
+                      data['claims4wk'] = round(obs[0]['val'])
+                      if len(obs) >= 5:
+                          data['claimsTrend'] = round((obs[0]['val'] / obs[4]['val'] - 1) * 100, 2)
                       print(f"Claims: {data['claims4wk']} (trend: {data.get('claimsTrend', 'N/A')}%)")
 
           # 2. FRED: CFNAI
@@ -312,7 +310,7 @@ jobs:
               reader = csv.DictReader(io.StringIO(text))
               rows = list(reader)
               if rows:
-                  latest = rows[-1]
+                  latest = rows[0]
                   y10 = float(latest.get('10 Yr', 0))
                   y2 = float(latest.get('2 Yr', 0))
                   y3m = float(latest.get('3 Mo', 0))

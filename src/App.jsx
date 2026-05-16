@@ -1458,13 +1458,8 @@ Instructions:
         } catch {}
       })());
 
-      // 4. Fear & Greed Index (free, CORS-friendly)
-      fetches.push((async () => {
-        try {
-          const r = await fetch("https://api.alternative.me/fng/?limit=1");
-          if (r.ok) { const d = await r.json(); if (d.data?.[0]) { results.fearGreed = parseInt(d.data[0].value); results.fgClassification = d.data[0].value_classification; } }
-        } catch {}
-      })());
+      // Note: alternative.me/fng is the CRYPTO (Bitcoin) Fear & Greed Index, not equity.
+      // Removed to avoid misleading S&P 500 bear probability with Bitcoin sentiment.
 
       await Promise.all(fetches);
       results.loaded = true;
@@ -5873,10 +5868,16 @@ Instructions:
                 const md = macroData;
 
                 // Factor 1: Yield Curve (10Y-2Y) — strongest single recession predictor
-                // Estrella & Mishkin (1998) used 10Y-3M; 10Y-2Y is the practitioner convention with comparable power
+                // Post-inversion premium: recessions start AFTER de-inversion (Bauer & Mertens 2018)
+                // 10Y-2Y inverted Jul 2022 — Oct 2024. Premium decays linearly over 24 months post de-inversion.
                 if (md.yieldSpread != null) {
-                  const score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 48], [0.25, 38], [0.5, 28], [1.0, 18], [1.5, 10], [2.5, 5]]);
-                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%`, score, weight: 18, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-2Y (cf. Estrella & Mishkin 1998)" });
+                  let score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 48], [0.25, 38], [0.5, 28], [1.0, 18], [1.5, 10], [2.5, 5]]);
+                  const inversionEndDate = new Date("2024-10-01");
+                  const monthsSinceDeInversion = Math.max(0, (Date.now() - inversionEndDate) / (30.44 * 86400000));
+                  const postInvPremium = monthsSinceDeInversion < 24 && md.yieldSpread > 0 ? Math.round(18 * (1 - monthsSinceDeInversion / 24)) : 0;
+                  score = Math.min(95, score + postInvPremium);
+                  const piNote = postInvPremium > 0 ? ` +${postInvPremium}pt post-inversion (${Math.round(monthsSinceDeInversion)}mo since de-inversion)` : "";
+                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%${piNote}`, score, weight: 18, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-2Y (Bauer & Mertens 2018)" });
                 }
 
                 // Factor 2: Valuation (P/E) — steepened curve: GFC started at 21x, 2022 bear at 23x
@@ -5933,14 +5934,12 @@ Instructions:
                   factors.push({ name: "Sahm Rule", value: `${md.sahmVal.toFixed(2)}pp`, detail: `Unemployment: ${md.unrate?.toFixed(1)}% — triggers at 0.50pp — ${md.unrateDate}`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Sahm (2019), FRED UNRATE" });
                 }
 
-                // Composite: weighted average + concordance bonus + F&G sentiment modifier
+                // Composite: weighted average + concordance bonus
                 const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
                 const baseComposite = totalWeight > 0 ? factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0) : null;
                 const elevatedCount = factors.filter(f => f.score >= 50).length;
                 const concordanceBonus = elevatedCount >= 5 ? 15 : elevatedCount >= 4 ? 10 : elevatedCount >= 3 ? 5 : 0;
-                // Fear & Greed: contrarian modifier — extreme greed adds risk, extreme fear subtracts
-                const fgMod = md.fearGreed != null ? (md.fearGreed >= 80 ? 5 : md.fearGreed >= 75 ? 3 : md.fearGreed <= 20 ? -5 : md.fearGreed <= 25 ? -3 : 0) : 0;
-                const composite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus + fgMod))) : null;
+                const composite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus))) : null;
                 const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
                 const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
@@ -5958,7 +5957,8 @@ Instructions:
                       {composite != null ? (<>
                         <div style={{ fontSize: 56, fontWeight: 900, color: compositeColor, lineHeight: 1 }}>{composite}%</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: compositeColor, marginTop: 6, letterSpacing: 2 }}>{riskLabel}</div>
-                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}{fgMod !== 0 ? ` ${fgMod > 0 ? "+" : ""}${fgMod}pt F&G (${md.fgClassification})` : ""}</div>
+                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}</div>
+                        {md.updated && (() => { const hrs = (Date.now() - new Date(md.updated)) / 3600000; return hrs > 48 ? <div style={{ fontSize: 10, color: C.dn, marginTop: 4 }}>Data is {Math.round(hrs / 24)}d old — workflow may have failed</div> : <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Updated {hrs < 1 ? "just now" : hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
                       </>) : (
                         <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
                       )}
@@ -5988,32 +5988,11 @@ Instructions:
                       </div>
                     </div>
 
-                    {/* Fear & Greed sentiment modifier */}
-                    {md.fearGreed != null && (
-                      <div style={{ ...cardStyle, border: `1px solid ${md.fearGreed >= 75 ? C.dn : md.fearGreed <= 25 ? C.up : C.border}30` }}>
-                        {sectionTitle("Sentiment: Fear & Greed Index")}
-                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                          <div style={{ fontSize: 36, fontWeight: 900, color: md.fearGreed >= 75 ? C.dn : md.fearGreed >= 55 ? "#FBBF24" : md.fearGreed <= 25 ? C.up : md.fearGreed <= 45 ? "#60A5FA" : C.t2, minWidth: 60, textAlign: "center" }}>{md.fearGreed}</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{md.fgClassification}</div>
-                            <div style={{ height: 8, background: C.card, borderRadius: 4, overflow: "hidden", marginBottom: 6 }}>
-                              <div style={{ width: `${md.fearGreed}%`, height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${C.up}, #FBBF24, ${C.dn})` }} />
-                            </div>
-                            <div style={{ fontSize: 11, color: C.t4 }}>
-                              {fgMod !== 0 ? <><strong style={{ color: fgMod > 0 ? C.dn : C.up }}>{fgMod > 0 ? "+" : ""}{fgMod}pt</strong> contrarian modifier applied — </> : "No modifier applied — "}
-                              {md.fearGreed >= 75 ? "extreme greed is contrarian bearish (markets tend to correct)" : md.fearGreed <= 25 ? "extreme fear is contrarian bullish (markets tend to recover)" : "neutral zone, no contrarian signal"}
-                            </div>
-                            <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Not a weighted factor — 3 of its 7 sub-indicators overlap with our existing factors (VIX, momentum, credit). Applied only as ±3-5pt modifier at extremes (&gt;75 or &lt;25).</div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Methodology */}
                     <div style={cardStyle}>
                       {sectionTitle("Methodology")}
                       <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.8 }}>
-                        <div><strong style={{ color: C.t1 }}>Yield Curve (18%)</strong> — 10Y minus 2Y Treasury spread. Yield curve inversion has preceded every U.S. recession since 1955, with 1-2 false positives (1966, arguably 1998). The original academic work (Estrella & Mishkin, 1998) used 10Y minus 3-month T-bill; the 10Y-2Y practitioner convention has comparable predictive power. Note: the 2022-2024 deep inversion (-1.08%) has not yet produced a recession — either a false positive or very long lag.</div>
+                        <div><strong style={{ color: C.t1 }}>Yield Curve (18%)</strong> — 10Y minus 2Y Treasury spread with post-inversion premium. Yield curve inversion has preceded every U.S. recession since 1955. Critically, recessions typically begin *after* the curve de-inverts (Bauer & Mertens, 2018) — the re-steepening phase is the most dangerous. The 2022-2024 inversion (-1.08%) ended ~Oct 2024; a +18pt premium decays linearly over 24 months from de-inversion to capture this lagged risk.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (13%)</strong> — SPY trailing P/E ratio. Scoring calibrated to actual pre-bear P/E levels: the 2007 GFC began at 21x, the 2022 bear at 23x, the dot-com crash at 28x (Shiller, 2000). Not a timing signal, but a severity amplifier — high P/E markets fall further.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Jobless Claims (12%)</strong> — 4-week moving average of initial unemployment claims from FRED (series IC4WSA, released weekly on Thursdays). Rising claims precede every post-war recession by 3-6 months. Scored on the trend: a 10%+ increase over the prior month is an amber signal; 20%+ is a red flag. This is the model's primary real-economy indicator.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (10%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Of the {atRisk.length} bulls that lasted longer than {bullAgeMo} months, {atRisk.length - survived12.length} ended within the next 12 months. 95% CI: {Math.max(0, Math.round((durationProb / 100 - 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% to {Math.min(100, Math.round((durationProb / 100 + 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% — wide range due to small sample.</div>
@@ -6023,8 +6002,8 @@ Instructions:
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Sahm Rule (7%)</strong> — 3-month average unemployment rate minus its 12-month low (Sahm, 2019). Triggers at 0.50 percentage points — has signaled every recession since 1950 with zero false positives. Currently at {md.sahmVal != null ? md.sahmVal.toFixed(2) : "—"}pp. This is the most reliable real-time recession indicator in existence.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (5%)</strong> — CBOE VIX Index. Low weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Concordance Bonus</strong> — When 3+ factors score above 50, a bonus of 5-15 points is added. Simultaneous stress across multiple indicators is disproportionately dangerous: the 2000 and 2007 crashes both had yield curve inversion + elevated valuations + credit stress simultaneously.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Fear & Greed Modifier</strong> — CNN Fear & Greed Index (via alternative.me API). Not a weighted factor because 3 of its 7 sub-indicators overlap with existing factors (VIX, S&P vs 125-day MA, junk bond demand). Applied only as a ±3-5 point contrarian modifier at extremes: greed &gt;75 adds risk (markets tend to correct from euphoria), fear &lt;25 subtracts risk (markets tend to recover from panic).</div>
-                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide CI). HYG has only 3 bear markets of data. The Fear & Greed Index partially overlaps with VIX, momentum, and credit factors. This model estimates risk, not certainty — it cannot predict black swan events or novel shocks.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Post-Inversion Premium</strong> — When the yield curve has been inverted within the last 24 months and has since de-inverted, a decaying premium (up to +18pt) is added to the yield curve score. Academic research (Bauer & Mertens 2018, Engstrom & Sharpe 2019) shows recessions typically begin 6-18 months after de-inversion, not during inversion itself.</div>
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide CI). HYG has only 3 bear markets of data. Post-inversion premium uses a fixed de-inversion date (Oct 2024) and decays linearly — a simplification. No out-of-sample backtesting has been performed. This model estimates risk, not certainty — it cannot predict black swan events or novel shocks.</div>
                       </div>
                     </div>
 
