@@ -301,44 +301,57 @@ jobs:
                       data['unrateDate'] = d['observations'][0]['date']
                       print(f"Sahm: {data['sahmVal']}pp (unemployment: {data['unrate']}%)")
 
-          # 4. FMP: Treasury yields (try v4, fallback v3)
-          if fmp:
-              today = datetime.utcnow().strftime('%Y-%m-%d')
-              d30 = (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m-%d')
-              d = fetch(f'https://financialmodelingprep.com/api/v4/treasury?from={d30}&to={today}&apikey={fmp}')
-              if d and isinstance(d, list) and d:
-                  t = d[0]
-                  data['yield10Y'] = t.get('year10')
-                  data['yield2Y'] = t.get('year2')
-                  data['yield3M'] = t.get('month3')
-                  data['yieldDate'] = t.get('date')
-                  if t.get('year10') is not None and t.get('year2') is not None:
-                      data['yieldSpread'] = round(t['year10'] - t['year2'], 3)
-                  print(f"Yield: 10Y={data.get('yield10Y')}, 2Y={data.get('yield2Y')}, spread={data.get('yieldSpread')}")
-              else:
-                  print("FMP v4 treasury failed, trying v3...")
-                  d = fetch(f'https://financialmodelingprep.com/api/v3/treasury?from={d30}&to={today}&apikey={fmp}')
-                  if d and isinstance(d, list) and d:
-                      t = d[0]
-                      data['yield10Y'] = t.get('year10')
-                      data['yield2Y'] = t.get('year2')
-                      if t.get('year10') is not None and t.get('year2') is not None:
-                          data['yieldSpread'] = round(t['year10'] - t['year2'], 3)
-                      print(f"Yield (v3): spread={data.get('yieldSpread')}")
+          # 4. Treasury.gov: Yield curve (free, no key)
+          import csv, io
+          try:
+              now = datetime.now(tz=None)
+              url = f'https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/all/{now.strftime("%Y%m")}?type=daily_treasury_yield_curve&field_tdr_date_value={now.year}&page&_format=csv'
+              req = urllib.request.Request(url, headers={'User-Agent': 'Dashboard/1.0'})
+              with urllib.request.urlopen(req, timeout=15) as r:
+                  text = r.read().decode()
+              reader = csv.DictReader(io.StringIO(text))
+              rows = list(reader)
+              if rows:
+                  latest = rows[-1]
+                  y10 = float(latest.get('10 Yr', 0))
+                  y2 = float(latest.get('2 Yr', 0))
+                  y3m = float(latest.get('3 Mo', 0))
+                  data['yield10Y'] = y10
+                  data['yield2Y'] = y2
+                  data['yield3M'] = y3m
+                  data['yieldSpread'] = round(y10 - y2, 3)
+                  data['yieldDate'] = latest.get('Date', '')
+                  print(f"Yield: 10Y={y10}, 2Y={y2}, spread={data['yieldSpread']}")
+          except Exception as e:
+              print(f"Treasury.gov yield curve failed: {e}", file=sys.stderr)
 
-          # 5. FMP: VIX quote
-          if fmp:
-              d = fetch(f'https://financialmodelingprep.com/api/v3/quote/%5EVIX?apikey={fmp}')
-              if d and isinstance(d, list) and d:
-                  data['vix'] = d[0].get('price') or d[0].get('previousClose')
-                  print(f"VIX: {data.get('vix')}")
+          # 5. Yahoo Finance: VIX (free, no key)
+          try:
+              d = fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?range=1d&interval=1d')
+              if d and d.get('chart', {}).get('result'):
+                  data['vix'] = d['chart']['result'][0]['meta']['regularMarketPrice']
+                  print(f"VIX: {data['vix']}")
+          except Exception as e:
+              print(f"Yahoo VIX failed: {e}", file=sys.stderr)
 
-          # 6. FMP: SPY PE ratio
-          if fmp:
-              d = fetch(f'https://financialmodelingprep.com/api/v3/quote/SPY?apikey={fmp}')
-              if d and isinstance(d, list) and d:
-                  data['spyPE'] = d[0].get('pe')
+          # 6. Yahoo Finance: SPY PE ratio
+          try:
+              d = fetch('https://query1.finance.yahoo.com/v8/finance/chart/SPY?range=1d&interval=1d')
+              if d and d.get('chart', {}).get('result'):
+                  meta = d['chart']['result'][0]['meta']
+                  data['spyPrice'] = meta.get('regularMarketPrice')
+              # Get PE from quote summary
+              d2 = fetch('https://query1.finance.yahoo.com/v10/finance/quoteSummary/SPY?modules=defaultKeyStatistics')
+              if d2 and d2.get('quoteSummary', {}).get('result'):
+                  stats = d2['quoteSummary']['result'][0].get('defaultKeyStatistics', {})
+                  pe_val = stats.get('trailingPE', {})
+                  if isinstance(pe_val, dict):
+                      data['spyPE'] = pe_val.get('raw') or pe_val.get('fmt')
+                  elif pe_val:
+                      data['spyPE'] = float(pe_val)
                   print(f"SPY PE: {data.get('spyPE')}")
+          except Exception as e:
+              print(f"Yahoo SPY failed: {e}", file=sys.stderr)
 
           data['updated'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 

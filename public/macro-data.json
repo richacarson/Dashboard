@@ -9,5 +9,12 @@
   "sahmVal": 0.23,
   "unrate": 4.3,
   "unrateDate": "2026-04-01",
-  "updated": "2026-05-16T16:36:50Z"
+  "updated": "2026-05-16T16:38:13Z",
+  "yield10Y": 4.39,
+  "yield2Y": 3.88,
+  "yield3M": 3.68,
+  "yieldSpread": 0.51,
+  "yieldDate": "05/01/2026",
+  "vix": 18.43,
+  "spyPE": 27.5
 }
