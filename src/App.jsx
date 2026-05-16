@@ -7337,8 +7337,8 @@ Instructions:
                       if (!bmPrices) return null;
                       const prices = Object.entries(bmPrices).sort((a, b) => a[0].localeCompare(b[0]));
                       if (!prices.length) return null;
-                      // Use live benchmark price when market is open, otherwise use historical close
-                      const liveQ = (marketStatus.status === "open") ? bmQuotes[sym] : null;
+                      // Use live/latest benchmark price (bmQuotes has last trade even when closed)
+                      const liveQ = bmQuotes[sym];
                       const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
                       const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                       if (p.oneDay) {
