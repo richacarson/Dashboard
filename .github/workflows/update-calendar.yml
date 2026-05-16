@@ -18,6 +18,7 @@ jobs:
     env:
       FMP_KEY: ${{ secrets.FMP_API }}
       FINNHUB_KEY: ${{ secrets.FINHUB_API }}
+      FRED_KEY: ${{ secrets.FRED_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -241,9 +242,124 @@ jobs:
               json.dump(result, f, indent=2)
           PY
 
+      - name: Fetch macro indicators (FRED + FMP)
+        run: |
+          python3 << 'PYFRED'
+          import json, urllib.request, os, sys
+          from datetime import datetime, timedelta
+
+          data = {}
+          fred = os.environ.get('FRED_KEY', '')
+          fmp = os.environ.get('FMP_KEY', '')
+
+          def fetch(url):
+              try:
+                  req = urllib.request.Request(url, headers={'User-Agent': 'Dashboard/1.0'})
+                  with urllib.request.urlopen(req, timeout=15) as r:
+                      return json.loads(r.read())
+              except Exception as e:
+                  print(f"  WARN: {e}", file=sys.stderr)
+                  return None
+
+          # 1. FRED: Initial Claims 4-week avg
+          if fred:
+              d = fetch(f'https://api.stlouisfed.org/fred/series/observations?series_id=IC4WSA&api_key={fred}&sort_order=desc&limit=14&file_type=json')
+              if d:
+                  obs = [{'date': o['date'], 'val': float(o['value'])} for o in d.get('observations', []) if o['value'] != '.']
+                  if len(obs) >= 2:
+                      data['claims'] = obs[0]['val']
+                      data['claimsDate'] = obs[0]['date']
+                      r4 = sum(o['val'] for o in obs[:4]) / min(4, len(obs))
+                      data['claims4wk'] = round(r4)
+                      if len(obs) >= 8:
+                          p4 = sum(o['val'] for o in obs[4:8]) / min(4, len(obs[4:8]))
+                          data['claimsTrend'] = round((r4 / p4 - 1) * 100, 2)
+                      print(f"Claims: {data['claims4wk']} (trend: {data.get('claimsTrend', 'N/A')}%)")
+
+          # 2. FRED: CFNAI
+          if fred:
+              d = fetch(f'https://api.stlouisfed.org/fred/series/observations?series_id=CFNAI&api_key={fred}&sort_order=desc&limit=4&file_type=json')
+              if d:
+                  obs = [{'date': o['date'], 'val': float(o['value'])} for o in d.get('observations', []) if o['value'] != '.']
+                  if obs:
+                      data['cfnai'] = obs[0]['val']
+                      data['cfnaiDate'] = obs[0]['date']
+                      if len(obs) >= 3:
+                          data['cfnai3mo'] = round(sum(o['val'] for o in obs[:3]) / 3, 3)
+                      print(f"CFNAI: {data['cfnai']} (3mo: {data.get('cfnai3mo', 'N/A')})")
+
+          # 3. FRED: Unemployment rate (Sahm Rule)
+          if fred:
+              d = fetch(f'https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&api_key={fred}&sort_order=desc&limit=13&file_type=json')
+              if d:
+                  vals = [float(o['value']) for o in d.get('observations', []) if o['value'] != '.']
+                  if len(vals) >= 3:
+                      avg3 = (vals[0] + vals[1] + vals[2]) / 3
+                      low12 = min(vals)
+                      data['sahmVal'] = round(avg3 - low12, 2)
+                      data['unrate'] = vals[0]
+                      data['unrateDate'] = d['observations'][0]['date']
+                      print(f"Sahm: {data['sahmVal']}pp (unemployment: {data['unrate']}%)")
+
+          # 4. FMP: Treasury yields (try v4, fallback v3)
+          if fmp:
+              today = datetime.utcnow().strftime('%Y-%m-%d')
+              d30 = (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m-%d')
+              d = fetch(f'https://financialmodelingprep.com/api/v4/treasury?from={d30}&to={today}&apikey={fmp}')
+              if d and isinstance(d, list) and d:
+                  t = d[0]
+                  data['yield10Y'] = t.get('year10')
+                  data['yield2Y'] = t.get('year2')
+                  data['yield3M'] = t.get('month3')
+                  data['yieldDate'] = t.get('date')
+                  if t.get('year10') is not None and t.get('year2') is not None:
+                      data['yieldSpread'] = round(t['year10'] - t['year2'], 3)
+                  print(f"Yield: 10Y={data.get('yield10Y')}, 2Y={data.get('yield2Y')}, spread={data.get('yieldSpread')}")
+              else:
+                  print("FMP v4 treasury failed, trying v3...")
+                  d = fetch(f'https://financialmodelingprep.com/api/v3/treasury?from={d30}&to={today}&apikey={fmp}')
+                  if d and isinstance(d, list) and d:
+                      t = d[0]
+                      data['yield10Y'] = t.get('year10')
+                      data['yield2Y'] = t.get('year2')
+                      if t.get('year10') is not None and t.get('year2') is not None:
+                          data['yieldSpread'] = round(t['year10'] - t['year2'], 3)
+                      print(f"Yield (v3): spread={data.get('yieldSpread')}")
+
+          # 5. FMP: VIX quote
+          if fmp:
+              d = fetch(f'https://financialmodelingprep.com/api/v3/quote/%5EVIX?apikey={fmp}')
+              if d and isinstance(d, list) and d:
+                  data['vix'] = d[0].get('price') or d[0].get('previousClose')
+                  print(f"VIX: {data.get('vix')}")
+
+          # 6. FMP: SPY PE ratio
+          if fmp:
+              d = fetch(f'https://financialmodelingprep.com/api/v3/quote/SPY?apikey={fmp}')
+              if d and isinstance(d, list) and d:
+                  data['spyPE'] = d[0].get('pe')
+                  print(f"SPY PE: {data.get('spyPE')}")
+
+          data['updated'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+          # Merge with existing data (preserve fields that didn't update)
+          try:
+              with open('public/macro-data.json') as f:
+                  existing = json.loads(f.read())
+              for k, v in existing.items():
+                  if k not in data and k != 'updated':
+                      data[k] = v
+          except:
+              pass
+
+          with open('public/macro-data.json', 'w') as f:
+              json.dump(data, f, indent=2)
+          print(f"Wrote macro-data.json with {len(data)} fields")
+          PYFRED
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/economic-calendar.json public/earnings-calendar.json
+          git add public/economic-calendar.json public/earnings-calendar.json public/macro-data.json
           git diff --cached --quiet || (git commit -m "Auto-update calendars $(date -u +%Y-%m-%d\ %H:%M) UTC" && git push)
