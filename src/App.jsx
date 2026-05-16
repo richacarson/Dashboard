@@ -1416,29 +1416,27 @@ Instructions:
   useEffect(() => {
     const fetchMacro = async () => {
       const results = {};
-      const today = new Date().toISOString().slice(0, 10);
-      const d30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
       const d300 = new Date(Date.now() - 300 * 86400000).toISOString().slice(0, 10);
 
       const fetches = [];
 
-      // 1. Treasury yield curve from FMP
-      if (FK) fetches.push((async () => {
+      // 1. Static macro data (FRED + FMP, updated by GitHub Actions — no CORS issues)
+      fetches.push((async () => {
         try {
-          const r = await fetch(`https://financialmodelingprep.com/api/v4/treasury?from=${d30}&to=${today}&apikey=${FK}`);
-          if (r.ok) { const d = await r.json(); if (d?.[0]) { results.yield10Y = d[0].year10; results.yield2Y = d[0].year2; results.yield3M = d[0].month3; results.yieldDate = d[0].date; results.yieldSpread = (d[0].year10 || 0) - (d[0].year2 || 0); } }
+          const r = await fetch(`${import.meta.env.BASE_URL}macro-data.json?v=${Date.now()}`);
+          if (r.ok) {
+            const d = await r.json();
+            if (d.yieldSpread != null) { results.yieldSpread = d.yieldSpread; results.yield10Y = d.yield10Y; results.yield2Y = d.yield2Y; results.yieldDate = d.yieldDate; }
+            if (d.vix != null) results.vix = d.vix;
+            if (d.spyPE != null) results.spyPE = d.spyPE;
+            if (d.claims != null) { results.claims = d.claims; results.claimsDate = d.claimsDate; results.claims4wk = d.claims4wk; results.claimsTrend = d.claimsTrend; }
+            if (d.cfnai != null) { results.cfnai = d.cfnai; results.cfnaiDate = d.cfnaiDate; results.cfnai3mo = d.cfnai3mo; }
+            if (d.sahmVal != null) { results.sahmVal = d.sahmVal; results.unrate = d.unrate; results.unrateDate = d.unrateDate; }
+          }
         } catch {}
       })());
 
-      // 2. VIX from FMP
-      if (FK) fetches.push((async () => {
-        try {
-          const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/%5EVIX?apikey=${FK}`);
-          if (r.ok) { const d = await r.json(); if (d?.[0]) { results.vix = d[0].price || d[0].previousClose; } }
-        } catch {}
-      })());
-
-      // 3. SPY 200-day SMA from Alpaca
+      // 2. SPY 200-day SMA from Alpaca (CORS-friendly)
       if (apiKey) fetches.push((async () => {
         try {
           const r = await fetch(`${BASE}/v2/stocks/bars?symbols=SPY&timeframe=1Day&start=${d300}&limit=250&adjustment=split&feed=iex`, { headers: { "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret } });
@@ -1446,7 +1444,7 @@ Instructions:
         } catch {}
       })());
 
-      // 4. HYG (high yield) from Alpaca + 52wk high from Finnhub
+      // 3. HYG from Alpaca + 52wk high from Finnhub (both CORS-friendly)
       if (apiKey) fetches.push((async () => {
         try {
           const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=HYG&feed=iex`, { headers: { "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret } });
@@ -1460,68 +1458,7 @@ Instructions:
         } catch {}
       })());
 
-      // 5. SPY P/E (valuation proxy) from Finnhub
-      if (FH) fetches.push((async () => {
-        try {
-          const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=SPY&metric=all&token=${FH}`);
-          if (r.ok) { const d = await r.json(); if (d.metric) { results.spyPE = d.metric.peTTM || d.metric.peBasicExclExtraTTM || d.metric.peNormalizedAnnual; } }
-        } catch {}
-      })());
-
-      // 6. FRED: Initial unemployment claims (weekly, 4-week moving avg)
-      if (FRED) fetches.push((async () => {
-        try {
-          const r = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=IC4WSA&api_key=${FRED}&sort_order=desc&limit=14&file_type=json`);
-          if (r.ok) {
-            const d = await r.json();
-            const obs = (d.observations || []).filter(o => o.value !== ".").map(o => ({ date: o.date, val: parseFloat(o.value) }));
-            if (obs.length >= 2) {
-              results.claims = obs[0].val;
-              results.claimsDate = obs[0].date;
-              const recent4 = obs.slice(0, 4).reduce((a, b) => a + b.val, 0) / Math.min(4, obs.length);
-              const prior4 = obs.slice(4, 8);
-              results.claims4wk = Math.round(recent4);
-              if (prior4.length >= 2) {
-                const priorAvg = prior4.reduce((a, b) => a + b.val, 0) / prior4.length;
-                results.claimsTrend = ((recent4 / priorAvg) - 1) * 100;
-              }
-            }
-          }
-        } catch {}
-      })());
-
-      // 7. FRED: Chicago Fed National Activity Index (85 indicators, monthly)
-      if (FRED) fetches.push((async () => {
-        try {
-          const r = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=CFNAI&api_key=${FRED}&sort_order=desc&limit=4&file_type=json`);
-          if (r.ok) {
-            const d = await r.json();
-            const obs = (d.observations || []).filter(o => o.value !== ".").map(o => ({ date: o.date, val: parseFloat(o.value) }));
-            if (obs.length >= 1) { results.cfnai = obs[0].val; results.cfnaiDate = obs[0].date; }
-            if (obs.length >= 3) { results.cfnai3mo = obs.slice(0, 3).reduce((a, b) => a + b.val, 0) / 3; }
-          }
-        } catch {}
-      })());
-
-      // 8. FRED: Sahm Rule — unemployment rate 3-month avg vs 12-month low
-      if (FRED) fetches.push((async () => {
-        try {
-          const r = await fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&api_key=${FRED}&sort_order=desc&limit=13&file_type=json`);
-          if (r.ok) {
-            const d = await r.json();
-            const vals = (d.observations || []).filter(o => o.value !== ".").map(o => parseFloat(o.value));
-            if (vals.length >= 3) {
-              const avg3 = (vals[0] + vals[1] + vals[2]) / 3;
-              const low12 = Math.min(...vals);
-              results.sahmVal = +(avg3 - low12).toFixed(2);
-              results.unrate = vals[0];
-              results.unrateDate = d.observations[0].date;
-            }
-          }
-        } catch {}
-      })());
-
-      // 8. Fear & Greed Index (free, no key)
+      // 4. Fear & Greed Index (free, CORS-friendly)
       fetches.push((async () => {
         try {
           const r = await fetch("https://api.alternative.me/fng/?limit=1");
@@ -1533,7 +1470,7 @@ Instructions:
       results.loaded = true;
       setMacroData(prev => ({ ...prev, ...results }));
     };
-    if (apiKey || FK || FH || FRED) fetchMacro();
+    fetchMacro();
   }, [apiKey, apiSecret]);
 
   /* ── Fetch economic + earnings calendar ── */
