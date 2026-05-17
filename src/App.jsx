@@ -7985,7 +7985,12 @@ Instructions:
                 )}
               </div>
               {/* List */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
+              {(() => {
+                const ITEM_H = 68;
+                const screenerListRef = React.useRef(null);
+                const [scrScrollTop, setScrScrollTop] = React.useState(0);
+                return (
+              <div ref={screenerListRef} onScroll={e => setScrScrollTop(e.target.scrollTop)} style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
                 {!screenerData.length ? (
                   <div style={{ textAlign: "center", padding: 40 }}>
                     <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
@@ -8004,10 +8009,14 @@ Instructions:
                     if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                     return true;
                   }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
-                  return filtered.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>
-                  ) : filtered.map(s => (
-                    <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 8, cursor: "pointer" }}>
+                  if (filtered.length === 0) return <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>;
+                  const viewH = screenerListRef.current?.clientHeight || 800;
+                  const startIdx = Math.max(0, Math.floor(scrScrollTop / ITEM_H) - 5);
+                  const endIdx = Math.min(filtered.length, Math.ceil((scrScrollTop + viewH) / ITEM_H) + 5);
+                  return (
+                    <div style={{ height: filtered.length * ITEM_H, position: "relative" }}>
+                      {filtered.slice(startIdx, endIdx).map((s, i) => (
+                        <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ position: "absolute", top: (startIdx + i) * ITEM_H, left: 0, right: 0, height: ITEM_H - 8, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
                         <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
@@ -8016,9 +8025,13 @@ Instructions:
                       {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
                       {s.overall_score != null && <div style={{ fontSize: 18, fontWeight: 800, color: C.t1, minWidth: 36, textAlign: "right" }}>{s.overall_score}</div>}
                     </div>
-                  ));
+                  ))}
+                    </div>
+                  );
                 })()}
               </div>
+                );
+              })()}
             </>
         </div>
       )}
