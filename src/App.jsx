@@ -922,6 +922,7 @@ Instructions:
   const [opportunities, setOpportunities] = useState([]);
   const [oppExpandedThesis, setOppExpandedThesis] = useState({});
   const [oppExpandedRisks, setOppExpandedRisks] = useState({});
+  const [oppDetail, setOppDetail] = useState(null);
   const oppFetched = useRef(false);
 
   // Open stock profile with specific tab
@@ -2382,7 +2383,7 @@ Instructions:
   useEffect(() => {
     if (tab !== "opportunities" || oppFetched.current || opportunities.length) return;
     oppFetched.current = true;
-    const ids = ["ai-power-bottleneck","ai-optical-interconnects","ai-cybersecurity-demand","copper-datacenter-demand","aluminum-supply-shock","aluminum-hormuz-supply-shock","iran-ammonia-disruption","rare-earth-magnet-independence","us-ethane-polymer-windfall"];
+    const ids = ["ai-power-bottleneck","ai-optical-interconnects","ai-cybersecurity-demand","copper-datacenter-demand","aluminum-supply-shock","iran-ammonia-disruption","rare-earth-magnet-independence","us-ethane-polymer-windfall"];
     Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null)))
       .then(results => setOpportunities(results.filter(Boolean).sort((a, b) => {
         if (a.conviction === "High" && b.conviction !== "High") return -1;
@@ -6503,50 +6504,78 @@ Instructions:
                 <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
               </div>
             ) : opportunities.map(opp => (
-              <div key={opp.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14 }}>
+              <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                   {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High" ? C.upSoft : "#2563EB20", color: opp.conviction === "High" ? C.up : "#2563EB" }}>{opp.conviction} Conviction</span>
-                  {opp.status && <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 20, background: C.surface, color: C.t3 }}>{opp.status}</span>}
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
                 </div>
-                {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, marginBottom: 10, lineHeight: 1.5 }}>{opp.catalyst}</div>}
-                {opp.thesis && (
-                  <div style={{ fontSize: 12, color: C.t3, marginBottom: 10, lineHeight: 1.6 }}>
-                    {oppExpandedThesis[opp.id] ? opp.thesis : opp.thesis.slice(0, 150)}
-                    {opp.thesis.length > 150 && (
-                      <span onClick={() => setOppExpandedThesis(p => ({ ...p, [opp.id]: !p[opp.id] }))} style={{ color: C.accent, fontWeight: 600, cursor: "pointer", marginLeft: 4 }}>
-                        {oppExpandedThesis[opp.id] ? " Show less" : "... Read more"}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {opp.tickers?.length > 0 && (
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                    {opp.tickers.map(t => (
-                      <span key={t} onClick={() => { setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 12, fontWeight: 700, padding: "4px 12px", borderRadius: 20, background: C.accentSoft, border: `1px solid ${C.borderHover}`, color: C.t1, cursor: "pointer" }}>{t}</span>
-                    ))}
-                  </div>
-                )}
-                {opp.risks?.length > 0 && (
-                  <div style={{ marginBottom: 8 }}>
-                    <div onClick={() => setOppExpandedRisks(p => ({ ...p, [opp.id]: !p[opp.id] }))} style={{ fontSize: 12, fontWeight: 700, color: C.t3, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" style={{ transform: oppExpandedRisks[opp.id] ? "rotate(90deg)" : "rotate(0deg)", transition: "0.15s" }}><polyline points="9 18 15 12 9 6" /></svg>
-                      Risks ({opp.risks.length})
-                    </div>
-                    {oppExpandedRisks[opp.id] && (
-                      <div style={{ paddingLeft: 16 }}>
-                        {opp.risks.map((r, i) => <div key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.6, marginBottom: 4 }}>{typeof r === "string" ? `• ${r}` : `• ${r.description || r.risk || JSON.stringify(r)}`}</div>)}
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 12, fontSize: 11, color: C.t4 }}>
-                  {opp.date_identified && <span>Identified: {opp.date_identified}</span>}
-                  {opp.timeframe && <span>Timeframe: {opp.timeframe}</span>}
+                {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                  {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                </div>
+                <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
+                  {opp.date_identified && <span>{opp.date_identified}</span>}
+                  {opp.timeframe && <span>{opp.timeframe}</span>}
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Opportunity detail overlay */}
+        {oppDetail && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+              <button onClick={() => setOppDetail(null)} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                Back
+              </button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.t3 }}>Research Report</span>
+              <div style={{ width: 50 }} />
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, lineHeight: 1.2, marginBottom: 12 }}>{oppDetail.title}</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                {oppDetail.pattern && <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{oppDetail.pattern}</span>}
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: oppDetail.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: oppDetail.conviction === "High Conviction" ? C.up : "#2563EB" }}>{oppDetail.conviction}</span>
+                {oppDetail.status && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.status}</span>}
+                {oppDetail.timeframe && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.timeframe}</span>}
+              </div>
+
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Catalyst</div>
+              <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.catalyst}</div>
+
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Investment Thesis</div>
+              <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.thesis}</div>
+
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.up}` }}>Ticker Analysis</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                {oppDetail.tickers?.map(t => (
+                  <div key={t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                      <span style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{t}</span>
+                      <button onClick={(e) => { e.stopPropagation(); setOppDetail(null); setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 8, background: C.accentSoft, border: `1px solid ${C.borderActive}`, color: C.t1, cursor: "pointer", fontFamily: "inherit" }}>View Screener Report</button>
+                    </div>
+                    {oppDetail.ticker_rationale?.[t] && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7 }}>{oppDetail.ticker_rationale[t]}</div>}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.dn}` }}>Key Risks</div>
+              <ol style={{ margin: "8px 0 16px", paddingLeft: 28 }}>
+                {oppDetail.risks?.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.description || r.risk || JSON.stringify(r)}</li>)}
+              </ol>
+
+              {oppDetail.sources?.length > 0 && (<>
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #B8860B` }}>Sources</div>
+                <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
+                  {oppDetail.sources.map((s, i) => <li key={i} style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginBottom: 8 }}>{typeof s === "string" ? s : s.title || s.source || JSON.stringify(s)}</li>)}
+                </ol>
+              </>)}
+
+              <div style={{ textAlign: "center", fontSize: 10, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 40, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</div>
+            </div>
           </div>
         )}
 
