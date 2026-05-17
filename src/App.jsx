@@ -920,6 +920,8 @@ Instructions:
   const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
   const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem("iown_layout") || "classic");
   const [terminalActiveSym, setTerminalActiveSym] = useState("__portfolio__");
+  const [tChartHover, setTChartHover] = useState(null);
+  const [tChartRange, setTChartRange] = useState("YTD");
   const [terminalSleeve, setTerminalSleeve] = useState("dividend");
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
@@ -2774,6 +2776,10 @@ Instructions:
             return (<>
               <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
                 <button onClick={() => setTerminalActiveSym("__portfolio__")} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 4, border: `1px solid ${isPortfolio ? C.accentGlow : C.border}`, background: isPortfolio ? C.accentSoft : "transparent", color: isPortfolio ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>Dividend Portfolio</button>
+                {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "ALL"].map(r => (
+                  <button key={r} onClick={() => setTChartRange(r)} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
+                ))}
+                {isPortfolio && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
                 {isPortfolio && ["SPY", "DVY", "DIA"].map(bm => (
                   <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, border: `1px solid ${tBmToggles[bm] ? ({"SPY":"#6B8DE3","DVY":"#FF9800","DIA":"#C76BDB"})[bm] + "66" : C.border}`, background: tBmToggles[bm] ? ({"SPY":"#6B8DE320","DVY":"#FF980020","DIA":"#C76BDB20"})[bm] : "transparent", color: tBmToggles[bm] ? ({"SPY":"#6B8DE3","DVY":"#FF9800","DIA":"#C76BDB"})[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>
                 ))}
@@ -2784,78 +2790,102 @@ Instructions:
                 </>}
               </div>
               {isPortfolio && portfolio.length > 1 ? (() => {
-                const W = 900, H = 400, PAD = { top: 20, right: 60, bottom: 30, left: 10 };
-                const yearStart = `${new Date().getFullYear() - 1}-12-31`;
-                const startPt = [...portfolio].reverse().find(p => p.date <= yearStart);
-                const filtered = startPt ? portfolio.filter(p => p.date >= startPt.date) : portfolio;
+                const PAD = { top: 40, right: 60, bottom: 40, left: 10 };
+                const now = new Date();
+                let filtered;
+                if (tChartRange === "1D") {
+                  filtered = portfolio.slice(-2);
+                } else if (tChartRange === "QTD") {
+                  const qm = Math.floor(now.getMonth() / 3) * 3;
+                  const qStart = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
+                  const qtdStart = [...portfolio].reverse().find(p => p.date < qStart);
+                  filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio;
+                } else if (tChartRange === "YTD") {
+                  const yearEnd = `${now.getFullYear() - 1}-12-31`;
+                  const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
+                  filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio;
+                } else if (tChartRange === "ALL") {
+                  filtered = portfolio;
+                } else {
+                  const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[tChartRange] || 365;
+                  const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+                  filtered = portfolio.filter(p => p.date >= cutoff);
+                }
                 if (filtered.length < 2) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.t4 }}>Loading portfolio data...</div>;
                 const baseVal = filtered[0].value;
-                // Build OHLC candles from daily portfolio values
                 const candles = [];
                 for (let i = 1; i < filtered.length; i++) {
-                  const open = ((filtered[i - 1].value / baseVal) - 1) * 100;
-                  const close = ((filtered[i].value / baseVal) - 1) * 100;
-                  const body = Math.abs(close - open);
-                  const wick = body * 0.3 + 0.05;
-                  candles.push({ date: filtered[i].date, o: open, c: close, h: Math.max(open, close) + wick, l: Math.min(open, close) - wick });
+                  const o = ((filtered[i - 1].value / baseVal) - 1) * 100;
+                  const c = ((filtered[i].value / baseVal) - 1) * 100;
+                  const body = Math.abs(c - o); const wick = body * 0.3 + 0.05;
+                  candles.push({ date: filtered[i].date, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick, rawVal: filtered[i].value });
                 }
                 const allVals = candles.flatMap(c => [c.h, c.l]);
-                // Benchmark lines
-                const bmLines = {};
-                const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
+                const bmLines = {}; const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
                 Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                   if (!tBmToggles[sym]) return;
                   const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
                   if (!prices.length) return;
-                  let bp = null;
-                  for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
+                  let bp = null; for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
                   if (!bp) bp = prices[prices.length - 1][1];
-                  const bCandles = [];
-                  let pi = 0, prevVal = 0;
+                  const bc = []; let pi = 0, pv = 0;
                   for (let i = 1; i < filtered.length; i++) {
                     while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
-                    const close = ((prices[pi][1] / bp) - 1) * 100;
-                    const open = prevVal;
-                    const body = Math.abs(close - open);
-                    const wick = body * 0.25 + 0.03;
-                    bCandles.push({ o: open, c: close, h: Math.max(open, close) + wick, l: Math.min(open, close) - wick });
-                    prevVal = close;
+                    const cl = ((prices[pi][1] / bp) - 1) * 100; const bd = Math.abs(cl - pv); const wk = bd * 0.25 + 0.03;
+                    bc.push({ o: pv, c: cl, h: Math.max(pv, cl) + wk, l: Math.min(pv, cl) - wk }); pv = cl;
                   }
-                  const liveQ = bmQuotes[sym];
-                  if (liveQ?.p && bCandles.length) { const lv = ((liveQ.p / bp) - 1) * 100; const last = bCandles[bCandles.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
-                  bmLines[sym] = bCandles;
-                  allVals.push(...bCandles.flatMap(c => [c.h, c.l]));
+                  const lq = bmQuotes[sym];
+                  if (lq?.p && bc.length) { const lv = ((lq.p / bp) - 1) * 100; const last = bc[bc.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
+                  bmLines[sym] = bc; allVals.push(...bc.flatMap(c => [c.h, c.l]));
                 });
-                const minV = Math.min(...allVals), maxV = Math.max(...allVals);
-                const range = maxV - minV || 1;
-                const cW = Math.max(2, Math.min(8, (W - PAD.left - PAD.right) / candles.length * 0.7));
-                const gap = (W - PAD.left - PAD.right) / candles.length;
-                const x = i => PAD.left + gap * (i + 0.5);
-                const y = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
+                const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
+                const candleW = 6; const gap = candleW + 2;
+                const chartW = Math.max(900, candles.length * gap + PAD.left + PAD.right);
+                const H = 400;
+                const xPos = i => PAD.left + gap * (i + 0.5);
+                const yPos = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
                 const lastVal = candles[candles.length - 1]?.c || 0;
+                const hc = tChartHover != null && tChartHover >= 0 && tChartHover < candles.length ? candles[tChartHover] : null;
+                // Date labels: show first of each quarter
+                const dateLabels = []; let lastQ = "";
+                candles.forEach((c, i) => { const q = c.date.slice(0, 7); if (q !== lastQ && (c.date.endsWith("-01") || i % Math.max(1, Math.floor(candles.length / 20)) === 0)) { dateLabels.push(i); lastQ = q; } });
+                if (!dateLabels.length) candles.forEach((c, i) => { if (i % Math.max(1, Math.floor(candles.length / 15)) === 0) dateLabels.push(i); });
                 return (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 10 }}>
-                    <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
-                      <rect x={0} y={0} width={W} height={H} fill={C.bg} />
-                      {[...Array(5)].map((_, i) => { const v = minV + (range * i / 4); const yp = y(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={W - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
-                      <line x1={PAD.left} y1={y(0)} x2={W - PAD.right} y2={y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
-                      {/* Benchmark candles (narrower, behind portfolio) */}
-                      {Object.entries(bmLines).map(([sym, bCandles]) => { const color = bmColors[sym]; const bCW = Math.max(1, cW * 0.5); return bCandles.map((c, i) => { const bull = c.c >= c.o; return (
-                        <g key={`${sym}-${i}`} opacity={0.55}>
-                          <line x1={x(i)} y1={y(c.h)} x2={x(i)} y2={y(c.l)} stroke={color} strokeWidth={0.5} />
-                          <rect x={x(i) - bCW / 2 + (sym === "SPY" ? -cW * 0.4 : sym === "DIA" ? cW * 0.4 : 0)} y={y(Math.max(c.o, c.c))} width={bCW} height={Math.max(0.5, y(Math.min(c.o, c.c)) - y(Math.max(c.o, c.c)))} fill={bull ? color : "transparent"} stroke={color} strokeWidth={0.5} />
-                        </g>
-                      ); }); })}
-                      {/* Portfolio candles (on top) */}
-                      {candles.map((c, i) => { const bullish = c.c >= c.o; const color = bullish ? C.up : C.dn; return (
-                        <g key={i}>
-                          <line x1={x(i)} y1={y(c.h)} x2={x(i)} y2={y(c.l)} stroke={color} strokeWidth={1} />
-                          <rect x={x(i) - cW / 2} y={y(Math.max(c.o, c.c))} width={cW} height={Math.max(1, y(Math.min(c.o, c.c)) - y(Math.max(c.o, c.c)))} fill={bullish ? color : color} stroke={color} strokeWidth={0.5} rx={0.5} />
-                        </g>
-                      ); })}
-                      <text x={PAD.left + 4} y={PAD.top + 14} fill={C.t1} fontSize={14} fontWeight={800} fontFamily="monospace">DIVIDEND YTD {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</text>
-                      {Object.entries(bmLines).map(([sym, bCandles], i) => { const lv = bCandles[bCandles.length - 1]?.c; return <text key={sym} x={PAD.left + 4} y={PAD.top + 30 + i * 14} fill={bmColors[sym]} fontSize={11} fontFamily="monospace">{sym} {lv >= 0 ? "+" : ""}{lv?.toFixed(2)}%</text>; })}
-                    </svg>
+                  <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                    {/* OHLC tooltip */}
+                    <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
+                      <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>DIVIDEND {tChartRange} {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</span>
+                      {Object.entries(bmLines).map(([sym, bc]) => <span key={sym} style={{ color: bmColors[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
+                    </div>
+                    {hc && (
+                      <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "monospace", color: C.t2, display: "flex", gap: 10 }}>
+                        <span style={{ color: C.t1, fontWeight: 700 }}>{hc.date}</span>
+                        <span>O: {hc.o >= 0 ? "+" : ""}{hc.o.toFixed(2)}%</span>
+                        <span>H: {hc.h >= 0 ? "+" : ""}{hc.h.toFixed(2)}%</span>
+                        <span>L: {hc.l >= 0 ? "+" : ""}{hc.l.toFixed(2)}%</span>
+                        <span style={{ color: hc.c >= hc.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc.c >= 0 ? "+" : ""}{hc.c.toFixed(2)}%</span>
+                        <span style={{ color: C.t4 }}>${hc.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      </div>
+                    )}
+                    <div style={{ width: "100%", height: "100%", overflowX: "auto", overflowY: "hidden" }}>
+                      <svg width={chartW} height={H} viewBox={`0 0 ${chartW} ${H}`} onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const mx = e.clientX - rect.left + e.currentTarget.parentElement.scrollLeft; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                        <rect x={0} y={0} width={chartW} height={H} fill={C.bg} />
+                        {[...Array(7)].map((_, i) => { const v = minV + (range * i / 6); const yp = yPos(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
+                        <line x1={PAD.left} y1={yPos(0)} x2={chartW - PAD.right} y2={yPos(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
+                        {/* Date labels */}
+                        {dateLabels.map(i => <text key={i} x={xPos(i)} y={H - 8} fill={C.t4} fontSize={8} fontFamily="monospace" textAnchor="middle">{candles[i].date.slice(0, 7)}</text>)}
+                        {/* Benchmark candles */}
+                        {Object.entries(bmLines).map(([sym, bc]) => { const col = bmColors[sym]; const bW = Math.max(1, candleW * 0.45); const off = sym === "SPY" ? -candleW * 0.5 : sym === "DIA" ? candleW * 0.5 : 0; return bc.map((c, i) => (
+                          <g key={`${sym}-${i}`} opacity={0.5}><line x1={xPos(i) + off} y1={yPos(c.h)} x2={xPos(i) + off} y2={yPos(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xPos(i) - bW / 2 + off} y={yPos(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
+                        )); })}
+                        {/* Portfolio candles */}
+                        {candles.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
+                          <g key={i}><line x1={xPos(i)} y1={yPos(c.h)} x2={xPos(i)} y2={yPos(c.l)} stroke={col} strokeWidth={1} /><rect x={xPos(i) - candleW / 2} y={yPos(Math.max(c.o, c.c))} width={candleW} height={Math.max(1, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
+                        ); })}
+                        {/* Hover crosshair */}
+                        {tChartHover != null && tChartHover >= 0 && tChartHover < candles.length && <line x1={xPos(tChartHover)} y1={PAD.top} x2={xPos(tChartHover)} y2={H - PAD.bottom} stroke={C.t3} strokeWidth={0.5} strokeDasharray="3,3" />}
+                      </svg>
+                    </div>
                   </div>
                 );
               })() : <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />}
