@@ -2790,46 +2790,61 @@ Instructions:
                 const filtered = startPt ? portfolio.filter(p => p.date >= startPt.date) : portfolio;
                 if (filtered.length < 2) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.t4 }}>Loading portfolio data...</div>;
                 const baseVal = filtered[0].value;
-                const pts = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100 }));
-                const allVals = [...pts.map(p => p.val)];
+                // Build OHLC candles from daily portfolio values
+                const candles = [];
+                for (let i = 1; i < filtered.length; i++) {
+                  const open = ((filtered[i - 1].value / baseVal) - 1) * 100;
+                  const close = ((filtered[i].value / baseVal) - 1) * 100;
+                  const body = Math.abs(close - open);
+                  const wick = body * 0.3 + 0.05;
+                  candles.push({ date: filtered[i].date, o: open, c: close, h: Math.max(open, close) + wick, l: Math.min(open, close) - wick });
+                }
+                const allVals = candles.flatMap(c => [c.h, c.l]);
+                // Benchmark lines
                 const bmLines = {};
+                const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
                 Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                   if (!tBmToggles[sym]) return;
                   const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
                   if (!prices.length) return;
-                  const startDate = filtered[0].date;
                   let bp = null;
-                  for (const [d, p] of prices) { if (d >= startDate) { bp = p; break; } }
+                  for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
                   if (!bp) bp = prices[prices.length - 1][1];
                   const bPts = [];
                   let pi = 0;
-                  for (const fp of filtered) {
-                    while (pi < prices.length - 1 && prices[pi + 1][0] <= fp.date) pi++;
-                    bPts.push({ date: fp.date, val: ((prices[pi][1] / bp) - 1) * 100 });
+                  for (let i = 1; i < filtered.length; i++) {
+                    while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
+                    bPts.push(((prices[pi][1] / bp) - 1) * 100);
                   }
                   const liveQ = bmQuotes[sym];
-                  if (liveQ?.p) bPts.push({ date: filtered[filtered.length - 1].date, val: ((liveQ.p / bp) - 1) * 100 });
+                  if (liveQ?.p && bPts.length) bPts[bPts.length - 1] = ((liveQ.p / bp) - 1) * 100;
                   bmLines[sym] = bPts;
-                  allVals.push(...bPts.map(p => p.val));
+                  allVals.push(...bPts);
                 });
                 const minV = Math.min(...allVals), maxV = Math.max(...allVals);
                 const range = maxV - minV || 1;
-                const x = (i, len) => PAD.left + (i / (len - 1)) * (W - PAD.left - PAD.right);
+                const cW = Math.max(2, Math.min(8, (W - PAD.left - PAD.right) / candles.length * 0.7));
+                const gap = (W - PAD.left - PAD.right) / candles.length;
+                const x = i => PAD.left + gap * (i + 0.5);
                 const y = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
-                const line = (data) => data.map((p, i) => `${i === 0 ? "M" : "L"}${x(i, data.length).toFixed(1)},${y(p.val).toFixed(1)}`).join(" ");
-                const lastVal = pts[pts.length - 1].val;
-                const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
+                const lastVal = candles[candles.length - 1]?.c || 0;
                 return (
                   <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 10 }}>
                     <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
                       <rect x={0} y={0} width={W} height={H} fill={C.bg} />
                       {[...Array(5)].map((_, i) => { const v = minV + (range * i / 4); const yp = y(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={W - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
                       <line x1={PAD.left} y1={y(0)} x2={W - PAD.right} y2={y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
-                      {Object.entries(bmLines).map(([sym, data]) => <path key={sym} d={line(data)} fill="none" stroke={bmColors[sym] || C.t4} strokeWidth={1.5} opacity={0.7} />)}
-                      <path d={line(pts)} fill="none" stroke={lastVal >= 0 ? C.up : C.dn} strokeWidth={2.5} />
-                      <path d={line(pts) + ` L${x(pts.length - 1, pts.length)},${y(0)} L${x(0, pts.length)},${y(0)} Z`} fill={lastVal >= 0 ? C.up : C.dn} opacity={0.08} />
+                      {/* Benchmark lines */}
+                      {Object.entries(bmLines).map(([sym, data]) => <path key={sym} d={data.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")} fill="none" stroke={bmColors[sym]} strokeWidth={1.5} opacity={0.6} />)}
+                      {/* Candlesticks */}
+                      {candles.map((c, i) => { const bullish = c.c >= c.o; const color = bullish ? C.up : C.dn; return (
+                        <g key={i}>
+                          <line x1={x(i)} y1={y(c.h)} x2={x(i)} y2={y(c.l)} stroke={color} strokeWidth={1} />
+                          <rect x={x(i) - cW / 2} y={y(Math.max(c.o, c.c))} width={cW} height={Math.max(1, y(Math.min(c.o, c.c)) - y(Math.max(c.o, c.c)))} fill={bullish ? color : color} stroke={color} strokeWidth={0.5} rx={0.5} />
+                        </g>
+                      ); })}
                       <text x={PAD.left + 4} y={PAD.top + 14} fill={C.t1} fontSize={14} fontWeight={800} fontFamily="monospace">DIVIDEND YTD {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</text>
-                      {Object.entries(bmLines).map(([sym, data], i) => { const lv = data[data.length - 1]?.val; return <text key={sym} x={PAD.left + 4} y={PAD.top + 30 + i * 14} fill={bmColors[sym]} fontSize={11} fontFamily="monospace">{sym} {lv >= 0 ? "+" : ""}{lv?.toFixed(2)}%</text>; })}
+                      {Object.entries(bmLines).map(([sym, data], i) => { const lv = data[data.length - 1]; return <text key={sym} x={PAD.left + 4} y={PAD.top + 30 + i * 14} fill={bmColors[sym]} fontSize={11} fontFamily="monospace">{sym} {lv >= 0 ? "+" : ""}{lv?.toFixed(2)}%</text>; })}
                     </svg>
                   </div>
                 );
