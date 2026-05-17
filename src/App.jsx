@@ -2913,15 +2913,31 @@ Instructions:
                   if (!prices.length) return;
                   let bp = null; for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
                   if (!bp) bp = prices[prices.length - 1][1];
-                  const bc = []; let pi = 0, pv = 0;
+                  // Build daily benchmark candles aligned to candle dates
+                  const dailyBm = []; let pi = 0;
                   for (let i = 1; i < filtered.length; i++) {
                     while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
-                    const cl = ((prices[pi][1] / bp) - 1) * 100; const bd = Math.abs(cl - pv); const wk = bd * 0.25 + 0.03;
-                    bc.push({ o: pv, c: cl, h: Math.max(pv, cl) + wk, l: Math.min(pv, cl) - wk }); pv = cl;
+                    const cl = ((prices[pi][1] / bp) - 1) * 100;
+                    const prevPi = i > 1 ? (() => { let pp = 0; for (let j = 0; j < prices.length && prices[j][0] <= filtered[i - 1].date; j++) pp = j; return pp; })() : 0;
+                    const op = i === 1 ? 0 : ((prices[prevPi][1] / bp) - 1) * 100;
+                    const bd = Math.abs(cl - op); const wk = bd * 0.25 + 0.03;
+                    dailyBm.push({ o: op, c: cl, h: Math.max(op, cl) + wk, l: Math.min(op, cl) - wk });
                   }
                   const lq = bmQuotes[sym];
-                  if (lq?.p && bc.length) { const lv = ((lq.p / bp) - 1) * 100; const last = bc[bc.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
-                  bmLines[sym] = bc; allVals.push(...bc.flatMap(c => [c.h, c.l]));
+                  if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
+                  // Aggregate to weekly if portfolio uses weekly
+                  if (useWeekly) {
+                    const wkBm = []; let wIdx = 0;
+                    for (const pc of candles) {
+                      let wO = null, wC = null, wH = -Infinity, wL = Infinity;
+                      while (wIdx < dailyBm.length && wIdx < dailyCandles.length && dailyCandles[wIdx].date <= pc.date) {
+                        const b = dailyBm[wIdx]; if (wO === null) wO = b.o; wC = b.c; wH = Math.max(wH, b.h); wL = Math.min(wL, b.l); wIdx++;
+                      }
+                      wkBm.push(wO !== null ? { o: wO, c: wC, h: wH, l: wL } : wkBm.length ? { ...wkBm[wkBm.length - 1] } : { o: 0, c: 0, h: 0, l: 0 });
+                    }
+                    bmLines[sym] = wkBm;
+                  } else { bmLines[sym] = dailyBm; }
+                  allVals.push(...(bmLines[sym]).flatMap(c => [c.h, c.l]));
                 });
                 const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
                 const chartW = 900; const H = 400;
@@ -2932,10 +2948,13 @@ Instructions:
                 const yPos = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
                 const lastVal = candles[candles.length - 1]?.c || 0;
                 const hc = tChartHover != null && tChartHover >= 0 && tChartHover < candles.length ? candles[tChartHover] : null;
-                // Date labels: show first of each quarter
-                const dateLabels = []; let lastQ = "";
-                candles.forEach((c, i) => { const q = c.date.slice(0, 7); if (q !== lastQ && (c.date.endsWith("-01") || i % Math.max(1, Math.floor(candles.length / 20)) === 0)) { dateLabels.push(i); lastQ = q; } });
-                if (!dateLabels.length) candles.forEach((c, i) => { if (i % Math.max(1, Math.floor(candles.length / 15)) === 0) dateLabels.push(i); });
+                // Date labels: enforce minimum 70px spacing
+                const dateLabels = []; const minLabelGap = 70;
+                let lastLabelX = -minLabelGap;
+                candles.forEach((c, i) => {
+                  const px = xPos(i);
+                  if (px - lastLabelX >= minLabelGap) { dateLabels.push(i); lastLabelX = px; }
+                });
                 return (
                   <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                     {/* OHLC tooltip */}
