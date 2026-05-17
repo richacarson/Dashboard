@@ -919,7 +919,7 @@ Instructions:
   const [chartsActiveSym, setChartsActiveSym] = useState(null); // for Charts tab
   const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
   const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem("iown_layout") || "classic");
-  const [terminalActiveSym, setTerminalActiveSym] = useState("SPY");
+  const [terminalActiveSym, setTerminalActiveSym] = useState("__portfolio__");
   const [terminalSleeve, setTerminalSleeve] = useState("dividend");
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
@@ -2765,12 +2765,77 @@ Instructions:
 
         {/* ── CENTER: CHART ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
-          <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>{terminalActiveSym}</span>
-            <span style={{ fontSize: 11, color: C.t3 }}>{names[terminalActiveSym] || ""}</span>
-            {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
-          </div>
-          <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+          {(() => {
+            const [tChartMode, setTChartMode] = [terminalActiveSym === "__portfolio__" ? "portfolio" : "stock", (m) => setTerminalActiveSym(m === "portfolio" ? "__portfolio__" : terminalActiveSym === "__portfolio__" ? "SPY" : terminalActiveSym)];
+            const isPortfolio = terminalActiveSym === "__portfolio__";
+            const tBmToggles = perfBmToggles;
+            const portfolio = perfData?.portfolio || [];
+            const benchmarks = perfData?.benchmarks || {};
+            return (<>
+              <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
+                <button onClick={() => setTerminalActiveSym("__portfolio__")} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 4, border: `1px solid ${isPortfolio ? C.accentGlow : C.border}`, background: isPortfolio ? C.accentSoft : "transparent", color: isPortfolio ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>Dividend Portfolio</button>
+                {isPortfolio && ["SPY", "DVY", "DIA"].map(bm => (
+                  <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, border: `1px solid ${tBmToggles[bm] ? ({"SPY":"#6B8DE3","DVY":"#FF9800","DIA":"#C76BDB"})[bm] + "66" : C.border}`, background: tBmToggles[bm] ? ({"SPY":"#6B8DE320","DVY":"#FF980020","DIA":"#C76BDB20"})[bm] : "transparent", color: tBmToggles[bm] ? ({"SPY":"#6B8DE3","DVY":"#FF9800","DIA":"#C76BDB"})[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>
+                ))}
+                {!isPortfolio && <>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>{terminalActiveSym}</span>
+                  <span style={{ fontSize: 11, color: C.t3 }}>{names[terminalActiveSym] || ""}</span>
+                  {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
+                </>}
+              </div>
+              {isPortfolio && portfolio.length > 1 ? (() => {
+                const W = 900, H = 400, PAD = { top: 20, right: 60, bottom: 30, left: 10 };
+                const yearStart = `${new Date().getFullYear() - 1}-12-31`;
+                const startPt = [...portfolio].reverse().find(p => p.date <= yearStart);
+                const filtered = startPt ? portfolio.filter(p => p.date >= startPt.date) : portfolio;
+                if (filtered.length < 2) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.t4 }}>Loading portfolio data...</div>;
+                const baseVal = filtered[0].value;
+                const pts = filtered.map(p => ({ date: p.date, val: ((p.value / baseVal) - 1) * 100 }));
+                const allVals = [...pts.map(p => p.val)];
+                const bmLines = {};
+                Object.entries(benchmarks).forEach(([sym, priceMap]) => {
+                  if (!tBmToggles[sym]) return;
+                  const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
+                  if (!prices.length) return;
+                  const startDate = filtered[0].date;
+                  let bp = null;
+                  for (const [d, p] of prices) { if (d >= startDate) { bp = p; break; } }
+                  if (!bp) bp = prices[prices.length - 1][1];
+                  const bPts = [];
+                  let pi = 0;
+                  for (const fp of filtered) {
+                    while (pi < prices.length - 1 && prices[pi + 1][0] <= fp.date) pi++;
+                    bPts.push({ date: fp.date, val: ((prices[pi][1] / bp) - 1) * 100 });
+                  }
+                  const liveQ = bmQuotes[sym];
+                  if (liveQ?.p) bPts.push({ date: filtered[filtered.length - 1].date, val: ((liveQ.p / bp) - 1) * 100 });
+                  bmLines[sym] = bPts;
+                  allVals.push(...bPts.map(p => p.val));
+                });
+                const minV = Math.min(...allVals), maxV = Math.max(...allVals);
+                const range = maxV - minV || 1;
+                const x = (i, len) => PAD.left + (i / (len - 1)) * (W - PAD.left - PAD.right);
+                const y = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
+                const line = (data) => data.map((p, i) => `${i === 0 ? "M" : "L"}${x(i, data.length).toFixed(1)},${y(p.val).toFixed(1)}`).join(" ");
+                const lastVal = pts[pts.length - 1].val;
+                const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
+                return (
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 10 }}>
+                    <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
+                      <rect x={0} y={0} width={W} height={H} fill={C.bg} />
+                      {[...Array(5)].map((_, i) => { const v = minV + (range * i / 4); const yp = y(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={W - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
+                      <line x1={PAD.left} y1={y(0)} x2={W - PAD.right} y2={y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
+                      {Object.entries(bmLines).map(([sym, data]) => <path key={sym} d={line(data)} fill="none" stroke={bmColors[sym] || C.t4} strokeWidth={1.5} opacity={0.7} />)}
+                      <path d={line(pts)} fill="none" stroke={lastVal >= 0 ? C.up : C.dn} strokeWidth={2.5} />
+                      <path d={line(pts) + ` L${x(pts.length - 1, pts.length)},${y(0)} L${x(0, pts.length)},${y(0)} Z`} fill={lastVal >= 0 ? C.up : C.dn} opacity={0.08} />
+                      <text x={PAD.left + 4} y={PAD.top + 14} fill={C.t1} fontSize={14} fontWeight={800} fontFamily="monospace">DIVIDEND YTD {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</text>
+                      {Object.entries(bmLines).map(([sym, data], i) => { const lv = data[data.length - 1]?.val; return <text key={sym} x={PAD.left + 4} y={PAD.top + 30 + i * 14} fill={bmColors[sym]} fontSize={11} fontFamily="monospace">{sym} {lv >= 0 ? "+" : ""}{lv?.toFixed(2)}%</text>; })}
+                    </svg>
+                  </div>
+                );
+              })() : <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />}
+            </>);
+          })()}
         </div>
 
         {/* ── RIGHT PANEL ── */}
