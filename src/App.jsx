@@ -1012,6 +1012,7 @@ Instructions:
   const [pbView, setPbView] = useState("regime");
   const [pbSimDrop, setPbSimDrop] = useState(30);
   const [pbSimValue, setPbSimValue] = useState(1000000);
+  const [pbSimHistBear, setPbSimHistBear] = useState("");
   const [macroData, setMacroData] = useState({ yieldSpread: null, vix: null, hySpread: null, spy200: null, cape: null, loaded: false });
   const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
@@ -5531,7 +5532,7 @@ Instructions:
                   <div style={{ ...cardStyle, textAlign: "center", paddingTop: 28, paddingBottom: 20 }}>
                     {(() => {
                       const W = isDesktop ? 420 : Math.min(window.innerWidth - 72, 360);
-                      const H = W * 0.58;
+                      const H = W * 0.66;
                       const cx = W / 2, cy = H * 0.82;
                       const R = W * 0.4;
                       const startAngle = Math.PI * 1.15;
@@ -5777,9 +5778,17 @@ Instructions:
 
               {/* ── SCENARIO SIMULATOR ── */}
               {pbView === "simulator" && (() => {
+                const historicalBears = BEAR_MARKETS.filter(b => !b.nearBear && Math.abs(b.drawdown) >= 20);
+                const bullBeforeBear = { "1929 Crash": 300, "Great Depression": 46.8, "1932-33 Decline": 111.6, "1933 Decline": 120.6, "1934-35 Decline": 37.9, "1937-38 Recession": 131.8, "1938-39 War Fears": 62.2, "1939-40 Fall of France": 29.8, "WWII / Pearl Harbor": 26.8, "Post-WWII Crash": 157.7, "1948-49 Recession": 20.8, "Eisenhower Recession": 267, "Kennedy Slide": 86.3, "Credit Crunch": 79.8, "Vietnam / Recession": 48, "OPEC Oil Embargo": 73.5, "Volcker Tightening": 125.6, "Black Monday": 228.8, "Dot-Com Bust": 582, "Global Financial Crisis": 101.5, "COVID-19 Crash": 400.5, "Inflation / Rate Hikes": 114.4 };
+                const selectedBear = historicalBears.find(b => b.name === pbSimHistBear);
                 const portfolioVal = pbSimValue;
-                const dropPct = pbSimDrop;
+                const dropPct = selectedBear ? Math.abs(selectedBear.drawdown) : pbSimDrop;
                 const currentCashPct = (() => {
+                  if (selectedBear) {
+                    const bullGain = bullBeforeBear[selectedBear.name] || 100;
+                    const tier = TRIM_TIERS.filter(t => bullGain >= t.pctAboveTrough).pop();
+                    return tier ? tier.trimPct : 0;
+                  }
                   const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
                   if (bullAgeMo < 21) return 0;
                   const tier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
@@ -5821,7 +5830,17 @@ Instructions:
                 return (
                   <div>
                     <div style={cardStyle}>
-                      {sectionTitle("What If The Market Drops...")}
+                      {sectionTitle("Scenario Simulator")}
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Simulate a Historical Bear Market</div>
+                      <select value={pbSimHistBear} onChange={e => { setPbSimHistBear(e.target.value); if (e.target.value) { const b = historicalBears.find(x => x.name === e.target.value); if (b) setPbSimDrop(Math.abs(b.drawdown)); } }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 14, fontWeight: 600, fontFamily: "inherit", marginBottom: 12, appearance: "auto" }}>
+                        <option value="">Custom scenario (use slider)</option>
+                        {historicalBears.map(b => <option key={b.name} value={b.name}>{b.name} ({b.peakDate}) — {b.drawdown}% in {b.durationMo}mo</option>)}
+                      </select>
+                      {selectedBear && (
+                        <div style={{ background: C.accent + "10", border: `1px solid ${C.accent}20`, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.t2, lineHeight: 1.6 }}>
+                          <strong style={{ color: C.t1 }}>{selectedBear.name}</strong> ({selectedBear.peakDate} → {selectedBear.troughDate}) — S&P fell <strong style={{ color: C.dn }}>{selectedBear.drawdown}%</strong> over {selectedBear.durationMo} months. Recovery took {selectedBear.recoveryMo} months. Preceding bull gained +{bullBeforeBear[selectedBear.name] || "?"}%, so the playbook would have trimmed <strong style={{ color: C.accent }}>{currentCashPct}%</strong> to cash before the crash.
+                        </div>
+                      )}
                       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
                         <div style={{ flex: 1, minWidth: 200 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Portfolio Value</div>
@@ -5829,7 +5848,7 @@ Instructions:
                         </div>
                         <div style={{ flex: 1, minWidth: 200 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Market Drop: -{dropPct}%</div>
-                          <input type="range" min={10} max={60} value={dropPct} onChange={e => setPbSimDrop(Number(e.target.value))} style={{ width: "100%", accentColor: C.dn }} />
+                          <input type="range" min={10} max={60} value={dropPct} onChange={e => { setPbSimDrop(Number(e.target.value)); setPbSimHistBear(""); }} style={{ width: "100%", accentColor: C.dn }} />
                           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}><span>-10%</span><span>-20%</span><span>-30%</span><span>-40%</span><span>-50%</span><span>-60%</span></div>
                         </div>
                       </div>
