@@ -3072,11 +3072,11 @@ Instructions:
             { id: "briefs", label: "Briefs" },
             { id: "settings", label: "Settings" },
           ].map(t => (
-            <button key={t.id} onClick={() => setTDrawer(tDrawer === t.id ? null : t.id)} style={{
+            <button key={t.id} onClick={() => { setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab(t.id); }} style={{
               flex: 1, padding: "6px 0", fontSize: 10, fontWeight: 700, fontFamily: "inherit",
-              background: tDrawer === t.id ? C.accentSoft : "transparent",
+              background: "transparent",
               border: "none", borderRight: `1px solid ${C.border}`,
-              color: tDrawer === t.id ? C.accent : C.t4, cursor: "pointer",
+              color: C.t4, cursor: "pointer",
               textTransform: "uppercase", letterSpacing: 0.5,
             }}>{t.label}</button>
           ))}
@@ -3107,66 +3107,6 @@ Instructions:
           </div>
         ); })()}
 
-        {tDrawer && (
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "60vh", background: C.bg, borderTop: `2px solid ${C.accent}`, zIndex: 100, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: 1 }}>{tDrawer}</span>
-              <button onClick={() => setTDrawer(null)} style={{ background: "none", border: "none", color: C.t3, fontSize: 18, cursor: "pointer", fontFamily: "inherit", padding: "2px 8px" }}>✕</button>
-            </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
-              {tDrawer === "playbook" && <div style={{ fontSize: 12, color: C.t2 }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Bear Probability: {(() => { const md = macroData; const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)); return md.loaded ? "See Playbook tab" : "Loading..."; })()}</div>
-                <div style={{ color: C.t3 }}>Switch to Classic layout to access the full Playbook with probability model, simulator, scripts, and bond ladder.</div>
-                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("playbook"); }} style={{ marginTop: 12, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Playbook</button>
-              </div>}
-              {tDrawer === "screener" && <div>
-                <div style={{ color: C.t3, marginBottom: 12 }}>Switch to Classic layout to access the full Screener with 2,251 stock reports.</div>
-                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("screener"); }} style={{ marginTop: 4, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Screener</button>
-              </div>}
-              {tDrawer === "opportunities" && <div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Opportunities ({opportunities.length})</div>
-                {opportunities.map(opp => (
-                  <div key={opp.id} onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("opportunities"); setOppDetail(opp); }} style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{opp.title}</div>
-                    <div style={{ fontSize: 10, color: C.t4, display: "flex", gap: 8 }}>
-                      <span>{opp.pattern}</span>
-                      <span style={{ color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
-                      <span>{opp.tickers?.join(", ")}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>}
-              {tDrawer === "performance" && <div>
-                <div style={{ color: C.t3, marginBottom: 12 }}>Switch to Classic layout to access the full Performance tab with charts and attribution.</div>
-                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("performance"); }} style={{ marginTop: 4, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Performance</button>
-              </div>}
-              {tDrawer === "metrics" && <div>
-                <div style={{ color: C.t3, marginBottom: 12 }}>Switch to Classic layout to access the full Metrics tab with fundamentals, peers, and scatter plots.</div>
-                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("metrics"); }} style={{ marginTop: 4, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Metrics</button>
-              </div>}
-              {tDrawer === "briefs" && <div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Quick Links</div>
-                {[
-                  { label: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html" },
-                  { label: "Market Commentary", url: "https://richacarson.github.io/iown-data" },
-                  { label: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html" },
-                ].map(l => <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "8px 10px", borderBottom: `1px solid ${C.border}`, color: C.accent, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>{l.label} ↗</a>)}
-              </div>}
-              {tDrawer === "settings" && <div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Quick Settings</div>
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Theme</div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {[{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
-                      <button key={v} onClick={() => toggleTheme(v)} style={{ flex: 1, padding: "8px 0", borderRadius: 6, border: `1px solid ${theme === v ? C.borderActive : C.border}`, background: theme === v ? C.accentSoft : "transparent", color: theme === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
-                    ))}
-                  </div>
-                </div>
-                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("settings"); }} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Settings</button>
-              </div>}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
