@@ -2794,6 +2794,70 @@ Instructions:
                 const now = new Date();
                 let filtered;
                 if (tChartRange === "1D") {
+                  // Use intraday data if available, aggregate into 5-min candles
+                  const intra = intradayPortfolio["1D"];
+                  if (intra && intra.length > 2) {
+                    const baseV = intra[0].value;
+                    const candles5m = [];
+                    for (let i = 0; i < intra.length; i += 5) {
+                      const chunk = intra.slice(i, Math.min(i + 5, intra.length));
+                      const vals = chunk.map(p => ((p.value / baseV) - 1) * 100);
+                      const o = vals[0], c = vals[vals.length - 1], h = Math.max(...vals), l = Math.min(...vals);
+                      candles5m.push({ date: chunk[0].date.replace("T", " ").slice(11, 16), o, c, h, l, rawVal: chunk[chunk.length - 1].value, fullDate: chunk[0].date });
+                    }
+                    // Benchmark intraday
+                    const ibm = intradayBenchmarks["1D"] || {};
+                    const bmL = {}; const bmC2 = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
+                    Object.entries(ibm).forEach(([sym, pts]) => {
+                      if (!tBmToggles[sym] || !pts.length) return;
+                      const bp = (bmBars[sym]?.pc) || pts[0].close;
+                      const bc = [];
+                      for (let i = 0; i < pts.length; i += 5) {
+                        const ch = pts.slice(i, Math.min(i + 5, pts.length));
+                        const vs = ch.map(p => ((p.close / bp) - 1) * 100);
+                        bc.push({ o: vs[0], c: vs[vs.length - 1], h: Math.max(...vs), l: Math.min(...vs) });
+                      }
+                      bmL[sym] = bc;
+                    });
+                    const aV = candles5m.flatMap(c => [c.h, c.l]);
+                    Object.values(bmL).forEach(bc => aV.push(...bc.flatMap(c => [c.h, c.l])));
+                    const mn = Math.min(...aV), mx = Math.max(...aV), rg = mx - mn || 1;
+                    const cW2 = 900, H2 = 400, uW = cW2 - PAD.left - PAD.right;
+                    const gp = uW / Math.max(1, candles5m.length); const cdW = Math.max(2, Math.min(12, gp * 0.75));
+                    const xP = i => PAD.left + gp * (i + 0.5); const yP = v => PAD.top + ((mx - v) / rg) * (H2 - PAD.top - PAD.bottom);
+                    const lastV = candles5m[candles5m.length - 1]?.c || 0;
+                    const hc2 = tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length ? candles5m[tChartHover] : null;
+                    return (
+                      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
+                          <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>DIVIDEND 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
+                          {Object.entries(bmL).map(([sym, bc]) => <span key={sym} style={{ color: bmC2[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
+                          <span style={{ color: C.t4 }}>5-min candles</span>
+                        </div>
+                        {hc2 && <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "monospace", color: C.t2, display: "flex", gap: 10 }}>
+                          <span style={{ color: C.t1, fontWeight: 700 }}>{hc2.date}</span>
+                          <span>O: {hc2.o >= 0 ? "+" : ""}{hc2.o.toFixed(2)}%</span><span>H: {hc2.h >= 0 ? "+" : ""}{hc2.h.toFixed(2)}%</span><span>L: {hc2.l >= 0 ? "+" : ""}{hc2.l.toFixed(2)}%</span>
+                          <span style={{ color: hc2.c >= hc2.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc2.c >= 0 ? "+" : ""}{hc2.c.toFixed(2)}%</span>
+                          <span style={{ color: C.t4 }}>${hc2.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                        </div>}
+                        <div style={{ width: "100%", height: "100%" }}>
+                          <svg width="100%" height="100%" viewBox={`0 0 ${cW2} ${H2}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const r2 = e.currentTarget.getBoundingClientRect(); const sX = cW2 / r2.width; const mX = (e.clientX - r2.left) * sX; const idx = Math.round((mX - PAD.left) / gp - 0.5); setTChartHover(idx >= 0 && idx < candles5m.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                            <rect x={0} y={0} width={cW2} height={H2} fill={C.bg} />
+                            {[...Array(7)].map((_, i) => { const v = mn + (rg * i / 6); const yy = yP(v); return <g key={i}><line x1={PAD.left} y1={yy} x2={cW2 - PAD.right} y2={yy} stroke={C.border} strokeWidth={0.5} /><text x={cW2 - PAD.right + 4} y={yy + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(2)}%</text></g>; })}
+                            <line x1={PAD.left} y1={yP(0)} x2={cW2 - PAD.right} y2={yP(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
+                            {candles5m.filter((_, i) => i % Math.max(1, Math.floor(candles5m.length / 12)) === 0).map((c, _, a) => { const i = candles5m.indexOf(c); return <text key={i} x={xP(i)} y={H2 - 8} fill={C.t4} fontSize={8} fontFamily="monospace" textAnchor="middle">{c.date}</text>; })}
+                            {Object.entries(bmL).map(([sym, bc]) => { const col = bmC2[sym]; const bW = Math.max(1, cdW * 0.45); const off = sym === "SPY" ? -cdW * 0.5 : sym === "DIA" ? cdW * 0.5 : 0; return bc.map((c, i) => (
+                              <g key={`${sym}-${i}`} opacity={0.5}><line x1={xP(i) + off} y1={yP(c.h)} x2={xP(i) + off} y2={yP(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xP(i) - bW / 2 + off} y={yP(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
+                            )); })}
+                            {candles5m.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
+                              <g key={i}><line x1={xP(i)} y1={yP(c.h)} x2={xP(i)} y2={yP(c.l)} stroke={col} strokeWidth={1} /><rect x={xP(i) - cdW / 2} y={yP(Math.max(c.o, c.c))} width={cdW} height={Math.max(1, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
+                            ); })}
+                            {tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length && <line x1={xP(tChartHover)} y1={PAD.top} x2={xP(tChartHover)} y2={H2 - PAD.bottom} stroke={C.t3} strokeWidth={0.5} strokeDasharray="3,3" />}
+                          </svg>
+                        </div>
+                      </div>
+                    );
+                  }
                   filtered = portfolio.slice(-5);
                 } else if (tChartRange === "QTD") {
                   const qm = Math.floor(now.getMonth() / 3) * 3;
