@@ -2718,7 +2718,7 @@ Instructions:
     const tNow = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit" });
     const tAllNews = [...(news || []), ...(broadNews || [])].sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50);
     const tPortfolioVal = liveValue ? liveValue.value : null;
-    const tPortfolioPrev = (() => { if (!liveValue) return null; let prev = liveValue.cash || 0; for (const [k] of Object.entries(perfDataMap)) { const h = perfDataMap[k]?.holdings; if (h) { for (const [sym, sh] of Object.entries(h)) { const pc = (barsRef.current[sym] || bars[sym])?.pc; if (pc && sh) prev += sh * pc; } } } return prev > 0 ? prev : null; })();
+    const tPortfolioPrev = liveValue?.prevClose || null;
     const tDayChg = (tPortfolioVal && tPortfolioPrev) ? ((tPortfolioVal / tPortfolioPrev) - 1) * 100 : null;
     const tDayChgDollar = (tPortfolioVal && tPortfolioPrev) ? tPortfolioVal - tPortfolioPrev : null;
     const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
