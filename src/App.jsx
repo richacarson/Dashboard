@@ -923,6 +923,8 @@ Instructions:
   const [tChartHover, setTChartHover] = useState(null);
   const [tChartRange, setTChartRange] = useState("YTD");
   const [terminalSleeve, setTerminalSleeve] = useState("dividend");
+  const [tChartSleeve, setTChartSleeve] = useState("dividend");
+  const [tDrawer, setTDrawer] = useState(null);
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -2712,7 +2714,7 @@ Instructions:
   if (layoutMode === "terminal" && isDesktop && authed) {
     const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
     const tSleeveKeys = Object.keys(sleeves);
-    const tSleeveSyms = sleeves[terminalSleeve]?.symbols || [];
+    const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
     const tChartBg = C.bg.replace("#", "");
     const tChartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${terminalActiveSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${tChartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
     const tNow = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -2726,7 +2728,7 @@ Instructions:
     const tYieldSpread = macroData.yieldSpread;
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr 24px", gridTemplateColumns: "260px 1fr 300px", overflow: "hidden", letterSpacing: "-0.2px" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "260px 1fr 300px", overflow: "hidden", letterSpacing: "-0.2px" }}>
         {/* ── TOP STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, fontVariantNumeric: "tabular-nums" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -2771,11 +2773,16 @@ Instructions:
             const [tChartMode, setTChartMode] = [terminalActiveSym === "__portfolio__" ? "portfolio" : "stock", (m) => setTerminalActiveSym(m === "portfolio" ? "__portfolio__" : terminalActiveSym === "__portfolio__" ? "SPY" : terminalActiveSym)];
             const isPortfolio = terminalActiveSym === "__portfolio__";
             const tBmToggles = perfBmToggles;
-            const portfolio = perfData?.portfolio || [];
-            const benchmarks = perfData?.benchmarks || {};
+            const tSleeveData = perfDataMap[tChartSleeve] || perfData || {};
+            const portfolio = tSleeveData?.portfolio || [];
+            const benchmarks = tSleeveData?.benchmarks || {};
             return (<>
               <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
-                <button onClick={() => setTerminalActiveSym("__portfolio__")} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 4, border: `1px solid ${isPortfolio ? C.accentGlow : C.border}`, background: isPortfolio ? C.accentSoft : "transparent", color: isPortfolio ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>Dividend Portfolio</button>
+                {["dividend", "growth", "fci100", "fciValues"].map(k => {
+                  const names = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
+                  const active = isPortfolio && tChartSleeve === k;
+                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
+                })}
                 {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "ALL"].map(r => (
                   <button key={r} onClick={() => setTChartRange(r)} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
                 ))}
@@ -2831,7 +2838,7 @@ Instructions:
                     return (
                       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                         <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
-                          <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>DIVIDEND 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
+                          <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>{({dividend:"DIVIDEND",growth:"GROWTH",fci100:"FCI 100",fciValues:"FCI VALUES"})[tChartSleeve] || "PORTFOLIO"} 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
                           {Object.entries(bmL).map(([sym, bc]) => <span key={sym} style={{ color: bmC2[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
                           <span style={{ color: C.t4 }}>3-min candles</span>
                         </div>
@@ -2959,7 +2966,7 @@ Instructions:
                   <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                     {/* OHLC tooltip */}
                     <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
-                      <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>DIVIDEND {tChartRange} {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</span>
+                      <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>{({dividend:"DIVIDEND",growth:"GROWTH",fci100:"FCI 100",fciValues:"FCI VALUES"})[tChartSleeve] || "PORTFOLIO"} {tChartRange} {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</span>
                       {Object.entries(bmLines).map(([sym, bc]) => <span key={sym} style={{ color: bmColors[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
                     </div>
                     {hc && (
@@ -3032,6 +3039,27 @@ Instructions:
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── SECTION TABS ── */}
+        <div style={{ gridColumn: "1 / -1", display: "flex", gap: 0, borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
+          {[
+            { id: "playbook", label: "Playbook" },
+            { id: "screener", label: "Screener" },
+            { id: "opportunities", label: "Opps" },
+            { id: "performance", label: "Perf" },
+            { id: "metrics", label: "Metrics" },
+            { id: "briefs", label: "Briefs" },
+            { id: "settings", label: "Settings" },
+          ].map(t => (
+            <button key={t.id} onClick={() => setTDrawer(tDrawer === t.id ? null : t.id)} style={{
+              flex: 1, padding: "6px 0", fontSize: 10, fontWeight: 700, fontFamily: "inherit",
+              background: tDrawer === t.id ? C.accentSoft : "transparent",
+              border: "none", borderRight: `1px solid ${C.border}`,
+              color: tDrawer === t.id ? C.accent : C.t4, cursor: "pointer",
+              textTransform: "uppercase", letterSpacing: 0.5,
+            }}>{t.label}</button>
+          ))}
         </div>
 
         {/* ── BOTTOM STATUS BAR ── */}
