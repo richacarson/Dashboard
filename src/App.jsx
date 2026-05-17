@@ -7988,7 +7988,6 @@ Instructions:
                     <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>
                   ) : filtered.map(s => (
                     <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 8, cursor: "pointer" }}>
-                      <img src={`https://financialmodelingprep.com/image-stock/${s.ticker}.png`} alt="" style={{ width: 24, height: 24, borderRadius: 6, objectFit: "contain", background: "#fff", marginRight: 10, flexShrink: 0 }} onError={(e) => { e.target.style.display = "none"; }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
                         <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
