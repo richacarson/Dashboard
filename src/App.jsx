@@ -918,6 +918,9 @@ Instructions:
   const [profileInitTab, setProfileInitTab] = useState("overview");
   const [chartsActiveSym, setChartsActiveSym] = useState(null); // for Charts tab
   const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
+  const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem("iown_layout") || "classic");
+  const [terminalActiveSym, setTerminalActiveSym] = useState("SPY");
+  const [terminalSleeve, setTerminalSleeve] = useState("dividend");
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -2700,6 +2703,139 @@ Instructions:
     { id: "opportunities", label: "Opportunities", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/></svg> },
     { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TERMINAL LAYOUT — 4-panel Bloomberg-style grid (desktop only)
+     ═══════════════════════════════════════════════════════════════════ */
+  if (layoutMode === "terminal" && isDesktop && authed) {
+    const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
+    const tSleeveKeys = Object.keys(sleeves);
+    const tSleeveSyms = sleeves[terminalSleeve]?.symbols || [];
+    const tChartBg = C.bg.replace("#", "");
+    const tChartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${terminalActiveSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${tChartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
+    const tNow = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const tAllNews = [...(news || []), ...(broadNews || [])].sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50);
+    const tPortfolioVal = liveValue ? liveValue.value : null;
+    const tPortfolioPrev = (() => { if (!liveValue) return null; let prev = liveValue.cash || 0; for (const [k] of Object.entries(perfDataMap)) { const h = perfDataMap[k]?.holdings; if (h) { for (const [sym, sh] of Object.entries(h)) { const pc = (barsRef.current[sym] || bars[sym])?.pc; if (pc && sh) prev += sh * pc; } } } return prev > 0 ? prev : null; })();
+    const tDayChg = (tPortfolioVal && tPortfolioPrev) ? ((tPortfolioVal / tPortfolioPrev) - 1) * 100 : null;
+    const tDayChgDollar = (tPortfolioVal && tPortfolioPrev) ? tPortfolioVal - tPortfolioPrev : null;
+    const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
+    const tVix = macroData.vix;
+    const tYieldSpread = macroData.yieldSpread;
+
+    return (
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr 24px", gridTemplateColumns: "260px 1fr 300px", overflow: "hidden", letterSpacing: "-0.2px" }}>
+        {/* ── TOP STATUS BAR ── */}
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}` }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: marketStatus.color }}>{marketStatus.label}</span>
+          </div>
+          <div style={{ display: "flex", gap: 16, alignItems: "center", overflow: "hidden" }}>
+            {["SPY", "QQQ", "DIA"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return (
+              <span key={sym} style={{ fontSize: 11, color: C.t2 }}>
+                <span style={{ fontWeight: 700 }}>{sym}</span>{" "}
+                {q?.p ? `$${q.p.toFixed(2)}` : "—"}{" "}
+                <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
+              </span>
+            ); })}
+          </div>
+          <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
+        </div>
+
+        {/* ── LEFT: WATCHLIST ── */}
+        <div style={{ borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Sleeve tabs */}
+          <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflow: "auto" }}>
+            {tSleeveKeys.map(k => (
+              <button key={k} onClick={() => setTerminalSleeve(k)} style={{ flex: "0 0 auto", padding: "6px 8px", background: terminalSleeve === k ? C.accentSoft : "transparent", border: "none", borderBottom: terminalSleeve === k ? `2px solid ${C.accent}` : "2px solid transparent", color: terminalSleeve === k ? C.t1 : C.t4, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: tFont, whiteSpace: "nowrap" }}>{sleeves[k].icon} {sleeves[k].name.split(" ")[0]}</button>
+            ))}
+          </div>
+          {/* Stock list */}
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+            {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const isActive = sym === terminalActiveSym; return (
+              <div key={sym} onClick={() => setTerminalActiveSym(sym)} style={{ display: "flex", alignItems: "center", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", gap: 6, boxSizing: "border-box" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: isActive ? C.t1 : C.t2, width: 48, flexShrink: 0 }}>{sym}</span>
+                <span style={{ flex: 1, fontSize: 11, color: C.t3, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, width: 56, textAlign: "right", color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4, fontVariantNumeric: "tabular-nums" }}>{c != null ? pct(c) : "—"}</span>
+              </div>
+            ); })}
+          </div>
+        </div>
+
+        {/* ── CENTER: CHART ── */}
+        <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
+          <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>{terminalActiveSym}</span>
+            <span style={{ fontSize: 11, color: C.t3 }}>{names[terminalActiveSym] || ""}</span>
+            {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
+          </div>
+          <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+        </div>
+
+        {/* ── RIGHT PANEL ── */}
+        <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          {/* Portfolio Summary (top ~40%) */}
+          <div style={{ flex: "0 0 40%", borderBottom: `1px solid ${C.border}`, padding: "8px 12px", overflowY: "auto" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Portfolio</div>
+            {tPortfolioVal && <div style={{ fontSize: 20, fontWeight: 900, color: C.t1, fontVariantNumeric: "tabular-nums" }}>${tPortfolioVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
+            {tDayChg != null && <div style={{ fontSize: 12, fontWeight: 600, color: tDayChg >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums", marginBottom: 8 }}>{tDayChg >= 0 ? "+" : ""}{tDayChgDollar?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({pct(tDayChg)})</div>}
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Sleeves</div>
+            {["dividend", "growth"].map(k => { const sc = sleeveActualDay(k); return (
+              <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 11 }}>
+                <span style={{ color: C.t2 }}>{sleeves[k]?.name || k}</span>
+                <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{sc != null ? pct(sc) : "—"}</span>
+              </div>
+            ); })}
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Indicators</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 12px", fontSize: 11 }}>
+              <span style={{ color: C.t3 }}>SPY</span><span style={{ color: C.t1, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tSpyPrice ? `$${tSpyPrice.toFixed(2)}` : "—"}</span>
+              <span style={{ color: C.t3 }}>VIX</span><span style={{ color: tVix > 25 ? C.dn : tVix > 18 ? "#FBBF24" : C.t1, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tVix ?? "—"}</span>
+              <span style={{ color: C.t3 }}>10Y-2Y</span><span style={{ color: tYieldSpread != null ? (tYieldSpread < 0 ? C.dn : C.t1) : C.t4, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tYieldSpread != null ? `${tYieldSpread.toFixed(2)}%` : "—"}</span>
+            </div>
+          </div>
+          {/* News Feed (bottom ~60%) */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, padding: "0 12px 4px" }}>News</div>
+            {tAllNews.map((article, i) => (
+              <div key={article.id || i} onClick={() => { setSelectedArticle(article); }} style={{ padding: "5px 12px", cursor: "pointer", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div style={{ fontSize: 11, color: C.t1, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{article.headline || article.title}</div>
+                <div style={{ display: "flex", gap: 8, fontSize: 10, color: C.t4 }}>
+                  <span>{article.source || ""}</span>
+                  <span>{ago(article.created_at || article.datetime)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── BOTTOM STATUS BAR ── */}
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderTop: `1px solid ${C.border}`, fontSize: 10 }}>
+          <span style={{ color: C.accent, fontWeight: 700 }}>IOWN TERMINAL</span>
+          <span style={{ color: C.t3 }}>{sleeves[terminalSleeve]?.name || ""} — {tSleeveSyms.length} stocks</span>
+          <span style={{ color: C.t4 }}>{lastUp ? `Data: ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Loading..."}</span>
+        </div>
+
+        {/* Settings gear to exit terminal mode */}
+        <button onClick={() => { setLayoutMode("classic"); try { localStorage.setItem("iown_layout", "classic"); } catch {} }} style={{ position: "fixed", bottom: 32, right: 12, width: 28, height: 28, borderRadius: "50%", background: C.surface, border: `1px solid ${C.border}`, color: C.t3, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 14, zIndex: 999 }} title="Exit Terminal Layout">✕</button>
+
+        {/* Article reader overlay (reuse existing) */}
+        {selectedArticle && (() => { const a = selectedArticle; return (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setSelectedArticle(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, width: "60%", maxWidth: 700, maxHeight: "80vh", overflow: "auto", padding: 24, fontFamily: tFont }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                <span style={{ fontSize: 10, color: C.t4 }}>{a.source} — {ago(a.created_at || a.datetime)}</span>
+                <button onClick={() => setSelectedArticle(null)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontSize: 16 }}>✕</button>
+              </div>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 8 }}>{a.headline || a.title}</h2>
+              <p style={{ fontSize: 12, color: C.t2, lineHeight: 1.6 }}>{a.summary || a.content || "No content available."}</p>
+              {a.url && <a href={a.url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: C.accent, marginTop: 12, display: "inline-block" }}>Read full article →</a>}
+            </div>
+          </div>
+        ); })()}
+      </div>
+    );
+  }
 
   return (
     <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto", fontFamily: theme === "terminal" ? "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace" : undefined, letterSpacing: theme === "terminal" ? "-0.2px" : undefined, fontSize: theme === "terminal" ? "13px" : undefined }}>
@@ -7686,6 +7822,21 @@ Instructions:
                   color: localStorage.getItem("iown_theme_locked") ? C.t3 : C.t1, fontSize: 12, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit",
                 }}>Auto</button>
+              </div>
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 6 }}>Layout</div>
+                <div style={{ fontSize: 11, color: C.t4, marginBottom: 8 }}>Terminal mode shows a multi-panel grid (desktop only)</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
+                    <button key={v} onClick={() => { setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} }} style={{
+                      flex: 1, padding: "10px 0", borderRadius: 10,
+                      border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`,
+                      background: layoutMode === v ? C.accentSoft : "transparent",
+                      color: layoutMode === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>{l}</button>
+                  ))}
+                </div>
               </div>
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
