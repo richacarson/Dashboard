@@ -62,6 +62,8 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
+  { sym: "GLD", name: "Gold" },
+  { sym: "USO", name: "Oil" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
@@ -2736,13 +2738,17 @@ Instructions:
             <span style={{ fontSize: 11, fontWeight: 700, color: marketStatus.color }}>{marketStatus.label}</span>
           </div>
           <div style={{ display: "flex", gap: 16, alignItems: "center", overflow: "hidden" }}>
-            {["SPY", "QQQ", "DIA"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return (
-              <span key={sym} style={{ fontSize: 11, color: C.t2 }}>
+            {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return (
+              <span key={sym} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}>
                 <span style={{ fontWeight: 700 }}>{sym}</span>{" "}
                 {q?.p ? `$${q.p.toFixed(2)}` : "—"}{" "}
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
               </span>
             ); })}
+            <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
+            {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? "#FBBF24" : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
+            {(() => { const gld = quotesRef.current?.GLD || bmQuotes.GLD; const gldB = barsRef.current?.GLD || bmBars.GLD; const gc = (gld && gldB?.pc) ? ((gld.p - gldB.pc) / gldB.pc * 100) : null; return gld?.p ? <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${gld.p.toFixed(0)} <span style={{ color: gc >= 0 ? C.up : C.dn }}>{gc != null ? pct(gc) : ""}</span></span> : null; })()}
+            {(() => { const uso = quotesRef.current?.USO || bmQuotes.USO; const usoB = barsRef.current?.USO || bmBars.USO; const oc = (uso && usoB?.pc) ? ((uso.p - usoB.pc) / usoB.pc * 100) : null; return uso?.p ? <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${uso.p.toFixed(2)} <span style={{ color: oc >= 0 ? C.up : C.dn }}>{oc != null ? pct(oc) : ""}</span></span> : null; })()}
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>
@@ -3019,12 +3025,25 @@ Instructions:
                 <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{sc != null ? pct(sc) : "—"}</span>
               </div>
             ); })}
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Indicators</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 12px", fontSize: 11 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Market</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 11 }}>
               <span style={{ color: C.t3 }}>SPY</span><span style={{ color: C.t1, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tSpyPrice ? `$${tSpyPrice.toFixed(2)}` : "—"}</span>
-              <span style={{ color: C.t3 }}>VIX</span><span style={{ color: tVix > 25 ? C.dn : tVix > 18 ? "#FBBF24" : C.t1, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tVix ?? "—"}</span>
-              <span style={{ color: C.t3 }}>10Y-2Y</span><span style={{ color: tYieldSpread != null ? (tYieldSpread < 0 ? C.dn : C.t1) : C.t4, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tYieldSpread != null ? `${tYieldSpread.toFixed(2)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>VIX</span><span style={{ color: tVix > 25 ? C.dn : tVix > 18 ? "#FBBF24" : C.up, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tVix ?? "—"}</span>
+              <span style={{ color: C.t3 }}>10Y-2Y</span><span style={{ color: tYieldSpread != null ? (tYieldSpread < 0 ? C.dn : C.t1) : C.t4, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tYieldSpread != null ? `${tYieldSpread >= 0 ? "+" : ""}${tYieldSpread.toFixed(2)}%` : "—"}</span>
             </div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Bear Probability</div>
+            {(() => { const md = macroData; const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)); return (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 10 }}>
+              <span style={{ color: C.t3 }}>Yield Curve</span><span style={{ color: md.yieldSpread != null ? (md.yieldSpread < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.yieldSpread != null ? `${md.yieldSpread >= 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>SPY P/E</span><span style={{ color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.spyPE ? `${md.spyPE.toFixed(1)}x` : "—"}</span>
+              <span style={{ color: C.t3 }}>Bull Age</span><span style={{ color: bullAgeMo > 60 ? C.dn : bullAgeMo > 36 ? "#FBBF24" : C.up, textAlign: "right" }}>{bullAgeMo}mo</span>
+              <span style={{ color: C.t3 }}>Credit (BAA)</span><span style={{ color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.baa10y ? `${md.baa10y.toFixed(2)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>Claims</span><span style={{ color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.claims4wk ? `${(md.claims4wk / 1000).toFixed(0)}K` : "—"}</span>
+              <span style={{ color: C.t3 }}>CFNAI</span><span style={{ color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.cfnai != null ? md.cfnai.toFixed(2) : "—"}</span>
+              <span style={{ color: C.t3 }}>Sahm Rule</span><span style={{ color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.sahmVal != null ? `${md.sahmVal.toFixed(2)}pp` : "—"}</span>
+            </div>
+            ); })()}
           </div>
           {/* News Feed (bottom ~60%) */}
           <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
@@ -3086,6 +3105,67 @@ Instructions:
             </div>
           </div>
         ); })()}
+
+        {tDrawer && (
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "60vh", background: C.bg, borderTop: `2px solid ${C.accent}`, zIndex: 100, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: 1 }}>{tDrawer}</span>
+              <button onClick={() => setTDrawer(null)} style={{ background: "none", border: "none", color: C.t3, fontSize: 18, cursor: "pointer", fontFamily: "inherit", padding: "2px 8px" }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+              {tDrawer === "playbook" && <div style={{ fontSize: 12, color: C.t2 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Bear Probability: {(() => { const md = macroData; const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)); return md.loaded ? "See Playbook tab" : "Loading..."; })()}</div>
+                <div style={{ color: C.t3 }}>Switch to Classic layout to access the full Playbook with probability model, simulator, scripts, and bond ladder.</div>
+                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("playbook"); }} style={{ marginTop: 12, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Playbook</button>
+              </div>}
+              {tDrawer === "screener" && <div>
+                <div style={{ color: C.t3, marginBottom: 12 }}>Switch to Classic layout to access the full Screener with 2,251 stock reports.</div>
+                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("screener"); }} style={{ marginTop: 4, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Screener</button>
+              </div>}
+              {tDrawer === "opportunities" && <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Opportunities ({opportunities.length})</div>
+                {opportunities.map(opp => (
+                  <div key={opp.id} onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("opportunities"); setOppDetail(opp); }} style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{opp.title}</div>
+                    <div style={{ fontSize: 10, color: C.t4, display: "flex", gap: 8 }}>
+                      <span>{opp.pattern}</span>
+                      <span style={{ color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
+                      <span>{opp.tickers?.join(", ")}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>}
+              {tDrawer === "performance" && <div>
+                <div style={{ color: C.t3, marginBottom: 12 }}>Switch to Classic layout to access the full Performance tab with charts and attribution.</div>
+                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("performance"); }} style={{ marginTop: 4, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Performance</button>
+              </div>}
+              {tDrawer === "metrics" && <div>
+                <div style={{ color: C.t3, marginBottom: 12 }}>Switch to Classic layout to access the full Metrics tab with fundamentals, peers, and scatter plots.</div>
+                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("metrics"); }} style={{ marginTop: 4, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Metrics</button>
+              </div>}
+              {tDrawer === "briefs" && <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Quick Links</div>
+                {[
+                  { label: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html" },
+                  { label: "Market Commentary", url: "https://richacarson.github.io/iown-data" },
+                  { label: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html" },
+                ].map(l => <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "8px 10px", borderBottom: `1px solid ${C.border}`, color: C.accent, fontSize: 12, fontWeight: 600, textDecoration: "none" }}>{l.label} ↗</a>)}
+              </div>}
+              {tDrawer === "settings" && <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Quick Settings</div>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Theme</div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {[{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => toggleTheme(v)} style={{ flex: 1, padding: "8px 0", borderRadius: 6, border: `1px solid ${theme === v ? C.borderActive : C.border}`, background: theme === v ? C.accentSoft : "transparent", color: theme === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+                <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab("settings"); }} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accentSoft, color: C.accent, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Open Full Settings</button>
+              </div>}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
