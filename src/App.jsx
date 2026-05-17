@@ -2713,7 +2713,7 @@ Instructions:
   /* ═══════════════════════════════════════════════════════════════════
      TERMINAL LAYOUT — 4-panel Bloomberg-style grid (desktop only)
      ═══════════════════════════════════════════════════════════════════ */
-  if (layoutMode === "terminal" && isDesktop && authed) {
+  if (layoutMode === "terminal" && isDesktop && authed && !tDrawer) {
     const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
     const tSleeveKeys = Object.keys(sleeves);
     const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
@@ -3072,7 +3072,7 @@ Instructions:
             { id: "briefs", label: "Briefs" },
             { id: "settings", label: "Settings" },
           ].map(t => (
-            <button key={t.id} onClick={() => { setLayoutMode("classic"); localStorage.setItem("iown_layout", "classic"); setTab(t.id); }} style={{
+            <button key={t.id} onClick={() => { setTDrawer(t.id); setTab(t.id); }} style={{
               flex: 1, padding: "6px 0", fontSize: 10, fontWeight: 700, fontFamily: "inherit",
               background: "transparent",
               border: "none", borderRight: `1px solid ${C.border}`,
@@ -3113,6 +3113,14 @@ Instructions:
 
   return (
     <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto", fontFamily: theme === "terminal" ? "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace" : undefined, letterSpacing: theme === "terminal" ? "-0.2px" : undefined, fontSize: theme === "terminal" ? "13px" : undefined }}>
+
+      {/* Back to Terminal floating button */}
+      {layoutMode === "terminal" && tDrawer && isDesktop && (
+        <button onClick={() => { setTDrawer(null); setTab("home"); }} style={{ position: "fixed", top: 12, right: 16, zIndex: 10000, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accent, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          Back to Terminal
+        </button>
+      )}
 
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
