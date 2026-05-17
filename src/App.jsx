@@ -2798,13 +2798,13 @@ Instructions:
                   const intra = intradayPortfolio["1D"];
                   if (intra && intra.length > 2) {
                     const baseV = intra[0].value;
+                    const AGG = 3; // 3-minute candles
                     const candles5m = [];
-                    for (let i = 1; i < intra.length; i++) {
-                      const o = ((intra[i - 1].value / baseV) - 1) * 100;
-                      const c = ((intra[i].value / baseV) - 1) * 100;
-                      const h = Math.max(o, c) + Math.abs(c - o) * 0.1 + 0.01;
-                      const l = Math.min(o, c) - Math.abs(c - o) * 0.1 - 0.01;
-                      candles5m.push({ date: intra[i].date.replace("T", " ").slice(11, 16), o, c, h, l, rawVal: intra[i].value, fullDate: intra[i].date });
+                    for (let i = 0; i < intra.length - 1; i += AGG) {
+                      const chunk = intra.slice(i, Math.min(i + AGG + 1, intra.length));
+                      const vals = chunk.map(p => ((p.value / baseV) - 1) * 100);
+                      const o = vals[0], c = vals[vals.length - 1], h = Math.max(...vals), l = Math.min(...vals);
+                      candles5m.push({ date: chunk[chunk.length - 1].date.replace("T", " ").slice(11, 16), o, c, h, l, rawVal: chunk[chunk.length - 1].value, fullDate: chunk[chunk.length - 1].date });
                     }
                     // Benchmark intraday
                     const ibm = intradayBenchmarks["1D"] || {};
@@ -2813,10 +2813,10 @@ Instructions:
                       if (!tBmToggles[sym] || !pts.length) return;
                       const bp = (bmBars[sym]?.pc) || pts[0].close;
                       const bc = [];
-                      for (let i = 1; i < pts.length; i++) {
-                        const o2 = ((pts[i - 1].close / bp) - 1) * 100;
-                        const c2 = ((pts[i].close / bp) - 1) * 100;
-                        bc.push({ o: o2, c: c2, h: Math.max(o2, c2) + Math.abs(c2 - o2) * 0.1 + 0.01, l: Math.min(o2, c2) - Math.abs(c2 - o2) * 0.1 - 0.01 });
+                      for (let i = 0; i < pts.length - 1; i += AGG) {
+                        const ch = pts.slice(i, Math.min(i + AGG + 1, pts.length));
+                        const vs = ch.map(p => ((p.close / bp) - 1) * 100);
+                        bc.push({ o: vs[0], c: vs[vs.length - 1], h: Math.max(...vs), l: Math.min(...vs) });
                       }
                       bmL[sym] = bc;
                     });
@@ -2833,7 +2833,7 @@ Instructions:
                         <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
                           <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>DIVIDEND 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
                           {Object.entries(bmL).map(([sym, bc]) => <span key={sym} style={{ color: bmC2[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
-                          <span style={{ color: C.t4 }}>1-min candles</span>
+                          <span style={{ color: C.t4 }}>3-min candles</span>
                         </div>
                         {hc2 && <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "monospace", color: C.t2, display: "flex", gap: 10 }}>
                           <span style={{ color: C.t1, fontWeight: 700 }}>{hc2.date}</span>
