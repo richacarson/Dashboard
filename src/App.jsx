@@ -117,6 +117,16 @@ const LIGHT = {
   accent: "#4A6B25", accentSoft: "rgba(74,107,37,0.08)", accentGlow: "rgba(74,107,37,0.20)",
   shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
 };
+const TERMINAL = {
+  bg: "#000000", surface: "#0A0A0A", card: "#111111", cardHover: "#1A1A1A", elevated: "#141414",
+  border: "rgba(255,160,0,0.12)", borderHover: "rgba(255,160,0,0.22)", borderActive: "rgba(255,160,0,0.40)",
+  t1: "#FF9900", t2: "#CC7A00", t3: "#996600", t4: "#664400",
+  up: "#00FF00", upSoft: "#00FF0018", upGlow: "#00FF0030",
+  dn: "#FF3333", dnSoft: "#FF333318", dnGlow: "#FF333030",
+  accent: "#FF9900", accentSoft: "rgba(255,153,0,0.10)", accentGlow: "rgba(255,153,0,0.25)",
+  shadow: "none",
+  isTerminal: true,
+};
 let C = DARK;
 
 /* ── Sparkline from intraday bars array ── */
@@ -350,7 +360,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
     setDragX(0); setDragging(false); touchStart.current = null;
   };
 
-  const isDark = theme === "dark";
+  const isDark = theme !== "light";
 
   // Fetch profile data
   useEffect(() => {
@@ -960,7 +970,7 @@ Instructions:
       return getAutoTheme();
     } catch { return "dark"; }
   });
-  C = theme === "light" ? LIGHT : DARK;
+  C = theme === "terminal" ? TERMINAL : theme === "light" ? LIGHT : DARK;
   // Toggle theme for this session only (doesn't change default)
   const toggleTheme = (t) => { setTheme(t); };
   // Lock theme as permanent default
@@ -2426,7 +2436,7 @@ Instructions:
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
-          <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
+          <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
@@ -2445,7 +2455,7 @@ Instructions:
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
-          <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
+          <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
           <div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
         </div>
       </div>
@@ -2692,7 +2702,7 @@ Instructions:
   ];
 
   return (
-    <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto" }}>
+    <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto", fontFamily: theme === "terminal" ? "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace" : undefined, letterSpacing: theme === "terminal" ? "-0.2px" : undefined, fontSize: theme === "terminal" ? "13px" : undefined }}>
 
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
@@ -2702,7 +2712,7 @@ Instructions:
           display: "flex", flexDirection: "column",
         }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: "80%", height: "auto" }} />
+            <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: "80%", height: "auto" }} />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
@@ -2737,7 +2747,7 @@ Instructions:
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: theme === "dark" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme !== "light" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -4996,10 +5006,10 @@ Instructions:
         {/* ━━━ BRIEFS ━━━ */}
         {tab === "briefs" && (() => {
           const BRIEFS = [
-            { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme === "dark" ? "#F59E0B" : "#D97706" },
-            { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme === "dark" ? "#34D399" : "#16A34A" },
-            { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme === "dark" ? "#6366F1" : "#4F46E5" },
-            { id: "quarterly", title: "Quarterly Changes", icon: "📋", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme === "dark" ? "#A78BFA" : "#7C3AED" },
+            { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706" },
+            { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A" },
+            { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5" },
+            { id: "quarterly", title: "Quarterly Changes", icon: "📋", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED" },
           ];
           const active = BRIEFS.find(b => b.id === briefView);
 
@@ -5084,7 +5094,7 @@ Instructions:
                 if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
                 if (part.startsWith("`") && part.endsWith("`")) return <code key={i} style={{ background: C.card, padding: "2px 6px", borderRadius: 4, fontSize: "0.9em" }}>{part.slice(1, -1)}</code>;
                 const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-                if (linkMatch) return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: theme === "dark" ? "#60A5FA" : "#2563EB" }}>{linkMatch[1]}</a>;
+                if (linkMatch) return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: theme !== "light" ? "#60A5FA" : "#2563EB" }}>{linkMatch[1]}</a>;
                 return part;
               });
             };
@@ -5195,7 +5205,7 @@ Instructions:
                         padding: isDesktop ? "20px 24px" : "16px 14px",
                         cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
                       }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = theme === "dark" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = theme !== "light" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
@@ -5259,7 +5269,7 @@ Instructions:
 
         {/* ━━━ CHARTS ━━━ */}
         {tab === "charts" && (() => {
-          const isDark = theme === "dark";
+          const isDark = theme !== "light";
           const activeSym = chartsActiveSym || coreSyms[0] || "SPY";
           const liveQ = quotesRef.current?.[activeSym];
           const livePrice = liveQ?.p;
@@ -5575,7 +5585,7 @@ Instructions:
                             const g = pctPos < 0.3 ? Math.round(180 + pctPos * 200) : pctPos < 0.6 ? Math.round(240 - (pctPos - 0.3) * 400) : Math.round(100 - (pctPos - 0.6) * 200);
                             const b = 40;
                             const filled = i / segments <= clampedPct / maxGain;
-                            return <path key={i} d={arcPath(R, a1, a2)} fill="none" stroke={filled ? `rgb(${r},${g},${b})` : (theme === "dark" ? "#1E2536" : "#E5E7EB")} strokeWidth={14} strokeLinecap="butt" />;
+                            return <path key={i} d={arcPath(R, a1, a2)} fill="none" stroke={filled ? `rgb(${r},${g},${b})` : (theme !== "light" ? "#1E2536" : "#E5E7EB")} strokeWidth={14} strokeLinecap="butt" />;
                           })}
 
                           {/* Tick marks */}
@@ -7652,7 +7662,7 @@ Instructions:
                 {localStorage.getItem("iown_theme_locked") ? `Locked to ${localStorage.getItem("iown_theme_locked")} mode` : "Auto: light during market hours, dark after close"}
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                {[{ v: "dark", l: "🌙 Dark" }, { v: "light", l: "☀️ Light" }].map(({ v, l }) => (
+                {[{ v: "dark", l: "🌙 Dark" }, { v: "light", l: "☀️ Light" }, { v: "terminal", l: "💻 Terminal" }].map(({ v, l }) => (
                   <button key={v} onClick={() => toggleTheme(v)} style={{
                     flex: 1, padding: "10px 0", borderRadius: 10,
                     border: `1px solid ${theme === v ? C.borderActive : C.border}`,
@@ -7752,10 +7762,10 @@ Instructions:
       {/* BRIEF FULL-SCREEN OVERLAY */}
       {briefView && (() => {
         const BRIEFS = [
-          { id: "morning", title: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme === "dark" ? "#F59E0B" : "#D97706" },
-          { id: "commentary", title: "Market Commentary", url: "https://richacarson.github.io/iown-data", color: theme === "dark" ? "#34D399" : "#16A34A" },
-          { id: "report", title: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme === "dark" ? "#6366F1" : "#4F46E5" },
-          { id: "quarterly", title: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme === "dark" ? "#A78BFA" : "#7C3AED" },
+          { id: "morning", title: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706" },
+          { id: "commentary", title: "Market Commentary", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A" },
+          { id: "report", title: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5" },
+          { id: "quarterly", title: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED" },
         ];
         const active = BRIEFS.find(b => b.id === briefView);
         if (!active) return null;
@@ -8191,7 +8201,7 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: theme === "dark" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+        background: theme !== "light" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
         borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
@@ -8220,7 +8230,7 @@ Instructions:
           }}>
             <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.border}` }}>
-              <img src={theme === "dark" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ height: 36 }} />
+              <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ height: 36 }} />
               <button onClick={() => setMoreMenu(false)} style={{
                 width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
                 border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
@@ -8300,7 +8310,7 @@ Instructions:
 }
 
 function GS({ theme }) {
-  const isDark = theme === "dark";
+  const isDark = theme !== "light";
   return (
     <style>{`
       @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
