@@ -2794,7 +2794,7 @@ Instructions:
                 const now = new Date();
                 let filtered;
                 if (tChartRange === "1D") {
-                  filtered = portfolio.slice(-2);
+                  filtered = portfolio.slice(-5);
                 } else if (tChartRange === "QTD") {
                   const qm = Math.floor(now.getMonth() / 3) * 3;
                   const qStart = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
@@ -2813,12 +2813,32 @@ Instructions:
                 }
                 if (filtered.length < 2) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.t4 }}>Loading portfolio data...</div>;
                 const baseVal = filtered[0].value;
-                const candles = [];
+                // Build daily candles first
+                const dailyCandles = [];
                 for (let i = 1; i < filtered.length; i++) {
                   const o = ((filtered[i - 1].value / baseVal) - 1) * 100;
                   const c = ((filtered[i].value / baseVal) - 1) * 100;
                   const body = Math.abs(c - o); const wick = body * 0.3 + 0.05;
-                  candles.push({ date: filtered[i].date, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick, rawVal: filtered[i].value });
+                  dailyCandles.push({ date: filtered[i].date, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick, rawVal: filtered[i].value });
+                }
+                // Aggregate to weekly for long timeframes (>200 daily candles)
+                const useWeekly = dailyCandles.length > 200;
+                let candles;
+                if (useWeekly) {
+                  candles = [];
+                  let week = null;
+                  for (const d of dailyCandles) {
+                    const wk = d.date.slice(0, 4) + "-W" + String(Math.ceil((new Date(d.date).getTime() - new Date(d.date.slice(0, 4) + "-01-01").getTime()) / 604800000)).padStart(2, "0");
+                    if (!week || week._wk !== wk) {
+                      if (week) candles.push(week);
+                      week = { date: d.date, o: d.o, h: d.h, l: d.l, c: d.c, rawVal: d.rawVal, _wk: wk };
+                    } else {
+                      week.c = d.c; week.h = Math.max(week.h, d.h); week.l = Math.min(week.l, d.l); week.rawVal = d.rawVal; week.date = d.date;
+                    }
+                  }
+                  if (week) candles.push(week);
+                } else {
+                  candles = dailyCandles;
                 }
                 const allVals = candles.flatMap(c => [c.h, c.l]);
                 const bmLines = {}; const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
@@ -2839,9 +2859,10 @@ Instructions:
                   bmLines[sym] = bc; allVals.push(...bc.flatMap(c => [c.h, c.l]));
                 });
                 const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
-                const candleW = 6; const gap = candleW + 2;
-                const chartW = Math.max(900, candles.length * gap + PAD.left + PAD.right);
-                const H = 400;
+                const chartW = 900; const H = 400;
+                const usableW = chartW - PAD.left - PAD.right;
+                const gap = usableW / Math.max(1, candles.length);
+                const candleW = Math.max(1, Math.min(12, gap * 0.75));
                 const xPos = i => PAD.left + gap * (i + 0.5);
                 const yPos = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
                 const lastVal = candles[candles.length - 1]?.c || 0;
@@ -2867,8 +2888,8 @@ Instructions:
                         <span style={{ color: C.t4 }}>${hc.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                       </div>
                     )}
-                    <div style={{ width: "100%", height: "100%", overflowX: "auto", overflowY: "hidden" }}>
-                      <svg width={chartW} height={H} viewBox={`0 0 ${chartW} ${H}`} onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const mx = e.clientX - rect.left + e.currentTarget.parentElement.scrollLeft; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                    <div style={{ width: "100%", height: "100%" }}>
+                      <svg width="100%" height="100%" viewBox={`0 0 ${chartW} ${H}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
                         <rect x={0} y={0} width={chartW} height={H} fill={C.bg} />
                         {[...Array(7)].map((_, i) => { const v = minV + (range * i / 6); const yp = yPos(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
                         <line x1={PAD.left} y1={yPos(0)} x2={chartW - PAD.right} y2={yPos(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
