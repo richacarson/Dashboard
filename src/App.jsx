@@ -912,6 +912,8 @@ Instructions:
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
   const [screenerSearch, setScreenerSearch] = useState("");
+  const [screenerTypeFilter, setScreenerTypeFilter] = useState("All"); // "All" | "Dividend" | "Growth"
+  const [screenerRecFilter, setScreenerRecFilter] = useState("All"); // "All" | "BUY" | "HOLD" | "WATCH" | "SELL"
   const [screenerDetail, setScreenerDetail] = useState(null); // full report object
   const [screenerDetailLoading, setScreenerDetailLoading] = useState(false);
   const screenerFetched = useRef(false);
@@ -7962,9 +7964,25 @@ Instructions:
                   <button key={s} onClick={() => setScreenerSleeve(s)} style={{ flex: "0 0 auto", padding: "10px 14px", background: screenerSleeve === s ? C.accentSoft : "transparent", border: "none", borderBottom: screenerSleeve === s ? `2px solid ${C.accent}` : "2px solid transparent", color: screenerSleeve === s ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{s}</button>
                 ))}
               </div>
-              {/* Search */}
+              {/* Search + filters */}
               <div style={{ padding: "10px 16px", flexShrink: 0 }}>
                 <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                {screenerSleeve === "All" && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                      <option value="All">All Types</option>
+                      <option value="Dividend">Dividend Candidates</option>
+                      <option value="Growth">Growth Candidates</option>
+                    </select>
+                    <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                      <option value="All">All Ratings</option>
+                      <option value="BUY">BUY Only</option>
+                      <option value="HOLD">HOLD Only</option>
+                      <option value="WATCH">WATCH Only</option>
+                      <option value="SELL">SELL Only</option>
+                    </select>
+                  </div>
+                )}
               </div>
               {/* List */}
               <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
@@ -7981,6 +7999,8 @@ Instructions:
                       const holdings = portfolioMap[screenerSleeve];
                       if (!holdings || !holdings.includes(s.ticker)) return false;
                     }
+                    if (screenerSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
+                    if (screenerSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
                     if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                     return true;
                   }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
