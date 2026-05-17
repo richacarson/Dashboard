@@ -62,8 +62,6 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
-  { sym: "GLD", name: "Gold" },
-  { sym: "USO", name: "Oil" },
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
@@ -2738,15 +2736,16 @@ Instructions:
             <span style={{ fontSize: 11, fontWeight: 700, color: marketStatus.color }}>{marketStatus.label}</span>
           </div>
           <div style={{ display: "flex", gap: 16, alignItems: "center", overflow: "hidden" }}>
-            {["SPY", "QQQ", "DIA", "DVY", "IUSG", "GLD", "USO"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const label = sym === "GLD" ? "GOLD" : sym === "USO" ? "OIL" : sym; return q?.p ? (
+            {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? (
               <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
-                <span style={{ fontWeight: 700 }}>{label}</span>{" "}
-                ${q.p.toFixed(sym === "GLD" ? 0 : 2)}{" "}
+                <span style={{ fontWeight: 700 }}>{sym}</span>{" "}${q.p.toFixed(2)}{" "}
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
               </span>
             ) : null; })}
             <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
             {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? "#FBBF24" : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
+            {macroData.oilPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${macroData.oilPrice.toFixed(2)} <span style={{ color: macroData.oilChg >= 0 ? C.up : C.dn }}>{macroData.oilChg != null ? `${macroData.oilChg >= 0 ? "+" : ""}${macroData.oilChg.toFixed(2)}%` : ""}</span></span>}
+            {macroData.goldPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${macroData.goldPrice.toFixed(0)} <span style={{ color: macroData.goldChg >= 0 ? C.up : C.dn }}>{macroData.goldChg != null ? `${macroData.goldChg >= 0 ? "+" : ""}${macroData.goldChg.toFixed(2)}%` : ""}</span></span>}
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>

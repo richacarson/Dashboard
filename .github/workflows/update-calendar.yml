@@ -361,6 +361,20 @@ jobs:
           except Exception as e:
               print(f"Yahoo SPY failed: {e}", file=sys.stderr)
 
+          # 7. Yahoo Finance: Crude Oil (WTI) and Gold futures
+          for sym, key in [('CL=F', 'oil'), ('GC=F', 'gold')]:
+              try:
+                  d = fetch(f'https://query1.finance.yahoo.com/v8/finance/chart/{sym}?range=1d&interval=1d')
+                  if d and d.get('chart', {}).get('result'):
+                      meta = d['chart']['result'][0]['meta']
+                      data[f'{key}Price'] = meta.get('regularMarketPrice')
+                      pc = meta.get('chartPreviousClose')
+                      if data[f'{key}Price'] and pc:
+                          data[f'{key}Chg'] = round((data[f'{key}Price'] / pc - 1) * 100, 2)
+                      print(f"{key.upper()}: ${data[f'{key}Price']} ({data.get(f'{key}Chg', '?')}%)")
+              except Exception as e:
+                  print(f"Yahoo {key} failed: {e}", file=sys.stderr)
+
           data['updated'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
           # Merge with existing data (preserve fields that didn't update)
