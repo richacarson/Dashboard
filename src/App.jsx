@@ -2793,9 +2793,10 @@ Instructions:
                   <button key={r} onClick={() => setTChartRange(r)} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
                 ))}
                 {isPortfolio && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
-                {isPortfolio && ["SPY", "DVY", "DIA"].map(bm => (
-                  <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, border: `1px solid ${tBmToggles[bm] ? ({"SPY":"#6B8DE3","DVY":"#FF9800","DIA":"#C76BDB"})[bm] + "66" : C.border}`, background: tBmToggles[bm] ? ({"SPY":"#6B8DE320","DVY":"#FF980020","DIA":"#C76BDB20"})[bm] : "transparent", color: tBmToggles[bm] ? ({"SPY":"#6B8DE3","DVY":"#FF9800","DIA":"#C76BDB"})[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>
-                ))}
+                {isPortfolio && ({ dividend: ["SPY", "DVY", "DIA"], growth: ["SPY", "IUSG", "QQQ"], fci100: ["SPY", "QQQ", "DIA"], fciValues: ["SPY", "QQQ", "DIA"] }[tChartSleeve] || ["SPY", "DVY", "DIA"]).map(bm => {
+                  const bmCol = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
+                  return <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, border: `1px solid ${tBmToggles[bm] ? bmCol[bm] + "66" : C.border}`, background: tBmToggles[bm] ? bmCol[bm] + "20" : "transparent", color: tBmToggles[bm] ? bmCol[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>;
+                })}
                 {!isPortfolio && <>
                   <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>{terminalActiveSym}</span>
                   <span style={{ fontSize: 11, color: C.t3 }}>{names[terminalActiveSym] || ""}</span>
@@ -2821,7 +2822,7 @@ Instructions:
                     }
                     // Benchmark intraday
                     const ibm = intradayBenchmarks["1D"] || {};
-                    const bmL = {}; const bmC2 = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
+                    const bmL = {}; const bmC2 = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
                     Object.entries(ibm).forEach(([sym, pts]) => {
                       if (!tBmToggles[sym] || !pts.length) return;
                       const bp = (bmBars[sym]?.pc) || pts[0].close;
@@ -2919,7 +2920,7 @@ Instructions:
                   candles = dailyCandles;
                 }
                 const allVals = candles.flatMap(c => [c.h, c.l]);
-                const bmLines = {}; const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB" };
+                const bmLines = {}; const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
                 Object.entries(benchmarks).forEach(([sym, priceMap]) => {
                   if (!tBmToggles[sym]) return;
                   const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
