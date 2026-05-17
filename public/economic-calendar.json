@@ -638,5 +638,275 @@
     "previous": "",
     "forecast": "",
     "unit": ""
+  },
+  {
+    "title": "Chicago Fed National Activity Index",
+    "date": "2026-05-25 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-0.2",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Chicago Fed National Activity Index",
+    "date": "2026-05-26 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-0.2",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "S&P/Case-Shiller Home Price YoY",
+    "date": "2026-05-26 13:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.9",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "CB Consumer Confidence",
+    "date": "2026-05-26 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "92.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Dallas Fed Manufacturing Index",
+    "date": "2026-05-26 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-2.3",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "MBA 30-Year Mortgage Rate",
+    "date": "2026-05-27 11:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "ADP Employment Change Weekly",
+    "date": "2026-05-27 12:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "API Crude Oil Stock Change",
+    "date": "2026-05-27 20:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Core PCE Price Index MoM",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.3",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Corporate Profits QoQ Prel",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "5.7",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Durable Goods Orders Ex Transp MoM",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.9",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Durable Goods Orders MoM",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.8",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "GDP Growth Rate QoQ 2nd Est",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.5",
+    "forecast": "2",
+    "unit": "%"
+  },
+  {
+    "title": "GDP Price Index QoQ 2nd Est",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "3.7",
+    "forecast": "4.5",
+    "unit": "%"
+  },
+  {
+    "title": "Initial Jobless Claims",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "PCE Price Index MoM",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.7",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "PCE Price Index YoY",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "3.5",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Personal Income MoM",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.6",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Personal Spending MoM",
+    "date": "2026-05-28 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.9",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "New Home Sales",
+    "date": "2026-05-28 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.682",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "New Home Sales MoM",
+    "date": "2026-05-28 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "7.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Crude Oil Stocks Change",
+    "date": "2026-05-28 16:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Gasoline Stocks Change",
+    "date": "2026-05-28 16:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Goods Trade Balance Adv",
+    "date": "2026-05-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-87.45",
+    "forecast": "",
+    "unit": "$"
+  },
+  {
+    "title": "Retail Inventories Ex Autos MoM Adv",
+    "date": "2026-05-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.4",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Wholesale Inventories MoM Adv",
+    "date": "2026-05-29 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Chicago PMI",
+    "date": "2026-05-29 13:45:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "49.2",
+    "forecast": "",
+    "unit": ""
   }
 ]
