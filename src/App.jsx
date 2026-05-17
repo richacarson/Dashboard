@@ -2713,7 +2713,7 @@ Instructions:
   /* ═══════════════════════════════════════════════════════════════════
      TERMINAL LAYOUT — 4-panel Bloomberg-style grid (desktop only)
      ═══════════════════════════════════════════════════════════════════ */
-  if (layoutMode === "terminal" && isDesktop && authed && !tDrawer) {
+  if (layoutMode === "terminal" && isDesktop && authed) {
     const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
     const tSleeveKeys = Object.keys(sleeves);
     const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
@@ -2738,17 +2738,15 @@ Instructions:
             <span style={{ fontSize: 11, fontWeight: 700, color: marketStatus.color }}>{marketStatus.label}</span>
           </div>
           <div style={{ display: "flex", gap: 16, alignItems: "center", overflow: "hidden" }}>
-            {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return (
-              <span key={sym} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}>
-                <span style={{ fontWeight: 700 }}>{sym}</span>{" "}
-                {q?.p ? `$${q.p.toFixed(2)}` : "—"}{" "}
+            {["SPY", "QQQ", "DIA", "DVY", "IUSG", "GLD", "USO"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const label = sym === "GLD" ? "GOLD" : sym === "USO" ? "OIL" : sym; return q?.p ? (
+              <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
+                <span style={{ fontWeight: 700 }}>{label}</span>{" "}
+                ${q.p.toFixed(sym === "GLD" ? 0 : 2)}{" "}
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
               </span>
-            ); })}
+            ) : null; })}
             <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
             {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? "#FBBF24" : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
-            {(() => { const gld = quotesRef.current?.GLD || bmQuotes.GLD; const gldB = barsRef.current?.GLD || bmBars.GLD; const gc = (gld && gldB?.pc) ? ((gld.p - gldB.pc) / gldB.pc * 100) : null; return gld?.p ? <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${gld.p.toFixed(0)} <span style={{ color: gc >= 0 ? C.up : C.dn }}>{gc != null ? pct(gc) : ""}</span></span> : null; })()}
-            {(() => { const uso = quotesRef.current?.USO || bmQuotes.USO; const usoB = barsRef.current?.USO || bmBars.USO; const oc = (uso && usoB?.pc) ? ((uso.p - usoB.pc) / usoB.pc * 100) : null; return uso?.p ? <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${uso.p.toFixed(2)} <span style={{ color: oc >= 0 ? C.up : C.dn }}>{oc != null ? pct(oc) : ""}</span></span> : null; })()}
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>
@@ -2773,6 +2771,131 @@ Instructions:
           </div>
         </div>
 
+        {/* ── CENTER + RIGHT: CHART or SECTION CONTENT ── */}
+        {tDrawer ? (
+          <div style={{ gridColumn: "2 / 4", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ padding: "6px 16px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: 1 }}>{tDrawer}</span>
+              <button onClick={() => setTDrawer(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 10px", color: C.t3, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>✕ Close</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+              {tDrawer === "playbook" && (() => { setTab("playbook"); return null; })() === null && (
+                <iframe src={`${window.location.origin}${window.location.pathname}#playbook`} style={{ display: "none" }} />
+              )}
+              {/* Render inline playbook content */}
+              {tDrawer === "playbook" && (() => {
+                const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
+                const md = macroData;
+                return (<div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Bull Age</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: C.t1 }}>{bullAgeMo}<span style={{ fontSize: 12, color: C.t3 }}> months</span></div>
+                    </div>
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>From Trough</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: C.up }}>+{pctFromTrough.toFixed(1)}%</div>
+                    </div>
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>From ATH</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: pctFromATH >= 0 ? C.up : C.dn }}>{pctFromATH >= 0 ? "+" : ""}{pctFromATH.toFixed(1)}%</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.t3, marginBottom: 16 }}>For the full Playbook with bear probability model, simulator, scripts, and bond ladder — use the section tabs below or switch layout in Settings.</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    {md.yieldSpread != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Yield Curve</div><div style={{ fontSize: 18, fontWeight: 800, color: md.yieldSpread < 0 ? C.dn : C.up }}>{md.yieldSpread >= 0 ? "+" : ""}{md.yieldSpread.toFixed(2)}%</div></div>}
+                    {md.spyPE != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>SPY P/E</div><div style={{ fontSize: 18, fontWeight: 800, color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? "#FBBF24" : C.up }}>{md.spyPE.toFixed(1)}x</div></div>}
+                    {md.sahmVal != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Sahm Rule</div><div style={{ fontSize: 18, fontWeight: 800, color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? "#FBBF24" : C.up }}>{md.sahmVal.toFixed(2)}pp</div><div style={{ fontSize: 10, color: C.t4 }}>Trigger: 0.50pp</div></div>}
+                    {md.cfnai != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>CFNAI</div><div style={{ fontSize: 18, fontWeight: 800, color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? "#FBBF24" : C.up }}>{md.cfnai.toFixed(2)}</div></div>}
+                    {md.baa10y != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Credit Spread</div><div style={{ fontSize: 18, fontWeight: 800, color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? "#FBBF24" : C.up }}>{md.baa10y.toFixed(2)}%</div></div>}
+                    {md.claims4wk != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Jobless Claims</div><div style={{ fontSize: 18, fontWeight: 800, color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? "#FBBF24" : C.up }}>{(md.claims4wk / 1000).toFixed(0)}K</div><div style={{ fontSize: 10, color: C.t4 }}>Trend: {md.claimsTrend >= 0 ? "+" : ""}{md.claimsTrend?.toFixed(1)}%</div></div>}
+                  </div>
+                </div>);
+              })()}
+              {tDrawer === "opportunities" && (<div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Opportunity Finder ({opportunities.length})</div>
+                {opportunities.map(opp => (
+                  <div key={opp.id} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: C.t1 }}>{opp.title}</div>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB", whiteSpace: "nowrap" }}>{opp.conviction}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: C.t3, marginBottom: 6 }}>{opp.pattern} · {opp.timeframe}</div>
+                    <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginBottom: 8 }}>{opp.catalyst}</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                      {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 4, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                    </div>
+                    {opp.ticker_rationale && Object.entries(opp.ticker_rationale).map(([t, r]) => <div key={t} style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginBottom: 4 }}><strong style={{ color: C.accent }}>{t}:</strong> {r}</div>)}
+                  </div>
+                ))}
+              </div>)}
+              {tDrawer === "screener" && (<div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Stock Screener — {screenerData.length} stocks</div>
+                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "8px 12px", marginBottom: 10, borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+                  {screenerData.filter(s => { const q = screenerSearch.toLowerCase(); return !q || s.ticker.toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q); }).slice(0, 50).map(s => (
+                    <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer" }}>
+                      <div><div style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{s.ticker}</div><div style={{ fontSize: 10, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{s.name}</div></div>
+                      <div style={{ textAlign: "right" }}><span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 3, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span><div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginTop: 2 }}>{s.overall_score}</div></div>
+                    </div>
+                  ))}
+                </div>
+              </div>)}
+              {tDrawer === "performance" && (<div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Performance</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                  {["dividend", "growth"].map(k => { const sc = sleeveActualDay(k); return (
+                    <div key={k} style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{sleeves[k]?.name}</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: sc >= 0 ? C.up : C.dn }}>{sc != null ? pct(sc) : "—"}</div>
+                      <div style={{ fontSize: 10, color: C.t4 }}>Day change</div>
+                    </div>
+                  ); })}
+                </div>
+                <div style={{ fontSize: 11, color: C.t3, marginTop: 12 }}>Full performance charts, attribution, and benchmarks available in the Performance tab.</div>
+              </div>)}
+              {tDrawer === "metrics" && (<div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Key Metrics</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+                  {tSleeveSyms.slice(0, 20).map(sym => { const f = fundamentals[sym]; const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const chg = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return (
+                    <div key={sym} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "8px 10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{sym}</span><span style={{ fontSize: 11, fontWeight: 600, color: chg >= 0 ? C.up : C.dn }}>{chg != null ? pct(chg) : "—"}</span></div>
+                      {f && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>P/E {f.pe?.toFixed(1) || "—"} · Div {f.dividendYield ? (f.dividendYield * 100).toFixed(1) + "%" : "—"}</div>}
+                    </div>
+                  ); })}
+                </div>
+              </div>)}
+              {tDrawer === "briefs" && (<div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Briefs & Research</div>
+                {[
+                  { label: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", desc: "Daily pre-market analysis" },
+                  { label: "Market Commentary", url: "https://richacarson.github.io/iown-data", desc: "Market outlook & strategy" },
+                  { label: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", desc: "Macro insights & thesis" },
+                  { label: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", desc: "Portfolio rebalance report" },
+                ].map(l => <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: C.card, border: `1px solid ${C.border}`, marginBottom: 8, color: C.t1, textDecoration: "none" }}><div><div style={{ fontSize: 13, fontWeight: 700 }}>{l.label}</div><div style={{ fontSize: 10, color: C.t3 }}>{l.desc}</div></div><span style={{ color: C.accent, fontSize: 12 }}>→</span></a>)}
+              </div>)}
+              {tDrawer === "settings" && (<div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Settings</div>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Theme</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => toggleTheme(v)} style={{ flex: 1, padding: "8px 0", border: `1px solid ${theme === v ? C.borderActive : C.border}`, background: theme === v ? C.accentSoft : "transparent", color: theme === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Layout</div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => { setLayoutMode(v); localStorage.setItem("iown_layout", v); if (v === "classic") setTDrawer(null); }} style={{ flex: 1, padding: "8px 0", border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`, background: layoutMode === v ? C.accentSoft : "transparent", color: layoutMode === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>)}
+            </div>
+          </div>
+        ) : (<>
         {/* ── CENTER: CHART ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
           {(() => {
@@ -3061,6 +3184,7 @@ Instructions:
           </div>
         </div>
 
+        </>)}
         {/* ── SECTION TABS ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", gap: 0, borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
           {[
@@ -3072,11 +3196,11 @@ Instructions:
             { id: "briefs", label: "Briefs" },
             { id: "settings", label: "Settings" },
           ].map(t => (
-            <button key={t.id} onClick={() => { setTDrawer(t.id); setTab(t.id); }} style={{
+            <button key={t.id} onClick={() => setTDrawer(tDrawer === t.id ? null : t.id)} style={{
               flex: 1, padding: "6px 0", fontSize: 10, fontWeight: 700, fontFamily: "inherit",
-              background: "transparent",
+              background: tDrawer === t.id ? C.accentSoft : "transparent",
               border: "none", borderRight: `1px solid ${C.border}`,
-              color: C.t4, cursor: "pointer",
+              color: tDrawer === t.id ? C.accent : C.t4, cursor: "pointer",
               textTransform: "uppercase", letterSpacing: 0.5,
             }}>{t.label}</button>
           ))}
@@ -3113,14 +3237,6 @@ Instructions:
 
   return (
     <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto", fontFamily: theme === "terminal" ? "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace" : undefined, letterSpacing: theme === "terminal" ? "-0.2px" : undefined, fontSize: theme === "terminal" ? "13px" : undefined }}>
-
-      {/* Back to Terminal floating button */}
-      {layoutMode === "terminal" && tDrawer && isDesktop && (
-        <button onClick={() => { setTDrawer(null); setTab("home"); }} style={{ position: "fixed", top: 12, right: 16, zIndex: 10000, padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.accent}`, background: C.accent, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-          Back to Terminal
-        </button>
-      )}
 
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
