@@ -918,6 +918,9 @@ Instructions:
   const [profileInitTab, setProfileInitTab] = useState("overview");
   const [chartsActiveSym, setChartsActiveSym] = useState(null); // for Charts tab
   const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
+  const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem("iown_layout") || "classic");
+  const [terminalActiveSym, setTerminalActiveSym] = useState("SPY");
+  const [terminalSleeve, setTerminalSleeve] = useState("dividend");
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -7686,6 +7689,21 @@ Instructions:
                   color: localStorage.getItem("iown_theme_locked") ? C.t3 : C.t1, fontSize: 12, fontWeight: 600,
                   cursor: "pointer", fontFamily: "inherit",
                 }}>Auto</button>
+              </div>
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 6 }}>Layout</div>
+                <div style={{ fontSize: 11, color: C.t4, marginBottom: 8 }}>Terminal mode shows a multi-panel grid (desktop only)</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
+                    <button key={v} onClick={() => { setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} }} style={{
+                      flex: 1, padding: "10px 0", borderRadius: 10,
+                      border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`,
+                      background: layoutMode === v ? C.accentSoft : "transparent",
+                      color: layoutMode === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}>{l}</button>
+                  ))}
+                </div>
               </div>
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
