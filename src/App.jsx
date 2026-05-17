@@ -2382,7 +2382,7 @@ Instructions:
 
   // Fetch screener manifest on first visit
   useEffect(() => {
-    if (tab !== "screener" || screenerFetched.current || screenerData.length) return;
+    if ((tab !== "screener" && tDrawer !== "screener") || screenerFetched.current || screenerData.length) return;
     screenerFetched.current = true;
     fetch("https://richacarson.github.io/Stock-Screener/manifest.json")
       .then(r => r.json())
@@ -2394,11 +2394,11 @@ Instructions:
         }
       })
       .catch(() => {});
-  }, [tab]);
+  }, [tab, tDrawer]);
 
   // Fetch opportunities on first visit
   useEffect(() => {
-    if (tab !== "opportunities" || oppFetched.current || opportunities.length) return;
+    if ((tab !== "opportunities" && tDrawer !== "opportunities") || oppFetched.current || opportunities.length) return;
     oppFetched.current = true;
     const ids = ["ai-power-bottleneck","ai-optical-interconnects","ai-cybersecurity-demand","copper-datacenter-demand","aluminum-supply-shock","iran-ammonia-disruption","rare-earth-magnet-independence","us-ethane-polymer-windfall"];
     Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null)))
@@ -2407,7 +2407,7 @@ Instructions:
         if (b.conviction === "High" && a.conviction !== "High") return 1;
         return (b.date_identified || "").localeCompare(a.date_identified || "");
       })));
-  }, [tab]);
+  }, [tab, tDrawer]);
 
   const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
@@ -2841,27 +2841,48 @@ Instructions:
                 </div>
               </div>)}
               {tDrawer === "performance" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Performance</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-                  {["dividend", "growth"].map(k => { const sc = sleeveActualDay(k); return (
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Portfolio Performance</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+                  {["dividend", "growth", "fci100", "fciValues"].map(k => { const sc = sleeveActualDay(k); const syms = sleeves[k]?.symbols || []; return (
                     <div key={k} style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{sleeves[k]?.name}</div>
-                      <div style={{ fontSize: 22, fontWeight: 900, color: sc >= 0 ? C.up : C.dn }}>{sc != null ? pct(sc) : "—"}</div>
-                      <div style={{ fontSize: 10, color: C.t4 }}>Day change</div>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{sleeves[k]?.name || k}</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4 }}>{sc != null ? pct(sc) : "—"}</div>
+                      <div style={{ fontSize: 10, color: C.t4 }}>{syms.length} holdings · Day change</div>
                     </div>
                   ); })}
                 </div>
-                <div style={{ fontSize: 11, color: C.t3, marginTop: 12 }}>Full performance charts, attribution, and benchmarks available in the Performance tab.</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.t1, margin: "16px 0 8px" }}>Top Movers Today</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6 }}>
+                  {(() => { const allSyms = [...new Set(Object.values(sleeves).flatMap(s => s.symbols || []))]; return allSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return { sym, chg: c, price: q?.p }; }).filter(s => s.chg != null).sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg)).slice(0, 30).map(s => (
+                    <div key={s.sym} onClick={() => { setTerminalActiveSym(s.sym); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: 11 }}>
+                      <span style={{ fontWeight: 700, color: C.t1 }}>{s.sym}</span>
+                      <span style={{ fontWeight: 600, color: s.chg >= 0 ? C.up : C.dn }}>{pct(s.chg)}</span>
+                    </div>
+                  )); })()}
+                </div>
               </div>)}
               {tDrawer === "metrics" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Key Metrics</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
-                  {tSleeveSyms.slice(0, 20).map(sym => { const f = fundamentals[sym]; const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const chg = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return (
-                    <div key={sym} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "8px 10px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{sym}</span><span style={{ fontSize: 11, fontWeight: 600, color: chg >= 0 ? C.up : C.dn }}>{chg != null ? pct(chg) : "—"}</span></div>
-                      {f && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>P/E {f.pe?.toFixed(1) || "—"} · Div {f.dividendYield ? (f.dividendYield * 100).toFixed(1) + "%" : "—"}</div>}
-                    </div>
-                  ); })}
+                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Holdings Metrics — {sleeves[tChartSleeve]?.name || "All"}</div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                      {["Ticker", "Price", "Day", "P/E", "Div Yield", "52W H", "52W L", "Sector"].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: h === "Ticker" || h === "Sector" ? "left" : "right", color: C.t4, fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{h}</th>)}
+                    </tr></thead>
+                    <tbody>
+                      {(sleeves[tChartSleeve]?.symbols || []).map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; const f = fundamentals[sym]; return (
+                        <tr key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                          <td style={{ padding: "5px 8px", fontWeight: 700, color: C.t1 }}>{sym}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: 600, color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4, fontVariantNumeric: "tabular-nums" }}>{c != null ? pct(c) : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t2 }}>{f?.pe ? f.pe.toFixed(1) : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: f?.dividendYield ? C.up : C.t4 }}>{f?.dividendYield ? `${(f.dividendYield * 100).toFixed(2)}%` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.["52WeekHigh"] ? `$${f["52WeekHigh"].toFixed(0)}` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.["52WeekLow"] ? `$${f["52WeekLow"].toFixed(0)}` : "—"}</td>
+                          <td style={{ padding: "5px 8px", color: C.t4, fontSize: 10, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f?.sector || "—"}</td>
+                        </tr>
+                      ); })}
+                    </tbody>
+                  </table>
                 </div>
               </div>)}
               {tDrawer === "briefs" && (<div>
