@@ -118,12 +118,12 @@ const LIGHT = {
   shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
 };
 const TERMINAL = {
-  bg: "#000000", surface: "#0A0A0A", card: "#111111", cardHover: "#1A1A1A", elevated: "#141414",
-  border: "rgba(255,160,0,0.12)", borderHover: "rgba(255,160,0,0.22)", borderActive: "rgba(255,160,0,0.40)",
-  t1: "#FF9900", t2: "#CC7A00", t3: "#996600", t4: "#664400",
-  up: "#00FF00", upSoft: "#00FF0018", upGlow: "#00FF0030",
-  dn: "#FF3333", dnSoft: "#FF333318", dnGlow: "#FF333030",
-  accent: "#FF9900", accentSoft: "rgba(255,153,0,0.10)", accentGlow: "rgba(255,153,0,0.25)",
+  bg: "#0B0E14", surface: "#0F1219", card: "#13171F", cardHover: "#1A1F2B", elevated: "#161B25",
+  border: "rgba(60,126,255,0.12)", borderHover: "rgba(60,126,255,0.22)", borderActive: "rgba(251,139,30,0.50)",
+  t1: "#E8EAED", t2: "#A0A8B4", t3: "#6B7280", t4: "#3D4654",
+  up: "#4AF6C3", upSoft: "#4AF6C318", upGlow: "#4AF6C330",
+  dn: "#FF433D", dnSoft: "#FF433D18", dnGlow: "#FF433D30",
+  accent: "#FB8B1E", accentSoft: "rgba(251,139,30,0.12)", accentGlow: "rgba(251,139,30,0.30)",
   shadow: "none",
   isTerminal: true,
 };
