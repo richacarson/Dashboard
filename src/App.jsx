@@ -914,6 +914,8 @@ Instructions:
   const [screenerSearch, setScreenerSearch] = useState("");
   const [screenerTypeFilter, setScreenerTypeFilter] = useState("All"); // "All" | "Dividend" | "Growth"
   const [screenerRecFilter, setScreenerRecFilter] = useState("All"); // "All" | "BUY" | "HOLD" | "WATCH" | "SELL"
+  const screenerListRef = useRef(null);
+  const [scrScrollTop, setScrScrollTop] = useState(0);
   const [screenerDetail, setScreenerDetail] = useState(null); // full report object
   const [screenerDetailLoading, setScreenerDetailLoading] = useState(false);
   const screenerFetched = useRef(false);
@@ -7987,8 +7989,6 @@ Instructions:
               {/* List */}
               {(() => {
                 const ITEM_H = 68;
-                const screenerListRef = React.useRef(null);
-                const [scrScrollTop, setScrScrollTop] = React.useState(0);
                 return (
               <div ref={screenerListRef} onScroll={e => setScrScrollTop(e.target.scrollTop)} style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
                 {!screenerData.length ? (
