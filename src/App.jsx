@@ -2810,16 +2810,21 @@ Instructions:
                   let bp = null;
                   for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
                   if (!bp) bp = prices[prices.length - 1][1];
-                  const bPts = [];
-                  let pi = 0;
+                  const bCandles = [];
+                  let pi = 0, prevVal = 0;
                   for (let i = 1; i < filtered.length; i++) {
                     while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
-                    bPts.push(((prices[pi][1] / bp) - 1) * 100);
+                    const close = ((prices[pi][1] / bp) - 1) * 100;
+                    const open = prevVal;
+                    const body = Math.abs(close - open);
+                    const wick = body * 0.25 + 0.03;
+                    bCandles.push({ o: open, c: close, h: Math.max(open, close) + wick, l: Math.min(open, close) - wick });
+                    prevVal = close;
                   }
                   const liveQ = bmQuotes[sym];
-                  if (liveQ?.p && bPts.length) bPts[bPts.length - 1] = ((liveQ.p / bp) - 1) * 100;
-                  bmLines[sym] = bPts;
-                  allVals.push(...bPts);
+                  if (liveQ?.p && bCandles.length) { const lv = ((liveQ.p / bp) - 1) * 100; const last = bCandles[bCandles.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
+                  bmLines[sym] = bCandles;
+                  allVals.push(...bCandles.flatMap(c => [c.h, c.l]));
                 });
                 const minV = Math.min(...allVals), maxV = Math.max(...allVals);
                 const range = maxV - minV || 1;
@@ -2834,9 +2839,14 @@ Instructions:
                       <rect x={0} y={0} width={W} height={H} fill={C.bg} />
                       {[...Array(5)].map((_, i) => { const v = minV + (range * i / 4); const yp = y(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={W - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
                       <line x1={PAD.left} y1={y(0)} x2={W - PAD.right} y2={y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
-                      {/* Benchmark lines */}
-                      {Object.entries(bmLines).map(([sym, data]) => <path key={sym} d={data.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ")} fill="none" stroke={bmColors[sym]} strokeWidth={1.5} opacity={0.6} />)}
-                      {/* Candlesticks */}
+                      {/* Benchmark candles (narrower, behind portfolio) */}
+                      {Object.entries(bmLines).map(([sym, bCandles]) => { const color = bmColors[sym]; const bCW = Math.max(1, cW * 0.5); return bCandles.map((c, i) => { const bull = c.c >= c.o; return (
+                        <g key={`${sym}-${i}`} opacity={0.55}>
+                          <line x1={x(i)} y1={y(c.h)} x2={x(i)} y2={y(c.l)} stroke={color} strokeWidth={0.5} />
+                          <rect x={x(i) - bCW / 2 + (sym === "SPY" ? -cW * 0.4 : sym === "DIA" ? cW * 0.4 : 0)} y={y(Math.max(c.o, c.c))} width={bCW} height={Math.max(0.5, y(Math.min(c.o, c.c)) - y(Math.max(c.o, c.c)))} fill={bull ? color : "transparent"} stroke={color} strokeWidth={0.5} />
+                        </g>
+                      ); }); })}
+                      {/* Portfolio candles (on top) */}
                       {candles.map((c, i) => { const bullish = c.c >= c.o; const color = bullish ? C.up : C.dn; return (
                         <g key={i}>
                           <line x1={x(i)} y1={y(c.h)} x2={x(i)} y2={y(c.l)} stroke={color} strokeWidth={1} />
@@ -2844,7 +2854,7 @@ Instructions:
                         </g>
                       ); })}
                       <text x={PAD.left + 4} y={PAD.top + 14} fill={C.t1} fontSize={14} fontWeight={800} fontFamily="monospace">DIVIDEND YTD {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</text>
-                      {Object.entries(bmLines).map(([sym, data], i) => { const lv = data[data.length - 1]; return <text key={sym} x={PAD.left + 4} y={PAD.top + 30 + i * 14} fill={bmColors[sym]} fontSize={11} fontFamily="monospace">{sym} {lv >= 0 ? "+" : ""}{lv?.toFixed(2)}%</text>; })}
+                      {Object.entries(bmLines).map(([sym, bCandles], i) => { const lv = bCandles[bCandles.length - 1]?.c; return <text key={sym} x={PAD.left + 4} y={PAD.top + 30 + i * 14} fill={bmColors[sym]} fontSize={11} fontFamily="monospace">{sym} {lv >= 0 ? "+" : ""}{lv?.toFixed(2)}%</text>; })}
                     </svg>
                   </div>
                 );
