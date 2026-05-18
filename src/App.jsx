@@ -111,7 +111,7 @@ const DARK = {
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
-  bg: "#F4F4F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#EAEAE5", elevated: "#FFFFFF",
+  bg: "#EFEEE7", surface: "#FAFAF6", card: "#FAFAF6", cardHover: "#F2F1EB", elevated: "#FAFAF6",
   border: "rgba(25,22,53,0.12)", borderHover: "rgba(25,22,53,0.22)", borderActive: "rgba(25,22,53,0.40)",
   t1: "#191635", t2: "#3D3859", t3: "#6E6A82", t4: "#9E9AAE",
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
@@ -540,7 +540,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <iframe
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "F4F4F0"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "EFEEE7"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
             style={{ flex: 1, width: "100%", border: "none", display: "block" }}
             title={`${symbol} Chart`}
             sandbox="allow-scripts allow-same-origin allow-popups"
@@ -2449,7 +2449,7 @@ Instructions:
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(252,212,50,0.08) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
-          <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
+          <img src={theme !== "light" ? "paradiem-logo-dark.png?v=5" : "paradiem-logo.png?v=5"} alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
@@ -2468,7 +2468,7 @@ Instructions:
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
-          <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
+          <img src={theme !== "light" ? "paradiem-logo-dark.png?v=5" : "paradiem-logo.png?v=5"} alt="Paradiem" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
           <div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
         </div>
       </div>
@@ -3272,7 +3272,7 @@ Instructions:
           display: "flex", flexDirection: "column",
         }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.navBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src="paradiem-logo-dark.png" alt="Paradiem" style={{ width: "80%", height: "auto" }} />
+            <img src="paradiem-logo-dark.png?v=5" alt="Paradiem" style={{ width: "80%", height: "auto" }} />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
@@ -5026,7 +5026,7 @@ Instructions:
                   const brandGreen = "191635";
                   const headerBg = "191635";
                   const headerText = "FCD432";
-                  const altRowBg = "F4F4F0";
+                  const altRowBg = "EFEEE7";
                   const greenText = "16A34A";
                   const redText = "DC2626";
                   const borderColor = "E5DFD0";
@@ -5876,7 +5876,7 @@ Instructions:
             </div>
           );
 
-          const chartBg = isDark ? "0B0820" : "F4F4F0";
+          const chartBg = isDark ? "0B0820" : "EFEEE7";
           const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`;
 
           return (
@@ -8805,7 +8805,7 @@ Instructions:
           }}>
             <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.navBorder}` }}>
-              <img src="paradiem-logo-dark.png" alt="Paradiem" style={{ height: 36 }} />
+              <img src="paradiem-logo-dark.png?v=5" alt="Paradiem" style={{ height: 36 }} />
               <button onClick={() => setMoreMenu(false)} style={{
                 width: 32, height: 32, borderRadius: 16, background: C.navTextMuted + "30",
                 border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
@@ -8902,7 +8902,7 @@ function GS({ theme }) {
       ::-webkit-scrollbar-track { background: ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
-      body { background: ${isDark ? "#0B0820" : "#F4F4F0"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
+      body { background: ${isDark ? "#0B0820" : "#EFEEE7"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
