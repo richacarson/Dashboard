@@ -992,6 +992,75 @@ Instructions:
   const lockTheme = (t) => { setTheme(t); try { localStorage.setItem("iown_theme_locked", t); } catch {} };
   // Reset to auto (market-hours based)
   const resetThemeAuto = () => { try { localStorage.removeItem("iown_theme_locked"); } catch {} setTheme(getAutoTheme()); };
+
+  // Shared markdown renderer — used by Research and Opportunity detail
+  const renderMarkdown = (md) => {
+    if (!md) return null;
+    let text = md;
+    const fmMatch = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    if (fmMatch) text = text.slice(fmMatch[0].length).trim();
+    const lines = text.split("\n");
+    const elements = [];
+    let listItems = [];
+    const flushList = () => {
+      if (listItems.length > 0) {
+        elements.push(<ul key={`ul-${elements.length}`} style={{ margin: "12px 0", paddingLeft: 24, color: C.t2 }}>{listItems}</ul>);
+        listItems = [];
+      }
+    };
+    const renderInline = (text) => {
+      return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/).map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+        if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
+        if (part.startsWith("`") && part.endsWith("`")) return <code key={i} style={{ background: C.card, padding: "2px 6px", borderRadius: 4, fontSize: "0.9em" }}>{part.slice(1, -1)}</code>;
+        const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (linkMatch) return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: theme !== "light" ? "#60A5FA" : "#2563EB" }}>{linkMatch[1]}</a>;
+        return part;
+      });
+    };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        flushList();
+        const tableRows = [];
+        let j = i;
+        while (j < lines.length && lines[j].trim().startsWith("|") && lines[j].trim().endsWith("|")) {
+          tableRows.push(lines[j]);
+          j++;
+        }
+        if (tableRows.length >= 2) {
+          const parseRow = (row) => row.split("|").slice(1, -1).map(c => c.trim());
+          const headers = parseRow(tableRows[0]);
+          const dataStart = tableRows[1].replace(/[|\s-:]/g, "") === "" ? 2 : 1;
+          const tStyle = { borderCollapse: "collapse", width: "100%", fontSize: 13, margin: "12px 0" };
+          const thStyle = { textAlign: "left", padding: "8px 12px", borderBottom: `2px solid ${C.border}`, color: C.t1, fontWeight: 700, whiteSpace: "nowrap" };
+          const tdStyle = { padding: "8px 12px", borderBottom: `1px solid ${C.border}`, color: C.t2, lineHeight: 1.5 };
+          elements.push(
+            <div key={i} style={{ overflowX: "auto", margin: "12px 0" }}>
+              <table style={tStyle}>
+                <thead><tr>{headers.map((h, hi) => <th key={hi} style={thStyle}>{renderInline(h)}</th>)}</tr></thead>
+                <tbody>{tableRows.slice(dataStart).map((row, ri) => {
+                  const cells = parseRow(row);
+                  return <tr key={ri}>{cells.map((c, ci) => <td key={ci} style={tdStyle}>{renderInline(c)}</td>)}</tr>;
+                })}</tbody>
+              </table>
+            </div>
+          );
+          i = j - 1;
+          continue;
+        }
+      }
+      if (line.startsWith("# ")) { flushList(); elements.push(<h1 key={i} style={{ fontSize: 28, fontWeight: 800, color: C.t1, margin: "24px 0 12px" }}>{renderInline(line.slice(2))}</h1>); }
+      else if (line.startsWith("## ")) { flushList(); elements.push(<h2 key={i} style={{ fontSize: 22, fontWeight: 700, color: C.t1, margin: "20px 0 10px" }}>{renderInline(line.slice(3))}</h2>); }
+      else if (line.startsWith("### ")) { flushList(); elements.push(<h3 key={i} style={{ fontSize: 18, fontWeight: 700, color: C.t1, margin: "16px 0 8px" }}>{renderInline(line.slice(4))}</h3>); }
+      else if (line.startsWith("- ") || line.startsWith("* ")) { listItems.push(<li key={i} style={{ marginBottom: 6, lineHeight: 1.6 }}>{renderInline(line.slice(2))}</li>); }
+      else if (line.trim() === "") { flushList(); }
+      else if (line.startsWith("---")) { flushList(); elements.push(<hr key={i} style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: "20px 0" }} />); }
+      else { flushList(); elements.push(<p key={i} style={{ margin: "10px 0", lineHeight: 1.7, color: C.t2 }}>{renderInline(line)}</p>); }
+    }
+    flushList();
+    return elements;
+  };
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -5661,79 +5730,6 @@ Instructions:
 
         {/* ━━━ RESEARCH ━━━ */}
         {tab === "research" && (() => {
-          const renderMarkdown = (md) => {
-            if (!md) return null;
-            // Strip YAML frontmatter
-            let text = md;
-            const fmMatch = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-            if (fmMatch) text = text.slice(fmMatch[0].length).trim();
-            const lines = text.split("\n");
-            const elements = [];
-            let inList = false;
-            let listItems = [];
-            const flushList = () => {
-              if (listItems.length > 0) {
-                elements.push(<ul key={`ul-${elements.length}`} style={{ margin: "12px 0", paddingLeft: 24, color: C.t2 }}>{listItems}</ul>);
-                listItems = [];
-                inList = false;
-              }
-            };
-            const renderInline = (text) => {
-              // Bold, italic, inline code, links
-              return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/).map((part, i) => {
-                if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
-                if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
-                if (part.startsWith("`") && part.endsWith("`")) return <code key={i} style={{ background: C.card, padding: "2px 6px", borderRadius: 4, fontSize: "0.9em" }}>{part.slice(1, -1)}</code>;
-                const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-                if (linkMatch) return <a key={i} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: theme !== "light" ? "#60A5FA" : "#2563EB" }}>{linkMatch[1]}</a>;
-                return part;
-              });
-            };
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i];
-              // Table detection: line starts with |
-              if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
-                flushList();
-                const tableRows = [];
-                let j = i;
-                while (j < lines.length && lines[j].trim().startsWith("|") && lines[j].trim().endsWith("|")) {
-                  tableRows.push(lines[j]);
-                  j++;
-                }
-                if (tableRows.length >= 2) {
-                  const parseRow = (row) => row.split("|").slice(1, -1).map(c => c.trim());
-                  const headers = parseRow(tableRows[0]);
-                  // Skip separator row (|---|---|)
-                  const dataStart = tableRows[1].replace(/[|\s-:]/g, "") === "" ? 2 : 1;
-                  const tStyle = { borderCollapse: "collapse", width: "100%", fontSize: 13, margin: "12px 0" };
-                  const thStyle = { textAlign: "left", padding: "8px 12px", borderBottom: `2px solid ${C.border}`, color: C.t1, fontWeight: 700, whiteSpace: "nowrap" };
-                  const tdStyle = { padding: "8px 12px", borderBottom: `1px solid ${C.border}`, color: C.t2, lineHeight: 1.5 };
-                  elements.push(
-                    <div key={i} style={{ overflowX: "auto", margin: "12px 0" }}>
-                      <table style={tStyle}>
-                        <thead><tr>{headers.map((h, hi) => <th key={hi} style={thStyle}>{renderInline(h)}</th>)}</tr></thead>
-                        <tbody>{tableRows.slice(dataStart).map((row, ri) => {
-                          const cells = parseRow(row);
-                          return <tr key={ri}>{cells.map((c, ci) => <td key={ci} style={tdStyle}>{renderInline(c)}</td>)}</tr>;
-                        })}</tbody>
-                      </table>
-                    </div>
-                  );
-                  i = j - 1; // skip processed table rows
-                  continue;
-                }
-              }
-              if (line.startsWith("# ")) { flushList(); elements.push(<h1 key={i} style={{ fontSize: 28, fontWeight: 800, color: C.t1, margin: "24px 0 12px" }}>{renderInline(line.slice(2))}</h1>); }
-              else if (line.startsWith("## ")) { flushList(); elements.push(<h2 key={i} style={{ fontSize: 22, fontWeight: 700, color: C.t1, margin: "20px 0 10px" }}>{renderInline(line.slice(3))}</h2>); }
-              else if (line.startsWith("### ")) { flushList(); elements.push(<h3 key={i} style={{ fontSize: 18, fontWeight: 700, color: C.t1, margin: "16px 0 8px" }}>{renderInline(line.slice(4))}</h3>); }
-              else if (line.startsWith("- ") || line.startsWith("* ")) { inList = true; listItems.push(<li key={i} style={{ marginBottom: 6, lineHeight: 1.6 }}>{renderInline(line.slice(2))}</li>); }
-              else if (line.trim() === "") { flushList(); }
-              else if (line.startsWith("---")) { flushList(); elements.push(<hr key={i} style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: "20px 0" }} />); }
-              else { flushList(); elements.push(<p key={i} style={{ margin: "10px 0", lineHeight: 1.7, color: C.t2 }}>{renderInline(line)}</p>); }
-            }
-            flushList();
-            return elements;
-          };
 
           const activeReport = researchReports.find(r => r.id === researchView);
 
@@ -7144,11 +7140,20 @@ Instructions:
                 {oppDetail.timeframe && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.timeframe}</span>}
               </div>
 
+              {oppDetail.summary && <div style={{ fontSize: 15, color: C.t2, lineHeight: 1.6, fontStyle: "italic", marginBottom: 20, paddingLeft: 12, borderLeft: `3px solid ${C.accent}` }}>{oppDetail.summary}</div>}
+
               <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Catalyst</div>
               <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.catalyst}</div>
 
               <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Investment Thesis</div>
               <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.thesis}</div>
+
+              {oppDetail.body_md && (<>
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Research Report</div>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: isDesktop ? "24px 32px" : "16px 18px", marginBottom: 20 }}>
+                  {renderMarkdown(oppDetail.body_md)}
+                </div>
+              </>)}
 
               <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.up}` }}>Ticker Analysis</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
@@ -7159,6 +7164,16 @@ Instructions:
                       <button onClick={(e) => { e.stopPropagation(); setOppDetail(null); setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 8, background: C.accentSoft, border: `1px solid ${C.borderActive}`, color: C.t1, cursor: "pointer", fontFamily: "inherit" }}>View Screener Report</button>
                     </div>
                     {oppDetail.ticker_rationale?.[t] && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7 }}>{oppDetail.ticker_rationale[t]}</div>}
+                    {oppDetail.key_metrics?.[t] && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                        {Object.entries(oppDetail.key_metrics[t]).map(([k, v]) => (
+                          <div key={k} style={{ fontSize: 11, color: C.t3, background: C.bg, padding: "3px 10px", borderRadius: 6, border: `1px solid ${C.border}` }}>
+                            <span style={{ color: C.t4 }}>{k}: </span>
+                            <span style={{ color: C.t2, fontWeight: 600 }}>{typeof v === "number" ? v.toLocaleString() : String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -7168,10 +7183,36 @@ Instructions:
                 {oppDetail.risks?.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.description || r.risk || JSON.stringify(r)}</li>)}
               </ol>
 
+              {oppDetail.invalidation?.length > 0 && (<>
+                <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #FBBF24` }}>What Would Change My Mind</div>
+                <ol style={{ margin: "8px 0 16px", paddingLeft: 28 }}>
+                  {oppDetail.invalidation.map((t, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof t === "string" ? t : t.trigger || t.description || JSON.stringify(t)}</li>)}
+                </ol>
+              </>)}
+
               {oppDetail.sources?.length > 0 && (<>
                 <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #B8860B` }}>Sources</div>
                 <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
-                  {oppDetail.sources.map((s, i) => <li key={i} style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginBottom: 8 }}>{typeof s === "string" ? s : s.title || s.source || JSON.stringify(s)}</li>)}
+                  {oppDetail.sources.map((s, i) => {
+                    if (typeof s === "string") {
+                      return <li key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.5, marginBottom: 8 }}>{s}</li>;
+                    }
+                    const linkColor = theme !== "light" ? "#60A5FA" : "#2563EB";
+                    return (
+                      <li key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.5, marginBottom: 10 }}>
+                        {s.url ? (
+                          <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: linkColor, fontWeight: 600, textDecoration: "none" }}>{s.title || s.url}</a>
+                        ) : (
+                          <span style={{ color: C.t2, fontWeight: 600 }}>{s.title || s.source || ""}</span>
+                        )}
+                        {(s.publisher || s.date) && (
+                          <span style={{ color: C.t4, marginLeft: 6 }}>
+                            — {[s.publisher, s.date].filter(Boolean).join(", ")}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ol>
               </>)}
 
