@@ -1,1 +1,208 @@
-["ai-cybersecurity-demand","ai-optical-interconnects","ai-power-bottleneck","aluminum-hormuz-supply-shock","aluminum-supply-shock","china-boeing-leap-engine-ramp","copper-datacenter-demand","dram-hbm-shortage","hbm-memory-shortage","iran-ammonia-disruption","medicare-glp1-bridge-launch","rare-earth-magnet-independence","silver-structural-deficit","us-ethane-polymer-windfall","us-lng-qatari-displacement"]
+[
+  {
+    "id": "ai-cybersecurity-demand",
+    "title": "AI-Driven Cybersecurity Spending Surge",
+    "pattern": "Secular Trend",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "FTNT"
+    ],
+    "date_identified": "2026-02-01",
+    "timeframe": "12-36 months",
+    "summary": "AI is expanding the cyber attack surface and driving a secular surge in enterprise cybersecurity budgets, benefiting platforms like Fortinet that combine custom silicon with AI-native threat detection."
+  },
+  {
+    "id": "ai-optical-interconnects",
+    "title": "AI Data Center Optical Interconnect Buildout",
+    "pattern": "Supply Chain",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "CRDO",
+      "MRVL"
+    ],
+    "date_identified": "2026-03-15",
+    "timeframe": "12-24 months",
+    "summary": "NVIDIA's next-gen GPU platforms require 1.6T+ optical interconnects, creating a multi-billion-dollar TAM for companies like Credo and Marvell that design the connectivity silicon and cables sitting in the critical path of every hyperscaler's AI infrastructure buildout."
+  },
+  {
+    "id": "ai-power-bottleneck",
+    "title": "AI Power Bottleneck \u2014 Gas Turbines and Nuclear Booked Solid",
+    "pattern": "Supply Chain",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "GEV",
+      "CEG"
+    ],
+    "date_identified": "2026-05-12",
+    "timeframe": "12-24 months",
+    "summary": "Hyperscaler AI capex of $700B in 2026 has created a power infrastructure bottleneck, with GE Vernova's gas turbine backlog sold out through 2030 at rising prices and Constellation Energy's 60 GW clean power fleet capturing premium hyperscaler PPAs."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "pattern": "Supply Shock",
+    "conviction": "On Our Radar",
+    "status": "active",
+    "tickers": [
+      "AA"
+    ],
+    "date_identified": "2026-05-12",
+    "timeframe": "3-6 months",
+    "summary": "The Strait of Hormuz closure has stranded ~3.5 million tonnes of Gulf aluminum supply \u2014 the largest base metals shock since 2000 \u2014 positioning Alcoa as the prime North American beneficiary with earnings doubling and a hidden data center land monetization catalyst."
+  },
+  {
+    "id": "aluminum-supply-shock",
+    "title": "Middle East Aluminum Supply Shock",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "AA",
+      "CENX"
+    ],
+    "date_identified": "2026-05-12",
+    "timeframe": "6-12 months",
+    "summary": "Iranian strikes on EGA and Alba removed ~3 million tonnes of annual aluminum capacity, spiking LME prices to $3,571/tonne and creating windfall margins for geographically insulated US producers Alcoa and Century Aluminum."
+  },
+  {
+    "id": "china-boeing-leap-engine-ramp",
+    "title": "China Reopens Boeing Order Book \u2014 LEAP Engine Supply Chain Squeeze",
+    "pattern": "Supply Chain",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "GE",
+      "HWM"
+    ],
+    "date_identified": "2026-05-14",
+    "timeframe": "12-24 months",
+    "summary": "China's 200-jet Boeing order tightens the LEAP engine supply chain at peak utilization, creating operating leverage for GE Aerospace (50% CFM owner) and Howmet Aerospace (2x content per MAX) that the market missed while selling Boeing on a smaller-than-expected headline number."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Data Center Copper Demand Supercycle",
+    "pattern": "Secular Trend",
+    "conviction": "On Our Radar",
+    "status": "active",
+    "tickers": [
+      "FCX"
+    ],
+    "date_identified": "2026-03-01",
+    "timeframe": "12-36 months",
+    "summary": "AI data centers consume 5-10x more copper per megawatt than traditional facilities, and the convergence of data center buildout, EV adoption, and grid electrification is creating a structural copper deficit that benefits the world's largest producer, Freeport-McMoRan."
+  },
+  {
+    "id": "dram-hbm-shortage",
+    "title": "Memory Supercycle \u2014 Most Severe DRAM Shortage in 15 Years",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "MU",
+      "SNDK"
+    ],
+    "date_identified": "2026-05-15",
+    "timeframe": "6-12 months",
+    "summary": "Goldman Sachs forecasts the most severe DRAM shortage in 15 years (4.9% supply deficit) as HBM consumes 23% of wafers, driving Micron to 81% gross margins and positioning both Micron and Sandisk for a multi-year capacity-constrained pricing regime unlike any previous memory cycle."
+  },
+  {
+    "id": "hbm-memory-shortage",
+    "title": "HBM Memory Sold Out Through 2026 \u2014 Pricing Power Returns to DRAM",
+    "pattern": "Supply Chain",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "MU"
+    ],
+    "date_identified": "2026-05-17",
+    "timeframe": "6-12 months",
+    "summary": "All three HBM producers are sold out through 2026 with shortages extending to 2027+, while Microsoft's $190B capex raise and $700B+ hyperscaler buildout create structural demand that the memory oligopoly cannot satisfy \u2014 giving Micron unprecedented pricing power at just 7.9x forward P/E."
+  },
+  {
+    "id": "iran-ammonia-disruption",
+    "title": "Iran Ammonia Supply Shock",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "NTR"
+    ],
+    "date_identified": "2026-04-01",
+    "timeframe": "3-6 months",
+    "summary": "The Iran conflict and Hormuz closure have removed ~30% of global ammonia exports and ~49% of urea exports from the market, spiking nitrogen fertilizer prices 35%+ and creating a windfall for Nutrien's low-cost North American nitrogen operations."
+  },
+  {
+    "id": "medicare-glp1-bridge-launch",
+    "title": "Medicare GLP-1 Bridge \u2014 $50 Copay Unlocks ~60M Seniors July 1",
+    "pattern": "Secular Trend",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "LLY",
+      "NVO"
+    ],
+    "date_identified": "2026-05-16",
+    "timeframe": "3-6 months",
+    "summary": "CMS's Medicare GLP-1 Bridge goes live July 1 with a $50/month copay for ~53M Part D beneficiaries, creating a step-function volume catalyst for Eli Lilly (Foundayo + Zepbound) and Novo Nordisk (Wegovy) that the sell-side has not yet modeled into Q3 estimates."
+  },
+  {
+    "id": "rare-earth-magnet-independence",
+    "title": "Rare Earth Magnet Supply Crisis \u2014 DoD-Anchored US Capacity Comes Online",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "MP"
+    ],
+    "date_identified": "2026-05-13",
+    "timeframe": "12-24 months",
+    "summary": "China's rare earth export controls have created persistent supply shortages, and MP Materials' DoD-anchored Independence magnet facility is the first Western mine-to-magnet operation to come online, with a 10-year off-take agreement and a path to 10,000 MT US capacity by 2028."
+  },
+  {
+    "id": "silver-structural-deficit",
+    "title": "Silver Structural Deficit \u2014 Sixth Consecutive Year, Largest on Record",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "WPM",
+      "PAAS",
+      "AG"
+    ],
+    "date_identified": "2026-05-15",
+    "timeframe": "12-24 months",
+    "summary": "Silver's sixth consecutive annual deficit (215 million ounces, the largest on record) has depleted above-ground stocks by 762M ounces since 2021, creating asymmetric price sensitivity to investment inflows and positioning primary silver producers WPM, PAAS, and AG for operating leverage at $70-100/oz pricing."
+  },
+  {
+    "id": "us-ethane-polymer-windfall",
+    "title": "US Ethane Crackers Capture Middle East Polymer Outage",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "LYB",
+      "DOW",
+      "WLK"
+    ],
+    "date_identified": "2026-05-12",
+    "timeframe": "3-6 months",
+    "summary": "The Hormuz blockade has disrupted ~50% of global polyethylene supply, spiking US PE prices from $0.30/lb to $0.60-0.70/lb and creating windfall margins for ethane-advantaged US crackers LyondellBasell, Dow, and Westlake running at 90%+ utilization."
+  },
+  {
+    "id": "us-lng-qatari-displacement",
+    "title": "US LNG Captures Multi-Year Qatari Supply Outage",
+    "pattern": "Supply Shock",
+    "conviction": "High Conviction",
+    "status": "active",
+    "tickers": [
+      "LNG",
+      "EQT"
+    ],
+    "date_identified": "2026-05-17",
+    "timeframe": "12-24 months",
+    "summary": "Qatar's LNG export complex (~20% of global supply) remains offline as the Strait of Hormuz crisis drives a structural reshoring of Asian LNG procurement toward US Gulf Coast exporters, with Cheniere signing multi-decade contracts and EQT benefiting from a permanent Henry Hub demand floor."
+  }
+]
