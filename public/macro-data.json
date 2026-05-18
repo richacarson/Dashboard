@@ -16,12 +16,12 @@
   "yield3M": 3.69,
   "yieldSpread": 0.5,
   "yieldDate": "05/15/2026",
-  "vix": 18.43,
+  "vix": 19.02,
   "spyPrice": 739.17,
-  "oilPrice": 101.02,
-  "oilChg": 4.23,
-  "goldPrice": 4561.9,
-  "goldChg": -2.63,
-  "updated": "2026-05-17T13:27:17Z",
+  "oilPrice": 102.14,
+  "oilChg": 1.11,
+  "goldPrice": 4553.0,
+  "goldChg": -0.2,
+  "updated": "2026-05-18T08:39:21Z",
   "spyPE": 27.5
 }
