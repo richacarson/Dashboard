@@ -375,6 +375,64 @@ jobs:
               except Exception as e:
                   print(f"Yahoo {key} failed: {e}", file=sys.stderr)
 
+          # 8. Yahoo Finance: Oil YoY % change (WTI 1-year history)
+          # Oil shocks transmit to earnings on a 3-4 quarter lag (Hamilton 1983, 2003; Kilian 2009).
+          # Every post-WWII US recession except 2020 was preceded by a significant oil price spike.
+          try:
+              d = fetch('https://query1.finance.yahoo.com/v8/finance/chart/CL=F?range=1y&interval=1d')
+              if d and d.get('chart', {}).get('result'):
+                  res = d['chart']['result'][0]
+                  closes = res.get('indicators', {}).get('quote', [{}])[0].get('close', [])
+                  closes = [c for c in closes if c is not None]
+                  if len(closes) >= 200 and data.get('oilPrice'):
+                      yearAgo = closes[0]
+                      if yearAgo and yearAgo > 0:
+                          data['oilYoY'] = round((data['oilPrice'] / yearAgo - 1) * 100, 2)
+                          print(f"Oil YoY: {data['oilYoY']}% (year ago: ${yearAgo:.2f})")
+          except Exception as e:
+              print(f"Oil YoY failed: {e}", file=sys.stderr)
+
+          # 9. Yahoo Finance: SPY forward EPS (analyst expectations — leading earnings signal)
+          # Tracks the trend in analyst forward EPS estimates. Falling estimates precede recessions;
+          # current consensus has Q2 2026 +20.5% growth despite oil shock — exposing the disconnect.
+          try:
+              d = fetch('https://query1.finance.yahoo.com/v10/finance/quoteSummary/SPY?modules=defaultKeyStatistics,earnings')
+              if d and d.get('quoteSummary', {}).get('result'):
+                  stats = d['quoteSummary']['result'][0].get('defaultKeyStatistics', {})
+                  fwd = stats.get('forwardEps')
+                  ttm = stats.get('trailingEps')
+                  if isinstance(fwd, dict): fwd = fwd.get('raw')
+                  if isinstance(ttm, dict): ttm = ttm.get('raw')
+                  if fwd: data['spyEpsFwd'] = round(float(fwd), 2)
+                  if ttm: data['spyEpsTtm'] = round(float(ttm), 2)
+                  print(f"SPY EPS: fwd={data.get('spyEpsFwd')}, ttm={data.get('spyEpsTtm')}")
+          except Exception as e:
+              print(f"SPY EPS failed: {e}", file=sys.stderr)
+
+          # 10. Maintain rolling history of forward EPS to compute 90-day trend
+          # Only append once per day (workflow runs 7x/day)
+          if data.get('spyEpsFwd'):
+              try:
+                  with open('public/macro-data.json') as f:
+                      existing = json.loads(f.read())
+                  hist = existing.get('spyEpsFwdHist') or []
+              except:
+                  hist = []
+              today = datetime.utcnow().strftime('%Y-%m-%d')
+              if not hist or hist[-1].get('date') != today:
+                  hist.append({'date': today, 'val': data['spyEpsFwd']})
+              else:
+                  hist[-1]['val'] = data['spyEpsFwd']
+              # Trim to last 120 entries (~4 months of daily data)
+              hist = hist[-120:]
+              data['spyEpsFwdHist'] = hist
+              # Compute 90-day % change if we have enough history
+              if len(hist) >= 60:
+                  oldVal = hist[0]['val']
+                  if oldVal and oldVal > 0:
+                      data['epsFwdChg90d'] = round((data['spyEpsFwd'] / oldVal - 1) * 100, 2)
+                      print(f"EPS 90d trend: {data['epsFwdChg90d']}% over {len(hist)} days")
+
           data['updated'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
 
           # Merge with existing data (preserve fields that didn't update)

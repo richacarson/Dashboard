@@ -891,7 +891,6 @@ Instructions:
   const [researchReports, setResearchReports] = useState([]);
   const [researchView, setResearchView] = useState(null); // null = list, or report id
   const [researchContent, setResearchContent] = useState("");
-  const [researchOpenFolders, setResearchOpenFolders] = useState({}); // { category: true/false }
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
   const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "playbook", "screener", "opportunities", "settings"];
@@ -1551,6 +1550,10 @@ Instructions:
             if (d.claims != null) { results.claims = d.claims; results.claimsDate = d.claimsDate; results.claims4wk = d.claims4wk; results.claimsTrend = d.claimsTrend; }
             if (d.cfnai != null) { results.cfnai = d.cfnai; results.cfnaiDate = d.cfnaiDate; results.cfnai3mo = d.cfnai3mo; }
             if (d.sahmVal != null) { results.sahmVal = d.sahmVal; results.unrate = d.unrate; results.unrateDate = d.unrateDate; }
+            if (d.baa10y != null) { results.baa10y = d.baa10y; results.baa10yDate = d.baa10yDate; }
+            if (d.oilYoY != null) { results.oilYoY = d.oilYoY; results.oilPrice = d.oilPrice; }
+            if (d.spyEpsFwd != null) { results.spyEpsFwd = d.spyEpsFwd; results.spyEpsTtm = d.spyEpsTtm; results.epsFwdChg90d = d.epsFwdChg90d; results.epsHistLen = (d.spyEpsFwdHist || []).length; }
+            if (d.updated) results.updated = d.updated;
           }
         } catch {}
       })());
@@ -5774,16 +5777,7 @@ Instructions:
                       <div style={{ fontSize: 13 }}>Reports will appear here as they are published.</div>
                     </div>
                   ) : (() => {
-                    // Group reports by category into folders
-                    const grouped = {};
-                    researchReports.forEach(r => {
-                      const cat = r.category || "Uncategorized";
-                      if (!grouped[cat]) grouped[cat] = [];
-                      grouped[cat].push(r);
-                    });
-                    const categories = Object.keys(grouped);
-                    // If only one category, don't show folder UI — just list reports
-                    const showFolders = categories.length > 1 || (categories.length === 1 && grouped[categories[0]].length > 1);
+                    const sortedReports = [...researchReports].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
                     const openReport = (report) => {
                       setResearchView(report.id);
                       setResearchContent("");
@@ -5817,40 +5811,8 @@ Instructions:
                       </div>
                     );
                     return (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                        {categories.map(cat => {
-                          const reports = grouped[cat];
-                          const isOpen = researchOpenFolders[cat] === true; // default closed
-                          return showFolders ? (
-                            <div key={cat}>
-                              <div onClick={() => setResearchOpenFolders(prev => ({ ...prev, [cat]: !isOpen }))} style={{
-                                display: "flex", alignItems: "center", gap: 10, padding: "12px 16px",
-                                background: C.card, border: `1px solid ${C.border}`, borderRadius: 14,
-                                cursor: "pointer", marginBottom: isOpen ? 10 : 0,
-                              }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill={C.accent + "33"} stroke={C.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                  {isOpen ? <><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /><line x1="2" y1="10" x2="22" y2="10" /></> : <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />}
-                                </svg>
-                                <div style={{ flex: 1 }}>
-                                  <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{cat}</span>
-                                  <span style={{ fontSize: 12, color: C.t4, marginLeft: 8 }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
-                                </div>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
-                                  <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                              </div>
-                              {isOpen && (
-                                <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingLeft: isDesktop ? 16 : 8 }}>
-                                  {reports.map(r => <ReportCard key={r.id} report={r} />)}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div key={cat} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                              {reports.map(r => <ReportCard key={r.id} report={r} />)}
-                            </div>
-                          );
-                        })}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {sortedReports.map(r => <ReportCard key={r.id} report={r} />)}
                       </div>
                     );
                   })()}
@@ -6609,6 +6571,24 @@ Instructions:
                   factors.push({ name: "Sahm Rule", value: `${md.sahmVal.toFixed(2)}pp`, detail: `Unemployment: ${md.unrate?.toFixed(1)}% — triggers at 0.50pp — ${md.unrateDate}`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Sahm (2019), FRED UNRATE" });
                 }
 
+                // Factor 10: Oil Shock (WTI YoY) — every post-WWII US recession except 2020
+                // was preceded by a significant oil price spike. Transmits to earnings on a
+                // 3-4 quarter lag (Hamilton 1983, 2003; Kilian 2009).
+                if (md.oilYoY != null) {
+                  const score = interp(md.oilYoY, [[-20, 5], [-5, 10], [10, 18], [25, 32], [40, 50], [60, 68], [85, 82], [120, 92]]);
+                  factors.push({ name: "Oil Shock", value: `${md.oilYoY >= 0 ? "+" : ""}${md.oilYoY.toFixed(1)}% YoY`, detail: `WTI: $${md.oilPrice?.toFixed(2) || "—"} — 3-4 quarter lag to earnings`, score, weight: 5, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Hamilton (2003), Kilian (2009)" });
+                }
+
+                // Factor 11: Forward EPS Revisions — analyst capitulation precedes earnings recessions
+                // Falling forward estimates over 90 days signal analysts catching up to macro reality
+                if (md.epsFwdChg90d != null) {
+                  const score = interp(md.epsFwdChg90d, [[-8, 90], [-5, 75], [-3, 58], [-1, 42], [0, 30], [2, 18], [4, 10], [6, 5]]);
+                  factors.push({ name: "Forward EPS Trend", value: `${md.epsFwdChg90d >= 0 ? "+" : ""}${md.epsFwdChg90d.toFixed(1)}% (90d)`, detail: `SPY fwd EPS: $${md.spyEpsFwd?.toFixed(2) || "—"} vs ttm $${md.spyEpsTtm?.toFixed(2) || "—"} — falling = analyst capitulation`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Yahoo Finance (analyst consensus)" });
+                } else if (md.spyEpsFwd != null) {
+                  // Building history — show factor but flag as warming up
+                  factors.push({ name: "Forward EPS Trend", value: "Warming up", detail: `SPY fwd EPS: $${md.spyEpsFwd.toFixed(2)} — need ~60 days of history for trend (${md.epsHistLen || 0} so far)`, score: 30, weight: 7, color: "#FBBF24", citation: "Yahoo Finance" });
+                }
+
                 // Composite: weighted average + concordance bonus
                 const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
                 const baseComposite = totalWeight > 0 ? factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0) : null;
@@ -6676,6 +6656,8 @@ Instructions:
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Economic Activity (8%)</strong> — Chicago Fed National Activity Index (CFNAI), a weighted average of 85 monthly indicators covering production, employment, consumption, and housing. Zero = trend growth, below -0.7 = high recession probability. The 3-month moving average is used when available for stability.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Sahm Rule (7%)</strong> — 3-month average unemployment rate minus its 12-month low (Sahm, 2019). Triggers at 0.50 percentage points — has signaled every recession since 1950 with zero false positives. Currently at {md.sahmVal != null ? md.sahmVal.toFixed(2) : "—"}pp. This is the most reliable real-time recession indicator in existence.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (5%)</strong> — CBOE VIX Index. Low weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Oil Shock (5%)</strong> — Year-over-year change in WTI crude (front-month futures). Every post-WWII US recession except 2020 was preceded by a significant oil price spike (Hamilton 1983, 2003, 2011; Kilian 2009; Federal Reserve 2014). The signal transmits to corporate earnings with a 3-4 quarter lag — meaning today's oil price is a leading indicator for earnings 9-12 months out. Lower weight (5%) because the US is now a net energy exporter, blunting the historical transmission. Updated daily from Yahoo Finance.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Forward EPS Trend (7%)</strong> — 90-day percent change in SPY's forward 12-month earnings estimate (aggregated analyst consensus from Yahoo Finance). Bottom-up estimates are notoriously slow to adjust to macro regime shifts — analysts didn't catch the 2008 collapse until Q3 2008, and 2022 forward estimates were still rising into the bear market. When forward EPS estimates start falling, it means analysts are finally capitulating to the deteriorating macro picture, which historically coincides with — or slightly precedes — earnings recessions. Tracks rolling daily history; requires ~60 days of data to compute trend.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Concordance Bonus</strong> — When 3+ factors score above 50, a bonus of 5-15 points is added. Simultaneous stress across multiple indicators is disproportionately dangerous: the 2000 and 2007 crashes both had yield curve inversion + elevated valuations + credit stress simultaneously.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Post-Inversion Premium</strong> — When the yield curve has been inverted within the last 24 months and has since de-inverted, a decaying premium (up to +18pt) is added to the yield curve score. Academic research (Bauer & Mertens 2018, Engstrom & Sharpe 2019) shows recessions typically begin 6-18 months after de-inversion, not during inversion itself.</div>
                         <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide CI). Post-inversion premium uses a fixed de-inversion date (Oct 2024) and decays linearly — a simplification. No out-of-sample backtesting has been performed. This model estimates risk, not certainty — it cannot predict black swan events or novel shocks.</div>
