@@ -62,7 +62,8 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
-  { sym: "DIA", name: "DIA" },
+  { sym: "USO", name: "Oil" },
+  { sym: "GLD", name: "Gold" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
 const NON_IEX_BM = ["IUSG", "DVY"];
