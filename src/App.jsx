@@ -3268,7 +3268,7 @@ Instructions:
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
         <div style={{
-          width: 240, flexShrink: 0, position: "sticky", top: 0, height: "100dvh",
+          width: 240, position: "fixed", top: 0, bottom: 0, left: 0, zIndex: 50,
           background: C.nav, borderRight: `1px solid ${C.navBorder}`,
           display: "flex", flexDirection: "column",
         }}>
@@ -3300,7 +3300,7 @@ Instructions:
       )}
 
       {/* MAIN CONTENT AREA */}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flex: 1, minWidth: 0, marginLeft: isDesktop ? 240 : 0 }}>
 
       {/* MOBILE HEADER — hidden on desktop */}
       {!isDesktop && (
@@ -3810,7 +3810,7 @@ Instructions:
             <div style={{ paddingTop: 28 }}>
               <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Top Movers</div>
               <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: "0 16px" }}>
-                {coreSyms.filter(s => (sleeves.dividend?.symbols?.includes(s) || sleeves.growth?.symbols?.includes(s)) && chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 6).map((s, i, arr) => (
+                {coreSyms.filter(s => (sleeves.dividend?.symbols?.includes(s) || sleeves.growth?.symbols?.includes(s)) && chg(s) != null).sort((a, b) => Math.abs(chg(b)) - Math.abs(chg(a))).slice(0, 15).map((s, i, arr) => (
                   <div key={s}>
                     { renderTickerRow(s) }
                     {i < arr.length - 1 && <div style={{ height: 1, background: C.border }} />}
