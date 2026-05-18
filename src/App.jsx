@@ -109,7 +109,7 @@ const DARK = {
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
-  bg: "#F5F0E5", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#EFE9DA", elevated: "#FFFFFF",
+  bg: "#F4F4F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#EAEAE5", elevated: "#FFFFFF",
   border: "rgba(25,22,53,0.12)", borderHover: "rgba(25,22,53,0.22)", borderActive: "rgba(25,22,53,0.40)",
   t1: "#191635", t2: "#3D3859", t3: "#6E6A82", t4: "#9E9AAE",
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
@@ -534,7 +534,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <iframe
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "F5F0E5"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "F4F4F0"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
             style={{ flex: 1, width: "100%", border: "none", display: "block" }}
             title={`${symbol} Chart`}
             sandbox="allow-scripts allow-same-origin allow-popups"
@@ -5020,7 +5020,7 @@ Instructions:
                   const brandGreen = "191635";
                   const headerBg = "191635";
                   const headerText = "FCD432";
-                  const altRowBg = "F5F0E5";
+                  const altRowBg = "F4F4F0";
                   const greenText = "16A34A";
                   const redText = "DC2626";
                   const borderColor = "E5DFD0";
@@ -5870,7 +5870,7 @@ Instructions:
             </div>
           );
 
-          const chartBg = isDark ? "0B0820" : "F5F0E5";
+          const chartBg = isDark ? "0B0820" : "F4F4F0";
           const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`;
 
           return (
@@ -8896,7 +8896,7 @@ function GS({ theme }) {
       ::-webkit-scrollbar-track { background: ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
-      body { background: ${isDark ? "#0B0820" : "#F5F0E5"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
+      body { background: ${isDark ? "#0B0820" : "#F4F4F0"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
