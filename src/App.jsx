@@ -58,15 +58,15 @@ const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.
 const CORE_KEYS = ["dividend", "growth", "digital", "fci100", "fciValues"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
-  { sym: "IUSG", name: "IUSG" },
   { sym: "DVY", name: "DVY" },
+  { sym: "IUSG", name: "IUSG" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
+  { sym: "DIA", name: "DIA" },
   { sym: "GLD", name: "Gold" },
-  { sym: "^VIX", name: "VIX" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
-const NON_IEX_BM = ["IUSG", "DVY", "^VIX"];
+const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -197,8 +197,10 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
   }
   // Sort by absolute change (biggest blocks first) for treemap feel
   cells.sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg));
+  // Cap at 50 (5 rows × 10 cols)
+  const limited = cells.slice(0, 50);
 
-  const maxAbs = Math.max(...cells.map(c => Math.abs(c.chg)), 1);
+  const maxAbs = Math.max(...limited.map(c => Math.abs(c.chg)), 1);
 
   const getColor = (chg) => {
     const intensity = Math.min(Math.abs(chg) / Math.max(maxAbs, 2), 1);
@@ -216,15 +218,15 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
     return C.card;
   };
 
-  if (!cells.length) return null;
+  if (!limited.length) return null;
 
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
+      gridTemplateColumns: "repeat(10, 1fr)",
       gap: 3, borderRadius: 14, overflow: "hidden",
     }}>
-      {cells.map(cell => {
+      {limited.map(cell => {
         let lpTimer = null;
         return (
         <div key={cell.sym} 
