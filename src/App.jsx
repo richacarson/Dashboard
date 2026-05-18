@@ -62,11 +62,11 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
-  { sym: "USOIL", name: "Oil" },
   { sym: "GLD", name: "Gold" },
+  { sym: "^VIX", name: "VIX" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
-const NON_IEX_BM = ["IUSG", "DVY"];
+const NON_IEX_BM = ["IUSG", "DVY", "^VIX"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -1138,7 +1138,7 @@ Instructions:
       if (isFirstFetch && FH) {
         await Promise.all(NON_IEX_BM.map(async (s) => {
           try {
-            const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${s}&token=${FH}`);
+            const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(s)}&token=${FH}`);
             if (r.ok) {
               const q = await r.json();
               if (q.c) nq[s] = { p: q.c, t: new Date().toISOString() };
@@ -1814,7 +1814,7 @@ Instructions:
           const msgs = JSON.parse(evt.data);
           for (const msg of msgs) {
             if (msg.T === "success" && msg.msg === "authenticated") {
-              ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...BM_SYMS] }));
+              ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...IEX_BM] }));
             }
             if (msg.T === "t" && msg.S && msg.p) {
               // Update refs only — React state syncs on next poll cycle (every 1s)
@@ -1870,7 +1870,7 @@ Instructions:
     const batchQ = {}, batchB = {};
     for (const sym of NON_IEX_BM) {
       try {
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FH}`);
+        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${FH}`);
         if (!r.ok) continue;
         const q = await r.json();
         if (!q.c) continue;
@@ -3801,10 +3801,18 @@ Instructions:
             {Object.entries(sleeves).map(([k, sleeve]) => (
               <React.Fragment key={k}>{renderSleeve(k, sleeve)}</React.Fragment>
             ))}
+
+            {/* Heatmap — fills the space under Lists alongside Top Movers */}
+            {Object.keys(quotes).length > 0 && (
+              <div style={{ paddingTop: 28, paddingBottom: 20 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
+                <Heatmap sleeves={Object.fromEntries(["dividend","growth"].filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} onContext={(s, x, y) => setCtxMenu({ sym: s, x, y })} />
+              </div>
+            )}
               </div>
 
-              {/* Right column: Top Movers + Heatmap */}
-              <div style={{ position: isDesktop ? "sticky" : "static", top: isDesktop ? 80 : "auto", alignSelf: "start" }}>
+              {/* Right column: Top Movers */}
+              <div style={{ alignSelf: "start" }}>
 
             {/* Top Movers */}
             <div style={{ paddingTop: 28 }}>
@@ -3819,15 +3827,8 @@ Instructions:
               </div>
             </div>
 
-            {/* Heatmap */}
               </div>
             </div>
-            )}
-            {Object.keys(quotes).length > 0 && (
-              <div style={{ paddingTop: 28, paddingBottom: 20 }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Heatmap</div>
-                <Heatmap sleeves={Object.fromEntries(["dividend","growth"].filter(k => sleeves[k]).map(k => [k, sleeves[k]]))} chgFn={chg} namesFn={names} onTap={s => openStock(s)} onContext={(s, x, y) => setCtxMenu({ sym: s, x, y })} />
-              </div>
             )}
             {/* Add Transaction Modal */}
             {showTxModal && (
