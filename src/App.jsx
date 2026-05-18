@@ -1552,7 +1552,7 @@ Instructions:
             if (d.sahmVal != null) { results.sahmVal = d.sahmVal; results.unrate = d.unrate; results.unrateDate = d.unrateDate; }
             if (d.baa10y != null) { results.baa10y = d.baa10y; results.baa10yDate = d.baa10yDate; }
             if (d.oilYoY != null) { results.oilYoY = d.oilYoY; results.oilPrice = d.oilPrice; }
-            if (d.spyEpsFwd != null) { results.spyEpsFwd = d.spyEpsFwd; results.spyEpsTtm = d.spyEpsTtm; results.epsFwdChg90d = d.epsFwdChg90d; results.epsHistLen = (d.spyEpsFwdHist || []).length; }
+            if (d.spyEpsTtm != null) { results.spyEpsTtm = d.spyEpsTtm; results.epsChg90d = d.epsChg90d; results.epsHistLen = (d.spyEpsTtmHist || []).length; }
             if (d.updated) results.updated = d.updated;
           }
         } catch {}
@@ -6579,14 +6579,13 @@ Instructions:
                   factors.push({ name: "Oil Shock", value: `${md.oilYoY >= 0 ? "+" : ""}${md.oilYoY.toFixed(1)}% YoY`, detail: `WTI: $${md.oilPrice?.toFixed(2) || "—"} — 3-4 quarter lag to earnings`, score, weight: 5, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Hamilton (2003), Kilian (2009)" });
                 }
 
-                // Factor 11: Forward EPS Revisions — analyst capitulation precedes earnings recessions
-                // Falling forward estimates over 90 days signal analysts catching up to macro reality
-                if (md.epsFwdChg90d != null) {
-                  const score = interp(md.epsFwdChg90d, [[-8, 90], [-5, 75], [-3, 58], [-1, 42], [0, 30], [2, 18], [4, 10], [6, 5]]);
-                  factors.push({ name: "Forward EPS Trend", value: `${md.epsFwdChg90d >= 0 ? "+" : ""}${md.epsFwdChg90d.toFixed(1)}% (90d)`, detail: `SPY fwd EPS: $${md.spyEpsFwd?.toFixed(2) || "—"} vs ttm $${md.spyEpsTtm?.toFixed(2) || "—"} — falling = analyst capitulation`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Yahoo Finance (analyst consensus)" });
-                } else if (md.spyEpsFwd != null) {
-                  // Building history — show factor but flag as warming up
-                  factors.push({ name: "Forward EPS Trend", value: "Warming up", detail: `SPY fwd EPS: $${md.spyEpsFwd.toFixed(2)} — need ~60 days of history for trend (${md.epsHistLen || 0} so far)`, score: 30, weight: 7, color: "#FBBF24", citation: "Yahoo Finance" });
+                // Factor 11: SPY Trailing EPS Trend — falling trailing earnings = earnings recession in progress
+                // Derived from existing SPY price / P/E. Tracks 90-day change to flag earnings rolling over.
+                if (md.epsChg90d != null) {
+                  const score = interp(md.epsChg90d, [[-8, 90], [-5, 75], [-3, 58], [-1, 42], [0, 30], [2, 18], [4, 10], [6, 5]]);
+                  factors.push({ name: "EPS Trend", value: `${md.epsChg90d >= 0 ? "+" : ""}${md.epsChg90d.toFixed(1)}% (90d)`, detail: `SPY trailing EPS: $${md.spyEpsTtm?.toFixed(2) || "—"} — falling = earnings recession`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Derived from SPY price / trailing P/E" });
+                } else if (md.spyEpsTtm != null) {
+                  factors.push({ name: "EPS Trend", value: "Warming up", detail: `SPY trailing EPS: $${md.spyEpsTtm.toFixed(2)} — need ~60 days of history for trend (${md.epsHistLen || 0} so far)`, score: 30, weight: 7, color: "#FBBF24", citation: "Derived from SPY price / P/E" });
                 }
 
                 // Composite: weighted average + concordance bonus
@@ -6657,7 +6656,7 @@ Instructions:
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Sahm Rule (7%)</strong> — 3-month average unemployment rate minus its 12-month low (Sahm, 2019). Triggers at 0.50 percentage points — has signaled every recession since 1950 with zero false positives. Currently at {md.sahmVal != null ? md.sahmVal.toFixed(2) : "—"}pp. This is the most reliable real-time recession indicator in existence.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (5%)</strong> — CBOE VIX Index. Low weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Oil Shock (5%)</strong> — Year-over-year change in WTI crude (front-month futures). Every post-WWII US recession except 2020 was preceded by a significant oil price spike (Hamilton 1983, 2003, 2011; Kilian 2009; Federal Reserve 2014). The signal transmits to corporate earnings with a 3-4 quarter lag — meaning today's oil price is a leading indicator for earnings 9-12 months out. Lower weight (5%) because the US is now a net energy exporter, blunting the historical transmission. Updated daily from Yahoo Finance.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Forward EPS Trend (7%)</strong> — 90-day percent change in SPY's forward 12-month earnings estimate (aggregated analyst consensus from Yahoo Finance). Bottom-up estimates are notoriously slow to adjust to macro regime shifts — analysts didn't catch the 2008 collapse until Q3 2008, and 2022 forward estimates were still rising into the bear market. When forward EPS estimates start falling, it means analysts are finally capitulating to the deteriorating macro picture, which historically coincides with — or slightly precedes — earnings recessions. Tracks rolling daily history; requires ~60 days of data to compute trend.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>EPS Trend (7%)</strong> — 90-day percent change in SPY's trailing 12-month earnings, derived from the price and P/E we already track (EPS = price / P/E). Trailing EPS is a sum of the last four quarters, so it moves slowly — when it rolls over by more than 3% over 90 days, an earnings recession is already in progress. Less forward-looking than analyst estimates (which sit behind paid feeds like FactSet), but reliable and free. Tracks rolling daily history; requires ~60 days of data to compute the trend, after which the factor goes live.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Concordance Bonus</strong> — When 3+ factors score above 50, a bonus of 5-15 points is added. Simultaneous stress across multiple indicators is disproportionately dangerous: the 2000 and 2007 crashes both had yield curve inversion + elevated valuations + credit stress simultaneously.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Post-Inversion Premium</strong> — When the yield curve has been inverted within the last 24 months and has since de-inverted, a decaying premium (up to +18pt) is added to the yield curve score. Academic research (Bauer & Mertens 2018, Engstrom & Sharpe 2019) shows recessions typically begin 6-18 months after de-inversion, not during inversion itself.</div>
                         <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide CI). Post-inversion premium uses a fixed de-inversion date (Oct 2024) and decays linearly — a simplification. No out-of-sample backtesting has been performed. This model estimates risk, not certainty — it cannot predict black swan events or novel shocks.</div>
