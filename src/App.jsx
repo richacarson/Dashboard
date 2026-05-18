@@ -111,7 +111,7 @@ const DARK = {
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
-  bg: "#EFEEE7", surface: "#FAFAF6", card: "#FAFAF6", cardHover: "#F2F1EB", elevated: "#FAFAF6",
+  bg: "#EAE9E2", surface: "#F2F1EB", card: "#F2F1EB", cardHover: "#E6E5DE", elevated: "#F2F1EB",
   border: "rgba(25,22,53,0.12)", borderHover: "rgba(25,22,53,0.22)", borderActive: "rgba(25,22,53,0.40)",
   t1: "#191635", t2: "#3D3859", t3: "#6E6A82", t4: "#9E9AAE",
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
@@ -540,7 +540,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <iframe
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "EFEEE7"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "EAE9E2"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
             style={{ flex: 1, width: "100%", border: "none", display: "block" }}
             title={`${symbol} Chart`}
             sandbox="allow-scripts allow-same-origin allow-popups"
@@ -2701,17 +2701,17 @@ Instructions:
   };
 
   const navItems = [
-    { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
-    { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
-    { id: "metrics", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
-    { id: "charts", label: "Charts", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg> },
-    { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
-    { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" /><line x1="10" y1="8" x2="18" y2="8" /><line x1="10" y1="12" x2="18" y2="12" /><line x1="10" y1="16" x2="14" y2="16" /></svg> },
-    { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
-    { id: "playbook", label: "Playbook", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><path d="M12 6v7l3-2 3 2V6" /></svg> },
-    { id: "screener", label: "Screener", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
-    { id: "opportunities", label: "Opportunities", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/></svg> },
-    { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
+    { id: "home", label: "Home", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
+    { id: "performance", label: "Performance", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
+    { id: "metrics", label: "Metrics", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
+    { id: "charts", label: "Charts", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg> },
+    { id: "news", label: "News", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
+    { id: "briefs", label: "Briefs", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" /><line x1="10" y1="8" x2="18" y2="8" /><line x1="10" y1="12" x2="18" y2="12" /><line x1="10" y1="16" x2="14" y2="16" /></svg> },
+    { id: "research", label: "Research", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
+    { id: "playbook", label: "Playbook", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><path d="M12 6v7l3-2 3 2V6" /></svg> },
+    { id: "screener", label: "Screener", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
+    { id: "opportunities", label: "Opportunities", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? (onLight ? C.accentSoft : C.navAccentSoft) : "none"} stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/></svg> },
+    { id: "settings", label: "Settings", icon: (a, onLight) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? (onLight ? C.t1 : C.navText) : (onLight ? C.t4 : C.navTextMuted)} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -3307,7 +3307,7 @@ Instructions:
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: theme !== "light" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme !== "light" ? "rgba(11,8,32,0.88)" : "rgba(234,233,226,0.94)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -5026,7 +5026,7 @@ Instructions:
                   const brandGreen = "191635";
                   const headerBg = "191635";
                   const headerText = "FCD432";
-                  const altRowBg = "EFEEE7";
+                  const altRowBg = "EAE9E2";
                   const greenText = "16A34A";
                   const redText = "DC2626";
                   const borderColor = "E5DFD0";
@@ -5876,7 +5876,7 @@ Instructions:
             </div>
           );
 
-          const chartBg = isDark ? "0B0820" : "EFEEE7";
+          const chartBg = isDark ? "0B0820" : "EAE9E2";
           const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`;
 
           return (
@@ -8776,17 +8776,19 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: "rgba(25,22,53,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
-        borderTop: `1px solid ${C.navBorder}`, display: "flex", justifyContent: "space-around",
+        background: theme !== "light" ? "rgba(20,16,51,0.92)" : "rgba(242,241,235,0.94)",
+        backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+        borderTop: `2px solid ${C.accent}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
+        boxShadow: theme !== "light" ? "0 -4px 20px rgba(0,0,0,0.3)" : "0 -2px 12px rgba(25,22,53,0.08)",
       }}>
         {["home", "performance", "charts", "briefs", "metrics"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
           <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
             display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
           }}>
-            {t.icon(tab === t.id)}
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, color: tab === t.id ? C.navText : C.navTextMuted }}>{t.label}</span>
+            {t.icon(tab === t.id, theme === "light")}
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, color: tab === t.id ? (theme === "light" ? C.t1 : C.navText) : (theme === "light" ? C.t4 : C.navTextMuted) }}>{t.label}</span>
             <div style={{ width: tab === t.id ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)", boxShadow: tab === t.id ? `0 0 8px ${C.accentGlow}` : "none" }} />
           </button>
         ))}
@@ -8902,7 +8904,7 @@ function GS({ theme }) {
       ::-webkit-scrollbar-track { background: ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
-      body { background: ${isDark ? "#0B0820" : "#EFEEE7"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
+      body { background: ${isDark ? "#0B0820" : "#EAE9E2"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
