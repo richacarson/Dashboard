@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
-   IOWN PORTFOLIO COMMAND CENTER v3
+   PARADIEM COMMAND CENTER
    - Robinhood-style collapsible sleeve lists
    - Live news feed from Alpaca/Benzinga
    - Company names from /v2/assets
@@ -100,30 +100,30 @@ function getMarketStatus() {
 }
 
 const DARK = {
-  bg: "#0C1018", surface: "#121722", card: "#171D2A", cardHover: "#1E2536", elevated: "#232B3D",
-  border: "rgba(140,160,130,0.08)", borderHover: "rgba(140,160,130,0.16)", borderActive: "rgba(140,160,130,0.28)",
-  t1: "#EDF0E8", t2: "#B0BDA0", t3: "#7A8E68", t4: "#3D4A32",
+  bg: "#080A18", surface: "#0E1225", card: "#141830", cardHover: "#1A2040", elevated: "#1E2445",
+  border: "rgba(200,180,120,0.08)", borderHover: "rgba(200,180,120,0.16)", borderActive: "rgba(200,180,120,0.30)",
+  t1: "#E8EAF2", t2: "#A0A8C0", t3: "#6B7498", t4: "#3A4060",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
-  accent: "#8FA878", accentSoft: "rgba(143,168,120,0.10)", accentGlow: "rgba(143,168,120,0.25)",
+  accent: "#D4A832", accentSoft: "rgba(212,168,50,0.10)", accentGlow: "rgba(212,168,50,0.25)",
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
-  bg: "#F5F5F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#F0F2EC", elevated: "#FFFFFF",
-  border: "rgba(80,100,60,0.12)", borderHover: "rgba(80,100,60,0.22)", borderActive: "rgba(80,100,60,0.40)",
-  t1: "#1A2010", t2: "#3A4A28", t3: "#6E8450", t4: "#9DAF88",
+  bg: "#F5F4F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#F0EEE8", elevated: "#FFFFFF",
+  border: "rgba(26,29,59,0.12)", borderHover: "rgba(26,29,59,0.22)", borderActive: "rgba(26,29,59,0.40)",
+  t1: "#1A1D3B", t2: "#3A3F5C", t3: "#6B7498", t4: "#9BA2B8",
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
   dn: "#DC2626", dnSoft: "#DC262618", dnGlow: "#DC262630",
-  accent: "#4A6B25", accentSoft: "rgba(74,107,37,0.08)", accentGlow: "rgba(74,107,37,0.20)",
+  accent: "#B8932A", accentSoft: "rgba(184,147,42,0.08)", accentGlow: "rgba(184,147,42,0.20)",
   shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
 };
 const TERMINAL = {
-  bg: "#0B0E14", surface: "#0F1219", card: "#13171F", cardHover: "#1A1F2B", elevated: "#161B25",
-  border: "rgba(60,126,255,0.12)", borderHover: "rgba(60,126,255,0.22)", borderActive: "rgba(251,139,30,0.50)",
-  t1: "#E8EAED", t2: "#A0A8B4", t3: "#6B7280", t4: "#3D4654",
+  bg: "#0A0C18", surface: "#0F1220", card: "#131828", cardHover: "#1A2038", elevated: "#161C30",
+  border: "rgba(60,100,220,0.12)", borderHover: "rgba(60,100,220,0.22)", borderActive: "rgba(212,168,50,0.50)",
+  t1: "#E8EAF2", t2: "#A0A8C0", t3: "#6B7498", t4: "#3A4060",
   up: "#4AF6C3", upSoft: "#4AF6C318", upGlow: "#4AF6C330",
   dn: "#FF433D", dnSoft: "#FF433D18", dnGlow: "#FF433D30",
-  accent: "#FB8B1E", accentSoft: "rgba(251,139,30,0.12)", accentGlow: "rgba(251,139,30,0.30)",
+  accent: "#E8C840", accentSoft: "rgba(232,200,64,0.12)", accentGlow: "rgba(232,200,64,0.30)",
   shadow: "none",
   isTerminal: true,
 };
@@ -2443,14 +2443,14 @@ Instructions:
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
-          <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
+          <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
-            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(74,107,37,0.3)" }}>Continue</button>
+            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #D4A832, #B8932A)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(212,168,50,0.3)" }}>Continue</button>
             {codeErr && <div style={{ marginTop: 16, color: C.dn, fontSize: 13, fontWeight: 500, animation: "shake 0.4s" }}>Incorrect access code</div>}
           </div>
-          <div style={{ marginTop: 40, fontSize: 12, color: C.t4 }}>Authorized IOWN team members only</div>
+          <div style={{ marginTop: 40, fontSize: 12, color: C.t4 }}>Authorized Paradiem team members only</div>
         </div>
         <GS theme={theme} />
       </div>
@@ -2462,7 +2462,7 @@ Instructions:
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
-          <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
+          <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
           <div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
         </div>
       </div>
@@ -2483,7 +2483,7 @@ Instructions:
             <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="APCA-API-SECRET-KEY" style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 20, fontFamily: "inherit" }} />
             <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>GitHub Token <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional — for saving transactions)</span></label>
             <input type="password" value={ghToken} onChange={e => setGhToken(e.target.value)} placeholder="ghp_..." style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 28, fontFamily: "inherit" }} />
-            <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #4A6B25, #2D4A12)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(74,107,37,0.3)" }}>Connect</button>
+            <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #D4A832, #B8932A)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(212,168,50,0.3)" }}>Connect</button>
             {authErr && <div style={{ marginTop: 14, color: C.dn, fontSize: 13, fontWeight: 500, textAlign: "center" }}>{authErr}</div>}
           </div>
         </div>
@@ -3228,7 +3228,7 @@ Instructions:
 
         {/* ── BOTTOM STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderTop: `1px solid ${C.border}`, fontSize: 10 }}>
-          <span style={{ color: C.accent, fontWeight: 700 }}>IOWN TERMINAL</span>
+          <span style={{ color: C.accent, fontWeight: 700 }}>PARADIEM TERMINAL</span>
           <span style={{ color: C.t3 }}>{sleeves[terminalSleeve]?.name || ""} — {tSleeveSyms.length} stocks</span>
           <span style={{ color: C.t4 }}>{lastUp ? `Data: ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Loading..."}</span>
         </div>
@@ -3266,7 +3266,7 @@ Instructions:
           display: "flex", flexDirection: "column",
         }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ width: "80%", height: "auto" }} />
+            <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: "80%", height: "auto" }} />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
@@ -4285,7 +4285,7 @@ Instructions:
 
               return (
                 <>
-                  {renderEarningsSection("IOWN Holdings", iownEarnings)}
+                  {renderEarningsSection("Paradiem Holdings", iownEarnings)}
                   {!iownEarnings.length && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No holdings reporting earnings this week.</div>}
                 </>
               );
@@ -5013,7 +5013,7 @@ Instructions:
                   if (!window.ExcelJS) { alert("Could not load export library. Please try again."); return; }
 
                   const wb = new window.ExcelJS.Workbook();
-                  wb.creator = "IOWN Portfolio Dashboard";
+                  wb.creator = "Paradiem Portfolio Dashboard";
                   const ws = wb.addWorksheet(slName);
 
                   // Colors (Template A: Dark Executive)
@@ -5144,7 +5144,7 @@ Instructions:
                   // Download — mobile-friendly approach
                   const buf = await wb.xlsx.writeBuffer();
                   const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-                  const fileName = `IOWN_${slName}_Metrics_${new Date().toISOString().slice(0,10)}.xlsx`;
+                  const fileName = `Paradiem_${slName}_Metrics_${new Date().toISOString().slice(0,10)}.xlsx`;
                   // Use navigator.share on mobile if available, otherwise fallback to link click
                   if (navigator.share && /mobile|iphone|ipad|android/i.test(navigator.userAgent)) {
                     try {
@@ -7014,7 +7014,7 @@ Instructions:
                         { strategy: "Buy-and-Hold", result: "Baseline", problem: "No drawdown protection. Clients panic-sell at the bottom. A client who sells at -40% and waits 6 months to re-enter loses 15-30% of their recovery.", color: C.t3 },
                         { strategy: "Constant Cash (e.g. 10%)", result: "-70 bps/yr", problem: "Permanent drag. 10% cash × 7% equity premium = 70 bps/yr guaranteed underperformance, every year, forever. Over 30 years that's 23% less wealth.", color: C.dn },
                         { strategy: "Simple Trim (no decay)", result: "-9 bps/yr", problem: "Cash drag compounds in long bulls. The 1987-2000 bull (+582%) and 2009-2020 bull (+400%) each lasted 10+ years. Holding 8-12% cash through those erased all bear-market savings.", color: C.dn },
-                        { strategy: "IOWN Playbook", result: "+13.9 bps/yr", problem: "18-month time decay solves the long-bull problem. 3-tranche deployment (-25/-35/-50%) preserves reserves for deep bears. 100% non-loss rate across 93 years and 21 cycles.", color: C.up },
+                        { strategy: "Paradiem Playbook", result: "+13.9 bps/yr", problem: "18-month time decay solves the long-bull problem. 3-tranche deployment (-25/-35/-50%) preserves reserves for deep bears. 100% non-loss rate across 93 years and 21 cycles.", color: C.up },
                       ].map((s, i) => (
                         <div key={i} style={{ padding: "14px 16px", background: C.bg, borderRadius: 12, border: `1px solid ${i === 3 ? C.accent + "44" : C.border}` }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -7156,7 +7156,7 @@ Instructions:
                   <div style={{ fontSize: 40, marginBottom: 16 }}>🔗</div>
                   <div style={{ fontSize: 18, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Connect Redtail CRM</div>
                   <div style={{ fontSize: 13, color: C.t3, lineHeight: 1.6, maxWidth: 400, margin: "0 auto 20px" }}>
-                    Link your Redtail CRM to view contacts, tasks, and appointments directly in IOWN. You'll need a Redtail API key.
+                    Link your Redtail CRM to view contacts, tasks, and appointments directly in Paradiem. You'll need a Redtail API key.
                   </div>
                   <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, maxWidth: 420, margin: "0 auto", textAlign: "left" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Setup Instructions</div>
@@ -7966,7 +7966,7 @@ Instructions:
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 20, height: 3, borderRadius: 2, background: C.accent }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>IOWN {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>Paradiem {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</span>
                     </div>
                     {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -8413,7 +8413,7 @@ Instructions:
                       + `<p class="footer">Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</p></body></html>`;
                       const blob = new Blob([html], { type: "application/msword" });
                       const url = URL.createObjectURL(blob);
-                      const link = document.createElement("a"); link.href = url; link.download = `${a.ticker}_IOWN_Report.doc`; link.click();
+                      const link = document.createElement("a"); link.href = url; link.download = `${a.ticker}_Paradiem_Report.doc`; link.click();
                       URL.revokeObjectURL(url);
                     }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -8799,7 +8799,7 @@ Instructions:
           }}>
             <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.border}` }}>
-              <img src={theme !== "light" ? "iown-logo-dark.png" : "iown-logo.png"} alt="IOWN" style={{ height: 36 }} />
+              <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ height: 36 }} />
               <button onClick={() => setMoreMenu(false)} style={{
                 width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
                 border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
