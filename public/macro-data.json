@@ -18,10 +18,18 @@
   "yieldDate": "05/18/2026",
   "vix": 17.86,
   "spyPrice": 738.65,
-  "oilPrice": 101.8,
-  "oilChg": 0.77,
+  "oilPrice": 102.39,
+  "oilChg": -1.91,
   "goldPrice": 4564.4,
   "goldChg": 0.05,
-  "updated": "2026-05-18T20:21:47Z",
-  "spyPE": 27.5
+  "updated": "2026-05-18T23:59:14Z",
+  "spyPE": 27.5,
+  "oilYoY": 63.33,
+  "spyEpsTtm": 26.86,
+  "spyEpsTtmHist": [
+    {
+      "date": "2026-05-18",
+      "val": 26.86
+    }
+  ]
 }
