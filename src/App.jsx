@@ -106,6 +106,8 @@ const DARK = {
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
   accent: "#FCD432", accentSoft: "rgba(252,212,50,0.10)", accentGlow: "rgba(252,212,50,0.28)",
+  nav: "#141033", navText: "#F0EAD8", navTextDim: "#B5AB95", navTextMuted: "#7E7560",
+  navBorder: "rgba(252,212,50,0.10)", navAccentSoft: "rgba(252,212,50,0.12)",
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
@@ -115,6 +117,8 @@ const LIGHT = {
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
   dn: "#DC2626", dnSoft: "#DC262618", dnGlow: "#DC262630",
   accent: "#C9A015", accentSoft: "rgba(201,160,21,0.10)", accentGlow: "rgba(201,160,21,0.22)",
+  nav: "#191635", navText: "#F4F4F0", navTextDim: "#A8A3BD", navTextMuted: "#6E6A82",
+  navBorder: "rgba(244,244,240,0.10)", navAccentSoft: "rgba(252,212,50,0.18)",
   shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
 };
 const TERMINAL = {
@@ -124,6 +128,8 @@ const TERMINAL = {
   up: "#4AF6C3", upSoft: "#4AF6C318", upGlow: "#4AF6C330",
   dn: "#FF433D", dnSoft: "#FF433D18", dnGlow: "#FF433D30",
   accent: "#FCD432", accentSoft: "rgba(252,212,50,0.15)", accentGlow: "rgba(252,212,50,0.32)",
+  nav: "#100D2B", navText: "#FFF5D0", navTextDim: "#C0B292", navTextMuted: "#7A7158",
+  navBorder: "rgba(252,212,50,0.14)", navAccentSoft: "rgba(252,212,50,0.18)",
   shadow: "none",
   isTerminal: true,
 };
@@ -2695,17 +2701,17 @@ Instructions:
   };
 
   const navItems = [
-    { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
-    { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
-    { id: "metrics", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
-    { id: "charts", label: "Charts", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg> },
-    { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
-    { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" /><line x1="10" y1="8" x2="18" y2="8" /><line x1="10" y1="12" x2="18" y2="12" /><line x1="10" y1="16" x2="14" y2="16" /></svg> },
-    { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
-    { id: "playbook", label: "Playbook", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><path d="M12 6v7l3-2 3 2V6" /></svg> },
-    { id: "screener", label: "Screener", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
-    { id: "opportunities", label: "Opportunities", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.accentSoft : "none"} stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/></svg> },
-    { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.t1 : C.t4} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
+    { id: "home", label: "Home", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg> },
+    { id: "performance", label: "Performance", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg> },
+    { id: "metrics", label: "Metrics", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg> },
+    { id: "charts", label: "Charts", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17" /><polyline points="16 7 22 7 22 13" /></svg> },
+    { id: "news", label: "News", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" /><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" /></svg> },
+    { id: "briefs", label: "Briefs", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" /><line x1="10" y1="8" x2="18" y2="8" /><line x1="10" y1="12" x2="18" y2="12" /><line x1="10" y1="16" x2="14" y2="16" /></svg> },
+    { id: "research", label: "Research", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.578A1 1 0 005.598 22h12.804a1 1 0 00.878-1.422l-5.069-10.155A2 2 0 0114 9.527V2" /><path d="M8.5 2h7" /><path d="M7 16.5h10" /></svg> },
+    { id: "playbook", label: "Playbook", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><path d="M12 6v7l3-2 3 2V6" /></svg> },
+    { id: "screener", label: "Screener", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg> },
+    { id: "opportunities", label: "Opportunities", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill={a ? C.navAccentSoft : "none"} stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/></svg> },
+    { id: "settings", label: "Settings", icon: (a) => <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={a ? C.navText : C.navTextMuted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg> },
   ];
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -3262,32 +3268,32 @@ Instructions:
       {isDesktop && (
         <div style={{
           width: 240, flexShrink: 0, position: "sticky", top: 0, height: "100dvh",
-          background: C.surface, borderRight: `1px solid ${C.border}`,
+          background: C.nav, borderRight: `1px solid ${C.navBorder}`,
           display: "flex", flexDirection: "column",
         }}>
-          <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: "80%", height: "auto" }} />
+          <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.navBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src="paradiem-logo-dark.png" alt="Paradiem" style={{ width: "80%", height: "auto" }} />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
                 display: "flex", alignItems: "center", gap: 14, width: "100%",
-                padding: "14px 24px", background: tab === t.id ? C.accentSoft : "transparent",
+                padding: "14px 24px", background: tab === t.id ? C.navAccentSoft : "transparent",
                 border: "none", borderLeft: tab === t.id ? `3px solid ${C.accent}` : "3px solid transparent",
                 cursor: "pointer", transition: "all 0.15s",
               }}>
                 {t.icon(tab === t.id)}
-                <span style={{ fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.t1 : C.t3 }}>{t.label}</span>
+                <span style={{ fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.navText : C.navTextDim }}>{t.label}</span>
               </button>
             ))}
           </nav>
-          <div style={{ padding: "20px 24px", borderTop: `1px solid ${C.border}` }}>
+          <div style={{ padding: "20px 24px", borderTop: `1px solid ${C.navBorder}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}66` }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{marketStatus.label}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: C.navTextDim }}>{marketStatus.label}</span>
             </div>
-            <div data-last-updated style={{ fontSize: 11, color: C.t4 }}>{lastUp ? `Updated ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</div>
-            {loading && <div style={{ fontSize: 11, color: C.t3, marginTop: 4 }}>Refreshing…</div>}
+            <div data-last-updated style={{ fontSize: 11, color: C.navTextMuted }}>{lastUp ? `Updated ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</div>
+            {loading && <div style={{ fontSize: 11, color: C.navTextDim, marginTop: 4 }}>Refreshing…</div>}
           </div>
         </div>
       )}
@@ -8770,8 +8776,8 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: theme !== "light" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
-        borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
+        background: "rgba(25,22,53,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+        borderTop: `1px solid ${C.navBorder}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
         {["home", "performance", "charts", "briefs", "metrics"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
@@ -8780,7 +8786,7 @@ Instructions:
             padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer",
           }}>
             {t.icon(tab === t.id)}
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, color: tab === t.id ? C.t1 : C.t4 }}>{t.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, color: tab === t.id ? C.navText : C.navTextMuted }}>{t.label}</span>
             <div style={{ width: tab === t.id ? 4 : 0, height: 4, borderRadius: 2, background: C.accent, marginTop: -2, transition: "width 0.2s cubic-bezier(0.16,1,0.3,1)", boxShadow: tab === t.id ? `0 0 8px ${C.accentGlow}` : "none" }} />
           </button>
         ))}
@@ -8792,40 +8798,40 @@ Instructions:
           <div onClick={() => setMoreMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 9998, background: "rgba(0,0,0,0.5)" }} />
           <div style={{
             position: "fixed", top: 0, left: 0, bottom: 0, width: 280, zIndex: 9999,
-            background: C.surface, borderRight: `1px solid ${C.border}`,
+            background: C.nav, borderRight: `1px solid ${C.navBorder}`,
             display: "flex", flexDirection: "column",
             paddingTop: "calc(env(safe-area-inset-top, 20px) + 16px)",
             animation: "slideInLeft 0.25s cubic-bezier(0.16,1,0.3,1)",
           }}>
             <style>{`@keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.border}` }}>
-              <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ height: 36 }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 16px", borderBottom: `1px solid ${C.navBorder}` }}>
+              <img src="paradiem-logo-dark.png" alt="Paradiem" style={{ height: 36 }} />
               <button onClick={() => setMoreMenu(false)} style={{
-                width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
+                width: 32, height: 32, borderRadius: 16, background: C.navTextMuted + "30",
                 border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
               }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.navTextDim} strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
               </button>
             </div>
             <nav style={{ flex: 1, padding: "12px 0", overflowY: "auto" }}>
               {navItems.map(t => (
                 <button key={t.id} onClick={() => { handleTabTap(t.id); setMoreMenu(false); }} style={{
                   display: "flex", alignItems: "center", gap: 14, width: "100%",
-                  padding: "14px 24px", background: tab === t.id ? C.accentSoft : "transparent",
+                  padding: "14px 24px", background: tab === t.id ? C.navAccentSoft : "transparent",
                   border: "none", borderLeft: tab === t.id ? `3px solid ${C.accent}` : "3px solid transparent",
                   cursor: "pointer", transition: "all 0.15s", fontFamily: "inherit",
                 }}>
                   {t.icon(tab === t.id)}
-                  <span style={{ fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.t1 : C.t3 }}>{t.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? C.navText : C.navTextDim }}>{t.label}</span>
                 </button>
               ))}
             </nav>
-            <div style={{ padding: "16px 24px", borderTop: `1px solid ${C.border}`, paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)" }}>
+            <div style={{ padding: "16px 24px", borderTop: `1px solid ${C.navBorder}`, paddingBottom: "calc(env(safe-area-inset-bottom, 16px) + 16px)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 4, background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}66` }} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{marketStatus.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: C.navTextDim }}>{marketStatus.label}</span>
               </div>
-              <div style={{ fontSize: 11, color: C.t4 }}>{lastUp ? `Updated ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</div>
+              <div style={{ fontSize: 11, color: C.navTextMuted }}>{lastUp ? `Updated ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : ""}</div>
             </div>
           </div>
         </>
