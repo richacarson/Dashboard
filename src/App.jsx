@@ -186,6 +186,12 @@ function Sparkline({ points, chg, width = 100, height = 36 }) {
 
 /* ── Portfolio Heatmap ── */
 function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
+  const [cols, setCols] = useState(() => typeof window !== "undefined" && window.innerWidth >= 768 ? 10 : 5);
+  useEffect(() => {
+    const onResize = () => setCols(window.innerWidth >= 768 ? 10 : 5);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
   // Build cells from all sleeves
   const cells = [];
   for (const [k, sleeve] of Object.entries(sleeves)) {
@@ -196,7 +202,7 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
   }
   // Sort by absolute change (biggest blocks first) for treemap feel
   cells.sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg));
-  // Cap at 50 (5 rows × 10 cols)
+  // Cap at 50 cells (e.g. 5×10 or 10×5)
   const limited = cells.slice(0, 50);
 
   const maxAbs = Math.max(...limited.map(c => Math.abs(c.chg)), 1);
@@ -222,7 +228,7 @@ function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "repeat(10, 1fr)",
+      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
       gap: 3, borderRadius: 14, overflow: "hidden",
     }}>
       {limited.map(cell => {
