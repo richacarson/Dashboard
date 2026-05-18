@@ -2400,8 +2400,8 @@ Instructions:
   useEffect(() => {
     if ((tab !== "opportunities" && tDrawer !== "opportunities") || oppFetched.current || opportunities.length) return;
     oppFetched.current = true;
-    const ids = ["ai-power-bottleneck","ai-optical-interconnects","ai-cybersecurity-demand","copper-datacenter-demand","aluminum-supply-shock","iran-ammonia-disruption","rare-earth-magnet-independence","us-ethane-polymer-windfall"];
-    Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null)))
+    fetch(`${import.meta.env.BASE_URL}opportunities/manifest.json`).then(r => r.ok ? r.json() : []).catch(() => [])
+      .then(ids => Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null))))
       .then(results => setOpportunities(results.filter(Boolean).sort((a, b) => {
         if (a.conviction === "High" && b.conviction !== "High") return -1;
         if (b.conviction === "High" && a.conviction !== "High") return 1;
