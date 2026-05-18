@@ -3346,9 +3346,7 @@ Instructions:
           borderBottom: `1px solid ${C.border}`, background: C.bg,
           position: "sticky", top: 0, zIndex: 100,
         }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>
-            {tab === "home" ? "Home" : tab === "performance" ? "Performance" : tab === "metrics" ? "Metrics" : tab === "charts" ? "Charts" : tab === "news" ? "News" : tab === "briefs" ? "Briefs" : tab === "research" ? "Research" : tab === "playbook" ? "Playbook" : tab === "screener" ? "Screener" : tab === "opportunities" ? "Opportunities" : "Settings"}
-          </div>
+          <div />
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {lastUp && <span data-last-updated style={{ fontSize: 12, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
           </div>
