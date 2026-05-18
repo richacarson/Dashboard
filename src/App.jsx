@@ -63,7 +63,6 @@ const BENCHMARKS = [
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
-  { sym: "GLD", name: "Gold" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
 const NON_IEX_BM = ["IUSG", "DVY"];
@@ -3411,6 +3410,36 @@ Instructions:
                       </div>
                     );
                   })}
+                  {(() => {
+                    const sectorSyms = sleeves.sectors?.symbols || [];
+                    const ranked = sectorSyms
+                      .map(s => ({ sym: s, c: chg(s) }))
+                      .filter(x => x.c != null)
+                      .sort((a, b) => b.c - a.c);
+                    const top = ranked[0];
+                    if (!top) return null;
+                    return (
+                      <div key="top-sector" {...stockContextHandlers(top.sym)} style={{
+                        flex: isDesktop ? undefined : "0 0 auto",
+                        padding: isDesktop ? "16px" : "12px 16px",
+                        cursor: "pointer",
+                        minWidth: isDesktop ? undefined : 100,
+                        background: isDesktop ? C.card : "transparent",
+                        border: isDesktop ? `1px solid ${C.border}` : "none",
+                        borderRadius: isDesktop ? 14 : 0,
+                        transition: "border-color 0.15s",
+                      }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>Top Sector</div>
+                        <div style={{ display: "flex", alignItems: isDesktop ? "center" : "baseline", gap: 8, flexWrap: isDesktop ? "wrap" : "nowrap" }}>
+                          <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1 }}>{top.sym}</span>
+                          <span style={{
+                            fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
+                            color: top.c > 0 ? C.up : top.c < 0 ? C.dn : C.t3,
+                          }}>{pct(top.c)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 {!isDesktop && <div style={{ height: 1, background: C.border }} />}
               </div>
