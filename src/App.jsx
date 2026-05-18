@@ -627,7 +627,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
               <Card title="Valuation">
                 <StatRow label="P/E (TTM)" value={fmt(f.peTTM || fm["peNormalizedAnnual"])} />
                 <StatRow label="P/E (FWD)" value={fmt(f.peFwd)} />
-                <StatRow label="PEG Ratio" value={fmt(f.peg || fm["pegAnnual"])} />
+                <StatRow label="PEG Ratio" value={fmt(f.pegTTM ?? fm["pegTTM"] ?? fm["pegAnnual"])} />
                 <StatRow label="Price/Book" value={fmt(fm["pbAnnual"])} />
                 <StatRow label="Price/Sales" value={fmt(fm["psAnnual"])} />
                 <StatRow label="EV/EBITDA" value={fmt(fm["currentEv/freeCashFlowAnnual"])} />
