@@ -100,30 +100,30 @@ function getMarketStatus() {
 }
 
 const DARK = {
-  bg: "#080A18", surface: "#0E1225", card: "#141830", cardHover: "#1A2040", elevated: "#1E2445",
-  border: "rgba(200,180,120,0.08)", borderHover: "rgba(200,180,120,0.16)", borderActive: "rgba(200,180,120,0.30)",
-  t1: "#E8EAF2", t2: "#A0A8C0", t3: "#6B7498", t4: "#3A4060",
+  bg: "#0B0820", surface: "#141033", card: "#1C1840", cardHover: "#241F4F", elevated: "#2B2560",
+  border: "rgba(252,212,50,0.10)", borderHover: "rgba(252,212,50,0.20)", borderActive: "rgba(252,212,50,0.35)",
+  t1: "#F0EAD8", t2: "#B5AB95", t3: "#7E7560", t4: "#4A4338",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
-  accent: "#D4A832", accentSoft: "rgba(212,168,50,0.10)", accentGlow: "rgba(212,168,50,0.25)",
+  accent: "#FCD432", accentSoft: "rgba(252,212,50,0.10)", accentGlow: "rgba(252,212,50,0.28)",
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
-  bg: "#F5F4F0", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#F0EEE8", elevated: "#FFFFFF",
-  border: "rgba(26,29,59,0.12)", borderHover: "rgba(26,29,59,0.22)", borderActive: "rgba(26,29,59,0.40)",
-  t1: "#1A1D3B", t2: "#3A3F5C", t3: "#6B7498", t4: "#9BA2B8",
+  bg: "#F5F0E5", surface: "#FFFFFF", card: "#FFFFFF", cardHover: "#EFE9DA", elevated: "#FFFFFF",
+  border: "rgba(25,22,53,0.12)", borderHover: "rgba(25,22,53,0.22)", borderActive: "rgba(25,22,53,0.40)",
+  t1: "#191635", t2: "#3D3859", t3: "#6E6A82", t4: "#9E9AAE",
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
   dn: "#DC2626", dnSoft: "#DC262618", dnGlow: "#DC262630",
-  accent: "#B8932A", accentSoft: "rgba(184,147,42,0.08)", accentGlow: "rgba(184,147,42,0.20)",
+  accent: "#C9A015", accentSoft: "rgba(201,160,21,0.10)", accentGlow: "rgba(201,160,21,0.22)",
   shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
 };
 const TERMINAL = {
-  bg: "#0A0C18", surface: "#0F1220", card: "#131828", cardHover: "#1A2038", elevated: "#161C30",
-  border: "rgba(60,100,220,0.12)", borderHover: "rgba(60,100,220,0.22)", borderActive: "rgba(212,168,50,0.50)",
-  t1: "#E8EAF2", t2: "#A0A8C0", t3: "#6B7498", t4: "#3A4060",
+  bg: "#08051A", surface: "#100D2B", card: "#1A1640", cardHover: "#221E4F", elevated: "#2A2660",
+  border: "rgba(252,212,50,0.14)", borderHover: "rgba(252,212,50,0.24)", borderActive: "rgba(252,212,50,0.55)",
+  t1: "#FFF5D0", t2: "#C0B292", t3: "#7A7158", t4: "#4A4338",
   up: "#4AF6C3", upSoft: "#4AF6C318", upGlow: "#4AF6C330",
   dn: "#FF433D", dnSoft: "#FF433D18", dnGlow: "#FF433D30",
-  accent: "#E8C840", accentSoft: "rgba(232,200,64,0.12)", accentGlow: "rgba(232,200,64,0.30)",
+  accent: "#FCD432", accentSoft: "rgba(252,212,50,0.15)", accentGlow: "rgba(252,212,50,0.32)",
   shadow: "none",
   isTerminal: true,
 };
@@ -323,7 +323,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
         </div>
       );
     }
-    const colors = ["#4A6B25","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
+    const colors = ["#191635","#3B82F6","#8B5CF6","#EC4899","#F59E0B","#10B981","#6366F1","#F97316"];
     const bg = colors[symbol.charCodeAt(0) % colors.length];
     return (
       <div style={{ width: size, height: size, borderRadius: size / 2, background: bg + "22", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -534,7 +534,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
       {profileTab === "chart" && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <iframe
-            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "171D2A" : "F5F5F0"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
+            src={`https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${symbol}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${isDark ? "0B0820" : "F5F0E5"}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`}
             style={{ flex: 1, width: "100%", border: "none", display: "block" }}
             title={`${symbol} Chart`}
             sandbox="allow-scripts allow-same-origin allow-popups"
@@ -2440,14 +2440,14 @@ Instructions:
 
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, paddingTop: "env(safe-area-inset-top, 24px)", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(252,212,50,0.08) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
           <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
-            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #D4A832, #B8932A)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(212,168,50,0.3)" }}>Continue</button>
+            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #FCD432, #C9A015)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(252,212,50,0.3)" }}>Continue</button>
             {codeErr && <div style={{ marginTop: 16, color: C.dn, fontSize: 13, fontWeight: 500, animation: "shake 0.4s" }}>Incorrect access code</div>}
           </div>
           <div style={{ marginTop: 40, fontSize: 12, color: C.t4 }}>Authorized Paradiem team members only</div>
@@ -2483,7 +2483,7 @@ Instructions:
             <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="APCA-API-SECRET-KEY" style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 20, fontFamily: "inherit" }} />
             <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>GitHub Token <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional — for saving transactions)</span></label>
             <input type="password" value={ghToken} onChange={e => setGhToken(e.target.value)} placeholder="ghp_..." style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 28, fontFamily: "inherit" }} />
-            <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #D4A832, #B8932A)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(212,168,50,0.3)" }}>Connect</button>
+            <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #FCD432, #C9A015)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(252,212,50,0.3)" }}>Connect</button>
             {authErr && <div style={{ marginTop: 14, color: C.dn, fontSize: 13, fontWeight: 500, textAlign: "center" }}>{authErr}</div>}
           </div>
         </div>
@@ -4350,7 +4350,7 @@ Instructions:
 
               if (!sectors.length || !total) return <div style={{ textAlign: "center", padding: "40px 0", color: C.t4 }}>No sector data available. Refresh metrics first.</div>;
 
-              const COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EF4444", "#A855F7", "#06B6D4", "#EC4899", "#10B981", "#F97316", "#8B5CF6", "#84CC16", "#14B8A6"];
+              const COLORS = ["#FCD432", "#3B82F6", "#22C55E", "#EF4444", "#A855F7", "#06B6D4", "#EC4899", "#F97316", "#10B981", "#8B5CF6", "#84CC16", "#14B8A6"];
 
               // Clean SVG donut
               const size = 240, cx = size / 2, cy = size / 2, r = 90, strokeW = 28;
@@ -5016,14 +5016,14 @@ Instructions:
                   wb.creator = "Paradiem Portfolio Dashboard";
                   const ws = wb.addWorksheet(slName);
 
-                  // Colors (Template A: Dark Executive)
-                  const brandGreen = "4A6B25";
-                  const headerBg = "1B2A12";
-                  const headerText = "FFFFFF";
-                  const altRowBg = "F7F9F4";
+                  // Colors (Template: Paradiem Navy/Gold)
+                  const brandGreen = "191635";
+                  const headerBg = "191635";
+                  const headerText = "FCD432";
+                  const altRowBg = "F5F0E5";
                   const greenText = "16A34A";
                   const redText = "DC2626";
-                  const borderColor = "E0E5D8";
+                  const borderColor = "E5DFD0";
                   const avgBg = "E8EDE0";
                   const darkText = "333333";
 
@@ -5870,7 +5870,7 @@ Instructions:
             </div>
           );
 
-          const chartBg = isDark ? "0C1018" : "F5F5F0";
+          const chartBg = isDark ? "0B0820" : "F5F0E5";
           const chartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart_full&symbol=${activeSym}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&toolbarbg=${chartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${isDark ? "dark" : "light"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&studies_overrides={}&overrides={"paneProperties.background"%3A"%23${chartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%2C%22header_screenshot%22%2C%22header_undo_redo%22%5D&disabled_features=[]&locale=en`;
 
           return (
@@ -8397,13 +8397,13 @@ Instructions:
                     <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
                     <button onClick={() => {
                       const a = screenerDetail;
-                      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#1A2010;line-height:1.6}h1{font-size:24pt;margin:0}h2{font-size:14pt;color:#4A6B25;border-bottom:2px solid #B8860B;padding-bottom:4px;margin:24px 0 12px}h3{font-size:12pt;margin:16px 0 4px}.meta{font-size:9pt;color:#6E8450;text-transform:uppercase;letter-spacing:1px}.score{font-size:10pt;margin:4px 0 8px}.rec{display:inline-block;font-size:10pt;font-weight:bold;padding:2px 10px;border-radius:4px;background:#f0f0f0}.thesis{font-size:11pt;line-height:1.7;margin-bottom:12px}ol{margin:8px 0 16px 20px}ol li{margin-bottom:8px}.footer{text-align:center;font-size:8pt;color:#9DAF88;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}</style></head><body>`
-                      + `<h1>${a.ticker} <span style="font-size:16pt;font-weight:normal;color:#6E8450">${a.name || ""}</span></h1>`
+                      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#191635;line-height:1.6}h1{font-size:24pt;margin:0}h2{font-size:14pt;color:#191635;border-bottom:2px solid #C9A015;padding-bottom:4px;margin:24px 0 12px}h3{font-size:12pt;margin:16px 0 4px}.meta{font-size:9pt;color:#6E6A82;text-transform:uppercase;letter-spacing:1px}.score{font-size:10pt;margin:4px 0 8px}.rec{display:inline-block;font-size:10pt;font-weight:bold;padding:2px 10px;border-radius:4px;background:#f0f0f0}.thesis{font-size:11pt;line-height:1.7;margin-bottom:12px}ol{margin:8px 0 16px 20px}ol li{margin-bottom:8px}.footer{text-align:center;font-size:8pt;color:#9E9AAE;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}</style></head><body>`
+                      + `<h1>${a.ticker} <span style="font-size:16pt;font-weight:normal;color:#6E6A82">${a.name || ""}</span></h1>`
                       + `<p class="meta">${a.sleeve || ""} SLEEVE · ${a.screen_date || ""}${a.faith_alignment?.inspire_impact_score != null ? ` · Inspire: ${a.faith_alignment.inspire_impact_score}` : ""}${a.infinite_game?.mindset ? ` · ${a.infinite_game.mindset}` : ""}</p>`
-                      + `<p><span class="rec">${a.recommendation || ""}</span> <span style="font-size:24pt;font-weight:bold;margin-left:12px">${a.overall_score || ""}</span><span style="color:#9DAF88"> / 100</span></p>`
+                      + `<p><span class="rec">${a.recommendation || ""}</span> <span style="font-size:24pt;font-weight:bold;margin-left:12px">${a.overall_score || ""}</span><span style="color:#9E9AAE"> / 100</span></p>`
                       + (a.profile ? `<h2>Company Profile</h2><p class="meta">${[a.profile.sector,a.profile.industry,a.profile.exchange,a.profile.country].filter(Boolean).join(" · ")}${a.profile.employees ? ` · ${Number(a.profile.employees).toLocaleString()} Employees` : ""}</p>${a.profile.description ? `<p class="thesis">${a.profile.description}</p>` : ""}` : "")
                       + (a.excellence_evaluation ? `<h2>Excellence Evaluation (50%)</h2>` + ["innovation","inspiration","infrastructure"].map(k => { const v = a.excellence_evaluation[k]; return v ? `<h3>${k.charAt(0).toUpperCase()+k.slice(1)} — ${v.score}/10 (${v.label || ""})</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
-                      + (a.infinite_game ? `<h2>Finite vs Infinite Game (25%)</h2><p><strong>Mindset:</strong> ${a.infinite_game.mindset} · <strong>Overall:</strong> ${a.infinite_game.overall}/10</p>${a.infinite_game.summary ? `<blockquote style="border-left:3px solid #ccc;padding-left:12px;font-style:italic;color:#3A4A28">${a.infinite_game.summary}</blockquote>` : ""}` + ["just_cause","trusting_teams","worthy_rivals","existential_flexibility","courage_to_lead"].map(k => { const v = a.infinite_game[k]; return v ? `<h3>${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())} — ${v.score}/10</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
+                      + (a.infinite_game ? `<h2>Finite vs Infinite Game (25%)</h2><p><strong>Mindset:</strong> ${a.infinite_game.mindset} · <strong>Overall:</strong> ${a.infinite_game.overall}/10</p>${a.infinite_game.summary ? `<blockquote style="border-left:3px solid #ccc;padding-left:12px;font-style:italic;color:#3D3859">${a.infinite_game.summary}</blockquote>` : ""}` + ["just_cause","trusting_teams","worthy_rivals","existential_flexibility","courage_to_lead"].map(k => { const v = a.infinite_game[k]; return v ? `<h3>${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())} — ${v.score}/10</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
                       + (a.investment_thesis ? `<h2>Investment Thesis</h2><p class="thesis">${a.investment_thesis}</p>${a.thesis_continued ? `<p class="thesis">${a.thesis_continued}</p>` : ""}` : "")
                       + (a.key_catalysts?.length ? `<h2>Key Catalysts</h2><ol>${a.key_catalysts.map(c => `<li>${typeof c === "string" ? c : c.catalyst || c.description || ""}</li>`).join("")}</ol>` : "")
                       + (a.key_risks?.length ? `<h2>Key Risks</h2><ol>${a.key_risks.map(r => `<li>${typeof r === "string" ? r : r.risk || r.description || ""}</li>`).join("")}</ol>` : "")
@@ -8890,20 +8890,20 @@ function GS({ theme }) {
       @keyframes slideInRight { from { opacity: 0; transform: translateX(30px) } to { opacity: 1; transform: translateX(0) } }
       @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px) } to { opacity: 1; transform: translateX(0) } }
       * { -webkit-tap-highlight-color: transparent; }
-      input::placeholder { color: ${isDark ? "#3A4A28" : "#9DAF88"} !important; }
-      input:focus { border-color: rgba(${isDark ? "120,140,88" : "74,107,37"},0.30) !important; }
+      input::placeholder { color: ${isDark ? "#4A4338" : "#9E9AAE"} !important; }
+      input:focus { border-color: rgba(${isDark ? "252,212,50" : "25,22,53"},0.30) !important; }
       ::-webkit-scrollbar { width: 10px; height: 8px; }
-      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(30,40,25,0.3)" : "rgba(200,210,190,0.3)"}; border-radius: 10px; }
-      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.4" : "80,100,60,0.35"}); border-radius: 10px; min-height: 40px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.6" : "80,100,60,0.55"}); }
-      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "110,132,80,0.4" : "80,100,60,0.35"}) ${isDark ? "rgba(30,40,25,0.3)" : "rgba(200,210,190,0.3)"}; }
+      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
+      body { background: ${isDark ? "#0B0820" : "#F5F0E5"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
       .ticker-row:active { transform: scale(0.97); opacity: 0.85; }
       @media (min-width: 768px) {
         .tradingview-widget-container { min-height: 500px; }
-        tr:hover td { background: rgba(${isDark ? "110,132,80,0.04" : "74,107,37,0.06"}) !important; }
+        tr:hover td { background: rgba(${isDark ? "252,212,50,0.05" : "25,22,53,0.04"}) !important; }
         button:hover { opacity: 0.85; }
       }
     `}</style>
