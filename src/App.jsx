@@ -62,7 +62,7 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "SPY", name: "SPY" },
   { sym: "QQQ", name: "QQQ" },
-  { sym: "USO", name: "Oil" },
+  { sym: "USOIL", name: "Oil" },
   { sym: "GLD", name: "Gold" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
