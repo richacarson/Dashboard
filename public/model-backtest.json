@@ -1,142 +1,144 @@
 {
-  "generated": "2026-05-19T01:35:00Z",
+  "generated": "2026-05-19T01:37:34Z",
   "start_month": "1990-01",
   "end_month": "2026-05",
   "total_months": 437,
-  "bear_months": 24,
+  "bear_months": 48,
   "bear_starts": [
-    "1987-09",
-    "2001-06",
-    "2008-09"
+    "1987-10",
+    "2001-03",
+    "2008-07",
+    "2020-03",
+    "2022-06"
   ],
-  "auc": 0.866,
+  "auc": 0.669,
   "buckets": [
     {
       "range": "0-20",
       "lo": 0,
       "hi": 20,
-      "n": 26,
-      "bears": 0,
-      "rate": 0.0,
-      "ci_lo": 0,
-      "ci_hi": 12.9
+      "n": 28,
+      "bears": 1,
+      "rate": 3.6,
+      "ci_lo": 0.6,
+      "ci_hi": 17.7
     },
     {
       "range": "20-30",
       "lo": 20,
       "hi": 30,
-      "n": 187,
-      "bears": 1,
-      "rate": 0.5,
-      "ci_lo": 0.1,
-      "ci_hi": 3.0
+      "n": 210,
+      "bears": 12,
+      "rate": 5.7,
+      "ci_lo": 3.3,
+      "ci_hi": 9.7
     },
     {
       "range": "30-40",
       "lo": 30,
       "hi": 40,
-      "n": 117,
-      "bears": 2,
-      "rate": 1.7,
-      "ci_lo": 0.5,
-      "ci_hi": 6.0
+      "n": 118,
+      "bears": 15,
+      "rate": 12.7,
+      "ci_lo": 7.9,
+      "ci_hi": 19.9
     },
     {
       "range": "40-50",
       "lo": 40,
       "hi": 50,
-      "n": 60,
+      "n": 27,
       "bears": 7,
-      "rate": 11.7,
-      "ci_lo": 5.8,
-      "ci_hi": 22.2
+      "rate": 25.9,
+      "ci_lo": 13.2,
+      "ci_hi": 44.7
     },
     {
       "range": "50-60",
       "lo": 50,
       "hi": 60,
-      "n": 31,
-      "bears": 12,
-      "rate": 38.7,
-      "ci_lo": 23.7,
-      "ci_hi": 56.2
+      "n": 26,
+      "bears": 9,
+      "rate": 34.6,
+      "ci_lo": 19.4,
+      "ci_hi": 53.8
     },
     {
       "range": "60-70",
       "lo": 60,
       "hi": 70,
-      "n": 14,
-      "bears": 2,
-      "rate": 14.3,
-      "ci_lo": 4.0,
-      "ci_hi": 39.9
+      "n": 25,
+      "bears": 4,
+      "rate": 16.0,
+      "ci_lo": 6.4,
+      "ci_hi": 34.7
     },
     {
       "range": "70-100",
       "lo": 70,
       "hi": 100,
-      "n": 2,
+      "n": 3,
       "bears": 0,
       "rate": 0.0,
       "ci_lo": 0,
-      "ci_hi": 65.8
+      "ci_hi": 56.2
     }
   ],
   "thresholds": {
     "40": {
-      "n_above": 107,
-      "true_pos": 21,
-      "false_pos": 86,
-      "precision": 19.6,
-      "recall": 87.5,
-      "fpr": 20.8
+      "n_above": 81,
+      "true_pos": 20,
+      "false_pos": 61,
+      "precision": 24.7,
+      "recall": 41.7,
+      "fpr": 15.7
     },
     "45": {
-      "n_above": 75,
-      "true_pos": 19,
-      "false_pos": 56,
-      "precision": 25.3,
-      "recall": 79.2,
-      "fpr": 13.6
+      "n_above": 67,
+      "true_pos": 18,
+      "false_pos": 49,
+      "precision": 26.9,
+      "recall": 37.5,
+      "fpr": 12.6
     },
     "50": {
-      "n_above": 47,
-      "true_pos": 14,
-      "false_pos": 33,
-      "precision": 29.8,
-      "recall": 58.3,
-      "fpr": 8.0
+      "n_above": 54,
+      "true_pos": 13,
+      "false_pos": 41,
+      "precision": 24.1,
+      "recall": 27.1,
+      "fpr": 10.5
     },
     "55": {
-      "n_above": 28,
-      "true_pos": 7,
-      "false_pos": 21,
-      "precision": 25.0,
-      "recall": 29.2,
-      "fpr": 5.1
+      "n_above": 42,
+      "true_pos": 9,
+      "false_pos": 33,
+      "precision": 21.4,
+      "recall": 18.8,
+      "fpr": 8.5
     },
     "60": {
-      "n_above": 16,
-      "true_pos": 2,
-      "false_pos": 14,
-      "precision": 12.5,
+      "n_above": 28,
+      "true_pos": 4,
+      "false_pos": 24,
+      "precision": 14.3,
       "recall": 8.3,
-      "fpr": 3.4
+      "fpr": 6.2
     },
     "65": {
-      "n_above": 11,
+      "n_above": 14,
       "true_pos": 1,
-      "false_pos": 10,
-      "precision": 9.1,
-      "recall": 4.2,
-      "fpr": 2.4
+      "false_pos": 13,
+      "precision": 7.1,
+      "recall": 2.1,
+      "fpr": 3.3
     }
   },
   "pre_bear_avg_score": {
-    "12": 36.0,
-    "6": 58.0,
-    "3": 64.0,
-    "1": 50.5
+    "12": 29.2,
+    "6": 37.5,
+    "3": 44.8,
+    "1": 50.2
   },
   "factors_included": [
     "yield_2s10s",
