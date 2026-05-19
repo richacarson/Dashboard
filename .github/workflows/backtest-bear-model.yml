@@ -25,6 +25,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies
+        run: pip install scikit-learn numpy
+
       - name: Run backtest
         env:
           FRED_KEY: ${{ secrets.FRED_API_KEY }}

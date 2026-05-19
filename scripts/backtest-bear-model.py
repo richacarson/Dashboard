@@ -327,15 +327,132 @@ def main():
                 outcome = 1
                 break
 
+        # Raw inputs (for logistic regression — needs all 7 to be present)
+        raw = {
+            "yield": series["yield_2s10s"][k][1] if k in series["yield_2s10s"] else None,
+            "claims": claims_trend.get(k),
+            "baa10y": series["baa10y"][k][1] if k in series["baa10y"] else None,
+            "nfci": series["nfci"][k][1] if k in series["nfci"] else None,
+            "cfnai": cfnai_3m.get(k),
+            "sahm": sahm.get(k),
+            "oil": oil_yoy.get(k),
+        }
+
         rows.append({
             "month": f"{k[0]:04d}-{k[1]:02d}",
+            "month_idx": k[0] * 12 + k[1],
             "score": composite,
             "outcome": outcome,
             "n_factors": len(factors),
             "elevated": elevated,
+            "raw": raw,
         })
 
     print(f"Scored {len(rows)} months ({sum(r['outcome'] for r in rows)} positive)")
+
+    # ── Train logistic regression on the raw factor inputs ───────────────
+    # Only use rows with all 7 features present (drop early months where NFCI/oil missing)
+    try:
+        import numpy as np
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.metrics import roc_auc_score
+        FEATURES = ["yield", "claims", "baa10y", "nfci", "cfnai", "sahm", "oil"]
+        complete = [r for r in rows if all(r["raw"][f] is not None for f in FEATURES)]
+        print(f"\nLogistic regression: {len(complete)} months with all 7 features")
+        X = np.array([[r["raw"][f] for f in FEATURES] for r in complete], dtype=float)
+        y = np.array([r["outcome"] for r in complete], dtype=int)
+        months_arr = np.array([r["month"] for r in complete])
+
+        # Standardize features
+        means = X.mean(axis=0)
+        stds = X.std(axis=0)
+        stds[stds == 0] = 1.0
+        X_std = (X - means) / stds
+
+        # Train on full data — this is the production model
+        prod_model = LogisticRegression(penalty="l2", C=1.0, max_iter=1000, class_weight="balanced")
+        prod_model.fit(X_std, y)
+        prod_probs = prod_model.predict_proba(X_std)[:, 1]
+        train_auc = roc_auc_score(y, prod_probs)
+        print(f"  Training AUC: {train_auc:.3f}")
+
+        # Walk-forward out-of-sample evaluation: for each year boundary, train on prior
+        # months only and predict the next 12 months. Captures true OOS performance.
+        oos_probs = np.full(len(complete), np.nan)
+        # Sort by chronology
+        order = np.argsort([(int(m[:4]), int(m[5:7])) for m in months_arr])
+        X_sorted = X_std[order]
+        y_sorted = y[order]
+        # Start predicting after 60 months of training data
+        MIN_TRAIN = 60
+        for i in range(MIN_TRAIN, len(complete)):
+            train_X = X_sorted[:i]
+            train_y = y_sorted[:i]
+            if len(np.unique(train_y)) < 2:
+                continue
+            try:
+                m = LogisticRegression(penalty="l2", C=1.0, max_iter=1000, class_weight="balanced")
+                m.fit(train_X, train_y)
+                oos_probs[order[i]] = m.predict_proba(X_sorted[i:i+1])[:, 1][0]
+            except Exception:
+                continue
+        oos_mask = ~np.isnan(oos_probs)
+        if oos_mask.sum() > 0 and len(np.unique(y[oos_mask])) > 1:
+            oos_auc = roc_auc_score(y[oos_mask], oos_probs[oos_mask])
+        else:
+            oos_auc = None
+        print(f"  Walk-forward OOS AUC: {oos_auc:.3f if oos_auc else 'n/a'} ({oos_mask.sum()} months)")
+
+        # Attach probabilities to rows
+        prob_by_month = {complete[i]["month"]: float(prod_probs[i]) for i in range(len(complete))}
+        oos_by_month = {complete[i]["month"]: float(oos_probs[i]) for i in range(len(complete)) if not np.isnan(oos_probs[i])}
+        for r in rows:
+            r["lr_prob"] = prob_by_month.get(r["month"])
+            r["lr_prob_oos"] = oos_by_month.get(r["month"])
+
+        # LR bucket calibration (using OOS probabilities)
+        lr_buckets_def = [(0, 5), (5, 10), (10, 20), (20, 30), (30, 50), (50, 75), (75, 100)]
+        lr_buckets = []
+        for lo, hi in lr_buckets_def:
+            in_b = [r for r in rows if r.get("lr_prob_oos") is not None
+                    and lo / 100 <= r["lr_prob_oos"] < hi / 100]
+            n = len(in_b)
+            bears = sum(r["outcome"] for r in in_b)
+            rate = bears / n if n else 0
+            if n > 0:
+                z = 1.96
+                denom = 1 + z * z / n
+                center = (rate + z * z / (2 * n)) / denom
+                margin = z * ((rate * (1 - rate) / n + z * z / (4 * n * n)) ** 0.5) / denom
+                ci = (max(0, center - margin), min(1, center + margin))
+            else:
+                ci = (0, 0)
+            lr_buckets.append({
+                "range": f"{lo}-{hi}",
+                "lo": lo, "hi": hi, "n": n, "bears": bears,
+                "rate": round(rate * 100, 1),
+                "ci_lo": round(ci[0] * 100, 1),
+                "ci_hi": round(ci[1] * 100, 1),
+            })
+
+        lr_artifact = {
+            "features": FEATURES,
+            "means": means.tolist(),
+            "stds": stds.tolist(),
+            "coefficients": prod_model.coef_[0].tolist(),
+            "intercept": float(prod_model.intercept_[0]),
+            "train_auc": round(train_auc, 3),
+            "oos_auc": round(oos_auc, 3) if oos_auc is not None else None,
+            "oos_months": int(oos_mask.sum()),
+            "buckets": lr_buckets,
+            "trained_on_n": len(complete),
+        }
+    except ImportError:
+        print("  WARN: sklearn not available — skipping LR training", file=sys.stderr)
+        lr_artifact = None
+    except Exception as e:
+        print(f"  WARN: LR training failed: {e}", file=sys.stderr)
+        lr_artifact = None
 
     # Bucket calibration
     buckets = [(0, 20), (20, 30), (30, 40), (40, 50), (50, 60), (60, 70), (70, 100)]
@@ -415,6 +532,7 @@ def main():
         "buckets": bucket_stats,
         "thresholds": thresholds,
         "pre_bear_avg_score": pre_bear_avg,
+        "logistic_regression": lr_artifact,
         "factors_included": ["yield_2s10s", "claims", "baa10y", "nfci", "cfnai", "sahm", "oil_yoy"],
         "factors_excluded": ["valuation_pe", "eps_trend"],
         "notes": (
