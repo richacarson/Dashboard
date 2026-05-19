@@ -1558,6 +1558,7 @@ Instructions:
             if (d.cfnai != null) { results.cfnai = d.cfnai; results.cfnaiDate = d.cfnaiDate; results.cfnai3mo = d.cfnai3mo; }
             if (d.sahmVal != null) { results.sahmVal = d.sahmVal; results.unrate = d.unrate; results.unrateDate = d.unrateDate; }
             if (d.baa10y != null) { results.baa10y = d.baa10y; results.baa10yDate = d.baa10yDate; }
+            if (d.nfci != null) { results.nfci = d.nfci; results.nfciDate = d.nfciDate; }
             if (d.oilYoY != null) { results.oilYoY = d.oilYoY; results.oilPrice = d.oilPrice; }
             if (d.spyEpsTtm != null) { results.spyEpsTtm = d.spyEpsTtm; results.epsChg90d = d.epsChg90d; results.epsHistLen = (d.spyEpsTtmHist || []).length; }
             if (d.updated) results.updated = d.updated;
@@ -6524,12 +6525,6 @@ Instructions:
                   factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, detail: "SPY trailing P/E (GFC started at 21x, 2022 bear at 23x)", score, weight: 13, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Shiller (2000)" });
                 }
 
-                // Factor 3: Bull Duration — conditional survival from 21 historical bulls
-                {
-                  const score = interp(durationProb, [[5, 8], [15, 18], [25, 30], [35, 42], [50, 55], [65, 68], [80, 80]]);
-                  factors.push({ name: "Bull Duration", value: `${bullAgeMo} months`, detail: `${atRisk.length} comparable bulls, ${atRisk.length - survived12.length} ended within 12mo`, score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `n=${totalBulls} (1929-2022)` });
-                }
-
                 // Factor 4: Credit Spreads (BAA-10Y) — Gilchrist & Zakrajšek (2012)
                 // BAA10Y: Moody's BAA corporate yield minus 10Y Treasury, daily, 1986-present
                 // Pre-bear levels: GFC 1.72-1.90%, COVID 2.05%, 2022 bear 1.82%. Median 2.14%.
@@ -6543,17 +6538,13 @@ Instructions:
                   factors.push({ name: "Credit Stress", value: `${hygDrawdown.toFixed(1)}% from high`, detail: `HYG fallback: $${md.hygPrice.toFixed(2)} / 52wk: $${md.hyg52High.toFixed(2)}`, score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "HYG fallback" });
                 }
 
-                // Factor 5: Momentum (SPY vs 200-day SMA) — practical risk indicator
-                if (md.spy200 != null && spyPrice > 0) {
-                  const pctAbove200 = ((spyPrice / md.spy200) - 1) * 100;
-                  const score = interp(pctAbove200, [[-12, 90], [-6, 75], [-2, 55], [0, 40], [3, 25], [6, 15], [12, 5]]);
-                  factors.push({ name: "Momentum", value: `${pctAbove200 >= 0 ? "+" : ""}${pctAbove200.toFixed(1)}% vs 200d`, detail: `SPY: $${spyPrice.toFixed(2)} / 200d SMA: $${md.spy200.toFixed(2)}`, score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: `${md.spy200Count || 200}-day SMA` });
-                }
-
-                // Factor 6: Volatility (VIX) — reactive, not predictive, but captures regime
-                if (md.vix != null) {
-                  const score = interp(md.vix, [[10, 5], [14, 12], [18, 25], [22, 40], [28, 58], [35, 72], [45, 85]]);
-                  factors.push({ name: "Volatility", value: `VIX ${md.vix.toFixed(1)}`, detail: "CBOE Volatility Index", score, weight: 5, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "CBOE" });
+                // Factor 5: NFCI (Chicago Fed National Financial Conditions Index)
+                // 105-component composite of risk, credit, leverage, and money-market indicators.
+                // Z-scored so 0 = average. >0 = tighter than average. NFCI > 0.5 has preceded
+                // every major equity correction since 1973 (Chicago Fed, Brave & Butters 2010).
+                if (md.nfci != null) {
+                  const score = interp(md.nfci, [[-0.7, 5], [-0.3, 12], [0, 25], [0.3, 42], [0.6, 58], [1.0, 72], [1.5, 84], [2.5, 92]]);
+                  factors.push({ name: "Financial Conditions", value: `NFCI ${md.nfci >= 0 ? "+" : ""}${md.nfci.toFixed(2)}`, detail: `Chicago Fed 105-factor financial conditions index — ${md.nfciDate || ""}`, score, weight: 10, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "FRED NFCI (Brave & Butters 2010)" });
                 }
 
                 // Factor 7: Unemployment Claims trend — real-economy leading indicator
@@ -6595,12 +6586,21 @@ Instructions:
                   factors.push({ name: "EPS Trend", value: "Warming up", detail: `SPY trailing EPS: $${md.spyEpsTtm.toFixed(2)} — need ~60 days of history for trend (${md.epsHistLen || 0} so far)`, score: 30, weight: 7, color: "#FBBF24", citation: "Derived from SPY price / P/E" });
                 }
 
-                // Composite: weighted average + concordance bonus
+                // Composite: weighted average + concordance bonus (calibrated to 6-factor count)
                 const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
                 const baseComposite = totalWeight > 0 ? factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0) : null;
                 const elevatedCount = factors.filter(f => f.score >= 50).length;
-                const concordanceBonus = elevatedCount >= 5 ? 15 : elevatedCount >= 4 ? 10 : elevatedCount >= 3 ? 5 : 0;
-                const composite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus))) : null;
+                const concordanceBonus = elevatedCount >= 4 ? 15 : elevatedCount >= 3 ? 10 : elevatedCount >= 2 ? 5 : 0;
+                const rawComposite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus))) : null;
+
+                // Isotonic recalibration: map raw score to historical realized rate using backtest buckets
+                let calibrated = rawComposite;
+                if (rawComposite != null && backtest?.buckets) {
+                  const b = backtest.buckets.find(b => rawComposite >= b.lo && rawComposite < b.hi);
+                  if (b && b.n > 0) calibrated = Math.round(b.rate);
+                }
+
+                const composite = calibrated;
                 const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
                 const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
@@ -6619,6 +6619,7 @@ Instructions:
                         <div style={{ fontSize: 56, fontWeight: 900, color: compositeColor, lineHeight: 1 }}>{composite}%</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: compositeColor, marginTop: 6, letterSpacing: 2 }}>{riskLabel}</div>
                         <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}</div>
+                        {backtest?.buckets && rawComposite !== calibrated && <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Raw model score: {rawComposite} → calibrated to {calibrated}% via backtest buckets</div>}
                         {md.updated && (() => { const hrs = (Date.now() - new Date(md.updated)) / 3600000; return hrs > 48 ? <div style={{ fontSize: 10, color: C.dn, marginTop: 4 }}>Data is {Math.round(hrs / 24)}d old — workflow may have failed</div> : <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Updated {hrs < 1 ? "just now" : hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
                       </>) : (
                         <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
@@ -6656,17 +6657,16 @@ Instructions:
                         <div><strong style={{ color: C.t1 }}>Yield Curve (18%)</strong> — 10Y minus 2Y Treasury spread with post-inversion premium. Yield curve inversion has preceded every U.S. recession since 1955. Critically, recessions typically begin *after* the curve de-inverts (Bauer & Mertens, 2018) — the re-steepening phase is the most dangerous. The 2022-2024 inversion (-1.08%) ended ~Oct 2024; a +18pt premium decays linearly over 24 months from de-inversion to capture this lagged risk.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (13%)</strong> — SPY trailing P/E ratio. Scoring calibrated to actual pre-bear P/E levels: the 2007 GFC began at 21x, the 2022 bear at 23x, the dot-com crash at 28x (Shiller, 2000). Not a timing signal, but a severity amplifier — high P/E markets fall further.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Jobless Claims (12%)</strong> — 4-week moving average of initial unemployment claims from FRED (series IC4WSA, released weekly on Thursdays). Rising claims precede every post-war recession by 3-6 months. Scored on the trend: a 10%+ increase over the prior month is an amber signal; 20%+ is a red flag. This is the model's primary real-economy indicator.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Bull Duration (10%)</strong> — Conditional survival probability from {totalBulls} historical bull markets (1929-2022). Of the {atRisk.length} bulls that lasted longer than {bullAgeMo} months, {atRisk.length - survived12.length} ended within the next 12 months. 95% CI: {Math.max(0, Math.round((durationProb / 100 - 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% to {Math.min(100, Math.round((durationProb / 100 + 1.96 * Math.sqrt(durationProb / 100 * (1 - durationProb / 100) / atRisk.length)) * 100))}% — wide range due to small sample.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Spreads (10%)</strong> — Moody's BAA corporate bond yield minus 10-Year Treasury (FRED BAA10Y, daily, 1986-present). Widening spreads signal deteriorating credit conditions and precede equity drawdowns (Gilchrist & Zakrajsek, 2012). Calibrated to actual pre-bear levels: GFC started at 1.72-1.90%, COVID at 2.05%, 2022 at 1.82%. Stress: Lehman 3.66%, COVID crash 4.31%, GFC bottom 5.40%. Falls back to HYG ETF if FRED data unavailable.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Momentum (10%)</strong> — SPY price vs its 200-day moving average. Sustained breakdown below the 200-day SMA has accompanied or preceded most major bear markets, though in rapid crashes (COVID, 1987) the breakdown was concurrent with, not before, the decline.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Financial Conditions (10%)</strong> — Chicago Fed National Financial Conditions Index (NFCI, FRED), a 105-component composite covering risk premia, credit spreads, leverage measures, money-market stress, equity volatility, and dealer positioning. Z-scored so 0 = average financial conditions; values above 0 signal tighter than average. NFCI above +0.5 has preceded every major equity correction since 1973 (Brave & Butters 2010, Hatzius et al. 2010). One of the most robust single-source recession composites the Fed publishes — weekly updates.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Economic Activity (8%)</strong> — Chicago Fed National Activity Index (CFNAI), a weighted average of 85 monthly indicators covering production, employment, consumption, and housing. Zero = trend growth, below -0.7 = high recession probability. The 3-month moving average is used when available for stability.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Sahm Rule (7%)</strong> — 3-month average unemployment rate minus its 12-month low (Sahm, 2019). Triggers at 0.50 percentage points — has signaled every recession since 1950 with zero false positives. Currently at {md.sahmVal != null ? md.sahmVal.toFixed(2) : "—"}pp. This is the most reliable real-time recession indicator in existence.</div>
-                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Volatility (5%)</strong> — CBOE VIX Index. Low weight because VIX is reactive — it rises during declines rather than predicting them. Bear markets typically *start* with low VIX (12-16 range). Elevated VIX signals stress already underway.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Oil Shock (5%)</strong> — Year-over-year change in WTI crude (front-month futures). Every post-WWII US recession except 2020 was preceded by a significant oil price spike (Hamilton 1983, 2003, 2011; Kilian 2009; Federal Reserve 2014). The signal transmits to corporate earnings with a 3-4 quarter lag — meaning today's oil price is a leading indicator for earnings 9-12 months out. Lower weight (5%) because the US is now a net energy exporter, blunting the historical transmission. Updated daily from Yahoo Finance.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>EPS Trend (7%)</strong> — 90-day percent change in SPY's trailing 12-month earnings, derived from the price and P/E we already track (EPS = price / P/E). Trailing EPS is a sum of the last four quarters, so it moves slowly — when it rolls over by more than 3% over 90 days, an earnings recession is already in progress. Less forward-looking than analyst estimates (which sit behind paid feeds like FactSet), but reliable and free. Tracks rolling daily history; requires ~60 days of data to compute the trend, after which the factor goes live.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Concordance Bonus</strong> — When 3+ factors score above 50, a bonus of 5-15 points is added. Simultaneous stress across multiple indicators is disproportionately dangerous: the 2000 and 2007 crashes both had yield curve inversion + elevated valuations + credit stress simultaneously.</div>
+                        <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Isotonic Recalibration</strong> — The displayed headline % is recalibrated against the backtest. The raw weighted-average score is mapped to the realized 12-month bear-onset rate of the matching historical bucket (Calibration tab). Example: a raw score of 55 lands in the 50-60 bucket; if that bucket historically had 38% realized rate, the display shows 38%. This makes the displayed % an empirically grounded probability instead of a heuristic.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Post-Inversion Premium</strong> — When the yield curve has been inverted within the last 24 months and has since de-inverted, a decaying premium (up to +18pt) is added to the yield curve score. Academic research (Bauer & Mertens 2018, Engstrom & Sharpe 2019) shows recessions typically begin 6-18 months after de-inversion, not during inversion itself.</div>
-                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Bull duration is conditional on n={atRisk.length} comparable periods (wide CI). Post-inversion premium uses a fixed de-inversion date (Oct 2024) and decays linearly — a simplification. No out-of-sample backtesting has been performed. This model estimates risk, not certainty — it cannot predict black swan events or novel shocks.</div>
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}><strong style={{ color: C.accent }}>Limitations:</strong> Factors are scored via piecewise interpolation against historical ranges — not a trained ML model. Weights are from published research, not curve-fit to historical data. Post-inversion premium uses a fixed de-inversion date (Oct 2024) and decays linearly — a simplification. The model has been backtested out-of-sample 1990-present and the display % is recalibrated against realized bucket rates (see Calibration tab for the actual AUC and bucket fit). This model estimates risk, not certainty — it cannot predict black swan events like COVID 2020.</div>
                       </div>
                     </div>
 

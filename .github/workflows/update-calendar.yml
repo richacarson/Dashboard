@@ -309,6 +309,17 @@ jobs:
                       data['baa10yDate'] = obs[0][0]
                       print(f"BAA10Y: {data['baa10y']}% ({data['baa10yDate']})")
 
+          # 3c. FRED: NFCI (Chicago Fed National Financial Conditions Index, weekly)
+          # 105-component composite. >0 = tighter than average. Brave & Butters (2010).
+          if fred:
+              d = fetch(f'https://api.stlouisfed.org/fred/series/observations?series_id=NFCI&api_key={fred}&sort_order=desc&limit=3&file_type=json')
+              if d:
+                  obs = [(o['date'], float(o['value'])) for o in d.get('observations', []) if o['value'] != '.']
+                  if obs:
+                      data['nfci'] = obs[0][1]
+                      data['nfciDate'] = obs[0][0]
+                      print(f"NFCI: {data['nfci']} ({data['nfciDate']})")
+
           # 4. Treasury.gov: Yield curve (free, no key)
           import csv, io
           try:
