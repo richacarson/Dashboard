@@ -6593,14 +6593,39 @@ Instructions:
                 const concordanceBonus = elevatedCount >= 4 ? 15 : elevatedCount >= 3 ? 10 : elevatedCount >= 2 ? 5 : 0;
                 const rawComposite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus))) : null;
 
-                // Isotonic recalibration: map raw score to historical realized rate using backtest buckets
-                let calibrated = rawComposite;
-                if (rawComposite != null && backtest?.buckets) {
-                  const b = backtest.buckets.find(b => rawComposite >= b.lo && rawComposite < b.hi);
-                  if (b && b.n > 0) calibrated = Math.round(b.rate);
+                // Logistic regression: use the trained model from backtest if available
+                // Coefficients were fit on raw factor inputs via L2-regularized logistic
+                // regression, then validated with walk-forward out-of-sample evaluation.
+                const lrModel = backtest?.logistic_regression;
+                let lrProb = null;
+                let lrInputsAvailable = false;
+                if (lrModel) {
+                  const rawInputs = [
+                    md.yieldSpread,
+                    md.claimsTrend,
+                    md.baa10y,
+                    md.nfci,
+                    md.cfnai3mo != null ? md.cfnai3mo : md.cfnai,
+                    md.sahmVal,
+                    md.oilYoY,
+                  ];
+                  if (rawInputs.every(v => v != null && !isNaN(v))) {
+                    lrInputsAvailable = true;
+                    const standardized = rawInputs.map((v, i) => (v - lrModel.means[i]) / lrModel.stds[i]);
+                    const logit = lrModel.intercept + standardized.reduce((s, v, i) => s + lrModel.coefficients[i] * v, 0);
+                    lrProb = 1 / (1 + Math.exp(-logit));
+                  }
                 }
 
-                const composite = calibrated;
+                // Isotonic fallback: if LR model not available, use bucket map of heuristic score
+                let isotonic = rawComposite;
+                if (rawComposite != null && backtest?.buckets) {
+                  const b = backtest.buckets.find(b => rawComposite >= b.lo && rawComposite < b.hi);
+                  if (b && b.n > 0) isotonic = Math.round(b.rate);
+                }
+
+                // Headline: prefer LR probability, fall back to isotonic, then raw
+                const composite = lrProb != null ? Math.round(lrProb * 100) : isotonic;
                 const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
                 const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
@@ -6618,8 +6643,13 @@ Instructions:
                       {composite != null ? (<>
                         <div style={{ fontSize: 56, fontWeight: 900, color: compositeColor, lineHeight: 1 }}>{composite}%</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: compositeColor, marginTop: 6, letterSpacing: 2 }}>{riskLabel}</div>
-                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}</div>
-                        {backtest?.buckets && rawComposite !== calibrated && <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Raw model score: {rawComposite} → calibrated to {calibrated}% via backtest buckets</div>}
+                        <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>
+                          {lrProb != null
+                            ? <>Logistic regression on 7 factors{lrModel?.oos_auc != null ? ` (walk-forward AUC: ${lrModel.oos_auc.toFixed(2)})` : ""}</>
+                            : <>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}</>
+                          }
+                        </div>
+                        {lrProb != null && <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Heuristic score: {rawComposite} (shown in factor breakdown below)</div>}
                         {md.updated && (() => { const hrs = (Date.now() - new Date(md.updated)) / 3600000; return hrs > 48 ? <div style={{ fontSize: 10, color: C.dn, marginTop: 4 }}>Data is {Math.round(hrs / 24)}d old — workflow may have failed</div> : <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Updated {hrs < 1 ? "just now" : hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
                       </>) : (
                         <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
@@ -6821,6 +6851,55 @@ Instructions:
                         </div>
                       </div>
                     )}
+
+                    {/* Logistic regression model */}
+                    {bt.logistic_regression && (() => {
+                      const lr = bt.logistic_regression;
+                      const featLabels = { yield: "Yield Curve", claims: "Jobless Claims", baa10y: "Credit Spread", nfci: "NFCI", cfnai: "CFNAI", sahm: "Sahm Rule", oil: "Oil YoY" };
+                      const coefMag = lr.coefficients.map(c => Math.abs(c));
+                      const maxMag = Math.max(...coefMag);
+                      return (
+                        <div style={cardStyle}>
+                          {sectionTitle("Logistic Regression Model")}
+                          <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
+                            L2-regularized logistic regression fit on raw factor inputs across {lr.trained_on_n} months. The headline probability you see on the Probability tab comes from this model. Walk-forward AUC is the honest out-of-sample estimate; training AUC is in-sample.
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-around", flexWrap: "wrap", gap: 24, marginBottom: 18 }}>
+                            <div style={{ textAlign: "center" }}>
+                              <div style={{ fontSize: 32, fontWeight: 900, color: lr.oos_auc >= 0.75 ? C.up : lr.oos_auc >= 0.65 ? "#FBBF24" : C.dn }}>{lr.oos_auc != null ? lr.oos_auc.toFixed(3) : "—"}</div>
+                              <div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Walk-Forward AUC</div>
+                              <div style={{ fontSize: 9, color: C.t4, marginTop: 2 }}>{lr.oos_months} OOS months</div>
+                            </div>
+                            <div style={{ textAlign: "center" }}>
+                              <div style={{ fontSize: 32, fontWeight: 900, color: C.t2 }}>{lr.train_auc.toFixed(3)}</div>
+                              <div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Training AUC</div>
+                              <div style={{ fontSize: 9, color: C.t4, marginTop: 2 }}>In-sample</div>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t2, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Feature coefficients</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {lr.features.map((f, i) => {
+                              const coef = lr.coefficients[i];
+                              const sign = coef > 0 ? "+" : "";
+                              const pct = Math.abs(coef) / maxMag * 100;
+                              return (
+                                <div key={f} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12 }}>
+                                  <div style={{ flex: "0 0 110px", color: C.t2 }}>{featLabels[f] || f}</div>
+                                  <div style={{ flex: 1, height: 14, background: C.bg, borderRadius: 4, position: "relative", overflow: "hidden" }}>
+                                    <div style={{ position: "absolute", left: coef >= 0 ? "50%" : `${50 - pct/2}%`, width: `${pct/2}%`, height: "100%", background: coef >= 0 ? C.dn : C.up }} />
+                                    <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: C.t4 }} />
+                                  </div>
+                                  <div style={{ flex: "0 0 60px", textAlign: "right", color: coef >= 0 ? C.dn : C.up, fontWeight: 700 }}>{sign}{coef.toFixed(2)}</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 10, lineHeight: 1.5 }}>
+                            Positive coefficient = factor pushes bear probability up. Negative = pushes it down. Coefficients are on standardized features, so magnitudes are directly comparable across factors. L2 penalty (C=1.0) prevents any single factor from dominating with only ~48 positive observations.
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Bear list */}
                     {bt.bear_starts && bt.bear_starts.length > 0 && (
