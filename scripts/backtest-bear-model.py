@@ -128,6 +128,9 @@ def interp(x, points):
 
 def main():
     print("Fetching FRED series...")
+    if not FRED_KEY:
+        print("  ERROR: FRED_KEY env var not set — backtest cannot run", file=sys.stderr)
+        sys.exit(1)
     series = {}
     fred_ids = [
         ("T10Y2Y", "yield_2s10s", to_monthly_avg),
@@ -148,10 +151,18 @@ def main():
             print(f"    FAILED: {e}", file=sys.stderr)
             series[name] = {}
 
-    print("Fetching ^GSPC monthly history from Yahoo...")
-    spx_raw = fetch_yahoo_history("%5EGSPC", range_="max", interval="1mo")
-    spx_monthly = {(d.year, d.month): (d, v) for d, v in spx_raw}
-    print(f"  {len(spx_monthly)} monthly closes ({spx_raw[0][0]} to {spx_raw[-1][0]})")
+    if all(len(series[name]) == 0 for _, name, _ in fred_ids):
+        print("ERROR: All FRED fetches returned empty — FRED_KEY may be invalid", file=sys.stderr)
+        sys.exit(1)
+
+    print("Fetching ^GSPC daily history from Yahoo (for accurate bear detection)...")
+    spx_daily_raw = fetch_yahoo_history("%5EGSPC", range_="max", interval="1d")
+    print(f"  {len(spx_daily_raw)} daily closes ({spx_daily_raw[0][0]} to {spx_daily_raw[-1][0]})")
+    # Monthly closes = last daily close in each month
+    spx_monthly = {}
+    for d, v in spx_daily_raw:
+        spx_monthly[(d.year, d.month)] = (d, v)
+    print(f"  {len(spx_monthly)} monthly closes derived")
 
     # Build chronological list
     spx_keys = sorted(spx_monthly.keys())
@@ -163,47 +174,32 @@ def main():
         if i >= 9:
             sma10[k] = sum(spx_vals[i - 9:i + 1]) / 10
 
-    # Identify bear-market starts (-20% close from prior peak, with recovery reset)
-    bear_starts = []
+    # Identify bear starts using DAILY closes (-20% from peak, recovery reset).
+    # Daily catches rapid bears (1990, 2020, 2022) that monthly closes barely miss.
+    bear_starts_daily = []
+    bear_end_dates_daily = []
     in_bear = False
     running_peak = 0
     bear_peak = 0
-    for k in spx_keys:
-        v = spx_monthly[k][1]
+    for d, v in spx_daily_raw:
         if not in_bear:
             if v > running_peak:
                 running_peak = v
             if running_peak > 0 and (v / running_peak - 1) * 100 <= -20:
-                bear_starts.append(k)
+                bear_starts_daily.append(d)
                 in_bear = True
                 bear_peak = running_peak
         else:
             if v >= bear_peak:
+                bear_end_dates_daily.append(d)
                 in_bear = False
                 running_peak = v
 
-    print(f"Bear-market starts identified: {len(bear_starts)}")
+    bear_starts = [(d.year, d.month) for d in bear_starts_daily]
+    bear_end_dates = [(d.year, d.month) for d in bear_end_dates_daily]
+    print(f"Bear-market starts identified (daily): {len(bear_starts)}")
     for bs in bear_starts:
         print(f"  {bs[0]}-{bs[1]:02d}")
-
-    # Bear-end dates for bull-age calculation
-    bear_end_dates = []
-    in_bear = False
-    running_peak = 0
-    bear_peak = 0
-    for k in spx_keys:
-        v = spx_monthly[k][1]
-        if not in_bear:
-            if v > running_peak:
-                running_peak = v
-            if running_peak > 0 and (v / running_peak - 1) * 100 <= -20:
-                in_bear = True
-                bear_peak = running_peak
-        else:
-            if v >= bear_peak:
-                bear_end_dates.append(k)
-                in_bear = False
-                running_peak = v
 
     def months_since_last_bear_end(yr, mo):
         cand = [be for be in bear_end_dates if be < (yr, mo)]

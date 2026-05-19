@@ -27,7 +27,7 @@ jobs:
 
       - name: Run backtest
         env:
-          FRED_KEY: ${{ secrets.FRED_KEY }}
+          FRED_KEY: ${{ secrets.FRED_API_KEY }}
         run: |
           python3 scripts/backtest-bear-model.py
 
