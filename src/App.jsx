@@ -6617,15 +6617,26 @@ Instructions:
                   }
                 }
 
-                // Isotonic fallback: if LR model not available, use bucket map of heuristic score
+                // LR bucket recalibration: map raw LR probability to historical realized rate
+                // in the matching bucket. Backtest showed the top bucket (75-100%) only
+                // realizes ~49% — the model is over-confident at the high end. This step
+                // makes the displayed probability empirically grounded.
+                let lrCalibrated = lrProb;
+                if (lrProb != null && lrModel?.buckets) {
+                  const lrPct = lrProb * 100;
+                  const b = lrModel.buckets.find(b => lrPct >= b.lo && lrPct < b.hi);
+                  if (b && b.n >= 10) lrCalibrated = b.rate / 100;
+                }
+
+                // Isotonic fallback for heuristic score: if LR model not available
                 let isotonic = rawComposite;
                 if (rawComposite != null && backtest?.buckets) {
                   const b = backtest.buckets.find(b => rawComposite >= b.lo && rawComposite < b.hi);
                   if (b && b.n > 0) isotonic = Math.round(b.rate);
                 }
 
-                // Headline: prefer LR probability, fall back to isotonic, then raw
-                const composite = lrProb != null ? Math.round(lrProb * 100) : isotonic;
+                // Headline: prefer calibrated LR probability, fall back to isotonic
+                const composite = lrCalibrated != null ? Math.round(lrCalibrated * 100) : isotonic;
                 const compositeColor = composite > 60 ? C.dn : composite > 40 ? "#FBBF24" : composite > 25 ? C.up : C.up;
                 const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
 
@@ -6649,7 +6660,11 @@ Instructions:
                             : <>{factors.length}-factor composite{concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance (${elevatedCount} elevated)` : ""}</>
                           }
                         </div>
-                        {lrProb != null && <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Heuristic score: {rawComposite} (shown in factor breakdown below)</div>}
+                        {lrProb != null && (
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>
+                            Raw LR: {Math.round(lrProb * 100)}% → bucket-calibrated: {Math.round(lrCalibrated * 100)}% · Heuristic score: {rawComposite}
+                          </div>
+                        )}
                         {md.updated && (() => { const hrs = (Date.now() - new Date(md.updated)) / 3600000; return hrs > 48 ? <div style={{ fontSize: 10, color: C.dn, marginTop: 4 }}>Data is {Math.round(hrs / 24)}d old — workflow may have failed</div> : <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Updated {hrs < 1 ? "just now" : hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
                       </>) : (
                         <div style={{ fontSize: 13, color: C.t4, padding: 20 }}>Loading macro indicators...</div>
