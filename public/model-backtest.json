@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-19T02:34:38Z",
+  "generated": "2026-05-19T02:36:56Z",
   "start_month": "1990-01",
   "end_month": "2026-05",
   "total_months": 437,
@@ -179,78 +179,78 @@
     ],
     "intercept": -1.3742427594025273,
     "train_auc": 0.884,
-    "oos_auc": null,
-    "oos_months": 0,
+    "oos_auc": 0.88,
+    "oos_months": 311,
     "buckets": [
       {
         "range": "0-5",
         "lo": 0,
         "hi": 5,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 118,
+        "bears": 1,
+        "rate": 0.8,
+        "ci_lo": 0.1,
+        "ci_hi": 4.6
       },
       {
         "range": "5-10",
         "lo": 5,
         "hi": 10,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 33,
+        "bears": 1,
+        "rate": 3.0,
+        "ci_lo": 0.5,
+        "ci_hi": 15.3
       },
       {
         "range": "10-20",
         "lo": 10,
         "hi": 20,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 47,
+        "bears": 2,
+        "rate": 4.3,
+        "ci_lo": 1.2,
+        "ci_hi": 14.2
       },
       {
         "range": "20-30",
         "lo": 20,
         "hi": 30,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 20,
+        "bears": 1,
+        "rate": 5.0,
+        "ci_lo": 0.9,
+        "ci_hi": 23.6
       },
       {
         "range": "30-50",
         "lo": 30,
         "hi": 50,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 20,
+        "bears": 8,
+        "rate": 40.0,
+        "ci_lo": 21.9,
+        "ci_hi": 61.3
       },
       {
         "range": "50-75",
         "lo": 50,
         "hi": 75,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 28,
+        "bears": 12,
+        "rate": 42.9,
+        "ci_lo": 26.5,
+        "ci_hi": 60.9
       },
       {
         "range": "75-100",
         "lo": 75,
         "hi": 100,
-        "n": 0,
-        "bears": 0,
-        "rate": 0,
-        "ci_lo": 0,
-        "ci_hi": 0
+        "n": 45,
+        "bears": 22,
+        "rate": 48.9,
+        "ci_lo": 35.0,
+        "ci_hi": 63.0
       }
     ],
     "trained_on_n": 434
