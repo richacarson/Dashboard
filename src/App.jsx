@@ -1114,6 +1114,13 @@ Instructions:
   const [pbSimValue, setPbSimValue] = useState(1000000);
   const [pbSimHistBear, setPbSimHistBear] = useState("");
   const [macroData, setMacroData] = useState({ yieldSpread: null, vix: null, hySpread: null, spy200: null, cape: null, loaded: false });
+  const [backtest, setBacktest] = useState(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL || "/"}model-backtest.json?v=${Math.floor(Date.now() / 3600000)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(setBacktest)
+      .catch(() => {});
+  }, []);
   const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
@@ -6081,7 +6088,7 @@ Instructions:
 
               {/* Sub-nav */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
+                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "calibration", l: "Calibration" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
                   <button key={v} onClick={() => setPbView(v)} style={{
                     flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${pbView === v ? C.borderActive : C.border}`,
                     background: pbView === v ? C.accentSoft : "transparent",
@@ -6674,6 +6681,168 @@ Instructions:
                         {(() => { const x = PAD.left + (bullAgeMo / 180) * (W - PAD.left - PAD.right); return <><line x1={x} y1={PAD.top} x2={x} y2={H - PAD.bottom} stroke={C.accent} strokeWidth={2} strokeDasharray="4,3" /><text x={x} y={PAD.top - 4} fill={C.accent} fontSize={9} fontWeight={700} textAnchor="middle">NOW ({bullAgeMo}mo)</text></>; })()}
                         {[0, 24, 48, 72, 96, 120, 144, 168].map(m => <text key={m} x={PAD.left + (m / 180) * (W - PAD.left - PAD.right)} y={H - PAD.bottom + 14} fill={C.t4} fontSize={9} textAnchor="middle">{m}mo</text>)}
                       </svg>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── CALIBRATION (model backtest) ── */}
+              {pbView === "calibration" && (() => {
+                if (!backtest) {
+                  return (
+                    <div style={cardStyle}>
+                      {sectionTitle("Model Backtest — Calibration")}
+                      <div style={{ fontSize: 13, color: C.t4, padding: 20, textAlign: "center" }}>
+                        Loading backtest results... If this persists, the workflow may not have run yet — trigger <code style={{ background: C.bg, padding: "2px 6px", borderRadius: 4 }}>backtest-bear-model</code> in GitHub Actions.
+                      </div>
+                    </div>
+                  );
+                }
+                const bt = backtest;
+                const W = isDesktop ? 700 : Math.min(window.innerWidth - 72, 500);
+                const H = 260;
+                const PAD = { top: 20, right: 20, bottom: 50, left: 50 };
+                const maxRate = Math.max(100, ...bt.buckets.map(b => b.ci_hi));
+                const barW = (W - PAD.left - PAD.right) / bt.buckets.length;
+                return (
+                  <div>
+                    {/* Summary headline */}
+                    <div style={{ ...cardStyle, textAlign: "center" }}>
+                      {sectionTitle("Model Backtest — Out-of-Sample Calibration")}
+                      <div style={{ display: "flex", justifyContent: "center", gap: 40, flexWrap: "wrap", marginTop: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 36, fontWeight: 900, color: bt.auc >= 0.75 ? C.up : bt.auc >= 0.6 ? "#FBBF24" : C.dn }}>{bt.auc != null ? bt.auc.toFixed(3) : "—"}</div>
+                          <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>ROC AUC</div>
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>1.0 = perfect, 0.5 = coin flip</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 36, fontWeight: 900, color: C.t1 }}>{bt.total_months}</div>
+                          <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Months Scored</div>
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{bt.start_month} to {bt.end_month}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 36, fontWeight: 900, color: C.t1 }}>{bt.bear_starts?.length || 0}</div>
+                          <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Bear Markets</div>
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>-20% from peak</div>
+                        </div>
+                      </div>
+                      {bt.generated && (() => { const hrs = (Date.now() - new Date(bt.generated)) / 3600000; return <div style={{ fontSize: 10, color: C.t4, marginTop: 12 }}>Backtest generated {hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
+                    </div>
+
+                    {/* Calibration plot */}
+                    <div style={cardStyle}>
+                      {sectionTitle("Score Bucket → Realized 12-Month Bear Rate")}
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
+                        For each score bucket, what % of historical months in that range had a bear-market start within the next 12 months. Dashed line = perfect calibration (model says X%, reality is X%). Error bars are Wilson 95% CIs.
+                      </div>
+                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: "block" }}>
+                        {/* Gridlines */}
+                        {[0, 25, 50, 75, 100].map(v => { const y = PAD.top + ((100 - v) / 100) * (H - PAD.top - PAD.bottom); return <g key={v}><line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke={C.border} strokeWidth={1} /><text x={PAD.left - 6} y={y + 3} fill={C.t4} fontSize={9} textAnchor="end">{v}%</text></g>; })}
+                        {/* Perfect-calibration diagonal */}
+                        <line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={PAD.top} stroke={C.t4} strokeWidth={1} strokeDasharray="4,3" opacity={0.4} />
+                        {/* Bucket bars + error bars */}
+                        {bt.buckets.map((b, i) => {
+                          const x = PAD.left + i * barW + barW * 0.15;
+                          const w = barW * 0.7;
+                          const yRate = PAD.top + ((100 - b.rate) / 100) * (H - PAD.top - PAD.bottom);
+                          const yLo = PAD.top + ((100 - b.ci_lo) / 100) * (H - PAD.top - PAD.bottom);
+                          const yHi = PAD.top + ((100 - b.ci_hi) / 100) * (H - PAD.top - PAD.bottom);
+                          const color = b.rate > 60 ? C.dn : b.rate > 35 ? "#FBBF24" : C.up;
+                          const cx = x + w / 2;
+                          return (
+                            <g key={i}>
+                              <rect x={x} y={yRate} width={w} height={H - PAD.bottom - yRate} fill={color} opacity={0.7} />
+                              {b.n > 0 && (
+                                <>
+                                  <line x1={cx} y1={yLo} x2={cx} y2={yHi} stroke={C.t2} strokeWidth={1.5} />
+                                  <line x1={cx - 5} y1={yLo} x2={cx + 5} y2={yLo} stroke={C.t2} strokeWidth={1.5} />
+                                  <line x1={cx - 5} y1={yHi} x2={cx + 5} y2={yHi} stroke={C.t2} strokeWidth={1.5} />
+                                </>
+                              )}
+                              <text x={cx} y={H - PAD.bottom + 14} fill={C.t3} fontSize={9} textAnchor="middle">{b.range}</text>
+                              <text x={cx} y={H - PAD.bottom + 26} fill={C.t4} fontSize={8} textAnchor="middle">n={b.n}</text>
+                              {b.n > 0 && <text x={cx} y={yRate - 4} fill={C.t1} fontSize={10} fontWeight={700} textAnchor="middle">{b.rate}%</text>}
+                            </g>
+                          );
+                        })}
+                        <text x={PAD.left} y={H - 8} fill={C.t4} fontSize={10} fontWeight={700}>Model score (bucket)</text>
+                        <text x={6} y={PAD.top - 6} fill={C.t4} fontSize={10} fontWeight={700}>Realized rate</text>
+                      </svg>
+                    </div>
+
+                    {/* Threshold table */}
+                    <div style={cardStyle}>
+                      {sectionTitle("Threshold Performance")}
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 12 }}>If we treat "model score ≥ T" as a bear-warning signal, here's how each threshold performs.</div>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ color: C.t4, textAlign: "right", borderBottom: `1px solid ${C.border}` }}>
+                              <th style={{ textAlign: "left", padding: "8px 6px" }}>Threshold</th>
+                              <th style={{ padding: "8px 6px" }}>Months Above</th>
+                              <th style={{ padding: "8px 6px" }}>Precision</th>
+                              <th style={{ padding: "8px 6px" }}>Recall</th>
+                              <th style={{ padding: "8px 6px" }}>False Positive Rate</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(bt.thresholds || {}).map(([t, s]) => (
+                              <tr key={t} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                <td style={{ padding: "8px 6px", color: C.t1, fontWeight: 700 }}>≥ {t}</td>
+                                <td style={{ padding: "8px 6px", textAlign: "right", color: C.t2 }}>{s.n_above}</td>
+                                <td style={{ padding: "8px 6px", textAlign: "right", color: s.precision >= 60 ? C.up : s.precision >= 40 ? "#FBBF24" : C.t2 }}>{s.precision}%</td>
+                                <td style={{ padding: "8px 6px", textAlign: "right", color: s.recall >= 60 ? C.up : s.recall >= 40 ? "#FBBF24" : C.t2 }}>{s.recall}%</td>
+                                <td style={{ padding: "8px 6px", textAlign: "right", color: s.fpr <= 10 ? C.up : s.fpr <= 25 ? "#FBBF24" : C.dn }}>{s.fpr}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{ fontSize: 11, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
+                        <strong style={{ color: C.t2 }}>Precision:</strong> of months where the model flagged ≥T, what fraction were followed by a bear within 12 months. <strong style={{ color: C.t2 }}>Recall:</strong> of all months that were followed by a bear within 12 months, what fraction did the model flag. <strong style={{ color: C.t2 }}>FPR:</strong> of months where no bear followed, what fraction did the model falsely flag.
+                      </div>
+                    </div>
+
+                    {/* Trajectory before bears */}
+                    {bt.pre_bear_avg_score && (
+                      <div style={cardStyle}>
+                        {sectionTitle("Average Score Before Each Historical Bear")}
+                        <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>The model's average reading in the months leading up to each of the {bt.bear_starts?.length || 0} bears in the backtest. A useful model should climb as the bear approaches.</div>
+                        <div style={{ display: "flex", gap: 16, justifyContent: "space-around", flexWrap: "wrap" }}>
+                          {[12, 6, 3, 1].map(lag => {
+                            const v = bt.pre_bear_avg_score[lag];
+                            return (
+                              <div key={lag} style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1 }}>{lag} mo before</div>
+                                <div style={{ fontSize: 28, fontWeight: 900, color: v == null ? C.t4 : v >= 50 ? C.dn : v >= 35 ? "#FBBF24" : C.up }}>{v == null ? "—" : v}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bear list */}
+                    {bt.bear_starts && bt.bear_starts.length > 0 && (
+                      <div style={cardStyle}>
+                        {sectionTitle("Bear Markets in Backtest")}
+                        <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.8 }}>
+                          {bt.bear_starts.join(" · ")}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Methodology */}
+                    <div style={cardStyle}>
+                      {sectionTitle("Methodology & Caveats")}
+                      <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7 }}>
+                        <div>{bt.notes}</div>
+                        <div style={{ marginTop: 10 }}><strong style={{ color: C.t1 }}>Factors included ({bt.factors_included?.length || 0}):</strong> {(bt.factors_included || []).join(", ")}.</div>
+                        {bt.factors_excluded?.length > 0 && <div style={{ marginTop: 6 }}><strong style={{ color: C.t1 }}>Excluded:</strong> {bt.factors_excluded.join(", ")} (insufficient historical data).</div>}
+                        <div style={{ marginTop: 10, padding: "10px 14px", background: C.accent + "10", borderRadius: 8, border: `1px solid ${C.accent}20` }}>
+                          <strong style={{ color: C.accent }}>How to read this:</strong> If the bucket bars roughly track the dashed diagonal, the model is well-calibrated — "55%" actually means ~55% historical hit rate. If they diverge, the headline % is misleading and should be treated as a relative risk indicator rather than a literal probability.
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
