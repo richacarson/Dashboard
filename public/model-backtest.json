@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-19T02:21:49Z",
+  "generated": "2026-05-19T02:29:06Z",
   "start_month": "1990-01",
   "end_month": "2026-05",
   "total_months": 437,
@@ -140,6 +140,7 @@
     "3": 39.2,
     "1": 40.5
   },
+  "logistic_regression": null,
   "factors_included": [
     "yield_2s10s",
     "claims",
