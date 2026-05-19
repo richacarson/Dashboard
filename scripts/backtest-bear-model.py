@@ -401,7 +401,8 @@ def main():
             oos_auc = roc_auc_score(y[oos_mask], oos_probs[oos_mask])
         else:
             oos_auc = None
-        print(f"  Walk-forward OOS AUC: {oos_auc:.3f if oos_auc else 'n/a'} ({oos_mask.sum()} months)")
+        oos_auc_str = f"{oos_auc:.3f}" if oos_auc is not None else "n/a"
+        print(f"  Walk-forward OOS AUC: {oos_auc_str} ({oos_mask.sum()} months)")
 
         # Attach probabilities to rows
         prob_by_month = {complete[i]["month"]: float(prod_probs[i]) for i in range(len(complete))}
@@ -447,11 +448,13 @@ def main():
             "buckets": lr_buckets,
             "trained_on_n": len(complete),
         }
-    except ImportError:
-        print("  WARN: sklearn not available — skipping LR training", file=sys.stderr)
+    except ImportError as e:
+        print(f"  WARN: sklearn not available — skipping LR training ({e})", file=sys.stderr)
         lr_artifact = None
     except Exception as e:
+        import traceback
         print(f"  WARN: LR training failed: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         lr_artifact = None
 
     # Bucket calibration
