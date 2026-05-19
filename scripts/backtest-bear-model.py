@@ -143,7 +143,7 @@ def main():
     fred_ids = [
         ("T10Y2Y", "yield_2s10s", to_monthly_avg),
         ("BAA10Y", "baa10y", to_monthly_avg),
-        ("VIXCLS", "vix", to_monthly_avg),
+        ("NFCI", "nfci", to_monthly_last),
         ("IC4WSA", "claims", to_monthly_last),
         ("CFNAI", "cfnai", to_monthly_first),
         ("UNRATE", "unrate", to_monthly_first),
@@ -283,28 +283,16 @@ def main():
             score = interp(ct, [(-15, 5), (-5, 12), (0, 22), (5, 38), (10, 55), (20, 72), (35, 85), (50, 92)])
             factors.append(("claims", score, 12))
 
-        # Bull Duration (10%)
-        bull_age = months_since_last_bear_end(k[0], k[1])
-        if bull_age is not None and bull_age >= 0:
-            score = interp(bull_age, [(6, 8), (18, 15), (36, 25), (60, 40), (84, 55), (120, 68), (160, 80)])
-            factors.append(("duration", score, 10))
-
         # Credit Spreads (10%)
         if k in series["baa10y"]:
             spread = series["baa10y"][k][1]
             score = interp(spread, [(1.2, 8), (1.5, 15), (1.8, 22), (2.2, 32), (2.8, 48), (3.5, 65), (4.5, 80), (5.5, 90)])
             factors.append(("credit", score, 10))
 
-        # Momentum (10%)
-        if k in spx_monthly and k in sma10:
-            pct = (spx_monthly[k][1] / sma10[k] - 1) * 100
-            score = interp(pct, [(-12, 90), (-6, 75), (-2, 55), (0, 40), (3, 25), (6, 15), (12, 5)])
-            factors.append(("momentum", score, 10))
-
-        # VIX (5%)
-        if k in series["vix"]:
-            score = interp(series["vix"][k][1], [(10, 5), (14, 12), (18, 25), (22, 40), (28, 58), (35, 72), (45, 85)])
-            factors.append(("vix", score, 5))
+        # NFCI (10%) — Chicago Fed financial conditions
+        if k in series["nfci"]:
+            score = interp(series["nfci"][k][1], [(-0.7, 5), (-0.3, 12), (0, 25), (0.3, 42), (0.6, 58), (1.0, 72), (1.5, 84), (2.5, 92)])
+            factors.append(("nfci", score, 10))
 
         # CFNAI (8%)
         if k in cfnai_3m:
@@ -327,7 +315,8 @@ def main():
         total_w = sum(w for _, _, w in factors)
         base = sum(s * w / total_w for _, s, w in factors)
         elevated = sum(1 for _, s, _ in factors if s >= 50)
-        bonus = 15 if elevated >= 5 else 10 if elevated >= 4 else 5 if elevated >= 3 else 0
+        # Concordance recalibrated for 6-factor model (was 5+/4+/3+ for 9 factors)
+        bonus = 15 if elevated >= 4 else 10 if elevated >= 3 else 5 if elevated >= 2 else 0
         composite = max(5, min(95, round(base + bonus)))
 
         # Outcome: bear within next 12 months?
@@ -426,15 +415,19 @@ def main():
         "buckets": bucket_stats,
         "thresholds": thresholds,
         "pre_bear_avg_score": pre_bear_avg,
-        "factors_included": [f[0] for f in [("yield_2s10s", 18), ("claims", 12), ("duration", 10), ("baa10y", 10), ("momentum", 10), ("vix", 5), ("cfnai", 8), ("sahm", 7), ("oil_yoy", 5)]],
+        "factors_included": ["yield_2s10s", "claims", "baa10y", "nfci", "cfnai", "sahm", "oil_yoy"],
         "factors_excluded": ["valuation_pe", "eps_trend"],
         "notes": (
             "Backtest scores each month from 1990-present using the same factor "
             "interpolation tables as the live model. Excludes Valuation (no free "
             "monthly P/E history) and EPS Trend (new factor). Yield-curve "
             "post-inversion premium is also excluded — the backtest uses raw "
-            "10Y-2Y spread only. Outcome label: any bear-market start (-20% "
-            "from peak) within the following 12 months."
+            "10Y-2Y spread only. Bull Duration, Momentum, and VIX factors were "
+            "dropped from the model after backtest showed they were coincident "
+            "rather than leading indicators (AUC contribution near zero). NFCI "
+            "(Chicago Fed financial conditions, 105 components) added as a "
+            "stronger composite financial-stress signal. Outcome label: any "
+            "bear-market start (-20% from peak) within the following 12 months."
         ),
     }
 
