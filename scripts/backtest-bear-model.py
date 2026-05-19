@@ -376,26 +376,34 @@ def main():
         train_auc = roc_auc_score(y, prod_probs)
         print(f"  Training AUC: {train_auc:.3f}")
 
-        # Walk-forward out-of-sample evaluation: for each year boundary, train on prior
-        # months only and predict the next 12 months. Captures true OOS performance.
+        # Walk-forward out-of-sample evaluation: at each month t (chronologically),
+        # train on all months < t, predict t. Captures true OOS performance.
         oos_probs = np.full(len(complete), np.nan)
-        # Sort by chronology
-        order = np.argsort([(int(m[:4]), int(m[5:7])) for m in months_arr])
+        # Sort by chronology — Python sorted() handles tuples correctly (numpy argsort doesn't)
+        order = sorted(range(len(complete)), key=lambda i: (int(months_arr[i][:4]), int(months_arr[i][5:7])))
+        order = np.array(order)
         X_sorted = X_std[order]
         y_sorted = y[order]
-        # Start predicting after 60 months of training data
         MIN_TRAIN = 60
+        n_attempts = 0
+        n_succeeded = 0
         for i in range(MIN_TRAIN, len(complete)):
             train_X = X_sorted[:i]
             train_y = y_sorted[:i]
-            if len(np.unique(train_y)) < 2:
+            # Need at least one positive AND one negative in training data
+            if train_y.sum() < 1 or train_y.sum() >= len(train_y):
                 continue
+            n_attempts += 1
             try:
                 m = LogisticRegression(penalty="l2", C=1.0, max_iter=1000, class_weight="balanced")
                 m.fit(train_X, train_y)
                 oos_probs[order[i]] = m.predict_proba(X_sorted[i:i+1])[:, 1][0]
-            except Exception:
+                n_succeeded += 1
+            except Exception as ex:
+                if n_attempts < 5:
+                    print(f"    LR fit failed at i={i}: {ex}", file=sys.stderr)
                 continue
+        print(f"  Walk-forward: {n_attempts} attempts, {n_succeeded} succeeded")
         oos_mask = ~np.isnan(oos_probs)
         if oos_mask.sum() > 0 and len(np.unique(y[oos_mask])) > 1:
             oos_auc = roc_auc_score(y[oos_mask], oos_probs[oos_mask])
