@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-19T01:37:34Z",
+  "generated": "2026-05-19T02:21:49Z",
   "start_month": "1990-01",
   "end_month": "2026-05",
   "total_months": 437,
@@ -11,142 +11,140 @@
     "2020-03",
     "2022-06"
   ],
-  "auc": 0.669,
+  "auc": 0.712,
   "buckets": [
     {
       "range": "0-20",
       "lo": 0,
       "hi": 20,
-      "n": 28,
+      "n": 71,
       "bears": 1,
-      "rate": 3.6,
-      "ci_lo": 0.6,
-      "ci_hi": 17.7
+      "rate": 1.4,
+      "ci_lo": 0.2,
+      "ci_hi": 7.6
     },
     {
       "range": "20-30",
       "lo": 20,
       "hi": 30,
-      "n": 210,
-      "bears": 12,
-      "rate": 5.7,
-      "ci_lo": 3.3,
-      "ci_hi": 9.7
+      "n": 234,
+      "bears": 21,
+      "rate": 9.0,
+      "ci_lo": 5.9,
+      "ci_hi": 13.3
     },
     {
       "range": "30-40",
       "lo": 30,
       "hi": 40,
-      "n": 118,
-      "bears": 15,
-      "rate": 12.7,
-      "ci_lo": 7.9,
-      "ci_hi": 19.9
+      "n": 73,
+      "bears": 9,
+      "rate": 12.3,
+      "ci_lo": 6.6,
+      "ci_hi": 21.8
     },
     {
       "range": "40-50",
       "lo": 40,
       "hi": 50,
-      "n": 27,
-      "bears": 7,
-      "rate": 25.9,
-      "ci_lo": 13.2,
-      "ci_hi": 44.7
+      "n": 33,
+      "bears": 11,
+      "rate": 33.3,
+      "ci_lo": 19.8,
+      "ci_hi": 50.4
     },
     {
       "range": "50-60",
       "lo": 50,
       "hi": 60,
-      "n": 26,
-      "bears": 9,
-      "rate": 34.6,
-      "ci_lo": 19.4,
-      "ci_hi": 53.8
+      "n": 6,
+      "bears": 1,
+      "rate": 16.7,
+      "ci_lo": 3.0,
+      "ci_hi": 56.4
     },
     {
       "range": "60-70",
       "lo": 60,
       "hi": 70,
-      "n": 25,
-      "bears": 4,
-      "rate": 16.0,
-      "ci_lo": 6.4,
-      "ci_hi": 34.7
+      "n": 14,
+      "bears": 5,
+      "rate": 35.7,
+      "ci_lo": 16.3,
+      "ci_hi": 61.2
     },
     {
       "range": "70-100",
       "lo": 70,
       "hi": 100,
-      "n": 3,
+      "n": 6,
       "bears": 0,
       "rate": 0.0,
       "ci_lo": 0,
-      "ci_hi": 56.2
+      "ci_hi": 39.0
     }
   ],
   "thresholds": {
     "40": {
-      "n_above": 81,
-      "true_pos": 20,
-      "false_pos": 61,
-      "precision": 24.7,
-      "recall": 41.7,
-      "fpr": 15.7
+      "n_above": 59,
+      "true_pos": 17,
+      "false_pos": 42,
+      "precision": 28.8,
+      "recall": 35.4,
+      "fpr": 10.8
     },
     "45": {
-      "n_above": 67,
-      "true_pos": 18,
-      "false_pos": 49,
-      "precision": 26.9,
-      "recall": 37.5,
-      "fpr": 12.6
+      "n_above": 39,
+      "true_pos": 9,
+      "false_pos": 30,
+      "precision": 23.1,
+      "recall": 18.8,
+      "fpr": 7.7
     },
     "50": {
-      "n_above": 54,
-      "true_pos": 13,
-      "false_pos": 41,
-      "precision": 24.1,
-      "recall": 27.1,
-      "fpr": 10.5
+      "n_above": 26,
+      "true_pos": 6,
+      "false_pos": 20,
+      "precision": 23.1,
+      "recall": 12.5,
+      "fpr": 5.1
     },
     "55": {
-      "n_above": 42,
-      "true_pos": 9,
-      "false_pos": 33,
-      "precision": 21.4,
-      "recall": 18.8,
-      "fpr": 8.5
+      "n_above": 24,
+      "true_pos": 6,
+      "false_pos": 18,
+      "precision": 25.0,
+      "recall": 12.5,
+      "fpr": 4.6
     },
     "60": {
-      "n_above": 28,
-      "true_pos": 4,
-      "false_pos": 24,
-      "precision": 14.3,
-      "recall": 8.3,
-      "fpr": 6.2
+      "n_above": 20,
+      "true_pos": 5,
+      "false_pos": 15,
+      "precision": 25.0,
+      "recall": 10.4,
+      "fpr": 3.9
     },
     "65": {
-      "n_above": 14,
-      "true_pos": 1,
-      "false_pos": 13,
-      "precision": 7.1,
-      "recall": 2.1,
-      "fpr": 3.3
+      "n_above": 12,
+      "true_pos": 2,
+      "false_pos": 10,
+      "precision": 16.7,
+      "recall": 4.2,
+      "fpr": 2.6
     }
   },
   "pre_bear_avg_score": {
-    "12": 29.2,
-    "6": 37.5,
-    "3": 44.8,
-    "1": 50.2
+    "12": 27.2,
+    "6": 33.0,
+    "3": 39.2,
+    "1": 40.5
   },
   "factors_included": [
     "yield_2s10s",
     "claims",
-    "duration",
     "baa10y",
-    "momentum",
-    "vix",
+    "nfci",
     "cfnai",
     "sahm",
     "oil_yoy"
@@ -155,5 +153,5 @@
     "valuation_pe",
     "eps_trend"
   ],
-  "notes": "Backtest scores each month from 1990-present using the same factor interpolation tables as the live model. Excludes Valuation (no free monthly P/E history) and EPS Trend (new factor). Yield-curve post-inversion premium is also excluded \u2014 the backtest uses raw 10Y-2Y spread only. Outcome label: any bear-market start (-20% from peak) within the following 12 months."
+  "notes": "Backtest scores each month from 1990-present using the same factor interpolation tables as the live model. Excludes Valuation (no free monthly P/E history) and EPS Trend (new factor). Yield-curve post-inversion premium is also excluded \u2014 the backtest uses raw 10Y-2Y spread only. Bull Duration, Momentum, and VIX factors were dropped from the model after backtest showed they were coincident rather than leading indicators (AUC contribution near zero). NFCI (Chicago Fed financial conditions, 105 components) added as a stronger composite financial-stress signal. Outcome label: any bear-market start (-20% from peak) within the following 12 months."
 }
