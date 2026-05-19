@@ -57,11 +57,19 @@ def fetch_fred_api(series_id):
     return out
 
 
-def fetch_yahoo_history(symbol, range_="max", interval="1mo"):
-    """Fetch Yahoo Finance OHLC history. Returns list of (date, close)."""
+def fetch_yahoo_history(symbol, interval="1d", period1=None, period2=None):
+    """Fetch Yahoo Finance OHLC history. Returns list of (date, close).
+
+    Yahoo silently downsamples to ~167 points when using range=max — use
+    explicit period1/period2 Unix timestamps to get true daily granularity.
+    """
+    if period1 is None:
+        period1 = 441763200  # 1984-01-01
+    if period2 is None:
+        period2 = int(datetime.utcnow().timestamp())
     url = (
         f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
-        f"?range={range_}&interval={interval}"
+        f"?period1={period1}&period2={period2}&interval={interval}"
     )
     data = curl_json(url)
     res = data["chart"]["result"][0]
@@ -156,8 +164,10 @@ def main():
         sys.exit(1)
 
     print("Fetching ^GSPC daily history from Yahoo (for accurate bear detection)...")
-    spx_daily_raw = fetch_yahoo_history("%5EGSPC", range_="max", interval="1d")
+    spx_daily_raw = fetch_yahoo_history("%5EGSPC", interval="1d")
     print(f"  {len(spx_daily_raw)} daily closes ({spx_daily_raw[0][0]} to {spx_daily_raw[-1][0]})")
+    if len(spx_daily_raw) < 5000:
+        print(f"  WARN: Expected ~10000+ daily points, got {len(spx_daily_raw)} — Yahoo may be downsampling", file=sys.stderr)
     # Monthly closes = last daily close in each month
     spx_monthly = {}
     for d, v in spx_daily_raw:
