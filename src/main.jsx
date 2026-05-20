@@ -32,3 +32,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </React.StrictMode>,
 )
+
+// Remove the branded loading splash once the app has mounted
+requestAnimationFrame(() => {
+  const splash = document.getElementById('app-splash')
+  if (splash) {
+    splash.style.transition = 'opacity 0.3s ease'
+    splash.style.opacity = '0'
+    setTimeout(() => splash.remove(), 320)
+  }
+})
