@@ -2284,9 +2284,9 @@
     "date": "2026-05-20",
     "hour": "amc",
     "epsEstimate": 2.8752,
-    "epsActual": null,
+    "epsActual": 2.86,
     "revenueEstimate": 743421318,
-    "revenueActual": null,
+    "revenueActual": 740850000,
     "source": "finnhub"
   },
   {
@@ -2314,9 +2314,9 @@
     "date": "2026-05-20",
     "hour": "amc",
     "epsEstimate": 1.7927,
-    "epsActual": null,
+    "epsActual": 1.87,
     "revenueEstimate": 80432094512,
-    "revenueActual": null,
+    "revenueActual": 81615000000,
     "source": "finnhub"
   },
   {
@@ -2532,11 +2532,11 @@
   {
     "symbol": "VIVK",
     "date": "2026-05-20",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": -2.32,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 19460000,
     "source": "finnhub"
   },
   {
