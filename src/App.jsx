@@ -2554,10 +2554,10 @@ Instructions:
   /* ━━━ LOADING (keys baked in, auth in progress) ━━━ */
   if (!authed && EK && ES) {
     return (
-      <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ minHeight: "100dvh", background: "#191635", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
-          <img src={theme !== "light" ? "paradiem-logo-dark.png?v=6" : "paradiem-logo.png?v=6"} alt="Paradiem" style={{ width: 200, height: "auto", margin: "0 auto 20px", display: "block", opacity: 0.7 }} />
-          <div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+          <img src="paradiem-logo-dark.png?v=15" alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 24px", display: "block" }} />
+          <div style={{ width: 24, height: 24, border: "3px solid rgba(255,255,255,0.15)", borderTopColor: "#FCD432", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
         </div>
       </div>
     );
