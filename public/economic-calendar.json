@@ -184,8 +184,8 @@
     "date": "2026-05-21 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-11.4",
+    "actual": "5.8",
+    "previous": "-11.5",
     "forecast": "",
     "unit": "%"
   },
@@ -194,7 +194,7 @@
     "date": "2026-05-21 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "1.442",
     "previous": "1.363",
     "forecast": "1.39",
     "unit": ""
@@ -204,8 +204,8 @@
     "date": "2026-05-21 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "1.502",
+    "actual": "1.465",
+    "previous": "1.507",
     "forecast": "1.41",
     "unit": ""
   },
@@ -214,8 +214,8 @@
     "date": "2026-05-21 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "10.8",
+    "actual": "-2.8",
+    "previous": "12",
     "forecast": "",
     "unit": "%"
   },
@@ -224,8 +224,8 @@
     "date": "2026-05-21 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "211",
+    "actual": "209",
+    "previous": "212",
     "forecast": "210",
     "unit": ""
   },
@@ -234,7 +234,7 @@
     "date": "2026-05-21 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-0.4",
     "previous": "26.7",
     "forecast": "18",
     "unit": ""
@@ -244,7 +244,7 @@
     "date": "2026-05-21 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "51.7",
     "previous": "51.7",
     "forecast": "",
     "unit": ""
@@ -254,7 +254,7 @@
     "date": "2026-05-21 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "55.3",
     "previous": "54.5",
     "forecast": "53.8",
     "unit": ""
@@ -264,7 +264,7 @@
     "date": "2026-05-21 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "50.9",
     "previous": "51",
     "forecast": "51.1",
     "unit": ""
@@ -505,7 +505,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-7.864",
     "forecast": "",
     "unit": ""
   },
@@ -515,7 +515,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-1.548",
     "forecast": "",
     "unit": ""
   },
