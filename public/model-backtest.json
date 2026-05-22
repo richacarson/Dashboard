@@ -1,5 +1,5 @@
 {
-  "generated": "2026-05-22T16:26:05Z",
+  "generated": "2026-05-22T16:40:03Z",
   "start_month": "1971-01",
   "end_month": "2026-04",
   "total_months": 664,
@@ -156,109 +156,109 @@
       "oil"
     ],
     "means": [
-      1.5288066465256795,
-      1.336559389212215,
-      2.201163141993959,
-      0.0018942598187312984,
-      -0.00019133937562941067,
-      0.4861027190332305,
-      11.864380293831324
+      1.4700000000000006,
+      -0.5234694346612055,
+      2.0719946808510636,
+      -0.20230851063829786,
+      0.0886258865248228,
+      0.3163120567375884,
+      6.9833258041117645
     ],
     "stds": [
-      1.3018893760641477,
-      39.71430227134445,
-      0.6840460802094745,
-      1.002012288488145,
-      0.6946532460428374,
-      0.9248634989179434,
-      41.33033701960676
+      1.1932650095342294,
+      4.6589131761482765,
+      0.4759330253854606,
+      0.7794359666436894,
+      0.40501507077741955,
+      0.547744023165691,
+      36.54668390907096
     ],
     "coefficients": [
-      -0.6757217037106727,
-      -1.5470178838417339,
-      0.6706570889074004,
-      0.6949440626130682,
-      0.08842231471750678,
-      -1.8687145558807592,
-      0.42788514693466784
+      -0.8932179868178222,
+      -0.2446009375329844,
+      0.7497003066813837,
+      1.3707647280074113,
+      0.036316494478192,
+      -1.5430730727239363,
+      0.7466845145639772
     ],
-    "intercept": -0.7159174450915409,
-    "train_auc": 0.807,
-    "oos_auc": 0.702,
-    "oos_months": 602,
+    "intercept": -0.7589642355525923,
+    "train_auc": 0.892,
+    "oos_auc": 0.822,
+    "oos_months": 316,
     "buckets": [
       {
         "range": "0-5",
         "lo": 0,
         "hi": 5,
-        "n": 48,
-        "bears": 0,
-        "rate": 0.0,
-        "ci_lo": 0,
-        "ci_hi": 7.4
+        "n": 37,
+        "bears": 1,
+        "rate": 2.7,
+        "ci_lo": 0.5,
+        "ci_hi": 13.8
       },
       {
         "range": "5-10",
         "lo": 5,
         "hi": 10,
-        "n": 36,
-        "bears": 1,
-        "rate": 2.8,
-        "ci_lo": 0.5,
-        "ci_hi": 14.2
+        "n": 47,
+        "bears": 0,
+        "rate": 0.0,
+        "ci_lo": 0.0,
+        "ci_hi": 7.6
       },
       {
         "range": "10-20",
         "lo": 10,
         "hi": 20,
-        "n": 71,
-        "bears": 4,
-        "rate": 5.6,
-        "ci_lo": 2.2,
-        "ci_hi": 13.6
+        "n": 53,
+        "bears": 2,
+        "rate": 3.8,
+        "ci_lo": 1.0,
+        "ci_hi": 12.8
       },
       {
         "range": "20-30",
         "lo": 20,
         "hi": 30,
-        "n": 99,
-        "bears": 6,
-        "rate": 6.1,
-        "ci_lo": 2.8,
-        "ci_hi": 12.6
+        "n": 44,
+        "bears": 9,
+        "rate": 20.5,
+        "ci_lo": 11.2,
+        "ci_hi": 34.5
       },
       {
         "range": "30-50",
         "lo": 30,
         "hi": 50,
-        "n": 172,
-        "bears": 20,
-        "rate": 11.6,
-        "ci_lo": 7.7,
-        "ci_hi": 17.3
+        "n": 59,
+        "bears": 12,
+        "rate": 20.3,
+        "ci_lo": 12.0,
+        "ci_hi": 32.3
       },
       {
         "range": "50-75",
         "lo": 50,
         "hi": 75,
-        "n": 119,
-        "bears": 32,
-        "rate": 26.9,
-        "ci_lo": 19.7,
-        "ci_hi": 35.5
+        "n": 56,
+        "bears": 23,
+        "rate": 41.1,
+        "ci_lo": 29.2,
+        "ci_hi": 54.1
       },
       {
         "range": "75-100",
         "lo": 75,
         "hi": 100,
-        "n": 57,
-        "bears": 9,
-        "rate": 15.8,
-        "ci_lo": 8.5,
-        "ci_hi": 27.4
+        "n": 20,
+        "bears": 13,
+        "rate": 65.0,
+        "ci_lo": 43.3,
+        "ci_hi": 81.9
       }
     ],
-    "trained_on_n": 662
+    "trained_on_n": 376
   },
   "factors_included": [
     "yield_10y3m",
@@ -273,5 +273,5 @@
     "valuation_pe",
     "eps_trend"
   ],
-  "notes": "Backtest scores each month from 1971-present \u2014 1971 is the true floor (NFCI, the Chicago Fed financial conditions index, does not exist earlier). Three factors use reconstructed series so the model can reach 1971: yield curve = 10Y minus 3-month T-bill (GS10 - TB3MS) instead of 10Y-2Y, which only starts 1976; credit spread = Moody's BAA minus 10Y (BAA - GS10) instead of the BAA10Y series which starts 1986; oil = monthly WTI spot (WTISPLC, from 1946) instead of daily WTI which starts 1986. Excludes Valuation (no free monthly P/E history) and EPS Trend (new factor). Bull Duration, Momentum, and VIX were dropped after an earlier backtest showed they were coincident rather than leading. Outcome label: any bear-market start (-20% from peak) within the following 12 months."
+  "notes": "Backtest scores each month from 1971-present \u2014 1971 is the true floor (NFCI, the Chicago Fed financial conditions index, does not exist earlier). Three factors use reconstructed series so the model can reach 1971: yield curve = 10Y minus 3-month T-bill (GS10 - TB3MS) instead of 10Y-2Y, which only starts 1976; credit spread = Moody's BAA minus 10Y (BAA - GS10) instead of the BAA10Y series which starts 1986; oil = monthly WTI spot (WTISPLC, from 1946) instead of daily WTI which starts 1986. Excludes Valuation (no free monthly P/E history) and EPS Trend (new factor). Bull Duration, Momentum, and VIX were dropped after an earlier backtest showed they were coincident rather than leading. Months where a bear is already underway are excluded from logistic-regression training \u2014 the model predicts bear ONSET, not whether one is in progress. Outcome label: any bear-market start (-20% from peak) within the following 12 months."
 }
