@@ -250,6 +250,22 @@ def main():
     for bs in bear_starts:
         print(f"  {bs[0]}-{bs[1]:02d}")
 
+    # In-bear months: from each bear start through its recovery. These months are
+    # excluded from LR training — "will a bear start in the next 12 months?" is a
+    # malformed question when a bear is already underway, and including them
+    # polluted the high-score bucket (the model's most confident calls).
+    in_bear_months = set()
+    for i, sd in enumerate(bear_starts_daily):
+        # Find the matching recovery date (first bear-end after this start)
+        end = next((ed for ed in bear_end_dates_daily if ed > sd), None)
+        y0, m0 = sd.year, sd.month
+        y1, m1 = (end.year, end.month) if end else (spx_daily_raw[-1][0].year, spx_daily_raw[-1][0].month)
+        cur = (y0, m0)
+        while cur <= (y1, m1):
+            in_bear_months.add(cur)
+            cur = add_months(cur[0], cur[1], 1)
+    print(f"In-bear months flagged for training exclusion: {len(in_bear_months)}")
+
     def months_since_last_bear_end(yr, mo):
         cand = [be for be in bear_end_dates if be < (yr, mo)]
         if not cand:
@@ -397,8 +413,14 @@ def main():
         from sklearn.linear_model import LogisticRegression
         from sklearn.metrics import roc_auc_score
         FEATURES = ["yield", "claims", "baa10y", "nfci", "cfnai", "sahm", "oil"]
-        complete = [r for r in rows if all(r["raw"][f] is not None for f in FEATURES)]
-        print(f"\nLogistic regression: {len(complete)} months with all 7 features")
+        all_complete = [r for r in rows if all(r["raw"][f] is not None for f in FEATURES)]
+        # Exclude in-bear months from the training set — keeps the model focused
+        # on predicting bear ONSET rather than learning "a bear is happening now."
+        def _mkey(r):
+            return (int(r["month"][:4]), int(r["month"][5:7]))
+        complete = [r for r in all_complete if _mkey(r) not in in_bear_months]
+        print(f"\nLogistic regression: {len(all_complete)} complete months, "
+              f"{len(complete)} used for training ({len(all_complete) - len(complete)} in-bear excluded)")
         X = np.array([[r["raw"][f] for f in FEATURES] for r in complete], dtype=float)
         y = np.array([r["outcome"] for r in complete], dtype=int)
         months_arr = np.array([r["month"] for r in complete])
@@ -597,8 +619,11 @@ def main():
             "instead of daily WTI which starts 1986. Excludes Valuation (no free "
             "monthly P/E history) and EPS Trend (new factor). Bull Duration, "
             "Momentum, and VIX were dropped after an earlier backtest showed "
-            "they were coincident rather than leading. Outcome label: any "
-            "bear-market start (-20% from peak) within the following 12 months."
+            "they were coincident rather than leading. Months where a bear is "
+            "already underway are excluded from logistic-regression training — "
+            "the model predicts bear ONSET, not whether one is in progress. "
+            "Outcome label: any bear-market start (-20% from peak) within the "
+            "following 12 months."
         ),
     }
 
