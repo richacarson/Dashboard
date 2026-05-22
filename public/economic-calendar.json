@@ -110,16 +110,6 @@
     "unit": ""
   },
   {
-    "title": "Fed Venable Speech",
-    "date": "2026-05-19 23:45:00",
-    "country": "USD",
-    "impact": "Medium",
-    "actual": "",
-    "previous": "",
-    "forecast": "",
-    "unit": ""
-  },
-  {
     "title": "MBA 30-Year Mortgage Rate",
     "date": "2026-05-20 11:00:00",
     "country": "USD",
@@ -274,7 +264,7 @@
     "date": "2026-05-22 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "44.8",
     "previous": "49.8",
     "forecast": "48.2",
     "unit": ""
@@ -340,6 +330,16 @@
     "unit": ""
   },
   {
+    "title": "Fed Logan Speech",
+    "date": "2026-05-27 08:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "MBA 30-Year Mortgage Rate",
     "date": "2026-05-27 11:00:00",
     "country": "USD",
@@ -360,12 +360,32 @@
     "unit": ""
   },
   {
+    "title": "Fed Cook Speech",
+    "date": "2026-05-27 19:55:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "API Crude Oil Stock Change",
     "date": "2026-05-27 20:30:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
     "previous": "-9.1",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Jefferson Speech",
+    "date": "2026-05-28 00:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -435,7 +455,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "209",
     "forecast": "",
     "unit": ""
   },
@@ -478,6 +498,16 @@
     "previous": "0.9",
     "forecast": "",
     "unit": "%"
+  },
+  {
+    "title": "Fed Williams Speech",
+    "date": "2026-05-28 12:55:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
   },
   {
     "title": "New Home Sales",
@@ -550,12 +580,42 @@
     "unit": "%"
   },
   {
+    "title": "Fed Bowman Speech",
+    "date": "2026-05-29 13:10:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Paulson Speech",
+    "date": "2026-05-29 13:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "Chicago PMI",
     "date": "2026-05-29 13:45:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
     "previous": "49.2",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Waller Speech",
+    "date": "2026-05-31 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   }
