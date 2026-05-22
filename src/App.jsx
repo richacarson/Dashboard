@@ -6754,29 +6754,40 @@ Instructions:
                     {/* Summary headline */}
                     <div style={{ ...cardStyle, textAlign: "center" }}>
                       {sectionTitle("Model Backtest — Out-of-Sample Calibration")}
-                      <div style={{ display: "flex", justifyContent: "center", gap: 40, flexWrap: "wrap", marginTop: 10 }}>
-                        <div>
-                          <div style={{ fontSize: 36, fontWeight: 900, color: bt.auc >= 0.75 ? C.up : bt.auc >= 0.6 ? "#FBBF24" : C.dn }}>{bt.auc != null ? bt.auc.toFixed(3) : "—"}</div>
-                          <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>ROC AUC</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>1.0 = perfect, 0.5 = coin flip</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 36, fontWeight: 900, color: C.t1 }}>{bt.total_months}</div>
-                          <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Months Scored</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{bt.start_month} to {bt.end_month}</div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 36, fontWeight: 900, color: C.t1 }}>{bt.bear_starts?.length || 0}</div>
-                          <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Bear Markets</div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>-20% from peak</div>
-                        </div>
-                      </div>
-                      {bt.generated && (() => { const hrs = (Date.now() - new Date(bt.generated)) / 3600000; return <div style={{ fontSize: 10, color: C.t4, marginTop: 12 }}>Backtest generated {hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
+                      {(() => {
+                        const lr = bt.logistic_regression;
+                        const headlineAuc = lr?.oos_auc != null ? lr.oos_auc : bt.auc;
+                        const aucLabel = lr?.oos_auc != null ? "Walk-Forward AUC" : "ROC AUC";
+                        const aucSub = lr?.oos_auc != null ? "Logistic regression (production model)" : "1.0 = perfect, 0.5 = coin flip";
+                        return (
+                          <div style={{ display: "flex", justifyContent: "center", gap: 40, flexWrap: "wrap", marginTop: 10 }}>
+                            <div>
+                              <div style={{ fontSize: 36, fontWeight: 900, color: headlineAuc >= 0.8 ? C.up : headlineAuc >= 0.7 ? "#FBBF24" : C.dn }}>{headlineAuc != null ? headlineAuc.toFixed(3) : "—"}</div>
+                              <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>{aucLabel}</div>
+                              <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{aucSub}</div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 36, fontWeight: 900, color: C.t1 }}>{bt.total_months}</div>
+                              <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Months Scored</div>
+                              <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{bt.start_month} to {bt.end_month}</div>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 36, fontWeight: 900, color: C.t1 }}>{bt.bear_starts?.length || 0}</div>
+                              <div style={{ fontSize: 11, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Bear Markets</div>
+                              <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>-20% from peak</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {bt.logistic_regression?.oos_auc != null && (
+                        <div style={{ fontSize: 10, color: C.t4, marginTop: 10 }}>Legacy heuristic composite: AUC {bt.auc != null ? bt.auc.toFixed(3) : "—"} — see breakdown below</div>
+                      )}
+                      {bt.generated && (() => { const hrs = (Date.now() - new Date(bt.generated)) / 3600000; return <div style={{ fontSize: 10, color: C.t4, marginTop: 6 }}>Backtest generated {hrs < 24 ? `${Math.round(hrs)}h ago` : `${Math.round(hrs/24)}d ago`}</div>; })()}
                     </div>
 
                     {/* Calibration plot */}
                     <div style={cardStyle}>
-                      {sectionTitle("Score Bucket → Realized 12-Month Bear Rate")}
+                      {sectionTitle("Heuristic Composite — Score Bucket → Realized Rate")}
                       <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
                         For each score bucket, what % of historical months in that range had a bear-market start within the next 12 months. Dashed line = perfect calibration (model says X%, reality is X%). Error bars are Wilson 95% CIs.
                       </div>
