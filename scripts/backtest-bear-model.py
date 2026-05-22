@@ -64,7 +64,7 @@ def fetch_yahoo_history(symbol, interval="1d", period1=None, period2=None):
     explicit period1/period2 Unix timestamps to get true daily granularity.
     """
     if period1 is None:
-        period1 = 441763200  # 1984-01-01
+        period1 = -315619200  # 1960-01-01 (need pre-1971 data for bear detection)
     if period2 is None:
         period2 = int(datetime.utcnow().timestamp())
     url = (
@@ -140,14 +140,12 @@ def main():
         print("  ERROR: FRED_KEY env var not set — backtest cannot run", file=sys.stderr)
         sys.exit(1)
     series = {}
+    # Single FRED series fetched directly
     fred_ids = [
-        ("T10Y2Y", "yield_2s10s", to_monthly_avg),
-        ("BAA10Y", "baa10y", to_monthly_avg),
         ("NFCI", "nfci", to_monthly_last),
         ("IC4WSA", "claims", to_monthly_last),
         ("CFNAI", "cfnai", to_monthly_first),
         ("UNRATE", "unrate", to_monthly_first),
-        ("DCOILWTICO", "oil", to_monthly_avg),
     ]
     for fid, name, agg in fred_ids:
         print(f"  {fid} -> {name}...", flush=True)
@@ -159,7 +157,48 @@ def main():
             print(f"    FAILED: {e}", file=sys.stderr)
             series[name] = {}
 
-    if all(len(series[name]) == 0 for _, name, _ in fred_ids):
+    # Reconstructed series — built from longer-running components so the
+    # backtest can reach 1971 (T10Y2Y/BAA10Y/DCOILWTICO only start 1976/1986).
+    # Yield curve: 10Y minus 3-month T-bill (GS10 from 1953, TB3MS from 1934).
+    # The live model feeds the same 10Y-3M spread.
+    try:
+        gs10 = to_monthly_first(fetch_fred_api("GS10"))
+        tb3ms = to_monthly_first(fetch_fred_api("TB3MS"))
+        yc = {}
+        for k in gs10:
+            if k in tb3ms:
+                yc[k] = (gs10[k][0], gs10[k][1] - tb3ms[k][1])
+        series["yield_curve"] = yc
+        print(f"  GS10 - TB3MS -> yield_curve: {len(yc)} months")
+    except Exception as e:
+        print(f"    Yield curve reconstruction FAILED: {e}", file=sys.stderr)
+        series["yield_curve"] = {}
+
+    # Credit spread: Moody's BAA corporate yield minus 10Y Treasury
+    # (BAA from 1919, GS10 from 1953). Equivalent to the BAA10Y series.
+    try:
+        baa = to_monthly_first(fetch_fred_api("BAA"))
+        gs10_c = to_monthly_first(fetch_fred_api("GS10"))
+        cs = {}
+        for k in baa:
+            if k in gs10_c:
+                cs[k] = (baa[k][0], baa[k][1] - gs10_c[k][1])
+        series["baa10y"] = cs
+        print(f"  BAA - GS10 -> baa10y: {len(cs)} months")
+    except Exception as e:
+        print(f"    Credit spread reconstruction FAILED: {e}", file=sys.stderr)
+        series["baa10y"] = {}
+
+    # Oil: WTI spot, monthly (WTISPLC from 1946) instead of daily DCOILWTICO (1986)
+    try:
+        series["oil"] = to_monthly_first(fetch_fred_api("WTISPLC"))
+        print(f"  WTISPLC -> oil: {len(series['oil'])} months")
+    except Exception as e:
+        print(f"    Oil reconstruction FAILED: {e}", file=sys.stderr)
+        series["oil"] = {}
+
+    required = ["nfci", "claims", "cfnai", "unrate", "yield_curve", "baa10y", "oil"]
+    if all(len(series.get(name, {})) == 0 for name in required):
         print("ERROR: All FRED fetches returned empty — FRED_KEY may be invalid", file=sys.stderr)
         sys.exit(1)
 
@@ -254,9 +293,10 @@ def main():
             continue
         cfnai_3m[k] = sum(cfnai[cfnai_keys[j]][1] for j in range(i - 2, i + 1)) / 3
 
-    # Determine start month — when all key factors have data
-    # BAA10Y starts 1986, VIX starts 1990 → use 1990 for full coverage
-    START = (1990, 1)
+    # Determine start month — NFCI starts 1971, the binding constraint for the
+    # full 7-factor model. All other series cover 1971 (reconstructed where
+    # needed). 1971 is the true floor for this model.
+    START = (1971, 1)
     END = max(spx_monthly.keys())
 
     months = []
@@ -271,10 +311,10 @@ def main():
     for k in months:
         factors = []
 
-        # Yield Curve (18%)
-        if k in series["yield_2s10s"]:
-            spread = series["yield_2s10s"][k][1]
-            score = interp(spread, [(-1.5, 92), (-0.8, 78), (-0.4, 62), (0.0, 45), (0.5, 30), (1.0, 18), (2.0, 10), (3.0, 5)])
+        # Yield Curve (18%) — 10Y minus 3-month T-bill
+        if k in series["yield_curve"]:
+            spread = series["yield_curve"][k][1]
+            score = interp(spread, [(-2.5, 92), (-1.2, 80), (-0.5, 64), (0.0, 46), (0.7, 30), (1.5, 18), (2.5, 10), (3.5, 5)])
             factors.append(("yield", score, 18))
 
         # Jobless Claims (12%)
@@ -329,7 +369,7 @@ def main():
 
         # Raw inputs (for logistic regression — needs all 7 to be present)
         raw = {
-            "yield": series["yield_2s10s"][k][1] if k in series["yield_2s10s"] else None,
+            "yield": series["yield_curve"][k][1] if k in series["yield_curve"] else None,
             "claims": claims_trend.get(k),
             "baa10y": series["baa10y"][k][1] if k in series["baa10y"] else None,
             "nfci": series["nfci"][k][1] if k in series["nfci"] else None,
@@ -544,18 +584,20 @@ def main():
         "thresholds": thresholds,
         "pre_bear_avg_score": pre_bear_avg,
         "logistic_regression": lr_artifact,
-        "factors_included": ["yield_2s10s", "claims", "baa10y", "nfci", "cfnai", "sahm", "oil_yoy"],
+        "factors_included": ["yield_10y3m", "claims", "baa10y", "nfci", "cfnai", "sahm", "oil_yoy"],
         "factors_excluded": ["valuation_pe", "eps_trend"],
         "notes": (
-            "Backtest scores each month from 1990-present using the same factor "
-            "interpolation tables as the live model. Excludes Valuation (no free "
-            "monthly P/E history) and EPS Trend (new factor). Yield-curve "
-            "post-inversion premium is also excluded — the backtest uses raw "
-            "10Y-2Y spread only. Bull Duration, Momentum, and VIX factors were "
-            "dropped from the model after backtest showed they were coincident "
-            "rather than leading indicators (AUC contribution near zero). NFCI "
-            "(Chicago Fed financial conditions, 105 components) added as a "
-            "stronger composite financial-stress signal. Outcome label: any "
+            "Backtest scores each month from 1971-present — 1971 is the true "
+            "floor (NFCI, the Chicago Fed financial conditions index, does not "
+            "exist earlier). Three factors use reconstructed series so the model "
+            "can reach 1971: yield curve = 10Y minus 3-month T-bill (GS10 - "
+            "TB3MS) instead of 10Y-2Y, which only starts 1976; credit spread = "
+            "Moody's BAA minus 10Y (BAA - GS10) instead of the BAA10Y series "
+            "which starts 1986; oil = monthly WTI spot (WTISPLC, from 1946) "
+            "instead of daily WTI which starts 1986. Excludes Valuation (no free "
+            "monthly P/E history) and EPS Trend (new factor). Bull Duration, "
+            "Momentum, and VIX were dropped after an earlier backtest showed "
+            "they were coincident rather than leading. Outcome label: any "
             "bear-market start (-20% from peak) within the following 12 months."
         ),
     }

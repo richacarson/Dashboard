@@ -1551,7 +1551,7 @@ Instructions:
           const r = await fetch(`${import.meta.env.BASE_URL}macro-data.json?v=${Date.now()}`);
           if (r.ok) {
             const d = await r.json();
-            if (d.yieldSpread != null) { results.yieldSpread = d.yieldSpread; results.yield10Y = d.yield10Y; results.yield2Y = d.yield2Y; results.yieldDate = d.yieldDate; }
+            if (d.yieldSpread != null) { results.yieldSpread = d.yieldSpread; results.yield10Y = d.yield10Y; results.yield2Y = d.yield2Y; results.yield3M = d.yield3M; results.yieldDate = d.yieldDate; }
             if (d.vix != null) results.vix = d.vix;
             if (d.spyPE != null) results.spyPE = d.spyPE;
             if (d.claims != null) { results.claims = d.claims; results.claimsDate = d.claimsDate; results.claims4wk = d.claims4wk; results.claimsTrend = d.claimsTrend; }
@@ -6506,17 +6506,21 @@ Instructions:
                 const factors = [];
                 const md = macroData;
 
-                // Factor 1: Yield Curve (10Y-2Y) — strongest single recession predictor
+                // Factor 1: Yield Curve (10Y-3M) — strongest single recession predictor
+                // 10Y-3M is the NY Fed's chosen spread; the 2Y series only starts 1976.
                 // Post-inversion premium: recessions start AFTER de-inversion (Bauer & Mertens 2018)
-                // 10Y-2Y inverted Jul 2022 — Oct 2024. Premium decays linearly over 24 months post de-inversion.
-                if (md.yieldSpread != null) {
-                  let score = interp(md.yieldSpread, [[-1.0, 90], [-0.5, 75], [0, 48], [0.25, 38], [0.5, 28], [1.0, 18], [1.5, 10], [2.5, 5]]);
-                  const inversionEndDate = new Date("2024-10-01");
-                  const monthsSinceDeInversion = Math.max(0, (Date.now() - inversionEndDate) / (30.44 * 86400000));
-                  const postInvPremium = monthsSinceDeInversion < 24 && md.yieldSpread > 0 ? Math.round(18 * (1 - monthsSinceDeInversion / 24)) : 0;
-                  score = Math.min(95, score + postInvPremium);
-                  const piNote = postInvPremium > 0 ? ` +${postInvPremium}pt post-inversion (${Math.round(monthsSinceDeInversion)}mo since de-inversion)` : "";
-                  factors.push({ name: "Yield Curve", value: `${md.yieldSpread > 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 2Y: ${md.yield2Y?.toFixed(2)}%${piNote}`, score, weight: 18, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-2Y (Bauer & Mertens 2018)" });
+                // Premium decays linearly over 24 months post de-inversion.
+                {
+                  const yc = (md.yield10Y != null && md.yield3M != null) ? md.yield10Y - md.yield3M : md.yieldSpread;
+                  if (yc != null) {
+                    let score = interp(yc, [[-2.5, 92], [-1.2, 80], [-0.5, 64], [0.0, 46], [0.7, 30], [1.5, 18], [2.5, 10], [3.5, 5]]);
+                    const inversionEndDate = new Date("2024-10-01");
+                    const monthsSinceDeInversion = Math.max(0, (Date.now() - inversionEndDate) / (30.44 * 86400000));
+                    const postInvPremium = monthsSinceDeInversion < 24 && yc > 0 ? Math.round(18 * (1 - monthsSinceDeInversion / 24)) : 0;
+                    score = Math.min(95, score + postInvPremium);
+                    const piNote = postInvPremium > 0 ? ` +${postInvPremium}pt post-inversion (${Math.round(monthsSinceDeInversion)}mo since de-inversion)` : "";
+                    factors.push({ name: "Yield Curve", value: `${yc > 0 ? "+" : ""}${yc.toFixed(2)}%`, detail: `10Y: ${md.yield10Y?.toFixed(2)}% / 3M: ${md.yield3M?.toFixed(2)}%${piNote}`, score, weight: 18, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "10Y-3M (NY Fed recession model)" });
+                  }
                 }
 
                 // Factor 2: Valuation (P/E) — steepened curve: GFC started at 21x, 2022 bear at 23x
@@ -6600,8 +6604,11 @@ Instructions:
                 let lrProb = null;
                 let lrInputsAvailable = false;
                 if (lrModel) {
+                  // Yield curve as 10Y-3M to match the backtest (the 2Y series
+                  // doesn't exist before 1976, so the model uses 10Y minus 3M).
+                  const yc10y3m = (md.yield10Y != null && md.yield3M != null) ? md.yield10Y - md.yield3M : null;
                   const rawInputs = [
-                    md.yieldSpread,
+                    yc10y3m,
                     md.claimsTrend,
                     md.baa10y,
                     md.nfci,
@@ -6699,7 +6706,7 @@ Instructions:
                     <div style={cardStyle}>
                       {sectionTitle("Methodology")}
                       <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.8 }}>
-                        <div><strong style={{ color: C.t1 }}>Yield Curve (18%)</strong> — 10Y minus 2Y Treasury spread with post-inversion premium. Yield curve inversion has preceded every U.S. recession since 1955. Critically, recessions typically begin *after* the curve de-inverts (Bauer & Mertens, 2018) — the re-steepening phase is the most dangerous. The 2022-2024 inversion (-1.08%) ended ~Oct 2024; a +18pt premium decays linearly over 24 months from de-inversion to capture this lagged risk.</div>
+                        <div><strong style={{ color: C.t1 }}>Yield Curve (18%)</strong> — 10Y minus 3-month T-bill spread with post-inversion premium. This is the spread the NY Fed uses in its official recession-probability model; the 2-year series only starts in 1976, so 10Y-3M also lets the backtest reach 1971. Yield curve inversion has preceded every U.S. recession since 1955. Critically, recessions typically begin *after* the curve de-inverts (Bauer & Mertens, 2018) — the re-steepening phase is the most dangerous. The 2022-2024 inversion ended ~Oct 2024; a +18pt premium decays linearly over 24 months from de-inversion to capture this lagged risk.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Valuation (13%)</strong> — SPY trailing P/E ratio. Scoring calibrated to actual pre-bear P/E levels: the 2007 GFC began at 21x, the 2022 bear at 23x, the dot-com crash at 28x (Shiller, 2000). Not a timing signal, but a severity amplifier — high P/E markets fall further.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Jobless Claims (12%)</strong> — 4-week moving average of initial unemployment claims from FRED (series IC4WSA, released weekly on Thursdays). Rising claims precede every post-war recession by 3-6 months. Scored on the trend: a 10%+ increase over the prior month is an amber signal; 20%+ is a red flag. This is the model's primary real-economy indicator.</div>
                         <div style={{ marginTop: 8 }}><strong style={{ color: C.t1 }}>Credit Spreads (10%)</strong> — Moody's BAA corporate bond yield minus 10-Year Treasury (FRED BAA10Y, daily, 1986-present). Widening spreads signal deteriorating credit conditions and precede equity drawdowns (Gilchrist & Zakrajsek, 2012). Calibrated to actual pre-bear levels: GFC started at 1.72-1.90%, COVID at 2.05%, 2022 at 1.82%. Stress: Lehman 3.66%, COVID crash 4.31%, GFC bottom 5.40%. Falls back to HYG ETF if FRED data unavailable.</div>
