@@ -779,6 +779,30 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
 }
 
 /* ═══════════════════════════════════════════════════════════════════ */
+
+/* Bear-probability model — applies the trained logistic-regression
+   coefficients from the backtest to current macro data. Returns
+   { raw, calibrated } as 0-1 fractions, or null if model/data unavailable. */
+function bearModelProbability(md, backtest) {
+  const lrModel = backtest?.logistic_regression;
+  if (!lrModel) return null;
+  const yc = (md.yield10Y != null && md.yield3M != null) ? md.yield10Y - md.yield3M : null;
+  const inputs = [yc, md.claimsTrend, md.baa10y, md.nfci,
+    md.cfnai3mo != null ? md.cfnai3mo : md.cfnai, md.sahmVal, md.oilYoY];
+  if (!inputs.every(v => v != null && !isNaN(v))) return null;
+  const z = inputs.map((v, i) => (v - lrModel.means[i]) / lrModel.stds[i]);
+  const logit = lrModel.intercept + z.reduce((s, v, i) => s + lrModel.coefficients[i] * v, 0);
+  const raw = 1 / (1 + Math.exp(-logit));
+  let calibrated = raw;
+  if (lrModel.buckets) {
+    const pct = raw * 100;
+    const b = lrModel.buckets.find(bk => pct >= bk.lo && pct < bk.hi);
+    if (b && b.n >= 10) calibrated = b.rate / 100;
+  }
+  return { raw, calibrated };
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
 export default function App() {
   const [unlocked, setUnlocked] = useState(() => {
     try { return localStorage.getItem("iown_remembered") === "true"; } catch { return false; }
@@ -6597,43 +6621,14 @@ Instructions:
                 const concordanceBonus = elevatedCount >= 4 ? 15 : elevatedCount >= 3 ? 10 : elevatedCount >= 2 ? 5 : 0;
                 const rawComposite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus))) : null;
 
-                // Logistic regression: use the trained model from backtest if available
-                // Coefficients were fit on raw factor inputs via L2-regularized logistic
-                // regression, then validated with walk-forward out-of-sample evaluation.
+                // Logistic regression: apply the trained model from the backtest.
+                // Coefficients fit on raw factor inputs (L2-regularized), validated
+                // with walk-forward out-of-sample evaluation. Bucket recalibration
+                // maps the raw probability to the realized historical rate.
                 const lrModel = backtest?.logistic_regression;
-                let lrProb = null;
-                let lrInputsAvailable = false;
-                if (lrModel) {
-                  // Yield curve as 10Y-3M to match the backtest (the 2Y series
-                  // doesn't exist before 1976, so the model uses 10Y minus 3M).
-                  const yc10y3m = (md.yield10Y != null && md.yield3M != null) ? md.yield10Y - md.yield3M : null;
-                  const rawInputs = [
-                    yc10y3m,
-                    md.claimsTrend,
-                    md.baa10y,
-                    md.nfci,
-                    md.cfnai3mo != null ? md.cfnai3mo : md.cfnai,
-                    md.sahmVal,
-                    md.oilYoY,
-                  ];
-                  if (rawInputs.every(v => v != null && !isNaN(v))) {
-                    lrInputsAvailable = true;
-                    const standardized = rawInputs.map((v, i) => (v - lrModel.means[i]) / lrModel.stds[i]);
-                    const logit = lrModel.intercept + standardized.reduce((s, v, i) => s + lrModel.coefficients[i] * v, 0);
-                    lrProb = 1 / (1 + Math.exp(-logit));
-                  }
-                }
-
-                // LR bucket recalibration: map raw LR probability to historical realized rate
-                // in the matching bucket. Backtest showed the top bucket (75-100%) only
-                // realizes ~49% — the model is over-confident at the high end. This step
-                // makes the displayed probability empirically grounded.
-                let lrCalibrated = lrProb;
-                if (lrProb != null && lrModel?.buckets) {
-                  const lrPct = lrProb * 100;
-                  const b = lrModel.buckets.find(b => lrPct >= b.lo && lrPct < b.hi);
-                  if (b && b.n >= 10) lrCalibrated = b.rate / 100;
-                }
+                const _bp = bearModelProbability(md, backtest);
+                const lrProb = _bp ? _bp.raw : null;
+                const lrCalibrated = _bp ? _bp.calibrated : null;
 
                 // Isotonic fallback for heuristic score: if LR model not available
                 let isotonic = rawComposite;
@@ -7129,35 +7124,56 @@ Instructions:
                 const bullAgeMo = (Date.now() - new Date("2022-10-12")) / (30.44 * 86400000);
                 const bearsCovered5yr = officialBears.filter(b => (b.durationMo + b.recoveryMo) <= 60).length;
                 const coveragePct5yr = Math.round(bearsCovered5yr / officialBears.length * 100);
-                const riskLevel = pctFromTrough > 150 ? "elevated" : pctFromTrough > 100 ? "moderate" : "low";
-                const riskColor = riskLevel === "elevated" ? C.dn : riskLevel === "moderate" ? "#FBBF24" : C.up;
-                const recommendedYears = riskLevel === "elevated" ? 6 : riskLevel === "moderate" ? 5 : 4;
+
+                // The ladder is the client's standing safety net: 5 bonds, each one
+                // year of living expenses. 5 years is a permanent FLOOR — the ladder
+                // never goes below it. The bear-probability model can only thicken
+                // the ladder above the floor (add a 6th/7th bond) when risk rises.
+                const FLOOR_YEARS = 5;
+                const bearProbFrac = bearModelProbability(md, backtest)?.calibrated ?? null;
+                const bearProbPct = bearProbFrac != null ? Math.round(bearProbFrac * 100) : null;
+                let recommendedYears = FLOOR_YEARS;
+                if (bearProbPct != null) {
+                  if (bearProbPct > 55) recommendedYears = 7;
+                  else if (bearProbPct > 40) recommendedYears = 6;
+                }
+                const riskLevel = bearProbPct == null ? "unknown"
+                  : bearProbPct > 55 ? "high" : bearProbPct > 40 ? "elevated"
+                  : bearProbPct > 25 ? "moderate" : "low";
+                const riskColor = (riskLevel === "high" || riskLevel === "elevated") ? C.dn
+                  : riskLevel === "moderate" ? "#FBBF24" : riskLevel === "low" ? C.up : C.t4;
                 const LADDER_YEARS = [
-                  { year: 1, purpose: "Current-year living expenses", action: "Matures annually — fund withdrawals" },
+                  { year: 1, purpose: "Current-year living expenses", action: "Matures annually — funds withdrawals" },
                   { year: 2, purpose: "Next-year living expenses", action: "Rolls to Year 1 on maturity" },
-                  { year: 3, purpose: "Buffer year", action: "Rolls to Year 2 on maturity" },
-                  { year: 4, purpose: "Buffer year", action: "Rolls to Year 3 on maturity" },
-                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear market tranches (-25/-35/-50%)" },
+                  { year: 3, purpose: "Living-expense reserve", action: "Rolls down on maturity" },
+                  { year: 4, purpose: "Living-expense reserve", action: "Rolls down on maturity" },
+                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear tranches (-25/-35/-50%)" },
                 ];
-                if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Extended buffer", action: "Added when cycle risk is elevated" });
+                if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Pre-positioned reserve", action: "Added — bear-probability model elevated" });
+                if (recommendedYears >= 7) LADDER_YEARS.push({ year: 7, purpose: "Pre-positioned reserve", action: "Added — bear-probability model high" });
 
                 return (
                   <div>
                     {/* Current recommendation */}
                     <div style={{ ...cardStyle, textAlign: "center", position: "relative", overflow: "hidden" }}>
                       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.accent }} />
-                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Current Bond Ladder Rule</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Recommended Bond Ladder</div>
                       <div style={{ fontSize: 48, fontWeight: 900, color: C.accent, marginBottom: 4 }}>{recommendedYears}</div>
                       <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Years of Living Expenses in Bonds</div>
                       <div style={{ display: "inline-block", padding: "6px 16px", borderRadius: 8, background: riskColor + "18", border: `1px solid ${riskColor}44` }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: riskColor, textTransform: "uppercase" }}>Cycle Risk: {riskLevel}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: riskColor, textTransform: "uppercase" }}>
+                          Bear Risk: {riskLevel}{bearProbPct != null ? ` (${bearProbPct}%)` : ""}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 11, color: C.t4, marginTop: 12, lineHeight: 1.5 }}>
+                        Floor: <strong style={{ color: C.t2 }}>5 years</strong> — five bonds, each one year of the client's living expenses. This safety net is always held in full. The bear-probability model can thicken it to {recommendedYears > FLOOR_YEARS ? `${recommendedYears} years` : "6-7 years"} when risk rises — it never recommends less than 5.
                       </div>
                     </div>
 
                     {/* Why this number */}
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                      {statBox("Bear Probability", bearProbPct != null ? `${bearProbPct}%` : "—", riskColor)}
                       {statBox("Bull Age", `${Math.round(bullAgeMo)} mo`, C.t1)}
-                      {statBox("From Trough", `${pctFromTrough >= 0 ? "+" : ""}${pctFromTrough.toFixed(0)}%`, pctFromTrough >= 0 ? C.up : C.dn)}
                       {statBox("5yr Coverage", `${coveragePct5yr}%`, coveragePct5yr >= 70 ? C.up : "#FBBF24")}
                       {statBox("Avg Recovery", `${avgRecovery.toFixed(0)} mo`, C.t1)}
                     </div>
@@ -7166,35 +7182,41 @@ Instructions:
                     <div style={cardStyle}>
                       {sectionTitle("Bond Ladder Structure")}
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {LADDER_YEARS.map((ly, i) => (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: ly.year === 5 ? C.dn + "10" : ly.year === 6 ? "#FBBF2410" : C.bg, borderRadius: 10, border: `1px solid ${ly.year === 5 ? C.dn + "30" : ly.year === 6 ? "#FBBF2430" : C.border}` }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, background: ly.year === 5 ? C.dn + "20" : ly.year === 6 ? "#FBBF2420" : C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: ly.year === 5 ? C.dn : ly.year === 6 ? "#FBBF24" : C.accent, flexShrink: 0 }}>{ly.year}</div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{ly.purpose}</div>
-                              <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{ly.action}</div>
+                        {LADDER_YEARS.map((ly, i) => {
+                          const extra = ly.year >= 6;       // model-added pre-positioned reserve
+                          const deploy = ly.year === 5;     // base-ladder deployment reserve
+                          const tone = extra ? "#FBBF24" : deploy ? C.dn : null;
+                          return (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: tone ? tone + "10" : C.bg, borderRadius: 10, border: `1px solid ${tone ? tone + "30" : C.border}` }}>
+                              <div style={{ width: 36, height: 36, borderRadius: 10, background: tone ? tone + "20" : C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: tone || C.accent, flexShrink: 0 }}>{ly.year}</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{ly.purpose}</div>
+                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{ly.action}</div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
                     {/* Dynamic rule */}
                     <div style={cardStyle}>
-                      {sectionTitle("When to Adjust")}
+                      {sectionTitle("Ladder Sizing Rule")}
+                      <div style={{ fontSize: 11, color: C.t4, marginBottom: 12 }}>
+                        Driven by the 7-factor bear-probability model (walk-forward AUC 0.82). The 5-year floor is permanent; the model only adds buffer above it.
+                      </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {[
-                          { condition: "Bull market < 100% above trough", years: 4, risk: "low", color: C.up },
-                          { condition: "Bull market 100-150% above trough", years: 5, risk: "moderate", color: "#FBBF24" },
-                          { condition: "Bull market > 150% above trough", years: 6, risk: "elevated", color: C.dn },
-                          { condition: "Yield curve inverted", years: 6, risk: "elevated", color: C.dn },
+                          { condition: "Bear probability ≤ 40%", sub: "Low / moderate risk", years: 5, color: C.up, lo: -1, hi: 40 },
+                          { condition: "Bear probability 41-55%", sub: "Elevated — add a 6th bond", years: 6, color: "#FBBF24", lo: 40, hi: 55 },
+                          { condition: "Bear probability > 55%", sub: "High — add a 7th bond", years: 7, color: C.dn, lo: 55, hi: 1000 },
                         ].map((r, i) => {
-                          const active = (r.condition.includes("<") && pctFromTrough < 100) ||
-                            (r.condition.includes("100-150") && pctFromTrough >= 100 && pctFromTrough <= 150) ||
-                            (r.condition.includes("> 150") && pctFromTrough > 150);
+                          const active = bearProbPct != null && bearProbPct > r.lo && bearProbPct <= r.hi;
                           return (
                             <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: active ? C.accentSoft : C.bg, borderRadius: 10, border: `1px solid ${active ? C.borderActive : C.border}` }}>
                               <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: active ? C.t1 : C.t3 }}>{r.condition}</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: active ? C.t1 : C.t3 }}>{r.condition}</div>
+                                <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{r.sub}</div>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                 <span style={{ fontSize: 16, fontWeight: 900, color: r.color }}>{r.years} yr</span>
@@ -7203,6 +7225,9 @@ Instructions:
                             </div>
                           );
                         })}
+                      </div>
+                      <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.5 }}>
+                        Extra bonds (6th, 7th) are pre-positioned deployment reserve — added while markets are calm so they can be sold in a bear without touching the core 5-year safety net. Rebuild after recovery.
                       </div>
                     </div>
                   </div>
