@@ -1135,9 +1135,9 @@ Instructions:
   const [perfLoading, setPerfLoading] = useState(false);
   const [pbView, setPbView] = useState("regime");
   const [pbSimDrop, setPbSimDrop] = useState(30);
-  const [pbSimValue, setPbSimValue] = useState(1000000);
+  const [pbSimBondPerYear, setPbSimBondPerYear] = useState(100000);
+  const [pbSimEquity, setPbSimEquity] = useState(1000000);
   const [pbSimHistBear, setPbSimHistBear] = useState("");
-  const [pbSimReservePct, setPbSimReservePct] = useState(5);
   const [macroData, setMacroData] = useState({ yieldSpread: null, vix: null, hySpread: null, spy200: null, cape: null, loaded: false });
   const [backtest, setBacktest] = useState(null);
   useEffect(() => {
@@ -6286,15 +6286,21 @@ Instructions:
               {pbView === "simulator" && (() => {
                 const historicalBears = BEAR_MARKETS.filter(b => !b.nearBear && Math.abs(b.drawdown) >= 20);
                 const selectedBear = historicalBears.find(b => b.name === pbSimHistBear);
-                const portfolioVal = pbSimValue;
                 const dropPct = selectedBear ? Math.abs(selectedBear.drawdown) : pbSimDrop;
-                const currentCashPct = pbSimReservePct;
-                const cashReserves = portfolioVal * (currentCashPct / 100);
-                const equityVal = portfolioVal - cashReserves;
+
+                // Portfolio shape: 5-year bond ladder + equity sleeve
+                const bondPerYear = pbSimBondPerYear;
+                const equityVal = pbSimEquity;
+                const totalBonds = 5 * bondPerYear;        // entire ladder
+                const bondsKept = 4 * bondPerYear;         // Years 1-4 (untouched)
+                const cashReserves = bondPerYear;          // Year-5 (deployable)
+                const portfolioVal = totalBonds + equityVal;
+
+                // Walk through deploy tranches
                 const trancheResults = [];
                 let remainingCash = cashReserves;
                 let totalDeployed = 0;
-                let deployedAtLevels = [];
+                const deployedAtLevels = [];
                 for (const t of BEAR_TRANCHES) {
                   if (dropPct >= Math.abs(t.drawdownTrigger)) {
                     const deployAmt = cashReserves * (t.pctReserves / 100);
@@ -6307,26 +6313,38 @@ Instructions:
                     trancheResults.push({ ...t, deployed: 0, triggered: false });
                   }
                 }
+
+                // At the bear bottom
                 const equityAfterDrop = equityVal * (1 - dropPct / 100);
-                const portfolioAtBottom = equityAfterDrop + remainingCash + totalDeployed * (1 - dropPct / 100) * (1 / (1 - Math.abs(deployedAtLevels[0]?.level || dropPct) / 100));
-                const portfolioAtBottomSimple = equityAfterDrop + remainingCash;
-                const bhAtBottom = portfolioVal * (1 - dropPct / 100);
-                const saved = portfolioAtBottomSimple - bhAtBottom;
-                const recoveryGain = dropPct / (100 - dropPct) * 100;
-                const portfolioAtRecovery = equityVal + cashReserves;
+                // Value of deployed cash at the bottom: each tranche bought equity at
+                // price (1 - level/100) of peak, which is now worth (1 - dropPct/100)
+                // of peak — so it dropped from deploy price by the marginal amount.
+                let deployedValueAtBottom = 0;
+                for (const d of deployedAtLevels) {
+                  const deployLevel = Math.abs(d.level) / 100;
+                  deployedValueAtBottom += d.amount * (1 - dropPct / 100) / (1 - deployLevel);
+                }
+                const portfolioAtBottom = bondsKept + remainingCash + equityAfterDrop + deployedValueAtBottom;
+                // Baseline: passive bond-holding (5 bonds untouched + equity drops)
+                const bhAtBottom = totalBonds + equityAfterDrop;
+                const saved = portfolioAtBottom - bhAtBottom;
+
+                // At full recovery (equity returns to peak)
                 let deploymentAlpha = 0;
                 for (const d of deployedAtLevels) {
                   const buyDiscount = Math.abs(d.level);
-                  const returnToRecovery = buyDiscount / (100 - buyDiscount) * 100;
-                  deploymentAlpha += d.amount * (returnToRecovery / 100);
+                  const returnToRecovery = buyDiscount / (100 - buyDiscount);
+                  deploymentAlpha += d.amount * returnToRecovery;
                 }
-                const portfolioAfterRecovery = portfolioVal + deploymentAlpha;
+                const portfolioAfterRecovery = totalBonds + equityVal + deploymentAlpha;
+                const bhAtRecovery = totalBonds + equityVal;
+                const recoveryGain = dropPct / (100 - dropPct) * 100;
 
                 return (
                   <div>
                     <div style={cardStyle}>
                       {sectionTitle("Bond-Deploy Scenario Simulator")}
-                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 10, lineHeight: 1.6 }}>Models the bond-deploy strategy: a chosen portion of the portfolio sits in deployable bond reserves (typically Year-5 of a 5-year ladder, ~5% of portfolio), then deploys into equity at -25% and -40% drawdown thresholds. Compares to buy-and-hold at the bear bottom and at full recovery.</div>
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 10, lineHeight: 1.6 }}>Models the bond-deploy strategy for a client portfolio with a 5-year bond ladder + equity sleeve. Year-5 bond is the deployable reserve (sold in bear-market tranches). Years 1-4 are inviolate — they fund the next four years of living expenses. Edit the bond and equity amounts to match a specific client.</div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Simulate a Historical Bear Market</div>
                       <select value={pbSimHistBear} onChange={e => { setPbSimHistBear(e.target.value); if (e.target.value) { const b = historicalBears.find(x => x.name === e.target.value); if (b) setPbSimDrop(Math.abs(b.drawdown)); } }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 14, fontWeight: 600, fontFamily: "inherit", marginBottom: 12, appearance: "auto" }}>
                         <option value="">Custom scenario (use slider)</option>
@@ -6334,25 +6352,29 @@ Instructions:
                       </select>
                       {selectedBear && (
                         <div style={{ background: C.accent + "10", border: `1px solid ${C.accent}20`, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.t2, lineHeight: 1.6 }}>
-                          <strong style={{ color: C.t1 }}>{selectedBear.name}</strong> ({selectedBear.peakDate} → {selectedBear.troughDate}) — S&P fell <strong style={{ color: C.dn }}>{selectedBear.drawdown}%</strong> over {selectedBear.durationMo} months. Recovery took {selectedBear.recoveryMo} months. With <strong style={{ color: C.accent }}>{currentCashPct}%</strong> of portfolio in deployable bond reserves, the deploy schedule below fires across the drawdown.
+                          <strong style={{ color: C.t1 }}>{selectedBear.name}</strong> ({selectedBear.peakDate} → {selectedBear.troughDate}) — S&P fell <strong style={{ color: C.dn }}>{selectedBear.drawdown}%</strong> over {selectedBear.durationMo} months. Recovery took {selectedBear.recoveryMo} months.
                         </div>
                       )}
-                      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-                        <div style={{ flex: 1, minWidth: 200 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Portfolio Value</div>
-                          <input type="text" value={`$${portfolioVal.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v > 0) setPbSimValue(v); }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 16, fontWeight: 700, fontFamily: "inherit" }} />
+                      <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+                        <div style={{ flex: 1, minWidth: 180 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Per-Bond Amount</div>
+                          <input type="text" value={`$${bondPerYear.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v >= 0) setPbSimBondPerYear(v); }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 16, fontWeight: 700, fontFamily: "inherit" }} />
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>1 year of living expenses × 5 bonds = ${totalBonds.toLocaleString()}</div>
                         </div>
-                        <div style={{ flex: 1, minWidth: 200 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Deployable Reserves: {currentCashPct}%</div>
-                          <input type="range" min={0} max={20} step={1} value={currentCashPct} onChange={e => setPbSimReservePct(Number(e.target.value))} style={{ width: "100%", accentColor: C.accent }} />
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}><span>0%</span><span>5%</span><span>10%</span><span>15%</span><span>20%</span></div>
-                          <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Year-5 bond ≈ 5% (1 year of expenses). Thickened ladders (6-7 bonds) ≈ 10-15%.</div>
+                        <div style={{ flex: 1, minWidth: 180 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Equity Sleeve</div>
+                          <input type="text" value={`$${equityVal.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v >= 0) setPbSimEquity(v); }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 16, fontWeight: 700, fontFamily: "inherit" }} />
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Total portfolio: ${portfolioVal.toLocaleString()} ({(equityVal / portfolioVal * 100).toFixed(0)}% equity / {(totalBonds / portfolioVal * 100).toFixed(0)}% bonds)</div>
                         </div>
                         <div style={{ flex: 1, minWidth: 200 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Market Drop: -{dropPct}%</div>
                           <input type="range" min={10} max={60} value={dropPct} onChange={e => { setPbSimDrop(Number(e.target.value)); setPbSimHistBear(""); }} style={{ width: "100%", accentColor: C.dn }} />
                           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}><span>-10%</span><span>-20%</span><span>-30%</span><span>-40%</span><span>-50%</span><span>-60%</span></div>
                         </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: C.t3, padding: "10px 14px", background: C.bg, borderRadius: 10, lineHeight: 1.5 }}>
+                        Deployable reserve = Year-5 bond = <strong style={{ color: C.accent }}>${cashReserves.toLocaleString()}</strong>.
+                        Deploy schedule: <strong>${(cashReserves * 0.70).toLocaleString()} at -25%</strong>, <strong>${(cashReserves * 0.30).toLocaleString()} at -40%</strong>.
                       </div>
                     </div>
 
@@ -6361,19 +6383,19 @@ Instructions:
                       {sectionTitle("At The Bottom")}
                       <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : "1fr", gap: 10, marginBottom: 14 }}>
                         <div style={{ background: C.dn + "12", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${C.dn}30` }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Buy & Hold Value</div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Passive Bond Hold</div>
                           <div style={{ fontSize: 22, fontWeight: 900, color: C.dn }}>${bhAtBottom.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                          <div style={{ fontSize: 11, color: C.dn }}>-${(portfolioVal - bhAtBottom).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                          <div style={{ fontSize: 11, color: C.dn }}>-${(portfolioVal - bhAtBottom).toLocaleString(undefined, { maximumFractionDigits: 0 })} equity loss</div>
                         </div>
                         <div style={{ background: C.up + "12", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${C.up}30` }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Playbook Value</div>
-                          <div style={{ fontSize: 22, fontWeight: 900, color: C.t1 }}>${portfolioAtBottomSimple.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                          <div style={{ fontSize: 11, color: C.up }}>+${saved.toLocaleString(undefined, { maximumFractionDigits: 0 })} protected</div>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: C.t1 }}>${portfolioAtBottom.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+                          <div style={{ fontSize: 11, color: saved >= 0 ? C.up : C.dn }}>{saved >= 0 ? "+" : ""}${saved.toLocaleString(undefined, { maximumFractionDigits: 0 })} vs passive</div>
                         </div>
                         <div style={{ background: C.accent + "12", borderRadius: 12, padding: 16, textAlign: "center", border: `1px solid ${C.accent}30` }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Cash Deployed</div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Bonds Deployed</div>
                           <div style={{ fontSize: 22, fontWeight: 900, color: C.accent }}>${totalDeployed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-                          <div style={{ fontSize: 11, color: C.t3 }}>buying at a discount</div>
+                          <div style={{ fontSize: 11, color: C.t3 }}>buying equity at a discount</div>
                         </div>
                       </div>
                     </div>
@@ -6398,9 +6420,9 @@ Instructions:
                     {/* Recovery */}
                     <div style={cardStyle}>
                       {sectionTitle("After Full Recovery")}
-                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>When the market returns to its prior peak, the deployed cash has earned the recovery return.</div>
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>When the equity sleeve returns to its prior peak, the deployed bonds have earned the recovery return. Baseline = passive bond-holding (same portfolio shape, bonds untouched).</div>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                        {statBox("Buy & Hold", `$${portfolioVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.t3)}
+                        {statBox("Passive Bond Hold", `$${bhAtRecovery.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.t3)}
                         {statBox("Playbook", `$${portfolioAfterRecovery.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.up)}
                         {statBox("Deployment Alpha", `+$${deploymentAlpha.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, C.accent)}
                         {statBox("Recovery Needed", `+${recoveryGain.toFixed(0)}%`, C.t1)}
@@ -7011,6 +7033,7 @@ Instructions:
 
               {/* ── BOND DURATION ANALYSIS ── */}
               {pbView === "bonds" && (() => {
+                const md = macroData;
                 const bullAgeMo = (Date.now() - new Date("2022-10-12")) / (30.44 * 86400000);
                 const bearsCovered5yr = officialBears.filter(b => (b.durationMo + b.recoveryMo) <= 60).length;
                 const coveragePct5yr = Math.round(bearsCovered5yr / officialBears.length * 100);
