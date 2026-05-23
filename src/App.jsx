@@ -6086,9 +6086,8 @@ Instructions:
           const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
 
           const BEAR_TRANCHES = [
-            { drawdownTrigger: -25, pctReserves: 25, action: "Deploy 25% of reserves", deploy: "87% of bears reach — first tranche, patient entry" },
-            { drawdownTrigger: -35, pctReserves: 40, action: "Deploy 40% of reserves", deploy: "47% of bears reach — deep value territory" },
-            { drawdownTrigger: -50, pctReserves: 100, action: "Deploy all remaining reserves", deploy: "23% of bears reach — generational buying opportunity" },
+            { drawdownTrigger: -25, pctReserves: 70, action: "Deploy 70% of reserves", deploy: "87% of bears reach — highest expected-value tranche" },
+            { drawdownTrigger: -40, pctReserves: 100, action: "Deploy remaining reserves", deploy: "32% of bears reach — deep value, +67% recovery return" },
           ];
 
           const peakToRecovery = officialBears.map(b => b.durationMo + b.recoveryMo);
@@ -6344,7 +6343,7 @@ Instructions:
                 <div>
                   <div style={cardStyle}>
                     {sectionTitle("Bear Market Deployment Tranches")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Three-tranche system: deploy 25% at -25%, 40% at -35%, all remaining at -50%. Deeper third tranche captures generational buying opportunities in severe bears. Optimized across 22 bear markets (1929-2024).</div>
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Two-tranche system: deploy 70% at -25%, remaining 30% at -40%. Front-loaded because -25% has the highest expected-value-per-dollar across 22 historical bears (1929-2024): 87% hit rate × 33% recovery return = 29¢ per $1 deployed. The -25% / -40% pair skips the -35% tier (dominated on both axes) and the -50% tier (too rare to justify reserving capital).</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {BEAR_TRANCHES.map((t, i) => {
                         const triggered = drawdown <= t.drawdownTrigger;
@@ -6366,7 +6365,7 @@ Instructions:
                     {sectionTitle("5-Year Bond Ladder Structure")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
                       <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
-                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy across three tranches: 25% at -25%, 40% at -35%, all remaining at -50%. The deepest tranche captures generational buying opportunities where recovery returns are highest.</p>
+                      <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 70% at -25% (the high-probability tranche, hit by 87% of bears) and the remaining 30% at -40% (the deep-value tranche, hit by 32%). Front-loading at -25% captures the highest expected alpha per dollar; the -40% reserve preserves powder for genuinely deep bears.</p>
                       <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
                       <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
                     </div>
@@ -6983,23 +6982,16 @@ Instructions:
                   {
                     regime: "Bear Market — Tranche 1",
                     condition: "S&P down 25%+ from peak",
-                    active: drawdown <= -25 && drawdown > -35,
+                    active: drawdown <= -25 && drawdown > -40,
                     subject: "DEPLOYING: First Tranche Into the Market",
-                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak — we've hit our first deployment threshold.\n\nPer our investment playbook, we're deploying 25% of your cash reserves back into equities at these levels. This is the plan working exactly as designed. We're buying stocks at a significant discount while others are panicking.\n\n87% of historical bear markets have reached this level. We still have 75% of our reserves held back in case the market falls further. If it doesn't, we've already started buying at a great price.\n\nI know this feels uncomfortable. But the data is clear: deploying cash systematically during bear markets is the single highest-value action an investor can take. Across 93 years and 21 market cycles, this approach has outperformed buy-and-hold every single time.`,
+                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak — we've hit our first deployment threshold.\n\nPer our investment playbook, we're deploying 70% of your bond-ladder reserves back into equities at these levels. This is the plan working exactly as designed. We're buying stocks at a significant discount while others are panicking.\n\n87% of historical bear markets have reached this level — it's the single highest expected-value entry point. We're holding back the remaining 30% in case the decline deepens to -40%, but most bears stop here, in which case we've deployed at the optimal moment.\n\nI know this feels uncomfortable. But the data is clear: deploying systematically during bear markets is the highest-value action an investor can take. The bond ladder was built precisely so we'd have ammunition for exactly this moment.`,
                   },
                   {
                     regime: "Bear Market — Tranche 2",
-                    condition: "S&P down 35%+ from peak",
-                    active: drawdown <= -35 && drawdown > -50,
-                    subject: "DEPLOYING: Second Tranche — Deep Value Territory",
-                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. This level of decline has only occurred in about half of all bear markets — we are in historically deep territory.\n\nWe're deploying our second tranche — 40% of remaining reserves — into equities. Stocks purchased at -35% from peak have historically delivered +54% returns by the time the market recovers to its prior high.\n\nWe still have reserves held back for an even deeper decline, but statistically, we're likely near the bottom. The average bear market falls 37%. The key now is patience — recoveries take time (average 35 months), but they always come.\n\nThis is the moment that separates disciplined investors from everyone else. Stay the course.`,
-                  },
-                  {
-                    regime: "Bear Market — Tranche 3",
-                    condition: "S&P down 50%+ from peak",
-                    active: drawdown <= -50,
-                    subject: "DEPLOYING: All Remaining Reserves — Generational Opportunity",
-                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. Only 5 bear markets in 95 years have reached this depth. This is a generational buying opportunity.\n\nWe're deploying all remaining cash reserves into equities. Stocks purchased at -50% from peak have historically delivered +100% returns by recovery — your deployed cash doubles.\n\nI know this is the hardest moment to invest. Every headline is negative. But this is precisely when the greatest fortunes are made. Buffett's famous quote applies: "Be fearful when others are greedy, and greedy when others are fearful."\n\nThe plan has worked for 93 years. Trust the process.`,
+                    condition: "S&P down 40%+ from peak",
+                    active: drawdown <= -40,
+                    subject: "DEPLOYING: Final Tranche — Deep Bear Territory",
+                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. Only 32% of bear markets reach this depth — we are in historically rare territory.\n\nWe're deploying all remaining bond reserves into equities. Stocks purchased at -40% from peak have historically delivered +67% returns by the time the market recovers to its prior high. The deeper the bear, the larger the upside on the way back.\n\nThis is the moment that separates disciplined investors from everyone else. Every fiber of intuition says to wait, that it could get worse. But waiting for the absolute bottom is a mistake no one in history has reliably timed. Deploying our final tranche now captures the largest expected gain we'll see this cycle.\n\nThe plan has worked across nearly a century of market history. Trust the process.`,
                   },
                 ];
 
@@ -7147,7 +7139,7 @@ Instructions:
                   { year: 2, purpose: "Next-year living expenses", action: "Rolls to Year 1 on maturity" },
                   { year: 3, purpose: "Living-expense reserve", action: "Rolls down on maturity" },
                   { year: 4, purpose: "Living-expense reserve", action: "Rolls down on maturity" },
-                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear tranches (-25/-35/-50%)" },
+                  { year: 5, purpose: "Deployment reserve", action: "Sell in bear tranches (-25 / -40%)" },
                 ];
                 if (recommendedYears >= 6) LADDER_YEARS.push({ year: 6, purpose: "Pre-positioned reserve", action: "Added — bear-probability model elevated" });
                 if (recommendedYears >= 7) LADDER_YEARS.push({ year: 7, purpose: "Pre-positioned reserve", action: "Added — bear-probability model high" });
@@ -7261,7 +7253,7 @@ Instructions:
                       {[
                         { num: "1", title: "Age Gate (21 months)", desc: "No trimming until the bull is mature. Eliminates cash drag entirely in short bulls. The 1% scout tier at +75% has negligible cost but catches short cycles like 2020-2022." },
                         { num: "2", title: "18-Month Time Decay", desc: "If no bear arrives within 18 months of trimming, cash goes back to equity. Triggers reset at higher levels. More frequent recycling generates more trimming opportunities in mega-bulls, preventing cash from sitting idle for a decade." },
-                        { num: "3", title: "3-Tranche Deployment (-25 / -35 / -50%)", desc: "Deploy 25% at -25%, 40% at -35%, all remaining at -50%. Three tranches preserve reserves for the deepest bears where recovery returns are highest. In the GFC (-57%), the third tranche deploys at generational lows." },
+                        { num: "3", title: "2-Tranche Deployment (-25 / -40%)", desc: "Deploy 70% at -25%, remaining 30% at -40%. Front-loaded because -25% has the highest expected-value per dollar (87% hit rate × 33% recovery return). The -40% reserve preserves powder for the 32% of bears that go genuinely deep. Skips -35% (dominated) and -50% (too rare)." },
                       ].map((m, i) => (
                         <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px", background: C.bg, borderRadius: 12 }}>
                           <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: C.accent, flexShrink: 0 }}>{m.num}</div>
@@ -7340,7 +7332,7 @@ Instructions:
                         { strategy: "Buy-and-Hold", result: "Baseline", problem: "No drawdown protection. Clients panic-sell at the bottom. A client who sells at -40% and waits 6 months to re-enter loses 15-30% of their recovery.", color: C.t3 },
                         { strategy: "Constant Cash (e.g. 10%)", result: "-70 bps/yr", problem: "Permanent drag. 10% cash × 7% equity premium = 70 bps/yr guaranteed underperformance, every year, forever. Over 30 years that's 23% less wealth.", color: C.dn },
                         { strategy: "Simple Trim (no decay)", result: "-9 bps/yr", problem: "Cash drag compounds in long bulls. The 1987-2000 bull (+582%) and 2009-2020 bull (+400%) each lasted 10+ years. Holding 8-12% cash through those erased all bear-market savings.", color: C.dn },
-                        { strategy: "Paradiem Playbook", result: "+13.9 bps/yr", problem: "18-month time decay solves the long-bull problem. 3-tranche deployment (-25/-35/-50%) preserves reserves for deep bears. 100% non-loss rate across 93 years and 21 cycles.", color: C.up },
+                        { strategy: "Paradiem Playbook", result: "+13.9 bps/yr", problem: "18-month time decay solves the long-bull problem. 2-tranche deployment (-25 / -40%) maximizes expected-value per dollar: 70% deploys at the high-probability -25% threshold (87% hit rate), with 30% reserved for genuinely deep bears at -40% (32% hit rate).", color: C.up },
                       ].map((s, i) => (
                         <div key={i} style={{ padding: "14px 16px", background: C.bg, borderRadius: 12, border: `1px solid ${i === 3 ? C.accent + "44" : C.border}` }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
