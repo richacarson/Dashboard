@@ -1137,6 +1137,7 @@ Instructions:
   const [pbSimDrop, setPbSimDrop] = useState(30);
   const [pbSimValue, setPbSimValue] = useState(1000000);
   const [pbSimHistBear, setPbSimHistBear] = useState("");
+  const [pbSimReservePct, setPbSimReservePct] = useState(5);
   const [macroData, setMacroData] = useState({ yieldSpread: null, vix: null, hySpread: null, spy200: null, cape: null, loaded: false });
   const [backtest, setBacktest] = useState(null);
   useEffect(() => {
@@ -6076,15 +6077,6 @@ Instructions:
           const avgAllDur = Math.round(allDeclines.reduce((s, b) => s + b.durationMo, 0) / allDeclines.length * 10) / 10;
           const avgAllRecovery = Math.round(allDeclines.reduce((s, b) => s + b.recoveryMo, 0) / allDeclines.length * 10) / 10;
 
-          const TRIM_TIERS = [
-            { pctAboveTrough: 75, trimPct: 2, note: "Scout tier — minimal drag, catches short bulls" },
-            { pctAboveTrough: 150, trimPct: 5, note: "Bull has 2.5x'd — begin building position" },
-            { pctAboveTrough: 250, trimPct: 8, note: "Bull has 3.5x'd — moderate cash" },
-            { pctAboveTrough: 350, trimPct: 11, note: "Bull has 4.5x'd — elevated cycle risk" },
-            { pctAboveTrough: 500, trimPct: 14, note: "Bull has 6x'd — max cash, rare territory" },
-          ];
-          const currentTrimTier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
-
           const BEAR_TRANCHES = [
             { drawdownTrigger: -25, pctReserves: 70, action: "Deploy 70% of reserves", deploy: "87% of bears reach — highest expected-value tranche" },
             { drawdownTrigger: -40, pctReserves: 100, action: "Deploy remaining reserves", deploy: "32% of bears reach — deep value, +67% recovery return" },
@@ -6112,7 +6104,7 @@ Instructions:
 
               {/* Sub-nav */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ v: "regime", l: "Live Regime" }, { v: "bull", l: "Bull Playbook" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "calibration", l: "Calibration" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
+                {[{ v: "regime", l: "Live Regime" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "calibration", l: "Calibration" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "bonds", l: "Bond Ladder" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
                   <button key={v} onClick={() => setPbView(v)} style={{
                     flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${pbView === v ? C.borderActive : C.border}`,
                     background: pbView === v ? C.accentSoft : "transparent",
@@ -6232,36 +6224,6 @@ Instructions:
                     </div>
                   </div>
 
-                  {/* Current trim status */}
-                  {(() => {
-                    const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
-                    const ageGateMet = bullAgeMo >= 21;
-                    const activeTier = ageGateMet ? currentTrimTier : null;
-                    return (
-                      <div style={{ ...cardStyle, border: `1px solid ${activeTier ? C.accent + "44" : C.border}` }}>
-                        {sectionTitle("Active Trim Level")}
-                        {activeTier ? (
-                          <>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <div>
-                                <div style={{ fontSize: 13, color: C.t3 }}>At +{pctFromTrough.toFixed(0)}% from trough, {bullAgeMo} months old</div>
-                                <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>Models A, C, D</div>
-                              </div>
-                              <div style={{ fontSize: 28, fontWeight: 900, color: C.accent }}>{activeTier.trimPct}%</div>
-                            </div>
-                            <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>of total portfolio balance should be in cash</div>
-                          </>
-                        ) : (
-                          <div>
-                            <div style={{ fontSize: 13, color: C.t3 }}>Age gate not met — bull is {bullAgeMo} months old</div>
-                            <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Trimming begins at 21 months. {21 - bullAgeMo > 0 ? `${21 - bullAgeMo} months remaining.` : ""} No cash drag until then.</div>
-                            <div style={{ fontSize: 22, fontWeight: 900, color: C.t4, marginTop: 8 }}>0%</div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
                   {/* Bear market distance */}
                   <div style={cardStyle}>
                     {sectionTitle("Distance to Bear Market")}
@@ -6281,59 +6243,6 @@ Instructions:
                         </div>
                       );
                     })()}
-                  </div>
-                </div>
-              )}
-
-              {/* ── BULL MARKET TRIM RULES ── */}
-              {pbView === "bull" && (
-                <div>
-                  <div style={cardStyle}>
-                    {sectionTitle("Bull Market Cash Trim Rules")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Applies to Models A, C, D. 21-month age gate with 18-month time decay. Optimized across 110,000+ configurations and 21 historical cycles (1929-2024). Produces <strong style={{ color: C.up }}>+13.9 bps/yr alpha</strong> with 100% non-loss rate (21/21 cycles).</div>
-                    <div style={{ borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                        <thead>
-                          <tr style={{ background: C.bg }}>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>S&P From Trough</th>
-                            <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>Cash Target</th>
-                            <th style={{ padding: "10px 12px", textAlign: "left", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>Context</th>
-                            <th style={{ padding: "10px 12px", textAlign: "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(() => {
-                            const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
-                            const ageGateMet = bullAgeMo >= 21;
-                            return TRIM_TIERS.map((t, i) => {
-                              const levelMet = pctFromTrough >= t.pctAboveTrough;
-                              const active = levelMet && ageGateMet;
-                              const isCurrent = active && currentTrimTier === t && ageGateMet;
-                              return (
-                                <tr key={i} style={{ borderTop: `1px solid ${C.border}`, background: isCurrent ? C.accentSoft : "transparent" }}>
-                                  <td style={{ padding: "10px 12px", fontWeight: 700, color: isCurrent ? C.t1 : C.t2 }}>+{t.pctAboveTrough}%</td>
-                                  <td style={{ padding: "10px 12px", textAlign: "center", fontWeight: 800, color: isCurrent ? C.accent : C.t2 }}>{t.trimPct}%</td>
-                                  <td style={{ padding: "10px 12px", color: C.t3 }}>{t.note}</td>
-                                  <td style={{ padding: "10px 12px", textAlign: "center" }}>
-                                    {active ? <span style={{ color: C.up, fontWeight: 700 }}>Active</span> : levelMet && !ageGateMet ? <span style={{ color: "#FBBF24", fontWeight: 600 }}>Age Gate</span> : <span style={{ color: C.t4 }}>Pending</span>}
-                                  </td>
-                                </tr>
-                              );
-                            });
-                          })()}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <div style={cardStyle}>
-                    {sectionTitle("How It Works")}
-                    <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Age Gate (21 months):</strong> No trimming until the bull market is at least 21 months old. The 1% scout tier at +75% activates early with minimal drag, while larger tiers require both age and gain thresholds.</p>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>Cumulative Targets:</strong> Tiers are cumulative, not incremental. At +250% from trough, hold 5% total in cash — not 5% on top of prior tiers.</p>
-                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.accent }}>18-Month Time Decay:</strong> If no bear market begins within 18 months of the last trim, all cash is redeployed to equity. Triggers reset and can fire again at higher levels. More frequent recycling generates more trimming opportunities in mega-bulls.</p>
-                      <p><strong style={{ color: C.accent }}>Backtested Result:</strong> +13.9 bps/yr alpha vs buy-and-hold across 21 historical cycles (1929-2024). <strong style={{ color: C.up }}>100% non-loss rate (21/21)</strong>. +12.9% excess terminal wealth over 93 years.</p>
-                    </div>
                   </div>
                 </div>
               )}
@@ -6367,7 +6276,7 @@ Instructions:
                       <p style={{ marginBottom: 10 }}>Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward.</p>
                       <p style={{ marginBottom: 10 }}>In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — the furthest from maturity. Deploy 70% at -25% (the high-probability tranche, hit by 87% of bears) and the remaining 30% at -40% (the deep-value tranche, hit by 32%). Front-loading at -25% captures the highest expected alpha per dollar; the -40% reserve preserves powder for genuinely deep bears.</p>
                       <p style={{ marginBottom: 10 }}>When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.</p>
-                      <p>For <strong style={{ color: C.t1 }}>non-bond clients</strong> (Models A, C, D): the cash reserves built during the bull market via trim rules serve the same purpose — dry powder for deployment at each bear tranche.</p>
+                      <p>For <strong style={{ color: C.t1 }}>non-bond accumulating clients</strong>: the deploy mechanic still works at a smaller scale by holding a single 5-year Treasury bond (5-10% of portfolio) as a deployment reserve. At forward equity returns below ~8%, this produces small positive alpha; at higher equity returns it's roughly a wash. The simpler honest alternative for pure-growth accounts is 100% equity with no deploy mechanic.</p>
                     </div>
                   </div>
                 </div>
@@ -6376,21 +6285,10 @@ Instructions:
               {/* ── SCENARIO SIMULATOR ── */}
               {pbView === "simulator" && (() => {
                 const historicalBears = BEAR_MARKETS.filter(b => !b.nearBear && Math.abs(b.drawdown) >= 20);
-                const bullBeforeBear = { "1929 Crash": 300, "Great Depression": 46.8, "1932-33 Decline": 111.6, "1933 Decline": 120.6, "1934-35 Decline": 37.9, "1937-38 Recession": 131.8, "1938-39 War Fears": 62.2, "1939-40 Fall of France": 29.8, "WWII / Pearl Harbor": 26.8, "Post-WWII Crash": 157.7, "1948-49 Recession": 20.8, "Eisenhower Recession": 267, "Kennedy Slide": 86.3, "Credit Crunch": 79.8, "Vietnam / Recession": 48, "OPEC Oil Embargo": 73.5, "Volcker Tightening": 125.6, "Black Monday": 228.8, "Dot-Com Bust": 582, "Global Financial Crisis": 101.5, "COVID-19 Crash": 400.5, "Inflation / Rate Hikes": 114.4 };
                 const selectedBear = historicalBears.find(b => b.name === pbSimHistBear);
                 const portfolioVal = pbSimValue;
                 const dropPct = selectedBear ? Math.abs(selectedBear.drawdown) : pbSimDrop;
-                const currentCashPct = (() => {
-                  if (selectedBear) {
-                    const bullGain = bullBeforeBear[selectedBear.name] || 100;
-                    const tier = TRIM_TIERS.filter(t => bullGain >= t.pctAboveTrough).pop();
-                    return tier ? tier.trimPct : 0;
-                  }
-                  const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
-                  if (bullAgeMo < 21) return 0;
-                  const tier = TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop();
-                  return tier ? tier.trimPct : 0;
-                })();
+                const currentCashPct = pbSimReservePct;
                 const cashReserves = portfolioVal * (currentCashPct / 100);
                 const equityVal = portfolioVal - cashReserves;
                 const trancheResults = [];
@@ -6427,7 +6325,8 @@ Instructions:
                 return (
                   <div>
                     <div style={cardStyle}>
-                      {sectionTitle("Scenario Simulator")}
+                      {sectionTitle("Bond-Deploy Scenario Simulator")}
+                      <div style={{ fontSize: 12, color: C.t3, marginBottom: 10, lineHeight: 1.6 }}>Models the bond-deploy strategy: a chosen portion of the portfolio sits in deployable bond reserves (typically Year-5 of a 5-year ladder, ~5% of portfolio), then deploys into equity at -25% and -40% drawdown thresholds. Compares to buy-and-hold at the bear bottom and at full recovery.</div>
                       <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Simulate a Historical Bear Market</div>
                       <select value={pbSimHistBear} onChange={e => { setPbSimHistBear(e.target.value); if (e.target.value) { const b = historicalBears.find(x => x.name === e.target.value); if (b) setPbSimDrop(Math.abs(b.drawdown)); } }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 14, fontWeight: 600, fontFamily: "inherit", marginBottom: 12, appearance: "auto" }}>
                         <option value="">Custom scenario (use slider)</option>
@@ -6435,13 +6334,19 @@ Instructions:
                       </select>
                       {selectedBear && (
                         <div style={{ background: C.accent + "10", border: `1px solid ${C.accent}20`, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.t2, lineHeight: 1.6 }}>
-                          <strong style={{ color: C.t1 }}>{selectedBear.name}</strong> ({selectedBear.peakDate} → {selectedBear.troughDate}) — S&P fell <strong style={{ color: C.dn }}>{selectedBear.drawdown}%</strong> over {selectedBear.durationMo} months. Recovery took {selectedBear.recoveryMo} months. Preceding bull gained +{bullBeforeBear[selectedBear.name] || "?"}%, so the playbook would have trimmed <strong style={{ color: C.accent }}>{currentCashPct}%</strong> to cash before the crash.
+                          <strong style={{ color: C.t1 }}>{selectedBear.name}</strong> ({selectedBear.peakDate} → {selectedBear.troughDate}) — S&P fell <strong style={{ color: C.dn }}>{selectedBear.drawdown}%</strong> over {selectedBear.durationMo} months. Recovery took {selectedBear.recoveryMo} months. With <strong style={{ color: C.accent }}>{currentCashPct}%</strong> of portfolio in deployable bond reserves, the deploy schedule below fires across the drawdown.
                         </div>
                       )}
                       <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
                         <div style={{ flex: 1, minWidth: 200 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Portfolio Value</div>
                           <input type="text" value={`$${portfolioVal.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v > 0) setPbSimValue(v); }} style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`, background: C.bg, color: C.t1, fontSize: 16, fontWeight: 700, fontFamily: "inherit" }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 200 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Deployable Reserves: {currentCashPct}%</div>
+                          <input type="range" min={0} max={20} step={1} value={currentCashPct} onChange={e => setPbSimReservePct(Number(e.target.value))} style={{ width: "100%", accentColor: C.accent }} />
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}><span>0%</span><span>5%</span><span>10%</span><span>15%</span><span>20%</span></div>
+                          <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Year-5 bond ≈ 5% (1 year of expenses). Thickened ladders (6-7 bonds) ≈ 10-15%.</div>
                         </div>
                         <div style={{ flex: 1, minWidth: 200 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Market Drop: -{dropPct}%</div>
@@ -6959,18 +6864,11 @@ Instructions:
                 const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
                 const scripts = [
                   {
-                    regime: "Bull Market — Early/Mid Cycle",
-                    condition: "S&P < +100% from trough",
-                    active: pctFromTrough < 100,
+                    regime: "Bull Market — Staying Invested",
+                    condition: "Market within 10% of peak",
+                    active: drawdown > -10,
                     subject: "Portfolio Update: Staying the Course",
-                    body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. At this stage of the bull market, our playbook calls for staying fully invested — history shows that trimming too early costs more in missed upside than it saves in protection.\n\nWe're monitoring the market cycle closely and have clear rules for when to start building a cash buffer. For now, the plan is simple: stay invested and let compounding work.`,
-                  },
-                  {
-                    regime: "Bull Market — Extended",
-                    condition: "S&P > +100% from trough, trimming active",
-                    active: pctFromTrough >= 100 && pctFromTrough < 200,
-                    subject: "Portfolio Update: Building a Cash Cushion",
-                    body: `The S&P 500 has more than doubled from the October 2022 low (+${pctFromTrough.toFixed(0)}%). While the bull market may continue, history tells us that the further we go, the closer we get to the next correction.\n\nPer our investment playbook, we've begun setting aside a small cash position — currently targeting around ${(TRIM_TIERS.filter(t => pctFromTrough >= t.pctAboveTrough).pop()?.trimPct || 0)}% of your portfolio. This isn't a call that the market is about to drop — it's a systematic rule that's been backtested across 93 years of market history with positive results.\n\nIf no correction materializes within 18 months, this cash goes right back to work. Think of it as inexpensive insurance.`,
+                    body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. Our playbook calls for staying fully invested in equities through bull markets — history shows that trying to time the top costs more in missed upside than it saves in protection.\n\nYour bond ladder remains in place, funding the next several years of expenses and serving as deployment ammunition for when the next bear market arrives. Until then, the plan is simple: stay invested, let compounding work, and trust the structure we've built.`,
                   },
                   {
                     regime: "Correction — Down 10-20%",
@@ -7232,18 +7130,18 @@ Instructions:
                   {/* Headline */}
                   <div style={{ ...cardStyle, textAlign: "center", position: "relative", overflow: "hidden" }}>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: C.up }} />
-                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Backtested Across 93 Years</div>
-                    <div style={{ fontSize: 42, fontWeight: 900, color: C.up, marginBottom: 4 }}>+13.9</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>basis points per year alpha vs. buy-and-hold</div>
-                    <div style={{ fontSize: 13, color: C.t3 }}>21 complete bull/bear cycles · 1929-2024 · <span style={{ color: C.up, fontWeight: 700 }}>100% non-loss rate</span></div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8 }}>Bond-Deploy Alpha vs Passive Bond-Holding</div>
+                    <div style={{ fontSize: 42, fontWeight: 900, color: C.up, marginBottom: 4 }}>+3.67%</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 4 }}>mean alpha per bull-bear cycle</div>
+                    <div style={{ fontSize: 13, color: C.t3 }}>14 historical cycles · 1932-2024 · <span style={{ color: C.up, fontWeight: 700 }}>71% positive</span></div>
                   </div>
 
                   {/* Key stats */}
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
-                    {statBox("Non-Loss Rate", "21/21", C.up)}
-                    {statBox("Excess Wealth", "+12.9%", C.up)}
-                    {statBox("Max Cash", "14%", C.t1)}
-                    {statBox("Configs Tested", "110K+", C.t3)}
+                    {statBox("Mean Alpha", "+3.67%", C.up)}
+                    {statBox("Median Alpha", "+4.49%", C.up)}
+                    {statBox("% Cycles Positive", "71%", C.t1)}
+                    {statBox("LR Model AUC", "0.82", C.t1)}
                   </div>
 
                   {/* Why it works */}
@@ -7251,9 +7149,9 @@ Instructions:
                     {sectionTitle("The Three Mechanisms")}
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       {[
-                        { num: "1", title: "Age Gate (21 months)", desc: "No trimming until the bull is mature. Eliminates cash drag entirely in short bulls. The 1% scout tier at +75% has negligible cost but catches short cycles like 2020-2022." },
-                        { num: "2", title: "18-Month Time Decay", desc: "If no bear arrives within 18 months of trimming, cash goes back to equity. Triggers reset at higher levels. More frequent recycling generates more trimming opportunities in mega-bulls, preventing cash from sitting idle for a decade." },
-                        { num: "3", title: "2-Tranche Deployment (-25 / -40%)", desc: "Deploy 70% at -25%, remaining 30% at -40%. Front-loaded because -25% has the highest expected-value per dollar (87% hit rate × 33% recovery return). The -40% reserve preserves powder for the 32% of bears that go genuinely deep. Skips -35% (dominated) and -50% (too rare)." },
+                        { num: "1", title: "5-Year Bond Ladder Floor", desc: "Five bonds, each one year of the client's living expenses. Year 1 matures each year to fund expenses; Years 2-5 roll forward. The floor is inviolate — it guarantees the client never has to sell equity at a bear-market bottom to fund income, which is where ~80% of retirement portfolios are destroyed." },
+                        { num: "2", title: "Bear-Probability Ladder Thickening", desc: "When the 7-factor logistic-regression model (walk-forward AUC 0.82) shows bear probability > 40%, add a 6th bond. Above 55%, add a 7th. Extra bonds become pre-positioned deployment reserve. The model concentrates dry powder in genuinely elevated-risk periods rather than firing on bull magnitude alone." },
+                        { num: "3", title: "2-Tranche Deployment (-25% / -40%)", desc: "When the bear arrives, deploy 70% of deployable bonds at -25% and remaining 30% at -40%. Front-loaded because -25% has the highest expected-value per dollar (87% hit rate × 33% recovery return = 29¢ per $1). The -40% reserve preserves powder for the 32% of bears that go genuinely deep. Skips -35% (dominated by -25% on hit rate and by -40% on discount) and -50% (too rare to justify reserving capital)." },
                       ].map((m, i) => (
                         <div key={i} style={{ display: "flex", gap: 14, padding: "14px 16px", background: C.bg, borderRadius: 12 }}>
                           <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: C.accent, flexShrink: 0 }}>{m.num}</div>
@@ -7266,61 +7164,30 @@ Instructions:
                     </div>
                   </div>
 
-                  {/* Cycle-by-cycle results */}
+                  {/* Validation results */}
                   <div style={cardStyle}>
-                    {sectionTitle("Cycle-by-Cycle Results")}
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 12 }}>Every bull/bear cycle from 1932 to 2024. Alpha = strategy return minus buy-and-hold return.</div>
-                    <div style={{ overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, minWidth: 600 }}>
-                        <thead>
-                          <tr style={{ background: C.bg }}>
-                            {["Cycle", "Bull", "Bear", "Cash@Peak", "Alpha", "DD Red."].map(h => (
-                              <th key={h} style={{ padding: "8px 10px", textAlign: h === "Cycle" ? "left" : "center", fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase" }}>{h}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[
-                            { cycle: "1929-30 / Depression", bull: "+47%", bear: "-83.0%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1932 / 1932-33", bull: "+112%", bear: "-40.6%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1933 / 1933", bull: "+121%", bear: "-29.8%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1933-34 / 1934-35", bull: "+38%", bear: "-31.8%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1935-37 / 1937-38", bull: "+132%", bear: "-54.5%", cash: "1.8%", alpha: "+1.38%", ddRed: "+0.8pp" },
-                            { cycle: "1938 / War Fears", bull: "+62%", bear: "-26.2%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1939 / Fall of France", bull: "+30%", bear: "-31.9%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1940 / WWII", bull: "+27%", bear: "-34.5%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1942-46 / Post-WWII", bull: "+158%", bear: "-28.8%", cash: "4.9%", alpha: "+2.81%", ddRed: "+1.2pp" },
-                            { cycle: "1947-48 / 1948-49", bull: "+21%", bear: "-20.6%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1949-56 / Eisenhower", bull: "+267%", bear: "-21.6%", cash: "7.7%", alpha: "+1.64%", ddRed: "+1.1pp" },
-                            { cycle: "1957-61 / Kennedy", bull: "+86%", bear: "-28.0%", cash: "1.9%", alpha: "+0.92%", ddRed: "+0.6pp" },
-                            { cycle: "1962-66 / Credit Crunch", bull: "+80%", bear: "-22.2%", cash: "2.0%", alpha: "+0.82%", ddRed: "+0.4pp" },
-                            { cycle: "1966-68 / Vietnam", bull: "+48%", bear: "-36.1%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1970-73 / OPEC", bull: "+74%", bear: "-48.2%", cash: "0%", alpha: "0.00%", ddRed: "—" },
-                            { cycle: "1974-80 / Volcker", bull: "+126%", bear: "-27.1%", cash: "1.9%", alpha: "+0.86%", ddRed: "+0.5pp" },
-                            { cycle: "1982-87 / Black Monday", bull: "+229%", bear: "-33.5%", cash: "4.0%", alpha: "+1.03%", ddRed: "+1.0pp" },
-                            { cycle: "1987-00 / Dot-Com", bull: "+582%", bear: "-49.1%", cash: "12.9%", alpha: "+11.86%", ddRed: "+2.1pp" },
-                            { cycle: "2002-07 / GFC", bull: "+102%", bear: "-56.8%", cash: "1.8%", alpha: "+1.09%", ddRed: "+0.5pp" },
-                            { cycle: "2009-20 / COVID", bull: "+400%", bear: "-33.9%", cash: "10.3%", alpha: "+3.96%", ddRed: "+3.0pp" },
-                            { cycle: "2020-22 / Inflation", bull: "+114%", bear: "-25.4%", cash: "2.0%", alpha: "+1.16%", ddRed: "+0.5pp" },
-                          ].map((r, i) => (
-                            <tr key={i} style={{ borderTop: `1px solid ${C.border}` }}>
-                              <td style={{ padding: "8px 10px", fontWeight: 600, color: C.t2, whiteSpace: "nowrap" }}>{r.cycle}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.up }}>{r.bull}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.dn }}>{r.bear}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{r.cash}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 700, color: parseFloat(r.alpha) > 0 ? C.up : parseFloat(r.alpha) < 0 ? C.dn : C.t3 }}>{r.alpha}</td>
-                              <td style={{ padding: "8px 10px", textAlign: "center", color: C.t3 }}>{r.ddRed}</td>
-                            </tr>
-                          ))}
-                          <tr style={{ borderTop: `2px solid ${C.border}`, background: C.bg }}>
-                            <td style={{ padding: "8px 10px", fontWeight: 800, color: C.t1 }}>Total / Average</td>
-                            <td colSpan={2} />
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>2.4% avg</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.up }}>+27.5%</td>
-                            <td style={{ padding: "8px 10px", textAlign: "center", fontWeight: 800, color: C.t1 }}>+1.1pp</td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    {sectionTitle("Validation — Bond-Deploy Alpha")}
+                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14, lineHeight: 1.6 }}>Per-cycle alpha of bond-deploy strategy vs passive bond-holding, computed by full-cycle numerical simulation (tracks shares + cash through bull → peak → bear → recovery) across 14 historical bull-bear pairs since 1932. Validation script: <code style={{ fontSize: 11, color: C.accent }}>scripts/alpha_experiments.py</code>.</div>
+                    <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10 }}>
+                      <div style={{ background: C.bg, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Mean Alpha per Cycle</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: C.up }}>+3.67%</div>
+                      </div>
+                      <div style={{ background: C.bg, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Median Alpha per Cycle</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: C.up }}>+4.49%</div>
+                      </div>
+                      <div style={{ background: C.bg, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>% Cycles Positive</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: C.up }}>71%</div>
+                      </div>
+                      <div style={{ background: C.bg, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Worst Cycle Alpha</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: C.dn }}>-3.05%</div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 14, padding: "12px 14px", background: C.accentSoft, borderRadius: 10, fontSize: 11, color: C.t3, lineHeight: 1.6 }}>
+                      <strong style={{ color: C.t1 }}>Note:</strong> These numbers measure the deploy-vs-passive alpha — i.e., the incremental gain from selling bonds during bears and buying equity at a discount, vs holding bonds through the bear. They are <em>not</em> a comparison to 100% equity, which would be inappropriate since retirees can't realistically be 100% equity (forced bear-bottom selling devastates wealth). The right baseline is "bonds held anyway for income, do we deploy them or not?" — and the data shows deploying produces meaningful per-cycle alpha.
                     </div>
                   </div>
 
@@ -7329,10 +7196,10 @@ Instructions:
                     {sectionTitle("Why It Beats the Alternatives")}
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {[
-                        { strategy: "Buy-and-Hold", result: "Baseline", problem: "No drawdown protection. Clients panic-sell at the bottom. A client who sells at -40% and waits 6 months to re-enter loses 15-30% of their recovery.", color: C.t3 },
-                        { strategy: "Constant Cash (e.g. 10%)", result: "-70 bps/yr", problem: "Permanent drag. 10% cash × 7% equity premium = 70 bps/yr guaranteed underperformance, every year, forever. Over 30 years that's 23% less wealth.", color: C.dn },
-                        { strategy: "Simple Trim (no decay)", result: "-9 bps/yr", problem: "Cash drag compounds in long bulls. The 1987-2000 bull (+582%) and 2009-2020 bull (+400%) each lasted 10+ years. Holding 8-12% cash through those erased all bear-market savings.", color: C.dn },
-                        { strategy: "Paradiem Playbook", result: "+13.9 bps/yr", problem: "18-month time decay solves the long-bull problem. 2-tranche deployment (-25 / -40%) maximizes expected-value per dollar: 70% deploys at the high-probability -25% threshold (87% hit rate), with 30% reserved for genuinely deep bears at -40% (32% hit rate).", color: C.up },
+                        { strategy: "100% Equity Buy-and-Hold", result: "Baseline", problem: "Highest expected return for accumulating clients with no income needs. But devastating for distributing clients — forced selling during bears at the worst possible prices. A retiree taking 4% withdrawals through the GFC permanently impaired 25-30% of their wealth.", color: C.t3 },
+                        { strategy: "Trim-and-Deploy (mechanical)", result: "≈ 0 bps/yr", problem: "Sells equity early in the bull (cheap), buys back mid-bear (expensive vs. trim price). The 'discount' at -25% from peak is only a discount vs. peak — it's a premium vs. the +75% trim point. Math is structurally against itself: 87% of bears stop above -50%, so most deploys re-buy higher than the trim sale.", color: C.dn },
+                        { strategy: "Passive Bond Ladder (no deploy)", result: "-30 to -50 bps/yr", problem: "Holds bonds for income, never deploys during bears. Misses the alpha opportunity entirely. Equity portion suffers the full bear-market drawdown; bond portion just sits earning yield.", color: C.dn },
+                        { strategy: "Bond Ladder + Active Deploy", result: "+3.7%/cycle vs passive", problem: "Bonds serve the income role (the reason they're held), AND deploy into equity at bear depths. The deploy is pure incremental alpha because the bonds were going to be there regardless. Bear-probability model thickens the ladder pre-emptively when risk rises, expanding deployable reserves.", color: C.up },
                       ].map((s, i) => (
                         <div key={i} style={{ padding: "14px 16px", background: C.bg, borderRadius: 12, border: `1px solid ${i === 3 ? C.accent + "44" : C.border}` }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -7349,10 +7216,10 @@ Instructions:
                   <div style={cardStyle}>
                     {sectionTitle("The Real Alpha: Behavioral")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
-                      <p style={{ marginBottom: 10 }}>The +44.7 bps/yr quantitative alpha is real, but the <strong style={{ color: C.t1 }}>behavioral alpha is far larger</strong>. Studies show the average equity investor underperforms the S&P 500 by <strong style={{ color: C.dn }}>300-400 bps/yr</strong> (Dalbar QAIB, 2024) — almost entirely from panic selling during drawdowns and late re-entry.</p>
+                      <p style={{ marginBottom: 10 }}>The bond-deploy alpha (+3.7% per cycle vs passive bond-holding) is real, but the <strong style={{ color: C.t1 }}>behavioral alpha is far larger</strong>. Studies show the average equity investor underperforms the S&P 500 by <strong style={{ color: C.dn }}>300-400 bps/yr</strong> (Dalbar QAIB, 2024) — almost entirely from panic selling during drawdowns and late re-entry.</p>
                       <p style={{ marginBottom: 10 }}>This playbook eliminates that by giving clients a <strong style={{ color: C.t1 }}>visible, rules-based framework</strong>. When the market drops 25%, they see "TRANCHE 1: DEPLOYING" — not just losses. The psychology shifts from <em>"I'm losing money"</em> to <em>"the plan is working."</em></p>
-                      <p style={{ marginBottom: 10 }}>A client who panic-sells at -35% and waits 6 months to re-enter a market that's already recovered 20% loses <strong style={{ color: C.dn }}>~25% of their portfolio permanently</strong>. Preventing that even once in a 30-year relationship is worth more than decades of 44.7 bps.</p>
-                      <p><strong style={{ color: C.accent }}>The playbook's job is to keep clients invested through the worst moments. The quantitative alpha is a bonus — the behavioral alpha is the product.</strong></p>
+                      <p style={{ marginBottom: 10 }}>A client who panic-sells at -35% and waits 6 months to re-enter a market that's already recovered 20% loses <strong style={{ color: C.dn }}>~25% of their portfolio permanently</strong>. Preventing that even once in a 30-year relationship dwarfs the quantitative deploy alpha across decades.</p>
+                      <p><strong style={{ color: C.accent }}>The playbook's job is to keep clients invested through the worst moments. The bond-deploy alpha is a bonus — the behavioral alpha is the product.</strong></p>
                     </div>
                   </div>
 
@@ -7360,9 +7227,10 @@ Instructions:
                   <div style={cardStyle}>
                     {sectionTitle("Methodology")}
                     <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7 }}>
-                      <p style={{ marginBottom: 10 }}>Optimized across <strong style={{ color: C.t1 }}>110,000+ strategy configurations</strong> using Monte Carlo simulation with bootstrap resampling of 21 historical S&P 500 bull/bear cycles (1929-2024), plus 5 near-bear corrections. Parameters swept: age gates (12-60 months), time decay (6-36 months), trim thresholds (50-600% from trough), trim amounts (1-18%), deploy triggers (-10% to -50%), and deploy splits (2-4 tranches with varying weights).</p>
-                      <p style={{ marginBottom: 10 }}>Each configuration was scored on a composite objective: maximize cumulative alpha while maintaining 100% non-loss rate. The recommended strategy achieved the highest composite score with <strong style={{ color: C.up }}>21/21 non-losing cycles</strong>.</p>
-                      <p>Data sources: S&P 500 / S&P Composite historical data from Yardeni Research, Hartford Funds, NYU Stern, Macrotrends. Bear market definitions follow the standard -20% from peak threshold. Recovery defined as closing above the prior peak.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.t1 }}>Deploy schedule:</strong> chosen by expected-value analysis across 22 historical bears (1929-2024). For each candidate trigger × fraction pair, computed P(bear reaches depth) × recovery return per dollar. The -25% tier wins on EV (87% hit × 33% recovery = 29¢/$1); -40% is the next-best non-dominated tier (32% × 67% = 21¢/$1). Skipped -35% (dominated) and -50% (too rare).</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.t1 }}>Bear-probability model:</strong> L2-regularized logistic regression on 7 macro factors (yield curve, claims trend, BAA-10Y spread, NFCI, CFNAI, Sahm rule, oil YoY). Walk-forward out-of-sample AUC 0.82 across 1971-present. Bucket-calibrated against realized 12-month bear-onset rates. Used to trigger ladder thickening when probability exceeds 40% and 55%.</p>
+                      <p style={{ marginBottom: 10 }}><strong style={{ color: C.t1 }}>Validation:</strong> The bond-deploy strategy's per-cycle alpha (+3.7% vs passive bond-holding) was validated via numerical full-cycle simulation tracking shares and cash through bull → peak → bear → recovery on all 14 bull-bear pairs since 1932. Bootstrap CIs report 71% probability of positive per-cycle alpha. See scripts/alpha_experiments.py.</p>
+                      <p>Data sources: S&P 500 historical data from Shiller (1871-present) and BEAR_MARKETS table (Yardeni / Hartford / NYU Stern / Macrotrends). Macro factors from FRED. Bear market definition: -20% from peak. Recovery: closing above prior peak.</p>
                     </div>
                   </div>
                 </div>
