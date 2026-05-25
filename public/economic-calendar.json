@@ -235,7 +235,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "51.7",
-    "previous": "51.7",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -245,7 +245,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "55.3",
-    "previous": "54.5",
+    "previous": "",
     "forecast": "53.8",
     "unit": ""
   },
@@ -255,7 +255,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "50.9",
-    "previous": "51",
+    "previous": "",
     "forecast": "51.1",
     "unit": ""
   },
@@ -396,7 +396,7 @@
     "impact": "High",
     "actual": "",
     "previous": "0.3",
-    "forecast": "",
+    "forecast": "0.3",
     "unit": "%"
   },
   {
@@ -416,7 +416,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.9",
-    "forecast": "",
+    "forecast": "0.5",
     "unit": "%"
   },
   {
@@ -426,7 +426,7 @@
     "impact": "High",
     "actual": "",
     "previous": "0.8",
-    "forecast": "",
+    "forecast": "3.5",
     "unit": "%"
   },
   {
@@ -456,7 +456,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "209",
-    "forecast": "212",
+    "forecast": "211",
     "unit": ""
   },
   {
@@ -466,7 +466,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.7",
-    "forecast": "",
+    "forecast": "0.5",
     "unit": "%"
   },
   {
@@ -476,7 +476,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "3.5",
-    "forecast": "",
+    "forecast": "3.8",
     "unit": "%"
   },
   {
@@ -556,7 +556,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-87.45",
-    "forecast": "",
+    "forecast": "-87",
     "unit": "$"
   },
   {
@@ -606,7 +606,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "49.2",
-    "forecast": "49.5",
+    "forecast": "49.7",
     "unit": ""
   },
   {
