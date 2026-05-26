@@ -7263,137 +7263,413 @@ Instructions:
         })()}
 
         {/* ━���━ SCREENER ━━━ */}
-        {tab === "screener" && null}
+        {tab === "screener" && (
+          <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+            {!screenerDetail ? (<>
+              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Stock Screener</div>}
+              {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Stock Screener</div>}
+              <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>{screenerData.length} stocks screened across the Paradiem framework</div>
+              {/* Sleeve sub-tabs */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>
+                {["Dividend", "Growth", "FCI 100", "FCI Values", "All"].map(s => (
+                  <button key={s} onClick={() => setScreenerSleeve(s)} style={{
+                    flex: "0 0 auto", padding: "9px 16px", borderRadius: 10,
+                    border: `1px solid ${screenerSleeve === s ? C.borderActive : C.border}`,
+                    background: screenerSleeve === s ? C.accentSoft : "transparent",
+                    color: screenerSleeve === s ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>{s}</button>
+                ))}
+              </div>
+              {/* Search + filters */}
+              <div style={{ marginBottom: 14 }}>
+                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                {screenerSleeve === "All" && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                    <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                      <option value="All">All Types</option>
+                      <option value="Dividend">Dividend Candidates</option>
+                      <option value="Growth">Growth Candidates</option>
+                    </select>
+                    <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                      <option value="All">All Ratings</option>
+                      <option value="BUY">BUY Only</option>
+                      <option value="HOLD">HOLD Only</option>
+                      <option value="WATCH">WATCH Only</option>
+                      <option value="SELL">SELL Only</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+              {/* List */}
+              {!screenerData.length ? (
+                <div style={{ textAlign: "center", padding: 40 }}>
+                  <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+                  <div style={{ fontSize: 13, color: C.t4 }}>Loading screener data...</div>
+                </div>
+              ) : (() => {
+                const q = screenerSearch.toLowerCase();
+                const portfolioMap = { "Dividend": sleeves.dividend?.symbols || [], "Growth": sleeves.growth?.symbols || [], "FCI 100": sleeves.fci100?.symbols || [], "FCI Values": sleeves.fciValues?.symbols || [] };
+                const filtered = screenerData.filter(s => {
+                  if (screenerSleeve !== "All") {
+                    const holdings = portfolioMap[screenerSleeve];
+                    if (!holdings || !holdings.includes(s.ticker)) return false;
+                  }
+                  if (screenerSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
+                  if (screenerSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
+                  if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
+                  return true;
+                }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
+                if (filtered.length === 0) return <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>;
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {filtered.map(s => (
+                      <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s" }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = theme !== "light" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
+                          <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                          {s.screen_date && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.screen_date}</div>}
+                        </div>
+                        {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
+                        {s.overall_score != null && <div style={{ fontSize: 18, fontWeight: 800, color: C.t1, minWidth: 36, textAlign: "right" }}>{s.overall_score}</div>}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </>) : (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+                  <button onClick={() => setScreenerDetail(null)} style={{
+                    background: "none", border: `1px solid ${C.border}`, borderRadius: 10,
+                    padding: "8px 16px", color: C.t3, fontSize: 13, fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                    Back to list
+                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
+                    <button onClick={() => {
+                      const a = screenerDetail;
+                      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#191635;line-height:1.6}h1{font-size:24pt;margin:0}h2{font-size:14pt;color:#191635;border-bottom:2px solid #C9A015;padding-bottom:4px;margin:24px 0 12px}h3{font-size:12pt;margin:16px 0 4px}.meta{font-size:9pt;color:#6E6A82;text-transform:uppercase;letter-spacing:1px}.score{font-size:10pt;margin:4px 0 8px}.rec{display:inline-block;font-size:10pt;font-weight:bold;padding:2px 10px;border-radius:4px;background:#f0f0f0}.thesis{font-size:11pt;line-height:1.7;margin-bottom:12px}ol{margin:8px 0 16px 20px}ol li{margin-bottom:8px}.footer{text-align:center;font-size:8pt;color:#9E9AAE;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}</style></head><body>`
+                      + `<h1>${a.ticker} <span style="font-size:16pt;font-weight:normal;color:#6E6A82">${a.name || ""}</span></h1>`
+                      + `<p class="meta">${a.sleeve || ""} SLEEVE · ${a.screen_date || ""}${a.faith_alignment?.inspire_impact_score != null ? ` · Inspire: ${a.faith_alignment.inspire_impact_score}` : ""}${a.infinite_game?.mindset ? ` · ${a.infinite_game.mindset}` : ""}</p>`
+                      + `<p><span class="rec">${a.recommendation || ""}</span> <span style="font-size:24pt;font-weight:bold;margin-left:12px">${a.overall_score || ""}</span><span style="color:#9E9AAE"> / 100</span></p>`
+                      + (a.profile ? `<h2>Company Profile</h2><p class="meta">${[a.profile.sector,a.profile.industry,a.profile.exchange,a.profile.country].filter(Boolean).join(" · ")}${a.profile.employees ? ` · ${Number(a.profile.employees).toLocaleString()} Employees` : ""}</p>${a.profile.description ? `<p class="thesis">${a.profile.description}</p>` : ""}` : "")
+                      + (a.excellence_evaluation ? `<h2>Excellence Evaluation (50%)</h2>` + ["innovation","inspiration","infrastructure"].map(k => { const v = a.excellence_evaluation[k]; return v ? `<h3>${k.charAt(0).toUpperCase()+k.slice(1)} — ${v.score}/10 (${v.label || ""})</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
+                      + (a.infinite_game ? `<h2>Finite vs Infinite Game (25%)</h2><p><strong>Mindset:</strong> ${a.infinite_game.mindset} · <strong>Overall:</strong> ${a.infinite_game.overall}/10</p>${a.infinite_game.summary ? `<blockquote style="border-left:3px solid #ccc;padding-left:12px;font-style:italic;color:#3D3859">${a.infinite_game.summary}</blockquote>` : ""}` + ["just_cause","trusting_teams","worthy_rivals","existential_flexibility","courage_to_lead"].map(k => { const v = a.infinite_game[k]; return v ? `<h3>${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())} — ${v.score}/10</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
+                      + (a.investment_thesis ? `<h2>Investment Thesis</h2><p class="thesis">${a.investment_thesis}</p>${a.thesis_continued ? `<p class="thesis">${a.thesis_continued}</p>` : ""}` : "")
+                      + (a.key_catalysts?.length ? `<h2>Key Catalysts</h2><ol>${a.key_catalysts.map(c => `<li>${typeof c === "string" ? c : c.catalyst || c.description || ""}</li>`).join("")}</ol>` : "")
+                      + (a.key_risks?.length ? `<h2>Key Risks</h2><ol>${a.key_risks.map(r => `<li>${typeof r === "string" ? r : r.risk || r.description || ""}</li>`).join("")}</ol>` : "")
+                      + (a.ai_resilience ? `<h2>AI Resilience (25%)</h2><p class="score">${a.ai_resilience.score}/10 — ${a.ai_resilience.label || ""}</p><p class="thesis">${a.ai_resilience.analysis || ""}</p>` : "")
+                      + (a.faith_alignment ? `<h2>Faith Alignment</h2><p>Inspire Impact Score: <strong style="font-size:18pt">${a.faith_alignment.inspire_impact_score}</strong></p>${a.faith_alignment.negative_attributions?.length ? `<p style="color:#DC2626">Negative: ${a.faith_alignment.negative_attributions.join(", ")}</p>` : ""}${a.faith_alignment.positive_attributions?.length ? `<p style="color:#16A34A">Positive: ${a.faith_alignment.positive_attributions.join(", ")}</p>` : ""}` : "")
+                      + (a.sources?.length ? `<h2>Resources</h2><ol>${a.sources.map(s => `<li style="font-size:9pt">${typeof s === "string" ? s : s.title || ""}</li>`).join("")}</ol>` : "")
+                      + `<p class="footer">Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</p></body></html>`;
+                      const blob = new Blob([html], { type: "application/msword" });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement("a"); link.href = url; link.download = `${a.ticker}_Paradiem_Report.doc`; link.click();
+                      URL.revokeObjectURL(url);
+                    }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Download
+                    </button>
+                  </div>
+                </div>
+                {screenerDetailLoading ? (
+                  <div style={{ textAlign: "center", padding: 60 }}>
+                    <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+                    <div style={{ fontSize: 13, color: C.t4 }}>Loading report...</div>
+                  </div>
+                ) : (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: isDesktop ? "32px 48px" : "20px 18px" }}>
+                    {(() => {
+                      const a = screenerDetail;
+                      const scoreColor = s => s >= 7 ? C.up : s >= 4 ? "#B8860B" : C.dn;
+                      const ScoreRow = ({ title, score, label, analysis }) => (
+                        <div style={{ marginBottom: 20 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                            <span style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>{title}</span>
+                            {label && <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1, textTransform: "uppercase" }}>{label}</span>}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                            <div style={{ flex: 1, height: 8, background: C.border + "40", borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ width: `${score * 10}%`, height: "100%", borderRadius: 4, background: scoreColor(score) }} />
+                            </div>
+                            <span style={{ fontSize: 16, fontWeight: 800, minWidth: 20, textAlign: "right", color: scoreColor(score) }}>{score}</span>
+                          </div>
+                          {analysis && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.5 }}>{analysis}</div>}
+                        </div>
+                      );
+                      const SectionHeader = ({ children, color }) => (
+                        <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 16px", paddingBottom: 4, borderBottom: `2px solid ${color || "#B8860B"}` }}>{children}</div>
+                      );
+                      const recColors = { BUY: { bg: "rgba(22,163,74,0.10)", fg: C.up }, HOLD: { bg: "rgba(217,119,6,0.10)", fg: "#D97706" }, SELL: { bg: "rgba(220,38,38,0.10)", fg: C.dn }, WATCH: { bg: "rgba(37,99,235,0.10)", fg: "#2563EB" } };
+                      const rc = recColors[a.recommendation] || recColors.HOLD;
+
+                      return (<>
+                        {/* Header */}
+                        <div style={{ marginBottom: 24 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                            <img src={`https://financialmodelingprep.com/image-stock/${a.ticker}.png`} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, border: `1px solid ${C.border}` }} onError={(e) => { e.target.style.display = "none"; }} />
+                            <div style={{ fontSize: isDesktop ? 36 : 28, fontWeight: 800, color: C.t1, letterSpacing: -0.5, lineHeight: 1.1 }}>
+                              {a.ticker} <span style={{ fontSize: isDesktop ? 20 : 16, fontWeight: 400, color: C.t3 }}>{a.name}</span>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
+                            <span>{a.sleeve?.toUpperCase()} SLEEVE</span>
+                            <span style={{ color: C.border }}>·</span>
+                            <span>{a.screen_date}</span>
+                            {a.faith_alignment?.inspire_impact_score != null && <><span style={{ color: C.border }}>·</span><span style={{ color: a.faith_alignment.inspire_impact_score < 0 ? C.dn : "#B8860B" }}>Inspire: {a.faith_alignment.inspire_impact_score}</span></>}
+                            {a.infinite_game?.mindset && <><span style={{ color: C.border }}>·</span><span style={{ color: "#B8860B" }}>{a.infinite_game.mindset}</span></>}
+                          </div>
+                          <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <span style={{ display: "inline-block", fontSize: 13, fontWeight: 800, padding: "4px 14px", borderRadius: 8, letterSpacing: 1, textTransform: "uppercase", background: rc.bg, color: rc.fg }}>{a.recommendation}</span>
+                            <div><span style={{ fontSize: 48, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{a.overall_score}</span><span style={{ fontSize: 18, fontWeight: 400, color: C.t4 }}> / 100</span></div>
+                          </div>
+                        </div>
+
+                        {/* Company Profile */}
+                        {a.profile && (<>
+                          <SectionHeader>Company Profile</SectionHeader>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
+                            {a.profile.sector && <span>{a.profile.sector}</span>}
+                            {a.profile.industry && <><span style={{ color: C.border }}>·</span><span>{a.profile.industry}</span></>}
+                            {a.profile.exchange && <><span style={{ color: C.border }}>·</span><span>{a.profile.exchange}</span></>}
+                            {a.profile.country && <><span style={{ color: C.border }}>·</span><span>{a.profile.country}</span></>}
+                          </div>
+                          {a.profile.description && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginTop: 12 }}>{a.profile.description}</div>}
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                            {a.profile.employees && <span>{Number(a.profile.employees).toLocaleString()} Employees</span>}
+                            {a.profile.website && <><span style={{ color: C.border }}>·</span><span style={{ color: C.accent }}>{a.profile.website.replace(/https?:\/\//, "")}</span></>}
+                          </div>
+                        </>)}
+
+                        {/* Excellence Evaluation */}
+                        {a.excellence_evaluation && (<>
+                          <SectionHeader color={C.up}>Excellence Evaluation — Think Like an Owner (50%)</SectionHeader>
+                          <ScoreRow title="Innovation" score={a.excellence_evaluation.innovation?.score} label={a.excellence_evaluation.innovation?.label} analysis={a.excellence_evaluation.innovation?.analysis} />
+                          <ScoreRow title="Inspiration" score={a.excellence_evaluation.inspiration?.score} label={a.excellence_evaluation.inspiration?.label} analysis={a.excellence_evaluation.inspiration?.analysis} />
+                          <ScoreRow title="Infrastructure" score={a.excellence_evaluation.infrastructure?.score} label={a.excellence_evaluation.infrastructure?.label} analysis={a.excellence_evaluation.infrastructure?.analysis} />
+                        </>)}
+
+                        {/* Infinite Game */}
+                        {a.infinite_game && (<>
+                          <SectionHeader color={C.up}>Finite vs Infinite Game — Sinek (25%)</SectionHeader>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 12, flexWrap: "wrap" }}>
+                            <span style={{ fontSize: 14, color: C.t2 }}>Mindset:</span>
+                            <span style={{ fontSize: 14, fontWeight: 800, color: "#B8860B", textTransform: "uppercase" }}>{a.infinite_game.mindset}</span>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: C.t2 }}>Overall: <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{a.infinite_game.overall}</span> /10</span>
+                          </div>
+                          {a.infinite_game.summary && <div style={{ borderLeft: `3px solid ${C.border}`, paddingLeft: 16, margin: "12px 0 20px", fontSize: 12, fontStyle: "italic", color: C.t2, lineHeight: 1.6 }}>{a.infinite_game.summary}</div>}
+                          {a.infinite_game.just_cause && <ScoreRow title="Just Cause" score={a.infinite_game.just_cause.score} analysis={a.infinite_game.just_cause.analysis} />}
+                          {a.infinite_game.trusting_teams && <ScoreRow title="Trusting Teams" score={a.infinite_game.trusting_teams.score} analysis={a.infinite_game.trusting_teams.analysis} />}
+                          {a.infinite_game.worthy_rivals && <ScoreRow title="Worthy Rivals" score={a.infinite_game.worthy_rivals.score} analysis={a.infinite_game.worthy_rivals.analysis} />}
+                          {a.infinite_game.existential_flexibility && <ScoreRow title="Existential Flexibility" score={a.infinite_game.existential_flexibility.score} analysis={a.infinite_game.existential_flexibility.analysis} />}
+                          {a.infinite_game.courage_to_lead && <ScoreRow title="Courage to Lead" score={a.infinite_game.courage_to_lead.score} analysis={a.infinite_game.courage_to_lead.analysis} />}
+                        </>)}
+
+                        {/* Investment Thesis */}
+                        {(a.investment_thesis || a.thesis_continued) && (<>
+                          <SectionHeader>Investment Thesis</SectionHeader>
+                          {a.investment_thesis && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.investment_thesis}</div>}
+                          {a.thesis_continued && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.thesis_continued}</div>}
+                        </>)}
+
+                        {/* Key Catalysts */}
+                        {a.key_catalysts?.length > 0 && (<>
+                          <SectionHeader color={C.up}>Key Catalysts</SectionHeader>
+                          <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
+                            {a.key_catalysts.map((c, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof c === "string" ? c : c.catalyst || c.description || JSON.stringify(c)}</li>)}
+                          </ol>
+                        </>)}
+
+                        {/* Key Risks */}
+                        {a.key_risks?.length > 0 && (<>
+                          <SectionHeader color={C.dn}>Key Risks</SectionHeader>
+                          <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
+                            {a.key_risks.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.risk || r.description || JSON.stringify(r)}</li>)}
+                          </ol>
+                        </>)}
+
+                        {/* AI Resilience */}
+                        {a.ai_resilience && (<>
+                          <SectionHeader>AI Resilience (25%)</SectionHeader>
+                          <ScoreRow title="AI Resilience" score={a.ai_resilience.score} label={a.ai_resilience.label} analysis={a.ai_resilience.analysis} />
+                        </>)}
+
+                        {/* Faith Alignment / Inspire Impact */}
+                        {a.faith_alignment && (<>
+                          <SectionHeader color={C.dn}>Faith Alignment — Inspire Insight</SectionHeader>
+                          <div style={{ marginBottom: 12 }}>
+                            <span style={{ fontSize: 14, color: C.t2 }}>Inspire Impact Score: </span>
+                            <span style={{ fontSize: 28, fontWeight: 800, color: a.faith_alignment.inspire_impact_score >= 0 ? C.up : C.dn }}>{a.faith_alignment.inspire_impact_score}</span>
+                          </div>
+                          {a.faith_alignment.negative_attributions?.length > 0 && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.dn, marginRight: 4 }}>Negative:</span>
+                              {a.faith_alignment.negative_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(220,38,38,0.08)", color: C.dn }}>{attr}</span>)}
+                            </div>
+                          )}
+                          {a.faith_alignment.positive_attributions?.length > 0 && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.up, marginRight: 4 }}>Positive:</span>
+                              {a.faith_alignment.positive_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(22,163,74,0.08)", color: C.up }}>{attr}</span>)}
+                            </div>
+                          )}
+                          {a.faith_alignment.source && <div style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Source: {a.faith_alignment.source}</div>}
+                        </>)}
+
+                        {/* Sources */}
+                        {a.sources?.length > 0 && (<>
+                          <SectionHeader>Resources</SectionHeader>
+                          <ol style={{ margin: "8px 0", paddingLeft: 28, listStyle: "none", counterReset: "src" }}>
+                            {a.sources.map((s, i) => <li key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.5, marginBottom: 8, counterIncrement: "src", position: "relative", paddingLeft: 0 }}><span style={{ fontWeight: 800, fontSize: 10, color: C.accent, marginRight: 8 }}>{i + 1}.</span>{typeof s === "string" ? s : s.title || s.source || JSON.stringify(s)}</li>)}
+                          </ol>
+                        </>)}
+
+                        <div style={{ textAlign: "center", fontSize: 10, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 40, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</div>
+                      </>);
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ━━━ OPPORTUNITIES ━━━ */}
         {tab === "opportunities" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-            {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
-            {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
-            <div style={{ fontSize: 12, color: C.t3, marginBottom: 18 }}>Thematic investment ideas backed by research</div>
-            {!opportunities.length ? (
-              <div style={{ textAlign: "center", padding: 40 }}>
-                <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-                <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
-              </div>
-            ) : opportunities.map(opp => (
-              <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
-                <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                  {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
+            {!oppDetail ? (<>
+              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
+              {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
+              <div style={{ fontSize: 12, color: C.t3, marginBottom: 18 }}>Thematic investment ideas backed by research</div>
+              {!opportunities.length ? (
+                <div style={{ textAlign: "center", padding: 40 }}>
+                  <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+                  <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
                 </div>
-                {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-                  {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
-                </div>
-                <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
-                  {opp.date_identified && <span>{opp.date_identified}</span>}
-                  {opp.timeframe && <span>{opp.timeframe}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Opportunity detail overlay */}
-        {oppDetail && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-              <button onClick={() => setOppDetail(null)} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                Back
-              </button>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.t3 }}>Research Report</span>
-              <div style={{ width: 50 }} />
-            </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, lineHeight: 1.2, marginBottom: 12 }}>{oppDetail.title}</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                {oppDetail.pattern && <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{oppDetail.pattern}</span>}
-                <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: oppDetail.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: oppDetail.conviction === "High Conviction" ? C.up : "#2563EB" }}>{oppDetail.conviction}</span>
-                {oppDetail.status && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.status}</span>}
-                {oppDetail.timeframe && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.timeframe}</span>}
-              </div>
-
-              {oppDetail.summary && <div style={{ fontSize: 15, color: C.t2, lineHeight: 1.6, fontStyle: "italic", marginBottom: 20, paddingLeft: 12, borderLeft: `3px solid ${C.accent}` }}>{oppDetail.summary}</div>}
-
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Catalyst</div>
-              <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.catalyst}</div>
-
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Investment Thesis</div>
-              <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.thesis}</div>
-
-              {oppDetail.body_md && (<>
-                <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Research Report</div>
-                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: isDesktop ? "24px 32px" : "16px 18px", marginBottom: 20 }}>
-                  {renderMarkdown(oppDetail.body_md)}
-                </div>
-              </>)}
-
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.up}` }}>Ticker Analysis</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
-                {oppDetail.tickers?.map(t => (
-                  <div key={t} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{t}</span>
-                      <button onClick={(e) => { e.stopPropagation(); setOppDetail(null); setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 8, background: C.accentSoft, border: `1px solid ${C.borderActive}`, color: C.t1, cursor: "pointer", fontFamily: "inherit" }}>View Screener Report</button>
-                    </div>
-                    {oppDetail.ticker_rationale?.[t] && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7 }}>{oppDetail.ticker_rationale[t]}</div>}
-                    {oppDetail.key_metrics?.[t] && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
-                        {Object.entries(oppDetail.key_metrics[t]).map(([k, v]) => (
-                          <div key={k} style={{ fontSize: 11, color: C.t3, background: C.bg, padding: "3px 10px", borderRadius: 6, border: `1px solid ${C.border}` }}>
-                            <span style={{ color: C.t4 }}>{k}: </span>
-                            <span style={{ color: C.t2, fontWeight: 600 }}>{typeof v === "number" ? v.toLocaleString() : String(v)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              ) : opportunities.map(opp => (
+                <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                    {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
                   </div>
-                ))}
+                  {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                    {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                  </div>
+                  <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
+                    {opp.date_identified && <span>{opp.date_identified}</span>}
+                    {opp.timeframe && <span>{opp.timeframe}</span>}
+                  </div>
+                </div>
+              ))}
+            </>) : (
+              <div>
+                <button onClick={() => setOppDetail(null)} style={{
+                  background: "none", border: `1px solid ${C.border}`, borderRadius: 10,
+                  padding: "8px 16px", color: C.t3, fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
+                  marginBottom: 20,
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  Back to opportunities
+                </button>
+                <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: isDesktop ? "32px 48px" : "20px 18px" }}>
+                  <div style={{ fontSize: isDesktop ? 28 : 24, fontWeight: 800, color: C.t1, lineHeight: 1.2, marginBottom: 12 }}>{oppDetail.title}</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                    {oppDetail.pattern && <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{oppDetail.pattern}</span>}
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: oppDetail.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: oppDetail.conviction === "High Conviction" ? C.up : "#2563EB" }}>{oppDetail.conviction}</span>
+                    {oppDetail.status && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.status}</span>}
+                    {oppDetail.timeframe && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.timeframe}</span>}
+                  </div>
+
+                  {oppDetail.summary && <div style={{ fontSize: 15, color: C.t2, lineHeight: 1.6, fontStyle: "italic", marginBottom: 20, paddingLeft: 12, borderLeft: `3px solid ${C.accent}` }}>{oppDetail.summary}</div>}
+
+                  <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Catalyst</div>
+                  <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.catalyst}</div>
+
+                  <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Investment Thesis</div>
+                  <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.thesis}</div>
+
+                  {oppDetail.body_md && (<>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Research Report</div>
+                    <div style={{ marginBottom: 20 }}>
+                      {renderMarkdown(oppDetail.body_md)}
+                    </div>
+                  </>)}
+
+                  <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.up}` }}>Ticker Analysis</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                    {oppDetail.tickers?.map(t => (
+                      <div key={t} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ fontSize: 16, fontWeight: 800, color: C.accent }}>{t}</span>
+                          <button onClick={(e) => { e.stopPropagation(); setOppDetail(null); setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 8, background: C.accentSoft, border: `1px solid ${C.borderActive}`, color: C.t1, cursor: "pointer", fontFamily: "inherit" }}>View Screener Report</button>
+                        </div>
+                        {oppDetail.ticker_rationale?.[t] && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7 }}>{oppDetail.ticker_rationale[t]}</div>}
+                        {oppDetail.key_metrics?.[t] && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                            {Object.entries(oppDetail.key_metrics[t]).map(([k, v]) => (
+                              <div key={k} style={{ fontSize: 11, color: C.t3, background: C.surface, padding: "3px 10px", borderRadius: 6, border: `1px solid ${C.border}` }}>
+                                <span style={{ color: C.t4 }}>{k}: </span>
+                                <span style={{ color: C.t2, fontWeight: 600 }}>{typeof v === "number" ? v.toLocaleString() : String(v)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.dn}` }}>Key Risks</div>
+                  <ol style={{ margin: "8px 0 16px", paddingLeft: 28 }}>
+                    {oppDetail.risks?.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.description || r.risk || JSON.stringify(r)}</li>)}
+                  </ol>
+
+                  {oppDetail.invalidation?.length > 0 && (<>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #FBBF24` }}>What Would Change My Mind</div>
+                    <ol style={{ margin: "8px 0 16px", paddingLeft: 28 }}>
+                      {oppDetail.invalidation.map((t, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof t === "string" ? t : t.trigger || t.description || JSON.stringify(t)}</li>)}
+                    </ol>
+                  </>)}
+
+                  {oppDetail.sources?.length > 0 && (<>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #B8860B` }}>Sources</div>
+                    <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
+                      {oppDetail.sources.map((s, i) => {
+                        if (typeof s === "string") {
+                          return <li key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.5, marginBottom: 8 }}>{s}</li>;
+                        }
+                        const linkColor = theme !== "light" ? "#60A5FA" : "#2563EB";
+                        return (
+                          <li key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.5, marginBottom: 10 }}>
+                            {s.url ? (
+                              <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: linkColor, fontWeight: 600, textDecoration: "none" }}>{s.title || s.url}</a>
+                            ) : (
+                              <span style={{ color: C.t2, fontWeight: 600 }}>{s.title || s.source || ""}</span>
+                            )}
+                            {(s.publisher || s.date) && (
+                              <span style={{ color: C.t4, marginLeft: 6 }}>
+                                — {[s.publisher, s.date].filter(Boolean).join(", ")}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>)}
+
+                  <div style={{ textAlign: "center", fontSize: 10, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 40, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</div>
+                </div>
               </div>
-
-              <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.dn}` }}>Key Risks</div>
-              <ol style={{ margin: "8px 0 16px", paddingLeft: 28 }}>
-                {oppDetail.risks?.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.description || r.risk || JSON.stringify(r)}</li>)}
-              </ol>
-
-              {oppDetail.invalidation?.length > 0 && (<>
-                <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #FBBF24` }}>What Would Change My Mind</div>
-                <ol style={{ margin: "8px 0 16px", paddingLeft: 28 }}>
-                  {oppDetail.invalidation.map((t, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof t === "string" ? t : t.trigger || t.description || JSON.stringify(t)}</li>)}
-                </ol>
-              </>)}
-
-              {oppDetail.sources?.length > 0 && (<>
-                <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid #B8860B` }}>Sources</div>
-                <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
-                  {oppDetail.sources.map((s, i) => {
-                    if (typeof s === "string") {
-                      return <li key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.5, marginBottom: 8 }}>{s}</li>;
-                    }
-                    const linkColor = theme !== "light" ? "#60A5FA" : "#2563EB";
-                    return (
-                      <li key={i} style={{ fontSize: 12, color: C.t3, lineHeight: 1.5, marginBottom: 10 }}>
-                        {s.url ? (
-                          <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ color: linkColor, fontWeight: 600, textDecoration: "none" }}>{s.title || s.url}</a>
-                        ) : (
-                          <span style={{ color: C.t2, fontWeight: 600 }}>{s.title || s.source || ""}</span>
-                        )}
-                        {(s.publisher || s.date) && (
-                          <span style={{ color: C.t4, marginLeft: 6 }}>
-                            — {[s.publisher, s.date].filter(Boolean).join(", ")}
-                          </span>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ol>
-              </>)}
-
-              <div style={{ textAlign: "center", fontSize: 10, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 40, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</div>
-            </div>
+            )}
           </div>
         )}
 
@@ -8628,294 +8904,6 @@ Instructions:
         );
       })()}
 
-      {/* SCREENER FULL-PAGE OVERLAY */}
-      {tab === "screener" && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: C.bg, display: "flex", flexDirection: "column", paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          {/* Detail overlay — layered on top, list stays mounted underneath */}
-          {screenerDetail && (
-          <div style={{ display: "flex", flexDirection: "column", position: "absolute", inset: 0, background: C.bg, zIndex: 1, paddingTop: "env(safe-area-inset-top, 0px)" }}>
-          {(
-            screenerDetailLoading ? (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-                <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
-                <div style={{ fontSize: 13, color: C.t4 }}>Loading report...</div>
-              </div>
-            ) : (
-              <>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                  <button onClick={() => setScreenerDetail(null)} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                    Back
-                  </button>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
-                    <button onClick={() => {
-                      const a = screenerDetail;
-                      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#191635;line-height:1.6}h1{font-size:24pt;margin:0}h2{font-size:14pt;color:#191635;border-bottom:2px solid #C9A015;padding-bottom:4px;margin:24px 0 12px}h3{font-size:12pt;margin:16px 0 4px}.meta{font-size:9pt;color:#6E6A82;text-transform:uppercase;letter-spacing:1px}.score{font-size:10pt;margin:4px 0 8px}.rec{display:inline-block;font-size:10pt;font-weight:bold;padding:2px 10px;border-radius:4px;background:#f0f0f0}.thesis{font-size:11pt;line-height:1.7;margin-bottom:12px}ol{margin:8px 0 16px 20px}ol li{margin-bottom:8px}.footer{text-align:center;font-size:8pt;color:#9E9AAE;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}</style></head><body>`
-                      + `<h1>${a.ticker} <span style="font-size:16pt;font-weight:normal;color:#6E6A82">${a.name || ""}</span></h1>`
-                      + `<p class="meta">${a.sleeve || ""} SLEEVE · ${a.screen_date || ""}${a.faith_alignment?.inspire_impact_score != null ? ` · Inspire: ${a.faith_alignment.inspire_impact_score}` : ""}${a.infinite_game?.mindset ? ` · ${a.infinite_game.mindset}` : ""}</p>`
-                      + `<p><span class="rec">${a.recommendation || ""}</span> <span style="font-size:24pt;font-weight:bold;margin-left:12px">${a.overall_score || ""}</span><span style="color:#9E9AAE"> / 100</span></p>`
-                      + (a.profile ? `<h2>Company Profile</h2><p class="meta">${[a.profile.sector,a.profile.industry,a.profile.exchange,a.profile.country].filter(Boolean).join(" · ")}${a.profile.employees ? ` · ${Number(a.profile.employees).toLocaleString()} Employees` : ""}</p>${a.profile.description ? `<p class="thesis">${a.profile.description}</p>` : ""}` : "")
-                      + (a.excellence_evaluation ? `<h2>Excellence Evaluation (50%)</h2>` + ["innovation","inspiration","infrastructure"].map(k => { const v = a.excellence_evaluation[k]; return v ? `<h3>${k.charAt(0).toUpperCase()+k.slice(1)} — ${v.score}/10 (${v.label || ""})</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
-                      + (a.infinite_game ? `<h2>Finite vs Infinite Game (25%)</h2><p><strong>Mindset:</strong> ${a.infinite_game.mindset} · <strong>Overall:</strong> ${a.infinite_game.overall}/10</p>${a.infinite_game.summary ? `<blockquote style="border-left:3px solid #ccc;padding-left:12px;font-style:italic;color:#3D3859">${a.infinite_game.summary}</blockquote>` : ""}` + ["just_cause","trusting_teams","worthy_rivals","existential_flexibility","courage_to_lead"].map(k => { const v = a.infinite_game[k]; return v ? `<h3>${k.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())} — ${v.score}/10</h3><p class="thesis">${v.analysis || ""}</p>` : ""; }).join("") : "")
-                      + (a.investment_thesis ? `<h2>Investment Thesis</h2><p class="thesis">${a.investment_thesis}</p>${a.thesis_continued ? `<p class="thesis">${a.thesis_continued}</p>` : ""}` : "")
-                      + (a.key_catalysts?.length ? `<h2>Key Catalysts</h2><ol>${a.key_catalysts.map(c => `<li>${typeof c === "string" ? c : c.catalyst || c.description || ""}</li>`).join("")}</ol>` : "")
-                      + (a.key_risks?.length ? `<h2>Key Risks</h2><ol>${a.key_risks.map(r => `<li>${typeof r === "string" ? r : r.risk || r.description || ""}</li>`).join("")}</ol>` : "")
-                      + (a.ai_resilience ? `<h2>AI Resilience (25%)</h2><p class="score">${a.ai_resilience.score}/10 — ${a.ai_resilience.label || ""}</p><p class="thesis">${a.ai_resilience.analysis || ""}</p>` : "")
-                      + (a.faith_alignment ? `<h2>Faith Alignment</h2><p>Inspire Impact Score: <strong style="font-size:18pt">${a.faith_alignment.inspire_impact_score}</strong></p>${a.faith_alignment.negative_attributions?.length ? `<p style="color:#DC2626">Negative: ${a.faith_alignment.negative_attributions.join(", ")}</p>` : ""}${a.faith_alignment.positive_attributions?.length ? `<p style="color:#16A34A">Positive: ${a.faith_alignment.positive_attributions.join(", ")}</p>` : ""}` : "")
-                      + (a.sources?.length ? `<h2>Resources</h2><ol>${a.sources.map(s => `<li style="font-size:9pt">${typeof s === "string" ? s : s.title || ""}</li>`).join("")}</ol>` : "")
-                      + `<p class="footer">Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</p></body></html>`;
-                      const blob = new Blob([html], { type: "application/msword" });
-                      const url = URL.createObjectURL(blob);
-                      const link = document.createElement("a"); link.href = url; link.download = `${a.ticker}_Paradiem_Report.doc`; link.click();
-                      URL.revokeObjectURL(url);
-                    }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      Download
-                    </button>
-                  </div>
-                </div>
-                <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px", paddingBottom: 40 }}>
-                  {(() => {
-                    const a = screenerDetail;
-                    const scoreColor = s => s >= 7 ? C.up : s >= 4 ? "#B8860B" : C.dn;
-                    const scoreLabel = s => s >= 7 ? "green" : s >= 4 ? "gold" : "red";
-                    const ScoreRow = ({ title, score, label, analysis }) => (
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                          <span style={{ fontSize: 16, fontWeight: 800, color: C.t1 }}>{title}</span>
-                          {label && <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1, textTransform: "uppercase" }}>{label}</span>}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <div style={{ flex: 1, height: 8, background: C.border + "40", borderRadius: 4, overflow: "hidden" }}>
-                            <div style={{ width: `${score * 10}%`, height: "100%", borderRadius: 4, background: scoreColor(score) }} />
-                          </div>
-                          <span style={{ fontSize: 16, fontWeight: 800, minWidth: 20, textAlign: "right", color: scoreColor(score) }}>{score}</span>
-                        </div>
-                        {analysis && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.5 }}>{analysis}</div>}
-                      </div>
-                    );
-                    const SectionHeader = ({ children, color }) => (
-                      <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 16px", paddingBottom: 4, borderBottom: `2px solid ${color || "#B8860B"}` }}>{children}</div>
-                    );
-                    const recColors = { BUY: { bg: "rgba(22,163,74,0.10)", fg: C.up }, HOLD: { bg: "rgba(217,119,6,0.10)", fg: "#D97706" }, SELL: { bg: "rgba(220,38,38,0.10)", fg: C.dn }, WATCH: { bg: "rgba(37,99,235,0.10)", fg: "#2563EB" } };
-                    const rc = recColors[a.recommendation] || recColors.HOLD;
-
-                    return (<>
-                      {/* Header */}
-                      <div style={{ marginBottom: 24 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                          <img src={`https://financialmodelingprep.com/image-stock/${a.ticker}.png`} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "contain", background: "#fff", padding: 4, border: `1px solid ${C.border}` }} onError={(e) => { e.target.style.display = "none"; }} />
-                          <div style={{ fontSize: 36, fontWeight: 800, color: C.t1, letterSpacing: -0.5, lineHeight: 1.1 }}>
-                            {a.ticker} <span style={{ fontSize: 20, fontWeight: 400, color: C.t3 }}>{a.name}</span>
-                          </div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
-                          <span>{a.sleeve?.toUpperCase()} SLEEVE</span>
-                          <span style={{ color: C.border }}>·</span>
-                          <span>{a.screen_date}</span>
-                          {a.faith_alignment?.inspire_impact_score != null && <><span style={{ color: C.border }}>·</span><span style={{ color: a.faith_alignment.inspire_impact_score < 0 ? C.dn : "#B8860B" }}>Inspire: {a.faith_alignment.inspire_impact_score}</span></>}
-                          {a.infinite_game?.mindset && <><span style={{ color: C.border }}>·</span><span style={{ color: "#B8860B" }}>{a.infinite_game.mindset}</span></>}
-                        </div>
-                        <div style={{ marginTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <span style={{ display: "inline-block", fontSize: 13, fontWeight: 800, padding: "4px 14px", borderRadius: 8, letterSpacing: 1, textTransform: "uppercase", background: rc.bg, color: rc.fg }}>{a.recommendation}</span>
-                          <div><span style={{ fontSize: 48, fontWeight: 800, color: C.t1, lineHeight: 1 }}>{a.overall_score}</span><span style={{ fontSize: 18, fontWeight: 400, color: C.t4 }}> / 100</span></div>
-                        </div>
-                      </div>
-
-                      {/* Company Profile */}
-                      {a.profile && (<>
-                        <SectionHeader>Company Profile</SectionHeader>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5, flexWrap: "wrap" }}>
-                          {a.profile.sector && <span>{a.profile.sector}</span>}
-                          {a.profile.industry && <><span style={{ color: C.border }}>·</span><span>{a.profile.industry}</span></>}
-                          {a.profile.exchange && <><span style={{ color: C.border }}>·</span><span>{a.profile.exchange}</span></>}
-                          {a.profile.country && <><span style={{ color: C.border }}>·</span><span>{a.profile.country}</span></>}
-                        </div>
-                        {a.profile.description && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginTop: 12 }}>{a.profile.description}</div>}
-                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10, fontSize: 12, fontWeight: 700, color: C.t3, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          {a.profile.employees && <span>{Number(a.profile.employees).toLocaleString()} Employees</span>}
-                          {a.profile.website && <><span style={{ color: C.border }}>·</span><span style={{ color: C.accent }}>{a.profile.website.replace(/https?:\/\//, "")}</span></>}
-                        </div>
-                      </>)}
-
-                      {/* Excellence Evaluation */}
-                      {a.excellence_evaluation && (<>
-                        <SectionHeader color={C.up}>Excellence Evaluation — Think Like an Owner (50%)</SectionHeader>
-                        <ScoreRow title="Innovation" score={a.excellence_evaluation.innovation?.score} label={a.excellence_evaluation.innovation?.label} analysis={a.excellence_evaluation.innovation?.analysis} />
-                        <ScoreRow title="Inspiration" score={a.excellence_evaluation.inspiration?.score} label={a.excellence_evaluation.inspiration?.label} analysis={a.excellence_evaluation.inspiration?.analysis} />
-                        <ScoreRow title="Infrastructure" score={a.excellence_evaluation.infrastructure?.score} label={a.excellence_evaluation.infrastructure?.label} analysis={a.excellence_evaluation.infrastructure?.analysis} />
-                      </>)}
-
-                      {/* Infinite Game */}
-                      {a.infinite_game && (<>
-                        <SectionHeader color={C.up}>Finite vs Infinite Game — Sinek (25%)</SectionHeader>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 12 }}>
-                          <span style={{ fontSize: 14, color: C.t2 }}>Mindset:</span>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: "#B8860B", textTransform: "uppercase" }}>{a.infinite_game.mindset}</span>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: C.t2 }}>Overall: <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{a.infinite_game.overall}</span> /10</span>
-                        </div>
-                        {a.infinite_game.summary && <div style={{ borderLeft: `3px solid ${C.border}`, paddingLeft: 16, margin: "12px 0 20px", fontSize: 12, fontStyle: "italic", color: C.t2, lineHeight: 1.6 }}>{a.infinite_game.summary}</div>}
-                        {a.infinite_game.just_cause && <ScoreRow title="Just Cause" score={a.infinite_game.just_cause.score} analysis={a.infinite_game.just_cause.analysis} />}
-                        {a.infinite_game.trusting_teams && <ScoreRow title="Trusting Teams" score={a.infinite_game.trusting_teams.score} analysis={a.infinite_game.trusting_teams.analysis} />}
-                        {a.infinite_game.worthy_rivals && <ScoreRow title="Worthy Rivals" score={a.infinite_game.worthy_rivals.score} analysis={a.infinite_game.worthy_rivals.analysis} />}
-                        {a.infinite_game.existential_flexibility && <ScoreRow title="Existential Flexibility" score={a.infinite_game.existential_flexibility.score} analysis={a.infinite_game.existential_flexibility.analysis} />}
-                        {a.infinite_game.courage_to_lead && <ScoreRow title="Courage to Lead" score={a.infinite_game.courage_to_lead.score} analysis={a.infinite_game.courage_to_lead.analysis} />}
-                      </>)}
-
-                      {/* Investment Thesis */}
-                      {(a.investment_thesis || a.thesis_continued) && (<>
-                        <SectionHeader>Investment Thesis</SectionHeader>
-                        {a.investment_thesis && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.investment_thesis}</div>}
-                        {a.thesis_continued && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.thesis_continued}</div>}
-                      </>)}
-
-                      {/* Key Catalysts */}
-                      {a.key_catalysts?.length > 0 && (<>
-                        <SectionHeader color={C.up}>Key Catalysts</SectionHeader>
-                        <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
-                          {a.key_catalysts.map((c, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof c === "string" ? c : c.catalyst || c.description || JSON.stringify(c)}</li>)}
-                        </ol>
-                      </>)}
-
-                      {/* Key Risks */}
-                      {a.key_risks?.length > 0 && (<>
-                        <SectionHeader color={C.dn}>Key Risks</SectionHeader>
-                        <ol style={{ margin: "8px 0", paddingLeft: 28 }}>
-                          {a.key_risks.map((r, i) => <li key={i} style={{ fontSize: 13, color: C.t2, lineHeight: 1.6, marginBottom: 10 }}>{typeof r === "string" ? r : r.risk || r.description || JSON.stringify(r)}</li>)}
-                        </ol>
-                      </>)}
-
-                      {/* AI Resilience */}
-                      {a.ai_resilience && (<>
-                        <SectionHeader>AI Resilience (25%)</SectionHeader>
-                        <ScoreRow title="AI Resilience" score={a.ai_resilience.score} label={a.ai_resilience.label} analysis={a.ai_resilience.analysis} />
-                      </>)}
-
-                      {/* Faith Alignment / Inspire Impact */}
-                      {a.faith_alignment && (<>
-                        <SectionHeader color={C.dn}>Faith Alignment — Inspire Insight</SectionHeader>
-                        <div style={{ marginBottom: 12 }}>
-                          <span style={{ fontSize: 14, color: C.t2 }}>Inspire Impact Score: </span>
-                          <span style={{ fontSize: 28, fontWeight: 800, color: a.faith_alignment.inspire_impact_score >= 0 ? C.up : C.dn }}>{a.faith_alignment.inspire_impact_score}</span>
-                        </div>
-                        {a.faith_alignment.negative_attributions?.length > 0 && (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.dn, marginRight: 4 }}>Negative:</span>
-                            {a.faith_alignment.negative_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(220,38,38,0.08)", color: C.dn }}>{attr}</span>)}
-                          </div>
-                        )}
-                        {a.faith_alignment.positive_attributions?.length > 0 && (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.up, marginRight: 4 }}>Positive:</span>
-                            {a.faith_alignment.positive_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(22,163,74,0.08)", color: C.up }}>{attr}</span>)}
-                          </div>
-                        )}
-                        {a.faith_alignment.source && <div style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Source: {a.faith_alignment.source}</div>}
-                      </>)}
-
-                      {/* Sources */}
-                      {a.sources?.length > 0 && (<>
-                        <SectionHeader>Resources</SectionHeader>
-                        <ol style={{ margin: "8px 0", paddingLeft: 28, listStyle: "none", counterReset: "src" }}>
-                          {a.sources.map((s, i) => <li key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.5, marginBottom: 8, counterIncrement: "src", position: "relative", paddingLeft: 0 }}><span style={{ fontWeight: 800, fontSize: 10, color: C.accent, marginRight: 8 }}>{i + 1}.</span>{typeof s === "string" ? s : s.title || s.source || JSON.stringify(s)}</li>)}
-                        </ol>
-                      </>)}
-
-                      <div style={{ textAlign: "center", fontSize: 10, color: C.t4, letterSpacing: 0.5, textTransform: "uppercase", marginTop: 40, paddingTop: 16, borderTop: `1px solid ${C.border}` }}>Intentional Ownership · For Investment Committee Use Only · Not Investment Advice</div>
-                    </>);
-                  })()}
-                </div>
-              </>
-            )
-          )}
-          </div>
-          )}
-          {/* List view — always rendered to preserve scroll position */}
-            <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                <button onClick={() => setTab("home")} style={{ background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                  Back
-                </button>
-                <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>Stock Screener</span>
-                <div style={{ width: 50 }} />
-              </div>
-              {/* Sub-tabs */}
-              <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflowX: "auto" }}>
-                {["Dividend", "Growth", "FCI 100", "FCI Values", "All"].map(s => (
-                  <button key={s} onClick={() => setScreenerSleeve(s)} style={{ flex: "0 0 auto", padding: "10px 14px", background: screenerSleeve === s ? C.accentSoft : "transparent", border: "none", borderBottom: screenerSleeve === s ? `2px solid ${C.accent}` : "2px solid transparent", color: screenerSleeve === s ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>{s}</button>
-                ))}
-              </div>
-              {/* Search + filters */}
-              <div style={{ padding: "10px 16px", flexShrink: 0 }}>
-                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                {screenerSleeve === "All" && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                      <option value="All">All Types</option>
-                      <option value="Dividend">Dividend Candidates</option>
-                      <option value="Growth">Growth Candidates</option>
-                    </select>
-                    <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                      <option value="All">All Ratings</option>
-                      <option value="BUY">BUY Only</option>
-                      <option value="HOLD">HOLD Only</option>
-                      <option value="WATCH">WATCH Only</option>
-                      <option value="SELL">SELL Only</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-              {/* List */}
-              {(() => {
-                const ITEM_H = 68;
-                return (
-              <div ref={screenerListRef} onScroll={e => setScrScrollTop(e.target.scrollTop)} style={{ flex: 1, overflowY: "auto", padding: "0 16px 40px" }}>
-                {!screenerData.length ? (
-                  <div style={{ textAlign: "center", padding: 40 }}>
-                    <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-                    <div style={{ fontSize: 13, color: C.t4 }}>Loading screener data...</div>
-                  </div>
-                ) : (() => {
-                  const q = screenerSearch.toLowerCase();
-                  const portfolioMap = { "Dividend": sleeves.dividend?.symbols || [], "Growth": sleeves.growth?.symbols || [], "FCI 100": sleeves.fci100?.symbols || [], "FCI Values": sleeves.fciValues?.symbols || [] };
-                  const filtered = screenerData.filter(s => {
-                    if (screenerSleeve !== "All") {
-                      const holdings = portfolioMap[screenerSleeve];
-                      if (!holdings || !holdings.includes(s.ticker)) return false;
-                    }
-                    if (screenerSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
-                    if (screenerSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
-                    if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
-                    return true;
-                  }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
-                  if (filtered.length === 0) return <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>;
-                  const viewH = screenerListRef.current?.clientHeight || 800;
-                  const startIdx = Math.max(0, Math.floor(scrScrollTop / ITEM_H) - 5);
-                  const endIdx = Math.min(filtered.length, Math.ceil((scrScrollTop + viewH) / ITEM_H) + 5);
-                  return (
-                    <div style={{ height: filtered.length * ITEM_H, position: "relative" }}>
-                      {filtered.slice(startIdx, endIdx).map((s, i) => (
-                        <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ position: "absolute", top: (startIdx + i) * ITEM_H, left: 0, right: 0, height: ITEM_H - 8, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
-                        <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                        {s.screen_date && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.screen_date}</div>}
-                      </div>
-                      {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
-                      {s.overall_score != null && <div style={{ fontSize: 18, fontWeight: 800, color: C.t1, minWidth: 36, textAlign: "right" }}>{s.overall_score}</div>}
-                    </div>
-                  ))}
-                    </div>
-                  );
-                })()}
-              </div>
-                );
-              })()}
-            </>
-        </div>
-      )}
 
       {/* ARTICLE READER OVERLAY */}
       {selectedArticle && (() => {
