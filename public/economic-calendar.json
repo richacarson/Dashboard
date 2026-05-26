@@ -14,8 +14,8 @@
     "date": "2026-05-26 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-0.2",
+    "actual": "0.14",
+    "previous": "-0.15",
     "forecast": "",
     "unit": ""
   },
@@ -24,7 +24,7 @@
     "date": "2026-05-26 13:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.8",
     "previous": "0.9",
     "forecast": "1",
     "unit": "%"
@@ -34,8 +34,8 @@
     "date": "2026-05-26 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "92.8",
+    "actual": "93.1",
+    "previous": "93.8",
     "forecast": "92",
     "unit": ""
   },
@@ -44,7 +44,7 @@
     "date": "2026-05-26 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.4",
     "previous": "-2.3",
     "forecast": "",
     "unit": ""
@@ -467,7 +467,7 @@
     "actual": "",
     "previous": "0.2",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Average Hourly Earnings YoY",
@@ -477,7 +477,7 @@
     "actual": "",
     "previous": "3.6",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Non Farm Payrolls",
