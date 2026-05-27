@@ -969,6 +969,13 @@ Instructions:
   const [screenerTypeFilter, setScreenerTypeFilter] = useState("All"); // "All" | "Dividend" | "Growth"
   const [screenerRecFilter, setScreenerRecFilter] = useState("All"); // "All" | "BUY" | "HOLD" | "WATCH" | "SELL"
   const [screenerSectorFilter, setScreenerSectorFilter] = useState("All");
+  const [screenerSectors, setScreenerSectors] = useState(() => {
+    try {
+      const c = JSON.parse(localStorage.getItem("iown_screener_sectors") || "{}");
+      const age = Date.now() - (c._ts || 0);
+      return age < 7 * 24 * 3600000 ? c : {};
+    } catch { return {}; }
+  });
   const screenerListRef = useRef(null);
   const [scrScrollTop, setScrScrollTop] = useState(0);
   const [screenerDetail, setScreenerDetail] = useState(null); // full report object
@@ -2506,12 +2513,35 @@ Instructions:
     screenerFetched.current = true;
     fetch("https://richacarson.github.io/Stock-Screener/manifest.json")
       .then(r => r.json())
-      .then(d => {
+      .then(async (d) => {
         setScreenerData(d);
         if (screenerSleeve === null) {
           const match = perfSleeve === "dividend" ? "Dividend" : perfSleeve === "growth" ? "Growth" : null;
           setScreenerSleeve(match || "All");
         }
+        // Background-fetch sectors for any tickers we don't already have cached
+        const missing = d.filter(s => !screenerSectors[s.ticker]).map(s => s.ticker);
+        if (missing.length === 0) return;
+        const sectors = { ...screenerSectors };
+        const CONCURRENCY = 8;
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < missing.length) {
+            const i = cursor++;
+            const ticker = missing[i];
+            try {
+              const r = await fetch(`https://richacarson.github.io/Stock-Screener/reports/${ticker}.json`);
+              if (!r.ok) continue;
+              const rep = await r.json();
+              const sec = rep.profile?.sector || rep.sector;
+              if (sec) sectors[ticker] = sec;
+            } catch {}
+          }
+        };
+        await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+        const out = { ...sectors, _ts: Date.now() };
+        setScreenerSectors(out);
+        try { localStorage.setItem("iown_screener_sectors", JSON.stringify(out)); } catch {}
       })
       .catch(() => {});
   }, [tab, tDrawer]);
@@ -7286,7 +7316,7 @@ Instructions:
               <div style={{ marginBottom: 14 }}>
                 <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
                 {screenerSleeve === "All" && (() => {
-                  const sectorOptions = Array.from(new Set(screenerData.map(s => s.sector || s.profile?.sector).filter(Boolean))).sort();
+                  const sectorOptions = Array.from(new Set(screenerData.map(s => screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector).filter(Boolean))).sort();
                   return (
                     <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
                       <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
@@ -7325,7 +7355,7 @@ Instructions:
                   }
                   if (screenerSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
                   if (screenerSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
-                  if (screenerSleeve === "All" && screenerSectorFilter !== "All" && (s.sector || s.profile?.sector) !== screenerSectorFilter) return false;
+                  if (screenerSleeve === "All" && screenerSectorFilter !== "All" && (screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector) !== screenerSectorFilter) return false;
                   if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                   return true;
                 }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
@@ -7333,7 +7363,7 @@ Instructions:
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {filtered.map(s => {
-                      const sector = s.sector || s.profile?.sector;
+                      const sector = screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector;
                       return (
                         <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation, sector: d.sector ?? d.profile?.sector ?? x.sector } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s" }}
                           onMouseEnter={e => { e.currentTarget.style.borderColor = theme !== "light" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
