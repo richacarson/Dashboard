@@ -64,18 +64,18 @@
     "date": "2026-05-27 11:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "6.65",
     "previous": "6.56",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "ADP Employment Change Weekly",
     "date": "2026-05-27 12:15:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "42.25",
+    "actual": "35.75",
+    "previous": "40.75",
     "forecast": "",
     "unit": ""
   },
@@ -395,7 +395,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.65",
     "forecast": "",
     "unit": ""
   },
