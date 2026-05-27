@@ -968,6 +968,7 @@ Instructions:
   const [screenerSearch, setScreenerSearch] = useState("");
   const [screenerTypeFilter, setScreenerTypeFilter] = useState("All"); // "All" | "Dividend" | "Growth"
   const [screenerRecFilter, setScreenerRecFilter] = useState("All"); // "All" | "BUY" | "HOLD" | "WATCH" | "SELL"
+  const [screenerSectorFilter, setScreenerSectorFilter] = useState("All");
   const screenerListRef = useRef(null);
   const [scrScrollTop, setScrScrollTop] = useState(0);
   const [screenerDetail, setScreenerDetail] = useState(null); // full report object
@@ -7284,22 +7285,29 @@ Instructions:
               {/* Search + filters */}
               <div style={{ marginBottom: 14 }}>
                 <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                {screenerSleeve === "All" && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                    <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                      <option value="All">All Types</option>
-                      <option value="Dividend">Dividend Candidates</option>
-                      <option value="Growth">Growth Candidates</option>
-                    </select>
-                    <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                      <option value="All">All Ratings</option>
-                      <option value="BUY">BUY Only</option>
-                      <option value="HOLD">HOLD Only</option>
-                      <option value="WATCH">WATCH Only</option>
-                      <option value="SELL">SELL Only</option>
-                    </select>
-                  </div>
-                )}
+                {screenerSleeve === "All" && (() => {
+                  const sectorOptions = Array.from(new Set(screenerData.map(s => s.sector || s.profile?.sector).filter(Boolean))).sort();
+                  return (
+                    <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                      <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                        <option value="All">All Types</option>
+                        <option value="Dividend">Dividend Candidates</option>
+                        <option value="Growth">Growth Candidates</option>
+                      </select>
+                      <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                        <option value="All">All Ratings</option>
+                        <option value="BUY">BUY Only</option>
+                        <option value="HOLD">HOLD Only</option>
+                        <option value="WATCH">WATCH Only</option>
+                        <option value="SELL">SELL Only</option>
+                      </select>
+                      <select value={screenerSectorFilter} onChange={e => setScreenerSectorFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
+                        <option value="All">All Sectors</option>
+                        {sectorOptions.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                      </select>
+                    </div>
+                  );
+                })()}
               </div>
               {/* List */}
               {!screenerData.length ? (
@@ -7317,26 +7325,33 @@ Instructions:
                   }
                   if (screenerSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
                   if (screenerSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
+                  if (screenerSleeve === "All" && screenerSectorFilter !== "All" && (s.sector || s.profile?.sector) !== screenerSectorFilter) return false;
                   if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                   return true;
                 }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
                 if (filtered.length === 0) return <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>;
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {filtered.map(s => (
-                      <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s" }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = theme !== "light" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
-                          <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                          {s.screen_date && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{s.screen_date}</div>}
+                    {filtered.map(s => {
+                      const sector = s.sector || s.profile?.sector;
+                      return (
+                        <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation, sector: d.sector ?? d.profile?.sector ?? x.sector } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s" }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = theme !== "light" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
+                            <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 3, flexWrap: "wrap" }}>
+                              {sector && <span style={{ fontSize: 10, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 4 }}>{sector}</span>}
+                              {s.screen_date && <span style={{ fontSize: 10, color: C.t4 }}>{s.screen_date}</span>}
+                            </div>
+                          </div>
+                          {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
+                          {s.overall_score != null && <div style={{ fontSize: 18, fontWeight: 800, color: C.t1, minWidth: 36, textAlign: "right" }}>{s.overall_score}</div>}
                         </div>
-                        {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
-                        {s.overall_score != null && <div style={{ fontSize: 18, fontWeight: 800, color: C.t1, minWidth: 36, textAlign: "right" }}>{s.overall_score}</div>}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 );
               })()}
