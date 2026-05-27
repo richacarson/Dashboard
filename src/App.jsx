@@ -977,6 +977,7 @@ Instructions:
     } catch { return {}; }
   });
   const screenerListRef = useRef(null);
+  const screenerListScrollY = useRef(0);
   const [scrScrollTop, setScrScrollTop] = useState(0);
   const [screenerDetail, setScreenerDetail] = useState(null); // full report object
   const [screenerDetailLoading, setScreenerDetailLoading] = useState(false);
@@ -7365,7 +7366,7 @@ Instructions:
                     {filtered.map(s => {
                       const sector = screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector;
                       return (
-                        <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation, sector: d.sector ?? d.profile?.sector ?? x.sector } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s" }}
+                        <div key={s.ticker} onClick={() => { screenerListScrollY.current = window.scrollY; setScreenerDetailLoading(true); setScreenerDetail(s); window.scrollTo(0, 0); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); if (d.screen_date && d.screen_date !== s.screen_date) setScreenerData(prev => prev.map(x => x.ticker === s.ticker ? { ...x, screen_date: d.screen_date, overall_score: d.overall_score ?? x.overall_score, recommendation: d.recommendation ?? x.recommendation, sector: d.sector ?? d.profile?.sector ?? x.sector } : x)); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, cursor: "pointer", transition: "border-color 0.2s, transform 0.15s" }}
                           onMouseEnter={e => { e.currentTarget.style.borderColor = theme !== "light" ? "#60A5FA66" : "#2563EB44"; e.currentTarget.style.transform = "translateY(-1px)"; }}
                           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
                         >
@@ -7388,7 +7389,7 @@ Instructions:
             </>) : (
               <div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-                  <button onClick={() => setScreenerDetail(null)} style={{
+                  <button onClick={() => { setScreenerDetail(null); requestAnimationFrame(() => window.scrollTo(0, screenerListScrollY.current)); }} style={{
                     background: "none", border: `1px solid ${C.border}`, borderRadius: 10,
                     padding: "8px 16px", color: C.t3, fontSize: 13, fontWeight: 600,
                     cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
