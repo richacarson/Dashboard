@@ -1,16 +1,6 @@
 [
   {
     "title": "Chicago Fed National Activity Index",
-    "date": "2026-05-25 12:30:00",
-    "country": "USD",
-    "impact": "Medium",
-    "actual": "",
-    "previous": "-0.2",
-    "forecast": "",
-    "unit": ""
-  },
-  {
-    "title": "Chicago Fed National Activity Index",
     "date": "2026-05-26 12:30:00",
     "country": "USD",
     "impact": "Medium",
@@ -124,7 +114,7 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "0.2",
     "previous": "0.3",
     "forecast": "0.3",
     "unit": "%"
@@ -134,7 +124,7 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-0.4",
     "previous": "5.7",
     "forecast": "5.7",
     "unit": "%"
@@ -144,8 +134,8 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.9",
+    "actual": "1.1",
+    "previous": "1.1",
     "forecast": "0.5",
     "unit": "%"
   },
@@ -154,8 +144,8 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "0.8",
+    "actual": "7.9",
+    "previous": "1.3",
     "forecast": "3.5",
     "unit": "%"
   },
@@ -164,7 +154,7 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "1.6",
     "previous": "0.5",
     "forecast": "2",
     "unit": "%"
@@ -174,8 +164,8 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "3.7",
+    "actual": "3.5",
+    "previous": "3.6",
     "forecast": "4.5",
     "unit": "%"
   },
@@ -184,8 +174,8 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "209",
+    "actual": "215",
+    "previous": "210",
     "forecast": "211",
     "unit": ""
   },
@@ -194,7 +184,7 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "0.4",
     "previous": "0.7",
     "forecast": "0.5",
     "unit": "%"
@@ -204,7 +194,7 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "3.8",
     "previous": "3.5",
     "forecast": "3.8",
     "unit": "%"
@@ -214,8 +204,8 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "0.6",
+    "actual": "0",
+    "previous": "0.5",
     "forecast": "0.4",
     "unit": "%"
   },
@@ -224,8 +214,8 @@
     "date": "2026-05-28 12:30:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "0.9",
+    "actual": "0.5",
+    "previous": "1",
     "forecast": "0.5",
     "unit": "%"
   },
@@ -244,8 +234,8 @@
     "date": "2026-05-28 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.682",
+    "actual": "0.622",
+    "previous": "0.663",
     "forecast": "0.67",
     "unit": ""
   },
@@ -254,8 +244,8 @@
     "date": "2026-05-28 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "7.4",
+    "actual": "-6.2",
+    "previous": "3.4",
     "forecast": "",
     "unit": "%"
   },
@@ -264,9 +254,9 @@
     "date": "2026-05-28 16:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-7.864",
-    "forecast": "-5",
+    "actual": "-3.327",
+    "previous": "-7.863",
+    "forecast": "-4.1",
     "unit": ""
   },
   {
@@ -274,9 +264,9 @@
     "date": "2026-05-28 16:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-2.572",
     "previous": "-1.548",
-    "forecast": "-3",
+    "forecast": "-2.4",
     "unit": ""
   },
   {
@@ -306,7 +296,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "1.3",
-    "forecast": "0.5",
+    "forecast": "0.6",
     "unit": "%"
   },
   {
@@ -395,7 +385,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-2.8",
     "forecast": "",
     "unit": ""
   },
