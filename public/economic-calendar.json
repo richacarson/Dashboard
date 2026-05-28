@@ -100,6 +100,16 @@
     "unit": ""
   },
   {
+    "title": "API Crude Oil Stock Change",
+    "date": "2026-05-27 21:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "-2.8",
+    "previous": "-9.1",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "Fed Jefferson Speech",
     "date": "2026-05-28 00:00:00",
     "country": "USD",
@@ -126,7 +136,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "5.7",
-    "forecast": "",
+    "forecast": "5.7",
     "unit": "%"
   },
   {
@@ -256,7 +266,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-7.864",
-    "forecast": "",
+    "forecast": "-5",
     "unit": ""
   },
   {
@@ -266,7 +276,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-1.548",
-    "forecast": "",
+    "forecast": "-3",
     "unit": ""
   },
   {
