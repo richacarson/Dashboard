@@ -7397,8 +7397,9 @@ Instructions:
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                     Back to list
                   </button>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <button onClick={() => { setChartSymbol(screenerDetail.ticker || screenerDetail.symbol); setProfileInitTab("chart"); }} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <button onClick={() => openStock(screenerDetail.ticker || screenerDetail.symbol, "overview")} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Overview</button>
+                    <button onClick={() => openStock(screenerDetail.ticker || screenerDetail.symbol, "chart")} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 14px", color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>View Chart</button>
                     <button onClick={() => {
                       const a = screenerDetail;
                       const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#191635;line-height:1.6}h1{font-size:24pt;margin:0}h2{font-size:14pt;color:#191635;border-bottom:2px solid #C9A015;padding-bottom:4px;margin:24px 0 12px}h3{font-size:12pt;margin:16px 0 4px}.meta{font-size:9pt;color:#6E6A82;text-transform:uppercase;letter-spacing:1px}.score{font-size:10pt;margin:4px 0 8px}.rec{display:inline-block;font-size:10pt;font-weight:bold;padding:2px 10px;border-radius:4px;background:#f0f0f0}.thesis{font-size:11pt;line-height:1.7;margin-bottom:12px}ol{margin:8px 0 16px 20px}ol li{margin-bottom:8px}.footer{text-align:center;font-size:8pt;color:#9E9AAE;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}</style></head><body>`
@@ -7554,13 +7555,13 @@ Instructions:
                             <span style={{ fontSize: 14, color: C.t2 }}>Inspire Impact Score: </span>
                             <span style={{ fontSize: 28, fontWeight: 800, color: a.faith_alignment.inspire_impact_score >= 0 ? C.up : C.dn }}>{a.faith_alignment.inspire_impact_score}</span>
                           </div>
-                          {a.faith_alignment.negative_attributions?.length > 0 && (
+                          {a.faith_alignment.inspire_impact_score < 0 && a.faith_alignment.negative_attributions?.length > 0 && (
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
                               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.dn, marginRight: 4 }}>Negative:</span>
                               {a.faith_alignment.negative_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(220,38,38,0.08)", color: C.dn }}>{attr}</span>)}
                             </div>
                           )}
-                          {a.faith_alignment.positive_attributions?.length > 0 && (
+                          {a.faith_alignment.inspire_impact_score >= 0 && a.faith_alignment.positive_attributions?.length > 0 && (
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center", margin: "10px 0 6px" }}>
                               <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.up, marginRight: 4 }}>Positive:</span>
                               {a.faith_alignment.positive_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 8, background: "rgba(22,163,74,0.08)", color: C.up }}>{attr}</span>)}
