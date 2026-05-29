@@ -270,12 +270,32 @@
     "unit": ""
   },
   {
+    "title": "Fed Kashkari Speech",
+    "date": "2026-05-29 06:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Schmid Speech",
+    "date": "2026-05-29 10:25:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
     "title": "Goods Trade Balance Adv",
     "date": "2026-05-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "-87.45",
+    "actual": "-82.4",
+    "previous": "-85.3",
     "forecast": "-86.5",
     "unit": "$"
   },
@@ -284,8 +304,8 @@
     "date": "2026-05-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "0.4",
+    "actual": "0.6",
+    "previous": "0.6",
     "forecast": "",
     "unit": "%"
   },
@@ -294,8 +314,8 @@
     "date": "2026-05-29 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.3",
+    "actual": "0.5",
+    "previous": "1.5",
     "forecast": "0.6",
     "unit": "%"
   },
@@ -324,9 +344,29 @@
     "date": "2026-05-29 13:45:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "62.7",
     "previous": "49.2",
     "forecast": "50.5",
+    "unit": ""
+  },
+  {
+    "title": "Fed Daly Speech",
+    "date": "2026-05-29 16:40:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Powell Speech",
+    "date": "2026-05-31 00:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
     "unit": ""
   },
   {
@@ -356,6 +396,16 @@
     "impact": "High",
     "actual": "",
     "previous": "52.7",
+    "forecast": "52.6",
+    "unit": ""
+  },
+  {
+    "title": "Fed Kashkari Speech",
+    "date": "2026-06-02 05:50:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -376,7 +426,7 @@
     "impact": "High",
     "actual": "",
     "previous": "6.866",
-    "forecast": "",
+    "forecast": "6.8",
     "unit": ""
   },
   {
@@ -406,6 +456,16 @@
     "impact": "Medium",
     "actual": "",
     "previous": "109",
+    "forecast": "110",
+    "unit": ""
+  },
+  {
+    "title": "Fed Barr Speech",
+    "date": "2026-06-03 13:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
@@ -426,7 +486,7 @@
     "impact": "High",
     "actual": "",
     "previous": "53.6",
-    "forecast": "",
+    "forecast": "53.6",
     "unit": ""
   },
   {
@@ -435,13 +495,23 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-3.327",
     "forecast": "",
     "unit": ""
   },
   {
     "title": "EIA Gasoline Stocks Change",
     "date": "2026-06-03 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-2.572",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Logan Speech",
+    "date": "2026-06-03 20:00:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
@@ -452,6 +522,16 @@
   {
     "title": "Initial Jobless Claims",
     "date": "2026-06-04 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "215",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Daly Speech",
+    "date": "2026-06-04 17:10:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
@@ -466,7 +546,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "0.2",
-    "forecast": "",
+    "forecast": "0.3",
     "unit": "%"
   },
   {
@@ -486,7 +566,7 @@
     "impact": "High",
     "actual": "",
     "previous": "115",
-    "forecast": "",
+    "forecast": "96",
     "unit": ""
   },
   {
@@ -506,7 +586,17 @@
     "impact": "High",
     "actual": "",
     "previous": "4.3",
-    "forecast": "",
+    "forecast": "4.3",
     "unit": "%"
+  },
+  {
+    "title": "Fed Barr Speech",
+    "date": "2026-06-06 16:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
   }
 ]
