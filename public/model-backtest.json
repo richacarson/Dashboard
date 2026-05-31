@@ -1,9 +1,9 @@
 {
-  "generated": "2026-05-24T14:21:35Z",
-  "start_month": "1971-01",
-  "end_month": "2026-04",
-  "total_months": 664,
-  "bear_months": 84,
+  "generated": "2026-05-31T14:26:53Z",
+  "start_month": null,
+  "end_month": null,
+  "total_months": 0,
+  "bear_months": 0,
   "bear_starts": [
     "1962-05",
     "1966-08",
@@ -16,250 +16,136 @@
     "2020-03",
     "2022-06"
   ],
-  "auc": 0.646,
+  "auc": null,
   "buckets": [
     {
       "range": "0-20",
       "lo": 0,
       "hi": 20,
-      "n": 152,
-      "bears": 5,
-      "rate": 3.3,
-      "ci_lo": 1.4,
-      "ci_hi": 7.5
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "20-30",
       "lo": 20,
       "hi": 30,
-      "n": 287,
-      "bears": 32,
-      "rate": 11.1,
-      "ci_lo": 8.0,
-      "ci_hi": 15.3
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "30-40",
       "lo": 30,
       "hi": 40,
-      "n": 92,
-      "bears": 18,
-      "rate": 19.6,
-      "ci_lo": 12.7,
-      "ci_hi": 28.8
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "40-50",
       "lo": 40,
       "hi": 50,
-      "n": 48,
-      "bears": 12,
-      "rate": 25.0,
-      "ci_lo": 14.9,
-      "ci_hi": 38.8
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "50-60",
       "lo": 50,
       "hi": 60,
-      "n": 28,
-      "bears": 8,
-      "rate": 28.6,
-      "ci_lo": 15.3,
-      "ci_hi": 47.1
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "60-70",
       "lo": 60,
       "hi": 70,
-      "n": 37,
-      "bears": 8,
-      "rate": 21.6,
-      "ci_lo": 11.4,
-      "ci_hi": 37.2
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "70-100",
       "lo": 70,
       "hi": 100,
-      "n": 20,
-      "bears": 1,
-      "rate": 5.0,
-      "ci_lo": 0.9,
-      "ci_hi": 23.6
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     }
   ],
   "thresholds": {
     "40": {
-      "n_above": 133,
-      "true_pos": 29,
-      "false_pos": 104,
-      "precision": 21.8,
-      "recall": 34.5,
-      "fpr": 17.9
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "45": {
-      "n_above": 107,
-      "true_pos": 25,
-      "false_pos": 82,
-      "precision": 23.4,
-      "recall": 29.8,
-      "fpr": 14.1
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "50": {
-      "n_above": 85,
-      "true_pos": 17,
-      "false_pos": 68,
-      "precision": 20.0,
-      "recall": 20.2,
-      "fpr": 11.7
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "55": {
-      "n_above": 72,
-      "true_pos": 13,
-      "false_pos": 59,
-      "precision": 18.1,
-      "recall": 15.5,
-      "fpr": 10.2
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "60": {
-      "n_above": 57,
-      "true_pos": 9,
-      "false_pos": 48,
-      "precision": 15.8,
-      "recall": 10.7,
-      "fpr": 8.3
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "65": {
-      "n_above": 35,
-      "true_pos": 2,
-      "false_pos": 33,
-      "precision": 5.7,
-      "recall": 2.4,
-      "fpr": 5.7
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     }
   },
   "pre_bear_avg_score": {
-    "12": 29.6,
-    "6": 33.9,
-    "3": 42.4,
-    "1": 40.1
+    "12": null,
+    "6": null,
+    "3": null,
+    "1": null
   },
-  "logistic_regression": {
-    "features": [
-      "yield",
-      "claims",
-      "baa10y",
-      "nfci",
-      "cfnai",
-      "sahm",
-      "oil"
-    ],
-    "means": [
-      1.4700000000000006,
-      -0.5234694346612055,
-      2.0719946808510636,
-      -0.20230851063829786,
-      0.0886258865248228,
-      0.3163120567375884,
-      6.9833258041117645
-    ],
-    "stds": [
-      1.1932650095342294,
-      4.6589131761482765,
-      0.4759330253854606,
-      0.7794359666436894,
-      0.40501507077741955,
-      0.547744023165691,
-      36.54668390907096
-    ],
-    "coefficients": [
-      -0.8932179868178222,
-      -0.2446009375329844,
-      0.7497003066813837,
-      1.3707647280074113,
-      0.036316494478192,
-      -1.5430730727239363,
-      0.7466845145639772
-    ],
-    "intercept": -0.7589642355525923,
-    "train_auc": 0.892,
-    "oos_auc": 0.822,
-    "oos_months": 316,
-    "buckets": [
-      {
-        "range": "0-5",
-        "lo": 0,
-        "hi": 5,
-        "n": 37,
-        "bears": 1,
-        "rate": 2.7,
-        "ci_lo": 0.5,
-        "ci_hi": 13.8
-      },
-      {
-        "range": "5-10",
-        "lo": 5,
-        "hi": 10,
-        "n": 47,
-        "bears": 0,
-        "rate": 0.0,
-        "ci_lo": 0.0,
-        "ci_hi": 7.6
-      },
-      {
-        "range": "10-20",
-        "lo": 10,
-        "hi": 20,
-        "n": 53,
-        "bears": 2,
-        "rate": 3.8,
-        "ci_lo": 1.0,
-        "ci_hi": 12.8
-      },
-      {
-        "range": "20-30",
-        "lo": 20,
-        "hi": 30,
-        "n": 44,
-        "bears": 9,
-        "rate": 20.5,
-        "ci_lo": 11.2,
-        "ci_hi": 34.5
-      },
-      {
-        "range": "30-50",
-        "lo": 30,
-        "hi": 50,
-        "n": 59,
-        "bears": 12,
-        "rate": 20.3,
-        "ci_lo": 12.0,
-        "ci_hi": 32.3
-      },
-      {
-        "range": "50-75",
-        "lo": 50,
-        "hi": 75,
-        "n": 56,
-        "bears": 23,
-        "rate": 41.1,
-        "ci_lo": 29.2,
-        "ci_hi": 54.1
-      },
-      {
-        "range": "75-100",
-        "lo": 75,
-        "hi": 100,
-        "n": 20,
-        "bears": 13,
-        "rate": 65.0,
-        "ci_lo": 43.3,
-        "ci_hi": 81.9
-      }
-    ],
-    "trained_on_n": 376
-  },
+  "logistic_regression": null,
   "factors_included": [
     "yield_10y3m",
     "claims",
