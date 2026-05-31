@@ -426,7 +426,7 @@
     "impact": "High",
     "actual": "",
     "previous": "6.866",
-    "forecast": "6.8",
+    "forecast": "6.87",
     "unit": ""
   },
   {
@@ -456,7 +456,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "109",
-    "forecast": "110",
+    "forecast": "116",
     "unit": ""
   },
   {
@@ -476,7 +476,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "1.5",
-    "forecast": "",
+    "forecast": "4.6",
     "unit": "%"
   },
   {
@@ -526,7 +526,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "215",
-    "forecast": "",
+    "forecast": "211",
     "unit": ""
   },
   {
@@ -556,7 +556,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "3.6",
-    "forecast": "",
+    "forecast": "3.5",
     "unit": "%"
   },
   {
@@ -596,6 +596,216 @@
     "impact": "Medium",
     "actual": "",
     "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "ADP Employment Change Weekly",
+    "date": "2026-06-09 12:15:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "35.75",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Balance of Trade",
+    "date": "2026-06-09 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "-60.3",
+    "forecast": "",
+    "unit": "$"
+  },
+  {
+    "title": "Exports",
+    "date": "2026-06-09 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "320.9",
+    "forecast": "",
+    "unit": "$"
+  },
+  {
+    "title": "Imports",
+    "date": "2026-06-09 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "381.2",
+    "forecast": "",
+    "unit": "$"
+  },
+  {
+    "title": "Existing Home Sales",
+    "date": "2026-06-09 14:00:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "4.02",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Existing Home Sales MoM",
+    "date": "2026-06-09 14:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "0.2",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "API Crude Oil Stock Change",
+    "date": "2026-06-09 20:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "MBA 30-Year Mortgage Rate",
+    "date": "2026-06-10 11:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Core Inflation Rate MoM",
+    "date": "2026-06-10 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.4",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Core Inflation Rate YoY",
+    "date": "2026-06-10 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "2.8",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "CPI",
+    "date": "2026-06-10 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "333.02",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "CPI s.a",
+    "date": "2026-06-10 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "332.407",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Inflation Rate MoM",
+    "date": "2026-06-10 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "0.6",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "Inflation Rate YoY",
+    "date": "2026-06-10 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "3.8",
+    "forecast": "",
+    "unit": "%"
+  },
+  {
+    "title": "EIA Crude Oil Stocks Change",
+    "date": "2026-06-10 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "EIA Gasoline Stocks Change",
+    "date": "2026-06-10 14:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Monthly Budget Statement",
+    "date": "2026-06-10 18:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "215",
+    "forecast": "",
+    "unit": "$"
+  },
+  {
+    "title": "Core PPI MoM",
+    "date": "2026-06-11 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "1",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Initial Jobless Claims",
+    "date": "2026-06-11 12:30:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "PPI MoM",
+    "date": "2026-06-11 12:30:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "1.4",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Michigan Consumer Sentiment Prel",
+    "date": "2026-06-12 14:00:00",
+    "country": "USD",
+    "impact": "High",
+    "actual": "",
+    "previous": "44.8",
     "forecast": "",
     "unit": ""
   }
