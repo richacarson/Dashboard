@@ -1,5 +1,23 @@
 [
   {
+    "id": "social-security-insolvency-2029",
+    "title": "Social Security Insolvency — Validating Porter Stansberry's \"2029\" Thesis",
+    "date": "2026-05-31",
+    "author": "Paradiem Research",
+    "category": "Macro / Strategy",
+    "summary": "Validation of Stansberry's thesis on Social Security insolvency. 2025 Trustees Report confirms OASI depletion by 2033, triggering automatic 23-28% benefit cuts affecting 67M+ Americans. Analysis of the structural crisis, Honeycomb portfolio framework, and portfolio positioning implications.",
+    "file": "Research - Social Security Insolvency Validating Stansberry 2029 Thesis.md"
+  },
+  {
+    "id": "oil-shock-delayed-effects-july-rebalance",
+    "title": "Oil Shock Delayed Effects — Q2 Earnings Disconnect & July Rebalance Playbook",
+    "date": "2026-05-18",
+    "author": "Paradiem Research",
+    "category": "Macro / Strategy",
+    "summary": "Brent at $112 with Hormuz closed — academic research shows oil shocks hit earnings with a 3-4 quarter lag, yet Wall Street has Q2 EPS growth at +20.5% and estimates rising. Framework for positioning the July rebalance before the lag catches up.",
+    "file": "Research - Oil Shock Delayed Effects Q2 Earnings Disconnect and July Rebalance Playbook.md"
+  },
+  {
     "id": "peter-lynch-dilemma",
     "title": "Portfolio Capacity & The Path Beyond 25 Stocks",
     "date": "2026-04-29",
@@ -12,7 +30,7 @@
     "id": "dividend-capture-ratio-beta",
     "title": "Dividend Portfolio Capture Ratio Optimization via Dynamic Beta Management",
     "date": "2026-04-25",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Portfolio Strategy",
     "summary": "Framework for optimizing upside/downside capture ratios in the dividend portfolio through dynamic beta management and sector rotation.",
     "file": "Research - Dividend Portfolio Capture Ratio Optimization via Dynamic Beta Management.md"
@@ -30,25 +48,25 @@
     "id": "bull-bear-risk-assessment",
     "title": "Bull Market Position & Bear Market Risk Assessment",
     "date": "2026-04-18",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Macro / Strategy",
     "summary": "Assessment of current bull market positioning and bear market risk factors across both portfolios.",
     "file": "Research - Bull Market Position and Bear Market Risk Assessment.md"
   },
   {
     "id": "iown-tamp-opportunity",
-    "title": "IOWN as a TAMP — Opportunity Assessment",
+    "title": "Paradiem as a TAMP — Opportunity Assessment",
     "date": "2026-04-15",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Business Strategy",
-    "summary": "Analysis of IOWN's potential as a Turnkey Asset Management Platform (TAMP) for advisors.",
+    "summary": "Analysis of Paradiem's potential as a Turnkey Asset Management Platform (TAMP) for advisors.",
     "file": "Research - IOWN as a TAMP Opportunity Assessment.md"
   },
   {
     "id": "qualified-opportunity-funds",
     "title": "Qualified Opportunity Funds — The Roth IRA's Bigger, Bolder Cousin",
     "date": "2026-04-12",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Tax Strategy",
     "summary": "Analysis of Qualified Opportunity Funds as a tax-advantaged complement to Roth IRAs for long-term wealth building.",
     "file": "Research - Qualified Opportunity Funds as Roth IRA Complement.md"
@@ -66,16 +84,16 @@
     "id": "ism-manufacturing-expansion",
     "title": "ISM Manufacturing Expansion: Three Consecutive Months — How to Profit",
     "date": "2026-04-01",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Macro / Economic",
-    "summary": "ISM Manufacturing PMI expanded for 3 consecutive months after 26 months of contraction. Analysis of defense spending, AI infrastructure, and reshoring tailwinds driving the recovery, with specific IOWN positioning recommendations.",
+    "summary": "ISM Manufacturing PMI expanded for 3 consecutive months after 26 months of contraction. Analysis of defense spending, AI infrastructure, and reshoring tailwinds driving the recovery, with specific positioning recommendations.",
     "file": "Research - ISM Manufacturing Expansion How to Profit.md"
   },
   {
     "id": "portfolio-positioning-q1-2026",
     "title": "Portfolio Positioning — Q1 2026 Geopolitical & Macro Playbook",
     "date": "2026-03-31",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Macro / Geopolitics",
     "summary": "Geopolitical supply shock analysis — Iran War impact on energy, fertilizers, and defense. Portfolio positioning framework for leaning into energy/commodity winners and reducing tech/crypto exposure.",
     "file": "Research - Portfolio Positioning Q1 2026 Geopolitical Playbook.md"
@@ -84,7 +102,7 @@
     "id": "persian-gulf-fertilizer-crisis",
     "title": "Persian Gulf Fertilizer Crisis — Global Food Supply Implications",
     "date": "2026-03-30",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Macro / Geopolitics",
     "summary": "The closure of the Strait of Hormuz has taken 30-35% of global ammonia and 11% of urea production offline — the most significant fertilizer disruption since WWII. Analysis of food supply implications, US insulation, and investment opportunities across fertilizers, ag equipment, and energy.",
     "file": "Research - Persian Gulf Fertilizer Crisis Global Food Supply.md"
@@ -93,16 +111,16 @@
     "id": "nvda-optical-interconnects",
     "title": "NVDA Optical Interconnects — Copper Replacement Play",
     "date": "2026-03-28",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Stock Analysis",
-    "summary": "NVIDIA's $4B bet on optical interconnects signals copper has hit its ceiling for AI data center networking. Analysis of the optical supply chain, key players (COHR, LITE, MRVL), and implications for IOWN holdings.",
+    "summary": "NVIDIA's $4B bet on optical interconnects signals copper has hit its ceiling for AI data center networking. Analysis of the optical supply chain, key players (COHR, LITE, MRVL), and implications for holdings.",
     "file": "Research - NVDA Optical Interconnects Copper Replacement.md"
   },
   {
     "id": "sector-rotation-technical-analysis",
     "title": "Sector Rotation — Technical Analysis for Sector Weighting",
     "date": "2026-03-27",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Sector Rotation",
     "summary": "How moving averages, relative strength, and technical signals translate into sector allocation decisions. Includes a scoring matrix and implementation framework.",
     "file": "Sector Rotation Technical Analysis.md"
@@ -111,7 +129,7 @@
     "id": "sector-rotation-academic-review",
     "title": "Sector Rotation as a Source of Alpha: Academic & Practitioner Evidence",
     "date": "2026-03-26",
-    "author": "IOWN Research",
+    "author": "Paradiem Research",
     "category": "Sector Rotation",
     "summary": "Comprehensive review of academic and practitioner evidence on sector rotation alpha. Covers business cycle rotation, momentum-based approaches, monetary policy signals, and valuation-driven frameworks.",
     "file": "Research - Sector Rotation Academic Review.md"
