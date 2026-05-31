@@ -987,6 +987,9 @@ Instructions:
   const [oppExpandedRisks, setOppExpandedRisks] = useState({});
   const [oppDetail, setOppDetail] = useState(null);
   const oppFetched = useRef(false);
+  const [oppLedger, setOppLedger] = useState([]);
+  const [oppSignals, setOppSignals] = useState(null);
+  const [oppView, setOppView] = useState("opportunities"); // "opportunities" | "ledger" | "signals"
 
   // Open stock profile with specific tab
   const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
@@ -2558,6 +2561,11 @@ Instructions:
         if (b.conviction === "High" && a.conviction !== "High") return 1;
         return (b.date_identified || "").localeCompare(a.date_identified || "");
       })));
+    // Optional sibling files — gracefully degrade if missing
+    fetch(`${import.meta.env.BASE_URL}opportunities/ledger.json`).then(r => r.ok ? r.json() : []).catch(() => [])
+      .then(rows => setOppLedger(Array.isArray(rows) ? rows.sort((a, b) => (b.closed || "").localeCompare(a.closed || "")) : []));
+    fetch(`${import.meta.env.BASE_URL}opportunities/signals.json`).then(r => r.ok ? r.json() : null).catch(() => null)
+      .then(s => setOppSignals(s));
   }, [tab, tDrawer]);
 
   const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
@@ -7594,29 +7602,187 @@ Instructions:
             {!oppDetail ? (<>
               {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
               {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
-              <div style={{ fontSize: 12, color: C.t3, marginBottom: 18 }}>Thematic investment ideas backed by research</div>
-              {!opportunities.length ? (
-                <div style={{ textAlign: "center", padding: 40 }}>
-                  <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-                  <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
-                </div>
-              ) : opportunities.map(opp => (
-                <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                    {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
+              <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Thematic investment ideas backed by research</div>
+              {/* Sub-nav */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+                {[
+                  { v: "opportunities", l: `Opportunities${opportunities.length ? ` (${opportunities.length})` : ""}` },
+                  { v: "ledger", l: `Ledger${oppLedger.length ? ` (${oppLedger.length})` : ""}` },
+                  { v: "signals", l: "Signals" },
+                ].map(({ v, l }) => (
+                  <button key={v} onClick={() => setOppView(v)} style={{
+                    flex: "0 0 auto", padding: "9px 16px", borderRadius: 10,
+                    border: `1px solid ${oppView === v ? C.borderActive : C.border}`,
+                    background: oppView === v ? C.accentSoft : "transparent",
+                    color: oppView === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                  }}>{l}</button>
+                ))}
+              </div>
+
+              {oppView === "opportunities" && (
+                !opportunities.length ? (
+                  <div style={{ textAlign: "center", padding: 40 }}>
+                    <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+                    <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
                   </div>
-                  {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-                    {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                ) : opportunities.map(opp => (
+                  <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                      {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
+                    </div>
+                    {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                      {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                    </div>
+                    <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
+                      {opp.date_identified && <span>{opp.date_identified}</span>}
+                      {opp.timeframe && <span>{opp.timeframe}</span>}
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
-                    {opp.date_identified && <span>{opp.date_identified}</span>}
-                    {opp.timeframe && <span>{opp.timeframe}</span>}
+                ))
+              )}
+
+              {oppView === "ledger" && (() => {
+                if (!oppLedger.length) return (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, textAlign: "center" }}>
+                    <div style={{ fontSize: 14, color: C.t3, marginBottom: 8 }}>No closed opportunities yet.</div>
+                    <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.6 }}>The ledger accumulates as opportunities are closed (stopped out, thesis broken, target hit, or expired).<br/>Track record will populate here as the routine maintains <code>opportunities/ledger.json</code>.</div>
                   </div>
-                </div>
-              ))}
+                );
+                const closed = oppLedger;
+                const winners = closed.filter(c => (c.return_pct || 0) > 0);
+                const losers = closed.filter(c => (c.return_pct || 0) < 0);
+                const avgRet = closed.length ? closed.reduce((s, c) => s + (c.return_pct || 0), 0) / closed.length : 0;
+                const winRate = closed.length ? winners.length / closed.length * 100 : 0;
+                return (<>
+                  {/* Aggregate stats */}
+                  <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
+                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", textAlign: "center", border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Closed</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: C.t1 }}>{closed.length}</div>
+                    </div>
+                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", textAlign: "center", border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Win Rate</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: winRate >= 50 ? C.up : C.dn }}>{winRate.toFixed(0)}%</div>
+                    </div>
+                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", textAlign: "center", border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Avg Return</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: avgRet >= 0 ? C.up : C.dn }}>{avgRet >= 0 ? "+" : ""}{avgRet.toFixed(1)}%</div>
+                    </div>
+                    <div style={{ background: C.card, borderRadius: 12, padding: "12px 14px", textAlign: "center", border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>W / L</div>
+                      <div style={{ fontSize: 22, fontWeight: 900, color: C.t1 }}><span style={{ color: C.up }}>{winners.length}</span> / <span style={{ color: C.dn }}>{losers.length}</span></div>
+                    </div>
+                  </div>
+                  {/* By pattern */}
+                  {(() => {
+                    const byPattern = {};
+                    for (const c of closed) {
+                      const p = c.pattern || "Unknown";
+                      if (!byPattern[p]) byPattern[p] = { n: 0, wins: 0, sum: 0 };
+                      byPattern[p].n++;
+                      if ((c.return_pct || 0) > 0) byPattern[p].wins++;
+                      byPattern[p].sum += (c.return_pct || 0);
+                    }
+                    const rows = Object.entries(byPattern).sort((a, b) => b[1].n - a[1].n);
+                    if (!rows.length) return null;
+                    return (
+                      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 18px", marginBottom: 14 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: C.t1, marginBottom: 10 }}>By Pattern</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                          {rows.map(([p, r]) => (
+                            <div key={p} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: C.bg, borderRadius: 8 }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: C.t2 }}>{p}</span>
+                              <div style={{ display: "flex", gap: 12, fontSize: 11 }}>
+                                <span style={{ color: C.t3 }}>n={r.n}</span>
+                                <span style={{ color: r.wins / r.n >= 0.5 ? C.up : C.dn }}>{Math.round(r.wins / r.n * 100)}% win</span>
+                                <span style={{ color: r.sum / r.n >= 0 ? C.up : C.dn, fontWeight: 700 }}>{r.sum / r.n >= 0 ? "+" : ""}{(r.sum / r.n).toFixed(1)}% avg</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Closed list */}
+                  {closed.map((c, i) => (
+                    <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{c.id || c.title}</div>
+                          <div style={{ display: "flex", gap: 10, fontSize: 11, color: C.t4, marginTop: 4, flexWrap: "wrap" }}>
+                            {c.opened && <span>Opened {c.opened}</span>}
+                            {c.closed && <span>· Closed {c.closed}</span>}
+                            {c.days_held != null && <span>· {c.days_held}d</span>}
+                            {c.pattern && <span>· {c.pattern}</span>}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 18, fontWeight: 900, color: (c.return_pct || 0) >= 0 ? C.up : C.dn }}>{(c.return_pct || 0) >= 0 ? "+" : ""}{(c.return_pct || 0).toFixed(1)}%</div>
+                      </div>
+                      {c.tickers?.length > 0 && (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+                          {c.tickers.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                        </div>
+                      )}
+                      {c.close_reason && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginTop: 8 }}><strong>Why:</strong> {c.close_reason}</div>}
+                      {c.what_worked && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginTop: 4 }}><strong>What worked:</strong> {c.what_worked}</div>}
+                      {c.what_didnt && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginTop: 4 }}><strong>What didn't:</strong> {c.what_didnt}</div>}
+                      {c.would_have_done && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginTop: 4 }}><strong>Lesson:</strong> {c.would_have_done}</div>}
+                    </div>
+                  ))}
+                </>);
+              })()}
+
+              {oppView === "signals" && (() => {
+                if (!oppSignals) return (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, textAlign: "center" }}>
+                    <div style={{ fontSize: 14, color: C.t3, marginBottom: 8 }}>No signal data yet.</div>
+                    <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.6 }}>The routine will publish <code>opportunities/signals.json</code> with insider cluster buys, congressional purchases, and 13F changes.<br/>Sources: SEC EDGAR / OpenInsider, House & Senate Stock Watcher, EDGAR 13F.</div>
+                  </div>
+                );
+                const blocks = [
+                  { key: "insider_clusters", title: "Insider Cluster Buys (last 14 days)", desc: "≥2 executives or directors buying their own stock, ≥$100K total. Source: SEC Form 4 / OpenInsider.", color: C.up },
+                  { key: "congressional", title: "Congressional Purchases (last 14 days)", desc: "≥2 members of Congress buying same ticker. Source: House & Senate Stock Watcher.", color: "#2563EB" },
+                  { key: "institutional", title: "Institutional 13F Changes", desc: "New or significantly-added positions from watched funds. Quarterly.", color: "#B8860B" },
+                ];
+                return (<>
+                  {oppSignals.generated_at && <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>Updated {oppSignals.generated_at}</div>}
+                  {blocks.map(b => {
+                    const items = oppSignals[b.key] || [];
+                    return (
+                      <div key={b.key} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px 18px", marginBottom: 14 }}>
+                        <div style={{ borderBottom: `2px solid ${b.color}`, paddingBottom: 6, marginBottom: 10 }}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: C.t1 }}>{b.title}</div>
+                          <div style={{ fontSize: 11, color: C.t4, marginTop: 2 }}>{b.desc}</div>
+                        </div>
+                        {!items.length ? (
+                          <div style={{ fontSize: 12, color: C.t4, padding: "8px 0" }}>No signals in this category.</div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {items.slice(0, 15).map((it, i) => (
+                              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "8px 10px", background: C.bg, borderRadius: 8 }}>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{it.ticker}</span>
+                                  {it.name && <span style={{ fontSize: 11, color: C.t3, marginLeft: 8 }}>{it.name}</span>}
+                                  {it.note && <div style={{ fontSize: 11, color: C.t4, marginTop: 2, lineHeight: 1.5 }}>{it.note}</div>}
+                                </div>
+                                <div style={{ display: "flex", gap: 8, fontSize: 11, color: C.t3, flexShrink: 0 }}>
+                                  {it.buyers != null && <span><strong>{it.buyers}</strong> buyers</span>}
+                                  {it.total_value && <span>${typeof it.total_value === "number" ? it.total_value.toLocaleString() : it.total_value}</span>}
+                                  {it.span_days != null && <span>{it.span_days}d</span>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>);
+              })()}
             </>) : (
               <div>
                 <button onClick={() => setOppDetail(null)} style={{
@@ -7645,6 +7811,53 @@ Instructions:
                   <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Investment Thesis</div>
                   <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{oppDetail.thesis}</div>
 
+                  {oppDetail.counter_thesis && (<>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.dn}` }}>Counter-Thesis (Bear Case)</div>
+                    <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.7, marginBottom: 16, fontStyle: "italic", paddingLeft: 14, borderLeft: `3px solid ${C.dn}`, background: C.dn + "08", padding: "12px 16px", borderRadius: 8 }}>{oppDetail.counter_thesis}</div>
+                  </>)}
+
+                  {oppDetail.trade_construction && (<>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Trade Construction</div>
+                    <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
+                      {oppDetail.trade_construction.entry_zone && (
+                        <div style={{ background: C.bg, borderRadius: 10, padding: "10px 12px", border: `1px solid ${C.border}` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Entry Zone</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{oppDetail.trade_construction.entry_zone}</div>
+                        </div>
+                      )}
+                      {oppDetail.trade_construction.target_12mo && (
+                        <div style={{ background: C.bg, borderRadius: 10, padding: "10px 12px", border: `1px solid ${C.border}` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>12-Mo Target</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.up }}>{oppDetail.trade_construction.target_12mo}</div>
+                        </div>
+                      )}
+                      {oppDetail.trade_construction.stop_loss && (
+                        <div style={{ background: C.bg, borderRadius: 10, padding: "10px 12px", border: `1px solid ${C.border}` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Stop Loss</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.dn }}>{oppDetail.trade_construction.stop_loss}</div>
+                        </div>
+                      )}
+                      {oppDetail.trade_construction.position_size_pct && (
+                        <div style={{ background: C.bg, borderRadius: 10, padding: "10px 12px", border: `1px solid ${C.border}` }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 4 }}>Position Size</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{oppDetail.trade_construction.position_size_pct}</div>
+                        </div>
+                      )}
+                    </div>
+                  </>)}
+
+                  {oppDetail.catalyst_calendar?.length > 0 && (<>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "24px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Catalyst Calendar</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                      {oppDetail.catalyst_calendar.map((c, i) => (
+                        <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "10px 12px", background: C.bg, borderRadius: 8, border: `1px solid ${C.border}` }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: C.accent, minWidth: 90 }}>{c.date}</span>
+                          <span style={{ fontSize: 12, color: C.t2, lineHeight: 1.5 }}>{c.event}{c.ticker ? ` (${c.ticker})` : ""}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>)}
+
                   {oppDetail.body_md && (<>
                     <div style={{ fontSize: 11, fontWeight: 800, color: C.t3, letterSpacing: 2, textTransform: "uppercase", margin: "32px 0 12px", paddingBottom: 4, borderBottom: `2px solid ${C.accent}` }}>Research Report</div>
                     <div style={{ marginBottom: 20 }}>
@@ -7661,6 +7874,14 @@ Instructions:
                           <button onClick={(e) => { e.stopPropagation(); setOppDetail(null); setScreenerDetail({ ticker: t, _loading: true }); setScreenerDetailLoading(true); setTab("screener"); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ fontSize: 11, fontWeight: 600, padding: "4px 12px", borderRadius: 8, background: C.accentSoft, border: `1px solid ${C.borderActive}`, color: C.t1, cursor: "pointer", fontFamily: "inherit" }}>View Screener Report</button>
                         </div>
                         {oppDetail.ticker_rationale?.[t] && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7 }}>{oppDetail.ticker_rationale[t]}</div>}
+                        {oppDetail.in_portfolio_status?.[t] && (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5 }}>Portfolio Fit:</span>
+                            <span style={{ fontSize: 11, color: C.t2, background: C.surface, padding: "3px 10px", borderRadius: 6, border: `1px solid ${C.border}` }}>Current: <strong>{oppDetail.in_portfolio_status[t].current_weight}%</strong></span>
+                            <span style={{ fontSize: 11, color: C.t2, background: C.surface, padding: "3px 10px", borderRadius: 6, border: `1px solid ${C.border}` }}>Target: <strong>{oppDetail.in_portfolio_status[t].target_weight}%</strong></span>
+                            {oppDetail.in_portfolio_status[t].action && <span style={{ fontSize: 11, fontWeight: 700, color: C.accent, background: C.accentSoft, padding: "3px 10px", borderRadius: 6 }}>{oppDetail.in_portfolio_status[t].action}</span>}
+                          </div>
+                        )}
                         {oppDetail.key_metrics?.[t] && (
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
                             {Object.entries(oppDetail.key_metrics[t]).map(([k, v]) => (
