@@ -1772,7 +1772,7 @@
   {
     "symbol": "CANG",
     "date": "2026-05-31",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": -0.204,
     "epsActual": -0.67,
     "revenueEstimate": 118736323,
@@ -2094,9 +2094,9 @@
     "date": "2026-06-01",
     "hour": "bmo",
     "epsEstimate": 2.3237,
-    "epsActual": null,
+    "epsActual": 3.23,
     "revenueEstimate": 1856861376,
-    "revenueActual": null,
+    "revenueActual": 1906000000,
     "source": "finnhub"
   },
   {
