@@ -2554,17 +2554,18 @@ Instructions:
   useEffect(() => {
     if ((tab !== "opportunities" && tDrawer !== "opportunities") || oppFetched.current || opportunities.length) return;
     oppFetched.current = true;
-    fetch(`${import.meta.env.BASE_URL}opportunities/manifest.json`).then(r => r.ok ? r.json() : []).catch(() => [])
-      .then(ids => Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json`).then(r => r.ok ? r.json() : null).catch(() => null))))
+    const cb = `?v=${Math.floor(Date.now() / 60000)}`;
+    fetch(`${import.meta.env.BASE_URL}opportunities/manifest.json${cb}`).then(r => r.ok ? r.json() : []).catch(() => [])
+      .then(ids => Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json${cb}`).then(r => r.ok ? r.json() : null).catch(() => null))))
       .then(results => setOpportunities(results.filter(Boolean).sort((a, b) => {
         if (a.conviction === "High" && b.conviction !== "High") return -1;
         if (b.conviction === "High" && a.conviction !== "High") return 1;
         return (b.date_identified || "").localeCompare(a.date_identified || "");
       })));
     // Optional sibling files — gracefully degrade if missing
-    fetch(`${import.meta.env.BASE_URL}opportunities/ledger.json`).then(r => r.ok ? r.json() : []).catch(() => [])
+    fetch(`${import.meta.env.BASE_URL}opportunities/ledger.json${cb}`).then(r => r.ok ? r.json() : []).catch(() => [])
       .then(rows => setOppLedger(Array.isArray(rows) ? rows.sort((a, b) => (b.closed || "").localeCompare(a.closed || "")) : []));
-    fetch(`${import.meta.env.BASE_URL}opportunities/signals.json`).then(r => r.ok ? r.json() : null).catch(() => null)
+    fetch(`${import.meta.env.BASE_URL}opportunities/signals.json${cb}`).then(r => r.ok ? r.json() : null).catch(() => null)
       .then(s => setOppSignals(s));
   }, [tab, tDrawer]);
 
