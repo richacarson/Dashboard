@@ -44,9 +44,9 @@
     "date": "2026-06-02 14:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
-    "previous": "6.866",
-    "forecast": "6.82",
+    "actual": "7.618",
+    "previous": "6.887",
+    "forecast": "6.88",
     "unit": ""
   },
   {
@@ -56,7 +56,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-2.8",
-    "forecast": "",
+    "forecast": "-3.6",
     "unit": ""
   },
   {
@@ -76,7 +76,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "109",
-    "forecast": "110",
+    "forecast": "117",
     "unit": ""
   },
   {
@@ -106,7 +106,7 @@
     "impact": "High",
     "actual": "",
     "previous": "53.6",
-    "forecast": "53.7",
+    "forecast": "53.8",
     "unit": ""
   },
   {
@@ -277,7 +277,7 @@
     "actual": "",
     "previous": "0.2",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "API Crude Oil Stock Change",
@@ -397,7 +397,7 @@
     "actual": "",
     "previous": "1",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Initial Jobless Claims",
@@ -417,7 +417,7 @@
     "actual": "",
     "previous": "1.4",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "Michigan Consumer Sentiment Prel",
