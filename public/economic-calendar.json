@@ -64,18 +64,18 @@
     "date": "2026-06-03 11:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "6.57",
     "previous": "6.65",
     "forecast": "",
-    "unit": ""
+    "unit": "%"
   },
   {
     "title": "ADP Employment Change",
     "date": "2026-06-03 12:15:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "109",
+    "actual": "122",
+    "previous": "105",
     "forecast": "117",
     "unit": ""
   },
@@ -94,8 +94,8 @@
     "date": "2026-06-03 14:00:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "1.5",
+    "actual": "4.8",
+    "previous": "1.8",
     "forecast": "4.6",
     "unit": "%"
   },
@@ -104,7 +104,7 @@
     "date": "2026-06-03 14:00:00",
     "country": "USD",
     "impact": "High",
-    "actual": "",
+    "actual": "54.5",
     "previous": "53.6",
     "forecast": "53.8",
     "unit": ""
@@ -114,9 +114,9 @@
     "date": "2026-06-03 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "-7.974",
     "previous": "-3.327",
-    "forecast": "-2.9",
+    "forecast": "-4",
     "unit": ""
   },
   {
@@ -124,9 +124,9 @@
     "date": "2026-06-03 14:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
+    "actual": "3.364",
     "previous": "-2.572",
-    "forecast": "",
+    "forecast": "-0.5",
     "unit": ""
   },
   {
@@ -142,6 +142,16 @@
   {
     "title": "Fed Logan Speech",
     "date": "2026-06-03 20:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Barkin Speech",
+    "date": "2026-06-04 12:30:00",
     "country": "USD",
     "impact": "Medium",
     "actual": "",
@@ -295,7 +305,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-6.75",
     "forecast": "",
     "unit": ""
   },
@@ -305,7 +315,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "6.57",
     "forecast": "",
     "unit": ""
   },
