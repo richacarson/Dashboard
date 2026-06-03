@@ -116,7 +116,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-3.327",
-    "forecast": "",
+    "forecast": "-2.9",
     "unit": ""
   },
   {
@@ -126,6 +126,16 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-2.572",
+    "forecast": "",
+    "unit": ""
+  },
+  {
+    "title": "Fed Goolsbee Speech",
+    "date": "2026-06-03 15:00:00",
+    "country": "USD",
+    "impact": "Medium",
+    "actual": "",
+    "previous": "",
     "forecast": "",
     "unit": ""
   },
