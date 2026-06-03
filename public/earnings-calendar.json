@@ -594,9 +594,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": -0.384,
-    "epsActual": null,
+    "epsActual": -0.33,
     "revenueEstimate": 51745655,
-    "revenueActual": null,
+    "revenueActual": 51600000,
     "source": "finnhub"
   },
   {
@@ -614,9 +614,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": 2.4458,
-    "epsActual": null,
+    "epsActual": 2.44,
     "revenueEstimate": 22716449549,
-    "revenueActual": null,
+    "revenueActual": 22187000000,
     "source": "finnhub"
   },
   {
@@ -644,9 +644,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": -1.0353,
-    "epsActual": null,
+    "epsActual": -0.74,
     "revenueEstimate": 98350062,
-    "revenueActual": null,
+    "revenueActual": 101820000,
     "source": "finnhub"
   },
   {
@@ -654,9 +654,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": 1.0886,
-    "epsActual": null,
+    "epsActual": 1.1,
     "revenueEstimate": 1389977919,
-    "revenueActual": null,
+    "revenueActual": 1385630000,
     "source": "finnhub"
   },
   {
@@ -734,9 +734,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": 0.8989,
-    "epsActual": null,
+    "epsActual": 0.94,
     "revenueEstimate": 311080000,
-    "revenueActual": null,
+    "revenueActual": 315710000,
     "source": "finnhub"
   },
   {
@@ -784,9 +784,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": -0.0714,
-    "epsActual": null,
+    "epsActual": -0.06,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 201590000,
     "source": "finnhub"
   },
   {
@@ -804,9 +804,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": 2.1709,
-    "epsActual": null,
+    "epsActual": 2.24,
     "revenueEstimate": 870719430,
-    "revenueActual": null,
+    "revenueActual": 882950000,
     "source": "finnhub"
   },
   {
@@ -824,9 +824,9 @@
     "date": "2026-06-03",
     "hour": "amc",
     "epsEstimate": 0.0157,
-    "epsActual": null,
+    "epsActual": 0.01,
     "revenueEstimate": 1518446347,
-    "revenueActual": null,
+    "revenueActual": 1496730000,
     "source": "finnhub"
   },
   {
