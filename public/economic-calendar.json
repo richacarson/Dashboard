@@ -164,8 +164,8 @@
     "date": "2026-06-04 12:30:00",
     "country": "USD",
     "impact": "Medium",
-    "actual": "",
-    "previous": "215",
+    "actual": "225",
+    "previous": "212",
     "forecast": "213",
     "unit": ""
   },
@@ -385,7 +385,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "-7.974",
     "forecast": "",
     "unit": ""
   },
@@ -395,7 +395,7 @@
     "country": "USD",
     "impact": "Medium",
     "actual": "",
-    "previous": "",
+    "previous": "3.364",
     "forecast": "",
     "unit": ""
   },

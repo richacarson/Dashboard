@@ -934,9 +934,9 @@
     "date": "2026-06-04",
     "hour": "bmo",
     "epsEstimate": 1.4859,
-    "epsActual": null,
+    "epsActual": 1.64,
     "revenueEstimate": 1533687616,
-    "revenueActual": null,
+    "revenueActual": 1570740000,
     "source": "finnhub"
   },
   {
@@ -944,9 +944,9 @@
     "date": "2026-06-04",
     "hour": "bmo",
     "epsEstimate": 0.4539,
-    "epsActual": null,
+    "epsActual": 0.24,
     "revenueEstimate": 377560650,
-    "revenueActual": null,
+    "revenueActual": 437830000,
     "source": "finnhub"
   },
   {
@@ -1094,9 +1094,9 @@
     "date": "2026-06-04",
     "hour": "bmo",
     "epsEstimate": 0.1564,
-    "epsActual": null,
+    "epsActual": 0.04,
     "revenueEstimate": 24477623,
-    "revenueActual": null,
+    "revenueActual": 25720000,
     "source": "finnhub"
   },
   {
@@ -1124,9 +1124,9 @@
     "date": "2026-06-04",
     "hour": "bmo",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.55,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 678180000,
     "source": "finnhub"
   },
   {
@@ -1174,9 +1174,9 @@
     "date": "2026-06-04",
     "hour": "bmo",
     "epsEstimate": 1.5158,
-    "epsActual": null,
+    "epsActual": 1.6,
     "revenueEstimate": 1407720830,
-    "revenueActual": null,
+    "revenueActual": 1424700000,
     "source": "finnhub"
   },
   {
@@ -1500,6 +1500,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MPAA",
+    "date": "2026-06-08",
+    "hour": "",
+    "epsEstimate": 0.3366,
+    "epsActual": null,
+    "revenueEstimate": 179479200,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MTN",
     "date": "2026-06-08",
     "hour": "amc",
@@ -1780,6 +1790,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "UEC",
+    "date": "2026-06-09",
+    "hour": "",
+    "epsEstimate": -0.0505,
+    "epsActual": null,
+    "revenueEstimate": 8585000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "UNFI",
     "date": "2026-06-09",
     "hour": "bmo",
@@ -1966,6 +1986,16 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ORCL",
+    "date": "2026-06-10",
+    "hour": "amc",
+    "epsEstimate": 1.9985,
+    "epsActual": null,
+    "revenueEstimate": 19481669489,
     "revenueActual": null,
     "source": "finnhub"
   },
