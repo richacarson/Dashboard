@@ -7003,7 +7003,7 @@ Instructions:
                     avg: scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null,
                   };
                 });
-                const color = v => v == null ? C.t4 : v >= 80 ? C.up : v >= 60 ? "#D97706" : v >= 40 ? "#2563EB" : C.dn;
+                const color = v => v == null ? C.t4 : C.accent;
                 if (screenerSleeve === "All") {
                   return (
                     <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
