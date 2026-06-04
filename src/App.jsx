@@ -7322,6 +7322,53 @@ Instructions:
                   }}>{s}</button>
                 ))}
               </div>
+              {/* Portfolio composite score(s) */}
+              {(() => {
+                const portfolios = [
+                  { key: "Dividend", holdings: sleeves.dividend?.symbols || [] },
+                  { key: "Growth", holdings: sleeves.growth?.symbols || [] },
+                  { key: "FCI 100", holdings: sleeves.fci100?.symbols || [] },
+                  { key: "FCI Values", holdings: sleeves.fciValues?.symbols || [] },
+                ];
+                const byTicker = {};
+                for (const s of screenerData) byTicker[s.ticker] = s;
+                const stats = portfolios.map(p => {
+                  const scored = p.holdings.map(t => byTicker[t]?.overall_score).filter(v => v != null);
+                  return {
+                    key: p.key,
+                    n: scored.length,
+                    coverage: p.holdings.length,
+                    avg: scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null,
+                  };
+                });
+                const color = v => v == null ? C.t4 : v >= 80 ? C.up : v >= 60 ? "#D97706" : v >= 40 ? "#2563EB" : C.dn;
+                if (screenerSleeve === "All") {
+                  return (
+                    <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
+                      {stats.map(s => (
+                        <div key={s.key} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{s.key}</div>
+                          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: 24, fontWeight: 900, color: color(s.avg), lineHeight: 1 }}>{s.avg != null ? s.avg : "—"}</div>
+                            <div style={{ fontSize: 10, color: C.t4 }}>{s.n}/{s.coverage} scored</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                const cur = stats.find(s => s.key === screenerSleeve);
+                if (!cur) return null;
+                return (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{cur.key} — Avg Composite Score</div>
+                      <div style={{ fontSize: 11, color: C.t4 }}>{cur.n} of {cur.coverage} holdings scored</div>
+                    </div>
+                    <div style={{ fontSize: 36, fontWeight: 900, color: color(cur.avg), lineHeight: 1 }}>{cur.avg != null ? cur.avg : "—"}<span style={{ fontSize: 14, fontWeight: 400, color: C.t4 }}> / 100</span></div>
+                  </div>
+                );
+              })()}
               {/* Search + filters */}
               <div style={{ marginBottom: 14 }}>
                 <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
