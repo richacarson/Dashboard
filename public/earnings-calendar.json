@@ -1252,7 +1252,7 @@
   {
     "symbol": "GASS",
     "date": "2026-06-05",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3876,
     "epsActual": null,
     "revenueEstimate": 39168000,
@@ -1842,7 +1842,7 @@
   {
     "symbol": "CHWY",
     "date": "2026-06-10",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.2548,
     "epsActual": null,
     "revenueEstimate": 3429241489,
@@ -1852,7 +1852,7 @@
   {
     "symbol": "CNM",
     "date": "2026-06-10",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.6868,
     "epsActual": null,
     "revenueEstimate": 1924204610,
@@ -1952,7 +1952,7 @@
   {
     "symbol": "NAVN",
     "date": "2026-06-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0098,
     "epsActual": null,
     "revenueEstimate": 209379163,
