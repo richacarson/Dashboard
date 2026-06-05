@@ -2537,6 +2537,13 @@ Instructions:
         const scores = { ...screenerScores };
         const CONCURRENCY = 8;
         let cursor = 0;
+        let completed = 0;
+        const FLUSH_EVERY = 25;
+        const flush = () => {
+          // Progressive update so UI populates as data arrives instead of all-at-once at end
+          setScreenerSectors({ ...sectors, _ts: Date.now() });
+          setScreenerScores({ ...scores, _ts: Date.now() });
+        };
         const worker = async () => {
           while (cursor < missing.length) {
             const i = cursor++;
@@ -2557,6 +2564,8 @@ Instructions:
                 };
               }
             } catch {}
+            completed++;
+            if (completed % FLUSH_EVERY === 0) flush();
           }
         };
         await Promise.all(Array.from({ length: CONCURRENCY }, worker));
