@@ -1502,7 +1502,7 @@
   {
     "symbol": "MPAA",
     "date": "2026-06-08",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3366,
     "epsActual": null,
     "revenueEstimate": 179479200,
@@ -1792,7 +1792,7 @@
   {
     "symbol": "UEC",
     "date": "2026-06-09",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0505,
     "epsActual": null,
     "revenueEstimate": 8585000,
@@ -2132,7 +2132,7 @@
   {
     "symbol": "HOFT",
     "date": "2026-06-11",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0408,
     "epsActual": null,
     "revenueEstimate": 67638750,
@@ -2172,7 +2172,7 @@
   {
     "symbol": "LOVE",
     "date": "2026-06-11",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -1.0183,
     "epsActual": null,
     "revenueEstimate": 140103803,
@@ -2192,7 +2192,7 @@
   {
     "symbol": "MH",
     "date": "2026-06-11",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.1743,
     "epsActual": null,
     "revenueEstimate": 453131834,
@@ -2262,7 +2262,7 @@
   {
     "symbol": "VRA",
     "date": "2026-06-11",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.3333,
     "epsActual": null,
     "revenueEstimate": 49607160,
@@ -2282,7 +2282,7 @@
   {
     "symbol": "ZDGE",
     "date": "2026-06-11",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.051,
     "epsActual": null,
     "revenueEstimate": 7148160,
