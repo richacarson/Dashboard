@@ -976,6 +976,13 @@ Instructions:
       return age < 7 * 24 * 3600000 ? c : {};
     } catch { return {}; }
   });
+  const [screenerScores, setScreenerScores] = useState(() => {
+    try {
+      const c = JSON.parse(localStorage.getItem("iown_screener_scores") || "{}");
+      const age = Date.now() - (c._ts || 0);
+      return age < 7 * 24 * 3600000 ? c : {};
+    } catch { return {}; }
+  });
   const screenerListRef = useRef(null);
   const screenerListScrollY = useRef(0);
   const [scrScrollTop, setScrScrollTop] = useState(0);
@@ -2523,10 +2530,11 @@ Instructions:
           const match = perfSleeve === "dividend" ? "Dividend" : perfSleeve === "growth" ? "Growth" : null;
           setScreenerSleeve(match || "All");
         }
-        // Background-fetch sectors for any tickers we don't already have cached
-        const missing = d.filter(s => !screenerSectors[s.ticker]).map(s => s.ticker);
+        // Background-fetch per-report metadata for any tickers we don't already have cached
+        const missing = d.filter(s => !screenerSectors[s.ticker] || !screenerScores[s.ticker]).map(s => s.ticker);
         if (missing.length === 0) return;
         const sectors = { ...screenerSectors };
+        const scores = { ...screenerScores };
         const CONCURRENCY = 8;
         let cursor = 0;
         const worker = async () => {
@@ -2539,13 +2547,25 @@ Instructions:
               const rep = await r.json();
               const sec = rep.profile?.sector || rep.sector;
               if (sec) sectors[ticker] = sec;
+              const ev = rep.excellence_evaluation || {};
+              const inn = ev.innovation?.score;
+              const infra = ev.infrastructure?.score;
+              if (typeof inn === "number" || typeof infra === "number") {
+                scores[ticker] = {
+                  ...(typeof inn === "number" ? { inn } : {}),
+                  ...(typeof infra === "number" ? { infra } : {}),
+                };
+              }
             } catch {}
           }
         };
         await Promise.all(Array.from({ length: CONCURRENCY }, worker));
-        const out = { ...sectors, _ts: Date.now() };
-        setScreenerSectors(out);
-        try { localStorage.setItem("iown_screener_sectors", JSON.stringify(out)); } catch {}
+        const sectorsOut = { ...sectors, _ts: Date.now() };
+        const scoresOut = { ...scores, _ts: Date.now() };
+        setScreenerSectors(sectorsOut);
+        setScreenerScores(scoresOut);
+        try { localStorage.setItem("iown_screener_sectors", JSON.stringify(sectorsOut)); } catch {}
+        try { localStorage.setItem("iown_screener_scores", JSON.stringify(scoresOut)); } catch {}
       })
       .catch(() => {});
   }, [tab, tDrawer]);
@@ -6994,13 +7014,23 @@ Instructions:
                 ];
                 const byTicker = {};
                 for (const s of screenerData) byTicker[s.ticker] = s;
+                const meanOf = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
                 const stats = portfolios.map(p => {
-                  const scored = p.holdings.map(t => byTicker[t]?.overall_score).filter(v => v != null);
+                  const composites = p.holdings.map(t => byTicker[t]?.overall_score).filter(v => typeof v === "number");
+                  const innValues = p.holdings.map(t => screenerScores[t]?.inn).filter(v => typeof v === "number");
+                  const infraValues = p.holdings.map(t => screenerScores[t]?.infra).filter(v => typeof v === "number");
+                  const compAvg = meanOf(composites);
+                  const innAvg = meanOf(innValues);
+                  const infraAvg = meanOf(infraValues);
                   return {
                     key: p.key,
-                    n: scored.length,
+                    n: composites.length,
                     coverage: p.holdings.length,
-                    avg: scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null,
+                    avg: compAvg != null ? Math.round(compAvg) : null,
+                    inn: innAvg != null ? Math.round(innAvg * 10) / 10 : null,
+                    innN: innValues.length,
+                    infra: infraAvg != null ? Math.round(infraAvg * 10) / 10 : null,
+                    infraN: infraValues.length,
                   };
                 });
                 const color = v => v == null ? C.t4 : C.accent;
@@ -7009,10 +7039,20 @@ Instructions:
                     <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10, marginBottom: 14 }}>
                       {stats.map(s => (
                         <div key={s.key} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{s.key}</div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>{s.key}</div>
                           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
                             <div style={{ fontSize: 24, fontWeight: 900, color: color(s.avg), lineHeight: 1 }}>{s.avg != null ? s.avg : "—"}</div>
                             <div style={{ fontSize: 10, color: C.t4 }}>{s.n}/{s.coverage} scored</div>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 6, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${C.border}`, fontSize: 11 }}>
+                            <div>
+                              <div style={{ fontSize: 9, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.3 }}>Innovation</div>
+                              <div style={{ fontWeight: 800, color: color(s.inn) }}>{s.inn != null ? `${s.inn} / 10` : "—"}</div>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <div style={{ fontSize: 9, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.3 }}>Infrastructure</div>
+                              <div style={{ fontWeight: 800, color: color(s.infra) }}>{s.infra != null ? `${s.infra} / 10` : "—"}</div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -7022,12 +7062,30 @@ Instructions:
                 const cur = stats.find(s => s.key === screenerSleeve);
                 if (!cur) return null;
                 return (
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{cur.key} — Avg Composite Score</div>
-                      <div style={{ fontSize: 11, color: C.t4 }}>{cur.n} of {cur.coverage} holdings scored</div>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{cur.key} — Avg Composite Score</div>
+                        <div style={{ fontSize: 11, color: C.t4 }}>{cur.n} of {cur.coverage} holdings scored</div>
+                      </div>
+                      <div style={{ fontSize: 36, fontWeight: 900, color: color(cur.avg), lineHeight: 1 }}>{cur.avg != null ? cur.avg : "—"}<span style={{ fontSize: 14, fontWeight: 400, color: C.t4 }}> / 100</span></div>
                     </div>
-                    <div style={{ fontSize: 36, fontWeight: 900, color: color(cur.avg), lineHeight: 1 }}>{cur.avg != null ? cur.avg : "—"}<span style={{ fontSize: 14, fontWeight: 400, color: C.t4 }}> / 100</span></div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Innovation</div>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: color(cur.inn), lineHeight: 1 }}>{cur.inn != null ? cur.inn : "—"}<span style={{ fontSize: 12, fontWeight: 400, color: C.t4 }}> / 10</span></div>
+                          <div style={{ fontSize: 10, color: C.t4 }}>{cur.innN}/{cur.coverage}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Infrastructure</div>
+                        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+                          <div style={{ fontSize: 22, fontWeight: 900, color: color(cur.infra), lineHeight: 1 }}>{cur.infra != null ? cur.infra : "—"}<span style={{ fontSize: 12, fontWeight: 400, color: C.t4 }}> / 10</span></div>
+                          <div style={{ fontSize: 10, color: C.t4 }}>{cur.infraN}/{cur.coverage}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
