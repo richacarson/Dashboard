@@ -100,12 +100,14 @@ function getMarketStatus() {
 }
 
 const DARK = {
-  bg: "#080A18", surface: "#0E1225", card: "#141830", cardHover: "#1A2040", elevated: "#1E2445",
-  border: "rgba(200,180,120,0.08)", borderHover: "rgba(200,180,120,0.16)", borderActive: "rgba(200,180,120,0.30)",
-  t1: "#E8EAF2", t2: "#A0A8C0", t3: "#6B7498", t4: "#3A4060",
+  bg: "#0B0B0F", surface: "#18181C", card: "#1F1F24", cardHover: "#28282E", elevated: "#313138",
+  border: "rgba(252,212,50,0.10)", borderHover: "rgba(252,212,50,0.20)", borderActive: "rgba(252,212,50,0.35)",
+  t1: "#F0EAD8", t2: "#B5AB95", t3: "#7E7560", t4: "#4A4338",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
-  accent: "#D4A832", accentSoft: "rgba(212,168,50,0.10)", accentGlow: "rgba(212,168,50,0.25)",
+  accent: "#FCD432", accentSoft: "rgba(252,212,50,0.10)", accentGlow: "rgba(252,212,50,0.28)",
+  nav: "#18181C", navText: "#F0EAD8", navTextDim: "#B5AB95", navTextMuted: "#7E7560",
+  navBorder: "rgba(252,212,50,0.10)", navAccentSoft: "rgba(252,212,50,0.12)",
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
 const LIGHT = {
@@ -2484,7 +2486,7 @@ Instructions:
 
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, paddingTop: "env(safe-area-inset-top, 24px)", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(110,132,80,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(252,212,50,0.06) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
           <img src={theme !== "light" ? "paradiem-logo-dark.png" : "paradiem-logo.png"} alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
@@ -3345,7 +3347,7 @@ Instructions:
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: theme !== "light" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme !== "light" ? "rgba(11,11,15,0.88)" : "rgba(234,233,226,0.94)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -8807,8 +8809,9 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: theme !== "light" ? "rgba(12,16,24,0.88)" : "rgba(245,245,240,0.92)", backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
-        borderTop: `1px solid ${C.border}`, display: "flex", justifyContent: "space-around",
+        background: theme !== "light" ? "rgba(24,24,28,0.92)" : "rgba(242,241,235,0.94)",
+        backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
+        borderTop: `2px solid ${C.accent}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
       }}>
         {["home", "performance", "charts", "briefs", "metrics"].map(id => navItems.find(t => t.id === id)).filter(Boolean).map(t => (
@@ -8927,20 +8930,20 @@ function GS({ theme }) {
       @keyframes slideInRight { from { opacity: 0; transform: translateX(30px) } to { opacity: 1; transform: translateX(0) } }
       @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px) } to { opacity: 1; transform: translateX(0) } }
       * { -webkit-tap-highlight-color: transparent; }
-      input::placeholder { color: ${isDark ? "#3A4A28" : "#9DAF88"} !important; }
-      input:focus { border-color: rgba(${isDark ? "120,140,88" : "74,107,37"},0.30) !important; }
+      input::placeholder { color: ${isDark ? "#4A4338" : "#9E9AAE"} !important; }
+      input:focus { border-color: rgba(${isDark ? "252,212,50" : "201,160,21"},0.30) !important; }
       ::-webkit-scrollbar { width: 10px; height: 8px; }
-      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(30,40,25,0.3)" : "rgba(200,210,190,0.3)"}; border-radius: 10px; }
-      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "110,132,80,0.4" : "80,100,60,0.35"}); border-radius: 10px; min-height: 40px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "110,132,80,0.6" : "80,100,60,0.55"}); }
-      body { background: ${isDark ? "#080B05" : "#F5F5F0"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "110,132,80,0.4" : "80,100,60,0.35"}) ${isDark ? "rgba(30,40,25,0.3)" : "rgba(200,210,190,0.3)"}; }
+      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(40,40,46,0.5)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
+      body { background: ${isDark ? "#0B0B0F" : "#EAE9E2"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(40,40,46,0.5)" : "rgba(25,22,53,0.06)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
       .ticker-row:active { transform: scale(0.97); opacity: 0.85; }
       @media (min-width: 768px) {
         .tradingview-widget-container { min-height: 500px; }
-        tr:hover td { background: rgba(${isDark ? "110,132,80,0.04" : "74,107,37,0.06"}) !important; }
+        tr:hover td { background: rgba(${isDark ? "252,212,50,0.04" : "201,160,21,0.06"}) !important; }
         button:hover { opacity: 0.85; }
       }
     `}</style>
