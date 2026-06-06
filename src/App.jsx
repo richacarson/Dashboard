@@ -923,7 +923,6 @@ Instructions:
   const [researchReports, setResearchReports] = useState([]);
   const [researchView, setResearchView] = useState(null); // null = list, or report id
   const [researchContent, setResearchContent] = useState("");
-  const [researchOpenFolders, setResearchOpenFolders] = useState({}); // { category: true/false }
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
   const tabIds = ["home", "performance", "metrics", "charts", "news", "briefs", "research", "playbook", "screener", "opportunities", "settings"];
@@ -5781,16 +5780,7 @@ Instructions:
                       <div style={{ fontSize: 13 }}>Reports will appear here as they are published.</div>
                     </div>
                   ) : (() => {
-                    // Group reports by category into folders
-                    const grouped = {};
-                    researchReports.forEach(r => {
-                      const cat = r.category || "Uncategorized";
-                      if (!grouped[cat]) grouped[cat] = [];
-                      grouped[cat].push(r);
-                    });
-                    const categories = Object.keys(grouped);
-                    // If only one category, don't show folder UI — just list reports
-                    const showFolders = categories.length > 1 || (categories.length === 1 && grouped[categories[0]].length > 1);
+                    const sortedReports = [...researchReports].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
                     const openReport = (report) => {
                       setResearchView(report.id);
                       setResearchContent("");
@@ -5812,9 +5802,10 @@ Instructions:
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 15, fontWeight: 700, color: C.t1, marginBottom: 5 }}>{report.title}</div>
                             {report.summary && <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.5, marginBottom: 6 }}>{report.summary}</div>}
-                            <div style={{ display: "flex", gap: 10, fontSize: 11, color: C.t4 }}>
+                            <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 11, color: C.t4, flexWrap: "wrap" }}>
                               <span>{report.date}</span>
                               {report.author && <span>{report.author}</span>}
+                              {report.category && <span style={{ padding: "2px 8px", background: C.accentSoft, borderRadius: 6, color: C.accent, fontWeight: 600 }}>{report.category}</span>}
                             </div>
                           </div>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
@@ -5824,40 +5815,8 @@ Instructions:
                       </div>
                     );
                     return (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                        {categories.map(cat => {
-                          const reports = grouped[cat];
-                          const isOpen = researchOpenFolders[cat] === true; // default closed
-                          return showFolders ? (
-                            <div key={cat}>
-                              <div onClick={() => setResearchOpenFolders(prev => ({ ...prev, [cat]: !isOpen }))} style={{
-                                display: "flex", alignItems: "center", gap: 10, padding: "12px 16px",
-                                background: C.card, border: `1px solid ${C.border}`, borderRadius: 14,
-                                cursor: "pointer", marginBottom: isOpen ? 10 : 0,
-                              }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill={C.accent + "33"} stroke={C.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                  {isOpen ? <><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /><line x1="2" y1="10" x2="22" y2="10" /></> : <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />}
-                                </svg>
-                                <div style={{ flex: 1 }}>
-                                  <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{cat}</span>
-                                  <span style={{ fontSize: 12, color: C.t4, marginLeft: 8 }}>{reports.length} report{reports.length !== 1 ? "s" : ""}</span>
-                                </div>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.2s" }}>
-                                  <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                              </div>
-                              {isOpen && (
-                                <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingLeft: isDesktop ? 16 : 8 }}>
-                                  {reports.map(r => <ReportCard key={r.id} report={r} />)}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div key={cat} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                              {reports.map(r => <ReportCard key={r.id} report={r} />)}
-                            </div>
-                          );
-                        })}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {sortedReports.map(r => <ReportCard key={r.id} report={r} />)}
                       </div>
                     );
                   })()}
