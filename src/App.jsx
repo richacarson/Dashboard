@@ -764,6 +764,50 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
   );
 }
 
+/* ── Brief iframe that injects theme-matching CSS ── */
+function BriefIframe({ url, title, theme, C }) {
+  const ref = useRef(null);
+  const [blobUrl, setBlobUrl] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(url).then(r => r.text()).then(html => {
+      if (cancelled) return;
+      const isDark = theme !== "light";
+      const css = `<style>
+        :root { color-scheme: ${isDark ? "dark" : "light"}; }
+        html, body {
+          background: ${C.bg} !important;
+          color: ${C.t2} !important;
+          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        }
+        body { padding: 16px !important; }
+        h1, h2, h3, h4, h5, h6 { color: ${C.t1} !important; }
+        a { color: ${C.accent} !important; }
+        table { border-collapse: collapse !important; width: 100% !important; }
+        th { color: ${C.t1} !important; border-bottom: 2px solid ${C.border} !important; padding: 8px 12px !important; text-align: left !important; }
+        td { color: ${C.t2} !important; border-bottom: 1px solid ${C.border} !important; padding: 8px 12px !important; }
+        tr:hover td { background: ${C.cardHover} !important; }
+        code, pre { background: ${C.card} !important; color: ${C.t2} !important; border-radius: 6px !important; }
+        pre { padding: 12px !important; overflow-x: auto !important; border: 1px solid ${C.border} !important; }
+        blockquote { border-left: 3px solid ${C.accent} !important; padding-left: 16px !important; color: ${C.t3} !important; }
+        hr { border-color: ${C.border} !important; }
+        img { max-width: 100% !important; border-radius: 8px !important; }
+        ul, ol { color: ${C.t2} !important; }
+        strong, b { color: ${C.t1} !important; }
+        * { border-color: ${C.border} !important; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${C.accent}33; border-radius: 4px; }
+      </style>`;
+      const injected = html.replace(/<head([^>]*)>/i, `<head$1>${css}`);
+      const blob = new Blob([injected], { type: "text/html" });
+      setBlobUrl(URL.createObjectURL(blob));
+    }).catch(() => setBlobUrl(url));
+    return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
+  }, [url, theme]);
+  if (!blobUrl) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /></div>;
+  return <iframe ref={ref} src={blobUrl} title={title} scrolling="yes" style={{ flex: 1, width: "100%", border: "none", display: "block", overflow: "auto" }} sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads" />;
+}
+
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function App() {
   const [unlocked, setUnlocked] = useState(() => {
@@ -8362,14 +8406,7 @@ Instructions:
                 cursor: "pointer", fontFamily: "inherit",
               }}>Open ↗</button>
             </div>
-            <iframe
-              key={active.id}
-              src={active.url}
-              title={active.title}
-              scrolling="yes"
-              style={{ flex: 1, width: "100%", border: "none", display: "block", overflow: "auto" }}
-              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
-            />
+            <BriefIframe key={active.id + theme} url={active.url} title={active.title} theme={theme} C={C} />
           </div>
         );
       })()}
