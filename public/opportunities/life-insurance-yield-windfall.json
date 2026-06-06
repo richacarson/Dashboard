@@ -7,7 +7,10 @@
   "status": "active",
   "date_identified": "2026-05-19",
   "timeframe": "12-24 months",
-  "tickers": ["MET", "PRU"],
+  "tickers": [
+    "MET",
+    "PRU"
+  ],
   "in_portfolio": false,
   "catalyst": "On May 19, 2026, the 30-year US Treasury yield briefly hit 5.197% — the highest reading since July 2007 [1][2]. A Bank of America Global Fund Manager Survey published the same day showed 62% of respondents expect the long bond to reach 6%, an additional ~85 bps from current levels [1]. For life insurers reinvesting trillions of dollars of legacy fixed-income portfolios, every 100 bps move in the long end is a structural earnings tailwind that compounds for a decade.",
   "thesis": "Life insurers hold the largest long-duration fixed-income portfolios in financial markets and earn the spread between assets and liabilities. When the long end rises and the curve steepens, three things happen simultaneously: (1) new-money reinvestment yields rise, lifting net investment income for a decade as legacy bonds mature into a higher-yielding environment; (2) GAAP liabilities discount at higher rates, increasing reported book value; and (3) annuity demand surges as retirees lock in record-high payout rates, expanding the asset base. MetLife and Prudential are the two largest US life insurers by general-account assets, both trading at ~6.5x forward earnings despite Q1 2026 results that already showed the early benefits — and neither stock is priced for the rate regime that the bond market is now signaling.",
@@ -18,22 +21,28 @@
   },
   "key_metrics": {
     "MET": {
-      "Stock Price": "$80",
-      "Forward P/E": 6.5,
-      "Adjusted ROE Q1 2026": "17.0%",
-      "Q1 2026 NII": "$5.36B (+10% YoY)",
-      "Q1 2026 Adj EPS": "$2.42 (+23% YoY)",
-      "Dividend Yield": "3.21%",
-      "FCF Target 2025-2029": "$25B"
+      "stock_price": 71.04,
+      "forward_pe": 6.49,
+      "pe_ratio": 15.08,
+      "revenue_growth_yoy": 27.6,
+      "profit_margin": 4.38,
+      "return_on_equity": 12.02,
+      "debt_to_equity": 225.97,
+      "overall_score": 56,
+      "recommendation": "WATCH",
+      "sleeve": "Dividend"
     },
     "PRU": {
-      "Stock Price": "$97",
-      "Forward P/E": 6.5,
-      "Adjusted ROE Q1 2026": "14.6%",
-      "Q1 2026 Adj EPS": "$3.61 (vs $3.11 est)",
-      "Q1 2026 Revenue": "$15.23B (+13.6% YoY)",
-      "AUM": "$1.576T",
-      "Dividend Yield": "5.42%"
+      "stock_price": 98.76,
+      "forward_pe": 6.49,
+      "pe_ratio": 9.89,
+      "revenue_growth_yoy": 31.2,
+      "profit_margin": 5.84,
+      "return_on_equity": 11.36,
+      "debt_to_equity": 124.48,
+      "overall_score": 60,
+      "recommendation": "HOLD",
+      "sleeve": "Dividend"
     }
   },
   "risks": [

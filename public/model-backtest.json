@@ -1,262 +1,153 @@
 {
-  "generated": "2026-05-19T02:36:56Z",
-  "start_month": "1990-01",
-  "end_month": "2026-05",
-  "total_months": 437,
-  "bear_months": 48,
+  "generated": "2026-05-31T14:26:53Z",
+  "start_month": null,
+  "end_month": null,
+  "total_months": 0,
+  "bear_months": 0,
   "bear_starts": [
+    "1962-05",
+    "1966-08",
+    "1970-01",
+    "1973-11",
+    "1982-02",
     "1987-10",
     "2001-03",
     "2008-07",
     "2020-03",
     "2022-06"
   ],
-  "auc": 0.712,
+  "auc": null,
   "buckets": [
     {
       "range": "0-20",
       "lo": 0,
       "hi": 20,
-      "n": 71,
-      "bears": 1,
-      "rate": 1.4,
-      "ci_lo": 0.2,
-      "ci_hi": 7.6
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "20-30",
       "lo": 20,
       "hi": 30,
-      "n": 234,
-      "bears": 21,
-      "rate": 9.0,
-      "ci_lo": 5.9,
-      "ci_hi": 13.3
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "30-40",
       "lo": 30,
       "hi": 40,
-      "n": 73,
-      "bears": 9,
-      "rate": 12.3,
-      "ci_lo": 6.6,
-      "ci_hi": 21.8
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "40-50",
       "lo": 40,
       "hi": 50,
-      "n": 33,
-      "bears": 11,
-      "rate": 33.3,
-      "ci_lo": 19.8,
-      "ci_hi": 50.4
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "50-60",
       "lo": 50,
       "hi": 60,
-      "n": 6,
-      "bears": 1,
-      "rate": 16.7,
-      "ci_lo": 3.0,
-      "ci_hi": 56.4
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "60-70",
       "lo": 60,
       "hi": 70,
-      "n": 14,
-      "bears": 5,
-      "rate": 35.7,
-      "ci_lo": 16.3,
-      "ci_hi": 61.2
+      "n": 0,
+      "bears": 0,
+      "rate": 0,
+      "ci_lo": 0,
+      "ci_hi": 0
     },
     {
       "range": "70-100",
       "lo": 70,
       "hi": 100,
-      "n": 6,
+      "n": 0,
       "bears": 0,
-      "rate": 0.0,
+      "rate": 0,
       "ci_lo": 0,
-      "ci_hi": 39.0
+      "ci_hi": 0
     }
   ],
   "thresholds": {
     "40": {
-      "n_above": 59,
-      "true_pos": 17,
-      "false_pos": 42,
-      "precision": 28.8,
-      "recall": 35.4,
-      "fpr": 10.8
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "45": {
-      "n_above": 39,
-      "true_pos": 9,
-      "false_pos": 30,
-      "precision": 23.1,
-      "recall": 18.8,
-      "fpr": 7.7
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "50": {
-      "n_above": 26,
-      "true_pos": 6,
-      "false_pos": 20,
-      "precision": 23.1,
-      "recall": 12.5,
-      "fpr": 5.1
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "55": {
-      "n_above": 24,
-      "true_pos": 6,
-      "false_pos": 18,
-      "precision": 25.0,
-      "recall": 12.5,
-      "fpr": 4.6
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "60": {
-      "n_above": 20,
-      "true_pos": 5,
-      "false_pos": 15,
-      "precision": 25.0,
-      "recall": 10.4,
-      "fpr": 3.9
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     },
     "65": {
-      "n_above": 12,
-      "true_pos": 2,
-      "false_pos": 10,
-      "precision": 16.7,
-      "recall": 4.2,
-      "fpr": 2.6
+      "n_above": 0,
+      "true_pos": 0,
+      "false_pos": 0,
+      "precision": 0,
+      "recall": 0,
+      "fpr": 0
     }
   },
   "pre_bear_avg_score": {
-    "12": 27.2,
-    "6": 33.0,
-    "3": 39.2,
-    "1": 40.5
+    "12": null,
+    "6": null,
+    "3": null,
+    "1": null
   },
-  "logistic_regression": {
-    "features": [
-      "yield",
-      "claims",
-      "baa10y",
-      "nfci",
-      "cfnai",
-      "sahm",
-      "oil"
-    ],
-    "means": [
-      1.0075293117710127,
-      1.9239108926494024,
-      2.289706291904504,
-      -0.4018571428571425,
-      -0.07271121351766513,
-      0.4589093701996922,
-      9.211955564371548
-    ],
-    "stds": [
-      0.9115671705907421,
-      48.876732980315516,
-      0.7093659506799318,
-      0.4903906444867517,
-      0.6945610121160531,
-      1.0089810419122416,
-      37.23673316201503
-    ],
-    "coefficients": [
-      -1.5963714091185979,
-      -1.0965677434793009,
-      0.8503059737838058,
-      0.10160015732410942,
-      -0.8166847449446867,
-      -1.6158248032940377,
-      1.3699845169828577
-    ],
-    "intercept": -1.3742427594025273,
-    "train_auc": 0.884,
-    "oos_auc": 0.88,
-    "oos_months": 311,
-    "buckets": [
-      {
-        "range": "0-5",
-        "lo": 0,
-        "hi": 5,
-        "n": 118,
-        "bears": 1,
-        "rate": 0.8,
-        "ci_lo": 0.1,
-        "ci_hi": 4.6
-      },
-      {
-        "range": "5-10",
-        "lo": 5,
-        "hi": 10,
-        "n": 33,
-        "bears": 1,
-        "rate": 3.0,
-        "ci_lo": 0.5,
-        "ci_hi": 15.3
-      },
-      {
-        "range": "10-20",
-        "lo": 10,
-        "hi": 20,
-        "n": 47,
-        "bears": 2,
-        "rate": 4.3,
-        "ci_lo": 1.2,
-        "ci_hi": 14.2
-      },
-      {
-        "range": "20-30",
-        "lo": 20,
-        "hi": 30,
-        "n": 20,
-        "bears": 1,
-        "rate": 5.0,
-        "ci_lo": 0.9,
-        "ci_hi": 23.6
-      },
-      {
-        "range": "30-50",
-        "lo": 30,
-        "hi": 50,
-        "n": 20,
-        "bears": 8,
-        "rate": 40.0,
-        "ci_lo": 21.9,
-        "ci_hi": 61.3
-      },
-      {
-        "range": "50-75",
-        "lo": 50,
-        "hi": 75,
-        "n": 28,
-        "bears": 12,
-        "rate": 42.9,
-        "ci_lo": 26.5,
-        "ci_hi": 60.9
-      },
-      {
-        "range": "75-100",
-        "lo": 75,
-        "hi": 100,
-        "n": 45,
-        "bears": 22,
-        "rate": 48.9,
-        "ci_lo": 35.0,
-        "ci_hi": 63.0
-      }
-    ],
-    "trained_on_n": 434
-  },
+  "logistic_regression": null,
   "factors_included": [
-    "yield_2s10s",
+    "yield_10y3m",
     "claims",
     "baa10y",
     "nfci",
@@ -268,5 +159,5 @@
     "valuation_pe",
     "eps_trend"
   ],
-  "notes": "Backtest scores each month from 1990-present using the same factor interpolation tables as the live model. Excludes Valuation (no free monthly P/E history) and EPS Trend (new factor). Yield-curve post-inversion premium is also excluded \u2014 the backtest uses raw 10Y-2Y spread only. Bull Duration, Momentum, and VIX factors were dropped from the model after backtest showed they were coincident rather than leading indicators (AUC contribution near zero). NFCI (Chicago Fed financial conditions, 105 components) added as a stronger composite financial-stress signal. Outcome label: any bear-market start (-20% from peak) within the following 12 months."
+  "notes": "Backtest scores each month from 1971-present \u2014 1971 is the true floor (NFCI, the Chicago Fed financial conditions index, does not exist earlier). Three factors use reconstructed series so the model can reach 1971: yield curve = 10Y minus 3-month T-bill (GS10 - TB3MS) instead of 10Y-2Y, which only starts 1976; credit spread = Moody's BAA minus 10Y (BAA - GS10) instead of the BAA10Y series which starts 1986; oil = monthly WTI spot (WTISPLC, from 1946) instead of daily WTI which starts 1986. Excludes Valuation (no free monthly P/E history) and EPS Trend (new factor). Bull Duration, Momentum, and VIX were dropped after an earlier backtest showed they were coincident rather than leading. Months where a bear is already underway are excluded from logistic-regression training \u2014 the model predicts bear ONSET, not whether one is in progress. Outcome label: any bear-market start (-20% from peak) within the following 12 months."
 }
