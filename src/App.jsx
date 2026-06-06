@@ -798,7 +798,9 @@ function BriefIframe({ url, title, theme, C }) {
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${C.accent}33; border-radius: 4px; }
       </style>`;
-      const injected = html.replace(/<head([^>]*)>/i, `<head$1>${css}`);
+      const baseUrl = new URL(url);
+      const baseTag = `<base href="${baseUrl.origin}${baseUrl.pathname.replace(/[^/]*$/, "")}" />`;
+      const injected = html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}${css}`);
       const blob = new Blob([injected], { type: "text/html" });
       setBlobUrl(URL.createObjectURL(blob));
     }).catch(() => setBlobUrl(url));
