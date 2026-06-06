@@ -764,51 +764,6 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
   );
 }
 
-/* ── Brief iframe that injects theme-matching CSS ── */
-function BriefIframe({ url, title, theme, C }) {
-  const ref = useRef(null);
-  const [blobUrl, setBlobUrl] = useState(null);
-  useEffect(() => {
-    let cancelled = false;
-    fetch(url).then(r => r.text()).then(html => {
-      if (cancelled) return;
-      const isDark = theme !== "light";
-      const css = `<style>
-        :root { color-scheme: ${isDark ? "dark" : "light"}; }
-        html, body {
-          background: ${C.bg} !important;
-          color: ${C.t2} !important;
-          font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        }
-        body { padding: 16px !important; }
-        h1, h2, h3, h4, h5, h6 { color: ${C.t1} !important; }
-        a { color: ${C.accent} !important; }
-        table { border-collapse: collapse !important; width: 100% !important; }
-        th { color: ${C.t1} !important; border-bottom: 2px solid ${C.border} !important; padding: 8px 12px !important; text-align: left !important; }
-        td { color: ${C.t2} !important; border-bottom: 1px solid ${C.border} !important; padding: 8px 12px !important; }
-        tr:hover td { background: ${C.cardHover} !important; }
-        code, pre { background: ${C.card} !important; color: ${C.t2} !important; border-radius: 6px !important; }
-        pre { padding: 12px !important; overflow-x: auto !important; border: 1px solid ${C.border} !important; }
-        blockquote { border-left: 3px solid ${C.accent} !important; padding-left: 16px !important; color: ${C.t3} !important; }
-        hr { border-color: ${C.border} !important; }
-        img { max-width: 100% !important; border-radius: 8px !important; }
-        ul, ol { color: ${C.t2} !important; }
-        strong, b { color: ${C.t1} !important; }
-        * { border-color: ${C.border} !important; }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: ${C.accent}33; border-radius: 4px; }
-      </style>`;
-      const baseUrl = new URL(url);
-      const baseTag = `<base href="${baseUrl.origin}${baseUrl.pathname.replace(/[^/]*$/, "")}" />`;
-      const injected = html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}${css}`);
-      const blob = new Blob([injected], { type: "text/html" });
-      setBlobUrl(URL.createObjectURL(blob));
-    }).catch(() => setBlobUrl(url));
-    return () => { cancelled = true; if (blobUrl) URL.revokeObjectURL(blobUrl); };
-  }, [url, theme]);
-  if (!blobUrl) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 24, height: 24, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} /></div>;
-  return <iframe ref={ref} src={blobUrl} title={title} scrolling="yes" style={{ flex: 1, width: "100%", border: "none", display: "block", overflow: "auto" }} sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads" />;
-}
 
 /* ═══════════════════════════════════════════════════════════════════ */
 export default function App() {
@@ -5637,7 +5592,7 @@ Instructions:
               {/* Brief cards — shown when no brief is active */}
               {!briefView && <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
-                  <div key={b.id} onClick={() => setBriefView(b.id)} style={{
+                  <div key={b.id} onClick={() => window.open(b.url, "_blank")} style={{
                     background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
                     padding: isDesktop ? "28px 24px" : "20px 18px",
                     cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
@@ -5657,8 +5612,8 @@ Instructions:
                         <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{b.title}</div>
                         <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{b.desc}</div>
                       </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
-                        <polyline points="9 18 15 12 9 6" />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
                       </svg>
                     </div>
                   </div>
@@ -8373,45 +8328,6 @@ Instructions:
 
       </div>
       </div>
-
-      {/* BRIEF FULL-SCREEN OVERLAY */}
-      {briefView && (() => {
-        const BRIEFS = [
-          { id: "morning", title: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706" },
-          { id: "commentary", title: "Market Commentary", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A" },
-          { id: "report", title: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5" },
-          { id: "quarterly", title: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED" },
-        ];
-        const active = BRIEFS.find(b => b.id === briefView);
-        if (!active) return null;
-        return (
-          <div style={{
-            position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
-            display: "flex", flexDirection: "column",
-            paddingTop: "env(safe-area-inset-top, 0px)",
-          }}>
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
-            }}>
-              <button onClick={() => setBriefView(null)} style={{
-                background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                Back
-              </button>
-              <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{active.title}</span>
-              <button onClick={() => window.open(active.url, "_blank")} style={{
-                background: "none", border: `1px solid ${C.border}`, borderRadius: 8,
-                padding: "5px 12px", color: C.t3, fontSize: 11, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit",
-              }}>Open ↗</button>
-            </div>
-            <BriefIframe key={active.id + theme} url={active.url} title={active.title} theme={theme} C={C} />
-          </div>
-        );
-      })()}
 
       {/* SCREENER FULL-PAGE OVERLAY */}
       {tab === "screener" && (
