@@ -100,13 +100,13 @@ function getMarketStatus() {
 }
 
 const DARK = {
-  bg: "#0B0820", surface: "#141033", card: "#1C1840", cardHover: "#241F4F", elevated: "#2B2560",
+  bg: "#0B0B0F", surface: "#18181C", card: "#1F1F24", cardHover: "#28282E", elevated: "#313138",
   border: "rgba(252,212,50,0.10)", borderHover: "rgba(252,212,50,0.20)", borderActive: "rgba(252,212,50,0.35)",
   t1: "#F0EAD8", t2: "#B5AB95", t3: "#7E7560", t4: "#4A4338",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
   accent: "#FCD432", accentSoft: "rgba(252,212,50,0.10)", accentGlow: "rgba(252,212,50,0.28)",
-  nav: "#141033", navText: "#F0EAD8", navTextDim: "#B5AB95", navTextMuted: "#7E7560",
+  nav: "#18181C", navText: "#F0EAD8", navTextDim: "#B5AB95", navTextMuted: "#7E7560",
   navBorder: "rgba(252,212,50,0.10)", navAccentSoft: "rgba(252,212,50,0.12)",
   shadow: "0 2px 8px rgba(0,0,0,0.3)",
 };
@@ -3490,7 +3490,7 @@ Instructions:
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: theme !== "light" ? "rgba(11,8,32,0.88)" : "rgba(234,233,226,0.94)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme !== "light" ? "rgba(11,11,15,0.88)" : "rgba(234,233,226,0.94)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -9057,7 +9057,7 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: theme !== "light" ? "rgba(20,16,51,0.92)" : "rgba(242,241,235,0.94)",
+        background: theme !== "light" ? "rgba(24,24,28,0.92)" : "rgba(242,241,235,0.94)",
         backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
         borderTop: `2px solid ${C.accent}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
@@ -9182,10 +9182,10 @@ function GS({ theme }) {
       input::placeholder { color: ${isDark ? "#4A4338" : "#9E9AAE"} !important; }
       input:focus { border-color: rgba(${isDark ? "252,212,50" : "25,22,53"},0.30) !important; }
       ::-webkit-scrollbar { width: 10px; height: 8px; }
-      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
+      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(40,40,46,0.5)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
       ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
       ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
-      body { background: ${isDark ? "#0B0820" : "#EAE9E2"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(20,16,48,0.3)" : "rgba(25,22,53,0.06)"}; }
+      body { background: ${isDark ? "#0B0B0F" : "#EAE9E2"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(40,40,46,0.5)" : "rgba(25,22,53,0.06)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
