@@ -996,7 +996,8 @@ Instructions:
   const oppFetched = useRef(false);
   const [oppLedger, setOppLedger] = useState([]);
   const [oppSignals, setOppSignals] = useState(null);
-  const [oppView, setOppView] = useState("opportunities"); // "opportunities" | "ledger" | "signals"
+  const [oppStalking, setOppStalking] = useState([]);
+  const [oppView, setOppView] = useState("opportunities"); // "opportunities" | "ledger" | "signals" | "stalking"
 
   // Open stock profile with specific tab
   const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
@@ -2587,13 +2588,16 @@ Instructions:
     fetch(`${import.meta.env.BASE_URL}opportunities/manifest.json${cb}`).then(r => r.ok ? r.json() : []).catch(() => [])
       .then(ids => Promise.all(ids.map(id => fetch(`${import.meta.env.BASE_URL}opportunities/${id}.json${cb}`).then(r => r.ok ? r.json() : null).catch(() => null))))
       .then(results => setOpportunities(results.filter(Boolean).sort((a, b) => {
-        if (a.conviction === "High" && b.conviction !== "High") return -1;
-        if (b.conviction === "High" && a.conviction !== "High") return 1;
+        const rank = (c) => c === "High Conviction" ? 0 : c === "On Our Radar" ? 1 : 2;
+        const dr = rank(a.conviction) - rank(b.conviction);
+        if (dr !== 0) return dr;
         return (b.date_identified || "").localeCompare(a.date_identified || "");
       })));
     // Optional sibling files — gracefully degrade if missing
     fetch(`${import.meta.env.BASE_URL}opportunities/ledger.json${cb}`).then(r => r.ok ? r.json() : []).catch(() => [])
       .then(rows => setOppLedger(Array.isArray(rows) ? rows.sort((a, b) => (b.closed || "").localeCompare(a.closed || "")) : []));
+    fetch(`${import.meta.env.BASE_URL}opportunities/stalking.json${cb}`).then(r => r.ok ? r.json() : []).catch(() => [])
+      .then(rows => setOppStalking(Array.isArray(rows) ? rows.sort((a, b) => (b.added || "").localeCompare(a.added || "")) : []));
     fetch(`${import.meta.env.BASE_URL}opportunities/signals.json${cb}`).then(r => r.ok ? r.json() : null).catch(() => null)
       .then(s => setOppSignals(s));
   }, [tab, tDrawer]);
@@ -3006,7 +3010,7 @@ Instructions:
                   <div key={opp.id} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                       <div style={{ fontSize: 14, fontWeight: 800, color: C.t1 }}>{opp.title}</div>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB", whiteSpace: "nowrap" }}>{opp.conviction}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: opp.conviction === "High Conviction" ? C.upSoft : opp.conviction === "On Our Radar" ? "#2563EB20" : C.t4 + "20", color: opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? "#2563EB" : C.t3, whiteSpace: "nowrap" }}>{opp.conviction}</span>
                     </div>
                     <div style={{ fontSize: 11, color: C.t3, marginBottom: 6 }}>{opp.pattern} · {opp.timeframe}</div>
                     <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginBottom: 8 }}>{opp.catalyst}</div>
@@ -7384,6 +7388,7 @@ Instructions:
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
                 {[
                   { v: "opportunities", l: `Opportunities${opportunities.length ? ` (${opportunities.length})` : ""}` },
+                  { v: "stalking", l: `Stalking${oppStalking.length ? ` (${oppStalking.length})` : ""}` },
                   { v: "ledger", l: `Ledger${oppLedger.length ? ` (${oppLedger.length})` : ""}` },
                   { v: "signals", l: "Signals" },
                 ].map(({ v, l }) => (
@@ -7408,7 +7413,7 @@ Instructions:
                     <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                       {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: opp.conviction === "High Conviction" ? C.up : "#2563EB" }}>{opp.conviction}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : opp.conviction === "On Our Radar" ? "#2563EB20" : C.t4 + "20", color: opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? "#2563EB" : C.t3 }}>{opp.conviction}</span>
                     </div>
                     {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
@@ -7421,6 +7426,44 @@ Instructions:
                   </div>
                 ))
               )}
+
+              {oppView === "stalking" && (() => {
+                if (!oppStalking.length) return (
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, textAlign: "center" }}>
+                    <div style={{ fontSize: 14, color: C.t3, marginBottom: 8 }}>Nothing on the stalking list yet.</div>
+                    <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.6 }}>The routine populates <code>opportunities/stalking.json</code> with ideas that have a credible catalyst and source but don't yet meet the On Our Radar bar. Useful as a watchlist before promoting to active.</div>
+                  </div>
+                );
+                return (
+                  <>
+                    <div style={{ fontSize: 11, color: C.t4, marginBottom: 12, lineHeight: 1.5 }}>Ideas the routine is watching but hasn't filed yet. Each needs a catalyst, thesis, and at least one source — no trade construction required. Re-evaluated daily; can graduate to On Our Radar or High Conviction when more evidence accumulates.</div>
+                    {oppStalking.map((s, i) => (
+                      <div key={s.id || i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.title || s.id}</div>
+                            {s.added && <div style={{ fontSize: 11, color: C.t4, marginTop: 4 }}>Added {s.added}</div>}
+                          </div>
+                          {s.tickers?.length > 0 && (
+                            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                              {s.tickers.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 12, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                            </div>
+                          )}
+                        </div>
+                        {s.catalyst && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginTop: 6 }}><strong>Catalyst:</strong> {s.catalyst}</div>}
+                        {s.thesis && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginTop: 4 }}><strong>Thesis:</strong> {s.thesis}</div>}
+                        {s.what_would_promote && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginTop: 6, padding: "8px 10px", background: C.bg, borderRadius: 8 }}><strong>What would promote:</strong> {s.what_would_promote}</div>}
+                        {s.checks_remaining && <div style={{ fontSize: 11, color: C.t4, lineHeight: 1.5, marginTop: 4 }}><strong>Checks remaining:</strong> {s.checks_remaining}</div>}
+                        {s.source && (
+                          <div style={{ fontSize: 11, color: C.t4, marginTop: 6 }}>
+                            Source: {s.source.url ? <a href={s.source.url} target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>{s.source.title || s.source.url}</a> : (s.source.title || JSON.stringify(s.source))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                );
+              })()}
 
               {oppView === "ledger" && (() => {
                 if (!oppLedger.length) return (
@@ -7575,7 +7618,7 @@ Instructions:
                   <div style={{ fontSize: isDesktop ? 28 : 24, fontWeight: 800, color: C.t1, lineHeight: 1.2, marginBottom: 12 }}>{oppDetail.title}</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
                     {oppDetail.pattern && <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{oppDetail.pattern}</span>}
-                    <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: oppDetail.conviction === "High Conviction" ? C.upSoft : "#2563EB20", color: oppDetail.conviction === "High Conviction" ? C.up : "#2563EB" }}>{oppDetail.conviction}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 14px", borderRadius: 20, background: oppDetail.conviction === "High Conviction" ? C.upSoft : oppDetail.conviction === "On Our Radar" ? "#2563EB20" : C.t4 + "20", color: oppDetail.conviction === "High Conviction" ? C.up : oppDetail.conviction === "On Our Radar" ? "#2563EB" : C.t3 }}>{oppDetail.conviction}</span>
                     {oppDetail.status && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.status}</span>}
                     {oppDetail.timeframe && <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 14px", borderRadius: 20, background: C.surface, border: `1px solid ${C.border}`, color: C.t3 }}>{oppDetail.timeframe}</span>}
                   </div>
