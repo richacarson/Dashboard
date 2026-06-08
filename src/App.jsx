@@ -911,7 +911,6 @@ Instructions:
   const lastUpRef = useRef(null);
   const [tab, setTab] = useState("home");
   const [moreMenu, setMoreMenu] = useState(false);
-  const [briefView, setBriefView] = useState(null); // null = picker, "morning" | "commentary" | "report"
   const [researchReports, setResearchReports] = useState([]);
   const [researchView, setResearchView] = useState(null); // null = list, or report id
   const [researchContent, setResearchContent] = useState("");
@@ -5787,33 +5786,14 @@ Instructions:
             { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5" },
             { id: "quarterly", title: "Quarterly Changes", icon: "📋", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED" },
           ];
-          const active = BRIEFS.find(b => b.id === briefView);
 
           return (
-            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, display: "flex", flexDirection: "column", height: briefView ? "calc(100dvh - 140px)" : "auto" }}>
-              {!isDesktop && !briefView && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
+            <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
+              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
 
-              {/* Back button when viewing a brief */}
-              {briefView && (
-                <div style={{ display: "flex", gap: 6, marginBottom: 0, flexShrink: 0, paddingBottom: 4 }}>
-                  <button onClick={() => setBriefView(null)} style={{
-                    flex: "0 0 auto", padding: "10px 16px", borderRadius: 12,
-                    border: `1px solid ${C.border}`,
-                    background: C.card,
-                    cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8,
-                    transition: "all 0.2s",
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: C.t3 }}>Back</span>
-                  </button>
-                  <span style={{ padding: "10px 16px", fontSize: 13, fontWeight: 700, color: C.t1, display: "flex", alignItems: "center" }}>{active?.title}</span>
-                </div>
-              )}
-
-              {/* Brief cards — shown when no brief is active */}
-              {!briefView && <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
+              <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
-                  <div key={b.id} onClick={() => setBriefView(b.id)} style={{
+                  <div key={b.id} onClick={() => window.open(b.url, "_blank", "noopener,noreferrer")} style={{
                     background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
                     padding: isDesktop ? "28px 24px" : "20px 18px",
                     cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
@@ -5833,13 +5813,13 @@ Instructions:
                         <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{b.title}</div>
                         <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{b.desc}</div>
                       </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 4 }}>
-                        <polyline points="9 18 15 12 9 6" />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 6 }}>
+                        <path d="M7 17L17 7M17 7H7M17 7v10" />
                       </svg>
                     </div>
                   </div>
                 ))}
-              </div>}
+              </div>
             </div>
           );
         })()}
@@ -8946,51 +8926,6 @@ Instructions:
       </div>
       </div>
 
-      {/* BRIEF FULL-SCREEN OVERLAY */}
-      {briefView && (() => {
-        const BRIEFS = [
-          { id: "morning", title: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706" },
-          { id: "commentary", title: "Market Commentary", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A" },
-          { id: "report", title: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5" },
-          { id: "quarterly", title: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED" },
-        ];
-        const active = BRIEFS.find(b => b.id === briefView);
-        if (!active) return null;
-        return (
-          <div style={{
-            position: "fixed", inset: 0, zIndex: 9999, background: C.bg,
-            display: "flex", flexDirection: "column",
-            paddingTop: "env(safe-area-inset-top, 0px)",
-          }}>
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 16px", borderBottom: `1px solid ${C.border}`, flexShrink: 0,
-            }}>
-              <button onClick={() => setBriefView(null)} style={{
-                background: "none", border: "none", color: C.t1, fontSize: 15, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6,
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.t1} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                Back
-              </button>
-              <span style={{ fontSize: 15, fontWeight: 700, color: C.t1 }}>{active.title}</span>
-              <button onClick={() => window.open(active.url, "_blank")} style={{
-                background: "none", border: `1px solid ${C.border}`, borderRadius: 8,
-                padding: "5px 12px", color: C.t3, fontSize: 11, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit",
-              }}>Open ↗</button>
-            </div>
-            <iframe
-              key={active.id}
-              src={active.url}
-              title={active.title}
-              scrolling="yes"
-              style={{ flex: 1, width: "100%", border: "none", display: "block", overflow: "auto" }}
-              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-downloads"
-            />
-          </div>
-        );
-      })()}
 
 
       {/* ARTICLE READER OVERLAY */}
