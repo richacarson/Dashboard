@@ -2812,7 +2812,7 @@ Instructions:
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 26, flexShrink: 0, position: "relative",
               }}>
-                {SLEEVE_ICON_SVGS[k] ? SLEEVE_ICON_SVGS[k](C.accent, 32) : sleeve.icon}
+                {SLEEVE_ICON_SVGS[k] ? SLEEVE_ICON_SVGS[k](C.t1, 32) : sleeve.icon}
                 {editMode && <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></div>}
               </div>
             )}
