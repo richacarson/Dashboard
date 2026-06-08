@@ -256,7 +256,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "-60.3",
-    "forecast": "-55.5",
+    "forecast": "-56.4",
     "unit": "$"
   },
   {
@@ -286,7 +286,7 @@
     "impact": "High",
     "actual": "",
     "previous": "4.02",
-    "forecast": "4.05",
+    "forecast": "4.06",
     "unit": ""
   },
   {
@@ -406,7 +406,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "215",
-    "forecast": "",
+    "forecast": "-270",
     "unit": "$"
   },
   {
@@ -426,7 +426,7 @@
     "impact": "Medium",
     "actual": "",
     "previous": "225",
-    "forecast": "225",
+    "forecast": "219",
     "unit": ""
   },
   {
@@ -436,7 +436,7 @@
     "impact": "High",
     "actual": "",
     "previous": "1.4",
-    "forecast": "0.8",
+    "forecast": "0.7",
     "unit": "%"
   },
   {
