@@ -100,26 +100,26 @@ function getMarketStatus() {
 }
 
 const DARK = {
-  bg: "#0B0B0F", surface: "#18181C", card: "#1F1F24", cardHover: "#28282E", elevated: "#313138",
-  border: "rgba(252,212,50,0.10)", borderHover: "rgba(252,212,50,0.20)", borderActive: "rgba(252,212,50,0.35)",
-  t1: "#F0EAD8", t2: "#B5AB95", t3: "#7E7560", t4: "#4A4338",
+  bg: "#171738", surface: "#1F1F45", card: "#252551", cardHover: "#2F2F5F", elevated: "#38386B",
+  border: "rgba(201,168,76,0.12)", borderHover: "rgba(201,168,76,0.24)", borderActive: "rgba(201,168,76,0.40)",
+  t1: "#FAF7F2", t2: "#F4EFE4", t3: "#B8B4AC", t4: "#8B7355",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
-  accent: "#FCD432", accentSoft: "rgba(252,212,50,0.10)", accentGlow: "rgba(252,212,50,0.28)",
-  nav: "#18181C", navText: "#F0EAD8", navTextDim: "#B5AB95", navTextMuted: "#7E7560",
-  navBorder: "rgba(252,212,50,0.10)", navAccentSoft: "rgba(252,212,50,0.12)",
-  shadow: "0 2px 8px rgba(0,0,0,0.3)",
+  accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.12)", accentGlow: "rgba(201,168,76,0.30)",
+  nav: "#1C1713", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
+  navBorder: "rgba(201,168,76,0.12)", navAccentSoft: "rgba(201,168,76,0.14)",
+  shadow: "0 2px 8px rgba(23,23,56,0.35)",
 };
 const LIGHT = {
-  bg: "#EAE9E2", surface: "#F2F1EB", card: "#F2F1EB", cardHover: "#E6E5DE", elevated: "#F2F1EB",
-  border: "rgba(25,22,53,0.12)", borderHover: "rgba(25,22,53,0.22)", borderActive: "rgba(25,22,53,0.40)",
-  t1: "#191635", t2: "#3D3859", t3: "#6E6A82", t4: "#9E9AAE",
+  bg: "#F4EFE4", surface: "#FAF7F2", card: "#FAF7F2", cardHover: "#EBE6DA", elevated: "#FAF7F2",
+  border: "rgba(139,115,85,0.18)", borderHover: "rgba(139,115,85,0.30)", borderActive: "rgba(139,115,85,0.50)",
+  t1: "#171738", t2: "#1C1713", t3: "#8B7355", t4: "#B8B4AC",
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
   dn: "#DC2626", dnSoft: "#DC262618", dnGlow: "#DC262630",
-  accent: "#C9A015", accentSoft: "rgba(201,160,21,0.10)", accentGlow: "rgba(201,160,21,0.22)",
-  nav: "#191635", navText: "#F4F4F0", navTextDim: "#A8A3BD", navTextMuted: "#6E6A82",
-  navBorder: "rgba(244,244,240,0.10)", navAccentSoft: "rgba(252,212,50,0.18)",
-  shadow: "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
+  accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.12)", accentGlow: "rgba(201,168,76,0.24)",
+  nav: "#171738", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
+  navBorder: "rgba(250,247,242,0.10)", navAccentSoft: "rgba(201,168,76,0.18)",
+  shadow: "0 1px 3px rgba(23,23,56,0.08), 0 1px 2px rgba(23,23,56,0.04)",
 };
 const TERMINAL = {
   bg: "#08051A", surface: "#100D2B", card: "#1A1640", cardHover: "#221E4F", elevated: "#2A2660",
@@ -2632,14 +2632,14 @@ Instructions:
 
     return (
       <div style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, paddingTop: "env(safe-area-inset-top, 24px)", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(252,212,50,0.08) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%, -50%)", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.10) 0%, transparent 70%)", pointerEvents: "none", filter: "blur(60px)" }} />
         <div style={{ width: "100%", maxWidth: 380, textAlign: "center", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Logo from public folder */}
           <img src={theme !== "light" ? "paradiem-logo-dark.png?v=6" : "paradiem-logo.png?v=6"} alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 28px", display: "block" }} />
           <p style={{ fontSize: 15, color: C.t3, marginBottom: 40, lineHeight: 1.5, fontStyle: "italic", letterSpacing: 0.2 }}>Research Reveals Opportunities</p>
           <div style={{ background: C.surface, borderRadius: 20, padding: 28, border: `1px solid ${codeFocused ? C.borderActive : C.border}`, boxShadow: "0 16px 64px rgba(0,0,0,0.3)", transition: "border-color 0.3s" }}>
             <input type="password" value={code} onChange={e => { setCode(e.target.value); setCodeErr(false); }} onKeyDown={e => { if (e.key === "Enter") handleUnlock(); }} onFocus={() => setCodeFocused(true)} onBlur={() => setCodeFocused(false)} placeholder="Access code" style={{ width: "100%", padding: "18px 20px", background: C.bg, border: `1px solid ${codeErr ? C.dn+"66" : C.border}`, borderRadius: 14, color: C.t1, fontSize: 16, outline: "none", boxSizing: "border-box", textAlign: "center", letterSpacing: 4, fontFamily: "inherit" }} />
-            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #FCD432, #C9A015)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(252,212,50,0.3)" }}>Continue</button>
+            <button onClick={handleUnlock} style={{ width: "100%", padding: 18, marginTop: 16, background: "linear-gradient(135deg, #C9A84C, #8B7355)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(201,168,76,0.3)" }}>Continue</button>
             {codeErr && <div style={{ marginTop: 16, color: C.dn, fontSize: 13, fontWeight: 500, animation: "shake 0.4s" }}>Incorrect access code</div>}
           </div>
           <div style={{ marginTop: 40, fontSize: 12, color: C.t4 }}>Authorized Paradiem team members only</div>
@@ -2675,7 +2675,7 @@ Instructions:
             <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="APCA-API-SECRET-KEY" style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 20, fontFamily: "inherit" }} />
             <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>GitHub Token <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional — for saving transactions)</span></label>
             <input type="password" value={ghToken} onChange={e => setGhToken(e.target.value)} placeholder="ghp_..." style={{ width: "100%", padding: "16px 18px", background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, color: C.t1, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: 28, fontFamily: "inherit" }} />
-            <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #FCD432, #C9A015)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(252,212,50,0.3)" }}>Connect</button>
+            <button onClick={auth} style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #C9A84C, #8B7355)", border: "none", borderRadius: 14, color: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(201,168,76,0.3)" }}>Connect</button>
             {authErr && <div style={{ marginTop: 14, color: C.dn, fontSize: 13, fontWeight: 500, textAlign: "center" }}>{authErr}</div>}
           </div>
         </div>
@@ -3493,7 +3493,7 @@ Instructions:
         padding: "12px 18px", paddingTop: "calc(env(safe-area-inset-top, 12px) + 12px)",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         borderBottom: `1px solid ${C.border}`,
-        background: theme !== "light" ? "rgba(11,11,15,0.88)" : "rgba(234,233,226,0.94)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
+        background: theme !== "light" ? "rgba(23,23,56,0.88)" : "rgba(244,239,228,0.94)", backdropFilter: "blur(24px) saturate(1.2)", WebkitBackdropFilter: "blur(24px) saturate(1.2)",
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -9035,7 +9035,7 @@ Instructions:
       {!isDesktop && (
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-        background: theme !== "light" ? "rgba(24,24,28,0.92)" : "rgba(242,241,235,0.94)",
+        background: theme !== "light" ? "rgba(31,31,69,0.92)" : "rgba(250,247,242,0.94)",
         backdropFilter: "blur(28px) saturate(1.4)", WebkitBackdropFilter: "blur(28px) saturate(1.4)",
         borderTop: `2px solid ${C.accent}`, display: "flex", justifyContent: "space-around",
         padding: "6px 0", paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 6px)",
@@ -9160,10 +9160,10 @@ function GS({ theme }) {
       input::placeholder { color: ${isDark ? "#4A4338" : "#9E9AAE"} !important; }
       input:focus { border-color: rgba(${isDark ? "252,212,50" : "25,22,53"},0.30) !important; }
       ::-webkit-scrollbar { width: 10px; height: 8px; }
-      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(40,40,46,0.5)" : "rgba(25,22,53,0.06)"}; border-radius: 10px; }
-      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
-      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "252,212,50,0.50" : "25,22,53,0.40"}); }
-      body { background: ${isDark ? "#0B0B0F" : "#EAE9E2"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "252,212,50,0.30" : "25,22,53,0.25"}) ${isDark ? "rgba(40,40,46,0.5)" : "rgba(25,22,53,0.06)"}; }
+      ::-webkit-scrollbar-track { background: ${isDark ? "rgba(31,31,69,0.5)" : "rgba(139,115,85,0.10)"}; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb { background: rgba(${isDark ? "201,168,76,0.35" : "25,22,53,0.25"}); border-radius: 10px; min-height: 40px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(${isDark ? "201,168,76,0.55" : "25,22,53,0.40"}); }
+      body { background: ${isDark ? "#171738" : "#F4EFE4"}; overscroll-behavior-x: none; scrollbar-width: auto; scrollbar-color: rgba(${isDark ? "201,168,76,0.35" : "25,22,53,0.25"}) ${isDark ? "rgba(31,31,69,0.5)" : "rgba(139,115,85,0.10)"}; }
       #root { user-select: none; -webkit-user-select: none; }
       input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
       .ticker-row { transition: transform 0.15s cubic-bezier(0.16,1,0.3,1), opacity 0.15s; }
