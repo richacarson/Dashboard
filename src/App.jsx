@@ -2805,13 +2805,14 @@ Instructions:
               </div>
             ) : (
               <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
-                width: 56, height: 56, borderRadius: 14, marginRight: 16,
-                background: SLEEVE_ICON_SVGS[k] ? "rgba(201,168,76,0.22)" : C.card,
-                border: `1px solid ${editMode ? C.borderActive : (SLEEVE_ICON_SVGS[k] ? "rgba(201,168,76,0.30)" : C.border)}`,
+                width: SLEEVE_ICON_SVGS[k] ? 40 : 56, height: SLEEVE_ICON_SVGS[k] ? 40 : 56,
+                borderRadius: 14, marginRight: SLEEVE_ICON_SVGS[k] ? 18 : 16,
+                background: SLEEVE_ICON_SVGS[k] ? "transparent" : C.card,
+                border: SLEEVE_ICON_SVGS[k] ? "none" : `1px solid ${editMode ? C.borderActive : C.border}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 26, flexShrink: 0, position: "relative",
               }}>
-                {SLEEVE_ICON_SVGS[k] ? SLEEVE_ICON_SVGS[k](C.accent, 26) : sleeve.icon}
+                {SLEEVE_ICON_SVGS[k] ? SLEEVE_ICON_SVGS[k](C.accent, 32) : sleeve.icon}
                 {editMode && <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></div>}
               </div>
             )}
