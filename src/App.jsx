@@ -5780,16 +5780,26 @@ Instructions:
 
         {/* ━━━ BRIEFS ━━━ */}
         {tab === "briefs" && (() => {
+          const iconProps = (color) => ({ width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" });
           const BRIEFS = [
-            { id: "morning", title: "Morning Brief", icon: "☀️", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706" },
-            { id: "commentary", title: "Market Commentary", icon: "📊", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A" },
-            { id: "report", title: "The Rich Report", icon: "📰", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5" },
-            { id: "quarterly", title: "Quarterly Changes", icon: "📋", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED" },
+            { id: "morning", title: "Morning Brief", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706",
+              icon: (c) => (<svg {...iconProps(c)}><circle cx="12" cy="14" r="4" /><line x1="12" y1="6" x2="12" y2="3" /><line x1="5" y1="14" x2="2" y2="14" /><line x1="22" y1="14" x2="19" y2="14" /><line x1="6.34" y1="8.34" x2="4.22" y2="6.22" /><line x1="17.66" y1="8.34" x2="19.78" y2="6.22" /><line x1="2" y1="20" x2="22" y2="20" /></svg>) },
+            { id: "commentary", title: "Market Commentary", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A",
+              icon: (c) => (<svg {...iconProps(c)}><line x1="3" y1="20" x2="21" y2="20" /><rect x="5" y="12" width="3" height="6" rx="0.5" /><rect x="10.5" y="8" width="3" height="10" rx="0.5" /><rect x="16" y="4" width="3" height="14" rx="0.5" /></svg>) },
+            { id: "report", title: "The Rich Report", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5",
+              icon: (c) => (<svg {...iconProps(c)}><path d="M4 4h12a2 2 0 0 1 2 2v13a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4z" /><line x1="7" y1="8" x2="15" y2="8" /><line x1="7" y1="12" x2="15" y2="12" /><line x1="7" y1="16" x2="12" y2="16" /></svg>) },
+            { id: "quarterly", title: "Quarterly Changes", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED",
+              icon: (c) => (<svg {...iconProps(c)}><rect x="6" y="4" width="12" height="17" rx="2" /><path d="M9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2h-6V4z" /><line x1="9" y1="11" x2="15" y2="11" /><line x1="9" y1="15" x2="13" y2="15" /></svg>) },
           ];
 
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Briefs</div>}
+              {!isDesktop && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 1.6, marginBottom: 6 }}>Daily Reading</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Briefs</div>
+                </div>
+              )}
 
               <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
@@ -5805,10 +5815,10 @@ Instructions:
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${b.color}, ${b.color}44)` }} />
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
                       <div style={{
-                        width: 48, height: 48, borderRadius: 14,
+                        width: 44, height: 44, borderRadius: 12,
                         background: b.color + "15", display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 24, flexShrink: 0,
-                      }}>{b.icon}</div>
+                        flexShrink: 0,
+                      }}>{b.icon(b.color)}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{b.title}</div>
                         <div style={{ fontSize: 12, color: C.t4, lineHeight: 1.4 }}>{b.desc}</div>
@@ -5831,7 +5841,12 @@ Instructions:
 
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-              {!isDesktop && !researchView && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Research</div>}
+              {!isDesktop && !researchView && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 1.6, marginBottom: 6 }}>Deep Dives</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Research</div>
+                </div>
+              )}
 
               {researchView ? (
                 <div>
@@ -6154,7 +6169,12 @@ Instructions:
 
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
-              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 16 }}>Playbook</div>}
+              {!isDesktop && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 1.6, marginBottom: 6 }}>Strategy</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Playbook</div>
+                </div>
+              )}
 
               {/* Sub-nav */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
@@ -6982,7 +7002,12 @@ Instructions:
         {tab === "screener" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!screenerDetail ? (<>
-              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Stock Screener</div>}
+              {!isDesktop && (
+                <div style={{ marginBottom: 4 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 1.6, marginBottom: 6 }}>Analysis</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Stock Screener</div>
+                </div>
+              )}
               {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Stock Screener</div>}
               <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>{screenerData.length} stocks screened across the Paradiem framework</div>
               {/* Sleeve sub-tabs */}
@@ -7361,7 +7386,12 @@ Instructions:
         {tab === "opportunities" && (
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!oppDetail ? (<>
-              {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
+              {!isDesktop && (
+                <div style={{ marginBottom: 4 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: 1.6, marginBottom: 6 }}>Ideas</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Opportunity Finder</div>
+                </div>
+              )}
               {isDesktop && <div style={{ fontSize: 20, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Opportunity Finder</div>}
               <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Thematic investment ideas backed by research</div>
               {/* Sub-nav */}
