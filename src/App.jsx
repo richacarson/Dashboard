@@ -9,6 +9,27 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "
    - WebSocket real-time streaming
    ═══════════════════════════════════════════════════════════════════ */
 
+const SLEEVE_ICON_SVGS = {
+  dividend: (color, size = 26) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5 1-2.5 2s1 1.5 2.5 2 2.5 1 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5" /><line x1="12" y1="6.5" x2="12" y2="8" /><line x1="12" y1="16" x2="12" y2="17.5" /></svg>
+  ),
+  growth: (color, size = 26) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 11 13 15 21 7" /><polyline points="15 7 21 7 21 13" /></svg>
+  ),
+  digital: (color, size = 26) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.5 7.5h4.25a2.5 2.5 0 0 1 0 5H9.5m0 0h4.75a2.5 2.5 0 0 1 0 5H9.5m0-10v10m1.5-12v2m0 10v2m2-14v2m0 10v2" /></svg>
+  ),
+  sectors: (color, size = 26) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+  ),
+  fci100: (color, size = 26) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h12v5a6 6 0 0 1-12 0V4z" /><path d="M6 6H3v2a3 3 0 0 0 3 3" /><path d="M18 6h3v2a3 3 0 0 1-3 3" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="15" x2="12" y2="20" /></svg>
+  ),
+  fciValues: (color, size = 26) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3h4v6h6v4h-6v8h-4v-8H4v-4h6V3z" /></svg>
+  ),
+};
+
 const DEFAULT_SLEEVES = {
   dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","DVN","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
   growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST"], icon: "🚀" },
@@ -2785,11 +2806,12 @@ Instructions:
             ) : (
               <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
                 width: 56, height: 56, borderRadius: 14, marginRight: 16,
-                background: C.card, border: `1px solid ${editMode ? C.borderActive : C.border}`,
+                background: SLEEVE_ICON_SVGS[k] ? C.accentSoft : C.card,
+                border: `1px solid ${editMode ? C.borderActive : C.border}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 26, flexShrink: 0, position: "relative",
               }}>
-                {sleeve.icon}
+                {SLEEVE_ICON_SVGS[k] ? SLEEVE_ICON_SVGS[k](C.accent, 26) : sleeve.icon}
                 {editMode && <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></div>}
               </div>
             )}
