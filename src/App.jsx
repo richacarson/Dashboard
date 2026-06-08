@@ -106,7 +106,7 @@ const DARK = {
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
   accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.12)", accentGlow: "rgba(201,168,76,0.30)",
-  nav: "#1C1713", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
+  nav: "#171738", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
   navBorder: "rgba(201,168,76,0.12)", navAccentSoft: "rgba(201,168,76,0.14)",
   shadow: "0 2px 8px rgba(23,23,56,0.35)",
 };
