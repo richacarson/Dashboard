@@ -2806,8 +2806,8 @@ Instructions:
             ) : (
               <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
                 width: 56, height: 56, borderRadius: 14, marginRight: 16,
-                background: SLEEVE_ICON_SVGS[k] ? C.accentSoft : C.card,
-                border: `1px solid ${editMode ? C.borderActive : C.border}`,
+                background: SLEEVE_ICON_SVGS[k] ? "rgba(201,168,76,0.22)" : C.card,
+                border: `1px solid ${editMode ? C.borderActive : (SLEEVE_ICON_SVGS[k] ? "rgba(201,168,76,0.30)" : C.border)}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 26, flexShrink: 0, position: "relative",
               }}>
