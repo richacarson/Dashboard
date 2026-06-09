@@ -1403,6 +1403,14 @@ Instructions:
     } catch {}
   }, [apiKey, apiSecret, hdrs]);
 
+  /* ── Drive fetchIntraday: on mount + when API keys / universe change + every 60s ── */
+  useEffect(() => {
+    if (!apiKey || !apiSecret) return;
+    fetchIntraday();
+    const id = setInterval(fetchIntraday, 60000);
+    return () => clearInterval(id);
+  }, [apiKey, apiSecret, fetchIntraday]);
+
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
     if (!apiKey || !apiSecret) return;
@@ -2825,6 +2833,9 @@ Instructions:
               <div style={{ marginRight: 16, flexShrink: 0 }}>
                 <Sparkline points={sleevePoints} chg={avgChg} width={84} height={36} />
               </div>
+            ) : SLEEVE_ICON_SVGS[k] && !editMode ? (
+              // Built-in sleeve, intraday not loaded yet → empty placeholder so layout doesn't jump
+              <div style={{ width: 84, height: 36, marginRight: 16, flexShrink: 0 }} />
             ) : (
               <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
                 width: 56, height: 56, borderRadius: 14, marginRight: 16,
