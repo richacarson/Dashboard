@@ -2766,7 +2766,7 @@ Instructions:
     return (
       <div>
         {/* Sleeve header row */}
-        <div style={{ display: "flex", alignItems: "center", padding: "18px 0", userSelect: "none", WebkitUserSelect: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", padding: "14px 0", userSelect: "none", WebkitUserSelect: "none" }}>
           {/* Edit mode: delete list button */}
           {editMode && (
             <div onClick={() => { if (confirm(`Delete "${sleeve.name}"?`)) removeList(k); }} style={{ width: 28, height: 28, borderRadius: 14, background: C.dn + "22", border: `1px solid ${C.dn}44`, display: "flex", alignItems: "center", justifyContent: "center", marginRight: 10, cursor: "pointer", flexShrink: 0 }}>
@@ -2783,22 +2783,21 @@ Instructions:
               </div>
             )}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 17, fontWeight: 700, color: C.t1 }}>{sleeve.name}</div>
-              <div style={{ fontSize: 13, color: C.t4, marginTop: 2 }}>{sleeve.symbols.length} items</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, letterSpacing: -0.1 }}>{sleeve.name}</div>
+              <div style={{ fontSize: 12, color: C.t4, marginTop: 2 }}>{sleeve.symbols.length} items</div>
             </div>
           </div>
           {/* Right side: avg change + chevron */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {avgChg != null && (
               <span data-sleeve-chg={k} style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: avgChg >= 0 ? C.up : C.dn, display: "inline-block", minWidth: 70, textAlign: "right" }}>{pct(avgChg)}</span>
             )}
             <div onClick={() => toggleSleeve(k)} style={{
-              width: 40, height: 40, borderRadius: 20, border: `1px solid ${C.border}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-              cursor: "pointer",
+              cursor: "pointer", padding: 6,
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </div>
           </div>
         </div>
