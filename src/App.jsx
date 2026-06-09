@@ -3960,15 +3960,9 @@ Instructions:
             <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 380px" : undefined, gap: isDesktop ? 32 : 0, marginTop: isDesktop ? 8 : 0 }}>
               {/* Left column: Lists */}
               <div>
-            {/* Lists header with edit toggle */}
+            {/* Lists header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "24px 0 8px" }}>
               <div style={{ fontSize: 24, fontWeight: 800, color: C.t1 }}>Lists</div>
-              <button onClick={() => setEditMode(!editMode)} style={{
-                padding: "6px 14px", borderRadius: 8, border: `1px solid ${editMode ? C.borderActive : C.border}`,
-                background: editMode ? C.accentSoft : "transparent",
-                color: editMode ? C.t1 : C.t3, fontSize: 13, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit",
-              }}>{editMode ? "Done" : "Edit"}</button>
             </div>
 
             {/* Create watchlist button */}
