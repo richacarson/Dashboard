@@ -2782,6 +2782,24 @@ Instructions:
       const changes = sleeve.symbols.map(chg).filter(c => c !== null);
       avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
     }
+    // Aggregate intraday sparkline: equal-weighted normalized curve across constituents
+    const sleevePoints = (() => {
+      const curves = sleeve.symbols
+        .map(s => intradayRef.current[s] || intradayPts[s])
+        .filter(arr => Array.isArray(arr) && arr.length >= 2 && arr[0] > 0);
+      if (!curves.length) return null;
+      const minLen = Math.min(...curves.map(c => c.length));
+      if (minLen < 2) return null;
+      const norm = curves.map(c => c.slice(0, minLen).map(p => (p / c[0]) * 100));
+      const avg = new Array(minLen);
+      for (let i = 0; i < minLen; i++) {
+        let s = 0;
+        for (const c of norm) s += c[i];
+        avg[i] = s / norm.length;
+      }
+      return avg;
+    })();
+
     const isAddingTicker = addTickerFor === k;
 
     return (
@@ -2795,7 +2813,7 @@ Instructions:
             </div>
           )}
           <div onClick={() => toggleSleeve(k)} style={{ display: "flex", alignItems: "center", flex: 1, cursor: "pointer", userSelect: "none" }}>
-            {/* Icon — tappable in edit mode to change */}
+            {/* Icon / sparkline — tappable in edit mode to change emoji */}
             {editMode && editIconFor === k ? (
               <div style={{ marginRight: 16, display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                 <input type="text" value={iconInput} onChange={e => setIconInput(e.target.value)} autoFocus
@@ -2803,16 +2821,18 @@ Instructions:
                   placeholder="😀" style={{ width: 50, height: 50, padding: 0, background: C.card, border: `1px solid ${C.borderActive}`, borderRadius: 14, color: C.t1, fontSize: 26, textAlign: "center", outline: "none", fontFamily: "inherit" }} />
                 <button onClick={(e) => { e.stopPropagation(); updateIcon(k, iconInput); }} style={{ padding: "8px 10px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, color: C.t1, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Set</button>
               </div>
+            ) : sleevePoints && !editMode ? (
+              <div style={{ marginRight: 16, flexShrink: 0 }}>
+                <Sparkline points={sleevePoints} chg={avgChg} width={84} height={36} />
+              </div>
             ) : (
               <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
-                width: SLEEVE_ICON_SVGS[k] ? 40 : 56, height: SLEEVE_ICON_SVGS[k] ? 40 : 56,
-                borderRadius: 14, marginRight: SLEEVE_ICON_SVGS[k] ? 18 : 16,
-                background: SLEEVE_ICON_SVGS[k] ? "transparent" : C.card,
-                border: SLEEVE_ICON_SVGS[k] ? "none" : `1px solid ${editMode ? C.borderActive : C.border}`,
+                width: 56, height: 56, borderRadius: 14, marginRight: 16,
+                background: C.card, border: `1px solid ${editMode ? C.borderActive : C.border}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 26, flexShrink: 0, position: "relative",
               }}>
-                {SLEEVE_ICON_SVGS[k] ? SLEEVE_ICON_SVGS[k](C.t3, 32) : sleeve.icon}
+                {sleeve.icon}
                 {editMode && <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></div>}
               </div>
             )}
