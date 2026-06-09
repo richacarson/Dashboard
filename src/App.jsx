@@ -9,27 +9,6 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "
    - WebSocket real-time streaming
    ═══════════════════════════════════════════════════════════════════ */
 
-const SLEEVE_ICON_SVGS = {
-  dividend: (color, size = 26) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5 1-2.5 2s1 1.5 2.5 2 2.5 1 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5" /><line x1="12" y1="6.5" x2="12" y2="8" /><line x1="12" y1="16" x2="12" y2="17.5" /></svg>
-  ),
-  growth: (color, size = 26) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 11 13 15 21 7" /><polyline points="15 7 21 7 21 13" /></svg>
-  ),
-  digital: (color, size = 26) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M9.5 7.5h4.25a2.5 2.5 0 0 1 0 5H9.5m0 0h4.75a2.5 2.5 0 0 1 0 5H9.5m0-10v10m1.5-12v2m0 10v2m2-14v2m0 10v2" /></svg>
-  ),
-  sectors: (color, size = 26) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
-  ),
-  fci100: (color, size = 26) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h12v5a6 6 0 0 1-12 0V4z" /><path d="M6 6H3v2a3 3 0 0 0 3 3" /><path d="M18 6h3v2a3 3 0 0 1-3 3" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="15" x2="12" y2="20" /></svg>
-  ),
-  fciValues: (color, size = 26) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3h4v6h6v4h-6v8h-4v-8H4v-4h6V3z" /></svg>
-  ),
-};
-
 const DEFAULT_SLEEVES = {
   dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","DVN","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
   growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST"], icon: "🚀" },
@@ -1402,14 +1381,6 @@ Instructions:
       if (changed || Object.keys(prev).length === 0) setIntradayPts(pts);
     } catch {}
   }, [apiKey, apiSecret, hdrs]);
-
-  /* ── Drive fetchIntraday: on mount + when API keys / universe change + every 60s ── */
-  useEffect(() => {
-    if (!apiKey || !apiSecret) return;
-    fetchIntraday();
-    const id = setInterval(fetchIntraday, 60000);
-    return () => clearInterval(id);
-  }, [apiKey, apiSecret, fetchIntraday]);
 
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
@@ -2790,24 +2761,6 @@ Instructions:
       const changes = sleeve.symbols.map(chg).filter(c => c !== null);
       avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
     }
-    // Aggregate intraday sparkline: equal-weighted normalized curve across constituents
-    const sleevePoints = (() => {
-      const curves = sleeve.symbols
-        .map(s => intradayRef.current[s] || intradayPts[s])
-        .filter(arr => Array.isArray(arr) && arr.length >= 2 && arr[0] > 0);
-      if (!curves.length) return null;
-      const minLen = Math.min(...curves.map(c => c.length));
-      if (minLen < 2) return null;
-      const norm = curves.map(c => c.slice(0, minLen).map(p => (p / c[0]) * 100));
-      const avg = new Array(minLen);
-      for (let i = 0; i < minLen; i++) {
-        let s = 0;
-        for (const c of norm) s += c[i];
-        avg[i] = s / norm.length;
-      }
-      return avg;
-    })();
-
     const isAddingTicker = addTickerFor === k;
 
     return (
@@ -2821,30 +2774,12 @@ Instructions:
             </div>
           )}
           <div onClick={() => toggleSleeve(k)} style={{ display: "flex", alignItems: "center", flex: 1, cursor: "pointer", userSelect: "none" }}>
-            {/* Icon / sparkline — tappable in edit mode to change emoji */}
-            {editMode && editIconFor === k ? (
+            {editMode && editIconFor === k && (
               <div style={{ marginRight: 16, display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                 <input type="text" value={iconInput} onChange={e => setIconInput(e.target.value)} autoFocus
                   onKeyDown={e => { if (e.key === "Enter") updateIcon(k, iconInput); if (e.key === "Escape") setEditIconFor(null); }}
                   placeholder="😀" style={{ width: 50, height: 50, padding: 0, background: C.card, border: `1px solid ${C.borderActive}`, borderRadius: 14, color: C.t1, fontSize: 26, textAlign: "center", outline: "none", fontFamily: "inherit" }} />
                 <button onClick={(e) => { e.stopPropagation(); updateIcon(k, iconInput); }} style={{ padding: "8px 10px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, color: C.t1, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Set</button>
-              </div>
-            ) : sleevePoints && !editMode ? (
-              <div style={{ marginRight: 16, flexShrink: 0 }}>
-                <Sparkline points={sleevePoints} chg={avgChg} width={84} height={36} />
-              </div>
-            ) : SLEEVE_ICON_SVGS[k] && !editMode ? (
-              // Built-in sleeve, intraday not loaded yet → empty placeholder so layout doesn't jump
-              <div style={{ width: 84, height: 36, marginRight: 16, flexShrink: 0 }} />
-            ) : (
-              <div onClick={(e) => { if (editMode) { e.stopPropagation(); setEditIconFor(k); setIconInput(sleeve.icon); } }} style={{
-                width: 56, height: 56, borderRadius: 14, marginRight: 16,
-                background: C.card, border: `1px solid ${editMode ? C.borderActive : C.border}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 26, flexShrink: 0, position: "relative",
-              }}>
-                {sleeve.icon}
-                {editMode && <div style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: 9, background: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></div>}
               </div>
             )}
             <div style={{ flex: 1 }}>
