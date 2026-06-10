@@ -1351,31 +1351,23 @@ Instructions:
       symbols: a.related ? a.related.split(",").map(s => s.trim()).filter(Boolean) : [],
       image_url: a.image,
     });
-    const clean = (arr) => arr.filter(a => a && a.headline && !BLOCKED.has(a.source)).map(norm);
     try {
-      // Broad market news — one call
-      const broadR = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FH}`);
-      if (broadR.ok) { const d = await broadR.json(); setBroadNews(clean(Array.isArray(d) ? d : []).slice(0, 60)); }
-      // Holdings news — per-symbol, throttled. 7-day window.
-      const today = new Date().toISOString().slice(0, 10);
-      const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString().slice(0, 10);
-      const targets = (coreSyms || []).slice(0, 20);
-      const results = [];
-      for (let i = 0; i < targets.length; i += 4) {
-        const batch = targets.slice(i, i + 4);
-        const settled = await Promise.all(batch.map(s =>
-          fetch(`https://finnhub.io/api/v1/company-news?symbol=${s}&from=${weekAgo}&to=${today}&token=${FH}`)
-            .then(r => r.ok ? r.json() : [])
-            .catch(() => [])
-        ));
-        for (const arr of settled) if (Array.isArray(arr)) results.push(...arr);
-      }
-      // Dedupe by id, sort desc by datetime, top 60
-      const seen = new Set();
-      const merged = clean(results).filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; })
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 60);
-      setNews(prev => prev.length === merged.length && prev[0]?.id === merged[0]?.id ? prev : merged);
+      // One call: Finnhub /news?category=general returns 100+ market articles.
+      // We split into "broad" and "holdings" based on whether any of our coreSyms
+      // appear in the article's `related` field — keeps us at 1 API call vs 20+.
+      const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FH}`);
+      if (!r.ok) return;
+      const raw = await r.json();
+      if (!Array.isArray(raw)) return;
+      const all = raw
+        .filter(a => a && a.headline && !BLOCKED.has(a.source))
+        .map(norm)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      const coreSet = new Set(coreSyms || []);
+      const holdings = all.filter(a => a.symbols.some(s => coreSet.has(s))).slice(0, 60);
+      const broad = all.slice(0, 60);
+      setNews(prev => prev.length === holdings.length && prev[0]?.id === holdings[0]?.id ? prev : holdings);
+      setBroadNews(broad);
     } catch {}
   }, [coreSyms]);
 
