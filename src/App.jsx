@@ -969,6 +969,8 @@ Instructions:
   const [chartsMobileList, setChartsMobileList] = useState(false); // mobile watchlist toggle
   const [layoutMode, setLayoutMode] = useState(() => localStorage.getItem("iown_layout") || "classic");
   const [terminalActiveSym, setTerminalActiveSym] = useState("__portfolio__");
+  const [tProfileSym, setTProfileSym] = useState(null); // terminal stock profile panel
+  const [tProfileTab, setTProfileTab] = useState("overview"); // "overview" | "chart" | "screener"
   const [tChartHover, setTChartHover] = useState(null);
   const [tChartRange, setTChartRange] = useState("YTD");
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
@@ -1043,6 +1045,9 @@ Instructions:
       // "iown_theme_locked" = user explicitly chose a default; "iown_theme" = session toggle
       const locked = localStorage.getItem("iown_theme_locked");
       if (locked) return locked;
+      // Terminal layout defaults to terminal theme; classic layout uses market-hour auto
+      const layout = localStorage.getItem("iown_layout") || "classic";
+      if (layout === "terminal") return "terminal";
       return getAutoTheme();
     } catch { return "dark"; }
   });
@@ -2797,6 +2802,7 @@ Instructions:
       if (e.key === "Escape") {
         if (selectedArticle) setSelectedArticle(null);
         else if (tDrawer) setTDrawer(null);
+        else setTProfileSym(null);
       } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         const syms = sleevesRef.current[tChartSleeve]?.symbols || [];
         if (!syms.length) return;
@@ -3097,6 +3103,130 @@ Instructions:
         <div style={{ fontSize: 18, fontWeight: 700, color: color || C.t1 }}>{val}</div>
       </div>
     );
+    const tScoreColor = s => s >= 7 ? C.up : s >= 4 ? C.warn : C.dn;
+    const tScoreRow = (title, v) => (v?.score == null) ? null : (
+      <div key={title} style={{ marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 3 }}>
+          <span style={tEyebrowMuted}>{title}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: tScoreColor(v.score) }}>{v.score}/10</span>
+          {v.label && <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{v.label}</span>}
+        </div>
+        {v.analysis && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.6 }}>{v.analysis}</div>}
+      </div>
+    );
+    // Full screener report — shared by the screener drawer and the stock profile screener tab
+    const tScreenerReport = (a, loading) => {
+      if (!a) return <div style={tEyebrowMuted}>NO SCREENER REPORT</div>;
+      const ig = a.infinite_game;
+      const fa = a.faith_alignment;
+      return (
+        <div style={{ maxWidth: 760 }}>
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>{a.ticker || a.symbol}</span>
+            <span style={{ fontSize: 12, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
+            {a.recommendation && <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px", borderRadius: 2, color: tRecColor(a.recommendation), background: tRecColor(a.recommendation) + "18" }}>{a.recommendation}</span>}
+            {a.overall_score != null && <span style={{ fontSize: 18, fontWeight: 700, color: C.t1, marginLeft: a.recommendation ? 0 : "auto" }}>{a.overall_score}<span style={{ fontSize: 10, fontWeight: 400, color: C.t4 }}> / 100</span></span>}
+          </div>
+          <div style={{ ...tEyebrowMuted, fontSize: 9, marginBottom: 14 }}>{[a.sleeve && `${a.sleeve} sleeve`, a.screen_date, ig?.mindset, fa?.inspire_impact_score != null && `Inspire ${fa.inspire_impact_score}`].filter(Boolean).join(" · ")}</div>
+          {loading ? (
+            <div style={tEyebrowMuted}>LOADING REPORT</div>
+          ) : (<>
+            {/* Company Profile */}
+            {a.profile && (<>
+              <div style={{ ...tEyebrow, marginBottom: 6 }}>Company Profile</div>
+              <div style={{ ...tEyebrowMuted, fontSize: 9, marginBottom: 6 }}>{[a.profile.sector, a.profile.industry, a.profile.exchange, a.profile.country, a.profile.employees && `${Number(a.profile.employees).toLocaleString()} employees`].filter(Boolean).join(" · ")}</div>
+              {a.profile.description && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, marginBottom: 16 }}>{a.profile.description}</div>}
+            </>)}
+            {/* Investment Thesis */}
+            {(a.investment_thesis || a.thesis_continued) && (<>
+              <div style={{ ...tEyebrow, marginBottom: 6 }}>Investment Thesis</div>
+              <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{[a.investment_thesis, a.thesis_continued].filter(Boolean).join(" ")}</div>
+            </>)}
+            {/* Excellence Evaluation */}
+            {a.excellence_evaluation && (<>
+              <div style={{ ...tEyebrow, marginBottom: 8 }}>Excellence Evaluation — Think Like an Owner (50%)</div>
+              {tScoreRow("Innovation", a.excellence_evaluation.innovation)}
+              {tScoreRow("Inspiration", a.excellence_evaluation.inspiration)}
+              {tScoreRow("Infrastructure", a.excellence_evaluation.infrastructure)}
+              <div style={{ marginBottom: 6 }} />
+            </>)}
+            {/* Infinite Game */}
+            {ig && (<>
+              <div style={{ ...tEyebrow, marginBottom: 6 }}>Finite vs Infinite Game (25%)</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 6 }}>
+                {ig.mindset && <span style={{ ...tEyebrowMuted, color: C.t2 }}>Mindset: <span style={{ color: C.accent }}>{ig.mindset}</span></span>}
+                {ig.overall != null && <span style={{ fontSize: 12, fontWeight: 700, color: tScoreColor(ig.overall) }}>{ig.overall}/10</span>}
+              </div>
+              {ig.summary && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.6, borderLeft: `2px solid ${C.border}`, paddingLeft: 10, marginBottom: 10 }}>{ig.summary}</div>}
+              {tScoreRow("Just Cause", ig.just_cause)}
+              {tScoreRow("Trusting Teams", ig.trusting_teams)}
+              {tScoreRow("Worthy Rivals", ig.worthy_rivals)}
+              {tScoreRow("Existential Flexibility", ig.existential_flexibility)}
+              {tScoreRow("Courage to Lead", ig.courage_to_lead)}
+              <div style={{ marginBottom: 6 }} />
+            </>)}
+            {/* AI Resilience */}
+            {a.ai_resilience && (<>
+              <div style={{ ...tEyebrow, marginBottom: 8 }}>AI Resilience (25%)</div>
+              {tScoreRow("AI Resilience", a.ai_resilience)}
+              <div style={{ marginBottom: 6 }} />
+            </>)}
+            {/* Key Catalysts */}
+            {a.key_catalysts?.length > 0 && (<>
+              <div style={{ ...tEyebrow, marginBottom: 8 }}>Key Catalysts</div>
+              <div style={{ marginBottom: 16 }}>{a.key_catalysts.map((c2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.accent }}>{i + 1}.</span> {typeof c2 === "string" ? c2 : c2.catalyst || c2.description || ""}</div>)}</div>
+            </>)}
+            {/* Key Risks */}
+            {a.key_risks?.length > 0 && (<>
+              <div style={{ ...tEyebrow, marginBottom: 8, color: C.dn }}>Key Risks</div>
+              <div style={{ marginBottom: 16 }}>{a.key_risks.map((r2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.dn }}>{i + 1}.</span> {typeof r2 === "string" ? r2 : r2.risk || r2.description || ""}</div>)}</div>
+            </>)}
+            {/* Faith Alignment */}
+            {fa && (<>
+              <div style={{ ...tEyebrow, marginBottom: 6 }}>Faith Alignment — Inspire Insight</div>
+              {fa.inspire_impact_score != null && (
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+                  <span style={tEyebrowMuted}>Inspire Impact Score</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: fa.inspire_impact_score >= 0 ? C.up : C.dn }}>{fa.inspire_impact_score}</span>
+                </div>
+              )}
+              {fa.positive_attributions?.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ ...tEyebrowMuted, fontSize: 9, color: C.up }}>Positive</span>
+                  {fa.positive_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 2, background: C.up + "14", color: C.up }}>{attr}</span>)}
+                </div>
+              )}
+              {fa.negative_attributions?.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ ...tEyebrowMuted, fontSize: 9, color: C.dn }}>Negative</span>
+                  {fa.negative_attributions.map((attr, i) => <span key={i} style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 2, background: C.dn + "14", color: C.dn }}>{attr}</span>)}
+                </div>
+              )}
+              {fa.source && <div style={{ fontSize: 10, color: C.t4, marginBottom: 16 }}>Source: {fa.source}</div>}
+              {!fa.source && <div style={{ marginBottom: 16 }} />}
+            </>)}
+            {/* Sources */}
+            {a.sources?.length > 0 && (<>
+              <div style={{ ...tEyebrow, marginBottom: 8 }}>Sources</div>
+              <div style={{ marginBottom: 16 }}>{a.sources.map((s2, i) => <div key={i} style={{ fontSize: 10, color: C.t3, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.accent }}>{i + 1}.</span> {typeof s2 === "string" ? s2 : s2.title || s2.source || ""}</div>)}</div>
+            </>)}
+          </>)}
+        </div>
+      );
+    };
+    // Open a stock screener report (fetch full JSON if not already loaded)
+    const tOpenScreenerReport = (sym) => {
+      const cur = screenerDetail?.ticker || screenerDetail?.symbol;
+      if (cur === sym && !screenerDetailLoading) return;
+      setScreenerDetailLoading(true);
+      const stub = screenerByTicker[sym] || { ticker: sym };
+      setScreenerDetail(stub);
+      fetch(`https://richacarson.github.io/Stock-Screener/reports/${sym}.json`)
+        .then(r => r.ok ? r.json() : stub)
+        .then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); })
+        .catch(() => { setScreenerDetail(stub); setScreenerDetailLoading(false); });
+    };
     const tSleeveKeys = Object.keys(sleeves);
     const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
     const tWOf = s => liveWeights[tChartSleeve]?.[s] ?? null;
@@ -3115,8 +3245,9 @@ Instructions:
     const tAvgPeg = tAvg(s => fundamentals[s]?.pegTTM);
     const tIsGrowth = tChartSleeve === "growth";
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
-    const tChartBg = C.bg.replace("#", "");
-    const tChartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${terminalActiveSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${tChartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${theme === "light" ? "light" : "dark"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
+    const tChartBg = "171738"; // terminal chart is always dark navy, regardless of theme
+    const tChartUrlFor = (s) => `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${s}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&hidevolume=0&toolbarbg=${tChartBg}&backgroundColor=%23${tChartBg}&gridColor=rgba(201%2C168%2C76%2C0.08)&studies=%5B%22Volume%40tv-basicstudies%22%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"%2C"paneProperties.vertGridProperties.color"%3A"rgba(201%2C168%2C76%2C0.08)"%2C"paneProperties.horzGridProperties.color"%3A"rgba(201%2C168%2C76%2C0.08)"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
+    const tChartUrl = tChartUrlFor(terminalActiveSym);
     const tNow = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
     const tAllNews = (() => { const seen = new Set(); return [...(news || []), ...(broadNews || [])].filter(a => { const k = a.id || a.headline; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50); })();
     const tPortfolioVal = liveValue ? liveValue.value : null;
@@ -3137,7 +3268,7 @@ Instructions:
           </div>
           <div style={{ display: "flex", gap: 16, alignItems: "center", overflowX: "auto" }}>
             {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? (
-              <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
+              <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(null); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
                 <span style={{ fontWeight: 700 }}>{sym}</span>{" "}${q.p.toFixed(2)}{" "}
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
               </span>
@@ -3178,7 +3309,7 @@ Instructions:
               ))}
             </div>
             {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
-              <div key={sym} onClick={() => setTerminalActiveSym(sym)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
+              <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("overview"); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: 44, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
                 <span style={{ fontSize: 10, color: C.t1, width: 52, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? q.p.toFixed(2) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
@@ -3219,8 +3350,8 @@ Instructions:
                 const avgBullGain = 135.9;
                 return (<div style={{ maxWidth: 920 }}>
                   <div style={tTabRow}>
-                    {[{ v: "regime", l: "Regime" }, { v: "bear", l: "Bear" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "proof", l: "Proof" }].map(({ v, l }) => (
-                      <button key={v} onClick={() => setPbView(v)} style={tTabBtn(pbView === v)}>{l}</button>
+                    {[{ v: "regime", l: "Regime" }, { v: "probability", l: "Probability" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => setPbView(["regime", "probability"].includes(v) ? v : "regime")} style={tTabBtn((pbView === v) || (v === "regime" && !["regime", "probability"].includes(pbView)))}>{l}</button>
                     ))}
                   </div>
                   {pbView === "regime" && (<div>
@@ -3245,7 +3376,7 @@ Instructions:
                       {md.claims4wk != null && tStat("Jobless Claims", `${(md.claims4wk / 1000).toFixed(0)}K`, md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? C.warn : C.up)}
                     </div>
                   </div>)}
-                  {pbView === "bear" && (<div>
+                  {(pbView === "regime" || !["regime", "probability"].includes(pbView)) && (<div>
                     <div style={{ ...tEyebrow, marginBottom: 8 }}>Bear Market Deployment Tranches</div>
                     <div style={{ fontSize: 11, color: C.t3, marginBottom: 12, lineHeight: 1.6 }}>Two-tranche system: deploy 70% at -25%, remaining 30% at -40%. Front-loaded because -25% has the highest expected-value-per-dollar across 22 historical bears (87% hit rate × 33% recovery return = 29¢ per $1 deployed).</div>
                     {PB_BEAR_TRANCHES.map((t, i) => {
@@ -3266,7 +3397,7 @@ Instructions:
                       Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward. In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — deploy 70% at -25% and the remaining 30% at -40%. When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.
                     </div>
                   </div>)}
-                  {pbView === "simulator" && (() => {
+                  {false && (() => {
                     const historicalBears = PB_BEAR_MARKETS.filter(b => !b.nearBear && Math.abs(b.drawdown) >= 20);
                     const selectedBear = historicalBears.find(b => b.name === pbSimHistBear);
                     const dropPct = selectedBear ? Math.abs(selectedBear.drawdown) : pbSimDrop;
@@ -3406,7 +3537,7 @@ Instructions:
                       {md.updated && <div style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Macro data updated {ago(md.updated)}</div>}
                     </div>);
                   })()}
-                  {pbView === "scripts" && (() => {
+                  {false && (() => {
                     const scripts = [
                       { regime: "Bull Market — Staying Invested", condition: "Market within 10% of peak", active: drawdown > -10, subject: "Portfolio Update: Staying the Course", body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. Our playbook calls for staying fully invested in equities through bull markets.\n\nYour bond ladder remains in place, funding the next several years of expenses and serving as deployment ammunition for when the next bear market arrives.` },
                       { regime: "Correction — Down 10-20%", condition: "S&P down 10-20% from peak", active: drawdown <= -10 && drawdown > -20, subject: "Market Update: Correction in Progress — The Plan Is Working", body: `The S&P 500 is down approximately ${Math.abs(drawdown).toFixed(0)}% from its recent high. This is normal, and we have a plan for exactly this situation.\n\nAt this level, our playbook says to hold. We haven't hit our first deployment threshold (-25%). Historically, the market has experienced 27 declines of -15% or more since 1929. Every single one eventually recovered.` },
@@ -3429,8 +3560,8 @@ Instructions:
                       ))}
                     </div>);
                   })()}
-                  {pbView === "history" && (<div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
+                  {(pbView === "regime" || !["regime", "probability"].includes(pbView)) && (<div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14, marginTop: 16 }}>
                       {tStat("Avg Bear Drawdown", `${avgBearDraw}%`, C.dn)}
                       {tStat("Avg Bear Duration", `${avgBearDur} mo`)}
                       {tStat("Avg Recovery", `${avgRecovery} mo`)}
@@ -3475,7 +3606,7 @@ Instructions:
                       </tbody>
                     </table>
                   </div>)}
-                  {pbView === "proof" && (<div>
+                  {false && (<div>
                     <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: "16px 18px", marginBottom: 14 }}>
                       <div style={{ ...tEyebrowMuted, marginBottom: 6 }}>Bond-Deploy Alpha vs Passive Bond-Holding</div>
                       <div style={{ fontSize: 34, fontWeight: 700, color: C.up, lineHeight: 1 }}>+3.67%</div>
@@ -3668,59 +3799,12 @@ Instructions:
                   </div>);
                 })()}
               </div>))}
-              {tDrawer === "screener" && (screenerDetail ? (() => {
-                const a = screenerDetail;
-                const recColor = ({ BUY: C.up, HOLD: "#8B7355", WATCH: C.t3, SELL: C.dn })[a.recommendation] || C.t3;
-                const scoreRows = [
-                  { label: "Innovation", v: a.excellence_evaluation?.innovation },
-                  { label: "Inspiration", v: a.excellence_evaluation?.inspiration },
-                  { label: "Infrastructure", v: a.excellence_evaluation?.infrastructure },
-                  { label: "Infinite Game", v: a.infinite_game?.overall != null ? { score: a.infinite_game.overall, label: a.infinite_game.mindset } : null },
-                  { label: "AI Resilience", v: a.ai_resilience },
-                ].filter(r => r.v?.score != null);
-                return (<div style={{ maxWidth: 760 }}>
+              {tDrawer === "screener" && (screenerDetail ? (
+                <div>
                   <button onClick={() => setScreenerDetail(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "4px 12px", color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", marginBottom: 14 }}>← Back</button>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>{a.ticker || a.symbol}</span>
-                    <span style={{ fontSize: 12, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
-                    <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: recColor }}>{a.recommendation}</span>
-                    {a.overall_score != null && <span style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>{a.overall_score}<span style={{ fontSize: 10, fontWeight: 400, color: C.t4 }}> / 100</span></span>}
-                  </div>
-                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4, marginBottom: 14 }}>{[a.sleeve && `${a.sleeve} sleeve`, a.screen_date, a.profile?.sector, a.profile?.industry].filter(Boolean).join(" · ")}</div>
-                  {screenerDetailLoading ? (
-                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.2, color: C.t4 }}>LOADING REPORT</div>
-                  ) : (<>
-                    {scoreRows.length > 0 && (<>
-                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Scores</div>
-                      <table style={{ borderCollapse: "collapse", fontSize: 11, marginBottom: 16 }}><tbody>
-                        {scoreRows.map(r => (
-                          <tr key={r.label} style={{ borderBottom: `1px solid ${C.border}` }}>
-                            <td style={{ padding: "4px 24px 4px 0", color: C.t2 }}>{r.label}</td>
-                            <td style={{ padding: "4px 24px 4px 0", fontWeight: 700, color: r.v.score >= 7 ? C.up : r.v.score >= 4 ? C.warn : C.dn }}>{r.v.score}/10</td>
-                            <td style={{ padding: "4px 0", fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4 }}>{r.v.label || ""}</td>
-                          </tr>
-                        ))}
-                      </tbody></table>
-                    </>)}
-                    {a.investment_thesis && (<>
-                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Investment Thesis</div>
-                      <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.investment_thesis}{a.thesis_continued ? ` ${a.thesis_continued}` : ""}</div>
-                    </>)}
-                    {a.key_catalysts?.length > 0 && (<>
-                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Key Catalysts</div>
-                      <div style={{ marginBottom: 16 }}>{a.key_catalysts.map((c2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.accent }}>{i + 1}.</span> {typeof c2 === "string" ? c2 : c2.catalyst || c2.description || ""}</div>)}</div>
-                    </>)}
-                    {a.key_risks?.length > 0 && (<>
-                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Key Risks</div>
-                      <div style={{ marginBottom: 16 }}>{a.key_risks.map((r2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.dn }}>{i + 1}.</span> {typeof r2 === "string" ? r2 : r2.risk || r2.description || ""}</div>)}</div>
-                    </>)}
-                    {a.profile?.description && (<>
-                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Company Profile</div>
-                      <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, marginBottom: 16 }}>{a.profile.description}</div>
-                    </>)}
-                  </>)}
-                </div>);
-              })() : (() => {
+                  {tScreenerReport(screenerDetail, screenerDetailLoading)}
+                </div>
+              ) : (() => {
                 const sSleeve = screenerSleeve || "All";
                 const getSector = s => screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector;
                 const portfolioMap = { "Dividend": sleeves.dividend?.symbols || [], "Growth": sleeves.growth?.symbols || [], "FCI 100": sleeves.fci100?.symbols || [], "FCI Values": sleeves.fciValues?.symbols || [] };
@@ -3843,30 +3927,355 @@ Instructions:
                   )); })()}
                 </div>
               </div>)}
-              {tDrawer === "metrics" && (<div>
-                <div style={{ ...tEyebrow, marginBottom: 10 }}>Holdings Metrics — {sleeves[tChartSleeve]?.name || "All"}</div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                    <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                      {["Ticker", "Price", "Day", "P/E", "Div Yield", "52W H", "52W L", "Sector"].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: h === "Ticker" || h === "Sector" ? "left" : "right", color: C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase" }}>{h}</th>)}
-                    </tr></thead>
-                    <tbody>
-                      {(sleeves[tChartSleeve]?.symbols || []).map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; const f = fundamentals[sym]; return (
-                        <tr key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                          <td style={{ padding: "5px 8px", fontWeight: 700, color: C.t1 }}>{sym}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t1 }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: 600, color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: f?.yieldFwd != null ? C.up : C.t4 }}>{f?.yieldFwd != null ? `${f.yieldFwd.toFixed(2)}%` : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.wk52h != null ? `$${f.wk52h.toFixed(0)}` : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.wk52l != null ? `$${f.wk52l.toFixed(0)}` : "—"}</td>
-                          <td style={{ padding: "5px 8px", color: C.t4, fontSize: 10, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f?.sector || "—"}</td>
-                        </tr>
-                      ); })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>)}
+              {tDrawer === "metrics" && (() => {
+                const mSyms = sleeves[metricsView]?.symbols || [];
+                const mTw = TARGET_WEIGHTS[metricsView] || {};
+                const mWOf = s => liveWeights[metricsView]?.[s] ?? mTw[s] ?? null;
+                const mDayChg = s => { const q = quotesRef.current[s] || quotes[s]; const b = barsRef.current[s] || bars[s]; return (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+                const mQtd = s => { const q = (quotesRef.current[s] || quotes[s])?.p; const anc = REBALANCE_ANCHORS[s]; return (anc && q) ? ((q - anc) / anc) * 100 : null; };
+                const mDash = <span style={{ color: C.t4 }}>—</span>;
+                const mFmtV = v => v == null || !isFinite(v) ? null : Number(v).toFixed(1);
+                const mFmtP = v => v == null || !isFinite(v) ? null : `${Number(v).toFixed(1)}%`;
+                const mFmtSgn = (v, dp = 2) => v == null || !isFinite(v) ? null : `${v >= 0 ? "+" : ""}${v.toFixed(dp)}%`;
+                const mVol = v => v == null || !isFinite(v) ? null : v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : String(Math.round(v));
+                const mUpDn = v => v == null ? C.t4 : v > 0 ? C.up : v < 0 ? C.dn : C.t3;
+                return (<div>
+                  <div style={{ ...tEyebrow, marginBottom: 10 }}>HOLDINGS METRICS</div>
+                  {/* Sleeve picker */}
+                  <div style={{ ...tTabRow, marginBottom: 0 }}>
+                    {["dividend", "growth", "fci100", "fciValues"].map(k => (
+                      <button key={k} onClick={() => { setMetricsView(k); setMetricSort({ col: null, dir: "desc" }); }} style={tTabBtn(metricsView === k)}>{sleeves[k]?.name || k}</button>
+                    ))}
+                  </div>
+                  {/* Sub-tabs */}
+                  <div style={tTabRow}>
+                    {[{ v: "table", l: "Table" }, { v: "weightcomp", l: "Weight Comp" }, { v: "qvq", l: "Q1 v Q2" }, { v: "attribution", l: "Attribution" }, { v: "sector", l: "Sector" }, { v: "matrix", l: "Matrix" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => setMetricsSubView(v)} style={tTabBtn(metricsSubView === v)}>{l}</button>
+                    ))}
+                  </div>
+
+                  {/* ── TABLE ── */}
+                  {metricsSubView === "table" && (() => {
+                    const pctCol = (l, k) => ({ l, k, fn: d => mFmtSgn(d[k], 1), color: d => mUpDn(d[k]) });
+                    const dayCol = { l: "Day", k: "_day", fn: (d, s) => mFmtSgn(mDayChg(s)), color: (d, s) => mUpDn(mDayChg(s)) };
+                    const cols = [
+                      { l: "Industry", k: "industry", fn: d => d.industry || null, noAvg: true, align: "left" },
+                      dayCol,
+                      { l: "Avg Vol", k: "avgVol", fn: d => mVol(d.avgVol) },
+                      pctCol("Last Qtr", "lastQtr"),
+                      pctCol("This Qtr", "thisQtr"),
+                      pctCol("YTD", "ytd"),
+                      ...(metricsView === "dividend" ? [
+                        { l: "Yield FWD", k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : null },
+                        { l: "Payout", k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : null },
+                      ] : [
+                        { l: "Margin", k: "profitMargin", fn: d => mFmtP(d.profitMargin) },
+                      ]),
+                      { l: "P/E TTM", k: "peTTM", fn: d => mFmtV(d.peTTM) },
+                      { l: "P/E FWD", k: "peFwd", fn: d => mFmtV(d.peFwd) },
+                      { l: "PEG", k: "pegTTM", fn: d => mFmtV(d.pegTTM) },
+                      { l: "Rev YoY", k: "revenueYoY", fn: d => mFmtP(d.revenueYoY), color: d => mUpDn(d.revenueYoY) },
+                      { l: "Rev 5Y", k: "revenue5Y", fn: d => mFmtP(d.revenue5Y), color: d => mUpDn(d.revenue5Y) },
+                      { l: "ROE", k: "roe", fn: d => mFmtP(d.roe) },
+                      { l: "D/E", k: "de", fn: d => mFmtV(d.de) },
+                      { l: "Beta", k: "beta", fn: d => d.beta != null ? d.beta.toFixed(2) : null },
+                    ];
+                    const sorted = [...mSyms].sort((a, b) => {
+                      if (!metricSort.col) return a.localeCompare(b);
+                      if (metricSort.col === "_day") {
+                        const av = mDayChg(a), bv = mDayChg(b);
+                        if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+                        return metricSort.dir === "asc" ? av - bv : bv - av;
+                      }
+                      const av = fundamentals[a]?.[metricSort.col] ?? null;
+                      const bv = fundamentals[b]?.[metricSort.col] ?? null;
+                      if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+                      if (typeof av === "string" && typeof bv === "string") return metricSort.dir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+                      return metricSort.dir === "asc" ? av - bv : bv - av;
+                    });
+                    const toggleSort = k => setMetricSort(p => p.col === k ? { col: k, dir: p.dir === "desc" ? "asc" : "desc" } : { col: k, dir: "desc" });
+                    const avgRow = (label, weighted) => (
+                      <tr style={{ borderTop: weighted ? `1px solid ${C.border}` : `2px solid ${C.accent}` }}>
+                        <td style={{ position: "sticky", left: 0, zIndex: 1, background: C.surface, padding: "5px 8px", borderRight: `1px solid ${C.border}`, fontSize: 10, fontWeight: 700, color: weighted ? C.t1 : C.t3, whiteSpace: "nowrap" }}>{label}</td>
+                        {cols.map(col => {
+                          if (col.noAvg) return <td key={col.l} style={{ ...tTd(), background: C.surface, color: C.t4 }}>—</td>;
+                          let avg = null;
+                          if (weighted) {
+                            let totW = 0, sum = 0;
+                            for (const s of sorted) {
+                              const v = col.k === "_day" ? mDayChg(s) : fundamentals[s]?.[col.k];
+                              const w = mWOf(s) || 0;
+                              if (v != null && isFinite(v) && w > 0) { totW += w; sum += w * v; }
+                            }
+                            avg = totW > 0 ? sum / totW : null;
+                          } else {
+                            const vals = sorted.map(s => col.k === "_day" ? mDayChg(s) : fundamentals[s]?.[col.k]).filter(v => v != null && isFinite(v));
+                            avg = vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : null;
+                          }
+                          const val = avg != null ? (col.k === "_day" ? mFmtSgn(avg) : col.fn({ [col.k]: avg })) : null;
+                          const clr = col.k === "_day" ? mUpDn(avg) : (weighted ? C.t1 : C.t3);
+                          return <td key={col.l} style={{ ...tTd(), background: C.surface, fontSize: 10, fontWeight: 700, color: clr }}>{val ?? mDash}</td>;
+                        })}
+                      </tr>
+                    );
+                    return (
+                      <div style={{ overflowX: "auto", border: `1px solid ${C.border}` }}>
+                        <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: 980 }}>
+                          <thead style={{ position: "sticky", top: 0, zIndex: 3 }}>
+                            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <th style={{ ...tTh("left", false), position: "sticky", left: 0, zIndex: 4, background: C.surface, borderRight: `1px solid ${C.border}` }}>Ticker</th>
+                              {cols.map(col => (
+                                <th key={col.l} onClick={() => toggleSort(col.k)} style={{ ...tTh(col.align || "right"), background: C.surface, color: metricSort.col === col.k ? C.t1 : C.t4 }}>
+                                  {col.l} {metricSort.col === col.k ? (metricSort.dir === "desc" ? "↓" : "↑") : ""}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sorted.map(s => {
+                              const d = fundamentals[s] || {};
+                              return (
+                                <tr key={s} onClick={() => { setTerminalActiveSym(s); setTProfileSym(s); setTProfileTab("overview"); setTDrawer(null); }} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                  <td style={{ padding: "5px 8px", position: "sticky", left: 0, zIndex: 1, background: C.bg, borderRight: `1px solid ${C.border}`, fontWeight: 700, color: C.t1, whiteSpace: "nowrap" }}>{s}</td>
+                                  {cols.map(col => {
+                                    const val = col.fn(d, s);
+                                    const clr = col.color ? col.color(d, s) : C.t2;
+                                    return <td key={col.l} style={{ ...tTd(col.align || "right"), color: val == null ? C.t4 : clr, fontSize: col.k === "industry" ? 10 : 11, maxWidth: col.k === "industry" ? 130 : undefined, overflow: col.k === "industry" ? "hidden" : undefined, textOverflow: col.k === "industry" ? "ellipsis" : undefined }}>{val ?? "—"}</td>;
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot>
+                            {avgRow("EW Avg", false)}
+                            {avgRow("Wt Avg", true)}
+                          </tfoot>
+                        </table>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── WEIGHT COMP ── */}
+                  {metricsSubView === "weightcomp" && (() => {
+                    const n = mSyms.length;
+                    if (!n) return <div style={tEyebrowMuted}>NO HOLDINGS</div>;
+                    const ew = 100 / n;
+                    const rows = mSyms.map(s => {
+                      const w = mWOf(s) || 0;
+                      const c = mDayChg(s);
+                      return { s, w, diff: w - ew, c, alpha: c != null ? (w - ew) * c / 100 : null };
+                    }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+                    const totW = rows.reduce((x, r) => x + r.w, 0);
+                    const totAlpha = rows.reduce((x, r) => x + (r.alpha || 0), 0);
+                    let wSum = 0, wTot = 0, eSum = 0, eTot = 0;
+                    for (const r of rows) { if (r.c != null) { wSum += r.w * r.c; wTot += r.w; eSum += ew * r.c; eTot += ew; } }
+                    const wDay = wTot > 0 ? wSum / wTot : null;
+                    const eDay = eTot > 0 ? eSum / eTot : null;
+                    return (
+                      <div style={{ maxWidth: 640 }}>
+                        <div style={{ display: "flex", gap: 20, marginBottom: 10 }}>
+                          {[{ l: "WT DAY", v: wDay }, { l: "EW DAY", v: eDay }, { l: "DAY ALPHA", v: (wDay != null && eDay != null) ? wDay - eDay : null }].map(({ l, v }) => (
+                            <span key={l} style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
+                              <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{l}</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: mUpDn(v) }}>{mFmtSgn(v) ?? "—"}</span>
+                            </span>
+                          ))}
+                        </div>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                          <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <th style={tTh("left", false)}>Ticker</th>
+                            {["Wt%", "EW%", "Diff", "Day%", "Day Alpha"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {rows.map(r => (
+                              <tr key={r.s} style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{r.s}</td>
+                                <td style={tTd()}>{r.w.toFixed(1)}%</td>
+                                <td style={{ ...tTd(), color: C.t3 }}>{ew.toFixed(1)}%</td>
+                                <td style={{ ...tTd(), color: mUpDn(r.diff) }}>{r.diff >= 0 ? "+" : ""}{r.diff.toFixed(1)}%</td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.c) }}>{mFmtSgn(r.c) ?? mDash}</td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.alpha) }}>{r.alpha != null ? `${r.alpha >= 0 ? "+" : ""}${r.alpha.toFixed(3)}%` : mDash}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{ borderTop: `2px solid ${C.accent}` }}>
+                              <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>TOTAL</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: C.t1 }}>{totW.toFixed(1)}%</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: C.t3 }}>100.0%</td>
+                              <td style={{ ...tTd(), color: C.t4 }}>—</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(wDay) }}>{mFmtSgn(wDay) ?? "—"}</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(totAlpha) }}>{totAlpha >= 0 ? "+" : ""}{totAlpha.toFixed(3)}%</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── Q1 v Q2 ── */}
+                  {metricsSubView === "qvq" && (() => {
+                    const Q1_STOCKS = {
+                      dividend: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"],
+                      growth: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","HOOD","KEYS","MARA","NVDA","NXPI","OKE","PDD","SYF","TSM","TOL"],
+                    };
+                    const q1Syms = Q1_STOCKS[metricsView] || [];
+                    if (!q1Syms.length) return <div style={tEyebrowMuted}>NO Q1 BASELINE FOR THIS SLEEVE</div>;
+                    const q2Syms = mSyms;
+                    const added = q2Syms.filter(s => !q1Syms.includes(s));
+                    const removed = q1Syms.filter(s => !q2Syms.includes(s));
+                    const kept = q2Syms.filter(s => q1Syms.includes(s));
+                    const section = (label, list, color) => (
+                      <div key={label} style={{ marginBottom: 16 }}>
+                        <div style={{ ...tEyebrow, color, marginBottom: 6 }}>{label} ({list.length})</div>
+                        {!list.length ? <div style={{ ...tEyebrowMuted, fontSize: 9 }}>NONE</div> : list.map(s => {
+                          const c = mDayChg(s);
+                          const ytd = fundamentals[s]?.ytd;
+                          return (
+                            <div key={s} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "3px 0", borderBottom: `1px solid ${C.border}` }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: C.t1, width: 56, flexShrink: 0 }}>{s}</span>
+                              <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(c) }}>{mFmtSgn(c) ?? "—"}</span>
+                              <span style={{ ...tEyebrowMuted, fontSize: 8 }}>DAY</span>
+                              <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(ytd) }}>{mFmtSgn(ytd, 1) ?? "—"}</span>
+                              <span style={{ ...tEyebrowMuted, fontSize: 8 }}>YTD</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                    return (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24, maxWidth: 920 }}>
+                        {section("Added", added, C.up)}
+                        {section("Removed", removed, C.dn)}
+                        {section("Kept", kept, C.t4)}
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── ATTRIBUTION ── */}
+                  {metricsSubView === "attribution" && (() => {
+                    const rows = mSyms.map(s => {
+                      const qtd = mQtd(s);
+                      const w = mWOf(s) ?? (mSyms.length ? 100 / mSyms.length : 0);
+                      return { s, w, qtd, contrib: qtd != null ? w * qtd / 100 : null };
+                    }).filter(r => r.qtd != null).sort((a, b) => Math.abs(b.w * b.qtd) - Math.abs(a.w * a.qtd));
+                    if (!rows.length) return <div style={tEyebrowMuted}>NO ANCHOR DATA FOR THIS SLEEVE</div>;
+                    const totW = rows.reduce((x, r) => x + r.w, 0);
+                    const wQtd = totW > 0 ? rows.reduce((x, r) => x + r.w * r.qtd, 0) / totW : null;
+                    return (
+                      <div style={{ maxWidth: 560 }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                          <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <th style={tTh("left", false)}>Ticker</th>
+                            {["Wt%", "QTD%", "Contrib"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {rows.map(r => (
+                              <tr key={r.s} style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{r.s}</td>
+                                <td style={{ ...tTd(), color: C.t3 }}>{r.w.toFixed(1)}%</td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.qtd) }}>{mFmtSgn(r.qtd)}</td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.contrib) }}>{r.contrib >= 0 ? "+" : ""}{r.contrib.toFixed(3)}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{ borderTop: `2px solid ${C.accent}` }}>
+                              <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>WEIGHTED QTD</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: C.t1 }}>{totW.toFixed(1)}%</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(wQtd) }}>{mFmtSgn(wQtd)}</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(wQtd) }}>{wQtd != null ? `${wQtd >= 0 ? "+" : ""}${wQtd.toFixed(3)}%` : "—"}</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── SECTOR ── */}
+                  {metricsSubView === "sector" && (() => {
+                    const groups = {};
+                    mSyms.forEach(s => {
+                      const sec = fundamentals[s]?.sector || "Uncategorized";
+                      if (!groups[sec]) groups[sec] = [];
+                      groups[sec].push(s);
+                    });
+                    const rows = Object.entries(groups).map(([sec, list]) => {
+                      const wt = list.reduce((x, s) => x + (mWOf(s) || 0), 0);
+                      const pes = list.map(s => fundamentals[s]?.peTTM).filter(v => v != null && isFinite(v));
+                      const ytds = list.map(s => fundamentals[s]?.ytd).filter(v => v != null && isFinite(v));
+                      return {
+                        sec, n: list.length, wt,
+                        pe: pes.length ? pes.reduce((x, y) => x + y, 0) / pes.length : null,
+                        ytd: ytds.length ? ytds.reduce((x, y) => x + y, 0) / ytds.length : null,
+                      };
+                    }).sort((a, b) => b.wt - a.wt || b.n - a.n);
+                    if (!rows.length) return <div style={tEyebrowMuted}>NO SECTOR DATA</div>;
+                    return (
+                      <div style={{ maxWidth: 560 }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                          <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <th style={tTh("left", false)}>Sector</th>
+                            {["N", "Wt%", "Avg P/E", "Avg YTD"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {rows.map(r => (
+                              <tr key={r.sec} style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                <td style={{ ...tTd("left"), fontWeight: 600, color: C.t1 }}>{r.sec}</td>
+                                <td style={{ ...tTd(), color: C.t3 }}>{r.n}</td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: C.t1 }}>{r.wt > 0 ? `${r.wt.toFixed(1)}%` : mDash}</td>
+                                <td style={{ ...tTd(), color: r.pe != null ? C.t2 : C.t4 }}>{r.pe != null ? r.pe.toFixed(1) : "—"}</td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.ytd) }}>{mFmtSgn(r.ytd, 1) ?? "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+
+                  {/* ── MATRIX ── */}
+                  {metricsSubView === "matrix" && (() => {
+                    const pts = mSyms.map(s => {
+                      const d = fundamentals[s] || {};
+                      return { s, pe: d.peTTM, rev: d.revenueYoY };
+                    }).filter(p => p.pe != null && isFinite(p.pe) && p.rev != null && isFinite(p.rev));
+                    if (!pts.length) return <div style={tEyebrowMuted}>NO P/E + REVENUE DATA YET</div>;
+                    const medOf = arr => [...arr].sort((a, b) => a - b)[Math.floor(arr.length / 2)];
+                    const medPE = medOf(pts.map(p => p.pe));
+                    const medRev = medOf(pts.map(p => p.rev));
+                    const quadrants = [
+                      { label: "Stars", desc: "High P/E · High Rev Growth", color: C.accent, stocks: pts.filter(p => p.pe >= medPE && p.rev >= medRev) },
+                      { label: "Growth", desc: "Low P/E · High Rev Growth", color: C.up, stocks: pts.filter(p => p.pe < medPE && p.rev >= medRev) },
+                      { label: "Value", desc: "Low P/E · Low Rev Growth", color: C.t3, stocks: pts.filter(p => p.pe < medPE && p.rev < medRev) },
+                      { label: "Watch", desc: "High P/E · Low Rev Growth", color: C.warn, stocks: pts.filter(p => p.pe >= medPE && p.rev < medRev) },
+                    ].map(q => ({ ...q, stocks: [...q.stocks].sort((a, b) => b.rev - a.rev) }));
+                    return (
+                      <div style={{ maxWidth: 760 }}>
+                        <div style={{ ...tEyebrowMuted, marginBottom: 10 }}>SPLIT BY MEDIAN P/E ({medPE.toFixed(1)}) AND MEDIAN REV YOY ({medRev.toFixed(1)}%)</div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                          {quadrants.map(q => (
+                            <div key={q.label} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "10px 12px" }}>
+                              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 2 }}>
+                                <span style={{ ...tEyebrow, color: q.color }}>{q.label}</span>
+                                <span style={{ fontSize: 14, fontWeight: 700, color: q.color }}>{q.stocks.length}</span>
+                              </div>
+                              <div style={{ ...tEyebrowMuted, fontSize: 8, marginBottom: 8 }}>{q.desc}</div>
+                              {!q.stocks.length ? <div style={{ ...tEyebrowMuted, fontSize: 9 }}>NONE</div> : q.stocks.map(p => (
+                                <div key={p.s} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "2px 0" }}>
+                                  <span style={{ fontSize: 11, fontWeight: 700, color: C.t1, width: 52, flexShrink: 0 }}>{p.s}</span>
+                                  <span style={{ fontSize: 10, fontWeight: 600, color: mUpDn(p.rev), marginLeft: "auto" }}>{p.rev >= 0 ? "+" : ""}{p.rev.toFixed(1)}%</span>
+                                  <span style={{ fontSize: 10, color: C.t3, width: 48, textAlign: "right" }}>{p.pe.toFixed(1)}x</span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>);
+              })()}
               {tDrawer === "research" && (<div style={{ maxWidth: 920 }}>
                 {researchView ? (() => {
                   const activeReport = researchReports.find(r => r.id === researchView);
@@ -3920,7 +4329,7 @@ Instructions:
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Layout</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
-                      <button key={v} onClick={() => { setLayoutMode(v); localStorage.setItem("iown_layout", v); if (v === "classic") setTDrawer(null); }} style={{ flex: 1, padding: "8px 0", border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`, background: layoutMode === v ? C.accentSoft : "transparent", color: layoutMode === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+                      <button key={v} onClick={() => { setLayoutMode(v); localStorage.setItem("iown_layout", v); if (v === "classic") setTDrawer(null); if (!localStorage.getItem("iown_theme_locked")) setTheme(v === "terminal" ? "terminal" : getAutoTheme()); }} style={{ flex: 1, padding: "8px 0", border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`, background: layoutMode === v ? C.accentSoft : "transparent", color: layoutMode === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
                     ))}
                   </div>
                 </div>
@@ -3928,9 +4337,110 @@ Instructions:
             </div>
           </div>
         ) : (<>
-        {/* ── CENTER: CHART ── */}
+        {/* ── CENTER: STOCK PROFILE or CHART ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
-          {(() => {
+          {tProfileSym && tProfileSym !== "__portfolio__" ? (() => {
+            const sym = tProfileSym;
+            const f = fundamentals[sym] || {};
+            const scr = screenerByTicker[sym];
+            const q = quotesRef.current[sym] || quotes[sym];
+            const b = barsRef.current[sym] || bars[sym];
+            const c = (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
+            const fmt1 = v => v != null && isFinite(v) ? Number(v).toFixed(1) : null;
+            const fmt2 = v => v != null && isFinite(v) ? Number(v).toFixed(2) : null;
+            const fmtPct = (v, dp = 1) => v != null && isFinite(v) ? `${v >= 0 ? "+" : ""}${Number(v).toFixed(dp)}%` : null;
+            const upDn = v => v == null ? undefined : v >= 0 ? C.up : C.dn;
+            const pItem = ([l, v, color]) => (
+              <div key={l} style={{ marginBottom: 8 }}>
+                <div style={{ ...tEyebrowMuted, fontSize: 9, marginBottom: 2 }}>{l}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: v == null ? C.t4 : (color || C.t1) }}>{v ?? "—"}</div>
+              </div>
+            );
+            const pSection = (title, items) => (
+              <div key={title} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "10px 12px" }}>
+                <div style={{ ...tEyebrow, marginBottom: 8 }}>{title}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>{items.map(pItem)}</div>
+              </div>
+            );
+            const desc = f.description || scr?.profile?.description || null;
+            return (<>
+              {/* Top bar */}
+              <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{sym}</span>
+                <span style={{ fontSize: 12, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{names[sym] || f.companyName || ""}</span>
+                <span style={{ marginLeft: "auto", fontSize: 13, fontWeight: 700, color: C.t1 }}>{q?.p != null ? `$${q.p.toFixed(2)}` : "—"}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : ""}</span>
+                <button onClick={() => setTProfileSym(null)} aria-label="Close profile" style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "3px 8px", color: C.t3, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="1.8" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                </button>
+              </div>
+              {/* Sub-tabs */}
+              <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                {[{ v: "overview", l: "Overview" }, { v: "chart", l: "Chart" }, { v: "screener", l: "Screener" }].map(({ v, l }) => (
+                  <button key={v} onClick={() => { setTProfileTab(v); if (v === "screener") tOpenScreenerReport(sym); }} style={tTabBtn(tProfileTab === v)}>{l}</button>
+                ))}
+              </div>
+              {/* Content */}
+              {tProfileTab === "chart" ? (
+                <div style={{ flex: 1, display: "flex", background: C.bg }}>
+                  <iframe key={sym} src={tChartUrlFor(sym)} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+                </div>
+              ) : (
+                <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px" }}>
+                  {tProfileTab === "overview" && (<>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+                      {pSection("Identity", [
+                        ["Sector", f.sector ?? scr?.profile?.sector ?? null],
+                        ["Industry", f.industry ?? scr?.profile?.industry ?? null],
+                        ["Exchange", f.exchange ?? scr?.profile?.exchange ?? null],
+                        ["Country", f.country ?? scr?.profile?.country ?? null],
+                        ["Employees", (f.employees ?? scr?.profile?.employees) != null ? Number(f.employees ?? scr.profile.employees).toLocaleString() : null],
+                      ])}
+                      {pSection("Valuation", [
+                        ["P/E TTM", fmt1(f.peTTM)],
+                        ["P/E FWD", fmt1(f.peFwd)],
+                        ["PEG", fmt1(f.pegTTM)],
+                        ["Yield FWD", f.yieldFwd != null ? `${f.yieldFwd.toFixed(2)}%` : null],
+                        ["Payout Ratio", f.payoutRatio != null ? `${f.payoutRatio.toFixed(0)}%` : null],
+                        ["Beta", fmt2(f.beta)],
+                      ])}
+                      {pSection("Growth", [
+                        ["Rev YoY", fmtPct(f.revenueYoY), upDn(f.revenueYoY)],
+                        ["Rev 5Y", fmtPct(f.revenue5Y), upDn(f.revenue5Y)],
+                        ["ROE", f.roe != null ? `${f.roe.toFixed(1)}%` : null],
+                        ["D/E", fmt1(f.de)],
+                        ["Profit Margin", f.profitMargin != null ? `${f.profitMargin.toFixed(1)}%` : null],
+                      ])}
+                      {pSection("Returns", [
+                        ["Day", fmtPct(c, 2), upDn(c)],
+                        ["Last Qtr", fmtPct(f.lastQtr), upDn(f.lastQtr)],
+                        ["This Qtr", fmtPct(f.thisQtr), upDn(f.thisQtr)],
+                        ["YTD", fmtPct(f.ytd), upDn(f.ytd)],
+                        ["52W Range", (f.wk52l != null && f.wk52h != null) ? `$${f.wk52l.toFixed(0)} – $${f.wk52h.toFixed(0)}` : null],
+                      ])}
+                      {scr && pSection("Screener", [
+                        ["Composite", scr.overall_score != null ? `${scr.overall_score} / 100` : null, scr.overall_score >= 70 ? C.up : scr.overall_score >= 50 ? C.t1 : C.warn],
+                        ["Recommendation", scr.recommendation ?? null, tRecColor(scr.recommendation)],
+                        ["Sleeve", scr.sleeve ?? null],
+                        ["Screen Date", scr.screen_date ?? null],
+                      ])}
+                    </div>
+                    {desc && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ ...tEyebrow, marginBottom: 6 }}>About</div>
+                        <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, maxWidth: 760 }}>{desc}</div>
+                      </div>
+                    )}
+                  </>)}
+                  {tProfileTab === "screener" && (
+                    (screenerDetail && (screenerDetail.ticker || screenerDetail.symbol) === sym)
+                      ? tScreenerReport(screenerDetail, screenerDetailLoading)
+                      : <div style={tEyebrowMuted}>LOADING REPORT</div>
+                  )}
+                </div>
+              )}
+            </>);
+          })() : (() => {
             const isPortfolio = tIsPortfolio;
             const tBmToggles = perfBmToggles;
             return (<>
@@ -3960,7 +4470,9 @@ Instructions:
                 </>}
               </div>
               {!isPortfolio ? (
-                <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+                <div style={{ flex: 1, display: "flex", background: C.bg }}>
+                  <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+                </div>
               ) : (() => {
                 const emptyMsg = (txt) => <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4 }}>{txt}</div>;
                 if (!tChartData || tChartData.status === "none") return emptyMsg(perfLoading ? "LOADING PORTFOLIO DATA" : "NO PORTFOLIO HISTORY");
@@ -4141,7 +4653,7 @@ Instructions:
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
               {tRailView === "news" && tAllNews.slice(0, 50).map((article, i) => (
-                <div key={article.id || i} onClick={() => { setSelectedArticle(article); }} style={{ padding: "5px 12px", cursor: "pointer", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div key={article.id || i} onClick={() => { if (article.url) window.open(article.url, "_blank", "noopener,noreferrer"); else setSelectedArticle(article); }} style={{ padding: "5px 12px", cursor: "pointer", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <div style={{ fontSize: 11, color: C.t1, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{article.headline || article.title}</div>
                   <div style={{ display: "flex", gap: 8, fontSize: 10, color: C.t4 }}>
                     <span>{article.source || ""}</span>
@@ -4150,7 +4662,7 @@ Instructions:
                 </div>
               ))}
               {tRailView === "opps" && (!opportunities.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>NO OPPORTUNITIES YET</div> : opportunities.map((opp, i) => (
-                <div key={opp.id || i} onClick={() => { setTDrawer("opportunities"); setOppView("opportunities"); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+                <div key={opp.id || i} onClick={() => { setOppDetail(opp); setTDrawer("opportunities"); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                     <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: opp.conviction === "High Conviction" ? C.up : C.accent }}>{opp.conviction || "Opportunity"}</span>
@@ -4204,7 +4716,7 @@ Instructions:
           <span style={{ color: C.t3 }}>{sleeves[tChartSleeve]?.name || ""} — {tSleeveSyms.length} stocks</span>
           <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ color: C.t4 }}>{lastUp ? `Data: ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Loading..."}</span>
-            <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); try { localStorage.setItem("iown_layout", "classic"); } catch {} }} title="Exit Terminal Layout" style={{ background: "none", border: "none", padding: 0, color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, cursor: "pointer", fontFamily: "inherit" }}>EXIT</button>
+            <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); try { localStorage.setItem("iown_layout", "classic"); } catch {} if (!localStorage.getItem("iown_theme_locked")) setTheme(getAutoTheme()); }} title="Exit Terminal Layout" style={{ background: "none", border: "none", padding: 0, color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, cursor: "pointer", fontFamily: "inherit" }}>EXIT</button>
           </span>
         </div>
 
@@ -9599,7 +10111,7 @@ Instructions:
                 <div style={{ fontSize: 11, color: C.t4, marginBottom: 8 }}>Terminal mode shows a multi-panel grid (desktop only)</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
-                    <button key={v} onClick={() => { setTDrawer(null); setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} }} style={{
+                    <button key={v} onClick={() => { setTDrawer(null); setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} if (!localStorage.getItem("iown_theme_locked")) setTheme(v === "terminal" ? "terminal" : getAutoTheme()); }} style={{
                       flex: 1, padding: "10px 0", borderRadius: 10,
                       border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`,
                       background: layoutMode === v ? C.accentSoft : "transparent",
