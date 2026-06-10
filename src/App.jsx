@@ -68,7 +68,7 @@ const BM_SYMS = BENCHMARKS.map(b => b.sym);
 const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 // Right-rail benchmark indices (BTC-USD omitted — not available via the Alpaca stock snapshot feed)
-const RAIL_BENCHMARKS = ["SPY", "QQQ", "DIA", "IWM", "VTI", "EFA", "EEM", "AGG", "TLT", "GLD"];
+const RAIL_BENCHMARKS = ["DVY", "IUSG", "SPY"];
 const RAIL_BM_EXTRA = RAIL_BENCHMARKS.filter(s => !BM_SYMS.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
