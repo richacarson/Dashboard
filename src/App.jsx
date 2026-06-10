@@ -1333,16 +1333,51 @@ Instructions:
 
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
-    if (!apiKey || !apiSecret) return;
+    if (!FH) return;
+    // Sources we filter out — press-release wires and noisy aggregators
+    const BLOCKED = new Set([
+      "Benzinga", "PR Newswire", "PRNewswire", "Business Wire", "BusinessWire",
+      "GlobeNewswire", "Globe Newswire", "Accesswire", "AccessWire", "Newsfile",
+      "Zacks Investment Research", "MT Newswires", "InvestorPlace",
+    ]);
+    const norm = (a) => ({
+      id: a.id,
+      headline: a.headline,
+      source: a.source,
+      created_at: new Date((a.datetime || 0) * 1000).toISOString(),
+      summary: a.summary,
+      content: a.summary,
+      url: a.url,
+      symbols: a.related ? a.related.split(",").map(s => s.trim()).filter(Boolean) : [],
+      image_url: a.image,
+    });
+    const clean = (arr) => arr.filter(a => a && a.headline && !BLOCKED.has(a.source)).map(norm);
     try {
-      // Holdings news: only core portfolio symbols
-      const holdingsR = await fetch(`${BASE}/v1beta1/news?symbols=${coreSyms.join(",")}&limit=30&sort=desc`, { headers: hdrs });
-      if (holdingsR.ok) { const d = await holdingsR.json(); const newNews = d.news || []; setNews(prev => prev.length === newNews.length && prev[0]?.id === newNews[0]?.id ? prev : newNews); }
-      // Broad market news: no symbol filter
-      const broadR = await fetch(`${BASE}/v1beta1/news?limit=30&sort=desc`, { headers: hdrs });
-      if (broadR.ok) { const d = await broadR.json(); setBroadNews(d.news || []); }
+      // Broad market news — one call
+      const broadR = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FH}`);
+      if (broadR.ok) { const d = await broadR.json(); setBroadNews(clean(Array.isArray(d) ? d : []).slice(0, 60)); }
+      // Holdings news — per-symbol, throttled. 7-day window.
+      const today = new Date().toISOString().slice(0, 10);
+      const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString().slice(0, 10);
+      const targets = (coreSyms || []).slice(0, 20);
+      const results = [];
+      for (let i = 0; i < targets.length; i += 4) {
+        const batch = targets.slice(i, i + 4);
+        const settled = await Promise.all(batch.map(s =>
+          fetch(`https://finnhub.io/api/v1/company-news?symbol=${s}&from=${weekAgo}&to=${today}&token=${FH}`)
+            .then(r => r.ok ? r.json() : [])
+            .catch(() => [])
+        ));
+        for (const arr of settled) if (Array.isArray(arr)) results.push(...arr);
+      }
+      // Dedupe by id, sort desc by datetime, top 60
+      const seen = new Set();
+      const merged = clean(results).filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true; })
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 60);
+      setNews(prev => prev.length === merged.length && prev[0]?.id === merged[0]?.id ? prev : merged);
     } catch {}
-  }, [apiKey, apiSecret, hdrs, coreSyms]);
+  }, [coreSyms]);
 
     /* ── Fetch fundamentals via Finnhub (1 call/symbol, 60/min free) ── */
   const [fmpStatus, setFmpStatus] = useState("");
