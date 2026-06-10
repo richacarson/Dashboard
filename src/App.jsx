@@ -67,6 +67,9 @@ const BENCHMARKS = [
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
 const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
+// Right-rail benchmark indices (BTC-USD omitted — not available via the Alpaca stock snapshot feed)
+const RAIL_BENCHMARKS = ["SPY", "QQQ", "DIA", "IWM", "VTI", "EFA", "EEM", "AGG", "TLT", "GLD"];
+const RAIL_BM_EXTRA = RAIL_BENCHMARKS.filter(s => !BM_SYMS.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
@@ -919,6 +922,7 @@ Instructions:
     setArticleLoading(false);
   }, []);
   const [fundamentals, setFundamentals] = useState({}); // { SYM: { pe, peFwd, peg, roe, de, ... } }
+  const [dividendHistory, setDividendHistory] = useState({}); // { SYM: { yearsPaid, yearsGrown, _ts } } — dividend sleeve only
   const [loading, setLoading] = useState(false);
   const [lastUp, setLastUp] = useState(null);
   const lastUpRef = useRef(null);
@@ -1199,7 +1203,8 @@ Instructions:
     const perfHoldings = Object.values(perfDataMap).flatMap(d => Object.keys(d.holdings || {}));
     // Include Q1 stocks for Q1 vs Q2 comparison (sold stocks still need quotes)
     const q1Stocks = ["A","MATX","GFI","FINV","PDD"];
-    return [...new Set([...base, ...perfHoldings, ...q1Stocks])];
+    // Include right-rail benchmark ETFs not already covered by BM_SYMS so they get live quotes
+    return [...new Set([...base, ...perfHoldings, ...q1Stocks, ...RAIL_BM_EXTRA])];
   }, [sleeves, perfDataMap]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
 
@@ -1563,6 +1568,60 @@ Instructions:
     setFundamentals(results);
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms, apiKey, apiSecret, hdrs]);
+
+  /* ── Dividend longevity (Yrs Paid / Yrs Grown) — dividend sleeve only ── */
+  const fetchDividendHistory = useCallback(async (force = false) => {
+    const key = FH || FK;
+    if (!key) return;
+    const divSyms = sleeves.dividend?.symbols || [];
+    if (!divSyms.length) return;
+    if (!force) {
+      try {
+        const old = JSON.parse(localStorage.getItem("iown_dividend_history") || "{}");
+        const age = Date.now() - (old._ts || 0);
+        const hasData = divSyms.some(s => old[s]?.yearsPaid != null);
+        if (age < 24 * 3600000 && hasData) { setDividendHistory(old); return; } // 24h TTL — dividend history changes rarely
+      } catch {}
+    }
+    const results = {};
+    const toDate = new Date().toISOString().slice(0, 10);
+    const curYear = new Date().getFullYear();
+    for (let i = 0; i < divSyms.length; i++) {
+      const sym = divSyms[i];
+      try {
+        const url = `https://finnhub.io/api/v1/stock/dividend2?symbol=${sym}&from=1995-01-01&to=${toDate}&token=${key}`;
+        let r = await fetch(url);
+        if (r.status === 429) { await new Promise(res => setTimeout(res, 61000)); r = await fetch(url); }
+        if (!r.ok) continue;
+        const d = await r.json();
+        const payments = Array.isArray(d) ? d : (d?.data || []);
+        // Group payments by calendar year
+        const yearSum = {};
+        for (const p of payments) {
+          const amt = Number(p.amount);
+          const dt = p.payDate || p.date || p.exDate || "";
+          const y = parseInt(String(dt).slice(0, 4), 10);
+          if (!isFinite(amt) || amt <= 0 || !y) continue;
+          yearSum[y] = (yearSum[y] || 0) + amt;
+        }
+        const paidYears = Object.keys(yearSum).map(Number).sort((a, b) => b - a);
+        let yearsPaid = null, yearsGrown = null;
+        if (paidYears.length) {
+          const latest = paidYears[0];
+          yearsPaid = 0;
+          for (let y = latest; yearSum[y] > 0; y--) yearsPaid++;
+          // Growth streak — skip the in-progress calendar year (partial totals would falsely break it)
+          const growEnd = latest === curYear ? latest - 1 : latest;
+          yearsGrown = 0;
+          for (let y = growEnd; yearSum[y] != null && yearSum[y - 1] != null && yearSum[y] > yearSum[y - 1]; y--) yearsGrown++;
+        }
+        results[sym] = { yearsPaid, yearsGrown, _ts: Date.now() };
+      } catch (e) { console.warn("Dividend history", sym, e.message); }
+    }
+    results._ts = Date.now();
+    setDividendHistory(results);
+    try { localStorage.setItem("iown_dividend_history", JSON.stringify(results)); } catch {}
+  }, [sleeves]);
 
   /* ── Fetch macro indicators for bear probability composite ── */
   useEffect(() => {
@@ -2480,7 +2539,7 @@ Instructions:
       fetchData(true);
       fetchNames();
       fetchNews();
-      fetchFundamentals();
+      fetchFundamentals().then(() => fetchDividendHistory()).catch(() => {});
       fetchCalendar();
       // Fetch research reports index
       fetch(`${import.meta.env.BASE_URL || "/"}research/index.json?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setResearchReports(d); }).catch(() => {});
@@ -3239,11 +3298,14 @@ Instructions:
       }
       return ws > 0 ? wsum / ws : (n ? esum / n : null);
     };
+    const tQtdOf = s => { const p = (quotesRef.current[s] || quotes[s])?.p; const anc = REBALANCE_ANCHORS[s]; return (anc && p) ? (p / anc - 1) * 100 : (fundamentals[s]?.thisQtr ?? null); };
     const tAvgPE = tAvg(s => fundamentals[s]?.peTTM);
     const tAvgComp = tAvg(s => screenerByTicker[s]?.overall_score);
     const tAvgYld = tAvg(s => fundamentals[s]?.yieldFwd);
     const tAvgPeg = tAvg(s => fundamentals[s]?.pegTTM);
+    const tAvgQtd = tAvg(tQtdOf);
     const tIsGrowth = tChartSleeve === "growth";
+    const tIsDividend = tChartSleeve === "dividend";
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
     const tChartBg = "171738"; // terminal chart is always dark navy, regardless of theme
     const tChartUrlFor = (s) => `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${s}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&hidevolume=0&toolbarbg=${tChartBg}&backgroundColor=%23${tChartBg}&gridColor=rgba(201%2C168%2C76%2C0.08)&studies=%5B%22Volume%40tv-basicstudies%22%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"%2C"paneProperties.vertGridProperties.color"%3A"rgba(201%2C168%2C76%2C0.08)"%2C"paneProperties.horzGridProperties.color"%3A"rgba(201%2C168%2C76%2C0.08)"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
@@ -3294,28 +3356,47 @@ Instructions:
           </div>
           {/* Stock list */}
           <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
-            {/* Sleeve summary (weighted averages) */}
-            <div style={{ position: "sticky", top: 0, zIndex: 1, background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "6px 10px", display: "flex", justifyContent: "space-between", gap: 8 }}>
-              {[
-                { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
-                { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
-                { l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null },
-                ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
-              ].map(({ l, v }) => (
-                <span key={l} style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
-                  <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.accent }}>{l}</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: v != null ? C.t1 : C.t4 }}>{v ?? "—"}</span>
-                </span>
-              ))}
+            {/* Sleeve summary (weighted averages) + column header */}
+            <div style={{ position: "sticky", top: 0, zIndex: 1, background: C.surface }}>
+              <div style={{ borderBottom: `1px solid ${C.border}`, padding: "6px 10px", display: "flex", justifyContent: "space-between", gap: 8 }}>
+                {[
+                  { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
+                  { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
+                  { l: "QTD", v: tAvgQtd != null ? `${tAvgQtd >= 0 ? "+" : ""}${tAvgQtd.toFixed(1)}%` : null, c: tAvgQtd == null ? null : tAvgQtd >= 0 ? C.up : C.dn },
+                  ...(tIsDividend ? [{ l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null }] : []),
+                  ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
+                ].map(({ l, v, c }) => (
+                  <span key={l} style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.accent }}>{l}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: v != null ? (c || C.t1) : C.t4 }}>{v ?? "—"}</span>
+                  </span>
+                ))}
+              </div>
+              <div style={{ padding: "4px 10px", borderBottom: `1px solid ${C.border}`, background: C.surface, display: "flex", alignItems: "center", justifyContent: "space-between", borderLeft: "2px solid transparent", boxSizing: "border-box" }}>
+                {[
+                  { l: "SYM", w: 38, a: "left" },
+                  { l: "PRICE", w: 42 },
+                  { l: "CHG%", w: 38 },
+                  { l: "QTD%", w: 38 },
+                  { l: "P/E", w: 28 },
+                  { l: "COMP", w: 26 },
+                  ...(tIsGrowth ? [{ l: "PEG", w: 28 }] : []),
+                  ...(tIsDividend ? [{ l: "YLD", w: 28 }] : []),
+                ].map(h => (
+                  <span key={h.l} style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.t4, width: h.w, flexShrink: 0, textAlign: h.a || "right", overflow: "hidden" }}>{h.l}</span>
+                ))}
+              </div>
             </div>
-            {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
+            {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
               <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("overview"); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: 44, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
-                <span style={{ fontSize: 10, color: C.t1, width: 52, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? q.p.toFixed(2) : "—"}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
-                <span style={{ fontSize: 10, width: 34, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: 38, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                <span style={{ fontSize: 10, color: C.t1, width: 42, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? q.p.toFixed(2) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, width: 38, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, width: 38, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? `${qtd >= 0 ? "+" : ""}${qtd.toFixed(1)}%` : "—"}</span>
+                <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 700, width: 26, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>
-                {tIsGrowth && <span style={{ fontSize: 10, width: 30, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
+                {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
+                {tIsDividend && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.yieldFwd != null ? C.t2 : C.t4 }}>{f?.yieldFwd != null ? `${f.yieldFwd.toFixed(1)}%` : "—"}</span>}
               </div>
             ); })}
           </div>
@@ -3939,6 +4020,7 @@ Instructions:
                 const mFmtSgn = (v, dp = 2) => v == null || !isFinite(v) ? null : `${v >= 0 ? "+" : ""}${v.toFixed(dp)}%`;
                 const mVol = v => v == null || !isFinite(v) ? null : v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : String(Math.round(v));
                 const mUpDn = v => v == null ? C.t4 : v > 0 ? C.up : v < 0 ? C.dn : C.t3;
+                const mDivStreak = v => v == null ? C.t4 : v >= 25 ? C.up : v >= 10 ? C.t1 : C.t3;
                 return (<div>
                   <div style={{ ...tEyebrow, marginBottom: 10 }}>HOLDINGS METRICS</div>
                   {/* Sleeve picker */}
@@ -3968,6 +4050,8 @@ Instructions:
                       ...(metricsView === "dividend" ? [
                         { l: "Yield FWD", k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : null },
                         { l: "Payout", k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : null },
+                        { l: "Yrs Paid", k: "_yrsPaid", noAvg: true, fn: (d, s) => { const v = dividendHistory[s]?.yearsPaid; return v != null ? String(v) : null; }, color: (d, s) => mDivStreak(dividendHistory[s]?.yearsPaid) },
+                        { l: "Yrs Grown", k: "_yrsGrown", noAvg: true, fn: (d, s) => { const v = dividendHistory[s]?.yearsGrown; return v != null ? String(v) : null; }, color: (d, s) => mDivStreak(dividendHistory[s]?.yearsGrown) },
                       ] : [
                         { l: "Margin", k: "profitMargin", fn: d => mFmtP(d.profitMargin) },
                       ]),
@@ -3984,6 +4068,12 @@ Instructions:
                       if (!metricSort.col) return a.localeCompare(b);
                       if (metricSort.col === "_day") {
                         const av = mDayChg(a), bv = mDayChg(b);
+                        if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+                        return metricSort.dir === "asc" ? av - bv : bv - av;
+                      }
+                      if (metricSort.col === "_yrsPaid" || metricSort.col === "_yrsGrown") {
+                        const kk = metricSort.col === "_yrsPaid" ? "yearsPaid" : "yearsGrown";
+                        const av = dividendHistory[a]?.[kk] ?? null, bv = dividendHistory[b]?.[kk] ?? null;
                         if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
                         return metricSort.dir === "asc" ? av - bv : bv - av;
                       }
@@ -4620,6 +4710,19 @@ Instructions:
                 <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600 }}>{sc != null ? pct(sc) : "—"}</span>
               </div>
             ); })}
+            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Benchmarks</div>
+            {RAIL_BENCHMARKS.map((sym, i) => {
+              const q = bmQuotes[sym] || quotesRef.current?.[sym] || quotes[sym];
+              const b = bmBars[sym] || barsRef.current?.[sym] || bars[sym];
+              const c = (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
+              return (
+                <div key={sym} style={{ display: "flex", alignItems: "baseline", padding: "4px 0", borderBottom: i < RAIL_BENCHMARKS.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.t1, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                  <span style={{ fontSize: 10, color: q?.p != null ? C.t1 : C.t4, width: 58, textAlign: "right", flexShrink: 0 }}>{q?.p != null ? q.p.toFixed(2) : "—"}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, width: 52, textAlign: "right", flexShrink: 0, color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
+                </div>
+              );
+            })}
             <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Market</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 11 }}>
               <span style={{ color: C.t3 }}>SPY</span><span style={{ color: C.t1, textAlign: "right" }}>{tSpyPrice ? `$${tSpyPrice.toFixed(2)}` : "—"}</span>
@@ -6745,6 +6848,8 @@ Instructions:
                 pctCol("YTD", "ytd", 60),
                 { l: "Yield FWD", w: 72, k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
                 { l: "Payout", w: 62, k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
+                { l: "Yrs Paid", w: 64, k: "_yrsPaid", noAvg: true, fn: (d, sym) => { const v = dividendHistory[sym]?.yearsPaid; return v != null ? String(v) : "—"; }, color: (d, sym) => { const v = dividendHistory[sym]?.yearsPaid; return v == null ? C.t4 : v >= 25 ? C.up : v >= 10 ? C.t1 : C.t3; } },
+                { l: "Yrs Grown", w: 72, k: "_yrsGrown", noAvg: true, fn: (d, sym) => { const v = dividendHistory[sym]?.yearsGrown; return v != null ? String(v) : "—"; }, color: (d, sym) => { const v = dividendHistory[sym]?.yearsGrown; return v == null ? C.t4 : v >= 25 ? C.up : v >= 10 ? C.t1 : C.t3; } },
                 { l: "P/E TTM", w: 62, k: "peTTM", fn: d => fmtV(d.peTTM) },
                 { l: "P/E FWD", w: 62, k: "peFwd", fn: d => fmtV(d.peFwd) },
                 { l: "PEG", w: 50, k: "pegTTM", fn: d => fmtV(d.pegTTM) },
@@ -6779,6 +6884,12 @@ Instructions:
                 // Special handling for live Day column
                 if (metricSort.col === "_day") {
                   const av = dayChg(a); const bv = dayChg(b);
+                  if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+                  return metricSort.dir === "asc" ? av - bv : bv - av;
+                }
+                if (metricSort.col === "_yrsPaid" || metricSort.col === "_yrsGrown") {
+                  const kk = metricSort.col === "_yrsPaid" ? "yearsPaid" : "yearsGrown";
+                  const av = dividendHistory[a]?.[kk] ?? null; const bv = dividendHistory[b]?.[kk] ?? null;
                   if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
                   return metricSort.dir === "asc" ? av - bv : bv - av;
                 }
@@ -10160,7 +10271,7 @@ Instructions:
               {fmpStatus && <div style={{ fontSize: 11, color: C.t2, marginTop: 8, padding: "6px 8px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
               {!(FH || FK) && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FINNHUB_KEY secret to GitHub repo, then re-deploy to enable metrics.</div>}
               {(FH || FK) && (
-                <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); } catch {} setFundamentals({}); fetchFundamentals(true); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); localStorage.removeItem("iown_dividend_history"); } catch {} setFundamentals({}); setDividendHistory({}); fetchFundamentals(true).then(() => fetchDividendHistory(true)).catch(() => {}); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
                 </button>
               )}
