@@ -93,9 +93,9 @@ function getMarketStatus() {
 
   if (day === 0 || day === 6) return { status: "closed", label: "Weekend", color: "#F87171" };
   if (mins < 240) return { status: "closed", label: "Closed", color: "#F87171" }; // before 4am
-  if (mins < 570) return { status: "premarket", label: "Pre-Market", color: "#FBBF24" }; // 4am-9:30am
+  if (mins < 570) return { status: "premarket", label: "Pre-Market", color: C.warn }; // 4am-9:30am
   if (mins < 960) return { status: "open", label: "Open", color: "#34D399" }; // 9:30am-4pm
-  if (mins < 1200) return { status: "afterhours", label: "After Hours", color: "#FBBF24" }; // 4pm-8pm
+  if (mins < 1200) return { status: "afterhours", label: "After Hours", color: C.warn }; // 4pm-8pm
   return { status: "closed", label: "Closed", color: "#F87171" }; // after 8pm
 }
 
@@ -106,6 +106,7 @@ const DARK = {
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
   accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.12)", accentGlow: "rgba(201,168,76,0.30)",
+  warn: "#D9A441",
   nav: "#171738", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
   navBorder: "rgba(201,168,76,0.12)", navAccentSoft: "rgba(201,168,76,0.14)",
   shadow: "0 2px 8px rgba(23,23,56,0.35)",
@@ -117,72 +118,27 @@ const LIGHT = {
   up: "#16A34A", upSoft: "#16A34A18", upGlow: "#16A34A30",
   dn: "#DC2626", dnSoft: "#DC262618", dnGlow: "#DC262630",
   accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.12)", accentGlow: "rgba(201,168,76,0.24)",
+  warn: "#B45309",
   nav: "#171738", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
   navBorder: "rgba(250,247,242,0.10)", navAccentSoft: "rgba(201,168,76,0.18)",
   shadow: "0 1px 3px rgba(23,23,56,0.08), 0 1px 2px rgba(23,23,56,0.04)",
 };
 const TERMINAL = {
-  bg: "#08051A", surface: "#100D2B", card: "#1A1640", cardHover: "#221E4F", elevated: "#2A2660",
-  border: "rgba(252,212,50,0.14)", borderHover: "rgba(252,212,50,0.24)", borderActive: "rgba(252,212,50,0.55)",
-  t1: "#FFF5D0", t2: "#C0B292", t3: "#7A7158", t4: "#4A4338",
-  up: "#4AF6C3", upSoft: "#4AF6C318", upGlow: "#4AF6C330",
-  dn: "#FF433D", dnSoft: "#FF433D18", dnGlow: "#FF433D30",
-  accent: "#FCD432", accentSoft: "rgba(252,212,50,0.15)", accentGlow: "rgba(252,212,50,0.32)",
-  nav: "#100D2B", navText: "#FFF5D0", navTextDim: "#C0B292", navTextMuted: "#7A7158",
-  navBorder: "rgba(252,212,50,0.14)", navAccentSoft: "rgba(252,212,50,0.18)",
-  shadow: "none",
+  bg: "#0E0E26", surface: "#13132E", card: "#171738", cardHover: "#1F1F45", elevated: "#252551",
+  border: "rgba(201,168,76,0.14)", borderHover: "rgba(201,168,76,0.24)", borderActive: "rgba(201,168,76,0.50)",
+  t1: "#FAF7F2", t2: "#F4EFE4", t3: "#B8B4AC", t4: "#8B7355",
+  up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
+  dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
+  accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.14)", accentGlow: "rgba(201,168,76,0.32)",
+  warn: "#D9A441",
+  nav: "#0E0E26", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
+  navBorder: "rgba(201,168,76,0.14)", navAccentSoft: "rgba(201,168,76,0.14)",
+  shadow: "0 2px 8px rgba(14,14,38,0.35)",
   isTerminal: true,
 };
+/* ── Benchmark overlay colors (muted, brand-adjacent) ── */
+const BM_COLORS = { SPY: "#8FA3D9", QQQ: "#B08BD0", DIA: "#C98B6B", DVY: "#D9A441", IUSG: "#7FAE9B" };
 let C = DARK;
-
-/* ── Sparkline from intraday bars array ── */
-function Sparkline({ points, chg, width = 100, height = 36 }) {
-  if (!points || points.length < 2) return <div style={{ width, height }} />;
-  const mn = Math.min(...points), mx = Math.max(...points), rng = mx - mn || 1;
-  const pad = 10; // enough room for the pulsing dot glow
-  const drawW = width - pad * 2;
-  const drawH = height - pad * 2;
-  const pts = points.map((p, i) => [
-    pad + (i / (points.length - 1)) * drawW,
-    pad + ((mx - p) / rng) * drawH
-  ]);
-  // Smooth curve using cardinal spline
-  const tension = 0.3;
-  let pathD = `M${pts[0][0]},${pts[0][1]}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const cp1x = p1[0] + (p2[0] - p0[0]) * tension;
-    const cp1y = p1[1] + (p2[1] - p0[1]) * tension;
-    const cp2x = p2[0] - (p3[0] - p1[0]) * tension;
-    const cp2y = p2[1] - (p3[1] - p1[1]) * tension;
-    pathD += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`;
-  }
-  const color = (chg != null ? chg : 0) >= 0 ? C.up : C.dn;
-  const id = `sp${Math.random().toString(36).slice(2, 8)}`;
-  // Fill path: close to bottom
-  const fillD = pathD + ` L${pts[pts.length-1][0]},${height - pad} L${pts[0][0]},${height - pad} Z`;
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block", flexShrink: 0 }}>
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <path d={fillD} fill={`url(#${id})`} />
-      <path d={pathD} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Pulsing dot at last point */}
-      <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="5" fill={color} opacity="0.15">
-        <animate attributeName="r" values="3;7;3" dur="2s" repeatCount="indefinite" />
-        <animate attributeName="opacity" values="0.2;0.05;0.2" dur="2s" repeatCount="indefinite" />
-      </circle>
-      <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="2.5" fill={color} />
-    </svg>
-  );
-}
 
 /* ── Portfolio Heatmap ── */
 function Heatmap({ sleeves, chgFn, namesFn, onTap, onContext }) {
@@ -820,7 +776,6 @@ export default function App() {
   const [bars, setBars] = useState({});
   const [bmQuotes, setBmQuotes] = useState({});
   const [bmBars, setBmBars] = useState({});
-  const [intradayPts, setIntradayPts] = useState({});
   const [anchorPrices, setAnchorPrices] = useState(loadAnchorPrices);
   const [liveWeights, setLiveWeights] = useState({});
   const [names, setNames] = useState({});
@@ -958,7 +913,6 @@ Instructions:
   const [terminalActiveSym, setTerminalActiveSym] = useState("__portfolio__");
   const [tChartHover, setTChartHover] = useState(null);
   const [tChartRange, setTChartRange] = useState("YTD");
-  const [terminalSleeve, setTerminalSleeve] = useState("dividend");
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
@@ -1317,71 +1271,6 @@ Instructions:
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
   }, [apiKey, apiSecret, hdrs, ALL]);
 
-  /* ── Fetch intraday bars for sparklines ── */
-  const intradayRef = useRef({});
-  const fetchIntraday = useCallback(async () => {
-    if (!apiKey || !apiSecret) return;
-    try {
-      const start = new Date();
-      start.setDate(start.getDate() - 2);
-      const startStr = start.toISOString().split("T")[0];
-      const today = new Date().toISOString().split("T")[0];
-      const r = await fetch(`${BASE}/v2/stocks/bars?symbols=${ALL.join(",")}&timeframe=5Min&start=${startStr}T04:00:00Z&feed=iex&limit=10000`, { headers: hdrs });
-      if (!r.ok) return;
-      const d = await r.json();
-      const pts = {};
-      if (d.bars) {
-        for (const [s, barArr] of Object.entries(d.bars)) {
-          const todayBars = barArr.filter(b => b.t.startsWith(today)).map(b => b.c);
-          const allCloses = barArr.map(b => b.c);
-          if (todayBars.length >= 5) {
-            pts[s] = todayBars;
-          } else {
-            pts[s] = allCloses.length > 78 ? allCloses.slice(-78) : allCloses;
-          }
-        }
-      }
-      // Stocks missing from IEX intraday — fetch 30-day daily bars as sparkline fallback
-      const missing = ALL.filter(s => !pts[s] || pts[s].length < 2);
-      if (missing.length > 0) {
-        // Try Alpaca daily bars without feed restriction
-        try {
-          const d30 = new Date(); d30.setDate(d30.getDate() - 35);
-          const dailyR = await fetch(`${BASE}/v2/stocks/bars?symbols=${missing.join(",")}&timeframe=1Day&start=${d30.toISOString().slice(0,10)}&limit=30&adjustment=split`, { headers: hdrs });
-          if (dailyR.ok) {
-            const dailyD = await dailyR.json();
-            if (dailyD.bars) {
-              for (const [s, barArr] of Object.entries(dailyD.bars)) {
-                if (barArr.length >= 2) pts[s] = barArr.map(b => b.c);
-              }
-            }
-          }
-        } catch {}
-      }
-      // Still missing — use Finnhub candles as final fallback
-      const stillMissing = ALL.filter(s => !pts[s] || pts[s].length < 2);
-      if (stillMissing.length > 0 && FH) {
-        const now = Math.floor(Date.now() / 1000);
-        const from = now - 30 * 86400;
-        for (const s of stillMissing) {
-          try {
-            const r = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${s}&resolution=D&from=${from}&to=${now}&token=${FH}`);
-            if (r.ok) {
-              const d = await r.json();
-              if (d.s === "ok" && d.c && d.c.length >= 2) {
-                pts[s] = d.c;
-              }
-            }
-          } catch {}
-        }
-      }
-      const prev = intradayRef.current;
-      const changed = Object.keys(pts).some(s => (pts[s]?.length || 0) !== (prev[s]?.length || 0));
-      intradayRef.current = pts;
-      if (changed || Object.keys(prev).length === 0) setIntradayPts(pts);
-    } catch {}
-  }, [apiKey, apiSecret, hdrs]);
-
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
     if (!apiKey || !apiSecret) return;
@@ -1564,6 +1453,8 @@ Instructions:
           roe: m.roeTTM ?? m.roeAnnual ?? null,
           de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
           beta: m.beta ?? null,
+          wk52h: m["52WeekHigh"] ?? null,
+          wk52l: m["52WeekLow"] ?? null,
           lastQtr: lastQtrCalc,
           thisQtr: thisQtrCalc ?? (curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null),
           ytd: ytdCalc ?? m["yearToDatePriceReturnDaily"] ?? null,
@@ -2621,6 +2512,155 @@ Instructions:
 
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
 
+  /* ── Terminal layout: memoized portfolio chart pipeline (candles + benchmark alignment) ── */
+  const tChartData = useMemo(() => {
+    if (layoutMode !== "terminal" || terminalActiveSym !== "__portfolio__") return null;
+    const tSleeveData = perfDataMap[tChartSleeve] || perfData || {};
+    const portfolio = tSleeveData.portfolio || [];
+    const benchmarks = tSleeveData.benchmarks || {};
+    if (portfolio.length < 2) return { status: "none" };
+    const now = new Date();
+    let filtered;
+    if (tChartRange === "1D") {
+      // Use intraday data if available, aggregate into 3-min candles
+      const intra = intradayPortfolio["1D"];
+      if (intra && intra.length > 2) {
+        const baseV = intra[0].value;
+        const AGG = 3; // 3-minute candles
+        const candles = [];
+        for (let i = 0; i < intra.length - 1; i += AGG) {
+          const chunk = intra.slice(i, Math.min(i + AGG + 1, intra.length));
+          const vals = chunk.map(p => ((p.value / baseV) - 1) * 100);
+          const o = vals[0], c = vals[vals.length - 1], h = Math.max(...vals), l = Math.min(...vals);
+          candles.push({ date: chunk[chunk.length - 1].date.replace("T", " ").slice(11, 16), o, c, h, l, rawVal: chunk[chunk.length - 1].value, fullDate: chunk[chunk.length - 1].date });
+        }
+        // Benchmark intraday
+        const ibm = intradayBenchmarks["1D"] || {};
+        const bmCandles = {};
+        Object.entries(ibm).forEach(([sym, pts]) => {
+          if (!perfBmToggles[sym] || !pts.length) return;
+          const bp = (bmBars[sym]?.pc) || pts[0].close;
+          const bc = [];
+          for (let i = 0; i < pts.length - 1; i += AGG) {
+            const ch = pts.slice(i, Math.min(i + AGG + 1, pts.length));
+            const vs = ch.map(p => ((p.close / bp) - 1) * 100);
+            bc.push({ o: vs[0], c: vs[vs.length - 1], h: Math.max(...vs), l: Math.min(...vs) });
+          }
+          bmCandles[sym] = bc;
+        });
+        const aV = candles.flatMap(c => [c.h, c.l]);
+        Object.values(bmCandles).forEach(bc => aV.push(...bc.flatMap(c => [c.h, c.l])));
+        const mn = Math.min(...aV), mx = Math.max(...aV), rg = mx - mn || 1;
+        return { status: "intraday", candles, bmCandles, mn, mx, rg };
+      }
+      filtered = portfolio.slice(-5);
+    } else if (tChartRange === "QTD") {
+      const qm = Math.floor(now.getMonth() / 3) * 3;
+      const qStart = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
+      const qtdStart = [...portfolio].reverse().find(p => p.date < qStart);
+      filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio.filter(p => p.date >= qStart);
+    } else if (tChartRange === "YTD") {
+      const yearEnd = `${now.getFullYear() - 1}-12-31`;
+      const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
+      filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio;
+    } else if (tChartRange === "ALL") {
+      filtered = portfolio;
+    } else {
+      const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[tChartRange] || 365;
+      const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+      filtered = portfolio.filter(p => p.date >= cutoff);
+    }
+    if (filtered.length < 2) return { status: "loading" };
+    const baseVal = filtered[0].value;
+    // Build daily candles first
+    const dailyCandles = [];
+    for (let i = 1; i < filtered.length; i++) {
+      const o = ((filtered[i - 1].value / baseVal) - 1) * 100;
+      const c = ((filtered[i].value / baseVal) - 1) * 100;
+      const body = Math.abs(c - o); const wick = body * 0.3 + 0.05;
+      dailyCandles.push({ date: filtered[i].date, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick, rawVal: filtered[i].value });
+    }
+    // Aggregate to weekly for long timeframes (>200 daily candles)
+    const useWeekly = dailyCandles.length > 200;
+    let candles;
+    if (useWeekly) {
+      candles = [];
+      let week = null;
+      for (const d of dailyCandles) {
+        const wk = d.date.slice(0, 4) + "-W" + String(Math.ceil((new Date(d.date).getTime() - new Date(d.date.slice(0, 4) + "-01-01").getTime()) / 604800000)).padStart(2, "0");
+        if (!week || week._wk !== wk) {
+          if (week) candles.push(week);
+          week = { date: d.date, o: d.o, h: d.h, l: d.l, c: d.c, rawVal: d.rawVal, _wk: wk };
+        } else {
+          week.c = d.c; week.h = Math.max(week.h, d.h); week.l = Math.min(week.l, d.l); week.rawVal = d.rawVal; week.date = d.date;
+        }
+      }
+      if (week) candles.push(week);
+    } else {
+      candles = dailyCandles;
+    }
+    const allVals = candles.flatMap(c => [c.h, c.l]);
+    const bmCandles = {};
+    Object.entries(benchmarks).forEach(([sym, priceMap]) => {
+      if (!perfBmToggles[sym]) return;
+      const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
+      if (!prices.length) return;
+      let bp = null; for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
+      if (!bp) bp = prices[prices.length - 1][1];
+      // Build daily benchmark candles aligned to candle dates (monotonic index, no rescans)
+      const dailyBm = []; let pi = 0, prevPi = 0;
+      for (let i = 1; i < filtered.length; i++) {
+        prevPi = pi; // pi is currently aligned to filtered[i - 1]
+        while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
+        const cl = ((prices[pi][1] / bp) - 1) * 100;
+        const op = i === 1 ? 0 : ((prices[prevPi][1] / bp) - 1) * 100;
+        const bd = Math.abs(cl - op); const wk = bd * 0.25 + 0.03;
+        dailyBm.push({ o: op, c: cl, h: Math.max(op, cl) + wk, l: Math.min(op, cl) - wk });
+      }
+      const lq = bmQuotes[sym];
+      if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
+      // Aggregate to weekly if portfolio uses weekly
+      if (useWeekly) {
+        const wkBm = []; let wIdx = 0;
+        for (const pc of candles) {
+          let wO = null, wC = null, wH = -Infinity, wL = Infinity;
+          while (wIdx < dailyBm.length && wIdx < dailyCandles.length && dailyCandles[wIdx].date <= pc.date) {
+            const b = dailyBm[wIdx]; if (wO === null) wO = b.o; wC = b.c; wH = Math.max(wH, b.h); wL = Math.min(wL, b.l); wIdx++;
+          }
+          wkBm.push(wO !== null ? { o: wO, c: wC, h: wH, l: wL } : wkBm.length ? { ...wkBm[wkBm.length - 1] } : { o: 0, c: 0, h: 0, l: 0 });
+        }
+        bmCandles[sym] = wkBm;
+      } else { bmCandles[sym] = dailyBm; }
+      allVals.push(...(bmCandles[sym]).flatMap(c => [c.h, c.l]));
+    });
+    const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
+    return { status: "daily", candles, bmCandles, minV, maxV, range };
+  }, [layoutMode, terminalActiveSym, tChartSleeve, tChartRange, perfDataMap, perfData, perfBmToggles, intradayPortfolio, intradayBenchmarks, bmQuotes, bmBars]);
+
+  /* ── Terminal layout: keyboard navigation ── */
+  useEffect(() => {
+    if (layoutMode !== "terminal" || !isDesktop || !authed) return;
+    const onKey = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || e.target?.isContentEditable) return;
+      if (e.key === "Escape") {
+        if (selectedArticle) setSelectedArticle(null);
+        else if (tDrawer) setTDrawer(null);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        const syms = sleevesRef.current[tChartSleeve]?.symbols || [];
+        if (!syms.length) return;
+        e.preventDefault();
+        setTerminalActiveSym(cur => {
+          const i = syms.indexOf(cur);
+          if (e.key === "ArrowDown") return i < 0 ? syms[0] : syms[Math.min(syms.length - 1, i + 1)];
+          return i <= 0 ? syms[0] : syms[i - 1];
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [layoutMode, isDesktop, authed, tDrawer, selectedArticle, tChartSleeve]);
+
   /* ━━━ PASSWORD GATE ━━━ */
   if (!unlocked) {
     const handleUnlock = () => {
@@ -2893,12 +2933,14 @@ Instructions:
      ═══════════════════════════════════════════════════════════════════ */
   if (layoutMode === "terminal" && isDesktop && authed) {
     const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
+    const tEyebrow = { fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent };
     const tSleeveKeys = Object.keys(sleeves);
     const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
-    const tChartBg = C.card.replace("#", "");
-    const tChartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${terminalActiveSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${tChartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
-    const tNow = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const tAllNews = [...(news || []), ...(broadNews || [])].sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50);
+    const tIsPortfolio = terminalActiveSym === "__portfolio__";
+    const tChartBg = C.bg.replace("#", "");
+    const tChartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${terminalActiveSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${tChartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${theme === "light" ? "light" : "dark"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
+    const tNow = new Date().toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
+    const tAllNews = (() => { const seen = new Set(); return [...(news || []), ...(broadNews || [])].filter(a => { const k = a.id || a.headline; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50); })();
     const tPortfolioVal = liveValue ? liveValue.value : null;
     const tPortfolioPrev = liveValue?.prevClose || null;
     const tDayChg = (tPortfolioVal && tPortfolioPrev) ? ((tPortfolioVal / tPortfolioPrev) - 1) * 100 : null;
@@ -2908,14 +2950,14 @@ Instructions:
     const tYieldSpread = macroData.yieldSpread;
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "260px 1fr 300px", overflow: "hidden", letterSpacing: "-0.2px" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "minmax(220px, 260px) 1fr minmax(240px, 300px)", overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
         {/* ── TOP STATUS BAR ── */}
-        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, fontVariantNumeric: "tabular-nums" }}>
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: marketStatus.color, boxShadow: `0 0 6px ${marketStatus.color}` }} />
             <span style={{ fontSize: 11, fontWeight: 700, color: marketStatus.color }}>{marketStatus.label}</span>
           </div>
-          <div style={{ display: "flex", gap: 16, alignItems: "center", overflow: "hidden" }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "center", overflowX: "auto" }}>
             {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? (
               <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
                 <span style={{ fontWeight: 700 }}>{sym}</span>{" "}${q.p.toFixed(2)}{" "}
@@ -2923,7 +2965,7 @@ Instructions:
               </span>
             ) : null; })}
             <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
-            {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? "#FBBF24" : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
+            {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? C.warn : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
             {macroData.oilPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${macroData.oilPrice.toFixed(2)} <span style={{ color: macroData.oilChg >= 0 ? C.up : C.dn }}>{macroData.oilChg != null ? `${macroData.oilChg >= 0 ? "+" : ""}${macroData.oilChg.toFixed(2)}%` : ""}</span></span>}
             {macroData.goldPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${macroData.goldPrice.toFixed(0)} <span style={{ color: macroData.goldChg >= 0 ? C.up : C.dn }}>{macroData.goldChg != null ? `${macroData.goldChg >= 0 ? "+" : ""}${macroData.goldChg.toFixed(2)}%` : ""}</span></span>}
           </div>
@@ -2934,17 +2976,20 @@ Instructions:
         <div style={{ borderRight: `1px solid ${C.border}`, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* Sleeve tabs */}
           <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${C.border}`, flexShrink: 0, overflow: "auto" }}>
-            {tSleeveKeys.map(k => (
-              <button key={k} onClick={() => setTerminalSleeve(k)} style={{ flex: "0 0 auto", padding: "6px 8px", background: terminalSleeve === k ? C.accentSoft : "transparent", border: "none", borderBottom: terminalSleeve === k ? `2px solid ${C.accent}` : "2px solid transparent", color: terminalSleeve === k ? C.t1 : C.t4, fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: tFont, whiteSpace: "nowrap" }}>{sleeves[k].icon} {sleeves[k].name.split(" ")[0]}</button>
-            ))}
+            {tSleeveKeys.map(k => {
+              const tabLabels = { dividend: "DIV", growth: "GROWTH", digital: "DIGITAL", sectors: "SECTORS", fci100: "FCI 100", fciValues: "FCI VAL" };
+              const label = tabLabels[k] || (sleeves[k].name || k).toUpperCase().slice(0, 8);
+              return (
+              <button key={k} onClick={() => setTChartSleeve(k)} style={{ flex: "0 0 auto", padding: "6px 8px", background: tChartSleeve === k ? C.accentSoft : "transparent", border: "none", borderBottom: tChartSleeve === k ? `2px solid ${C.accent}` : "2px solid transparent", color: tChartSleeve === k ? C.t1 : C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1, cursor: "pointer", fontFamily: tFont, whiteSpace: "nowrap" }}>{label}</button>
+            ); })}
           </div>
           {/* Stock list */}
           <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
             {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const isActive = sym === terminalActiveSym; return (
               <div key={sym} onClick={() => setTerminalActiveSym(sym)} style={{ display: "flex", alignItems: "center", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", gap: 6, boxSizing: "border-box" }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: isActive ? C.t1 : C.t2, width: 48, flexShrink: 0 }}>{sym}</span>
-                <span style={{ flex: 1, fontSize: 11, color: C.t3, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, width: 56, textAlign: "right", color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4, fontVariantNumeric: "tabular-nums" }}>{c != null ? pct(c) : "—"}</span>
+                <span style={{ flex: 1, fontSize: 11, color: C.t1, textAlign: "right" }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, width: 56, textAlign: "right", color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : "—"}</span>
               </div>
             ); })}
           </div>
@@ -2954,84 +2999,142 @@ Instructions:
         {tDrawer ? (
           <div style={{ gridColumn: "2 / 4", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             <div style={{ padding: "6px 16px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: 1 }}>{tDrawer}</span>
-              <button onClick={() => setTDrawer(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 10px", color: C.t3, fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>✕ Close</button>
+              <span style={tEyebrow}>{tDrawer}</span>
+              <button onClick={() => setTDrawer(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "3px 10px", color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="1.8" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                Close
+              </button>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-              {tDrawer === "playbook" && (() => { setTab("playbook"); return null; })() === null && (
-                <iframe src={`${window.location.origin}${window.location.pathname}#playbook`} style={{ display: "none" }} />
-              )}
               {/* Render inline playbook content */}
               {tDrawer === "playbook" && (() => {
                 const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
                 const md = macroData;
+                const SPY_TROUGH = 357.70, seedATH = 749.53;
+                const spyPrice = (bmQuotes.SPY || quotesRef.current?.SPY)?.p || 0;
+                const storedATH = (() => { try { return parseFloat(localStorage.getItem("iown_spy_ath")) || 0; } catch { return 0; } })();
+                const liveATH = Math.max(spyPrice, storedATH, seedATH);
+                const pctFromTrough = spyPrice > 0 ? ((spyPrice / SPY_TROUGH) - 1) * 100 : 0;
+                const pctFromATH = spyPrice > 0 ? ((spyPrice / liveATH) - 1) * 100 : 0;
                 return (<div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
                     <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Bull Age</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: C.t1 }}>{bullAgeMo}<span style={{ fontSize: 12, color: C.t3 }}> months</span></div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Bull Age</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: C.t1 }}>{bullAgeMo}<span style={{ fontSize: 12, color: C.t3 }}> months</span></div>
                     </div>
                     <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>From Trough</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: C.up }}>+{pctFromTrough.toFixed(1)}%</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>From Trough</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: C.up }}>+{pctFromTrough.toFixed(1)}%</div>
                     </div>
                     <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>From ATH</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: pctFromATH >= 0 ? C.up : C.dn }}>{pctFromATH >= 0 ? "+" : ""}{pctFromATH.toFixed(1)}%</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>From ATH</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: pctFromATH >= 0 ? C.up : C.dn }}>{pctFromATH >= 0 ? "+" : ""}{pctFromATH.toFixed(1)}%</div>
                     </div>
                   </div>
                   <div style={{ fontSize: 11, color: C.t3, marginBottom: 16 }}>For the full Playbook with bear probability model, simulator, scripts, and bond ladder — use the section tabs below or switch layout in Settings.</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    {md.yieldSpread != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Yield Curve</div><div style={{ fontSize: 18, fontWeight: 800, color: md.yieldSpread < 0 ? C.dn : C.up }}>{md.yieldSpread >= 0 ? "+" : ""}{md.yieldSpread.toFixed(2)}%</div></div>}
-                    {md.spyPE != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>SPY P/E</div><div style={{ fontSize: 18, fontWeight: 800, color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? "#FBBF24" : C.up }}>{md.spyPE.toFixed(1)}x</div></div>}
-                    {md.sahmVal != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Sahm Rule</div><div style={{ fontSize: 18, fontWeight: 800, color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? "#FBBF24" : C.up }}>{md.sahmVal.toFixed(2)}pp</div><div style={{ fontSize: 10, color: C.t4 }}>Trigger: 0.50pp</div></div>}
-                    {md.cfnai != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>CFNAI</div><div style={{ fontSize: 18, fontWeight: 800, color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? "#FBBF24" : C.up }}>{md.cfnai.toFixed(2)}</div></div>}
-                    {md.baa10y != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Credit Spread</div><div style={{ fontSize: 18, fontWeight: 800, color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? "#FBBF24" : C.up }}>{md.baa10y.toFixed(2)}%</div></div>}
-                    {md.claims4wk != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 700 }}>Jobless Claims</div><div style={{ fontSize: 18, fontWeight: 800, color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? "#FBBF24" : C.up }}>{(md.claims4wk / 1000).toFixed(0)}K</div><div style={{ fontSize: 10, color: C.t4 }}>Trend: {md.claimsTrend >= 0 ? "+" : ""}{md.claimsTrend?.toFixed(1)}%</div></div>}
+                    {md.yieldSpread != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Yield Curve</div><div style={{ fontSize: 18, fontWeight: 700, color: md.yieldSpread < 0 ? C.dn : C.up }}>{md.yieldSpread >= 0 ? "+" : ""}{md.yieldSpread.toFixed(2)}%</div></div>}
+                    {md.spyPE != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>SPY P/E</div><div style={{ fontSize: 18, fontWeight: 700, color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? C.warn : C.up }}>{md.spyPE.toFixed(1)}x</div></div>}
+                    {md.sahmVal != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Sahm Rule</div><div style={{ fontSize: 18, fontWeight: 700, color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? C.warn : C.up }}>{md.sahmVal.toFixed(2)}pp</div><div style={{ fontSize: 10, color: C.t4 }}>Trigger: 0.50pp</div></div>}
+                    {md.cfnai != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>CFNAI</div><div style={{ fontSize: 18, fontWeight: 700, color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? C.warn : C.up }}>{md.cfnai.toFixed(2)}</div></div>}
+                    {md.baa10y != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Credit Spread</div><div style={{ fontSize: 18, fontWeight: 700, color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? C.warn : C.up }}>{md.baa10y.toFixed(2)}%</div></div>}
+                    {md.claims4wk != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Jobless Claims</div><div style={{ fontSize: 18, fontWeight: 700, color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? C.warn : C.up }}>{(md.claims4wk / 1000).toFixed(0)}K</div><div style={{ fontSize: 10, color: C.t4 }}>Trend: {md.claimsTrend >= 0 ? "+" : ""}{md.claimsTrend?.toFixed(1)}%</div></div>}
                   </div>
                 </div>);
               })()}
               {tDrawer === "opportunities" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Opportunity Finder ({opportunities.length})</div>
+                <div style={{ ...tEyebrow, marginBottom: 12 }}>Opportunity Finder ({opportunities.length})</div>
                 {opportunities.map(opp => (
                   <div key={opp.id} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 10 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: C.t1 }}>{opp.title}</div>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: opp.conviction === "High Conviction" ? C.upSoft : opp.conviction === "On Our Radar" ? "#2563EB20" : C.t4 + "20", color: opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? "#2563EB" : C.t3, whiteSpace: "nowrap" }}>{opp.conviction}</span>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{opp.title}</div>
+                      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: opp.conviction === "High Conviction" ? C.up : C.t3, whiteSpace: "nowrap" }}>{opp.conviction}</span>
                     </div>
                     <div style={{ fontSize: 11, color: C.t3, marginBottom: 6 }}>{opp.pattern} · {opp.timeframe}</div>
                     <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginBottom: 8 }}>{opp.catalyst}</div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                      {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 4, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                      {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 2, background: C.accentSoft, color: C.accent }}>{t}</span>)}
                     </div>
                     {opp.ticker_rationale && Object.entries(opp.ticker_rationale).map(([t, r]) => <div key={t} style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginBottom: 4 }}><strong style={{ color: C.accent }}>{t}:</strong> {r}</div>)}
                   </div>
                 ))}
               </div>)}
-              {tDrawer === "screener" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Stock Screener — {screenerData.length} stocks</div>
-                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "8px 12px", marginBottom: 10, borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontFamily: "inherit", outline: "none" }} />
+              {tDrawer === "screener" && (screenerDetail ? (() => {
+                const a = screenerDetail;
+                const recColor = ({ BUY: C.up, HOLD: "#8B7355", WATCH: C.t3, SELL: C.dn })[a.recommendation] || C.t3;
+                const scoreRows = [
+                  { label: "Innovation", v: a.excellence_evaluation?.innovation },
+                  { label: "Inspiration", v: a.excellence_evaluation?.inspiration },
+                  { label: "Infrastructure", v: a.excellence_evaluation?.infrastructure },
+                  { label: "Infinite Game", v: a.infinite_game?.overall != null ? { score: a.infinite_game.overall, label: a.infinite_game.mindset } : null },
+                  { label: "AI Resilience", v: a.ai_resilience },
+                ].filter(r => r.v?.score != null);
+                return (<div style={{ maxWidth: 760 }}>
+                  <button onClick={() => setScreenerDetail(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "4px 12px", color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", marginBottom: 14 }}>← Back</button>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>{a.ticker || a.symbol}</span>
+                    <span style={{ fontSize: 12, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
+                    <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: recColor }}>{a.recommendation}</span>
+                    {a.overall_score != null && <span style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>{a.overall_score}<span style={{ fontSize: 10, fontWeight: 400, color: C.t4 }}> / 100</span></span>}
+                  </div>
+                  <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4, marginBottom: 14 }}>{[a.sleeve && `${a.sleeve} sleeve`, a.screen_date, a.profile?.sector, a.profile?.industry].filter(Boolean).join(" · ")}</div>
+                  {screenerDetailLoading ? (
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.2, color: C.t4 }}>LOADING REPORT</div>
+                  ) : (<>
+                    {scoreRows.length > 0 && (<>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Scores</div>
+                      <table style={{ borderCollapse: "collapse", fontSize: 11, marginBottom: 16 }}><tbody>
+                        {scoreRows.map(r => (
+                          <tr key={r.label} style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <td style={{ padding: "4px 24px 4px 0", color: C.t2 }}>{r.label}</td>
+                            <td style={{ padding: "4px 24px 4px 0", fontWeight: 700, color: r.v.score >= 7 ? C.up : r.v.score >= 4 ? C.warn : C.dn }}>{r.v.score}/10</td>
+                            <td style={{ padding: "4px 0", fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4 }}>{r.v.label || ""}</td>
+                          </tr>
+                        ))}
+                      </tbody></table>
+                    </>)}
+                    {a.investment_thesis && (<>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Investment Thesis</div>
+                      <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7, marginBottom: 16 }}>{a.investment_thesis}{a.thesis_continued ? ` ${a.thesis_continued}` : ""}</div>
+                    </>)}
+                    {a.key_catalysts?.length > 0 && (<>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Key Catalysts</div>
+                      <div style={{ marginBottom: 16 }}>{a.key_catalysts.map((c2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.accent }}>{i + 1}.</span> {typeof c2 === "string" ? c2 : c2.catalyst || c2.description || ""}</div>)}</div>
+                    </>)}
+                    {a.key_risks?.length > 0 && (<>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Key Risks</div>
+                      <div style={{ marginBottom: 16 }}>{a.key_risks.map((r2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.dn }}>{i + 1}.</span> {typeof r2 === "string" ? r2 : r2.risk || r2.description || ""}</div>)}</div>
+                    </>)}
+                    {a.profile?.description && (<>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Company Profile</div>
+                      <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, marginBottom: 16 }}>{a.profile.description}</div>
+                    </>)}
+                  </>)}
+                </div>);
+              })() : (<div>
+                <div style={{ ...tEyebrow, marginBottom: 10 }}>Stock Screener — {screenerData.length} stocks</div>
+                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "8px 12px", marginBottom: 10, borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
                   {screenerData.filter(s => { const q = screenerSearch.toLowerCase(); return !q || s.ticker.toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q); }).slice(0, 50).map(s => (
-                    <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer" }}>
+                    <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer" }}>
                       <div><div style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{s.ticker}</div><div style={{ fontSize: 10, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{s.name}</div></div>
-                      <div style={{ textAlign: "right" }}><span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 3, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span><div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginTop: 2 }}>{s.overall_score}</div></div>
+                      <div style={{ textAlign: "right" }}><span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: ({ BUY: C.up, HOLD: "#8B7355", WATCH: C.t3, SELL: C.dn })[s.recommendation] || C.t3 }}>{s.recommendation}</span><div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginTop: 2 }}>{s.overall_score}</div></div>
                     </div>
                   ))}
                 </div>
-              </div>)}
+              </div>))}
               {tDrawer === "performance" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Portfolio Performance</div>
+                <div style={{ ...tEyebrow, marginBottom: 12 }}>Portfolio Performance</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
                   {["dividend", "growth", "fci100", "fciValues"].map(k => { const sc = sleeveActualDay(k); const syms = sleeves[k]?.symbols || []; return (
                     <div key={k} style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>{sleeves[k]?.name || k}</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4 }}>{sc != null ? pct(sc) : "—"}</div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>{sleeves[k]?.name || k}</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4 }}>{sc != null ? pct(sc) : "—"}</div>
                       <div style={{ fontSize: 10, color: C.t4 }}>{syms.length} holdings · Day change</div>
                     </div>
                   ); })}
                 </div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: C.t1, margin: "16px 0 8px" }}>Top Movers Today</div>
+                <div style={{ ...tEyebrow, margin: "16px 0 8px" }}>Top Movers Today</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6 }}>
                   {(() => { const allSyms = [...new Set(Object.values(sleeves).flatMap(s => s.symbols || []))]; return allSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return { sym, chg: c, price: q?.p }; }).filter(s => s.chg != null).sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg)).slice(0, 30).map(s => (
                     <div key={s.sym} onClick={() => { setTerminalActiveSym(s.sym); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: 11 }}>
@@ -3042,22 +3145,22 @@ Instructions:
                 </div>
               </div>)}
               {tDrawer === "metrics" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 8 }}>Holdings Metrics — {sleeves[tChartSleeve]?.name || "All"}</div>
+                <div style={{ ...tEyebrow, marginBottom: 10 }}>Holdings Metrics — {sleeves[tChartSleeve]?.name || "All"}</div>
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                      {["Ticker", "Price", "Day", "P/E", "Div Yield", "52W H", "52W L", "Sector"].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: h === "Ticker" || h === "Sector" ? "left" : "right", color: C.t4, fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>{h}</th>)}
+                      {["Ticker", "Price", "Day", "P/E", "Div Yield", "52W H", "52W L", "Sector"].map(h => <th key={h} style={{ padding: "6px 8px", textAlign: h === "Ticker" || h === "Sector" ? "left" : "right", color: C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase" }}>{h}</th>)}
                     </tr></thead>
                     <tbody>
                       {(sleeves[tChartSleeve]?.symbols || []).map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; const f = fundamentals[sym]; return (
                         <tr key={sym} onClick={() => { setTerminalActiveSym(sym); setTDrawer(null); }} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                           <td style={{ padding: "5px 8px", fontWeight: 700, color: C.t1 }}>{sym}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t1, fontVariantNumeric: "tabular-nums" }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: 600, color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4, fontVariantNumeric: "tabular-nums" }}>{c != null ? pct(c) : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t2 }}>{f?.pe ? f.pe.toFixed(1) : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: f?.dividendYield ? C.up : C.t4 }}>{f?.dividendYield ? `${(f.dividendYield * 100).toFixed(2)}%` : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.["52WeekHigh"] ? `$${f["52WeekHigh"].toFixed(0)}` : "—"}</td>
-                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.["52WeekLow"] ? `$${f["52WeekLow"].toFixed(0)}` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t1 }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", fontWeight: 600, color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: f?.yieldFwd != null ? C.up : C.t4 }}>{f?.yieldFwd != null ? `${f.yieldFwd.toFixed(2)}%` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.wk52h != null ? `$${f.wk52h.toFixed(0)}` : "—"}</td>
+                          <td style={{ padding: "5px 8px", textAlign: "right", color: C.t3 }}>{f?.wk52l != null ? `$${f.wk52l.toFixed(0)}` : "—"}</td>
                           <td style={{ padding: "5px 8px", color: C.t4, fontSize: 10, maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f?.sector || "—"}</td>
                         </tr>
                       ); })}
@@ -3066,7 +3169,7 @@ Instructions:
                 </div>
               </div>)}
               {tDrawer === "briefs" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Briefs & Research</div>
+                <div style={{ ...tEyebrow, marginBottom: 12 }}>Briefs & Research</div>
                 {[
                   { label: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", desc: "Daily pre-market analysis" },
                   { label: "Market Commentary", url: "https://richacarson.github.io/iown-data", desc: "Market outlook & strategy" },
@@ -3075,9 +3178,9 @@ Instructions:
                 ].map(l => <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: C.card, border: `1px solid ${C.border}`, marginBottom: 8, color: C.t1, textDecoration: "none" }}><div><div style={{ fontSize: 13, fontWeight: 700 }}>{l.label}</div><div style={{ fontSize: 10, color: C.t3 }}>{l.desc}</div></div><span style={{ color: C.accent, fontSize: 12 }}>→</span></a>)}
               </div>)}
               {tDrawer === "settings" && (<div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t1, marginBottom: 12 }}>Settings</div>
+                <div style={{ ...tEyebrow, marginBottom: 12 }}>Settings</div>
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Theme</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Theme</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
                       <button key={v} onClick={() => toggleTheme(v)} style={{ flex: 1, padding: "8px 0", border: `1px solid ${theme === v ? C.borderActive : C.border}`, background: theme === v ? C.accentSoft : "transparent", color: theme === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
@@ -3085,7 +3188,7 @@ Instructions:
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.t4, textTransform: "uppercase", marginBottom: 6 }}>Layout</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Layout</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
                       <button key={v} onClick={() => { setLayoutMode(v); localStorage.setItem("iown_layout", v); if (v === "classic") setTDrawer(null); }} style={{ flex: 1, padding: "8px 0", border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`, background: layoutMode === v ? C.accentSoft : "transparent", color: layoutMode === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
@@ -3099,184 +3202,71 @@ Instructions:
         {/* ── CENTER: CHART ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
           {(() => {
-            const [tChartMode, setTChartMode] = [terminalActiveSym === "__portfolio__" ? "portfolio" : "stock", (m) => setTerminalActiveSym(m === "portfolio" ? "__portfolio__" : terminalActiveSym === "__portfolio__" ? "SPY" : terminalActiveSym)];
-            const isPortfolio = terminalActiveSym === "__portfolio__";
+            const isPortfolio = tIsPortfolio;
             const tBmToggles = perfBmToggles;
-            const tSleeveData = perfDataMap[tChartSleeve] || perfData || {};
-            const portfolio = tSleeveData?.portfolio || [];
-            const benchmarks = tSleeveData?.benchmarks || {};
             return (<>
               <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
                 {["dividend", "growth", "fci100", "fciValues"].map(k => {
                   const names = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
                   const active = isPortfolio && tChartSleeve === k;
-                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 4, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
+                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
                 })}
                 {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "ALL"].map(r => (
-                  <button key={r} onClick={() => setTChartRange(r)} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 3, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
+                  <button key={r} onClick={() => setTChartRange(r)} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
                 ))}
                 {isPortfolio && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
                 {isPortfolio && ({ dividend: ["SPY", "DVY", "DIA"], growth: ["SPY", "IUSG", "QQQ"], fci100: ["SPY", "QQQ", "DIA"], fciValues: ["SPY", "QQQ", "DIA"] }[tChartSleeve] || ["SPY", "DVY", "DIA"]).map(bm => {
-                  const bmCol = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
-                  return <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, border: `1px solid ${tBmToggles[bm] ? bmCol[bm] + "66" : C.border}`, background: tBmToggles[bm] ? bmCol[bm] + "20" : "transparent", color: tBmToggles[bm] ? bmCol[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>;
+                  return <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 2, border: `1px solid ${tBmToggles[bm] ? BM_COLORS[bm] + "66" : C.border}`, background: tBmToggles[bm] ? BM_COLORS[bm] + "20" : "transparent", color: tBmToggles[bm] ? BM_COLORS[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>;
                 })}
                 {!isPortfolio && <>
-                  <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>{terminalActiveSym}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{terminalActiveSym}</span>
                   <span style={{ fontSize: 11, color: C.t3 }}>{names[terminalActiveSym] || ""}</span>
-                  {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
+                  {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
                 </>}
               </div>
-              {isPortfolio && portfolio.length > 1 ? (() => {
+              {isPortfolio && tChartData && tChartData.status !== "none" ? (() => {
+                if (tChartData.status === "loading") return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, letterSpacing: 1.2, color: C.t4 }}>LOADING PORTFOLIO DATA</div>;
                 const PAD = { top: 40, right: 60, bottom: 40, left: 10 };
-                const now = new Date();
-                let filtered;
-                if (tChartRange === "1D") {
-                  // Use intraday data if available, aggregate into 5-min candles
-                  const intra = intradayPortfolio["1D"];
-                  if (intra && intra.length > 2) {
-                    const baseV = intra[0].value;
-                    const AGG = 3; // 3-minute candles
-                    const candles5m = [];
-                    for (let i = 0; i < intra.length - 1; i += AGG) {
-                      const chunk = intra.slice(i, Math.min(i + AGG + 1, intra.length));
-                      const vals = chunk.map(p => ((p.value / baseV) - 1) * 100);
-                      const o = vals[0], c = vals[vals.length - 1], h = Math.max(...vals), l = Math.min(...vals);
-                      candles5m.push({ date: chunk[chunk.length - 1].date.replace("T", " ").slice(11, 16), o, c, h, l, rawVal: chunk[chunk.length - 1].value, fullDate: chunk[chunk.length - 1].date });
-                    }
-                    // Benchmark intraday
-                    const ibm = intradayBenchmarks["1D"] || {};
-                    const bmL = {}; const bmC2 = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
-                    Object.entries(ibm).forEach(([sym, pts]) => {
-                      if (!tBmToggles[sym] || !pts.length) return;
-                      const bp = (bmBars[sym]?.pc) || pts[0].close;
-                      const bc = [];
-                      for (let i = 0; i < pts.length - 1; i += AGG) {
-                        const ch = pts.slice(i, Math.min(i + AGG + 1, pts.length));
-                        const vs = ch.map(p => ((p.close / bp) - 1) * 100);
-                        bc.push({ o: vs[0], c: vs[vs.length - 1], h: Math.max(...vs), l: Math.min(...vs) });
-                      }
-                      bmL[sym] = bc;
-                    });
-                    const aV = candles5m.flatMap(c => [c.h, c.l]);
-                    Object.values(bmL).forEach(bc => aV.push(...bc.flatMap(c => [c.h, c.l])));
-                    const mn = Math.min(...aV), mx = Math.max(...aV), rg = mx - mn || 1;
-                    const cW2 = 900, H2 = 400, uW = cW2 - PAD.left - PAD.right;
-                    const gp = uW / Math.max(1, candles5m.length); const cdW = Math.max(2, Math.min(12, gp * 0.75));
-                    const xP = i => PAD.left + gp * (i + 0.5); const yP = v => PAD.top + ((mx - v) / rg) * (H2 - PAD.top - PAD.bottom);
-                    const lastV = candles5m[candles5m.length - 1]?.c || 0;
-                    const hc2 = tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length ? candles5m[tChartHover] : null;
-                    return (
-                      <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
-                        <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
-                          <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>{({dividend:"DIVIDEND",growth:"GROWTH",fci100:"FCI 100",fciValues:"FCI VALUES"})[tChartSleeve] || "PORTFOLIO"} 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
-                          {Object.entries(bmL).map(([sym, bc]) => <span key={sym} style={{ color: bmC2[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
-                          <span style={{ color: C.t4 }}>3-min candles</span>
-                        </div>
-                        {hc2 && <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "monospace", color: C.t2, display: "flex", gap: 10 }}>
-                          <span style={{ color: C.t1, fontWeight: 700 }}>{hc2.date}</span>
-                          <span>O: {hc2.o >= 0 ? "+" : ""}{hc2.o.toFixed(2)}%</span><span>H: {hc2.h >= 0 ? "+" : ""}{hc2.h.toFixed(2)}%</span><span>L: {hc2.l >= 0 ? "+" : ""}{hc2.l.toFixed(2)}%</span>
-                          <span style={{ color: hc2.c >= hc2.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc2.c >= 0 ? "+" : ""}{hc2.c.toFixed(2)}%</span>
-                          <span style={{ color: C.t4 }}>${hc2.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>}
-                        <div style={{ width: "100%", height: "100%" }}>
-                          <svg width="100%" height="100%" viewBox={`0 0 ${cW2} ${H2}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const r2 = e.currentTarget.getBoundingClientRect(); const sX = cW2 / r2.width; const mX = (e.clientX - r2.left) * sX; const idx = Math.round((mX - PAD.left) / gp - 0.5); setTChartHover(idx >= 0 && idx < candles5m.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
-                            <rect x={0} y={0} width={cW2} height={H2} fill={C.bg} />
-                            {[...Array(7)].map((_, i) => { const v = mn + (rg * i / 6); const yy = yP(v); return <g key={i}><line x1={PAD.left} y1={yy} x2={cW2 - PAD.right} y2={yy} stroke={C.border} strokeWidth={0.5} /><text x={cW2 - PAD.right + 4} y={yy + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(2)}%</text></g>; })}
-                            <line x1={PAD.left} y1={yP(0)} x2={cW2 - PAD.right} y2={yP(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
-                            {candles5m.filter((_, i) => i % Math.max(1, Math.floor(candles5m.length / 12)) === 0).map((c, _, a) => { const i = candles5m.indexOf(c); return <text key={i} x={xP(i)} y={H2 - 8} fill={C.t4} fontSize={8} fontFamily="monospace" textAnchor="middle">{c.date}</text>; })}
-                            {Object.entries(bmL).map(([sym, bc]) => { const col = bmC2[sym]; const bW = Math.max(1, cdW * 0.45); const off = sym === "SPY" ? -cdW * 0.5 : sym === "DIA" ? cdW * 0.5 : 0; return bc.map((c, i) => (
-                              <g key={`${sym}-${i}`} opacity={0.5}><line x1={xP(i) + off} y1={yP(c.h)} x2={xP(i) + off} y2={yP(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xP(i) - bW / 2 + off} y={yP(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
-                            )); })}
-                            {candles5m.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
-                              <g key={i}><line x1={xP(i)} y1={yP(c.h)} x2={xP(i)} y2={yP(c.l)} stroke={col} strokeWidth={1} /><rect x={xP(i) - cdW / 2} y={yP(Math.max(c.o, c.c))} width={cdW} height={Math.max(1, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
-                            ); })}
-                            {tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length && <line x1={xP(tChartHover)} y1={PAD.top} x2={xP(tChartHover)} y2={H2 - PAD.bottom} stroke={C.t3} strokeWidth={0.5} strokeDasharray="3,3" />}
-                          </svg>
-                        </div>
+                const sleeveTitle = ({ dividend: "DIVIDEND", growth: "GROWTH", fci100: "FCI 100", fciValues: "FCI VALUES" })[tChartSleeve] || "PORTFOLIO";
+                if (tChartData.status === "intraday") {
+                  const { candles: candles5m, bmCandles: bmL, mn, mx, rg } = tChartData;
+                  const cW2 = 900, H2 = 400, uW = cW2 - PAD.left - PAD.right;
+                  const gp = uW / Math.max(1, candles5m.length); const cdW = Math.max(2, Math.min(12, gp * 0.75));
+                  const xP = i => PAD.left + gp * (i + 0.5); const yP = v => PAD.top + ((mx - v) / rg) * (H2 - PAD.top - PAD.bottom);
+                  const lastV = candles5m[candles5m.length - 1]?.c || 0;
+                  const hc2 = tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length ? candles5m[tChartHover] : null;
+                  return (
+                    <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                      <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "inherit", fontWeight: 600 }}>
+                        <span style={{ color: C.t1, fontWeight: 700, fontSize: 13 }}>{sleeveTitle} 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
+                        {Object.entries(bmL).map(([sym, bc]) => <span key={sym} style={{ color: BM_COLORS[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
+                        <span style={{ color: C.t3 }}>3-MIN CANDLES</span>
                       </div>
-                    );
-                  }
-                  filtered = portfolio.slice(-5);
-                } else if (tChartRange === "QTD") {
-                  const qm = Math.floor(now.getMonth() / 3) * 3;
-                  const qStart = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
-                  const qtdStart = [...portfolio].reverse().find(p => p.date < qStart);
-                  filtered = qtdStart ? portfolio.filter(p => p.date >= qtdStart.date) : portfolio;
-                } else if (tChartRange === "YTD") {
-                  const yearEnd = `${now.getFullYear() - 1}-12-31`;
-                  const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
-                  filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio;
-                } else if (tChartRange === "ALL") {
-                  filtered = portfolio;
-                } else {
-                  const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[tChartRange] || 365;
-                  const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
-                  filtered = portfolio.filter(p => p.date >= cutoff);
+                      {hc2 && <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "inherit", color: C.t2, display: "flex", gap: 10 }}>
+                        <span style={{ color: C.t1, fontWeight: 700 }}>{hc2.date}</span>
+                        <span>O: {hc2.o >= 0 ? "+" : ""}{hc2.o.toFixed(2)}%</span><span>H: {hc2.h >= 0 ? "+" : ""}{hc2.h.toFixed(2)}%</span><span>L: {hc2.l >= 0 ? "+" : ""}{hc2.l.toFixed(2)}%</span>
+                        <span style={{ color: hc2.c >= hc2.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc2.c >= 0 ? "+" : ""}{hc2.c.toFixed(2)}%</span>
+                        <span style={{ color: C.t4 }}>${hc2.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      </div>}
+                      <div style={{ width: "100%", height: "100%" }}>
+                        <svg width="100%" height="100%" viewBox={`0 0 ${cW2} ${H2}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const r2 = e.currentTarget.getBoundingClientRect(); const sX = cW2 / r2.width; const mX = (e.clientX - r2.left) * sX; const idx = Math.round((mX - PAD.left) / gp - 0.5); setTChartHover(idx >= 0 && idx < candles5m.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                          <rect x={0} y={0} width={cW2} height={H2} fill={C.bg} />
+                          {[...Array(7)].map((_, i) => { const v = mn + (rg * i / 6); const yy = yP(v); return <g key={i}><line x1={PAD.left} y1={yy} x2={cW2 - PAD.right} y2={yy} stroke={C.border} strokeWidth={0.5} /><text x={cW2 - PAD.right + 4} y={yy + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(2)}%</text></g>; })}
+                          <line x1={PAD.left} y1={yP(0)} x2={cW2 - PAD.right} y2={yP(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
+                          {candles5m.filter((_, i) => i % Math.max(1, Math.floor(candles5m.length / 12)) === 0).map((c, _, a) => { const i = candles5m.indexOf(c); return <text key={i} x={xP(i)} y={H2 - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{c.date}</text>; })}
+                          {Object.entries(bmL).map(([sym, bc]) => { const col = BM_COLORS[sym]; const bW = Math.max(1, cdW * 0.45); const off = sym === "SPY" ? -cdW * 0.5 : sym === "DIA" ? cdW * 0.5 : 0; return bc.map((c, i) => (
+                            <g key={`${sym}-${i}`} opacity={0.5}><line x1={xP(i) + off} y1={yP(c.h)} x2={xP(i) + off} y2={yP(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xP(i) - bW / 2 + off} y={yP(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
+                          )); })}
+                          {candles5m.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
+                            <g key={i}><line x1={xP(i)} y1={yP(c.h)} x2={xP(i)} y2={yP(c.l)} stroke={col} strokeWidth={1} /><rect x={xP(i) - cdW / 2} y={yP(Math.max(c.o, c.c))} width={cdW} height={Math.max(1, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
+                          ); })}
+                          {tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length && <line x1={xP(tChartHover)} y1={PAD.top} x2={xP(tChartHover)} y2={H2 - PAD.bottom} stroke={C.t3} strokeWidth={0.5} strokeDasharray="3,3" />}
+                        </svg>
+                      </div>
+                    </div>
+                  );
                 }
-                if (filtered.length < 2) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.t4 }}>Loading portfolio data...</div>;
-                const baseVal = filtered[0].value;
-                // Build daily candles first
-                const dailyCandles = [];
-                for (let i = 1; i < filtered.length; i++) {
-                  const o = ((filtered[i - 1].value / baseVal) - 1) * 100;
-                  const c = ((filtered[i].value / baseVal) - 1) * 100;
-                  const body = Math.abs(c - o); const wick = body * 0.3 + 0.05;
-                  dailyCandles.push({ date: filtered[i].date, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick, rawVal: filtered[i].value });
-                }
-                // Aggregate to weekly for long timeframes (>200 daily candles)
-                const useWeekly = dailyCandles.length > 200;
-                let candles;
-                if (useWeekly) {
-                  candles = [];
-                  let week = null;
-                  for (const d of dailyCandles) {
-                    const wk = d.date.slice(0, 4) + "-W" + String(Math.ceil((new Date(d.date).getTime() - new Date(d.date.slice(0, 4) + "-01-01").getTime()) / 604800000)).padStart(2, "0");
-                    if (!week || week._wk !== wk) {
-                      if (week) candles.push(week);
-                      week = { date: d.date, o: d.o, h: d.h, l: d.l, c: d.c, rawVal: d.rawVal, _wk: wk };
-                    } else {
-                      week.c = d.c; week.h = Math.max(week.h, d.h); week.l = Math.min(week.l, d.l); week.rawVal = d.rawVal; week.date = d.date;
-                    }
-                  }
-                  if (week) candles.push(week);
-                } else {
-                  candles = dailyCandles;
-                }
-                const allVals = candles.flatMap(c => [c.h, c.l]);
-                const bmLines = {}; const bmColors = { SPY: "#6B8DE3", DVY: "#FF9800", DIA: "#C76BDB", IUSG: "#4CAF50", QQQ: "#FF9800" };
-                Object.entries(benchmarks).forEach(([sym, priceMap]) => {
-                  if (!tBmToggles[sym]) return;
-                  const prices = Object.entries(priceMap).sort((a, b) => a[0].localeCompare(b[0]));
-                  if (!prices.length) return;
-                  let bp = null; for (const [d, p] of prices) { if (d >= filtered[0].date) { bp = p; break; } }
-                  if (!bp) bp = prices[prices.length - 1][1];
-                  // Build daily benchmark candles aligned to candle dates
-                  const dailyBm = []; let pi = 0;
-                  for (let i = 1; i < filtered.length; i++) {
-                    while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
-                    const cl = ((prices[pi][1] / bp) - 1) * 100;
-                    const prevPi = i > 1 ? (() => { let pp = 0; for (let j = 0; j < prices.length && prices[j][0] <= filtered[i - 1].date; j++) pp = j; return pp; })() : 0;
-                    const op = i === 1 ? 0 : ((prices[prevPi][1] / bp) - 1) * 100;
-                    const bd = Math.abs(cl - op); const wk = bd * 0.25 + 0.03;
-                    dailyBm.push({ o: op, c: cl, h: Math.max(op, cl) + wk, l: Math.min(op, cl) - wk });
-                  }
-                  const lq = bmQuotes[sym];
-                  if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
-                  // Aggregate to weekly if portfolio uses weekly
-                  if (useWeekly) {
-                    const wkBm = []; let wIdx = 0;
-                    for (const pc of candles) {
-                      let wO = null, wC = null, wH = -Infinity, wL = Infinity;
-                      while (wIdx < dailyBm.length && wIdx < dailyCandles.length && dailyCandles[wIdx].date <= pc.date) {
-                        const b = dailyBm[wIdx]; if (wO === null) wO = b.o; wC = b.c; wH = Math.max(wH, b.h); wL = Math.min(wL, b.l); wIdx++;
-                      }
-                      wkBm.push(wO !== null ? { o: wO, c: wC, h: wH, l: wL } : wkBm.length ? { ...wkBm[wkBm.length - 1] } : { o: 0, c: 0, h: 0, l: 0 });
-                    }
-                    bmLines[sym] = wkBm;
-                  } else { bmLines[sym] = dailyBm; }
-                  allVals.push(...(bmLines[sym]).flatMap(c => [c.h, c.l]));
-                });
-                const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
+                const { candles, bmCandles: bmLines, minV, maxV, range } = tChartData;
                 const chartW = 900; const H = 400;
                 const usableW = chartW - PAD.left - PAD.right;
                 const gap = usableW / Math.max(1, candles.length);
@@ -3295,12 +3285,12 @@ Instructions:
                 return (
                   <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                     {/* OHLC tooltip */}
-                    <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "monospace", fontWeight: 600 }}>
-                      <span style={{ color: C.t1, fontWeight: 800, fontSize: 13 }}>{({dividend:"DIVIDEND",growth:"GROWTH",fci100:"FCI 100",fciValues:"FCI VALUES"})[tChartSleeve] || "PORTFOLIO"} {tChartRange} {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</span>
-                      {Object.entries(bmLines).map(([sym, bc]) => <span key={sym} style={{ color: bmColors[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
+                    <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "inherit", fontWeight: 600 }}>
+                      <span style={{ color: C.t1, fontWeight: 700, fontSize: 13 }}>{sleeveTitle} {tChartRange} {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</span>
+                      {Object.entries(bmLines).map(([sym, bc]) => <span key={sym} style={{ color: BM_COLORS[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
                     </div>
                     {hc && (
-                      <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "monospace", color: C.t2, display: "flex", gap: 10 }}>
+                      <div style={{ position: "absolute", top: 20, left: 10, zIndex: 2, fontSize: 11, fontFamily: "inherit", color: C.t2, display: "flex", gap: 10 }}>
                         <span style={{ color: C.t1, fontWeight: 700 }}>{hc.date}</span>
                         <span>O: {hc.o >= 0 ? "+" : ""}{hc.o.toFixed(2)}%</span>
                         <span>H: {hc.h >= 0 ? "+" : ""}{hc.h.toFixed(2)}%</span>
@@ -3312,12 +3302,12 @@ Instructions:
                     <div style={{ width: "100%", height: "100%" }}>
                       <svg width="100%" height="100%" viewBox={`0 0 ${chartW} ${H}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
                         <rect x={0} y={0} width={chartW} height={H} fill={C.bg} />
-                        {[...Array(7)].map((_, i) => { const v = minV + (range * i / 6); const yp = yPos(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
+                        {[...Array(7)].map((_, i) => { const v = minV + (range * i / 6); const yp = yPos(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
                         <line x1={PAD.left} y1={yPos(0)} x2={chartW - PAD.right} y2={yPos(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
                         {/* Date labels */}
-                        {dateLabels.map(i => <text key={i} x={xPos(i)} y={H - 8} fill={C.t4} fontSize={8} fontFamily="monospace" textAnchor="middle">{candles[i].date.slice(0, 7)}</text>)}
+                        {dateLabels.map(i => <text key={i} x={xPos(i)} y={H - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{candles[i].date.slice(0, 7)}</text>)}
                         {/* Benchmark candles */}
-                        {Object.entries(bmLines).map(([sym, bc]) => { const col = bmColors[sym]; const bW = Math.max(1, candleW * 0.45); const off = sym === "SPY" ? -candleW * 0.5 : sym === "DIA" ? candleW * 0.5 : 0; return bc.map((c, i) => (
+                        {Object.entries(bmLines).map(([sym, bc]) => { const col = BM_COLORS[sym]; const bW = Math.max(1, candleW * 0.45); const off = sym === "SPY" ? -candleW * 0.5 : sym === "DIA" ? candleW * 0.5 : 0; return bc.map((c, i) => (
                           <g key={`${sym}-${i}`} opacity={0.5}><line x1={xPos(i) + off} y1={yPos(c.h)} x2={xPos(i) + off} y2={yPos(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xPos(i) - bW / 2 + off} y={yPos(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
                         )); })}
                         {/* Portfolio candles */}
@@ -3339,39 +3329,39 @@ Instructions:
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* Portfolio Summary (top ~40%) */}
           <div style={{ flex: "0 0 40%", borderBottom: `1px solid ${C.border}`, padding: "8px 12px", overflowY: "auto" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Portfolio</div>
-            {tPortfolioVal && <div style={{ fontSize: 20, fontWeight: 900, color: C.t1, fontVariantNumeric: "tabular-nums" }}>${tPortfolioVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
-            {tDayChg != null && <div style={{ fontSize: 12, fontWeight: 600, color: tDayChg >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums", marginBottom: 8 }}>{tDayChg >= 0 ? "+" : ""}{tDayChgDollar?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({pct(tDayChg)})</div>}
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Sleeves</div>
-            {["dividend", "growth"].map(k => { const sc = sleeveActualDay(k); return (
+            <div style={{ ...tEyebrow, marginBottom: 6 }}>Portfolio</div>
+            {tPortfolioVal && <div style={{ fontSize: 20, fontWeight: 700, color: C.t1 }}>${tPortfolioVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
+            {tDayChg != null && <div style={{ fontSize: 12, fontWeight: 600, color: tDayChg >= 0 ? C.up : C.dn, marginBottom: 8 }}>{tDayChg >= 0 ? "+" : ""}{tDayChgDollar?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({pct(tDayChg)})</div>}
+            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Sleeves</div>
+            {tSleeveKeys.map(k => { const sc = sleeveActualDay(k); return (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 11 }}>
                 <span style={{ color: C.t2 }}>{sleeves[k]?.name || k}</span>
-                <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{sc != null ? pct(sc) : "—"}</span>
+                <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600 }}>{sc != null ? pct(sc) : "—"}</span>
               </div>
             ); })}
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Market</div>
+            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Market</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 11 }}>
-              <span style={{ color: C.t3 }}>SPY</span><span style={{ color: C.t1, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tSpyPrice ? `$${tSpyPrice.toFixed(2)}` : "—"}</span>
-              <span style={{ color: C.t3 }}>VIX</span><span style={{ color: tVix > 25 ? C.dn : tVix > 18 ? "#FBBF24" : C.up, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tVix ?? "—"}</span>
-              <span style={{ color: C.t3 }}>10Y-2Y</span><span style={{ color: tYieldSpread != null ? (tYieldSpread < 0 ? C.dn : C.t1) : C.t4, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{tYieldSpread != null ? `${tYieldSpread >= 0 ? "+" : ""}${tYieldSpread.toFixed(2)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>SPY</span><span style={{ color: C.t1, textAlign: "right" }}>{tSpyPrice ? `$${tSpyPrice.toFixed(2)}` : "—"}</span>
+              <span style={{ color: C.t3 }}>VIX</span><span style={{ color: tVix > 25 ? C.dn : tVix > 18 ? C.warn : C.up, textAlign: "right" }}>{tVix ?? "—"}</span>
+              <span style={{ color: C.t3 }}>10Y-2Y</span><span style={{ color: tYieldSpread != null ? (tYieldSpread < 0 ? C.dn : C.t1) : C.t4, textAlign: "right" }}>{tYieldSpread != null ? `${tYieldSpread >= 0 ? "+" : ""}${tYieldSpread.toFixed(2)}%` : "—"}</span>
             </div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "8px 0 4px" }}>Bear Probability</div>
+            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Bear Probability</div>
             {(() => { const md = macroData; const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)); return (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 10 }}>
               <span style={{ color: C.t3 }}>Yield Curve</span><span style={{ color: md.yieldSpread != null ? (md.yieldSpread < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.yieldSpread != null ? `${md.yieldSpread >= 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%` : "—"}</span>
-              <span style={{ color: C.t3 }}>SPY P/E</span><span style={{ color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.spyPE ? `${md.spyPE.toFixed(1)}x` : "—"}</span>
-              <span style={{ color: C.t3 }}>Bull Age</span><span style={{ color: bullAgeMo > 60 ? C.dn : bullAgeMo > 36 ? "#FBBF24" : C.up, textAlign: "right" }}>{bullAgeMo}mo</span>
-              <span style={{ color: C.t3 }}>Credit (BAA)</span><span style={{ color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.baa10y ? `${md.baa10y.toFixed(2)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>SPY P/E</span><span style={{ color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? C.warn : C.up, textAlign: "right" }}>{md.spyPE ? `${md.spyPE.toFixed(1)}x` : "—"}</span>
+              <span style={{ color: C.t3 }}>Bull Age</span><span style={{ color: bullAgeMo > 60 ? C.dn : bullAgeMo > 36 ? C.warn : C.up, textAlign: "right" }}>{bullAgeMo}mo</span>
+              <span style={{ color: C.t3 }}>Credit (BAA)</span><span style={{ color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? C.warn : C.up, textAlign: "right" }}>{md.baa10y ? `${md.baa10y.toFixed(2)}%` : "—"}</span>
               <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
-              <span style={{ color: C.t3 }}>Claims</span><span style={{ color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.claims4wk ? `${(md.claims4wk / 1000).toFixed(0)}K` : "—"}</span>
-              <span style={{ color: C.t3 }}>CFNAI</span><span style={{ color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.cfnai != null ? md.cfnai.toFixed(2) : "—"}</span>
-              <span style={{ color: C.t3 }}>Sahm Rule</span><span style={{ color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? "#FBBF24" : C.up, textAlign: "right" }}>{md.sahmVal != null ? `${md.sahmVal.toFixed(2)}pp` : "—"}</span>
+              <span style={{ color: C.t3 }}>Claims</span><span style={{ color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? C.warn : C.up, textAlign: "right" }}>{md.claims4wk ? `${(md.claims4wk / 1000).toFixed(0)}K` : "—"}</span>
+              <span style={{ color: C.t3 }}>CFNAI</span><span style={{ color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? C.warn : C.up, textAlign: "right" }}>{md.cfnai != null ? md.cfnai.toFixed(2) : "—"}</span>
+              <span style={{ color: C.t3 }}>Sahm Rule</span><span style={{ color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? C.warn : C.up, textAlign: "right" }}>{md.sahmVal != null ? `${md.sahmVal.toFixed(2)}pp` : "—"}</span>
             </div>
             ); })()}
           </div>
           {/* News Feed (bottom ~60%) */}
           <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, padding: "0 12px 4px" }}>News</div>
+            <div style={{ ...tEyebrow, padding: "0 12px 4px" }}>News</div>
             {tAllNews.map((article, i) => (
               <div key={article.id || i} onClick={() => { setSelectedArticle(article); }} style={{ padding: "5px 12px", cursor: "pointer", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 <div style={{ fontSize: 11, color: C.t1, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{article.headline || article.title}</div>
@@ -3401,28 +3391,30 @@ Instructions:
               background: tDrawer === t.id ? C.accentSoft : "transparent",
               border: "none", borderRight: `1px solid ${C.border}`,
               color: tDrawer === t.id ? C.accent : C.t4, cursor: "pointer",
-              textTransform: "uppercase", letterSpacing: 0.5,
+              textTransform: "uppercase", letterSpacing: 1.2,
             }}>{t.label}</button>
           ))}
         </div>
 
         {/* ── BOTTOM STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderTop: `1px solid ${C.border}`, fontSize: 10 }}>
-          <span style={{ color: C.accent, fontWeight: 700 }}>PARADIEM TERMINAL</span>
-          <span style={{ color: C.t3 }}>{sleeves[terminalSleeve]?.name || ""} — {tSleeveSyms.length} stocks</span>
-          <span style={{ color: C.t4 }}>{lastUp ? `Data: ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Loading..."}</span>
+          <span style={{ color: C.accent, fontWeight: 600, letterSpacing: 1.2 }}>PARADIEM TERMINAL</span>
+          <span style={{ color: C.t3 }}>{sleeves[tChartSleeve]?.name || ""} — {tSleeveSyms.length} stocks</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <span style={{ color: C.t4 }}>{lastUp ? `Data: ${lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Loading..."}</span>
+            <button onClick={() => { setTDrawer(null); setLayoutMode("classic"); try { localStorage.setItem("iown_layout", "classic"); } catch {} }} title="Exit Terminal Layout" style={{ background: "none", border: "none", padding: 0, color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, cursor: "pointer", fontFamily: "inherit" }}>EXIT</button>
+          </span>
         </div>
-
-        {/* Settings gear to exit terminal mode */}
-        <button onClick={() => { setLayoutMode("classic"); try { localStorage.setItem("iown_layout", "classic"); } catch {} }} style={{ position: "fixed", bottom: 32, right: 12, width: 28, height: 28, borderRadius: "50%", background: C.surface, border: `1px solid ${C.border}`, color: C.t3, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 14, zIndex: 999 }} title="Exit Terminal Layout">✕</button>
 
         {/* Article reader overlay (reuse existing) */}
         {selectedArticle && (() => { const a = selectedArticle; return (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setSelectedArticle(null)}>
-            <div onClick={e => e.stopPropagation()} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, width: "60%", maxWidth: 700, maxHeight: "80vh", overflow: "auto", padding: 24, fontFamily: tFont }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 0, width: "60%", maxWidth: 700, maxHeight: "80vh", overflow: "auto", padding: 24, fontFamily: tFont }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                 <span style={{ fontSize: 10, color: C.t4 }}>{a.source} — {ago(a.created_at || a.datetime)}</span>
-                <button onClick={() => setSelectedArticle(null)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontSize: 16 }}>✕</button>
+                <button onClick={() => setSelectedArticle(null)} style={{ background: "none", border: "none", padding: 0, color: C.t3, cursor: "pointer", display: "flex", alignItems: "center" }} title="Close">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.t3} strokeWidth="1.8" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                </button>
               </div>
               <h2 style={{ fontSize: 16, fontWeight: 700, color: C.t1, marginBottom: 8 }}>{a.headline || a.title}</h2>
               <p style={{ fontSize: 12, color: C.t2, lineHeight: 1.6 }}>{a.summary || a.content || "No content available."}</p>
@@ -8826,7 +8818,7 @@ Instructions:
                 {localStorage.getItem("iown_theme_locked") ? `Locked to ${localStorage.getItem("iown_theme_locked")} mode` : "Auto: light during market hours, dark after close"}
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                {[{ v: "dark", l: "🌙 Dark" }, { v: "light", l: "☀️ Light" }, { v: "terminal", l: "💻 Terminal" }].map(({ v, l }) => (
+                {[{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
                   <button key={v} onClick={() => toggleTheme(v)} style={{
                     flex: 1, padding: "10px 0", borderRadius: 10,
                     border: `1px solid ${theme === v ? C.borderActive : C.border}`,
@@ -8856,7 +8848,7 @@ Instructions:
                 <div style={{ fontSize: 11, color: C.t4, marginBottom: 8 }}>Terminal mode shows a multi-panel grid (desktop only)</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
-                    <button key={v} onClick={() => { setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} }} style={{
+                    <button key={v} onClick={() => { setTDrawer(null); setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} }} style={{
                       flex: 1, padding: "10px 0", borderRadius: 10,
                       border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`,
                       background: layoutMode === v ? C.accentSoft : "transparent",
