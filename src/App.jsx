@@ -138,6 +138,64 @@ const TERMINAL = {
 };
 /* ── Benchmark overlay colors (muted, brand-adjacent) ── */
 const BM_COLORS = { SPY: "#8FA3D9", QQQ: "#B08BD0", DIA: "#C98B6B", DVY: "#D9A441", IUSG: "#7FAE9B" };
+
+/* ── Playbook historical data (shared by classic tab + terminal drawer) ── */
+const PB_BEAR_MARKETS = [
+  { name: "1929 Crash", peakDate: "1929-09", troughDate: "1929-11", drawdown: -44.7, durationMo: 2.2, recoveryMo: 5.0 },
+  { name: "Great Depression", peakDate: "1930-04", troughDate: "1932-06", drawdown: -83.0, durationMo: 25.7, recoveryMo: 267.0 },
+  { name: "1932-33 Decline", peakDate: "1932-09", troughDate: "1933-02", drawdown: -40.6, durationMo: 5.7, recoveryMo: 1.8 },
+  { name: "1933 Decline", peakDate: "1933-07", troughDate: "1933-10", drawdown: -29.8, durationMo: 3.1, recoveryMo: 17.2 },
+  { name: "1934-35 Decline", peakDate: "1934-02", troughDate: "1935-03", drawdown: -31.8, durationMo: 13.2, recoveryMo: 12.8 },
+  { name: "1937-38 Recession", peakDate: "1937-03", troughDate: "1938-03", drawdown: -54.5, durationMo: 12.8, recoveryMo: 95.6 },
+  { name: "1938-39 War Fears", peakDate: "1938-11", troughDate: "1939-04", drawdown: -26.2, durationMo: 4.9, recoveryMo: 6.9 },
+  { name: "1939-40 Fall of France", peakDate: "1939-10", troughDate: "1940-06", drawdown: -31.9, durationMo: 7.5, recoveryMo: 13.2 },
+  { name: "WWII / Pearl Harbor", peakDate: "1940-11", troughDate: "1942-04", drawdown: -34.5, durationMo: 17.6, recoveryMo: 25.2 },
+  { name: "Post-WWII Crash", peakDate: "1946-05", troughDate: "1947-05", drawdown: -28.8, durationMo: 11.6, recoveryMo: 39.5 },
+  { name: "1948-49 Recession", peakDate: "1948-06", troughDate: "1949-06", drawdown: -20.6, durationMo: 11.9, recoveryMo: 12.0 },
+  { name: "Eisenhower Recession", peakDate: "1956-08", troughDate: "1957-10", drawdown: -21.6, durationMo: 14.7, recoveryMo: 11.0 },
+  { name: "Kennedy Slide", peakDate: "1961-12", troughDate: "1962-06", drawdown: -28.0, durationMo: 6.5, recoveryMo: 14.3 },
+  { name: "Credit Crunch", peakDate: "1966-02", troughDate: "1966-10", drawdown: -22.2, durationMo: 7.9, recoveryMo: 6.9 },
+  { name: "Vietnam / Recession", peakDate: "1968-11", troughDate: "1970-05", drawdown: -36.1, durationMo: 17.9, recoveryMo: 21.4 },
+  { name: "OPEC Oil Embargo", peakDate: "1973-01", troughDate: "1974-10", drawdown: -48.2, durationMo: 20.7, recoveryMo: 69.5 },
+  { name: "Volcker Tightening", peakDate: "1980-11", troughDate: "1982-08", drawdown: -27.1, durationMo: 20.5, recoveryMo: 2.8 },
+  { name: "Black Monday", peakDate: "1987-08", troughDate: "1987-12", drawdown: -33.5, durationMo: 3.3, recoveryMo: 19.7 },
+  { name: "Gulf War", peakDate: "1990-07", troughDate: "1990-10", drawdown: -19.9, durationMo: 2.9, recoveryMo: 4.4, nearBear: true, intradayDraw: -20.3, note: "Crossed -20% intraday; -19.9% closing" },
+  { name: "LTCM / Russia Crisis", peakDate: "1998-07", troughDate: "1998-08", drawdown: -19.3, durationMo: 1.5, recoveryMo: 2.9, nearBear: true, intradayDraw: -19.5, note: "45-day plunge; peak 1186.75, trough 957.28" },
+  { name: "Dot-Com Bust", peakDate: "2000-03", troughDate: "2002-10", drawdown: -49.1, durationMo: 30.5, recoveryMo: 55.6 },
+  { name: "Global Financial Crisis", peakDate: "2007-10", troughDate: "2009-03", drawdown: -56.8, durationMo: 17.0, recoveryMo: 48.8 },
+  { name: "Euro Debt / Downgrade", peakDate: "2011-04", troughDate: "2011-10", drawdown: -19.4, durationMo: 5.2, recoveryMo: 5.7, nearBear: true, intradayDraw: -21.6, note: "Intraday low 1074.77 = -21.6%; closing -19.4%" },
+  { name: "Fed Tightening / Trade War", peakDate: "2018-09", troughDate: "2018-12", drawdown: -19.8, durationMo: 3.1, recoveryMo: 3.9, nearBear: true, intradayDraw: -20.2, note: "Breached -20% intraday on Christmas Eve" },
+  { name: "COVID-19 Crash", peakDate: "2020-02", troughDate: "2020-03", drawdown: -33.9, durationMo: 1.1, recoveryMo: 4.9 },
+  { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
+  { name: "Tariff Crash", peakDate: "2025-02", troughDate: "2025-04", drawdown: -17.6, durationMo: 1.6, recoveryMo: 2.8, nearBear: true, intradayDraw: -21.3, note: "Intraday low 4835 = -21.3%; closing low 5074 = -17.6%" },
+];
+const PB_BULL_MARKETS_BASE = [
+  { period: "1929-1930", gain: 46.8, durationMo: 5.0 },
+  { period: "1932-1932", gain: 111.6, durationMo: 3.0 },
+  { period: "1933-1933", gain: 120.6, durationMo: 5.0 },
+  { period: "1933-1934", gain: 37.9, durationMo: 4.0 },
+  { period: "1935-1937", gain: 131.8, durationMo: 24.0 },
+  { period: "1938-1938", gain: 62.2, durationMo: 8.0 },
+  { period: "1939-1939", gain: 29.8, durationMo: 6.0 },
+  { period: "1940-1940", gain: 26.8, durationMo: 5.0 },
+  { period: "1942-1946", gain: 157.7, durationMo: 49.0 },
+  { period: "1947-1948", gain: 20.8, durationMo: 13.0 },
+  { period: "1949-1956", gain: 267.0, durationMo: 86.0 },
+  { period: "1957-1961", gain: 86.3, durationMo: 49.7 },
+  { period: "1962-1966", gain: 79.8, durationMo: 43.5 },
+  { period: "1966-1968", gain: 48.0, durationMo: 25.7 },
+  { period: "1970-1973", gain: 73.5, durationMo: 31.5 },
+  { period: "1974-1980", gain: 125.6, durationMo: 73.9 },
+  { period: "1982-1987", gain: 228.8, durationMo: 60.4 },
+  { period: "1987-2000", gain: 582.0, durationMo: 147.6 },
+  { period: "2002-2007", gain: 101.5, durationMo: 60.0 },
+  { period: "2009-2020", gain: 400.5, durationMo: 131.4 },
+  { period: "2020-2022", gain: 114.4, durationMo: 21.3 },
+];
+const PB_BEAR_TRANCHES = [
+  { drawdownTrigger: -25, pctReserves: 70, action: "Deploy 70% of reserves", deploy: "87% of bears reach — highest expected-value tranche" },
+  { drawdownTrigger: -40, pctReserves: 100, action: "Deploy remaining reserves", deploy: "32% of bears reach — deep value, +67% recovery return" },
+];
 let C = DARK;
 
 /* ── Portfolio Heatmap ── */
@@ -915,6 +973,7 @@ Instructions:
   const [tChartRange, setTChartRange] = useState("YTD");
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
+  const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "research"
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -1198,6 +1257,7 @@ Instructions:
   const [priceFlash, setPriceFlash] = useState({});
   const quotesRef = useRef({});
   const barsRef = useRef({});
+  const bmQuotesRef = useRef({}); // per-trade WS benchmark quotes — synced to state at 1Hz
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
@@ -1841,9 +1901,9 @@ Instructions:
             if (msg.T === "t" && msg.S && msg.p) {
               // Update refs only — React state syncs on next poll cycle (every 1s)
               quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
-              // Also update bmQuotes for benchmark symbols so homepage bar updates
+              // Also update bmQuotes ref for benchmark symbols — state syncs at 1Hz below
               if (BM_SYMS.includes(msg.S)) {
-                setBmQuotes(prev => ({ ...prev, [msg.S]: { p: msg.p, t: msg.t } }));
+                bmQuotesRef.current[msg.S] = { p: msg.p, t: msg.t };
               }
             }
           }
@@ -1876,7 +1936,7 @@ Instructions:
               }
             }
             if (Object.keys(updates).length) {
-              setBmQuotes(prev => ({ ...prev, ...updates }));
+              Object.assign(bmQuotesRef.current, updates); // state syncs at 1Hz below
             }
           }
         } catch {}
@@ -1884,6 +1944,26 @@ Instructions:
       fhWs.onclose = () => { setTimeout(connectFinnhubWS, 5000); };
     } catch {}
   }, []);
+
+  // Sync per-trade benchmark quote refs into React state at 1Hz (avoids memo churn per trade)
+  useEffect(() => {
+    if (!authed) return;
+    const sync = () => {
+      const ref = bmQuotesRef.current;
+      if (!Object.keys(ref).length) return;
+      setBmQuotes(prev => {
+        let changed = false;
+        const next = { ...prev };
+        for (const [s, q] of Object.entries(ref)) {
+          if (!next[s] || next[s].p !== q.p || next[s].t !== q.t) { next[s] = q; changed = true; }
+        }
+        return changed ? next : prev;
+      });
+    };
+    sync();
+    const t = setInterval(sync, 1000);
+    return () => clearInterval(t);
+  }, [authed]);
 
   // Finnhub REST polling for non-IEX benchmarks (fallback, every 2s)
   const fhTimerRef = useRef(null);
@@ -2411,7 +2491,7 @@ Instructions:
 
   // Fetch screener manifest on first visit
   useEffect(() => {
-    if ((tab !== "screener" && tDrawer !== "screener") || screenerFetched.current || screenerData.length) return;
+    if ((tab !== "screener" && tDrawer !== "screener" && layoutMode !== "terminal") || screenerFetched.current || screenerData.length) return;
     screenerFetched.current = true;
     fetch("https://richacarson.github.io/Stock-Screener/manifest.json")
       .then(r => r.json())
@@ -2468,11 +2548,11 @@ Instructions:
         try { localStorage.setItem("iown_screener_scores", JSON.stringify(scoresOut)); } catch {}
       })
       .catch(() => {});
-  }, [tab, tDrawer]);
+  }, [tab, tDrawer, layoutMode]);
 
   // Fetch opportunities on first visit
   useEffect(() => {
-    if ((tab !== "opportunities" && tDrawer !== "opportunities") || oppFetched.current || opportunities.length) return;
+    if ((tab !== "opportunities" && tDrawer !== "opportunities" && layoutMode !== "terminal") || oppFetched.current || opportunities.length) return;
     oppFetched.current = true;
     const cb = `?v=${Math.floor(Date.now() / 60000)}`;
     fetch(`${import.meta.env.BASE_URL}opportunities/manifest.json${cb}`).then(r => r.ok ? r.json() : []).catch(() => [])
@@ -2490,7 +2570,7 @@ Instructions:
       .then(rows => setOppStalking(Array.isArray(rows) ? rows.sort((a, b) => (b.added || "").localeCompare(a.added || "")) : []));
     fetch(`${import.meta.env.BASE_URL}opportunities/signals.json${cb}`).then(r => r.ok ? r.json() : null).catch(() => null)
       .then(s => setOppSignals(s));
-  }, [tab, tDrawer]);
+  }, [tab, tDrawer, layoutMode]);
 
   const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
@@ -2512,6 +2592,36 @@ Instructions:
 
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
 
+  /* ── Terminal layout: O(1) screener composite lookups + sector average P/E ── */
+  const screenerByTicker = useMemo(() => Object.fromEntries(screenerData.map(s => [s.ticker, s])), [screenerData]);
+  const sectorPE = useMemo(() => {
+    const agg = {};
+    for (const [sym, f] of Object.entries(fundamentals)) {
+      if (sym === "_ts" || !f || typeof f !== "object") continue;
+      const sec = f.sector, pe = f.peTTM;
+      if (!sec || pe == null || !isFinite(pe) || pe <= 0) continue;
+      if (!agg[sec]) agg[sec] = { sum: 0, n: 0 };
+      agg[sec].sum += pe; agg[sec].n++;
+    }
+    return Object.fromEntries(Object.entries(agg).map(([k, v]) => [k, v.sum / v.n]));
+  }, [fundamentals]);
+
+  /* ── Terminal layout: measured chart dimensions (exact crosshair math, no letterboxing) ── */
+  const [tChartDims, setTChartDims] = useState({ w: 900, h: 400 });
+  const tChartRORef = useRef(null);
+  const attachTChartBox = useCallback(el => {
+    if (tChartRORef.current) { tChartRORef.current.disconnect(); tChartRORef.current = null; }
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(entries => {
+      const r = entries[0]?.contentRect;
+      if (r && r.width > 50 && r.height > 50) {
+        setTChartDims(d => (Math.abs(d.w - r.width) > 1 || Math.abs(d.h - r.height) > 1) ? { w: Math.round(r.width), h: Math.round(r.height) } : d);
+      }
+    });
+    ro.observe(el);
+    tChartRORef.current = ro;
+  }, []);
+
   /* ── Terminal layout: memoized portfolio chart pipeline (candles + benchmark alignment) ── */
   const tChartData = useMemo(() => {
     if (layoutMode !== "terminal" || terminalActiveSym !== "__portfolio__") return null;
@@ -2523,8 +2633,15 @@ Instructions:
     let filtered;
     if (tChartRange === "1D") {
       // Use intraday data if available, aggregate into 3-min candles
-      const intra = intradayPortfolio["1D"];
+      let intra = intradayPortfolio["1D"];
       if (intra && intra.length > 2) {
+        // Append live trailing point so the last candle tracks real-time value
+        if (tChartSleeve === perfSleeve && liveValue?.value) {
+          const lastPt = intra[intra.length - 1];
+          if (!lastPt || Math.abs(liveValue.value - lastPt.value) > 0.01) {
+            intra = [...intra, { date: new Date().toISOString(), value: liveValue.value }];
+          }
+        }
         const baseV = intra[0].value;
         const AGG = 3; // 3-minute candles
         const candles = [];
@@ -2553,7 +2670,7 @@ Instructions:
         const mn = Math.min(...aV), mx = Math.max(...aV), rg = mx - mn || 1;
         return { status: "intraday", candles, bmCandles, mn, mx, rg };
       }
-      filtered = portfolio.slice(-5);
+      return { status: "no-intraday" };
     } else if (tChartRange === "QTD") {
       const qm = Math.floor(now.getMonth() / 3) * 3;
       const qStart = `${now.getFullYear()}-${String(qm + 1).padStart(2, "0")}-01`;
@@ -2570,15 +2687,14 @@ Instructions:
       const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
       filtered = portfolio.filter(p => p.date >= cutoff);
     }
-    if (filtered.length < 2) return { status: "loading" };
+    if (filtered.length < 2) return { status: "insufficient" };
     const baseVal = filtered[0].value;
-    // Build daily candles first
+    // Build daily candles first (honest flat-top: no synthetic wicks)
     const dailyCandles = [];
     for (let i = 1; i < filtered.length; i++) {
       const o = ((filtered[i - 1].value / baseVal) - 1) * 100;
       const c = ((filtered[i].value / baseVal) - 1) * 100;
-      const body = Math.abs(c - o); const wick = body * 0.3 + 0.05;
-      dailyCandles.push({ date: filtered[i].date, o, c, h: Math.max(o, c) + wick, l: Math.min(o, c) - wick, rawVal: filtered[i].value });
+      dailyCandles.push({ date: filtered[i].date, o, c, h: Math.max(o, c), l: Math.min(o, c), rawVal: filtered[i].value });
     }
     // Aggregate to weekly for long timeframes (>200 daily candles)
     const useWeekly = dailyCandles.length > 200;
@@ -2599,6 +2715,15 @@ Instructions:
     } else {
       candles = dailyCandles;
     }
+    // Patch the last candle with the live portfolio value (refreshed ~2s)
+    if (tChartSleeve === perfSleeve && liveValue?.value && candles.length) {
+      const last = candles[candles.length - 1];
+      const lv = ((liveValue.value / baseVal) - 1) * 100;
+      last.c = lv;
+      last.h = Math.max(last.h, last.o, lv);
+      last.l = Math.min(last.l, last.o, lv);
+      last.rawVal = liveValue.value;
+    }
     const allVals = candles.flatMap(c => [c.h, c.l]);
     const bmCandles = {};
     Object.entries(benchmarks).forEach(([sym, priceMap]) => {
@@ -2614,11 +2739,10 @@ Instructions:
         while (pi < prices.length - 1 && prices[pi + 1][0] <= filtered[i].date) pi++;
         const cl = ((prices[pi][1] / bp) - 1) * 100;
         const op = i === 1 ? 0 : ((prices[prevPi][1] / bp) - 1) * 100;
-        const bd = Math.abs(cl - op); const wk = bd * 0.25 + 0.03;
-        dailyBm.push({ o: op, c: cl, h: Math.max(op, cl) + wk, l: Math.min(op, cl) - wk });
+        dailyBm.push({ o: op, c: cl, h: Math.max(op, cl), l: Math.min(op, cl) });
       }
       const lq = bmQuotes[sym];
-      if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv) + Math.abs(lv - last.o) * 0.25 + 0.03; last.l = Math.min(last.o, lv) - Math.abs(lv - last.o) * 0.25 - 0.03; }
+      if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
       // Aggregate to weekly if portfolio uses weekly
       if (useWeekly) {
         const wkBm = []; let wIdx = 0;
@@ -2635,7 +2759,7 @@ Instructions:
     });
     const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
     return { status: "daily", candles, bmCandles, minV, maxV, range };
-  }, [layoutMode, terminalActiveSym, tChartSleeve, tChartRange, perfDataMap, perfData, perfBmToggles, intradayPortfolio, intradayBenchmarks, bmQuotes, bmBars]);
+  }, [layoutMode, terminalActiveSym, tChartSleeve, tChartRange, perfDataMap, perfData, perfBmToggles, intradayPortfolio, intradayBenchmarks, bmQuotes, bmBars, liveValue, perfSleeve]);
 
   /* ── Terminal layout: keyboard navigation ── */
   useEffect(() => {
@@ -2934,6 +3058,18 @@ Instructions:
   if (layoutMode === "terminal" && isDesktop && authed) {
     const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
     const tEyebrow = { fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent };
+    const tEyebrowMuted = { ...tEyebrow, color: C.t4 };
+    const tTabBtn = (active) => ({ padding: "6px 12px", background: active ? C.accentSoft : "transparent", border: "none", borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent", color: active ? C.t1 : C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" });
+    const tTabRow = { display: "flex", borderBottom: `1px solid ${C.border}`, overflowX: "auto", marginBottom: 12 };
+    const tTh = (align = "right", sortable = true) => ({ padding: "5px 8px", textAlign: align, color: C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", whiteSpace: "nowrap", cursor: sortable ? "pointer" : "default", userSelect: "none" });
+    const tTd = (align = "right") => ({ padding: "5px 8px", textAlign: align, whiteSpace: "nowrap" });
+    const tRecColor = r => ({ BUY: C.up, HOLD: C.warn, WATCH: C.t3, SELL: C.dn })[r] || C.t3;
+    const tStat = (label, val, color) => (
+      <div key={label} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "10px 12px" }}>
+        <div style={{ ...tEyebrowMuted, marginBottom: 4 }}>{label}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: color || C.t1 }}>{val}</div>
+      </div>
+    );
     const tSleeveKeys = Object.keys(sleeves);
     const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
@@ -2980,7 +3116,7 @@ Instructions:
               const tabLabels = { dividend: "DIV", growth: "GROWTH", digital: "DIGITAL", sectors: "SECTORS", fci100: "FCI 100", fciValues: "FCI VAL" };
               const label = tabLabels[k] || (sleeves[k].name || k).toUpperCase().slice(0, 8);
               return (
-              <button key={k} onClick={() => setTChartSleeve(k)} style={{ flex: "0 0 auto", padding: "6px 8px", background: tChartSleeve === k ? C.accentSoft : "transparent", border: "none", borderBottom: tChartSleeve === k ? `2px solid ${C.accent}` : "2px solid transparent", color: tChartSleeve === k ? C.t1 : C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1, cursor: "pointer", fontFamily: tFont, whiteSpace: "nowrap" }}>{label}</button>
+              <button key={k} onClick={() => { setTChartSleeve(k); setTChartHover(null); if (perfDataMap[k] || ["dividend", "growth", "fci100", "fciValues"].includes(k)) setPerfSleeve(k); }} style={{ flex: "0 0 auto", padding: "6px 8px", background: tChartSleeve === k ? C.accentSoft : "transparent", border: "none", borderBottom: tChartSleeve === k ? `2px solid ${C.accent}` : "2px solid transparent", color: tChartSleeve === k ? C.t1 : C.t4, fontSize: 10, fontWeight: 600, letterSpacing: 1, cursor: "pointer", fontFamily: tFont, whiteSpace: "nowrap" }}>{label}</button>
             ); })}
           </div>
           {/* Stock list */}
@@ -3016,49 +3152,463 @@ Instructions:
                 const liveATH = Math.max(spyPrice, storedATH, seedATH);
                 const pctFromTrough = spyPrice > 0 ? ((spyPrice / SPY_TROUGH) - 1) * 100 : 0;
                 const pctFromATH = spyPrice > 0 ? ((spyPrice / liveATH) - 1) * 100 : 0;
-                return (<div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Bull Age</div>
-                      <div style={{ fontSize: 24, fontWeight: 700, color: C.t1 }}>{bullAgeMo}<span style={{ fontSize: 12, color: C.t3 }}> months</span></div>
-                    </div>
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>From Trough</div>
-                      <div style={{ fontSize: 24, fontWeight: 700, color: C.up }}>+{pctFromTrough.toFixed(1)}%</div>
-                    </div>
-                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>From ATH</div>
-                      <div style={{ fontSize: 24, fontWeight: 700, color: pctFromATH >= 0 ? C.up : C.dn }}>{pctFromATH >= 0 ? "+" : ""}{pctFromATH.toFixed(1)}%</div>
-                    </div>
+                const drawdown = Math.min(pctFromATH, 0);
+                const officialBears = PB_BEAR_MARKETS.filter(b => !b.nearBear);
+                const avgBearDraw = Math.round(officialBears.reduce((s, b) => s + b.drawdown, 0) / officialBears.length * 10) / 10;
+                const avgBearDur = Math.round(officialBears.reduce((s, b) => s + b.durationMo, 0) / officialBears.length * 10) / 10;
+                const avgRecovery = Math.round(officialBears.reduce((s, b) => s + b.recoveryMo, 0) / officialBears.length * 10) / 10;
+                const avgBullGain = 135.9;
+                return (<div style={{ maxWidth: 920 }}>
+                  <div style={tTabRow}>
+                    {[{ v: "regime", l: "Regime" }, { v: "bear", l: "Bear" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "proof", l: "Proof" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => setPbView(v)} style={tTabBtn(pbView === v)}>{l}</button>
+                    ))}
                   </div>
-                  <div style={{ fontSize: 11, color: C.t3, marginBottom: 16 }}>For the full Playbook with bear probability model, simulator, scripts, and bond ladder — use the section tabs below or switch layout in Settings.</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    {md.yieldSpread != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Yield Curve</div><div style={{ fontSize: 18, fontWeight: 700, color: md.yieldSpread < 0 ? C.dn : C.up }}>{md.yieldSpread >= 0 ? "+" : ""}{md.yieldSpread.toFixed(2)}%</div></div>}
-                    {md.spyPE != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>SPY P/E</div><div style={{ fontSize: 18, fontWeight: 700, color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? C.warn : C.up }}>{md.spyPE.toFixed(1)}x</div></div>}
-                    {md.sahmVal != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Sahm Rule</div><div style={{ fontSize: 18, fontWeight: 700, color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? C.warn : C.up }}>{md.sahmVal.toFixed(2)}pp</div><div style={{ fontSize: 10, color: C.t4 }}>Trigger: 0.50pp</div></div>}
-                    {md.cfnai != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>CFNAI</div><div style={{ fontSize: 18, fontWeight: 700, color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? C.warn : C.up }}>{md.cfnai.toFixed(2)}</div></div>}
-                    {md.baa10y != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Credit Spread</div><div style={{ fontSize: 18, fontWeight: 700, color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? C.warn : C.up }}>{md.baa10y.toFixed(2)}%</div></div>}
-                    {md.claims4wk != null && <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: 12 }}><div style={{ fontSize: 10, color: C.t4, textTransform: "uppercase", fontWeight: 600, letterSpacing: 1.2 }}>Jobless Claims</div><div style={{ fontSize: 18, fontWeight: 700, color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? C.warn : C.up }}>{(md.claims4wk / 1000).toFixed(0)}K</div><div style={{ fontSize: 10, color: C.t4 }}>Trend: {md.claimsTrend >= 0 ? "+" : ""}{md.claimsTrend?.toFixed(1)}%</div></div>}
-                  </div>
+                  {pbView === "regime" && (<div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
+                      {tStat("Bull Age", <>{bullAgeMo}<span style={{ fontSize: 12, color: C.t3 }}> months</span></>)}
+                      {tStat("From Trough", `+${pctFromTrough.toFixed(1)}%`, C.up)}
+                      {tStat("From ATH", `${pctFromATH >= 0 ? "+" : ""}${pctFromATH.toFixed(1)}%`, pctFromATH >= 0 ? C.up : C.dn)}
+                    </div>
+                    <div style={{ ...tEyebrow, marginBottom: 8 }}>Distance to Bear Market</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 16 }}>
+                      {tStat("Regime", drawdown <= -20 ? "BEAR" : "BULL", drawdown <= -20 ? C.dn : C.up)}
+                      {tStat("Bear At", `$${(liveATH * 0.8).toFixed(2)}`, C.dn)}
+                      {drawdown <= -20 ? tStat("Status", "BEAR", C.dn) : tStat("Cushion", `${(20 - Math.abs(drawdown)).toFixed(1)}%`, (20 - Math.abs(drawdown)) > 15 ? C.up : (20 - Math.abs(drawdown)) > 8 ? C.warn : C.dn)}
+                    </div>
+                    <div style={{ ...tEyebrow, marginBottom: 8 }}>Macro Indicators</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                      {md.yieldSpread != null && tStat("Yield Curve", `${md.yieldSpread >= 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%`, md.yieldSpread < 0 ? C.dn : C.up)}
+                      {md.spyPE != null && tStat("SPY P/E", `${md.spyPE.toFixed(1)}x`, md.spyPE > 30 ? C.dn : md.spyPE > 25 ? C.warn : C.up)}
+                      {md.sahmVal != null && tStat("Sahm Rule", `${md.sahmVal.toFixed(2)}pp`, md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? C.warn : C.up)}
+                      {md.cfnai != null && tStat("CFNAI", md.cfnai.toFixed(2), md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? C.warn : C.up)}
+                      {md.baa10y != null && tStat("Credit Spread", `${md.baa10y.toFixed(2)}%`, md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? C.warn : C.up)}
+                      {md.claims4wk != null && tStat("Jobless Claims", `${(md.claims4wk / 1000).toFixed(0)}K`, md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? C.warn : C.up)}
+                    </div>
+                  </div>)}
+                  {pbView === "bear" && (<div>
+                    <div style={{ ...tEyebrow, marginBottom: 8 }}>Bear Market Deployment Tranches</div>
+                    <div style={{ fontSize: 11, color: C.t3, marginBottom: 12, lineHeight: 1.6 }}>Two-tranche system: deploy 70% at -25%, remaining 30% at -40%. Front-loaded because -25% has the highest expected-value-per-dollar across 22 historical bears (87% hit rate × 33% recovery return = 29¢ per $1 deployed).</div>
+                    {PB_BEAR_TRANCHES.map((t, i) => {
+                      const triggered = drawdown <= t.drawdownTrigger;
+                      return (
+                        <div key={i} style={{ background: triggered ? C.dnSoft : C.card, border: `1px solid ${triggered ? C.dn + "44" : C.border}`, padding: "12px 14px", marginBottom: 10 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontSize: 18, fontWeight: 700, color: triggered ? C.dn : C.t2 }}>{t.drawdownTrigger}%</span>
+                            <span style={{ ...tEyebrowMuted, color: triggered ? C.dn : C.t4 }}>{triggered ? "TRIGGERED" : "STANDBY"}</span>
+                          </div>
+                          <div style={{ fontSize: 11, color: C.t3 }}>{t.action}</div>
+                          <div style={{ fontSize: 10, color: C.accent, marginTop: 2 }}>{t.deploy}</div>
+                        </div>
+                      );
+                    })}
+                    <div style={{ ...tEyebrow, margin: "16px 0 8px" }}>5-Year Bond Ladder</div>
+                    <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7 }}>
+                      Clients with bonds hold <strong style={{ color: C.t1 }}>5 years of living expenses</strong> across a bond ladder (Years 1-5). Year 1 matures each year to fund living expenses, and the ladder rolls forward. In a bear market, <strong style={{ color: C.t1 }}>only Year-5 bonds</strong> are touched — deploy 70% at -25% and the remaining 30% at -40%. When the market recovers to the prior peak, rebuild the Year-5 position from equity gains.
+                    </div>
+                  </div>)}
+                  {pbView === "simulator" && (() => {
+                    const historicalBears = PB_BEAR_MARKETS.filter(b => !b.nearBear && Math.abs(b.drawdown) >= 20);
+                    const selectedBear = historicalBears.find(b => b.name === pbSimHistBear);
+                    const dropPct = selectedBear ? Math.abs(selectedBear.drawdown) : pbSimDrop;
+                    const bondPerYear = pbSimBondPerYear, equityVal = pbSimEquity;
+                    const totalBonds = 5 * bondPerYear, bondsKept = 4 * bondPerYear, cashReserves = bondPerYear;
+                    const portfolioVal = totalBonds + equityVal;
+                    let remainingCash = cashReserves, totalDeployed = 0;
+                    const deployedAtLevels = [];
+                    const trancheResults = PB_BEAR_TRANCHES.map(t => {
+                      if (dropPct >= Math.abs(t.drawdownTrigger)) {
+                        const actualDeploy = Math.min(cashReserves * (t.pctReserves / 100), remainingCash);
+                        remainingCash -= actualDeploy; totalDeployed += actualDeploy;
+                        deployedAtLevels.push({ level: t.drawdownTrigger, amount: actualDeploy });
+                        return { ...t, deployed: actualDeploy, triggered: true };
+                      }
+                      return { ...t, deployed: 0, triggered: false };
+                    });
+                    const equityAfterDrop = equityVal * (1 - dropPct / 100);
+                    let deployedValueAtBottom = 0;
+                    for (const d of deployedAtLevels) deployedValueAtBottom += d.amount * (1 - dropPct / 100) / (1 - Math.abs(d.level) / 100);
+                    const portfolioAtBottom = bondsKept + remainingCash + equityAfterDrop + deployedValueAtBottom;
+                    const bhAtBottom = totalBonds + equityAfterDrop;
+                    const saved = portfolioAtBottom - bhAtBottom;
+                    let deploymentAlpha = 0;
+                    for (const d of deployedAtLevels) { const bd = Math.abs(d.level); deploymentAlpha += d.amount * (bd / (100 - bd)); }
+                    const recoveryGain = dropPct / (100 - dropPct) * 100;
+                    const fmt$ = v => `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+                    const inputStyle = { width: "100%", padding: "6px 10px", borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
+                    return (<div>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Bond-Deploy Scenario Simulator</div>
+                      <select value={pbSimHistBear} onChange={e => { setPbSimHistBear(e.target.value); if (e.target.value) { const b = historicalBears.find(x => x.name === e.target.value); if (b) setPbSimDrop(Math.abs(b.drawdown)); } }} style={{ ...inputStyle, marginBottom: 10, appearance: "auto" }}>
+                        <option value="">Custom scenario (use slider)</option>
+                        {historicalBears.map(b => <option key={b.name} value={b.name}>{b.name} ({b.peakDate}) — {b.drawdown}% in {b.durationMo}mo</option>)}
+                      </select>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+                        <div>
+                          <div style={{ ...tEyebrowMuted, marginBottom: 4 }}>Per-Bond Amount</div>
+                          <input type="text" value={`$${bondPerYear.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v >= 0) setPbSimBondPerYear(v); }} style={inputStyle} />
+                        </div>
+                        <div>
+                          <div style={{ ...tEyebrowMuted, marginBottom: 4 }}>Equity Sleeve</div>
+                          <input type="text" value={`$${equityVal.toLocaleString()}`} onChange={e => { const v = parseInt(e.target.value.replace(/[^0-9]/g, "")); if (v >= 0) setPbSimEquity(v); }} style={inputStyle} />
+                        </div>
+                        <div>
+                          <div style={{ ...tEyebrowMuted, marginBottom: 4 }}>Market Drop: -{dropPct}%</div>
+                          <input type="range" min={10} max={60} value={dropPct} onChange={e => { setPbSimDrop(Number(e.target.value)); setPbSimHistBear(""); }} style={{ width: "100%", accentColor: C.dn }} />
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 10, color: C.t4, marginBottom: 12 }}>Total portfolio {fmt$(portfolioVal)} · reserve = Year-5 bond {fmt$(cashReserves)} · deploy {fmt$(cashReserves * 0.7)} at -25%, {fmt$(cashReserves * 0.3)} at -40%</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 12 }}>
+                        {tStat("Passive at Bottom", fmt$(bhAtBottom), C.dn)}
+                        {tStat("Playbook at Bottom", fmt$(portfolioAtBottom), C.t1)}
+                        {tStat("Deployed", fmt$(totalDeployed), C.accent)}
+                      </div>
+                      {trancheResults.map((t, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: t.triggered ? C.upSoft : C.card, border: `1px solid ${t.triggered ? C.up + "33" : C.border}`, marginBottom: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: t.triggered ? C.dn : C.t4, width: 48 }}>{t.drawdownTrigger}%</span>
+                          <span style={{ flex: 1, fontSize: 11, color: t.triggered ? C.t1 : C.t4 }}>{t.triggered ? `Deploys $${t.deployed.toLocaleString(undefined, { maximumFractionDigits: 0 })} into equities` : "Not triggered at this drop level"}</span>
+                          <span style={{ ...tEyebrowMuted, color: t.triggered ? C.up : C.t4 }}>{t.triggered ? "FIRED" : "—"}</span>
+                        </div>
+                      ))}
+                      <div style={{ ...tEyebrow, margin: "12px 0 8px" }}>After Full Recovery</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                        {tStat("Passive", fmt$(totalBonds + equityVal), C.t3)}
+                        {tStat("Playbook", fmt$(totalBonds + equityVal + deploymentAlpha), C.up)}
+                        {tStat("Deploy Alpha", `+${fmt$(deploymentAlpha)}`, C.accent)}
+                        {tStat("Recovery Needed", `+${recoveryGain.toFixed(0)}%`, C.t1)}
+                      </div>
+                      {saved !== 0 && <div style={{ fontSize: 10, color: saved >= 0 ? C.up : C.dn, marginTop: 8 }}>{saved >= 0 ? "+" : ""}{fmt$(saved)} vs passive at the bottom</div>}
+                    </div>);
+                  })()}
+                  {pbView === "probability" && (() => {
+                    const interp = (val, pts) => {
+                      if (val <= pts[0][0]) return pts[0][1];
+                      if (val >= pts[pts.length - 1][0]) return pts[pts.length - 1][1];
+                      for (let i = 1; i < pts.length; i++) {
+                        if (val <= pts[i][0]) { const t = (val - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]); return Math.round(pts[i - 1][1] + t * (pts[i][1] - pts[i - 1][1])); }
+                      }
+                      return pts[pts.length - 1][1];
+                    };
+                    const factors = [];
+                    {
+                      const yc = (md.yield10Y != null && md.yield3M != null) ? md.yield10Y - md.yield3M : md.yieldSpread;
+                      if (yc != null) {
+                        let score = interp(yc, [[-2.5, 92], [-1.2, 80], [-0.5, 64], [0.0, 46], [0.7, 30], [1.5, 18], [2.5, 10], [3.5, 5]]);
+                        const monthsSinceDeInversion = Math.max(0, (Date.now() - new Date("2024-10-01")) / (30.44 * 86400000));
+                        const postInvPremium = monthsSinceDeInversion < 24 && yc > 0 ? Math.round(18 * (1 - monthsSinceDeInversion / 24)) : 0;
+                        score = Math.min(95, score + postInvPremium);
+                        factors.push({ name: "Yield Curve", value: `${yc > 0 ? "+" : ""}${yc.toFixed(2)}%`, score, weight: 18 });
+                      }
+                    }
+                    if (md.spyPE != null) factors.push({ name: "Valuation", value: `${md.spyPE.toFixed(1)}x P/E`, score: interp(md.spyPE, [[12, 5], [16, 15], [19, 30], [21, 42], [24, 52], [28, 62], [32, 72], [36, 80], [40, 85]]), weight: 13 });
+                    if (md.baa10y != null) factors.push({ name: "Credit Spreads", value: `${md.baa10y.toFixed(2)}%`, score: interp(md.baa10y, [[1.2, 8], [1.5, 15], [1.8, 22], [2.2, 32], [2.8, 48], [3.5, 65], [4.5, 80], [5.5, 90]]), weight: 10 });
+                    else if (md.hygPrice != null && md.hyg52High > 0) { const dd = ((md.hygPrice / md.hyg52High) - 1) * 100; factors.push({ name: "Credit Stress", value: `${dd.toFixed(1)}% from high`, score: interp(dd, [[-18, 90], [-12, 75], [-7, 55], [-4, 35], [-2, 20], [0, 8]]), weight: 10 }); }
+                    if (md.nfci != null) factors.push({ name: "Financial Conditions", value: `NFCI ${md.nfci >= 0 ? "+" : ""}${md.nfci.toFixed(2)}`, score: interp(md.nfci, [[-0.7, 5], [-0.3, 12], [0, 25], [0.3, 42], [0.6, 58], [1.0, 72], [1.5, 84], [2.5, 92]]), weight: 10 });
+                    if (md.claimsTrend != null) factors.push({ name: "Jobless Claims", value: `${md.claims4wk?.toLocaleString()} 4wk`, score: interp(md.claimsTrend, [[-15, 5], [-5, 12], [0, 22], [5, 38], [10, 55], [20, 72], [35, 85], [50, 92]]), weight: 12 });
+                    if (md.cfnai != null) factors.push({ name: "Economic Activity", value: `CFNAI ${md.cfnai.toFixed(2)}`, score: interp(md.cfnai3mo != null ? md.cfnai3mo : md.cfnai, [[-1.5, 92], [-0.7, 75], [-0.35, 55], [0, 35], [0.2, 20], [0.5, 10], [1.0, 5]]), weight: 8 });
+                    if (md.sahmVal != null) factors.push({ name: "Sahm Rule", value: `${md.sahmVal.toFixed(2)}pp`, score: interp(md.sahmVal, [[0, 5], [0.15, 15], [0.3, 35], [0.4, 55], [0.5, 75], [0.7, 88], [1.0, 95]]), weight: 7 });
+                    if (md.oilYoY != null) factors.push({ name: "Oil Shock", value: `${md.oilYoY >= 0 ? "+" : ""}${md.oilYoY.toFixed(1)}% YoY`, score: interp(md.oilYoY, [[-20, 5], [-5, 10], [10, 18], [25, 32], [40, 50], [60, 68], [85, 82], [120, 92]]), weight: 5 });
+                    if (md.epsChg90d != null) factors.push({ name: "EPS Trend", value: `${md.epsChg90d >= 0 ? "+" : ""}${md.epsChg90d.toFixed(1)}% (90d)`, score: interp(md.epsChg90d, [[-8, 90], [-5, 75], [-3, 58], [-1, 42], [0, 30], [2, 18], [4, 10], [6, 5]]), weight: 7 });
+                    const totalWeight = factors.reduce((a, f) => a + f.weight, 0);
+                    const baseComposite = totalWeight > 0 ? factors.reduce((a, f) => a + f.score * (f.weight / totalWeight), 0) : null;
+                    const elevatedCount = factors.filter(f => f.score >= 50).length;
+                    const concordanceBonus = elevatedCount >= 4 ? 15 : elevatedCount >= 3 ? 10 : elevatedCount >= 2 ? 5 : 0;
+                    const rawComposite = baseComposite != null ? Math.min(95, Math.max(5, Math.round(baseComposite + concordanceBonus))) : null;
+                    const _bp = bearModelProbability(md, backtest);
+                    let isotonic = rawComposite;
+                    if (rawComposite != null && backtest?.buckets) { const b = backtest.buckets.find(b => rawComposite >= b.lo && rawComposite < b.hi); if (b && b.n > 0) isotonic = Math.round(b.rate); }
+                    const composite = _bp?.calibrated != null ? Math.round(_bp.calibrated * 100) : isotonic;
+                    const compositeColor = composite > 60 ? C.dn : composite > 40 ? C.warn : C.up;
+                    const riskLabel = composite > 70 ? "VERY HIGH" : composite > 55 ? "HIGH" : composite > 40 ? "ELEVATED" : composite > 25 ? "MODERATE" : "LOW";
+                    return (<div>
+                      <div style={{ ...tEyebrow, marginBottom: 8 }}>Bear Probability — 12 Month Outlook</div>
+                      {composite != null ? (
+                        <div style={{ background: C.card, border: `1px solid ${compositeColor}30`, padding: "16px 18px", marginBottom: 14, display: "flex", alignItems: "baseline", gap: 14 }}>
+                          <span style={{ fontSize: 40, fontWeight: 700, color: compositeColor, lineHeight: 1 }}>{composite}%</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: compositeColor, letterSpacing: 2 }}>{riskLabel}</span>
+                          <span style={{ fontSize: 10, color: C.t4 }}>{_bp?.raw != null ? `Raw LR ${Math.round(_bp.raw * 100)}% — bucket-calibrated · heuristic ${rawComposite}` : `${factors.length}-factor composite${concordanceBonus > 0 ? ` + ${concordanceBonus}pt concordance` : ""}`}</span>
+                        </div>
+                      ) : <div style={{ ...tEyebrowMuted, padding: 16 }}>LOADING MACRO INDICATORS</div>}
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                        <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                          <th style={tTh("left", false)}>Factor</th><th style={tTh("right", false)}>Value</th><th style={tTh("right", false)}>Score</th><th style={tTh("right", false)}>Weight</th><th style={{ ...tTh("left", false), width: "30%" }}></th>
+                        </tr></thead>
+                        <tbody>
+                          {factors.map(f => { const col = f.score > 50 ? C.dn : f.score > 30 ? C.warn : C.up; return (
+                            <tr key={f.name} style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <td style={{ ...tTd("left"), fontWeight: 600, color: C.t1 }}>{f.name}</td>
+                              <td style={{ ...tTd(), color: C.t2 }}>{f.value}</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: col }}>{f.score}</td>
+                              <td style={{ ...tTd(), color: C.t4 }}>{f.weight}%</td>
+                              <td style={tTd("left")}><div style={{ height: 4, background: C.card, width: "100%" }}><div style={{ height: "100%", width: `${f.score}%`, background: col }} /></div></td>
+                            </tr>
+                          ); })}
+                        </tbody>
+                      </table>
+                      {md.updated && <div style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Macro data updated {ago(md.updated)}</div>}
+                    </div>);
+                  })()}
+                  {pbView === "scripts" && (() => {
+                    const scripts = [
+                      { regime: "Bull Market — Staying Invested", condition: "Market within 10% of peak", active: drawdown > -10, subject: "Portfolio Update: Staying the Course", body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. Our playbook calls for staying fully invested in equities through bull markets.\n\nYour bond ladder remains in place, funding the next several years of expenses and serving as deployment ammunition for when the next bear market arrives.` },
+                      { regime: "Correction — Down 10-20%", condition: "S&P down 10-20% from peak", active: drawdown <= -10 && drawdown > -20, subject: "Market Update: Correction in Progress — The Plan Is Working", body: `The S&P 500 is down approximately ${Math.abs(drawdown).toFixed(0)}% from its recent high. This is normal, and we have a plan for exactly this situation.\n\nAt this level, our playbook says to hold. We haven't hit our first deployment threshold (-25%). Historically, the market has experienced 27 declines of -15% or more since 1929. Every single one eventually recovered.` },
+                      { regime: "Bear Market — Tranche 1", condition: "S&P down 25%+ from peak", active: drawdown <= -25 && drawdown > -40, subject: "DEPLOYING: First Tranche Into the Market", body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak — we've hit our first deployment threshold.\n\nPer our investment playbook, we're deploying 70% of your bond-ladder reserves back into equities at these levels. 87% of historical bear markets have reached this level — it's the single highest expected-value entry point.` },
+                      { regime: "Bear Market — Tranche 2", condition: "S&P down 40%+ from peak", active: drawdown <= -40, subject: "DEPLOYING: Final Tranche — Deep Bear Territory", body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. Only 32% of bear markets reach this depth.\n\nWe're deploying all remaining bond reserves into equities. Stocks purchased at -40% from peak have historically delivered +67% returns by the time the market recovers to its prior high.` },
+                    ];
+                    return (<div>
+                      <div style={{ fontSize: 11, color: C.t3, marginBottom: 12 }}>Pre-written client communications per regime. The active script matches current conditions.</div>
+                      {scripts.map((s, i) => (
+                        <div key={i} style={{ background: C.card, border: `1px solid ${s.active ? C.accentGlow : C.border}`, padding: "12px 14px", marginBottom: 10 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                            <span style={{ ...tEyebrowMuted, color: s.active ? C.accent : C.t4 }}>{s.regime}</span>
+                            {s.active && <span style={tEyebrow}>Active Now</span>}
+                          </div>
+                          <div style={{ fontSize: 10, color: C.t4, marginBottom: 8 }}>{s.condition}</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Subject: {s.subject}</div>
+                          <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 8 }}>{s.body}</div>
+                          <button onClick={() => { navigator.clipboard.writeText(`Subject: ${s.subject}\n\n${s.body}`); }} style={{ padding: "4px 12px", borderRadius: 2, border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}>Copy</button>
+                        </div>
+                      ))}
+                    </div>);
+                  })()}
+                  {pbView === "history" && (<div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
+                      {tStat("Avg Bear Drawdown", `${avgBearDraw}%`, C.dn)}
+                      {tStat("Avg Bear Duration", `${avgBearDur} mo`)}
+                      {tStat("Avg Recovery", `${avgRecovery} mo`)}
+                      {tStat("Avg Bull Gain", `+${avgBullGain}%`, C.up)}
+                    </div>
+                    <div style={{ ...tEyebrow, marginBottom: 6 }}>Bear Markets & Near-Bear Corrections Since 1929</div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, marginBottom: 16 }}>
+                      <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <th style={tTh("left", false)}>Event</th><th style={tTh("right", false)}>Peak</th><th style={tTh("right", false)}>Trough</th><th style={tTh("right", false)}>Close</th><th style={tTh("right", false)}>Intraday</th><th style={tTh("right", false)}>Dur</th><th style={tTh("right", false)}>Recov</th>
+                      </tr></thead>
+                      <tbody>
+                        {PB_BEAR_MARKETS.map((b, i) => (
+                          <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <td style={{ ...tTd("left"), fontWeight: 600, color: b.nearBear ? C.warn : C.t2 }}>{b.name}{b.nearBear ? " *" : ""}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{b.peakDate}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{b.troughDate}</td>
+                            <td style={{ ...tTd(), fontWeight: 700, color: C.dn }}>{b.drawdown}%</td>
+                            <td style={{ ...tTd(), color: b.intradayDraw ? C.dn : C.t4 }}>{b.intradayDraw ? `${b.intradayDraw}%` : "—"}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{b.durationMo}mo</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{b.recoveryMo}mo</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div style={{ fontSize: 10, color: C.t4, marginBottom: 16 }}>* near-bear correction (-19% to -21% intraday)</div>
+                    <div style={{ ...tEyebrow, marginBottom: 6 }}>Bull Markets Since 1929</div>
+                    <table style={{ width: "100%", maxWidth: 420, borderCollapse: "collapse", fontSize: 11 }}>
+                      <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <th style={tTh("left", false)}>Period</th><th style={tTh("right", false)}>Gain</th><th style={tTh("right", false)}>Duration</th>
+                      </tr></thead>
+                      <tbody>
+                        {[...PB_BULL_MARKETS_BASE, { period: "2022-present", gain: Math.round(pctFromTrough * 10) / 10, durationMo: Math.round(bullAgeMo * 10) / 10 }].map((b, i) => {
+                          const isCurrent = b.period.includes("present");
+                          return (
+                            <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, background: isCurrent ? C.accentSoft : "transparent" }}>
+                              <td style={{ ...tTd("left"), fontWeight: 600, color: isCurrent ? C.t1 : C.t2 }}>{b.period}{isCurrent ? " — CURRENT" : ""}</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: C.up }}>+{b.gain}%</td>
+                              <td style={{ ...tTd(), color: C.t3 }}>{b.durationMo}mo</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>)}
+                  {pbView === "proof" && (<div>
+                    <div style={{ background: C.card, border: `1px solid ${C.border}`, padding: "16px 18px", marginBottom: 14 }}>
+                      <div style={{ ...tEyebrowMuted, marginBottom: 6 }}>Bond-Deploy Alpha vs Passive Bond-Holding</div>
+                      <div style={{ fontSize: 34, fontWeight: 700, color: C.up, lineHeight: 1 }}>+3.67%</div>
+                      <div style={{ fontSize: 11, color: C.t3, marginTop: 6 }}>mean alpha per bull-bear cycle · 14 historical cycles · 1932-2024 · <span style={{ color: C.up, fontWeight: 700 }}>71% positive</span></div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14 }}>
+                      {tStat("Mean Alpha", "+3.67%", C.up)}
+                      {tStat("Median Alpha", "+4.49%", C.up)}
+                      {tStat("Cycles Positive", "71%")}
+                      {tStat("LR Model AUC", "0.82")}
+                    </div>
+                    <div style={{ ...tEyebrow, marginBottom: 8 }}>The Three Mechanisms</div>
+                    {[
+                      { num: "1", title: "5-Year Bond Ladder Floor", desc: "Five bonds, each one year of living expenses. Year 1 matures each year to fund expenses. The floor guarantees the client never has to sell equity at a bear-market bottom to fund income." },
+                      { num: "2", title: "Bear-Probability Ladder Thickening", desc: "When the 7-factor logistic-regression model (walk-forward AUC 0.82) shows bear probability > 40%, add a 6th bond. Above 55%, add a 7th. Extra bonds become pre-positioned deployment reserve." },
+                      { num: "3", title: "2-Tranche Deployment (-25% / -40%)", desc: "Deploy 70% of deployable bonds at -25% and remaining 30% at -40%. Front-loaded because -25% has the highest expected-value per dollar (87% hit rate × 33% recovery return)." },
+                    ].map(m => (
+                      <div key={m.num} style={{ display: "flex", gap: 12, padding: "10px 12px", background: C.card, border: `1px solid ${C.border}`, marginBottom: 8 }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: C.accent, flexShrink: 0 }}>{m.num}</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginBottom: 2 }}>{m.title}</div>
+                          <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.6 }}>{m.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, marginTop: 8 }}>The behavioral alpha is larger than the deploy alpha: the average equity investor underperforms the S&P 500 by 300-400 bps/yr (Dalbar QAIB 2024), almost entirely from panic selling during drawdowns. A visible, rules-based framework shifts the psychology from "I'm losing money" to "the plan is working."</div>
+                  </div>)}
                 </div>);
               })()}
-              {tDrawer === "opportunities" && (<div>
-                <div style={{ ...tEyebrow, marginBottom: 12 }}>Opportunity Finder ({opportunities.length})</div>
-                {opportunities.map(opp => (
-                  <div key={opp.id} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 10 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{opp.title}</div>
-                      <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: opp.conviction === "High Conviction" ? C.up : C.t3, whiteSpace: "nowrap" }}>{opp.conviction}</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: C.t3, marginBottom: 6 }}>{opp.pattern} · {opp.timeframe}</div>
-                    <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, marginBottom: 8 }}>{opp.catalyst}</div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                      {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "2px 10px", borderRadius: 2, background: C.accentSoft, color: C.accent }}>{t}</span>)}
-                    </div>
-                    {opp.ticker_rationale && Object.entries(opp.ticker_rationale).map(([t, r]) => <div key={t} style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, marginBottom: 4 }}><strong style={{ color: C.accent }}>{t}:</strong> {r}</div>)}
+              {tDrawer === "opportunities" && (oppDetail ? (() => {
+                const o = oppDetail;
+                const convColor = o.conviction === "High Conviction" ? C.up : o.conviction === "On Our Radar" ? C.accent : C.t3;
+                return (<div style={{ maxWidth: 760 }}>
+                  <button onClick={() => setOppDetail(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "4px 12px", color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", marginBottom: 14 }}>← Back</button>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, lineHeight: 1.3, marginBottom: 6 }}>{o.title}</div>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{ ...tEyebrowMuted, color: convColor }}>{o.conviction}</span>
+                    {o.pattern && <span style={tEyebrowMuted}>{o.pattern}</span>}
+                    {o.timeframe && <span style={{ fontSize: 10, color: C.t4 }}>{o.timeframe}</span>}
+                    {o.date_identified && <span style={{ fontSize: 10, color: C.t4 }}>{o.date_identified}</span>}
                   </div>
-                ))}
-              </div>)}
+                  {o.summary && <div style={{ fontSize: 12, color: C.t2, lineHeight: 1.6, fontStyle: "italic", marginBottom: 14, paddingLeft: 10, borderLeft: `2px solid ${C.accent}` }}>{o.summary}</div>}
+                  {o.catalyst && (<><div style={{ ...tEyebrow, marginBottom: 6 }}>Catalyst</div><div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7, marginBottom: 14 }}>{o.catalyst}</div></>)}
+                  {o.thesis && (<><div style={{ ...tEyebrow, marginBottom: 6 }}>Investment Thesis</div><div style={{ fontSize: 12, color: C.t2, lineHeight: 1.7, marginBottom: 14 }}>{o.thesis}</div></>)}
+                  {o.counter_thesis && (<><div style={{ ...tEyebrow, marginBottom: 6, color: C.dn }}>Counter-Thesis</div><div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, fontStyle: "italic", marginBottom: 14 }}>{o.counter_thesis}</div></>)}
+                  {o.trade_construction && (<>
+                    <div style={{ ...tEyebrow, marginBottom: 6 }}>Trade Construction</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 14 }}>
+                      {o.trade_construction.entry_zone && tStat("Entry Zone", o.trade_construction.entry_zone)}
+                      {o.trade_construction.target_12mo && tStat("12-Mo Target", o.trade_construction.target_12mo, C.up)}
+                      {o.trade_construction.stop_loss && tStat("Stop Loss", o.trade_construction.stop_loss, C.dn)}
+                      {o.trade_construction.position_size_pct && tStat("Position Size", o.trade_construction.position_size_pct)}
+                    </div>
+                  </>)}
+                  {o.catalyst_calendar?.length > 0 && (<>
+                    <div style={{ ...tEyebrow, marginBottom: 6 }}>Catalyst Calendar</div>
+                    <div style={{ marginBottom: 14 }}>{o.catalyst_calendar.map((c2, i) => <div key={i} style={{ display: "flex", gap: 10, fontSize: 11, padding: "3px 0", borderBottom: `1px solid ${C.border}` }}><span style={{ color: C.accent, fontWeight: 700, minWidth: 80 }}>{c2.date}</span><span style={{ color: C.t2 }}>{c2.event}{c2.ticker ? ` (${c2.ticker})` : ""}</span></div>)}</div>
+                  </>)}
+                  {o.tickers?.length > 0 && (<>
+                    <div style={{ ...tEyebrow, marginBottom: 6 }}>Ticker Analysis</div>
+                    <div style={{ marginBottom: 14 }}>
+                      {o.tickers.map(t => (
+                        <div key={t} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "10px 12px", marginBottom: 8 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: C.accent }}>{t}</span>
+                            <button onClick={() => { setOppDetail(null); setTDrawer("screener"); setScreenerDetailLoading(true); setScreenerDetail({ ticker: t }); fetch(`https://richacarson.github.io/Stock-Screener/reports/${t}.json`).then(r => r.ok ? r.json() : { ticker: t }).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail({ ticker: t }); setScreenerDetailLoading(false); }); }} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "2px 8px", color: C.t3, fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}>Screener Report</button>
+                          </div>
+                          {o.ticker_rationale?.[t] && <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.6 }}>{o.ticker_rationale[t]}</div>}
+                          {o.in_portfolio_status?.[t] && <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>Current {o.in_portfolio_status[t].current_weight}% · Target {o.in_portfolio_status[t].target_weight}%{o.in_portfolio_status[t].action ? ` · ${o.in_portfolio_status[t].action}` : ""}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </>)}
+                  {o.risks?.length > 0 && (<>
+                    <div style={{ ...tEyebrow, marginBottom: 6, color: C.dn }}>Key Risks</div>
+                    <div style={{ marginBottom: 14 }}>{o.risks.map((r2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.dn }}>{i + 1}.</span> {typeof r2 === "string" ? r2 : r2.description || r2.risk || ""}</div>)}</div>
+                  </>)}
+                  {o.invalidation?.length > 0 && (<>
+                    <div style={{ ...tEyebrow, marginBottom: 6, color: C.warn }}>What Would Change My Mind</div>
+                    <div style={{ marginBottom: 14 }}>{o.invalidation.map((t2, i) => <div key={i} style={{ fontSize: 11, color: C.t2, lineHeight: 1.6, marginBottom: 4 }}><span style={{ color: C.warn }}>{i + 1}.</span> {typeof t2 === "string" ? t2 : t2.trigger || t2.description || ""}</div>)}</div>
+                  </>)}
+                  {o.body_md && (<><div style={{ ...tEyebrow, marginBottom: 6 }}>Research Report</div><div style={{ marginBottom: 14 }}>{renderMarkdown(o.body_md)}</div></>)}
+                  {o.sources?.length > 0 && (<>
+                    <div style={{ ...tEyebrow, marginBottom: 6 }}>Sources</div>
+                    {o.sources.map((s2, i) => <div key={i} style={{ fontSize: 10, color: C.t4, lineHeight: 1.5, marginBottom: 4 }}>{i + 1}. {typeof s2 === "string" ? s2 : s2.url ? <a href={s2.url} target="_blank" rel="noopener noreferrer" style={{ color: C.accent }}>{s2.title || s2.url}</a> : (s2.title || s2.source || "")}{typeof s2 !== "string" && (s2.publisher || s2.date) ? ` — ${[s2.publisher, s2.date].filter(Boolean).join(", ")}` : ""}</div>)}
+                  </>)}
+                </div>);
+              })() : (<div style={{ maxWidth: 920 }}>
+                <div style={tTabRow}>
+                  {[
+                    { v: "opportunities", l: `Opportunities${opportunities.length ? ` (${opportunities.length})` : ""}` },
+                    { v: "stalking", l: `Stalking${oppStalking.length ? ` (${oppStalking.length})` : ""}` },
+                    { v: "ledger", l: `Ledger${oppLedger.length ? ` (${oppLedger.length})` : ""}` },
+                    { v: "signals", l: "Signals" },
+                  ].map(({ v, l }) => <button key={v} onClick={() => setOppView(v)} style={tTabBtn(oppView === v)}>{l}</button>)}
+                </div>
+                {oppView === "opportunities" && (!opportunities.length ? (
+                  <div style={tEyebrowMuted}>LOADING OPPORTUNITIES</div>
+                ) : opportunities.map(opp => {
+                  const convColor = opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? C.accent : C.t3;
+                  return (
+                    <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                        <span style={{ ...tEyebrowMuted, fontSize: 9, color: convColor }}>{opp.conviction}{opp.pattern ? ` · ${opp.pattern}` : ""}</span>
+                        <span style={{ fontSize: 9, color: C.t4 }}>{[opp.date_identified, opp.timeframe].filter(Boolean).join(" · ")}</span>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{opp.title}</div>
+                      {opp.tickers?.length > 0 && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 4 }}>{opp.tickers.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 700, padding: "1px 8px", borderRadius: 2, background: C.accentSoft, color: C.accent }}>{t}</span>)}</div>}
+                      {opp.catalyst && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                    </div>
+                  );
+                }))}
+                {oppView === "stalking" && (!oppStalking.length ? (
+                  <div style={tEyebrowMuted}>NOTHING ON THE STALKING LIST</div>
+                ) : oppStalking.map((s, i) => (
+                  <div key={s.id || i} style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{s.title || s.id}</span>
+                      <span style={{ fontSize: 9, color: C.t4 }}>{s.added ? `Added ${s.added}` : ""}</span>
+                    </div>
+                    {s.tickers?.length > 0 && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 4 }}>{s.tickers.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 700, padding: "1px 8px", borderRadius: 2, background: C.accentSoft, color: C.accent }}>{t}</span>)}</div>}
+                    {s.catalyst && <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.5 }}><span style={{ color: C.t4 }}>Catalyst:</span> {s.catalyst}</div>}
+                    {s.thesis && <div style={{ fontSize: 11, color: C.t2, lineHeight: 1.5 }}><span style={{ color: C.t4 }}>Thesis:</span> {s.thesis}</div>}
+                    {s.what_would_promote && <div style={{ fontSize: 10, color: C.t3, lineHeight: 1.5, marginTop: 2 }}><span style={{ color: C.t4 }}>Would promote:</span> {s.what_would_promote}</div>}
+                  </div>
+                )))}
+                {oppView === "ledger" && (() => {
+                  if (!oppLedger.length) return <div style={tEyebrowMuted}>NO CLOSED OPPORTUNITIES YET</div>;
+                  const closed = oppLedger;
+                  const winners = closed.filter(c2 => (c2.return_pct || 0) > 0);
+                  const losers = closed.filter(c2 => (c2.return_pct || 0) < 0);
+                  const avgRet = closed.length ? closed.reduce((s, c2) => s + (c2.return_pct || 0), 0) / closed.length : 0;
+                  const winRate = closed.length ? winners.length / closed.length * 100 : 0;
+                  return (<div>
+                    <div style={{ display: "flex", gap: 20, padding: "6px 0 12px", flexWrap: "wrap" }}>
+                      {[["CLOSED", closed.length, C.t1], ["WIN RATE", `${winRate.toFixed(0)}%`, winRate >= 50 ? C.up : C.dn], ["AVG RETURN", `${avgRet >= 0 ? "+" : ""}${avgRet.toFixed(1)}%`, avgRet >= 0 ? C.up : C.dn], ["W / L", `${winners.length} / ${losers.length}`, C.t1]].map(([l2, v2, col]) => (
+                        <span key={l2} style={{ display: "flex", gap: 6, alignItems: "baseline" }}><span style={{ ...tEyebrowMuted, fontSize: 9 }}>{l2}</span><span style={{ fontSize: 13, fontWeight: 700, color: col }}>{v2}</span></span>
+                      ))}
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                      <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <th style={tTh("left", false)}>ID</th><th style={tTh("right", false)}>Opened</th><th style={tTh("right", false)}>Closed</th><th style={tTh("right", false)}>Days</th><th style={tTh("left", false)}>Pattern</th><th style={tTh("right", false)}>Return</th>
+                      </tr></thead>
+                      <tbody>
+                        {closed.map((c2, i) => (
+                          <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                            <td style={{ ...tTd("left"), fontWeight: 600, color: C.t1 }}>{c2.id || c2.title}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{c2.opened || "—"}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{c2.closed || "—"}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{c2.days_held ?? "—"}</td>
+                            <td style={{ ...tTd("left"), color: C.t3 }}>{c2.pattern || "—"}</td>
+                            <td style={{ ...tTd(), fontWeight: 700, color: (c2.return_pct || 0) >= 0 ? C.up : C.dn }}>{(c2.return_pct || 0) >= 0 ? "+" : ""}{(c2.return_pct || 0).toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>);
+                })()}
+                {oppView === "signals" && (() => {
+                  if (!oppSignals) return <div style={tEyebrowMuted}>NO SIGNAL DATA YET</div>;
+                  const blocks = [
+                    { key: "insider_clusters", title: "Insider Cluster Buys (last 14 days)" },
+                    { key: "congressional", title: "Congressional Purchases (last 14 days)" },
+                    { key: "institutional", title: "Institutional 13F Changes" },
+                  ];
+                  return (<div>
+                    {oppSignals.generated_at && <div style={{ fontSize: 10, color: C.t4, marginBottom: 10 }}>Updated {oppSignals.generated_at}</div>}
+                    {blocks.map(b => {
+                      const items = oppSignals[b.key] || [];
+                      return (
+                        <div key={b.key} style={{ marginBottom: 16 }}>
+                          <div style={{ ...tEyebrow, marginBottom: 6 }}>{b.title}</div>
+                          {!items.length ? <div style={{ fontSize: 11, color: C.t4 }}>No signals in this category.</div> : (
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                              <tbody>
+                                {items.slice(0, 15).map((it, i) => (
+                                  <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                                    <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1, width: 60 }}>{it.ticker}</td>
+                                    <td style={{ ...tTd("left"), color: C.t3, whiteSpace: "normal" }}>{it.name || ""}{it.note ? <span style={{ color: C.t4 }}> — {it.note}</span> : ""}</td>
+                                    <td style={{ ...tTd(), color: C.t3 }}>{it.buyers != null ? `${it.buyers} buyers` : ""}</td>
+                                    <td style={{ ...tTd(), color: C.t3 }}>{it.total_value ? `$${typeof it.total_value === "number" ? it.total_value.toLocaleString() : it.total_value}` : ""}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>);
+                })()}
+              </div>))}
               {tDrawer === "screener" && (screenerDetail ? (() => {
                 const a = screenerDetail;
                 const recColor = ({ BUY: C.up, HOLD: "#8B7355", WATCH: C.t3, SELL: C.dn })[a.recommendation] || C.t3;
@@ -3111,18 +3661,108 @@ Instructions:
                     </>)}
                   </>)}
                 </div>);
-              })() : (<div>
-                <div style={{ ...tEyebrow, marginBottom: 10 }}>Stock Screener — {screenerData.length} stocks</div>
-                <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "8px 12px", marginBottom: 10, borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
-                  {screenerData.filter(s => { const q = screenerSearch.toLowerCase(); return !q || s.ticker.toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q); }).slice(0, 50).map(s => (
-                    <div key={s.ticker} onClick={() => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer" }}>
-                      <div><div style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{s.ticker}</div><div style={{ fontSize: 10, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 150 }}>{s.name}</div></div>
-                      <div style={{ textAlign: "right" }}><span style={{ fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: ({ BUY: C.up, HOLD: "#8B7355", WATCH: C.t3, SELL: C.dn })[s.recommendation] || C.t3 }}>{s.recommendation}</span><div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginTop: 2 }}>{s.overall_score}</div></div>
+              })() : (() => {
+                const sSleeve = screenerSleeve || "All";
+                const getSector = s => screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector;
+                const portfolioMap = { "Dividend": sleeves.dividend?.symbols || [], "Growth": sleeves.growth?.symbols || [], "FCI 100": sleeves.fci100?.symbols || [], "FCI Values": sleeves.fciValues?.symbols || [] };
+                const meanOf = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+                const sleeveStats = Object.entries(portfolioMap).map(([key, holdings]) => {
+                  const composites = holdings.map(t => screenerByTicker[t]?.overall_score).filter(v => typeof v === "number");
+                  const innVals = holdings.map(t => screenerScores[t]?.inn).filter(v => typeof v === "number");
+                  const infraVals = holdings.map(t => screenerScores[t]?.infra).filter(v => typeof v === "number");
+                  return { key, n: composites.length, coverage: holdings.length, avg: composites.length ? Math.round(meanOf(composites)) : null, inn: innVals.length ? Math.round(meanOf(innVals) * 10) / 10 : null, infra: infraVals.length ? Math.round(meanOf(infraVals) * 10) / 10 : null };
+                });
+                const q = screenerSearch.toLowerCase();
+                const filtered = screenerData.filter(s => {
+                  if (sSleeve !== "All") { const holdings = portfolioMap[sSleeve]; if (!holdings || !holdings.includes(s.ticker)) return false; }
+                  if (sSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
+                  if (sSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
+                  if (sSleeve === "All" && screenerSectorFilter !== "All" && getSector(s) !== screenerSectorFilter) return false;
+                  if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
+                  return true;
+                });
+                const scrCols = [
+                  { k: "ticker", l: "Ticker", align: "left" },
+                  { k: "name", l: "Name", align: "left" },
+                  { k: "_sector", l: "Sector", align: "left" },
+                  { k: "recommendation", l: "Rec", align: "left" },
+                  { k: "overall_score", l: "Score", align: "right" },
+                  { k: "screen_date", l: "Date", align: "right" },
+                ];
+                const sortVal = (s, k) => k === "_sector" ? (getSector(s) || "") : (s[k] ?? null);
+                const sorted = [...filtered].sort((a, b) => {
+                  const col = metricSort.col && scrCols.some(c2 => c2.k === metricSort.col) ? metricSort.col : null;
+                  if (!col) return (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || "");
+                  const av = sortVal(a, col), bv = sortVal(b, col);
+                  if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
+                  const cmp = (typeof av === "string") ? av.localeCompare(bv) : av - bv;
+                  return metricSort.dir === "asc" ? cmp : -cmp;
+                });
+                const toggleScrSort = k => setMetricSort(p => p.col === k ? { col: k, dir: p.dir === "desc" ? "asc" : "desc" } : { col: k, dir: "desc" });
+                const openReport2 = s => { setScreenerDetailLoading(true); setScreenerDetail(s); fetch(`https://richacarson.github.io/Stock-Screener/reports/${s.ticker}.json`).then(r => r.ok ? r.json() : s).then(d => { setScreenerDetail(d); setScreenerDetailLoading(false); }).catch(() => { setScreenerDetail(s); setScreenerDetailLoading(false); }); };
+                const selStyle = { flex: "1 1 140px", padding: "6px 10px", borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 11, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" };
+                const sectorOptions = Array.from(new Set(screenerData.map(getSector).filter(Boolean))).sort();
+                return (<div style={{ maxWidth: 980 }}>
+                  <div style={tTabRow}>
+                    {["Dividend", "Growth", "FCI 100", "FCI Values", "All"].map(s => (
+                      <button key={s} onClick={() => setScreenerSleeve(s)} style={tTabBtn(sSleeve === s)}>{s}</button>
+                    ))}
+                  </div>
+                  {/* Portfolio composite summary strip */}
+                  <div style={{ marginBottom: 12 }}>
+                    {sleeveStats.map(st => (
+                      <div key={st.key} style={{ display: "flex", gap: 16, alignItems: "baseline", padding: "3px 0", fontSize: 11 }}>
+                        <span style={{ ...tEyebrowMuted, fontSize: 9, width: 84, flexShrink: 0 }}>{st.key}</span>
+                        <span><span style={{ color: C.t4, fontSize: 9 }}>COMP </span><span style={{ fontWeight: 700, color: st.avg != null ? (st.avg >= 70 ? C.up : st.avg >= 50 ? C.t1 : C.warn) : C.t4 }}>{st.avg ?? "—"}</span><span style={{ color: C.t4, fontSize: 9 }}> ({st.n}/{st.coverage})</span></span>
+                        <span><span style={{ color: C.t4, fontSize: 9 }}>INN </span><span style={{ fontWeight: 700, color: st.inn != null ? C.t1 : C.t4 }}>{st.inn ?? "—"}</span></span>
+                        <span><span style={{ color: C.t4, fontSize: 9 }}>INFRA </span><span style={{ fontWeight: 700, color: st.infra != null ? C.t1 : C.t4 }}>{st.infra ?? "—"}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                  <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "8px 12px", marginBottom: 8, borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                  {sSleeve === "All" && (
+                    <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                      <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={selStyle}>
+                        <option value="All">All Types</option>
+                        <option value="Dividend">Dividend Candidates</option>
+                        <option value="Growth">Growth Candidates</option>
+                      </select>
+                      <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={selStyle}>
+                        <option value="All">All Ratings</option>
+                        <option value="BUY">BUY Only</option>
+                        <option value="HOLD">HOLD Only</option>
+                        <option value="WATCH">WATCH Only</option>
+                        <option value="SELL">SELL Only</option>
+                      </select>
+                      <select value={screenerSectorFilter} onChange={e => setScreenerSectorFilter(e.target.value)} style={selStyle}>
+                        <option value="All">All Sectors</option>
+                        {sectorOptions.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                      </select>
                     </div>
-                  ))}
-                </div>
-              </div>))}
+                  )}
+                  {!screenerData.length ? <div style={tEyebrowMuted}>LOADING SCREENER DATA</div> : !sorted.length ? <div style={tEyebrowMuted}>NO STOCKS MATCH</div> : (
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                      <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                        {scrCols.map(c2 => (
+                          <th key={c2.k} onClick={() => toggleScrSort(c2.k)} style={{ ...tTh(c2.align), color: metricSort.col === c2.k ? C.t1 : C.t4 }}>{c2.l} {metricSort.col === c2.k ? (metricSort.dir === "desc" ? "↓" : "↑") : ""}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>
+                        {sorted.map(s => (
+                          <tr key={s.ticker} onClick={() => openReport2(s)} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                            <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{s.ticker}</td>
+                            <td style={{ ...tTd("left"), color: C.t3, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</td>
+                            <td style={{ ...tTd("left"), color: C.t4, fontSize: 10 }}>{getSector(s) || "—"}</td>
+                            <td style={tTd("left")}>{s.recommendation ? <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", padding: "1px 8px", borderRadius: 2, color: tRecColor(s.recommendation), background: tRecColor(s.recommendation) + "18" }}>{s.recommendation}</span> : "—"}</td>
+                            <td style={{ ...tTd(), fontWeight: 700, color: s.overall_score >= 70 ? C.up : s.overall_score >= 50 ? C.t1 : C.warn }}>{s.overall_score ?? "—"}</td>
+                            <td style={{ ...tTd(), color: C.t4, fontSize: 10 }}>{s.screen_date || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>);
+              })())}
               {tDrawer === "performance" && (<div>
                 <div style={{ ...tEyebrow, marginBottom: 12 }}>Portfolio Performance</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
@@ -3209,10 +3849,16 @@ Instructions:
                 {["dividend", "growth", "fci100", "fciValues"].map(k => {
                   const names = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
                   const active = isPortfolio && tChartSleeve === k;
-                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
+                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); setPerfSleeve(k); setTChartHover(null); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
                 })}
-                {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "ALL"].map(r => (
-                  <button key={r} onClick={() => setTChartRange(r)} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
+                {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "ALL"].filter(r => {
+                  if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
+                  const tPort = (perfDataMap[tChartSleeve] || perfData || {}).portfolio || [];
+                  const daysAvailable = tPort.length > 1 ? (new Date(tPort[tPort.length - 1].date) - new Date(tPort[0].date)) / 86400000 : 0;
+                  const need = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[r] || 0;
+                  return daysAvailable >= need * 0.9;
+                }).map(r => (
+                  <button key={r} onClick={() => { setTChartRange(r); setTChartHover(null); }} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
                 ))}
                 {isPortfolio && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
                 {isPortfolio && ({ dividend: ["SPY", "DVY", "DIA"], growth: ["SPY", "IUSG", "QQQ"], fci100: ["SPY", "QQQ", "DIA"], fciValues: ["SPY", "QQQ", "DIA"] }[tChartSleeve] || ["SPY", "DVY", "DIA"]).map(bm => {
@@ -3224,19 +3870,37 @@ Instructions:
                   {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
                 </>}
               </div>
-              {isPortfolio && tChartData && tChartData.status !== "none" ? (() => {
-                if (tChartData.status === "loading") return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, letterSpacing: 1.2, color: C.t4 }}>LOADING PORTFOLIO DATA</div>;
+              {!isPortfolio ? (
+                <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+              ) : (() => {
+                const emptyMsg = (txt) => <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4 }}>{txt}</div>;
+                if (!tChartData || tChartData.status === "none") return emptyMsg(perfLoading ? "LOADING PORTFOLIO DATA" : "NO PORTFOLIO HISTORY");
+                if (tChartData.status === "insufficient") return emptyMsg("INSUFFICIENT DATA FOR RANGE");
+                if (tChartData.status === "no-intraday") return emptyMsg("INTRADAY DATA UNAVAILABLE");
                 const PAD = { top: 40, right: 60, bottom: 40, left: 10 };
                 const sleeveTitle = ({ dividend: "DIVIDEND", growth: "GROWTH", fci100: "FCI 100", fciValues: "FCI VALUES" })[tChartSleeve] || "PORTFOLIO";
+                const niceTicks = (lo, hi) => {
+                  const rawSpan = (hi - lo) || 1;
+                  const step = rawSpan <= 2 ? 0.5 : rawSpan <= 5 ? 1 : rawSpan <= 10 ? 2 : rawSpan <= 50 ? 5 : rawSpan <= 100 ? 10 : rawSpan <= 200 ? 20 : rawSpan <= 500 ? 50 : 100;
+                  const yMin = Math.floor((lo - rawSpan * 0.04) / step) * step;
+                  const yMax = Math.ceil((hi + rawSpan * 0.04) / step) * step;
+                  const ticks = [];
+                  for (let v = yMin; v <= yMax + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+                  return { yMin, yMax, ticks };
+                };
                 if (tChartData.status === "intraday") {
-                  const { candles: candles5m, bmCandles: bmL, mn, mx, rg } = tChartData;
-                  const cW2 = 900, H2 = 400, uW = cW2 - PAD.left - PAD.right;
+                  const { candles: candles5m, bmCandles: bmL, mn, mx } = tChartData;
+                  const cW2 = tChartDims.w, H2 = tChartDims.h, uW = cW2 - PAD.left - PAD.right;
+                  const { yMin: yMn2, yMax: yMx2, ticks: ticks2 } = niceTicks(mn, mx);
                   const gp = uW / Math.max(1, candles5m.length); const cdW = Math.max(2, Math.min(12, gp * 0.75));
-                  const xP = i => PAD.left + gp * (i + 0.5); const yP = v => PAD.top + ((mx - v) / rg) * (H2 - PAD.top - PAD.bottom);
+                  const xP = i => PAD.left + gp * (i + 0.5); const yP = v => PAD.top + ((yMx2 - v) / (yMx2 - yMn2 || 1)) * (H2 - PAD.top - PAD.bottom);
                   const lastV = candles5m[candles5m.length - 1]?.c || 0;
                   const hc2 = tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length ? candles5m[tChartHover] : null;
+                  const dlt2 = hc2 && tChartHover > 0 ? hc2.c - candles5m[tChartHover - 1].c : null;
+                  const dLab2 = []; let lx2 = -70;
+                  candles5m.forEach((c, i) => { const px = xP(i); if (px - lx2 >= 70) { dLab2.push(i); lx2 = px; } });
                   return (
-                    <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                    <div ref={attachTChartBox} style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                       <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "inherit", fontWeight: 600 }}>
                         <span style={{ color: C.t1, fontWeight: 700, fontSize: 13 }}>{sleeveTitle} 1D {lastV >= 0 ? "+" : ""}{lastV.toFixed(2)}%</span>
                         {Object.entries(bmL).map(([sym, bc]) => <span key={sym} style={{ color: BM_COLORS[sym] }}>{sym} {bc[bc.length - 1]?.c >= 0 ? "+" : ""}{bc[bc.length - 1]?.c.toFixed(2)}%</span>)}
@@ -3246,35 +3910,48 @@ Instructions:
                         <span style={{ color: C.t1, fontWeight: 700 }}>{hc2.date}</span>
                         <span>O: {hc2.o >= 0 ? "+" : ""}{hc2.o.toFixed(2)}%</span><span>H: {hc2.h >= 0 ? "+" : ""}{hc2.h.toFixed(2)}%</span><span>L: {hc2.l >= 0 ? "+" : ""}{hc2.l.toFixed(2)}%</span>
                         <span style={{ color: hc2.c >= hc2.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc2.c >= 0 ? "+" : ""}{hc2.c.toFixed(2)}%</span>
+                        {dlt2 != null && <span style={{ color: dlt2 >= 0 ? C.up : C.dn }}>Δ {dlt2 >= 0 ? "+" : ""}{dlt2.toFixed(2)}%</span>}
                         <span style={{ color: C.t4 }}>${hc2.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                       </div>}
-                      <div style={{ width: "100%", height: "100%" }}>
-                        <svg width="100%" height="100%" viewBox={`0 0 ${cW2} ${H2}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const r2 = e.currentTarget.getBoundingClientRect(); const sX = cW2 / r2.width; const mX = (e.clientX - r2.left) * sX; const idx = Math.round((mX - PAD.left) / gp - 0.5); setTChartHover(idx >= 0 && idx < candles5m.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                      <svg width={cW2} height={H2} viewBox={`0 0 ${cW2} ${H2}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }} onMouseMove={e => { const r2 = e.currentTarget.getBoundingClientRect(); const sX = cW2 / r2.width; const mX = (e.clientX - r2.left) * sX; const idx = Math.round((mX - PAD.left) / gp - 0.5); setTChartHover(idx >= 0 && idx < candles5m.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
                           <rect x={0} y={0} width={cW2} height={H2} fill={C.bg} />
-                          {[...Array(7)].map((_, i) => { const v = mn + (rg * i / 6); const yy = yP(v); return <g key={i}><line x1={PAD.left} y1={yy} x2={cW2 - PAD.right} y2={yy} stroke={C.border} strokeWidth={0.5} /><text x={cW2 - PAD.right + 4} y={yy + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(2)}%</text></g>; })}
-                          <line x1={PAD.left} y1={yP(0)} x2={cW2 - PAD.right} y2={yP(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
-                          {candles5m.filter((_, i) => i % Math.max(1, Math.floor(candles5m.length / 12)) === 0).map((c, _, a) => { const i = candles5m.indexOf(c); return <text key={i} x={xP(i)} y={H2 - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{c.date}</text>; })}
+                          {ticks2.map(v => { const yy = yP(v); return <g key={v}><line x1={PAD.left} y1={yy} x2={cW2 - PAD.right} y2={yy} stroke={C.border} strokeWidth={0.5} /><text x={cW2 - PAD.right + 4} y={yy + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(2)}%</text></g>; })}
+                          {yMn2 <= 0 && yMx2 >= 0 && <line x1={PAD.left} y1={yP(0)} x2={cW2 - PAD.right} y2={yP(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />}
+                          {dLab2.map(i => <text key={i} x={xP(i)} y={H2 - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{candles5m[i].date}</text>)}
                           {Object.entries(bmL).map(([sym, bc]) => { const col = BM_COLORS[sym]; const bW = Math.max(1, cdW * 0.45); const off = sym === "SPY" ? -cdW * 0.5 : sym === "DIA" ? cdW * 0.5 : 0; return bc.map((c, i) => (
                             <g key={`${sym}-${i}`} opacity={0.5}><line x1={xP(i) + off} y1={yP(c.h)} x2={xP(i) + off} y2={yP(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xP(i) - bW / 2 + off} y={yP(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
                           )); })}
                           {candles5m.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
                             <g key={i}><line x1={xP(i)} y1={yP(c.h)} x2={xP(i)} y2={yP(c.l)} stroke={col} strokeWidth={1} /><rect x={xP(i) - cdW / 2} y={yP(Math.max(c.o, c.c))} width={cdW} height={Math.max(1, yP(Math.min(c.o, c.c)) - yP(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
                           ); })}
-                          {tChartHover != null && tChartHover >= 0 && tChartHover < candles5m.length && <line x1={xP(tChartHover)} y1={PAD.top} x2={xP(tChartHover)} y2={H2 - PAD.bottom} stroke={C.t3} strokeWidth={0.5} strokeDasharray="3,3" />}
-                        </svg>
-                      </div>
+                          {hc2 && <g>
+                            <line x1={xP(tChartHover)} y1={PAD.top} x2={xP(tChartHover)} y2={H2 - PAD.bottom} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />
+                            <line x1={PAD.left} y1={yP(hc2.c)} x2={cW2 - PAD.right} y2={yP(hc2.c)} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />
+                            <rect x={xP(tChartHover) - cdW / 2 - 2} y={yP(Math.max(hc2.o, hc2.c, hc2.h)) - 2} width={cdW + 4} height={Math.max(1, yP(Math.min(hc2.o, hc2.c, hc2.l)) - yP(Math.max(hc2.o, hc2.c, hc2.h))) + 4} fill="none" stroke={C.accent} strokeWidth={0.75} />
+                          </g>}
+                      </svg>
                     </div>
                   );
                 }
-                const { candles, bmCandles: bmLines, minV, maxV, range } = tChartData;
-                const chartW = 900; const H = 400;
+                const { candles, bmCandles: bmLines, minV, maxV } = tChartData;
+                const chartW = tChartDims.w; const H = tChartDims.h;
                 const usableW = chartW - PAD.left - PAD.right;
+                const { yMin: yMnD, yMax: yMxD, ticks: ticksD } = niceTicks(minV, maxV);
                 const gap = usableW / Math.max(1, candles.length);
                 const candleW = Math.max(1, Math.min(12, gap * 0.75));
                 const xPos = i => PAD.left + gap * (i + 0.5);
-                const yPos = v => PAD.top + ((maxV - v) / range) * (H - PAD.top - PAD.bottom);
+                const yPos = v => PAD.top + ((yMxD - v) / (yMxD - yMnD || 1)) * (H - PAD.top - PAD.bottom);
                 const lastVal = candles[candles.length - 1]?.c || 0;
                 const hc = tChartHover != null && tChartHover >= 0 && tChartHover < candles.length ? candles[tChartHover] : null;
+                const dlt = hc && tChartHover > 0 ? hc.c - candles[tChartHover - 1].c : null;
+                // Date label format depends on visible span
+                const spanDays = candles.length > 1 ? (new Date(candles[candles.length - 1].date) - new Date(candles[0].date)) / 86400000 : 0;
+                const fmtDate = ds => {
+                  const d = new Date(ds.length > 10 ? ds : ds + "T12:00:00");
+                  if (candles.length <= 90 && spanDays <= 190) return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  if (spanDays <= 740) return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+                  return String(d.getFullYear());
+                };
                 // Date labels: enforce minimum 70px spacing
                 const dateLabels = []; const minLabelGap = 70;
                 let lastLabelX = -minLabelGap;
@@ -3283,7 +3960,7 @@ Instructions:
                   if (px - lastLabelX >= minLabelGap) { dateLabels.push(i); lastLabelX = px; }
                 });
                 return (
-                  <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                  <div ref={attachTChartBox} style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                     {/* OHLC tooltip */}
                     <div style={{ position: "absolute", top: 4, left: 10, zIndex: 2, display: "flex", gap: 12, fontSize: 11, fontFamily: "inherit", fontWeight: 600 }}>
                       <span style={{ color: C.t1, fontWeight: 700, fontSize: 13 }}>{sleeveTitle} {tChartRange} {lastVal >= 0 ? "+" : ""}{lastVal.toFixed(2)}%</span>
@@ -3296,16 +3973,16 @@ Instructions:
                         <span>H: {hc.h >= 0 ? "+" : ""}{hc.h.toFixed(2)}%</span>
                         <span>L: {hc.l >= 0 ? "+" : ""}{hc.l.toFixed(2)}%</span>
                         <span style={{ color: hc.c >= hc.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc.c >= 0 ? "+" : ""}{hc.c.toFixed(2)}%</span>
+                        {dlt != null && <span style={{ color: dlt >= 0 ? C.up : C.dn }}>Δ {dlt >= 0 ? "+" : ""}{dlt.toFixed(2)}%</span>}
                         <span style={{ color: C.t4 }}>${hc.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                       </div>
                     )}
-                    <div style={{ width: "100%", height: "100%" }}>
-                      <svg width="100%" height="100%" viewBox={`0 0 ${chartW} ${H}`} preserveAspectRatio="xMidYMid meet" onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                    <svg width={chartW} height={H} viewBox={`0 0 ${chartW} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }} onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
                         <rect x={0} y={0} width={chartW} height={H} fill={C.bg} />
-                        {[...Array(7)].map((_, i) => { const v = minV + (range * i / 6); const yp = yPos(v); return <g key={i}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
-                        <line x1={PAD.left} y1={yPos(0)} x2={chartW - PAD.right} y2={yPos(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />
+                        {ticksD.map(v => { const yp = yPos(v); return <g key={v}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
+                        {yMnD <= 0 && yMxD >= 0 && <line x1={PAD.left} y1={yPos(0)} x2={chartW - PAD.right} y2={yPos(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />}
                         {/* Date labels */}
-                        {dateLabels.map(i => <text key={i} x={xPos(i)} y={H - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{candles[i].date.slice(0, 7)}</text>)}
+                        {dateLabels.map(i => <text key={i} x={xPos(i)} y={H - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{fmtDate(candles[i].date)}</text>)}
                         {/* Benchmark candles */}
                         {Object.entries(bmLines).map(([sym, bc]) => { const col = BM_COLORS[sym]; const bW = Math.max(1, candleW * 0.45); const off = sym === "SPY" ? -candleW * 0.5 : sym === "DIA" ? candleW * 0.5 : 0; return bc.map((c, i) => (
                           <g key={`${sym}-${i}`} opacity={0.5}><line x1={xPos(i) + off} y1={yPos(c.h)} x2={xPos(i) + off} y2={yPos(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xPos(i) - bW / 2 + off} y={yPos(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
@@ -3314,13 +3991,16 @@ Instructions:
                         {candles.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
                           <g key={i}><line x1={xPos(i)} y1={yPos(c.h)} x2={xPos(i)} y2={yPos(c.l)} stroke={col} strokeWidth={1} /><rect x={xPos(i) - candleW / 2} y={yPos(Math.max(c.o, c.c))} width={candleW} height={Math.max(1, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
                         ); })}
-                        {/* Hover crosshair */}
-                        {tChartHover != null && tChartHover >= 0 && tChartHover < candles.length && <line x1={xPos(tChartHover)} y1={PAD.top} x2={xPos(tChartHover)} y2={H - PAD.bottom} stroke={C.t3} strokeWidth={0.5} strokeDasharray="3,3" />}
-                      </svg>
-                    </div>
+                        {/* Hover crosshair + ring */}
+                        {hc && <g>
+                          <line x1={xPos(tChartHover)} y1={PAD.top} x2={xPos(tChartHover)} y2={H - PAD.bottom} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />
+                          <line x1={PAD.left} y1={yPos(hc.c)} x2={chartW - PAD.right} y2={yPos(hc.c)} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />
+                          <rect x={xPos(tChartHover) - candleW / 2 - 2} y={yPos(Math.max(hc.o, hc.c, hc.h)) - 2} width={candleW + 4} height={Math.max(1, yPos(Math.min(hc.o, hc.c, hc.l)) - yPos(Math.max(hc.o, hc.c, hc.h))) + 4} fill="none" stroke={C.accent} strokeWidth={0.75} />
+                        </g>}
+                    </svg>
                   </div>
                 );
-              })() : <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />}
+              })()}
             </>);
           })()}
         </div>
@@ -6055,57 +6735,9 @@ Instructions:
           const regime = isBear ? "BEAR" : "BULL";
           const regimeColor = isBear ? C.dn : C.up;
 
-          const BEAR_MARKETS = [
-            { name: "1929 Crash", peakDate: "1929-09", troughDate: "1929-11", drawdown: -44.7, durationMo: 2.2, recoveryMo: 5.0 },
-            { name: "Great Depression", peakDate: "1930-04", troughDate: "1932-06", drawdown: -83.0, durationMo: 25.7, recoveryMo: 267.0 },
-            { name: "1932-33 Decline", peakDate: "1932-09", troughDate: "1933-02", drawdown: -40.6, durationMo: 5.7, recoveryMo: 1.8 },
-            { name: "1933 Decline", peakDate: "1933-07", troughDate: "1933-10", drawdown: -29.8, durationMo: 3.1, recoveryMo: 17.2 },
-            { name: "1934-35 Decline", peakDate: "1934-02", troughDate: "1935-03", drawdown: -31.8, durationMo: 13.2, recoveryMo: 12.8 },
-            { name: "1937-38 Recession", peakDate: "1937-03", troughDate: "1938-03", drawdown: -54.5, durationMo: 12.8, recoveryMo: 95.6 },
-            { name: "1938-39 War Fears", peakDate: "1938-11", troughDate: "1939-04", drawdown: -26.2, durationMo: 4.9, recoveryMo: 6.9 },
-            { name: "1939-40 Fall of France", peakDate: "1939-10", troughDate: "1940-06", drawdown: -31.9, durationMo: 7.5, recoveryMo: 13.2 },
-            { name: "WWII / Pearl Harbor", peakDate: "1940-11", troughDate: "1942-04", drawdown: -34.5, durationMo: 17.6, recoveryMo: 25.2 },
-            { name: "Post-WWII Crash", peakDate: "1946-05", troughDate: "1947-05", drawdown: -28.8, durationMo: 11.6, recoveryMo: 39.5 },
-            { name: "1948-49 Recession", peakDate: "1948-06", troughDate: "1949-06", drawdown: -20.6, durationMo: 11.9, recoveryMo: 12.0 },
-            { name: "Eisenhower Recession", peakDate: "1956-08", troughDate: "1957-10", drawdown: -21.6, durationMo: 14.7, recoveryMo: 11.0 },
-            { name: "Kennedy Slide", peakDate: "1961-12", troughDate: "1962-06", drawdown: -28.0, durationMo: 6.5, recoveryMo: 14.3 },
-            { name: "Credit Crunch", peakDate: "1966-02", troughDate: "1966-10", drawdown: -22.2, durationMo: 7.9, recoveryMo: 6.9 },
-            { name: "Vietnam / Recession", peakDate: "1968-11", troughDate: "1970-05", drawdown: -36.1, durationMo: 17.9, recoveryMo: 21.4 },
-            { name: "OPEC Oil Embargo", peakDate: "1973-01", troughDate: "1974-10", drawdown: -48.2, durationMo: 20.7, recoveryMo: 69.5 },
-            { name: "Volcker Tightening", peakDate: "1980-11", troughDate: "1982-08", drawdown: -27.1, durationMo: 20.5, recoveryMo: 2.8 },
-            { name: "Black Monday", peakDate: "1987-08", troughDate: "1987-12", drawdown: -33.5, durationMo: 3.3, recoveryMo: 19.7 },
-            { name: "Gulf War", peakDate: "1990-07", troughDate: "1990-10", drawdown: -19.9, durationMo: 2.9, recoveryMo: 4.4, nearBear: true, intradayDraw: -20.3, note: "Crossed -20% intraday; -19.9% closing" },
-            { name: "LTCM / Russia Crisis", peakDate: "1998-07", troughDate: "1998-08", drawdown: -19.3, durationMo: 1.5, recoveryMo: 2.9, nearBear: true, intradayDraw: -19.5, note: "45-day plunge; peak 1186.75, trough 957.28" },
-            { name: "Dot-Com Bust", peakDate: "2000-03", troughDate: "2002-10", drawdown: -49.1, durationMo: 30.5, recoveryMo: 55.6 },
-            { name: "Global Financial Crisis", peakDate: "2007-10", troughDate: "2009-03", drawdown: -56.8, durationMo: 17.0, recoveryMo: 48.8 },
-            { name: "Euro Debt / Downgrade", peakDate: "2011-04", troughDate: "2011-10", drawdown: -19.4, durationMo: 5.2, recoveryMo: 5.7, nearBear: true, intradayDraw: -21.6, note: "Intraday low 1074.77 = -21.6%; closing -19.4%" },
-            { name: "Fed Tightening / Trade War", peakDate: "2018-09", troughDate: "2018-12", drawdown: -19.8, durationMo: 3.1, recoveryMo: 3.9, nearBear: true, intradayDraw: -20.2, note: "Breached -20% intraday on Christmas Eve" },
-            { name: "COVID-19 Crash", peakDate: "2020-02", troughDate: "2020-03", drawdown: -33.9, durationMo: 1.1, recoveryMo: 4.9 },
-            { name: "Inflation / Rate Hikes", peakDate: "2022-01", troughDate: "2022-10", drawdown: -25.4, durationMo: 9.3, recoveryMo: 15.3 },
-            { name: "Tariff Crash", peakDate: "2025-02", troughDate: "2025-04", drawdown: -17.6, durationMo: 1.6, recoveryMo: 2.8, nearBear: true, intradayDraw: -21.3, note: "Intraday low 4835 = -21.3%; closing low 5074 = -17.6%" },
-          ];
+          const BEAR_MARKETS = PB_BEAR_MARKETS;
           const BULL_MARKETS = [
-            { period: "1929-1930", gain: 46.8, durationMo: 5.0 },
-            { period: "1932-1932", gain: 111.6, durationMo: 3.0 },
-            { period: "1933-1933", gain: 120.6, durationMo: 5.0 },
-            { period: "1933-1934", gain: 37.9, durationMo: 4.0 },
-            { period: "1935-1937", gain: 131.8, durationMo: 24.0 },
-            { period: "1938-1938", gain: 62.2, durationMo: 8.0 },
-            { period: "1939-1939", gain: 29.8, durationMo: 6.0 },
-            { period: "1940-1940", gain: 26.8, durationMo: 5.0 },
-            { period: "1942-1946", gain: 157.7, durationMo: 49.0 },
-            { period: "1947-1948", gain: 20.8, durationMo: 13.0 },
-            { period: "1949-1956", gain: 267.0, durationMo: 86.0 },
-            { period: "1957-1961", gain: 86.3, durationMo: 49.7 },
-            { period: "1962-1966", gain: 79.8, durationMo: 43.5 },
-            { period: "1966-1968", gain: 48.0, durationMo: 25.7 },
-            { period: "1970-1973", gain: 73.5, durationMo: 31.5 },
-            { period: "1974-1980", gain: 125.6, durationMo: 73.9 },
-            { period: "1982-1987", gain: 228.8, durationMo: 60.4 },
-            { period: "1987-2000", gain: 582.0, durationMo: 147.6 },
-            { period: "2002-2007", gain: 101.5, durationMo: 60.0 },
-            { period: "2009-2020", gain: 400.5, durationMo: 131.4 },
-            { period: "2020-2022", gain: 114.4, durationMo: 21.3 },
+            ...PB_BULL_MARKETS_BASE,
             { period: "2022-present", gain: Math.round(pctFromTrough * 10) / 10, durationMo: Math.round(((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)) * 10) / 10 },
           ];
           const avgBullGain = 135.9;
@@ -6120,10 +6752,7 @@ Instructions:
           const avgAllDur = Math.round(allDeclines.reduce((s, b) => s + b.durationMo, 0) / allDeclines.length * 10) / 10;
           const avgAllRecovery = Math.round(allDeclines.reduce((s, b) => s + b.recoveryMo, 0) / allDeclines.length * 10) / 10;
 
-          const BEAR_TRANCHES = [
-            { drawdownTrigger: -25, pctReserves: 70, action: "Deploy 70% of reserves", deploy: "87% of bears reach — highest expected-value tranche" },
-            { drawdownTrigger: -40, pctReserves: 100, action: "Deploy remaining reserves", deploy: "32% of bears reach — deep value, +67% recovery return" },
-          ];
+          const BEAR_TRANCHES = PB_BEAR_TRANCHES;
 
           const peakToRecovery = officialBears.map(b => b.durationMo + b.recoveryMo);
           const avgP2R = peakToRecovery.reduce((a, b) => a + b, 0) / peakToRecovery.length;
