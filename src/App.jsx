@@ -3072,6 +3072,21 @@ Instructions:
     );
     const tSleeveKeys = Object.keys(sleeves);
     const tSleeveSyms = sleeves[tChartSleeve]?.symbols || [];
+    const tWOf = s => liveWeights[tChartSleeve]?.[s] ?? null;
+    const tAvg = (get) => {
+      let ws = 0, wsum = 0, esum = 0, n = 0;
+      for (const s of tSleeveSyms) {
+        const v = get(s); if (v == null || !isFinite(v)) continue;
+        const w = tWOf(s); if (w != null) { ws += w; wsum += w * v; }
+        esum += v; n++;
+      }
+      return ws > 0 ? wsum / ws : (n ? esum / n : null);
+    };
+    const tAvgPE = tAvg(s => fundamentals[s]?.peTTM);
+    const tAvgComp = tAvg(s => screenerByTicker[s]?.overall_score);
+    const tAvgYld = tAvg(s => fundamentals[s]?.yieldFwd);
+    const tAvgPeg = tAvg(s => fundamentals[s]?.pegTTM);
+    const tIsGrowth = tChartSleeve === "growth";
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
     const tChartBg = C.bg.replace("#", "");
     const tChartUrl = `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${terminalActiveSym}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=${tChartBg}&studies=%5B%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=${theme === "light" ? "light" : "dark"}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
@@ -3086,7 +3101,7 @@ Instructions:
     const tYieldSpread = macroData.yieldSpread;
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "minmax(220px, 260px) 1fr minmax(240px, 300px)", overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "260px 1fr minmax(240px, 300px)", overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
         {/* ── TOP STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -3121,11 +3136,28 @@ Instructions:
           </div>
           {/* Stock list */}
           <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
-            {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const isActive = sym === terminalActiveSym; return (
-              <div key={sym} onClick={() => setTerminalActiveSym(sym)} style={{ display: "flex", alignItems: "center", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", gap: 6, boxSizing: "border-box" }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: isActive ? C.t1 : C.t2, width: 48, flexShrink: 0 }}>{sym}</span>
-                <span style={{ flex: 1, fontSize: 11, color: C.t1, textAlign: "right" }}>{q?.p ? `$${q.p.toFixed(2)}` : "—"}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, width: 56, textAlign: "right", color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : "—"}</span>
+            {/* Sleeve summary (weighted averages) */}
+            <div style={{ position: "sticky", top: 0, zIndex: 1, background: C.surface, borderBottom: `1px solid ${C.border}`, padding: "6px 10px", display: "flex", justifyContent: "space-between", gap: 8 }}>
+              {[
+                { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
+                { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
+                { l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null },
+                ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
+              ].map(({ l, v }) => (
+                <span key={l} style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
+                  <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.accent }}>{l}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: v != null ? C.t1 : C.t4 }}>{v ?? "—"}</span>
+                </span>
+              ))}
+            </div>
+            {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
+              <div key={sym} onClick={() => setTerminalActiveSym(sym)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: 44, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                <span style={{ fontSize: 10, color: C.t1, width: 52, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? q.p.toFixed(2) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
+                <span style={{ fontSize: 10, width: 34, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, width: 26, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>
+                {tIsGrowth && <span style={{ fontSize: 10, width: 30, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
               </div>
             ); })}
           </div>
@@ -3808,6 +3840,36 @@ Instructions:
                   </table>
                 </div>
               </div>)}
+              {tDrawer === "research" && (<div style={{ maxWidth: 920 }}>
+                {researchView ? (() => {
+                  const activeReport = researchReports.find(r => r.id === researchView);
+                  return (<div>
+                    <button onClick={() => { setResearchView(null); setResearchContent(""); }} style={{ background: "none", border: "none", padding: 0, marginBottom: 16, color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}>← BACK</button>
+                    {activeReport && (
+                      <div style={{ display: "flex", gap: 12, alignItems: "baseline", marginBottom: 12 }}>
+                        <span style={tEyebrow}>{activeReport.category || "Research"}</span>
+                        <span style={{ fontSize: 10, color: C.t4 }}>{activeReport.date}</span>
+                      </div>
+                    )}
+                    {researchContent ? renderMarkdown(researchContent) : <div style={tEyebrowMuted}>LOADING REPORT</div>}
+                  </div>);
+                })() : (
+                  !researchReports.length ? <div style={tEyebrowMuted}>NO RESEARCH REPORTS YET</div> : (
+                    [...researchReports].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(report => (
+                      <div key={report.id} onClick={() => { setResearchView(report.id); setResearchContent(""); fetch(`${import.meta.env.BASE_URL || "/"}research/${report.file}?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.text() : "Failed to load report.").then(setResearchContent).catch(() => setResearchContent("Failed to load report.")); }}
+                        style={{ padding: "10px 16px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+                        onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={tEyebrow}>{report.category || "Research"}</span>
+                          <span style={{ fontSize: 10, color: C.t4 }}>{report.date}</span>
+                        </div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t1 }}>{report.title}</div>
+                        {report.summary && <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{report.summary}</div>}
+                      </div>
+                    ))
+                  )
+                )}
+              </div>)}
               {tDrawer === "briefs" && (<div>
                 <div style={{ ...tEyebrow, marginBottom: 12 }}>Briefs & Research</div>
                 {[
@@ -4039,18 +4101,50 @@ Instructions:
             </div>
             ); })()}
           </div>
-          {/* News Feed (bottom ~60%) */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
-            <div style={{ ...tEyebrow, padding: "0 12px 4px" }}>News</div>
-            {tAllNews.map((article, i) => (
-              <div key={article.id || i} onClick={() => { setSelectedArticle(article); }} style={{ padding: "5px 12px", cursor: "pointer", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <div style={{ fontSize: 11, color: C.t1, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{article.headline || article.title}</div>
-                <div style={{ display: "flex", gap: 8, fontSize: 10, color: C.t4 }}>
-                  <span>{article.source || ""}</span>
-                  <span>{ago(article.created_at || article.datetime)}</span>
+          {/* News / Opps / Research Feed (bottom ~60%) */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, padding: "0 8px", flexShrink: 0 }}>
+              {[
+                { v: "news", l: "NEWS" },
+                { v: "opps", l: "OPPS" },
+                { v: "research", l: "RESEARCH" },
+              ].map(({ v, l }) => (
+                <button key={v} onClick={() => setTRailView(v)} style={tTabBtn(tRailView === v)}>{l}</button>
+              ))}
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "6px 0" }}>
+              {tRailView === "news" && tAllNews.slice(0, 50).map((article, i) => (
+                <div key={article.id || i} onClick={() => { setSelectedArticle(article); }} style={{ padding: "5px 12px", cursor: "pointer", borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 2 }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ fontSize: 11, color: C.t1, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{article.headline || article.title}</div>
+                  <div style={{ display: "flex", gap: 8, fontSize: 10, color: C.t4 }}>
+                    <span>{article.source || ""}</span>
+                    <span>{ago(article.created_at || article.datetime)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              {tRailView === "opps" && (!opportunities.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>NO OPPORTUNITIES YET</div> : opportunities.map((opp, i) => (
+                <div key={opp.id || i} onClick={() => { setTDrawer("opportunities"); setOppView("opportunities"); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: opp.conviction === "High Conviction" ? C.up : C.accent }}>{opp.conviction || "Opportunity"}</span>
+                    <span style={{ fontSize: 9, color: C.t4 }}>{opp.date_identified || ""}</span>
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{opp.title}</div>
+                  <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{`${opp.pattern || "—"} · ${(opp.tickers || []).slice(0, 4).join(" · ")}`}</div>
+                </div>
+              )))}
+              {tRailView === "research" && (!researchReports.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>NO RESEARCH REPORTS YET</div> : researchReports.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 30).map(report => (
+                <div key={report.id} onClick={() => { setTDrawer("research"); setResearchView(report.id); setResearchContent(""); fetch(`${import.meta.env.BASE_URL || "/"}research/${report.file}?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.text() : "Failed to load report.").then(setResearchContent).catch(() => setResearchContent("Failed to load report.")); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent }}>{report.category || "RESEARCH"}</span>
+                    <span style={{ fontSize: 9, color: C.t4 }}>{report.date}</span>
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{report.title}</div>
+                  <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{`${report.date || ""}${report.author ? " · " + report.author : ""}`}</div>
+                </div>
+              )))}
+            </div>
           </div>
         </div>
 
@@ -4063,6 +4157,7 @@ Instructions:
             { id: "opportunities", label: "Opps" },
             { id: "performance", label: "Perf" },
             { id: "metrics", label: "Metrics" },
+            { id: "research", label: "Research" },
             { id: "briefs", label: "Briefs" },
             { id: "settings", label: "Settings" },
           ].map(t => (
