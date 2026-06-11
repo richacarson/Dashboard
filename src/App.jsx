@@ -1010,7 +1010,7 @@ Instructions:
     let cancelled = false;
     // Step 1: hydrate from cache immediately
     try {
-      const cached = JSON.parse(localStorage.getItem("iown_brief_index_v1") || "{}");
+      const cached = JSON.parse(localStorage.getItem("iown_brief_index_v2") || "{}");
       if (cached.list && Array.isArray(cached.list)) setTBriefIndex(cached.list);
     } catch {}
     // Step 2: always refetch in the background
@@ -1026,7 +1026,7 @@ Instructions:
               if (f.type !== "file") continue;
               const m = /^(\d{4}-\d{2}-\d{2})\.html$/i.exec(f.name);
               if (!m) continue;
-              list.push({ category: "Morning Brief", title: `Morning Brief — ${m[1]}`, date: m[1], url: f.download_url || `https://raw.githubusercontent.com/richacarson/rich-report/main/briefs/${f.name}` });
+              list.push({ category: "Morning Brief", title: `Morning Brief — ${m[1]}`, date: m[1], url: f.download_url || `https://raw.githubusercontent.com/richacarson/rich-report/main/briefs/${f.name}`, viewerUrl: `https://richacarson.github.io/rich-report/briefs/${f.name}` });
             }
           }
         }
@@ -1039,18 +1039,18 @@ Instructions:
           if (Array.isArray(arr)) {
             for (const c of arr) {
               if (!c.content) continue;
-              list.push({ category: "Market Commentary", title: c.headline || `Commentary — ${c.date}`, date: c.date, url: `https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentaries/${c.content}`, subhead: c.subhead });
+              list.push({ category: "Market Commentary", title: c.headline || `Commentary — ${c.date}`, date: c.date, url: `https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentaries/${c.content}`, viewerUrl: `https://richacarson.github.io/IOWN-data/commentaries/${c.content}`, subhead: c.subhead });
             }
           }
         }
       } catch {}
       // Singular reports
-      list.push({ category: "The Rich Report", title: "The Rich Report", date: new Date().toISOString().slice(0, 10), url: "https://raw.githubusercontent.com/richacarson/rich-report/main/The_Rich_Report.html" });
-      list.push({ category: "Quarterly Changes", title: "Q2 2026 Portfolio Changes", date: "2026-04-01", url: "https://raw.githubusercontent.com/richacarson/rich-report/main/rebalance/q2-2026/client.html" });
+      list.push({ category: "The Rich Report", title: "The Rich Report", date: new Date().toISOString().slice(0, 10), url: "https://raw.githubusercontent.com/richacarson/rich-report/main/The_Rich_Report.html", viewerUrl: "https://richacarson.github.io/rich-report/The_Rich_Report.html" });
+      list.push({ category: "Quarterly Changes", title: "Q2 2026 Portfolio Changes", date: "2026-04-01", url: "https://raw.githubusercontent.com/richacarson/rich-report/main/rebalance/q2-2026/client.html", viewerUrl: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html" });
       // Sort by date desc
       list.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
       if (!cancelled) setTBriefIndex(list);
-      try { localStorage.setItem("iown_brief_index_v1", JSON.stringify({ list, ts: Date.now() })); } catch {}
+      try { localStorage.setItem("iown_brief_index_v2", JSON.stringify({ list, ts: Date.now() })); } catch {}
     })();
     return () => { cancelled = true; };
   }, []);
@@ -3522,8 +3522,8 @@ Instructions:
                   ...(tIsEtfSleeve ? [] : [
                     { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
                     { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
+                    { l: "QTD", v: tAvgQtd != null ? pct(tAvgQtd) : null, c: tAvgQtd == null ? null : tAvgQtd >= 0 ? C.up : C.dn },
                   ]),
-                  { l: "QTD", v: tAvgQtd != null ? pct(tAvgQtd) : null, c: tAvgQtd == null ? null : tAvgQtd >= 0 ? C.up : C.dn },
                   ...(tIsDividend ? [{ l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null }] : []),
                   ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
                 ].map(({ l, v, c }) => (
@@ -3538,8 +3538,7 @@ Instructions:
                   { l: "SYM", k: "sym", w: tIsEtfSleeve ? 72 : 48, a: "left" },
                   { l: "PRICE", k: "price", w: tIsEtfSleeve ? 72 : 54 },
                   { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
-                  { l: "QTD%", k: "qtd", w: tIsEtfSleeve ? 62 : 48 },
-                  ...(tIsEtfSleeve ? [] : [{ l: "P/E", k: "pe", w: 36 }, { l: "COMP", k: "comp", w: 34 }]),
+                  ...(tIsEtfSleeve ? [] : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "COMP", k: "comp", w: 34 }]),
                   ...(tIsGrowth ? [{ l: "PEG", k: "peg", w: 28 }] : []),
                 ].map(h => {
                   const active = tWatchSort.col === h.k;
@@ -3583,7 +3582,7 @@ Instructions:
                 </span>
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>
+                {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>}
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 700, width: 34, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>}
                 {tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
@@ -4341,8 +4340,6 @@ Instructions:
                       ...(metricsView === "dividend" ? [
                         { l: "Yield FWD", k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : null },
                         { l: "Payout", k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : null },
-                        { l: "Yrs Paid", k: "_yrsPaid", noAvg: true, fn: (d, s) => { const v = dividendHistory[s]?.yearsPaid; return v != null ? String(v) : null; }, color: (d, s) => mDivStreak(dividendHistory[s]?.yearsPaid) },
-                        { l: "Yrs Grown", k: "_yrsGrown", noAvg: true, fn: (d, s) => { const v = dividendHistory[s]?.yearsGrown; return v != null ? String(v) : null; }, color: (d, s) => mDivStreak(dividendHistory[s]?.yearsGrown) },
                       ] : [
                         { l: "Margin", k: "profitMargin", fn: d => mFmtP(d.profitMargin) },
                       ]),
@@ -4400,7 +4397,7 @@ Instructions:
                       </tr>
                     );
                     return (
-                      <div style={{ overflowX: "auto", border: `1px solid ${C.border}` }}>
+                      <div style={{ width: "100%", overflowX: "auto", border: `1px solid ${C.border}` }}>
                         <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: 980 }}>
                           <thead style={{ position: "sticky", top: 0, zIndex: 3 }}>
                             <tr style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -4847,7 +4844,7 @@ Instructions:
               <div style={{ display: "flex", alignItems: "center", padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                 <span style={{ ...tEyebrow, marginRight: 12 }}>{tBriefView.category ? tBriefView.category.toUpperCase() : "BRIEF"}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tBriefView.title}</span>
-                <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 12, fontSize: 9, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap" }}>RAW SOURCE ↗</a>
+                <a href={tBriefView.viewerUrl || tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 12, fontSize: 9, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap" }}>OPEN BRIEF ↗</a>
                 <button onClick={() => setTBriefView(null)} title="Close" style={tCloseBtn}>{tCloseX}</button>
               </div>
               <div style={{ flex: 1, overflowY: "auto", padding: "24px 36px", background: C.bg }}>
@@ -5235,7 +5232,7 @@ Instructions:
               ].map(({ cat, desc }) => {
                 const latest = tBriefIndex.find(b => b.category === cat);
                 return (
-                  <div key={cat} onClick={() => { if (!latest) return; setTBriefView({ title: latest.title, category: latest.category, url: latest.url }); setTDrawer(null); setTProfileSym(null); }}
+                  <div key={cat} onClick={() => { if (!latest) return; setTBriefView({ title: latest.title, category: latest.category, url: latest.url, viewerUrl: latest.viewerUrl }); setTDrawer(null); setTProfileSym(null); }}
                     style={{ padding: "8px 12px", borderBottom: `1px solid ${C.border}`, cursor: latest ? "pointer" : "not-allowed", opacity: latest ? 1 : 0.5 }}
                     onMouseEnter={e => latest && (e.currentTarget.style.background = C.cardHover)} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
@@ -7319,8 +7316,6 @@ Instructions:
                 pctCol("YTD", "ytd", 60),
                 { l: "Yield FWD", w: 72, k: "yieldFwd", fn: d => d.yieldFwd != null ? `${d.yieldFwd.toFixed(2)}%` : "—" },
                 { l: "Payout", w: 62, k: "payoutRatio", fn: d => d.payoutRatio != null ? `${d.payoutRatio.toFixed(0)}%` : "—" },
-                { l: "Yrs Paid", w: 64, k: "_yrsPaid", noAvg: true, fn: (d, sym) => { const v = dividendHistory[sym]?.yearsPaid; return v != null ? String(v) : "—"; }, color: (d, sym) => { const v = dividendHistory[sym]?.yearsPaid; return v == null ? C.t4 : v >= 25 ? C.up : v >= 10 ? C.t1 : C.t3; } },
-                { l: "Yrs Grown", w: 72, k: "_yrsGrown", noAvg: true, fn: (d, sym) => { const v = dividendHistory[sym]?.yearsGrown; return v != null ? String(v) : "—"; }, color: (d, sym) => { const v = dividendHistory[sym]?.yearsGrown; return v == null ? C.t4 : v >= 25 ? C.up : v >= 10 ? C.t1 : C.t3; } },
                 { l: "P/E TTM", w: 62, k: "peTTM", fn: d => fmtV(d.peTTM) },
                 { l: "P/E FWD", w: 62, k: "peFwd", fn: d => fmtV(d.peFwd) },
                 { l: "PEG", w: 50, k: "pegTTM", fn: d => fmtV(d.pegTTM) },
