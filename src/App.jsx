@@ -3685,6 +3685,19 @@ Instructions:
     const tDayChg = (tPortfolioVal && tPortfolioPrev) ? ((tPortfolioVal / tPortfolioPrev) - 1) * 100 : null;
     const tDayChgDollar = (tPortfolioVal && tPortfolioPrev) ? tPortfolioVal - tPortfolioPrev : null;
     const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
+    // Live top-performing sector ETF — looked up from the sectors sleeve (XLY/XLP/XLE/.../XLU)
+    const SECTOR_ETF_NAMES = { XLK: "Tech", XLF: "Fin", XLV: "Health", XLE: "Energy", XLI: "Indust", XLY: "Cons Disc", XLP: "Staples", XLB: "Mtrls", XLU: "Utils", XLC: "Comm", XLRE: "Real Est" };
+    const tTopSector = (() => {
+      let best = null;
+      for (const s of (sleeves.sectors?.symbols || [])) {
+        const q = quotesRef.current[s] || quotes[s];
+        const b = barsRef.current[s] || bars[s];
+        if (!q?.p || !b?.pc) continue;
+        const c = ((q.p - b.pc) / b.pc) * 100;
+        if (!best || c > best.c) best = { sym: s, c };
+      }
+      return best;
+    })();
 
     return (
       <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: `${tIsGrowth ? 348 : 320}px minmax(0, 1fr) minmax(240px, 300px)`, overflow: "hidden", fontVariantNumeric: "tabular-nums", caretColor: "transparent" }}>
@@ -3712,6 +3725,14 @@ Instructions:
             ) : null; })}
             {/* VIX / OIL / GOLD removed from top banner — macroData refreshes only on auth (stale).
                 VIX is reachable live via Alpaca's ^VIX index or Finnhub; will re-add when wired to live feed. */}
+            {tTopSector && <>
+              <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}>
+                <span style={{ fontWeight: 700 }}>TOP</span>{" "}
+                <span style={{ color: C.accent, fontWeight: 700 }}>{SECTOR_ETF_NAMES[tTopSector.sym] || tTopSector.sym}</span>{" "}
+                <span style={{ color: tTopSector.c >= 0 ? C.up : C.dn }}>{pct(tTopSector.c)}</span>
+              </span>
+            </>}
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>
@@ -3806,7 +3827,14 @@ Instructions:
                       <span title={`Composite ${comp}`} style={{ fontSize: 8, fontWeight: 700, color: comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp}</span>
                     )}
                   </span>
-                  {(() => { const s = f?.sector; return s ? (<span title={s} style={{ fontSize: 8, color: C.t4, letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortSector(s)}</span>) : null; })()}
+                  {(() => {
+                    // Sector lookup with fallback chain — fundamentals can come back "Uncategorized"
+                    // when Finnhub's industry doesn't keyword-match; the screener report usually has
+                    // a cleaner sector taxonomy.
+                    let s = f?.sector;
+                    if (!s || s === "Uncategorized") s = screenerByTicker[sym]?.sector || screenerSectors?.[sym] || f?.industry || s;
+                    return s ? (<span title={s} style={{ fontSize: 8, color: C.t4, letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortSector(s)}</span>) : null;
+                  })()}
                 </span>
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
@@ -5700,6 +5728,7 @@ Instructions:
               <span style={{ color: C.t3 }}>SPY P/E</span><span style={{ color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? C.warn : C.up, textAlign: "right" }}>{md.spyPE ? `${md.spyPE.toFixed(1)}x` : "—"}</span>
               <span style={{ color: C.t3 }}>Bull Age</span><span style={{ color: bullAgeMo > 60 ? C.dn : bullAgeMo > 36 ? C.warn : C.up, textAlign: "right" }}>{bullAgeMo}mo</span>
               <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
+              <span style={{ color: C.t3 }}>Top Sector</span><span style={{ textAlign: "right", color: tTopSector ? (tTopSector.c >= 0 ? C.up : C.dn) : C.t4 }}>{tTopSector ? `${SECTOR_ETF_NAMES[tTopSector.sym] || tTopSector.sym} ${pct(tTopSector.c)}` : "—"}</span>
             </div>
             ); })()}
           </div>
