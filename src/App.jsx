@@ -1136,59 +1136,6 @@ Instructions:
 
   // Open stock profile with specific tab
   const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
-
-  // Universal ticker lookup — backfills quote + fundamentals for symbols outside the portfolio universe
-  // so search works for ANY stock (profile self-fetches the rest; screener tab 404s gracefully)
-  const lookupTicker = useCallback(async (raw) => {
-    const sym = (raw || "").trim().toUpperCase();
-    if (!/^[A-Z.\-]{1,10}$/.test(sym)) return null;
-    const jobs = [];
-    if (!(quotesRef.current[sym]?.p) && apiKey && apiSecret) {
-      jobs.push((async () => {
-        try {
-          const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${sym}&feed=iex`, { headers: hdrs });
-          if (!r.ok) return;
-          const d = await r.json();
-          const snap = d[sym];
-          if (snap?.latestTrade) {
-            quotesRef.current[sym] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
-            setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
-          }
-          if (snap?.prevDailyBar) {
-            barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.prevDailyBar.c };
-            setBars(prev => ({ ...prev, [sym]: barsRef.current[sym] }));
-          }
-        } catch {}
-      })());
-    }
-    if (!fundamentals[sym]?.peTTM && FH) {
-      jobs.push((async () => {
-        try {
-          const [mR, pR] = await Promise.all([
-            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`),
-          ]);
-          const m = mR.ok ? (await mR.json())?.metric || {} : {};
-          const p = pR.ok ? await pR.json() : {};
-          if (Object.keys(m).length || p?.name) {
-            const f = {
-              companyName: p.name, sector: p.finnhubIndustry, industry: p.finnhubIndustry, logo: p.logo,
-              peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null, peFwd: m.peAnnual ?? null, pegTTM: m.pegTTM ?? null,
-              yieldFwd: m.dividendYieldIndicatedAnnual ?? null, payoutRatio: m.payoutRatioTTM ?? null,
-              revenueYoY: m.revenueGrowthTTMYoy ?? null, revenue5Y: m.revenueGrowth5Y ?? null,
-              profitMargin: m.netProfitMarginTTM ?? null, roe: m.roeTTM ?? null, de: m["totalDebt/totalEquityQuarterly"] ?? null,
-              beta: m.beta ?? null, wk52h: m["52WeekHigh"] ?? null, wk52l: m["52WeekLow"] ?? null,
-              ytd: m.yearToDatePriceReturnDaily ?? null,
-            };
-            setFundamentals(prev => ({ ...prev, [sym]: { ...(prev[sym] || {}), ...f } }));
-          }
-        } catch {}
-      })());
-    }
-    await Promise.all(jobs);
-    return sym;
-  }, [apiKey, apiSecret, hdrs, fundamentals]);
-
   // Context menu handler (right-click on desktop, long-press on mobile)
   const stockContextHandlers = (sym) => {
     let longPressTimer = null;
@@ -1426,6 +1373,59 @@ Instructions:
   }, []);
 
   const hdrs = useMemo(() => ({ "APCA-API-KEY-ID": apiKey, "APCA-API-SECRET-KEY": apiSecret }), [apiKey, apiSecret]);
+
+  // Universal ticker lookup — backfills quote + fundamentals for symbols outside the portfolio universe
+  // so search works for ANY stock (profile self-fetches the rest; screener tab 404s gracefully)
+  const lookupTicker = useCallback(async (raw) => {
+    const sym = (raw || "").trim().toUpperCase();
+    if (!/^[A-Z.\-]{1,10}$/.test(sym)) return null;
+    const jobs = [];
+    if (!(quotesRef.current[sym]?.p) && apiKey && apiSecret) {
+      jobs.push((async () => {
+        try {
+          const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${sym}&feed=iex`, { headers: hdrs });
+          if (!r.ok) return;
+          const d = await r.json();
+          const snap = d[sym];
+          if (snap?.latestTrade) {
+            quotesRef.current[sym] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
+            setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
+          }
+          if (snap?.prevDailyBar) {
+            barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.prevDailyBar.c };
+            setBars(prev => ({ ...prev, [sym]: barsRef.current[sym] }));
+          }
+        } catch {}
+      })());
+    }
+    if (!fundamentals[sym]?.peTTM && FH) {
+      jobs.push((async () => {
+        try {
+          const [mR, pR] = await Promise.all([
+            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`),
+          ]);
+          const m = mR.ok ? (await mR.json())?.metric || {} : {};
+          const p = pR.ok ? await pR.json() : {};
+          if (Object.keys(m).length || p?.name) {
+            const f = {
+              companyName: p.name, sector: p.finnhubIndustry, industry: p.finnhubIndustry, logo: p.logo,
+              peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null, peFwd: m.peAnnual ?? null, pegTTM: m.pegTTM ?? null,
+              yieldFwd: m.dividendYieldIndicatedAnnual ?? null, payoutRatio: m.payoutRatioTTM ?? null,
+              revenueYoY: m.revenueGrowthTTMYoy ?? null, revenue5Y: m.revenueGrowth5Y ?? null,
+              profitMargin: m.netProfitMarginTTM ?? null, roe: m.roeTTM ?? null, de: m["totalDebt/totalEquityQuarterly"] ?? null,
+              beta: m.beta ?? null, wk52h: m["52WeekHigh"] ?? null, wk52l: m["52WeekLow"] ?? null,
+              ytd: m.yearToDatePriceReturnDaily ?? null,
+            };
+            setFundamentals(prev => ({ ...prev, [sym]: { ...(prev[sym] || {}), ...f } }));
+          }
+        } catch {}
+      })());
+    }
+    await Promise.all(jobs);
+    return sym;
+  }, [apiKey, apiSecret, hdrs, fundamentals]);
+
 
   /* ── Fetch asset names ── */
   const fetchNames = useCallback(async () => {
@@ -4384,6 +4384,128 @@ Instructions:
                   </table>
                 </div>);
               })()}
+              {tDrawer === "holdings" && (() => {
+                const hData = perfDataMap[perfSleeve] || perfDataMap.dividend || Object.values(perfDataMap)[0];
+                const sleevePicker = (
+                  <div style={tTabRow}>
+                    {["dividend", "growth", "fci100", "fciValues"].map(k => (
+                      <button key={k} onClick={() => setPerfSleeve(k)} style={tTabBtn(perfSleeve === k)}>{sleeves[k]?.name || k}</button>
+                    ))}
+                  </div>
+                );
+                if (!hData?.holdings) return (<div>{sleevePicker}<div style={tEyebrowMuted}>LOADING HOLDINGS</div></div>);
+                // Summary — same math as classic Performance > Holdings view
+                const lastPt = hData.portfolio?.[hData.portfolio.length - 1];
+                const totalVal = liveValue ? liveValue.value : (lastPt?.value || 0);
+                const cashVal = liveValue ? liveValue.cash : (hData.cash || 0);
+                const startVal = hData.portfolio?.[0]?.value || (hData.startBalance || 100000);
+                const totalGain = totalVal - startVal;
+                const totalGainPct = startVal > 0 ? ((totalVal / startVal) - 1) * 100 : 0;
+                const stats = [
+                  { label: "Portfolio Value", value: `$${totalVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}` },
+                  { label: "Cash", value: `$${cashVal.toLocaleString(undefined, { maximumFractionDigits: 2 })}` },
+                  { label: "All-Time Gain", value: `${totalGain >= 0 ? "+$" : "-$"}${Math.abs(totalGain).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalGain >= 0 ? C.up : C.dn },
+                  { label: "All-Time %", value: `${totalGainPct >= 0 ? "+" : ""}${totalGainPct.toFixed(1)}%`, color: totalGainPct >= 0 ? C.up : C.dn },
+                ];
+                // Per-holding rows — same math as classic holdings table
+                const weightBase = liveValue ? liveValue.value : (lastPt?.value || 1);
+                const rows = Object.entries(hData.holdings).map(([ticker, shares]) => {
+                  const q = quotesRef.current?.[ticker] || quotes[ticker];
+                  const price = q?.p || 0;
+                  const pc = (barsRef.current?.[ticker] || bars[ticker])?.pc || price;
+                  const dayChgPct = pc > 0 ? ((price - pc) / pc) * 100 : 0;
+                  const mktValue = shares * price;
+                  const weight = weightBase > 0 ? (mktValue / weightBase) * 100 : 0;
+                  const cb = hData.costBasis?.[ticker] || {};
+                  const avgCost = cb.avg_cost || 0;
+                  const costBasis = cb.total_cost || 0;
+                  const gainLoss = mktValue - costBasis;
+                  const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
+                  // Initial buy date for the current holding period
+                  let initDate = null;
+                  if (hData.transactions) {
+                    const txs = [...hData.transactions].filter(t => t.ticker === ticker).sort((a, b) => a.date.localeCompare(b.date));
+                    let running = 0;
+                    for (const tx of txs) {
+                      if (tx.type === "PURCHASE") { if (running <= 0.001) initDate = tx.date; running += tx.shares || 0; }
+                      else if (tx.type === "SALE") { running -= tx.shares || 0; if (running <= 0.001) { running = 0; initDate = null; } }
+                    }
+                  }
+                  return { ticker, shares, price, dayChgPct, mktValue, weight, avgCost, costBasis, gainLoss, gainLossPct, initDate };
+                });
+                const { col: hsc, dir: hsd } = holdingsSort;
+                const hSortKey = { symbol: r => r.ticker, shares: r => r.shares, price: r => r.price, dayChgPct: r => r.dayChgPct, mktValue: r => r.mktValue, weight: r => r.weight, avgCost: r => r.avgCost, costBasis: r => r.costBasis, gainLoss: r => r.gainLoss, gainLossPct: r => r.gainLossPct, initDate: r => r.initDate || "" }[hsc] || (r => r.weight);
+                rows.sort((a, b) => { const av = hSortKey(a), bv = hSortKey(b); if (typeof av === "string") return hsd === "asc" ? av.localeCompare(bv) : bv.localeCompare(av); return hsd === "asc" ? av - bv : bv - av; });
+                const totMktVal = rows.reduce((s, r) => s + r.mktValue, 0);
+                const totCostBasis = rows.reduce((s, r) => s + r.costBasis, 0);
+                const totGainLoss = rows.reduce((s, r) => s + r.gainLoss, 0);
+                const totGainLossPct = totCostBasis > 0 ? (totGainLoss / totCostBasis) * 100 : 0;
+                const hCols = [
+                  { key: "symbol", label: "Symbol", align: "left" }, { key: "shares", label: "Shares" },
+                  { key: "price", label: "Price" }, { key: "dayChgPct", label: "Day %" },
+                  { key: "mktValue", label: "Mkt Value" }, { key: "weight", label: "Weight" },
+                  { key: "avgCost", label: "Avg Cost" }, { key: "costBasis", label: "Cost Basis" },
+                  { key: "gainLoss", label: "Gain/Loss" }, { key: "gainLossPct", label: "G/L %" },
+                  { key: "initDate", label: "Buy Date" },
+                ];
+                return (<div>
+                  {sleevePicker}
+                  <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginBottom: 14 }}>
+                    {stats.map(s => (
+                      <div key={s.label}>
+                        <div style={{ fontSize: 9, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>{s.label}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: s.color || C.t1, fontVariantNumeric: "tabular-nums" }}>{s.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ border: `1px solid ${C.border}`, width: "100%", overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums", minWidth: 820 }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                          {hCols.map(col => (
+                            <th key={col.key} onClick={() => setHoldingsSort(prev => ({ col: col.key, dir: prev.col === col.key && prev.dir === "desc" ? "asc" : "desc" }))}
+                              style={{ ...tTh(col.align || "right"), color: holdingsSort.col === col.key ? C.t1 : C.t4 }}>
+                              {col.label} {holdingsSort.col === col.key ? (holdingsSort.dir === "desc" ? "▼" : "▲") : ""}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map(r => (
+                          <tr key={r.ticker} onClick={() => { setTerminalActiveSym(r.ticker); setTProfileSym(r.ticker); setTProfileTab("chart"); setTDrawer(null); }}
+                            onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                            style={{ cursor: "pointer", borderBottom: `1px solid ${C.border}` }}>
+                            <td style={{ ...tTd("left"), fontWeight: 700, color: C.accent }}>{r.ticker}</td>
+                            <td style={{ ...tTd(), color: C.t2 }}>{r.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
+                            <td style={{ ...tTd(), color: C.t1, fontWeight: 600 }}>${r.price.toFixed(2)}</td>
+                            <td style={{ ...tTd(), color: r.dayChgPct >= 0 ? C.up : C.dn }}>{r.dayChgPct >= 0 ? "+" : ""}{r.dayChgPct.toFixed(2)}%</td>
+                            <td style={{ ...tTd(), color: C.t1, fontWeight: 600 }}>${r.mktValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td style={{ ...tTd(), color: C.t1 }}>{r.weight.toFixed(1)}%</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>${r.avgCost.toFixed(2)}</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>${r.costBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td style={{ ...tTd(), color: r.gainLoss >= 0 ? C.up : C.dn, fontWeight: 600 }}>{r.gainLoss >= 0 ? "+$" : "-$"}{Math.abs(r.gainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                            <td style={{ ...tTd(), color: r.gainLossPct >= 0 ? C.up : C.dn }}>{r.gainLossPct >= 0 ? "+" : ""}{r.gainLossPct.toFixed(1)}%</td>
+                            <td style={{ ...tTd(), color: C.t3 }}>{r.initDate ? new Date(r.initDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" }) : "—"}</td>
+                          </tr>
+                        ))}
+                        <tr style={{ borderTop: `2px solid ${C.accent}44`, background: C.accentSoft }}>
+                          <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>TOTALS</td>
+                          <td style={{ ...tTd(), color: C.t4 }}>{rows.length}</td>
+                          <td colSpan={2} />
+                          <td style={{ ...tTd(), color: C.t1, fontWeight: 700 }}>${totMktVal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ ...tTd(), color: C.t1 }}>100%</td>
+                          <td />
+                          <td style={{ ...tTd(), color: C.t3 }}>${totCostBasis.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ ...tTd(), color: totGainLoss >= 0 ? C.up : C.dn, fontWeight: 700 }}>{totGainLoss >= 0 ? "+$" : "-$"}{Math.abs(totGainLoss).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                          <td style={{ ...tTd(), color: totGainLossPct >= 0 ? C.up : C.dn, fontWeight: 700 }}>{totGainLossPct >= 0 ? "+" : ""}{totGainLossPct.toFixed(1)}%</td>
+                          <td />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>);
+              })()}
               {tDrawer === "metrics" && (() => {
                 const mSyms = sleeves[metricsView]?.symbols || [];
                 const mTw = TARGET_WEIGHTS[metricsView] || {};
@@ -5441,6 +5563,7 @@ Instructions:
             { id: "playbook", label: "Playbook" },
             { id: "screener", label: "Screener" },
             { id: "performance", label: "Perf" },
+            { id: "holdings", label: "Holdings" },
             { id: "metrics", label: "Metrics" },
             { id: "settings", label: "Settings" },
           ].map(t => (
