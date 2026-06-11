@@ -4360,7 +4360,19 @@ Instructions:
                 const sleeveCurrentVal = k => {
                   const data = perfDataMap[k];
                   if (!data?.portfolio?.length) return null;
+                  // Active sleeve uses the live WS value as before
                   if (liveValue && perfSleeve === k) return liveValue.value;
+                  // Every other sleeve: compute live NAV from holdings × current quotes
+                  // (same pattern as sleeveActualDay) so the table ticks for ALL sleeves
+                  if (data.holdings) {
+                    const cash = data.cash || 0;
+                    let val = cash;
+                    for (const [sym, sh] of Object.entries(data.holdings)) {
+                      const q = quotesRef.current[sym] || quotes[sym];
+                      if (q?.p && sh) val += sh * q.p;
+                    }
+                    if (val > 0) return val;
+                  }
                   return data.portfolio[data.portfolio.length - 1].value;
                 };
                 const ret = (k, fromDate) => {
