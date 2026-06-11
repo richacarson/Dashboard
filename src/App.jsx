@@ -1938,6 +1938,31 @@ Instructions:
     return () => clearInterval(id);
   }, []);
 
+  /* ── Live 10Y-2Y yield spread from FRED public CSV (no key needed, CORS-friendly) ── */
+  useEffect(() => {
+    const fetchYieldSpread = async () => {
+      try {
+        // T10Y2Y = 10-Year Treasury Minus 2-Year Treasury Constant Maturity. Published daily by FRED.
+        const r = await fetch("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y");
+        if (!r.ok) return;
+        const csv = await r.text();
+        // CSV: header row, then DATE,VALUE pairs. Walk from the end for the most recent non-"." value.
+        const rows = csv.trim().split("\n").slice(1);
+        for (let i = rows.length - 1; i >= 0; i--) {
+          const [, val] = rows[i].split(",");
+          const num = parseFloat(val);
+          if (isFinite(num)) {
+            setMacroData(prev => ({ ...prev, yieldSpread: num }));
+            return;
+          }
+        }
+      } catch {}
+    };
+    fetchYieldSpread();
+    const id = setInterval(fetchYieldSpread, 6 * 60 * 60 * 1000); // 6h — FRED updates daily
+    return () => clearInterval(id);
+  }, []);
+
   /* ── Fetch economic + earnings calendar ── */
   const fetchCalendar = useCallback(async () => {
     try {
