@@ -4383,9 +4383,27 @@ Instructions:
                   if (!cur || !past) return null;
                   return ((cur / past) - 1) * 100;
                 };
+                // Classic QTD (matches Metrics > Weight Comp > Since Rebalance):
+                // weighted average of per-stock (current / REBALANCE_ANCHOR - 1) by sleeve weights
+                const sleeveSinceRebalance = k => {
+                  const data = perfDataMap[k];
+                  if (!data?.holdings) return null;
+                  const tw = TARGET_WEIGHTS[k] || {};
+                  const ap = REBALANCE_ANCHORS;
+                  let wSum = 0, wTot = 0;
+                  for (const sym of Object.keys(data.holdings)) {
+                    const q = (quotesRef.current[sym] || quotes[sym])?.p;
+                    const anc = ap[sym];
+                    if (!q || !anc) continue;
+                    const sinceReb = ((q - anc) / anc) * 100;
+                    const w = liveWeights[k]?.[sym] ?? tw[sym] ?? 0;
+                    if (w > 0) { wSum += w * sinceReb; wTot += w; }
+                  }
+                  return wTot > 0 ? wSum / wTot : null;
+                };
                 const ranges = [
                   { l: "DAY", fn: k => sleeveActualDay(k) },
-                  { l: "QTD", fn: k => ret(k, qStart) },
+                  { l: "QTD", fn: k => sleeveSinceRebalance(k) },
                   { l: "YTD", fn: k => ret(k, yStart) },
                   { l: "1Y", fn: k => ret(k, daysAgo(365)) },
                   { l: "3Y", fn: k => ret(k, daysAgo(365 * 3)) },
