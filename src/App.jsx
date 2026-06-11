@@ -997,39 +997,7 @@ Instructions:
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
   const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "research" | "briefs"
-  const [tBriefView, setTBriefView] = useState(null); // { title, url } when a brief is open
-  const [tBriefContent, setTBriefContent] = useState("");
-  const [tBriefLoading, setTBriefLoading] = useState(false);
-  const [tBriefFailed, setTBriefFailed] = useState(false);
-  // Fetch + parse the brief HTML into native terminal-styled content
-  useEffect(() => {
-    if (!tBriefView) { setTBriefContent(""); setTBriefFailed(false); return; }
-    setTBriefLoading(true); setTBriefFailed(false);
-    let cancelled = false;
-    (async () => {
-      try {
-        const r = await fetch(tBriefView.url, { cache: "no-store" });
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        const html = await r.text();
-        if (cancelled) return;
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        doc.querySelectorAll("script, link[rel=stylesheet], nav, header, footer, .header, .footer, .nav, .sidebar").forEach(el => el.remove());
-        // Drop inline style attributes that clash with the terminal palette
-        doc.querySelectorAll("[style]").forEach(el => el.removeAttribute("style"));
-        doc.querySelectorAll("style").forEach(el => el.remove());
-        const main = doc.querySelector("main") || doc.querySelector("article") || doc.querySelector(".content") || doc.querySelector("#content") || doc.body;
-        const baseUrl = new URL(tBriefView.url);
-        main.querySelectorAll("a[href]").forEach(a => { try { a.href = new URL(a.getAttribute("href"), baseUrl).href; a.target = "_blank"; a.rel = "noopener noreferrer"; } catch {} });
-        main.querySelectorAll("img[src]").forEach(img => { try { img.src = new URL(img.getAttribute("src"), baseUrl).href; } catch {} });
-        setTBriefContent(main.innerHTML);
-      } catch (e) {
-        if (!cancelled) { console.warn("[brief]", e.message); setTBriefFailed(true); }
-      } finally {
-        if (!cancelled) setTBriefLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [tBriefView]);
+  const [tBriefView, setTBriefView] = useState(null); // { title, url } when a brief is open in iframe overlay
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -5084,46 +5052,13 @@ Instructions:
         {/* Brief overlay — embedded iframe */}
         {tBriefView && (
           <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 1000, display: "flex", flexDirection: "column" }}>
-            <style>{`
-              .brief-native { color: ${C.t2}; font-family: inherit; font-size: 13px; line-height: 1.7; }
-              .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; letter-spacing: -0.01em; margin: 1.4em 0 0.5em; line-height: 1.25; }
-              .brief-native h1 { font-size: 22px; padding-bottom: 6px; border-bottom: 1px solid ${C.accent}55; }
-              .brief-native h2 { font-size: 17px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
-              .brief-native h3 { font-size: 14px; color: ${C.t1}; }
-              .brief-native h4 { font-size: 12px; color: ${C.t3}; text-transform: uppercase; letter-spacing: 1px; }
-              .brief-native p { margin: 0.6em 0; }
-              .brief-native a { color: ${C.accent}; text-decoration: none; border-bottom: 1px dashed ${C.accent}66; }
-              .brief-native a:hover { border-bottom-style: solid; }
-              .brief-native strong, .brief-native b { color: ${C.t1}; font-weight: 700; }
-              .brief-native em, .brief-native i { color: ${C.t1}; font-style: italic; }
-              .brief-native code { background: ${C.elevated}; color: ${C.accent}; padding: 1px 6px; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
-              .brief-native pre { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px; overflow-x: auto; border-radius: 2px; }
-              .brief-native pre code { background: transparent; padding: 0; }
-              .brief-native blockquote { border-left: 3px solid ${C.accent}; padding-left: 16px; margin: 1em 0; color: ${C.t3}; font-style: italic; }
-              .brief-native ul, .brief-native ol { margin: 0.6em 0; padding-left: 24px; }
-              .brief-native li { margin: 0.3em 0; }
-              .brief-native img { max-width: 100%; height: auto; border: 1px solid ${C.border}; }
-              .brief-native table { width: 100%; border-collapse: collapse; margin: 1em 0; font-variant-numeric: tabular-nums; }
-              .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 8px 12px; text-align: left; border-bottom: 1px solid ${C.border}; }
-              .brief-native td { padding: 6px 12px; border-bottom: 1px solid ${C.border}; }
-              .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 2em 0; }
-            `}</style>
             <div style={{ display: "flex", alignItems: "center", padding: "12px 24px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
               <span style={{ ...tEyebrow, marginRight: 16 }}>BRIEF</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{tBriefView.title}</span>
               <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 16, fontSize: 10, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600 }}>OPEN ORIGINAL ↗</a>
               <button onClick={() => setTBriefView(null)} title="Close" style={tCloseBtn}>{tCloseX}</button>
             </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "32px 48px" }}>
-              {tBriefLoading ? (
-                <div style={{ ...tEyebrowMuted, padding: 20 }}>LOADING BRIEF</div>
-              ) : tBriefFailed ? (
-                // CORS or fetch failed — fall back to iframe so user can still read
-                <iframe src={tBriefView.url} style={{ width: "100%", height: "calc(100vh - 130px)", border: `1px solid ${C.border}`, background: "#fff" }} title={tBriefView.title} />
-              ) : (
-                <div className="brief-native" style={{ maxWidth: 900, margin: "0 auto" }} dangerouslySetInnerHTML={{ __html: tBriefContent }} />
-              )}
-            </div>
+            <iframe src={tBriefView.url} title={tBriefView.title} style={{ flex: 1, border: "none", background: "#fff", width: "100%" }} />
           </div>
         )}
 
