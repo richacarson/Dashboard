@@ -2764,22 +2764,29 @@ Instructions:
 
   const auth = async () => {
     setAuthErr("");
+    // 10s timeout — Alpaca paper auth normally returns in &lt;500ms.
+    // Without this the app gets stuck on the loading splash if the
+    // network is flaky / the API is degraded / a CORS preflight hangs.
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 10000);
     try {
-      const r = await fetch(`${PAPER}/v2/account`, { headers: hdrs });
-      if (!r.ok) throw new Error("fail");
+      const r = await fetch(`${PAPER}/v2/account`, { headers: hdrs, signal: ctrl.signal });
+      clearTimeout(timeoutId);
+      if (!r.ok) throw new Error(`auth ${r.status}`);
       setAuthed(true);
       fetchData(true);
       fetchNames();
       fetchNews();
       fetchFundamentals().then(() => fetchDividendHistory()).catch(() => {});
       fetchCalendar();
-      // Fetch research reports index
       fetch(`${import.meta.env.BASE_URL || "/"}research/index.json?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setResearchReports(d); }).catch(() => {});
-      // Preload ExcelJS for export
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
       connectWS();
       connectFinnhubWS();
-    } catch { setAuthErr("Invalid API keys."); }
+    } catch (e) {
+      clearTimeout(timeoutId);
+      setAuthErr(e?.name === "AbortError" ? "Auth timed out (10s) — check connection." : "Auth failed — check API keys.");
+    }
   };
 
   useEffect(() => { if (EK && ES && !authed && unlocked) auth(); }, [unlocked]);
@@ -3161,10 +3168,17 @@ Instructions:
   /* ━━━ LOADING (keys baked in, auth in progress) ━━━ */
   if (!authed && EK && ES) {
     return (
-      <div style={{ minHeight: "100dvh", background: "#191635", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center" }}>
+      <div style={{ minHeight: "100dvh", background: "#191635", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ textAlign: "center", maxWidth: 360 }}>
           <img src="paradiem-logo-dark.png?v=15" alt="Paradiem" style={{ width: 240, height: "auto", margin: "0 auto 24px", display: "block" }} />
-          <div style={{ width: 24, height: 24, border: "3px solid rgba(255,255,255,0.15)", borderTopColor: "#FCD432", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+          {authErr ? (
+            <>
+              <div style={{ fontSize: 13, color: "#F87171", marginBottom: 16, fontFamily: "'DM Sans', sans-serif" }}>{authErr}</div>
+              <button onClick={() => auth()} style={{ padding: "10px 24px", borderRadius: 10, border: "1px solid #C9A84C66", background: "#C9A84C22", color: "#FAF7F2", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>Retry</button>
+            </>
+          ) : (
+            <div style={{ width: 24, height: 24, border: "3px solid rgba(255,255,255,0.15)", borderTopColor: "#FCD432", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+          )}
         </div>
       </div>
     );
