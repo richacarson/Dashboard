@@ -388,44 +388,29 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
    script instead of the basic widgetembed iframe which strips tools.
    ────────────────────────────────────────────────────────────────── */
 const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTheme, bg, toolbarBg, style: chartStyle = "1" }) {
-  const containerRef = useRef(null);
-  const idRef = useRef(`tv_${Math.random().toString(36).slice(2, 10)}`);
-  useEffect(() => {
-    const host = containerRef.current;
-    if (!host) return;
-    const widgetId = idRef.current;
-    // Match TradingView's documented embed structure EXACTLY — the embed script
-    // expects to find its config inside its own <script> tag's text content,
-    // sitting next to the container div inside .tradingview-widget-container.
-    host.innerHTML = `<div class="tradingview-widget-container" style="height:100%;width:100%;"><div id="${widgetId}" style="height:100%;width:100%;"></div></div>`;
-    const wrapper = host.querySelector(".tradingview-widget-container");
-    if (!wrapper) return;
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.async = true;
-    // textContent (not innerHTML) — TV's embed.js reads this via document.currentScript
-    script.textContent = JSON.stringify({
-      autosize: true,
-      symbol,
-      interval: "D",
-      timezone: "America/New_York",
-      theme: chartTheme === "light" ? "light" : "dark",
-      style: chartStyle,
-      locale: "en",
-      enable_publishing: false,
-      withdateranges: true,
-      hide_side_toolbar: false, // ← drawing tools panel
-      allow_symbol_change: false,
-      save_image: false,
-      backgroundColor: bg ? `#${bg}` : undefined,
-      toolbar_bg: toolbarBg ? `#${toolbarBg}` : undefined,
-      container_id: widgetId,
-      support_host: "https://www.tradingview.com",
-    });
-    wrapper.appendChild(script);
-    return () => { try { host.innerHTML = ""; } catch {} };
-  }, [symbol, chartTheme, bg, toolbarBg, chartStyle]);
-  return <div ref={containerRef} style={{ width: "100%", height: "100%", minHeight: 0, background: bg ? `#${bg}` : undefined }} />;
+  // We render TradingView's documented embed markup inside an iframe via srcDoc.
+  // This is more reliable than dynamically injecting <script> into the host:
+  // the iframe gives the embed.js a clean document with no React lifecycle
+  // interference, and document.currentScript resolution works correctly.
+  const config = {
+    autosize: true,
+    symbol,
+    interval: "D",
+    timezone: "America/New_York",
+    theme: chartTheme === "light" ? "light" : "dark",
+    style: chartStyle,
+    locale: "en",
+    enable_publishing: false,
+    withdateranges: true,
+    hide_side_toolbar: false, // ← drawing tools panel
+    allow_symbol_change: false,
+    save_image: false,
+    backgroundColor: bg ? `#${bg}` : undefined,
+    toolbar_bg: toolbarBg ? `#${toolbarBg}` : undefined,
+    support_host: "https://www.tradingview.com",
+  };
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:${bg ? "#" + bg : "#000"};}.tradingview-widget-container,.tradingview-widget-container>div{height:100%;width:100%;}</style></head><body><div class="tradingview-widget-container"><div></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>${JSON.stringify(config)}</script></div></body></html>`;
+  return <iframe key={`${symbol}-${chartTheme}-${bg}`} srcDoc={html} style={{ width: "100%", height: "100%", border: "none", display: "block", background: bg ? `#${bg}` : undefined }} sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms" title={`Chart: ${symbol}`} />;
 });
 function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
   const [profileTab, setProfileTab] = useState(initTab || "overview");
