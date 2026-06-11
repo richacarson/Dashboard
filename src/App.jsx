@@ -3700,7 +3700,7 @@ Instructions:
     })();
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: `${tIsGrowth ? 348 : 320}px minmax(0, 1fr) minmax(240px, 300px)`, overflow: "hidden", fontVariantNumeric: "tabular-nums", caretColor: "transparent" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: `${tIsGrowth ? 348 : 320}px minmax(0, 1fr) minmax(240px, 300px)`, overflow: "hidden", fontVariantNumeric: "tabular-nums", caretColor: "transparent", paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)", boxSizing: "border-box" }}>
         {/* Suppress the stray text caret that appears when clicking non-input text; restore it for real inputs */}
         <style>{`input, textarea, select, [contenteditable="true"] { caret-color: ${C.accent}; }`}</style>
         {/* ── TOP STATUS BAR ── */}
