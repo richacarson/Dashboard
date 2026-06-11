@@ -993,7 +993,7 @@ Instructions:
   const [tProfileTab, setTProfileTab] = useState("overview"); // "overview" | "chart" | "screener"
   const [tChartHover, setTChartHover] = useState(null);
   const [tWatchSort, setTWatchSort] = useState({ col: "chg", dir: "desc" }); // watchlist sort: col in sym|price|chg|qtd|pe|comp|peg
-  const [tChartRange, setTChartRange] = useState("YTD");
+  const [tChartRange, setTChartRange] = useState("3Y");
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
   const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "research"
@@ -3202,9 +3202,9 @@ Instructions:
     const tTd = (align = "right") => ({ padding: "5px 8px", textAlign: align, whiteSpace: "nowrap" });
     const tRecColor = r => ({ BUY: C.up, HOLD: C.warn, WATCH: C.t3, SELL: C.dn })[r] || C.t3;
     const tStat = (label, val, color) => (
-      <div key={label} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "10px 12px" }}>
-        <div style={{ ...tEyebrowMuted, marginBottom: 4 }}>{label}</div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: color || C.t1 }}>{val}</div>
+      <div key={label} style={{ display: "flex", flexDirection: "column", gap: 2, padding: "6px 14px 6px 0", borderRight: `1px solid ${C.border}` }}>
+        <div style={{ ...tEyebrowMuted, fontSize: 9 }}>{label}</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: color || C.t1, fontVariantNumeric: "tabular-nums" }}>{val}</div>
       </div>
     );
     const tScoreColor = s => s >= 7 ? C.up : s >= 4 ? C.warn : C.dn;
@@ -3535,13 +3535,13 @@ Instructions:
                     {PB_BEAR_TRANCHES.map((t, i) => {
                       const triggered = drawdown <= t.drawdownTrigger;
                       return (
-                        <div key={i} style={{ background: triggered ? C.dnSoft : C.card, border: `1px solid ${triggered ? C.dn + "44" : C.border}`, padding: "12px 14px", marginBottom: 10 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                            <span style={{ fontSize: 18, fontWeight: 700, color: triggered ? C.dn : C.t2 }}>{t.drawdownTrigger}%</span>
-                            <span style={{ ...tEyebrowMuted, color: triggered ? C.dn : C.t4 }}>{triggered ? "TRIGGERED" : "STANDBY"}</span>
-                          </div>
-                          <div style={{ fontSize: 11, color: C.t3 }}>{t.action}</div>
-                          <div style={{ fontSize: 10, color: C.accent, marginTop: 2 }}>{t.deploy}</div>
+                        <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 14, padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: triggered ? C.dn : C.t2, fontVariantNumeric: "tabular-nums", width: 56, flexShrink: 0 }}>{t.drawdownTrigger}%</span>
+                          <span style={{ flex: 1, fontSize: 11, color: triggered ? C.t1 : C.t3, lineHeight: 1.5 }}>
+                            <span>{t.action}</span>
+                            <span style={{ color: C.accent, marginLeft: 8 }}>· {t.deploy}</span>
+                          </span>
+                          <span style={{ ...tEyebrowMuted, color: triggered ? C.dn : C.t4, flexShrink: 0 }}>{triggered ? "TRIGGERED" : "STANDBY"}</span>
                         </div>
                       );
                     })}
@@ -4059,30 +4059,100 @@ Instructions:
                   )}
                 </div>);
               })())}
-              {tDrawer === "performance" && (<div>
-                <div style={{ ...tEyebrow, marginBottom: 12 }}>Portfolio Performance</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-                  {["dividend", "growth", "fci100", "fciValues"].map(k => { const sc = sleeveActualDay(k); const syms = sleeves[k]?.symbols || [];
-                    const qtd = (() => { let ws = 0, wsum = 0, esum = 0, n = 0; for (const s of syms) { const v = tQtdOf(s); if (v == null || !isFinite(v)) continue; const w = liveWeights[k]?.[s]; if (w != null) { ws += w; wsum += w * v; } esum += v; n++; } return ws > 0 ? wsum / ws : (n ? esum / n : null); })();
-                    return (
-                    <div key={k} style={{ background: C.card, border: `1px solid ${C.border}`, padding: 14 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>{sleeves[k]?.name || k}</div>
-                      <div style={{ fontSize: 24, fontWeight: 700, color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4 }}>{sc != null ? pct(sc) : "—"}</div>
-                      <div style={{ fontSize: 10, color: C.t4 }}>{syms.length} holdings · Day change</div>
-                      <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>QTD <span style={{ fontWeight: 600, color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span></div>
-                    </div>
-                  ); })}
-                </div>
-                <div style={{ ...tEyebrow, margin: "16px 0 8px" }}>Top Movers Today</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6 }}>
-                  {(() => { const allSyms = [...new Set(Object.values(sleeves).flatMap(s => s.symbols || []))]; return allSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return { sym, chg: c, price: q?.p }; }).filter(s => s.chg != null).sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg)).slice(0, 30).map(s => (
-                    <div key={s.sym} onClick={() => { setTerminalActiveSym(s.sym); setTProfileSym(s.sym); setTProfileTab("chart"); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: 11 }}>
-                      <span style={{ fontWeight: 700, color: C.t1 }}>{s.sym}</span>
-                      <span style={{ fontWeight: 600, color: s.chg >= 0 ? C.up : C.dn }}>{pct(s.chg)}</span>
-                    </div>
-                  )); })()}
-                </div>
-              </div>)}
+              {tDrawer === "performance" && (() => {
+                const SLEEVES_PERF = ["dividend", "growth", "fci100", "fciValues"];
+                // Find value at or before a target date (portfolio is ascending by date)
+                const valueAt = (portfolio, targetDateStr) => {
+                  if (!portfolio?.length) return null;
+                  for (let i = portfolio.length - 1; i >= 0; i--) if (portfolio[i].date <= targetDateStr) return portfolio[i].value;
+                  return null;
+                };
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const q = Math.floor(today.getMonth() / 3);
+                const qStart = `${yyyy}-${String(q * 3 + 1).padStart(2, "0")}-01`;
+                const yStart = `${yyyy}-01-01`;
+                const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+                const sleeveCurrentVal = k => {
+                  const data = perfDataMap[k];
+                  if (!data?.portfolio?.length) return null;
+                  if (liveValue && perfSleeve === k) return liveValue.value;
+                  return data.portfolio[data.portfolio.length - 1].value;
+                };
+                const ret = (k, fromDate) => {
+                  const data = perfDataMap[k];
+                  if (!data?.portfolio?.length) return null;
+                  const cur = sleeveCurrentVal(k);
+                  const past = valueAt(data.portfolio, fromDate);
+                  if (!cur || !past) return null;
+                  return ((cur / past) - 1) * 100;
+                };
+                const ranges = [
+                  { l: "DAY", fn: k => sleeveActualDay(k) },
+                  { l: "QTD", fn: k => ret(k, qStart) },
+                  { l: "YTD", fn: k => ret(k, yStart) },
+                  { l: "1Y", fn: k => ret(k, daysAgo(365)) },
+                  { l: "3Y", fn: k => ret(k, daysAgo(365 * 3)) },
+                  { l: "5Y", fn: k => ret(k, daysAgo(365 * 5)) },
+                  { l: "INCEP", fn: k => { const p = perfDataMap[k]?.portfolio; return p?.length ? ret(k, p[0].date) : null; } },
+                ];
+                const sleeveNames = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
+                const rowOf = k => ({ k, name: sleeveNames[k], val: sleeveCurrentVal(k), returns: ranges.map(r => r.fn(k)) });
+                const rows = SLEEVES_PERF.map(rowOf);
+                // Aggregate row (sum of NAVs, weighted returns by NAV)
+                const totalVal = rows.reduce((s, r) => s + (r.val || 0), 0);
+                const aggReturns = ranges.map((_, ri) => {
+                  let ws = 0, wsum = 0;
+                  for (const r of rows) { const v = r.returns[ri]; if (v != null && r.val) { ws += r.val; wsum += r.val * v; } }
+                  return ws > 0 ? wsum / ws : null;
+                });
+                const fmtVal = v => v != null ? `$${v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)}` : "—";
+                const fmtR = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
+                const cR = v => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
+                return (<div>
+                  <div style={{ ...tEyebrow, paddingBottom: 6, borderBottom: `1px solid ${C.accent}33`, marginBottom: 8 }}>Portfolio Performance</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, marginBottom: 18 }}>
+                    <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <th style={{ ...tTh("left", false) }}>Sleeve</th>
+                      <th style={tTh("right", false)}>NAV</th>
+                      {ranges.map(r => <th key={r.l} style={tTh("right", false)}>{r.l}</th>)}
+                    </tr></thead>
+                    <tbody>
+                      {rows.map(r => (
+                        <tr key={r.k} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(r.k); setPerfSleeve(r.k); setTDrawer(null); }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                          <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{r.name}</td>
+                          <td style={{ ...tTd(), color: C.t2 }}>{fmtVal(r.val)}</td>
+                          {r.returns.map((v, i) => <td key={i} style={{ ...tTd(), fontWeight: 600, color: cR(v) }}>{fmtR(v)}</td>)}
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{ borderTop: `2px solid ${C.accent}` }}>
+                        <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>TOTAL</td>
+                        <td style={{ ...tTd(), fontWeight: 700, color: C.t1 }}>{fmtVal(totalVal)}</td>
+                        {aggReturns.map((v, i) => <td key={i} style={{ ...tTd(), fontWeight: 700, color: cR(v) }}>{fmtR(v)}</td>)}
+                      </tr>
+                    </tfoot>
+                  </table>
+                  <div style={{ ...tEyebrow, paddingBottom: 6, borderBottom: `1px solid ${C.accent}33`, marginBottom: 8 }}>Top Movers Today</div>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+                    <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <th style={tTh("left", false)}>Ticker</th>
+                      <th style={tTh("right", false)}>Price</th>
+                      <th style={tTh("right", false)}>Day</th>
+                    </tr></thead>
+                    <tbody>
+                      {(() => { const allSyms = [...new Set(Object.values(sleeves).flatMap(s => s.symbols || []))]; return allSyms.map(sym => { const qq = quotesRef.current[sym] || quotes[sym]; const bb = barsRef.current[sym] || bars[sym]; const c = (qq && bb?.pc) ? ((qq.p - bb.pc) / bb.pc * 100) : null; return { sym, chg: c, price: qq?.p }; }).filter(s => s.chg != null).sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg)).slice(0, 20).map(s => (
+                        <tr key={s.sym} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onClick={() => { setTerminalActiveSym(s.sym); setTProfileSym(s.sym); setTProfileTab("chart"); setTDrawer(null); }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                          <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{s.sym}</td>
+                          <td style={{ ...tTd(), color: C.t2 }}>{s.price != null ? `$${s.price >= 1000 ? s.price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : s.price.toFixed(2)}` : "—"}</td>
+                          <td style={{ ...tTd(), fontWeight: 600, color: cR(s.chg) }}>{fmtR(s.chg)}</td>
+                        </tr>
+                      )); })()}
+                    </tbody>
+                  </table>
+                </div>);
+              })()}
               {tDrawer === "metrics" && (() => {
                 const mSyms = sleeves[metricsView]?.symbols || [];
                 const mTw = TARGET_WEIGHTS[metricsView] || {};
@@ -4515,15 +4585,15 @@ Instructions:
             const fmtPct = (v, dp = 1) => v != null && isFinite(v) ? `${v >= 0 ? "+" : ""}${Number(v).toFixed(dp)}%` : null;
             const upDn = v => v == null ? undefined : v >= 0 ? C.up : C.dn;
             const pItem = ([l, v, color]) => (
-              <div key={l} style={{ marginBottom: 8 }}>
-                <div style={{ ...tEyebrowMuted, fontSize: 9, marginBottom: 2 }}>{l}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: v == null ? C.t4 : (color || C.t1) }}>{v ?? "—"}</div>
+              <div key={l} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "4px 0", borderBottom: `1px solid ${C.border}` }}>
+                <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{l}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: v == null ? C.t4 : (color || C.t1), fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{v ?? "—"}</span>
               </div>
             );
             const pSection = (title, items) => (
-              <div key={title} style={{ background: C.card, border: `1px solid ${C.border}`, padding: "10px 12px" }}>
-                <div style={{ ...tEyebrow, marginBottom: 8 }}>{title}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>{items.map(pItem)}</div>
+              <div key={title}>
+                <div style={{ ...tEyebrow, paddingBottom: 4, borderBottom: `1px solid ${C.accent}33`, marginBottom: 4 }}>{title}</div>
+                <div>{items.map(pItem)}</div>
               </div>
             );
             const desc = f.description || scr?.profile?.description || null;
