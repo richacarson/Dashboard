@@ -1034,7 +1034,7 @@ Instructions:
       const list = [];
       try {
         // Morning briefs — GitHub Contents API listing the briefs/ folder
-        const r = await fetch("https://api.github.com/repos/richacarson/rich-report/contents/briefs");
+        const r = await fetch(`https://api.github.com/repos/richacarson/rich-report/contents/briefs?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
         if (r.ok) {
           const arr = await r.json();
           if (Array.isArray(arr)) {
@@ -1049,7 +1049,7 @@ Instructions:
       } catch {}
       try {
         // Market Commentary — IOWN-data manifest
-        const r = await fetch("https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentary-manifest.json");
+        const r = await fetch(`https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentary-manifest.json?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
         if (r.ok) {
           const arr = await r.json();
           if (Array.isArray(arr)) {
@@ -2837,6 +2837,17 @@ Instructions:
   };
 
   useEffect(() => { if (EK && ES && !authed && unlocked) auth(); }, [unlocked]);
+
+  /* ── News polling — runs 24/7 regardless of market hours (Finnhub publishes around the clock) ── */
+  useEffect(() => {
+    if (!authed) return;
+    fetchNews();
+    // 60s during market hours, 5min after-hours / weekends (still alive, just less aggressive)
+    const intervalMs = marketStatus.status === "open" ? 60_000 : 5 * 60_000;
+    const id = setInterval(fetchNews, intervalMs);
+    return () => clearInterval(id);
+  }, [authed, fetchNews, marketStatus.status]);
+
   useEffect(() => {
     if (!authed) return;
     const getInterval = () => {
@@ -2848,8 +2859,7 @@ Instructions:
     if (ms) {
       // Price polling — fast, no re-renders
       iRef.current = setInterval(() => { fetchData(); }, ms);
-      // News polling — slow, separate timer
-      const newsTimer = setInterval(() => { fetchNews(); }, 60000);
+      // News polling now runs in its own market-hours-independent effect above.
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
       // Finnhub benchmark polling (DVY, IUSG) — every 5s
@@ -2859,7 +2869,7 @@ Instructions:
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
       return () => {
-        clearInterval(iRef.current); clearInterval(newsTimer); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
+        clearInterval(iRef.current); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
         try { wsRef.current?.close(); } catch {}
         try { fhWsRef.current?.close(); } catch {}
       };
