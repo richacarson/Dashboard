@@ -4620,9 +4620,19 @@ Instructions:
             </div>
           </div>
         ) : (<>
-        {/* ── CENTER: STOCK PROFILE or CHART ── */}
+        {/* ── CENTER: BRIEF / STOCK PROFILE / CHART ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
-          {tProfileSym && tProfileSym !== "__portfolio__" ? (() => {
+          {tBriefView ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+                <span style={{ ...tEyebrow, marginRight: 12 }}>BRIEF</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tBriefView.title}</span>
+                <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 12, fontSize: 9, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap" }}>OPEN ORIGINAL ↗</a>
+                <button onClick={() => setTBriefView(null)} title="Close" style={tCloseBtn}>{tCloseX}</button>
+              </div>
+              <iframe src={tBriefView.url} title={tBriefView.title} style={{ flex: 1, border: "none", background: "#fff", width: "100%" }} />
+            </>
+          ) : tProfileSym && tProfileSym !== "__portfolio__" ? (() => {
             const sym = tProfileSym;
             const f = fundamentals[sym] || {};
             const scr = screenerByTicker[sym];
@@ -4991,7 +5001,7 @@ Instructions:
                 { label: "The Rich Report", category: "MONTHLY", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", desc: "Macro insights & thesis" },
                 { label: "Quarterly Changes", category: "QUARTERLY", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", desc: "Rebalance report" },
               ].map(b => (
-                <div key={b.label} onClick={() => setTBriefView({ title: b.label, url: b.url })} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+                <div key={b.label} onClick={() => { setTBriefView({ title: b.label, url: b.url }); setTDrawer(null); setTProfileSym(null); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                     <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent }}>{b.category}</span>
@@ -5050,18 +5060,6 @@ Instructions:
         </div>
 
         {/* Brief overlay — embedded iframe */}
-        {tBriefView && (
-          <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 1000, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", padding: "12px 24px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-              <span style={{ ...tEyebrow, marginRight: 16 }}>BRIEF</span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{tBriefView.title}</span>
-              <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 16, fontSize: 10, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600 }}>OPEN ORIGINAL ↗</a>
-              <button onClick={() => setTBriefView(null)} title="Close" style={tCloseBtn}>{tCloseX}</button>
-            </div>
-            <iframe src={tBriefView.url} title={tBriefView.title} style={{ flex: 1, border: "none", background: "#fff", width: "100%" }} />
-          </div>
-        )}
-
         {/* Article reader overlay (reuse existing) */}
         {selectedArticle && (() => { const a = selectedArticle; return (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setSelectedArticle(null)}>
