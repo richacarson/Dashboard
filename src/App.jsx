@@ -4384,14 +4384,17 @@ Instructions:
                   return ((cur / past) - 1) * 100;
                 };
                 // Classic QTD (matches Metrics > Weight Comp > Since Rebalance):
-                // weighted average of per-stock (current / REBALANCE_ANCHOR - 1) by sleeve weights
+                // weighted average of per-stock (current / REBALANCE_ANCHOR - 1) by sleeve weights.
+                // CRITICAL: iterate sleeves[k].symbols (the configured list) — NOT
+                // data.holdings — to match classic exactly; the perf snapshot's
+                // holdings can lag behind a rebalance edit.
                 const sleeveSinceRebalance = k => {
-                  const data = perfDataMap[k];
-                  if (!data?.holdings) return null;
+                  const syms = sleeves[k]?.symbols || [];
+                  if (!syms.length) return null;
                   const tw = TARGET_WEIGHTS[k] || {};
                   const ap = REBALANCE_ANCHORS;
                   let wSum = 0, wTot = 0;
-                  for (const sym of Object.keys(data.holdings)) {
+                  for (const sym of syms) {
                     const q = (quotesRef.current[sym] || quotes[sym])?.p;
                     const anc = ap[sym];
                     if (!q || !anc) continue;
@@ -4401,6 +4404,11 @@ Instructions:
                   }
                   return wTot > 0 ? wSum / wTot : null;
                 };
+                // Benchmarks reference the REBALANCE_DATE (when the portfolio was
+                // re-set), not the calendar quarter start — using qStart here gave
+                // benchmark QTD numbers ~1 week off vs the sleeve QTD they're
+                // compared against in the same table.
+                const REBAL_DATE_STR = REBALANCE_DATE;
                 const ranges = [
                   { l: "DAY", fn: k => sleeveActualDay(k) },
                   { l: "QTD", fn: k => sleeveSinceRebalance(k) },
@@ -4446,7 +4454,7 @@ Instructions:
                   const bmRows = bms.map(bmSym => ({
                     label: bmSym, nav: null, isBm: true, sym: bmSym,
                     returns: ranges.map(r => r.l === "DAY" ? bmDay(bmSym) : (
-                      r.l === "QTD" ? bmRet(sleeve, bmSym, qStart) :
+                      r.l === "QTD" ? bmRet(sleeve, bmSym, REBAL_DATE_STR) :
                       r.l === "YTD" ? bmRet(sleeve, bmSym, yStart) :
                       r.l === "1Y" ? bmRet(sleeve, bmSym, daysAgo(365)) :
                       r.l === "3Y" ? bmRet(sleeve, bmSym, daysAgo(365 * 3)) :
