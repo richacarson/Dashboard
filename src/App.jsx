@@ -997,7 +997,87 @@ Instructions:
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
   const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "research" | "briefs"
-  const [tBriefView, setTBriefView] = useState(null); // { title, url } when a brief is open in iframe overlay
+  const [tBriefView, setTBriefView] = useState(null); // { title, category, url } when a brief is open
+  const [tBriefIndex, setTBriefIndex] = useState([]); // [{ category, title, date, url, subhead }]
+  const [tBriefHtml, setTBriefHtml] = useState("");
+  const [tBriefLoading, setTBriefLoading] = useState(false);
+  const [tBriefFailed, setTBriefFailed] = useState(false);
+  // Build the brief index from rich-report (morning briefs + Rich Report + quarterly) and IOWN-data (commentary)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cached = JSON.parse(localStorage.getItem("iown_brief_index_v1") || "{}");
+        if (cached.list && Date.now() - (cached.ts || 0) < 60 * 60 * 1000) { // 1h cache
+          if (!cancelled) setTBriefIndex(cached.list);
+          return;
+        }
+      } catch {}
+      const list = [];
+      try {
+        // Morning briefs — GitHub Contents API listing the briefs/ folder
+        const r = await fetch("https://api.github.com/repos/richacarson/rich-report/contents/briefs");
+        if (r.ok) {
+          const arr = await r.json();
+          if (Array.isArray(arr)) {
+            for (const f of arr) {
+              if (f.type !== "file") continue;
+              const m = /^(\d{4}-\d{2}-\d{2})\.html$/i.exec(f.name);
+              if (!m) continue;
+              list.push({ category: "Morning Brief", title: `Morning Brief — ${m[1]}`, date: m[1], url: f.download_url || `https://raw.githubusercontent.com/richacarson/rich-report/main/briefs/${f.name}` });
+            }
+          }
+        }
+      } catch {}
+      try {
+        // Market Commentary — IOWN-data manifest
+        const r = await fetch("https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentary-manifest.json");
+        if (r.ok) {
+          const arr = await r.json();
+          if (Array.isArray(arr)) {
+            for (const c of arr) {
+              if (!c.content) continue;
+              list.push({ category: "Market Commentary", title: c.headline || `Commentary — ${c.date}`, date: c.date, url: `https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentaries/${c.content}`, subhead: c.subhead });
+            }
+          }
+        }
+      } catch {}
+      // Singular reports
+      list.push({ category: "The Rich Report", title: "The Rich Report", date: new Date().toISOString().slice(0, 10), url: "https://raw.githubusercontent.com/richacarson/rich-report/main/The_Rich_Report.html" });
+      list.push({ category: "Quarterly Changes", title: "Q2 2026 Portfolio Changes", date: "2026-04-01", url: "https://raw.githubusercontent.com/richacarson/rich-report/main/rebalance/q2-2026/client.html" });
+      // Sort by date desc
+      list.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+      if (!cancelled) setTBriefIndex(list);
+      try { localStorage.setItem("iown_brief_index_v1", JSON.stringify({ list, ts: Date.now() })); } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  // Fetch + parse the active brief's raw HTML into terminal-styled content
+  useEffect(() => {
+    if (!tBriefView) { setTBriefHtml(""); setTBriefFailed(false); return; }
+    setTBriefLoading(true); setTBriefFailed(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(tBriefView.url, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const html = await r.text();
+        if (cancelled) return;
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        doc.querySelectorAll("script, link, style, nav, header, footer, .header, .footer, .nav, .sidebar, button, input").forEach(el => el.remove());
+        doc.querySelectorAll("[style]").forEach(el => el.removeAttribute("style"));
+        const baseUrl = new URL(tBriefView.url);
+        doc.querySelectorAll("a[href]").forEach(a => { try { a.href = new URL(a.getAttribute("href"), baseUrl).href; a.target = "_blank"; a.rel = "noopener noreferrer"; } catch {} });
+        doc.querySelectorAll("img[src]").forEach(img => { try { img.src = new URL(img.getAttribute("src"), baseUrl).href; } catch {} });
+        setTBriefHtml(doc.body.innerHTML);
+      } catch (e) {
+        if (!cancelled) { console.warn("[brief]", e.message); setTBriefFailed(true); }
+      } finally {
+        if (!cancelled) setTBriefLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tBriefView]);
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -4624,13 +4704,57 @@ Instructions:
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
           {tBriefView ? (
             <>
+              <style>{`
+                .brief-native { color: ${C.t2}; font-family: inherit; font-size: 13px; line-height: 1.7; }
+                .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; line-height: 1.25; margin: 1.4em 0 0.5em; }
+                .brief-native h1 { font-size: 20px; padding-bottom: 6px; border-bottom: 1px solid ${C.accent}55; }
+                .brief-native h2 { font-size: 14px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; padding-bottom: 4px; border-bottom: 1px solid ${C.border}; }
+                .brief-native h3 { font-size: 13px; color: ${C.t1}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+                .brief-native h4 { font-size: 11px; color: ${C.t3}; text-transform: uppercase; letter-spacing: 1px; }
+                .brief-native p { margin: 0.6em 0; }
+                .brief-native a { color: ${C.accent}; text-decoration: none; border-bottom: 1px dashed ${C.accent}66; }
+                .brief-native a:hover { border-bottom-style: solid; }
+                .brief-native strong, .brief-native b { color: ${C.t1}; font-weight: 700; }
+                .brief-native em, .brief-native i { color: ${C.t1}; font-style: italic; }
+                .brief-native code { background: ${C.elevated}; color: ${C.accent}; padding: 1px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+                .brief-native pre { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px; overflow-x: auto; }
+                .brief-native pre code { background: transparent; padding: 0; }
+                .brief-native blockquote { border-left: 3px solid ${C.accent}; padding-left: 16px; margin: 1em 0; color: ${C.t3}; font-style: italic; }
+                .brief-native ul, .brief-native ol { margin: 0.6em 0; padding-left: 24px; }
+                .brief-native li { margin: 0.3em 0; }
+                .brief-native img { max-width: 100%; height: auto; border: 1px solid ${C.border}; }
+                .brief-native table { width: 100%; border-collapse: collapse; margin: 1em 0; font-variant-numeric: tabular-nums; font-size: 12px; }
+                .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 6px 10px; text-align: left; border-bottom: 1px solid ${C.border}; }
+                .brief-native td { padding: 5px 10px; border-bottom: 1px solid ${C.border}; }
+                .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 1.8em 0; }
+                .brief-native .snapshot, .brief-native .data-box { background: ${C.surface}; border: 1px solid ${C.border}; padding: 10px 14px; margin: 0.8em 0; }
+                .brief-native .section-start { margin-top: 1.4em; padding-top: 0.6em; border-top: 1px solid ${C.border}; }
+                .brief-native .bullet { margin: 0.5em 0; padding-left: 14px; position: relative; }
+                .brief-native .bullet::before { content: "—"; color: ${C.accent}; position: absolute; left: 0; }
+                .brief-native .radar-group { border: 1px solid ${C.border}; padding: 10px 14px; margin: 0.8em 0; }
+                .brief-native .label, .brief-native .eyebrow { color: ${C.accent}; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; }
+                .brief-native .ticker, .brief-native .price { color: ${C.t1}; font-weight: 700; font-variant-numeric: tabular-nums; }
+                .brief-native .up { color: ${C.up}; }
+                .brief-native .down, .brief-native .dn { color: ${C.dn}; }
+              `}</style>
               <div style={{ display: "flex", alignItems: "center", padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                <span style={{ ...tEyebrow, marginRight: 12 }}>BRIEF</span>
+                <span style={{ ...tEyebrow, marginRight: 12 }}>{tBriefView.category ? tBriefView.category.toUpperCase() : "BRIEF"}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tBriefView.title}</span>
-                <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 12, fontSize: 9, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap" }}>OPEN ORIGINAL ↗</a>
+                <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 12, fontSize: 9, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600, whiteSpace: "nowrap" }}>RAW SOURCE ↗</a>
                 <button onClick={() => setTBriefView(null)} title="Close" style={tCloseBtn}>{tCloseX}</button>
               </div>
-              <iframe src={tBriefView.url} title={tBriefView.title} style={{ flex: 1, border: "none", background: "#fff", width: "100%" }} />
+              <div style={{ flex: 1, overflowY: "auto", padding: "24px 36px", background: C.bg }}>
+                {tBriefLoading ? (
+                  <div style={tEyebrowMuted}>LOADING BRIEF</div>
+                ) : tBriefFailed ? (
+                  <div>
+                    <div style={{ ...tEyebrowMuted, color: C.dn, marginBottom: 8 }}>FAILED TO LOAD</div>
+                    <iframe src={tBriefView.url} title={tBriefView.title} style={{ width: "100%", height: "calc(100vh - 200px)", border: `1px solid ${C.border}`, background: "#fff" }} />
+                  </div>
+                ) : (
+                  <div className="brief-native" style={{ maxWidth: 860, margin: "0 auto" }} dangerouslySetInnerHTML={{ __html: tBriefHtml }} />
+                )}
+              </div>
             </>
           ) : tProfileSym && tProfileSym !== "__portfolio__" ? (() => {
             const sym = tProfileSym;
@@ -4995,21 +5119,17 @@ Instructions:
                   <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{`${report.date || ""}${report.author ? " · " + report.author : ""}`}</div>
                 </div>
               )))}
-              {tRailView === "briefs" && [
-                { label: "Morning Brief", category: "DAILY", url: "https://richacarson.github.io/rich-report/morning-briefs.html", desc: "Pre-market analysis" },
-                { label: "Market Commentary", category: "WEEKLY", url: "https://richacarson.github.io/iown-data/", desc: "Market outlook & strategy" },
-                { label: "The Rich Report", category: "MONTHLY", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", desc: "Macro insights & thesis" },
-                { label: "Quarterly Changes", category: "QUARTERLY", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", desc: "Rebalance report" },
-              ].map(b => (
-                <div key={b.label} onClick={() => { setTBriefView({ title: b.label, url: b.url }); setTDrawer(null); setTProfileSym(null); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
+              {tRailView === "briefs" && (!tBriefIndex.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>LOADING BRIEFS</div> : tBriefIndex.slice(0, 50).map((b, i) => (
+                <div key={b.url + i} onClick={() => { setTBriefView({ title: b.title, category: b.category, url: b.url }); setTDrawer(null); setTProfileSym(null); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
                     <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent }}>{b.category}</span>
+                    <span style={{ fontSize: 9, color: C.t4 }}>{b.date}</span>
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t1 }}>{b.label}</div>
-                  <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{b.desc}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{b.title}</div>
+                  {b.subhead && <div style={{ fontSize: 10, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{b.subhead}</div>}
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         </div>
