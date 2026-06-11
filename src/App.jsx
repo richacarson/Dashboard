@@ -387,20 +387,24 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
    trend lines, etc.). Uses the official embed-widget-advanced-chart.js
    script instead of the basic widgetembed iframe which strips tools.
    ────────────────────────────────────────────────────────────────── */
-const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTheme, bg, toolbarBg, studies, style: chartStyle = "1" }) {
+const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTheme, bg, toolbarBg, style: chartStyle = "1" }) {
   const containerRef = useRef(null);
-  // Stable container id per mount so the script knows where to render
   const idRef = useRef(`tv_${Math.random().toString(36).slice(2, 10)}`);
   useEffect(() => {
     const host = containerRef.current;
     if (!host) return;
-    // Reset host and inject the script with the JSON config in its innerHTML
-    host.innerHTML = `<div id="${idRef.current}" style="width:100%;height:100%;"></div>`;
+    const widgetId = idRef.current;
+    // Match TradingView's documented embed structure EXACTLY — the embed script
+    // expects to find its config inside its own <script> tag's text content,
+    // sitting next to the container div inside .tradingview-widget-container.
+    host.innerHTML = `<div class="tradingview-widget-container" style="height:100%;width:100%;"><div id="${widgetId}" style="height:100%;width:100%;"></div></div>`;
+    const wrapper = host.querySelector(".tradingview-widget-container");
+    if (!wrapper) return;
     const script = document.createElement("script");
-    script.type = "text/javascript";
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.async = true;
-    script.innerHTML = JSON.stringify({
+    // textContent (not innerHTML) — TV's embed.js reads this via document.currentScript
+    script.textContent = JSON.stringify({
       autosize: true,
       symbol,
       interval: "D",
@@ -408,24 +412,19 @@ const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTh
       theme: chartTheme === "light" ? "light" : "dark",
       style: chartStyle,
       locale: "en",
+      enable_publishing: false,
       withdateranges: true,
-      hide_side_toolbar: false,   // ← drawing tools panel (boxes, fib, trend lines, etc.)
+      hide_side_toolbar: false, // ← drawing tools panel
       allow_symbol_change: false,
       save_image: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      hide_volume: false,
       backgroundColor: bg ? `#${bg}` : undefined,
       toolbar_bg: toolbarBg ? `#${toolbarBg}` : undefined,
-      gridColor: chartTheme === "light" ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)",
-      details: false,
-      studies: studies || [],
-      container_id: idRef.current,
+      container_id: widgetId,
       support_host: "https://www.tradingview.com",
     });
-    host.appendChild(script);
+    wrapper.appendChild(script);
     return () => { try { host.innerHTML = ""; } catch {} };
-  }, [symbol, chartTheme, bg, toolbarBg, chartStyle, studies]);
+  }, [symbol, chartTheme, bg, toolbarBg, chartStyle]);
   return <div ref={containerRef} style={{ width: "100%", height: "100%", minHeight: 0, background: bg ? `#${bg}` : undefined }} />;
 });
 function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
