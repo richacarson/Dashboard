@@ -388,29 +388,14 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
    script instead of the basic widgetembed iframe which strips tools.
    ────────────────────────────────────────────────────────────────── */
 const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTheme, bg, toolbarBg, style: chartStyle = "1" }) {
-  // We render TradingView's documented embed markup inside an iframe via srcDoc.
-  // This is more reliable than dynamically injecting <script> into the host:
-  // the iframe gives the embed.js a clean document with no React lifecycle
-  // interference, and document.currentScript resolution works correctly.
-  const config = {
-    autosize: true,
-    symbol,
-    interval: "D",
-    timezone: "America/New_York",
-    theme: chartTheme === "light" ? "light" : "dark",
-    style: chartStyle,
-    locale: "en",
-    enable_publishing: false,
-    withdateranges: true,
-    hide_side_toolbar: false, // ← drawing tools panel
-    allow_symbol_change: false,
-    save_image: false,
-    backgroundColor: bg ? `#${bg}` : undefined,
-    toolbar_bg: toolbarBg ? `#${toolbarBg}` : undefined,
-    support_host: "https://www.tradingview.com",
-  };
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;background:${bg ? "#" + bg : "#000"};}.tradingview-widget-container,.tradingview-widget-container>div{height:100%;width:100%;}</style></head><body><div class="tradingview-widget-container"><div></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>${JSON.stringify(config)}</script></div></body></html>`;
-  return <iframe key={`${symbol}-${chartTheme}-${bg}`} srcDoc={html} style={{ width: "100%", height: "100%", border: "none", display: "block", background: bg ? `#${bg}` : undefined }} sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms" title={`Chart: ${symbol}`} />;
+  // Direct iframe to TradingView's hosted widget — known to render reliably.
+  // hidesidetoolbar=0 exposes the left drawing-tool panel (trend lines, fib,
+  // boxes, channels). The advanced-chart script embed approach (srcDoc or
+  // dynamic <script> injection) had document.currentScript issues that
+  // resulted in black panes; this simple iframe just works.
+  const tvTheme = chartTheme === "light" ? "light" : "dark";
+  const url = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&theme=${tvTheme}&style=${chartStyle}&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=en${bg ? `&backgroundColor=%23${bg}` : ""}${toolbarBg ? `&toolbar_bg=%23${toolbarBg}` : ""}`;
+  return <iframe key={`${symbol}-${tvTheme}`} src={url} style={{ width: "100%", height: "100%", border: "none", display: "block", background: bg ? `#${bg}` : undefined }} title={`Chart: ${symbol}`} />;
 });
 function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
   const [profileTab, setProfileTab] = useState(initTab || "overview");
