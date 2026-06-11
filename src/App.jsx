@@ -3480,7 +3480,7 @@ Instructions:
     const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "320px 1fr minmax(240px, 300px)", overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: `${tIsGrowth ? 348 : 320}px minmax(0, 1fr) minmax(240px, 300px)`, overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
         {/* ── TOP STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -3514,7 +3514,7 @@ Instructions:
             ); })}
           </div>
           {/* Stock list */}
-          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+          <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", scrollbarGutter: "stable" }}>
             {/* Sleeve summary (weighted averages) + column header */}
             <div style={{ position: "sticky", top: 0, zIndex: 1, background: C.surface }}>
               <div style={{ borderBottom: `1px solid ${C.border}`, padding: "6px 10px", display: "flex", justifyContent: "space-between", gap: 8 }}>
@@ -4435,97 +4435,200 @@ Instructions:
 
                   {/* ── WEIGHT COMP ── */}
                   {metricsSubView === "weightcomp" && (() => {
-                    const n = mSyms.length;
-                    if (!n) return <div style={tEyebrowMuted}>NO HOLDINGS</div>;
-                    const ew = 100 / n;
-                    const rows = mSyms.map(s => {
-                      const w = mWOf(s) || 0;
-                      const c = mQtd(s); // since rebalance (quarter-to-date vs anchor price)
-                      return { s, w, diff: w - ew, c, alpha: c != null ? (w - ew) * c / 100 : null };
-                    }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
-                    const totW = rows.reduce((x, r) => x + r.w, 0);
-                    const totAlpha = rows.reduce((x, r) => x + (r.alpha || 0), 0);
-                    let wSum = 0, wTot = 0, eSum = 0, eTot = 0;
-                    for (const r of rows) { if (r.c != null) { wSum += r.w * r.c; wTot += r.w; eSum += ew * r.c; eTot += ew; } }
-                    const wQ = wTot > 0 ? wSum / wTot : null;
-                    const eQ = eTot > 0 ? eSum / eTot : null;
-                    return (
-                      <div style={{ maxWidth: 640 }}>
-                        <div style={{ display: "flex", gap: 20, marginBottom: 10 }}>
-                          {[{ l: "WT QTD", v: wQ }, { l: "EW QTD", v: eQ }, { l: "QTD ALPHA", v: (wQ != null && eQ != null) ? wQ - eQ : null }].map(({ l, v }) => (
-                            <span key={l} style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
-                              <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{l}</span>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: mUpDn(v) }}>{mFmtSgn(v) ?? "—"}</span>
-                            </span>
-                          ))}
+                    const syms = mSyms;
+                    if (!syms.length) return <div style={tEyebrowMuted}>NO HOLDINGS</div>;
+                    const tw = TARGET_WEIGHTS[metricsView] || {};
+                    const ew = 100 / syms.length;
+                    const ap = anchorPrices?.prices || REBALANCE_ANCHORS;
+                    const getW = s => liveWeights[metricsView]?.[s] ?? tw[s] ?? 0;
+                    // Drifted equal weights — each stock starts at ew% and drifts with price (matches classic)
+                    let eqDriftTotal = 0; const eqDrift = {};
+                    for (const s of syms) { const anc = ap[s], cur = (quotesRef.current[s] || quotes[s])?.p; const g = (anc && cur) ? cur / anc : 1; eqDrift[s] = ew * g; eqDriftTotal += eqDrift[s]; }
+                    const getEW = s => eqDriftTotal > 0 ? (eqDrift[s] / eqDriftTotal) * 100 : ew;
+                    // Daily + since-rebalance, weighted vs drifted-equal
+                    let wDaySum = 0, wDayTot = 0, eDaySum = 0, eDayTot = 0;
+                    let wRebSum = 0, wRebTot = 0, eRebSum = 0, eRebTot = 0;
+                    const rows = [];
+                    for (const s of syms) {
+                      const c = mDayChg(s);
+                      const w = getW(s), ewD = getEW(s);
+                      const q = (quotesRef.current[s] || quotes[s])?.p;
+                      const anc = ap[s];
+                      const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
+                      if (c != null) { wDaySum += w * c; wDayTot += w; eDaySum += ewD * c; eDayTot += ewD; }
+                      if (sinceReb != null) { wRebSum += w * sinceReb; wRebTot += w; eRebSum += ewD * sinceReb; eRebTot += ewD; }
+                      rows.push({ s, w, ewD, c, sinceReb, wContribDay: c != null ? w * c / 100 : null, eContribDay: c != null ? ewD * c / 100 : null });
+                    }
+                    const wDay = sleeveActualDay(metricsView) ?? (wDayTot > 0 ? wDaySum / wDayTot : null);
+                    const eDay = eDayTot > 0 ? eDaySum / eDayTot : null;
+                    const dayAlpha = (wDay != null && eDay != null) ? wDay - eDay : null;
+                    const wReb = wRebTot > 0 ? wRebSum / wRebTot : null;
+                    const eReb = eRebTot > 0 ? eRebSum / eRebTot : null;
+                    const rebAlpha = (wReb != null && eReb != null) ? wReb - eReb : null;
+                    rows.sort((a, b) => Math.abs(b.wContribDay ?? 0) - Math.abs(a.wContribDay ?? 0));
+                    const fmtP = (v, dp = 2) => v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(dp)}%` : "—";
+                    const cR = v => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
+                    const summaryCol = (label, w, e, alpha, dp = 2) => (
+                      <div>
+                        <div style={{ ...tEyebrow, paddingBottom: 4, borderBottom: `1px solid ${C.accent}33`, marginBottom: 6 }}>{label}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                          <span style={tEyebrowMuted}>Weighted</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: cR(w) }}>{fmtP(w, dp)}</span>
                         </div>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                          <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                            <th style={tTh("left", false)}>Ticker</th>
-                            {["Wt%", "EW%", "Diff", "QTD%", "QTD Alpha"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
-                          </tr></thead>
-                          <tbody>
-                            {rows.map(r => (
-                              <tr key={r.s} style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                                <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{r.s}</td>
-                                <td style={tTd()}>{r.w.toFixed(1)}%</td>
-                                <td style={{ ...tTd(), color: C.t3 }}>{ew.toFixed(1)}%</td>
-                                <td style={{ ...tTd(), color: mUpDn(r.diff) }}>{r.diff >= 0 ? "+" : ""}{r.diff.toFixed(1)}%</td>
-                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.c) }}>{mFmtSgn(r.c) ?? mDash}</td>
-                                <td style={{ ...tTd(), fontWeight: 600, color: mUpDn(r.alpha) }}>{r.alpha != null ? `${r.alpha >= 0 ? "+" : ""}${r.alpha.toFixed(3)}%` : mDash}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot>
-                            <tr style={{ borderTop: `2px solid ${C.accent}` }}>
-                              <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>TOTAL</td>
-                              <td style={{ ...tTd(), fontWeight: 700, color: C.t1 }}>{totW.toFixed(1)}%</td>
-                              <td style={{ ...tTd(), fontWeight: 700, color: C.t3 }}>100.0%</td>
-                              <td style={{ ...tTd(), color: C.t4 }}>—</td>
-                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(wQ) }}>{mFmtSgn(wQ) ?? "—"}</td>
-                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(totAlpha) }}>{totAlpha >= 0 ? "+" : ""}{totAlpha.toFixed(3)}%</td>
-                            </tr>
-                          </tfoot>
-                        </table>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: `1px solid ${C.border}` }}>
+                          <span style={tEyebrowMuted}>Equal Wt (Drifted)</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: cR(e) }}>{fmtP(e, dp)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                          <span style={{ ...tEyebrowMuted, color: C.t2 }}>ALPHA</span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: cR(alpha) }}>{fmtP(alpha, dp)}</span>
+                        </div>
+                      </div>
+                    );
+                    return (
+                      <div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, marginBottom: 18, maxWidth: 700 }}>
+                          {summaryCol("Today", wDay, eDay, dayAlpha, 2)}
+                          {summaryCol("Since Rebalance", wReb, eReb, rebAlpha, 1)}
+                        </div>
+                        <div style={{ width: "100%", overflowX: "auto", border: `1px solid ${C.border}` }}>
+                          <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: 640 }}>
+                            <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <th style={tTh("left", false)}>Ticker</th>
+                              {["Wt%", "EW%", "Diff", "Day Chg", "Day Contrib", "Since Reb"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
+                            </tr></thead>
+                            <tbody>
+                              {rows.map(r => {
+                                const diff = r.w - r.ewD;
+                                return (
+                                  <tr key={r.s} style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                    <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{r.s}</td>
+                                    <td style={tTd()}>{r.w.toFixed(1)}%</td>
+                                    <td style={{ ...tTd(), color: C.t3 }}>{r.ewD.toFixed(1)}%</td>
+                                    <td style={{ ...tTd(), color: cR(diff) }}>{diff >= 0 ? "+" : ""}{diff.toFixed(1)}%</td>
+                                    <td style={{ ...tTd(), fontWeight: 600, color: cR(r.c) }}>{fmtP(r.c, 2)}</td>
+                                    <td style={{ ...tTd(), fontWeight: 600, color: cR(r.wContribDay) }}>{r.wContribDay != null ? `${r.wContribDay >= 0 ? "+" : ""}${r.wContribDay.toFixed(3)}%` : "—"}</td>
+                                    <td style={{ ...tTd(), fontWeight: 600, color: cR(r.sinceReb) }}>{fmtP(r.sinceReb, 1)}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     );
                   })()}
 
-                  {/* ── Q1 v Q2 ── */}
+                  {/* ── Q1 v Q2 (matches classic computation) ── */}
                   {metricsSubView === "qvq" && (() => {
                     const Q1_STOCKS = {
                       dividend: ["ABT","A","ADI","ATO","ADP","BKH","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","MATX","NEE","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"],
                       growth: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","EIX","FINV","FTNT","GFI","SUPV","HRMY","HUT","HOOD","KEYS","MARA","NVDA","NXPI","OKE","PDD","SYF","TSM","TOL"],
                     };
-                    const q1Syms = Q1_STOCKS[metricsView] || [];
+                    const sleeve = metricsView;
+                    const q1Syms = Q1_STOCKS[sleeve] || [];
                     if (!q1Syms.length) return <div style={tEyebrowMuted}>NO Q1 BASELINE FOR THIS SLEEVE</div>;
                     const q2Syms = mSyms;
+                    const tw = TARGET_WEIGHTS[sleeve] || {};
+                    const ap = REBALANCE_ANCHORS;
+                    const q1Ew = q1Syms.length ? 100 / q1Syms.length : 4;
+                    const fmtP = v => v != null ? `${v >= 0 ? "+" : ""}${v.toFixed(2)}%` : "—";
+                    const cR = v => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
+                    const calcPortfolio = (syms, getWeight) => {
+                      let wDaySum = 0, wDayTot = 0, wRebSum = 0, wRebTot = 0;
+                      for (const s of syms) {
+                        const c = mDayChg(s);
+                        const w = getWeight(s);
+                        const q = (quotesRef.current[s] || quotes[s])?.p;
+                        const anc = ap[s];
+                        const sinceReb = (anc && q) ? ((q - anc) / anc) * 100 : null;
+                        if (c != null && w > 0) { wDaySum += w * c; wDayTot += w; }
+                        if (sinceReb != null && w > 0) { wRebSum += w * sinceReb; wRebTot += w; }
+                      }
+                      return { day: wDayTot > 0 ? wDaySum / wDayTot : null, reb: wRebTot > 0 ? wRebSum / wRebTot : null };
+                    };
+                    const q2GetW = s => liveWeights[sleeve]?.[s] ?? tw[s] ?? 0;
+                    const q2 = calcPortfolio(q2Syms, q2GetW);
+                    const q2ActualDay = sleeveActualDay(sleeve);
+                    if (q2ActualDay !== null) q2.day = q2ActualDay;
+                    const q1Drift = {}; let q1DriftTotal = 0;
+                    for (const s of q1Syms) { const anc = ap[s], cur = (quotesRef.current[s] || quotes[s])?.p; const g = (anc && cur) ? cur / anc : 1; q1Drift[s] = q1Ew * g; q1DriftTotal += q1Drift[s]; }
+                    const q1GetW = s => q1DriftTotal > 0 ? (q1Drift[s] / q1DriftTotal) * 100 : q1Ew;
+                    const q1 = calcPortfolio(q1Syms, q1GetW);
+                    const dayAlpha = (q2.day != null && q1.day != null) ? q2.day - q1.day : null;
+                    const rebAlpha = (q2.reb != null && q1.reb != null) ? q2.reb - q1.reb : null;
                     const added = q2Syms.filter(s => !q1Syms.includes(s));
                     const removed = q1Syms.filter(s => !q2Syms.includes(s));
-                    const kept = q2Syms.filter(s => q1Syms.includes(s));
-                    const section = (label, list, color) => (
-                      <div key={label} style={{ marginBottom: 16 }}>
-                        <div style={{ ...tEyebrow, color, marginBottom: 6 }}>{label} ({list.length})</div>
-                        {!list.length ? <div style={{ ...tEyebrowMuted, fontSize: 9 }}>NONE</div> : list.map(s => {
-                          const qtd = mQtd(s);
-                          const ytd = fundamentals[s]?.ytd;
-                          return (
-                            <div key={s} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "3px 0", borderBottom: `1px solid ${C.border}` }}>
-                              <span style={{ fontSize: 11, fontWeight: 700, color: C.t1, width: 56, flexShrink: 0 }}>{s}</span>
-                              <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(qtd) }}>{mFmtSgn(qtd) ?? "—"}</span>
-                              <span style={{ ...tEyebrowMuted, fontSize: 8 }}>QTD</span>
-                              <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(ytd) }}>{mFmtSgn(ytd, 1) ?? "—"}</span>
-                              <span style={{ ...tEyebrowMuted, fontSize: 8 }}>YTD</span>
-                            </div>
-                          );
-                        })}
+                    const summaryCol = (label, q2v, q1v, alpha) => (
+                      <div>
+                        <div style={{ ...tEyebrow, paddingBottom: 4, borderBottom: `1px solid ${C.accent}33`, marginBottom: 6 }}>{label}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                          <span style={tEyebrowMuted}>Q2 (Current)</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: cR(q2v) }}>{fmtP(q2v)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: `1px solid ${C.border}` }}>
+                          <span style={tEyebrowMuted}>Q1 (Old EW)</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: cR(q1v) }}>{fmtP(q1v)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
+                          <span style={{ ...tEyebrowMuted, color: C.t2 }}>REBALANCE ALPHA</span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: cR(alpha) }}>{fmtP(alpha)}</span>
+                        </div>
                       </div>
                     );
                     return (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24, maxWidth: 920 }}>
-                        {section("Added", added, C.up)}
-                        {section("Removed", removed, C.dn)}
-                        {section("Kept", kept, C.t4)}
+                      <div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, marginBottom: 16, maxWidth: 700 }}>
+                          {summaryCol("Today", q2.day, q1.day, dayAlpha)}
+                          {summaryCol("Since Rebalance", q2.reb, q1.reb, rebAlpha)}
+                        </div>
+                        {(added.length > 0 || removed.length > 0) && (
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                            {added.map(s => <span key={s} style={{ fontSize: 10, fontWeight: 700, color: C.up, border: `1px solid ${C.up}55`, padding: "3px 8px" }}>+ {s}</span>)}
+                            {removed.map(s => <span key={s} style={{ fontSize: 10, fontWeight: 700, color: C.dn, border: `1px solid ${C.dn}55`, padding: "3px 8px" }}>− {s}</span>)}
+                          </div>
+                        )}
+                        <div style={{ width: "100%", overflowX: "auto", border: `1px solid ${C.border}` }}>
+                          <table style={{ borderCollapse: "collapse", fontSize: 11, minWidth: 580 }}>
+                            <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                              <th style={tTh("left", false)}>Ticker</th>
+                              <th style={tTh("right", false)}>Status</th>
+                              <th style={tTh("right", false)}>Q1 Wt%</th>
+                              <th style={tTh("right", false)}>Q2 Wt%</th>
+                              <th style={tTh("right", false)}>Day Chg</th>
+                              <th style={tTh("right", false)}>Since Reb</th>
+                            </tr></thead>
+                            <tbody>
+                              {[...new Set([...q2Syms, ...q1Syms])].sort((a, b) => {
+                                const aA = added.includes(a), bA = added.includes(b);
+                                const aR = removed.includes(a), bR = removed.includes(b);
+                                if (aA && !bA) return -1; if (!aA && bA) return 1;
+                                if (aR && !bR) return -1; if (!aR && bR) return 1;
+                                const aReb = (quotesRef.current[a] || quotes[a])?.p && ap[a] ? (((quotesRef.current[a] || quotes[a]).p - ap[a]) / ap[a]) * 100 : 0;
+                                const bReb = (quotesRef.current[b] || quotes[b])?.p && ap[b] ? (((quotesRef.current[b] || quotes[b]).p - ap[b]) / ap[b]) * 100 : 0;
+                                return Math.abs(bReb) - Math.abs(aReb);
+                              }).map(s => {
+                                const isAdded = added.includes(s);
+                                const isRemoved = removed.includes(s);
+                                const c = mDayChg(s);
+                                const q = (quotesRef.current[s] || quotes[s])?.p;
+                                const sinceReb = (ap[s] && q) ? ((q - ap[s]) / ap[s]) * 100 : null;
+                                const q1w = q1Syms.includes(s) ? q1GetW(s) : null;
+                                const q2w = q2Syms.includes(s) ? q2GetW(s) : null;
+                                return (
+                                  <tr key={s} style={{ borderBottom: `1px solid ${C.border}`, background: isAdded ? C.up + "10" : isRemoved ? C.dn + "10" : "transparent" }} onMouseEnter={e => e.currentTarget.style.background = isAdded ? C.up + "20" : isRemoved ? C.dn + "20" : C.cardHover} onMouseLeave={e => e.currentTarget.style.background = isAdded ? C.up + "10" : isRemoved ? C.dn + "10" : "transparent"}>
+                                    <td style={{ ...tTd("left"), fontWeight: 700, color: C.accent }}>{s}</td>
+                                    <td style={{ ...tTd(), fontSize: 10, fontWeight: 700, color: isAdded ? C.up : isRemoved ? C.dn : C.t4 }}>{isAdded ? "NEW" : isRemoved ? "OUT" : "KEPT"}</td>
+                                    <td style={{ ...tTd(), color: q1w != null ? C.t2 : C.t4 }}>{q1w != null ? q1w.toFixed(1) + "%" : "—"}</td>
+                                    <td style={{ ...tTd(), color: q2w != null ? C.t2 : C.t4 }}>{q2w != null ? q2w.toFixed(1) + "%" : "—"}</td>
+                                    <td style={{ ...tTd(), fontWeight: 600, color: cR(c) }}>{fmtP(c)}</td>
+                                    <td style={{ ...tTd(), fontWeight: 600, color: cR(sinceReb) }}>{fmtP(sinceReb)}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     );
                   })()}
