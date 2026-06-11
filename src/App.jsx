@@ -3686,15 +3686,19 @@ Instructions:
             {/* Sleeve summary (weighted averages) + column header */}
             <div style={{ position: "sticky", top: 0, zIndex: 1, background: C.surface }}>
               <div style={{ borderBottom: `1px solid ${C.border}`, padding: "6px 10px", display: "flex", justifyContent: "space-between", gap: 8 }}>
-                {[
-                  ...(tIsEtfSleeve ? [] : [
-                    { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
-                    { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
-                    { l: "QTD", v: tAvgQtd != null ? pct(tAvgQtd) : null, c: tAvgQtd == null ? null : tAvgQtd >= 0 ? C.up : C.dn },
-                  ]),
-                  ...(tIsDividend ? [{ l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null }] : []),
-                  ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
-                ].map(({ l, v, c }) => (
+                {(() => {
+                  // Sleeve's weighted total day change — matches the live portfolio NAV % move.
+                  // Uses the same calc as sleeveActualDay (shares × current price vs prev close).
+                  const sleeveDay = sleeveActualDay(tChartSleeve);
+                  return [
+                    ...(tIsEtfSleeve ? [] : [
+                      { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
+                      { l: "DAY", v: sleeveDay != null ? pct(sleeveDay) : null, c: sleeveDay == null ? null : sleeveDay >= 0 ? C.up : C.dn },
+                    ]),
+                    ...(tIsDividend ? [{ l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null }] : []),
+                    ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
+                  ];
+                })().map(({ l, v, c }) => (
                   <span key={l} style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
                     <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.accent }}>{l}</span>
                     <span style={{ fontSize: 10, fontWeight: 700, color: v != null ? (c || C.t1) : C.t4 }}>{v ?? "—"}</span>
@@ -3706,7 +3710,7 @@ Instructions:
                   { l: "SYM", k: "sym", w: tIsEtfSleeve ? 72 : 48, a: "left" },
                   { l: "PRICE", k: "price", w: tIsEtfSleeve ? 72 : 54 },
                   { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
-                  ...(tIsEtfSleeve ? [] : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "COMP", k: "comp", w: 34 }]),
+                  ...(tIsEtfSleeve ? [] : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
                   ...(tIsGrowth ? [{ l: "PEG", k: "peg", w: 28 }] : []),
                 ].map(h => {
                   const active = tWatchSort.col === h.k;
@@ -3725,7 +3729,7 @@ Instructions:
                 chg: s => { const q = quotesRef.current[s] || quotes[s]; const b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; },
                 qtd: s => tQtdOf(s),
                 pe: s => fundamentals[s]?.peTTM,
-                comp: s => screenerByTicker[s]?.overall_score,
+                wt: s => liveWeights[tChartSleeve]?.[s] ?? TARGET_WEIGHTS[tChartSleeve]?.[s] ?? null,
                 peg: s => fundamentals[s]?.pegTTM,
               };
               return [...tSleeveSyms].sort((a, b) => {
@@ -3745,14 +3749,22 @@ Instructions:
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
                 <span style={{ width: tIsEtfSleeve ? 72 : 48, flexShrink: 0, display: "flex", flexDirection: "column", lineHeight: 1.1, overflow: "hidden" }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                  <span style={{ display: "flex", alignItems: "baseline", gap: 4, overflow: "hidden" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                    {!tIsEtfSleeve && comp != null && (
+                      <span title={`Composite ${comp}`} style={{ fontSize: 8, fontWeight: 700, color: comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp}</span>
+                    )}
+                  </span>
                   {(() => { const s = f?.sector; return s ? (<span title={s} style={{ fontSize: 8, color: C.t4, letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortSector(s)}</span>) : null; })()}
                 </span>
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>}
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
-                {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 700, width: 34, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>}
+                {!tIsEtfSleeve && (() => {
+                  const w = liveWeights[tChartSleeve]?.[sym] ?? TARGET_WEIGHTS[tChartSleeve]?.[sym];
+                  return <span style={{ fontSize: 10, fontWeight: 600, width: 34, flexShrink: 0, textAlign: "right", color: w != null ? C.t2 : C.t4 }}>{w != null ? w.toFixed(1) : "—"}</span>;
+                })()}
                 {tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
               </div>
             ); })}
@@ -5578,12 +5590,37 @@ Instructions:
           {/* Sleeves + Benchmarks + Bear Probability (Portfolio Summary removed) */}
           <div style={{ flex: "0 0 auto", maxHeight: "58%", borderBottom: `1px solid ${C.border}`, padding: "8px 12px", overflowY: "auto" }}>
             <div style={{ ...tEyebrow, marginBottom: 4 }}>Sleeves</div>
-            {tSleeveKeys.filter(k => k !== "sectors" && k !== "digital").map(k => { const sc = sleeveActualDay(k); return (
-              <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 11 }}>
-                <span style={{ color: C.t2 }}>{sleeves[k]?.name || k}</span>
-                <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600 }}>{sc != null ? pct(sc) : "—"}</span>
-              </div>
-            ); })}
+            {(() => {
+              const SLEEVE_BMS = { dividend: ["DVY", "SPY"], growth: ["IUSG", "SPY"], fci100: ["SPY"], fciValues: ["SPY"] };
+              const bmDayOf = b => {
+                const q = bmQuotes[b] || quotesRef.current?.[b];
+                const bar = bmBars[b] || barsRef.current?.[b];
+                return (q?.p && bar?.pc) ? ((q.p - bar.pc) / bar.pc) * 100 : null;
+              };
+              return tSleeveKeys.filter(k => k !== "sectors" && k !== "digital").map(k => {
+                const sc = sleeveActualDay(k);
+                const bms = SLEEVE_BMS[k] || [];
+                const spreads = bms.map(b => ({ sym: b, alpha: (() => { const bd = bmDayOf(b); return (sc != null && bd != null) ? sc - bd : null; })() }));
+                return (
+                  <div key={k} style={{ padding: "3px 0", borderBottom: `1px dotted ${C.border}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
+                      <span style={{ color: C.t2 }}>{sleeves[k]?.name || k}</span>
+                      <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600 }}>{sc != null ? pct(sc) : "—"}</span>
+                    </div>
+                    {spreads.length > 0 && (
+                      <div style={{ display: "flex", gap: 10, fontSize: 9, color: C.t4, marginTop: 1 }}>
+                        {spreads.map(s => (
+                          <span key={s.sym}>
+                            vs {s.sym}{" "}
+                            <span style={{ color: s.alpha == null ? C.t4 : s.alpha >= 0 ? C.up : C.dn, fontWeight: 600 }}>{s.alpha != null ? `${s.alpha >= 0 ? "+" : ""}${s.alpha.toFixed(2)}%` : "—"}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+            })()}
             <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Benchmarks</div>
             {RAIL_BENCHMARKS.map((sym, i) => {
               const q = bmQuotes[sym] || quotesRef.current?.[sym] || quotes[sym];
