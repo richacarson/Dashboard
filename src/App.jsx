@@ -1064,11 +1064,25 @@ Instructions:
         const html = await r.text();
         if (cancelled) return;
         const doc = new DOMParser().parseFromString(html, "text/html");
-        doc.querySelectorAll("script, link, style, nav, header, footer, .header, .footer, .nav, .sidebar, button, input").forEach(el => el.remove());
+        doc.querySelectorAll("script, link, style, nav, header, footer, .header, .footer, .nav, .sidebar, button, input, form").forEach(el => el.remove());
+        // Strip ALL images (internal — no logos needed)
+        doc.querySelectorAll("img, svg, picture").forEach(el => el.remove());
+        // Strip disclosure/disclaimer/legal sections — match by class, id, or heading text
+        doc.querySelectorAll(
+          ".disclosures, .disclosure, .disclaimer, .disclaimers, .legal, .footer-disclaimer, " +
+          "#disclosures, #disclosure, #disclaimer, #legal, .compliance, .footnotes"
+        ).forEach(el => el.remove());
+        // Strip any section whose heading contains "Disclosure" / "Disclaimer" / "Legal" / "Important Information"
+        doc.querySelectorAll("h1, h2, h3, h4, h5").forEach(h => {
+          const txt = (h.textContent || "").trim().toLowerCase();
+          if (/^(disclosures?|disclaimers?|legal|important information|risk disclosure|terms)\b/.test(txt)) {
+            let el = h;
+            while (el) { const next = el.nextSibling; el.remove(); el = next; }
+          }
+        });
         doc.querySelectorAll("[style]").forEach(el => el.removeAttribute("style"));
         const baseUrl = new URL(tBriefView.url);
         doc.querySelectorAll("a[href]").forEach(a => { try { a.href = new URL(a.getAttribute("href"), baseUrl).href; a.target = "_blank"; a.rel = "noopener noreferrer"; } catch {} });
-        doc.querySelectorAll("img[src]").forEach(img => { try { img.src = new URL(img.getAttribute("src"), baseUrl).href; } catch {} });
         setTBriefHtml(doc.body.innerHTML);
       } catch (e) {
         if (!cancelled) { console.warn("[brief]", e.message); setTBriefFailed(true); }
@@ -1140,22 +1154,20 @@ Instructions:
     try {
       const now = new Date();
       const etHour = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" })).getHours();
-      // Light during market hours (7 AM - 4 PM ET), terminal (near-black) otherwise
-      return (etHour >= 16 || etHour < 7) ? "terminal" : "light";
-    } catch { return "terminal"; }
+      // Light during market hours (7 AM - 4 PM ET), dark otherwise — used for classic layout
+      return (etHour >= 16 || etHour < 7) ? "dark" : "light";
+    } catch { return "dark"; }
   };
   const [theme, setTheme] = useState(() => {
     try {
       // "iown_theme_locked" = user explicitly chose a default; "iown_theme" = session toggle
       const locked = localStorage.getItem("iown_theme_locked");
-      // Migrate legacy "dark" → "terminal" (we no longer expose a separate dark theme)
-      if (locked === "dark") return "terminal";
       if (locked) return locked;
-      // Terminal layout defaults to terminal theme; classic layout uses market-hour auto
+      // Terminal layout defaults to terminal theme; classic layout uses market-hour auto (dark/light)
       const layout = localStorage.getItem("iown_layout") || "classic";
       if (layout === "terminal") return "terminal";
       return getAutoTheme();
-    } catch { return "terminal"; }
+    } catch { return "dark"; }
   });
   C = theme === "terminal" ? TERMINAL : theme === "light" ? LIGHT : DARK;
   // Toggle theme for this session only (doesn't change default)
@@ -2865,7 +2877,7 @@ Instructions:
           }
         }
         const baseV = intra[0].value;
-        const AGG = 3; // 3-minute candles
+        const AGG = 2; // 2-minute candles — ~195 per session (target ≥160)
         const candles = [];
         for (let i = 0; i < intra.length - 1; i += AGG) {
           const chunk = intra.slice(i, Math.min(i + AGG + 1, intra.length));
@@ -2918,8 +2930,8 @@ Instructions:
       const c = ((filtered[i].value / baseVal) - 1) * 100;
       dailyCandles.push({ date: filtered[i].date, o, c, h: Math.max(o, c), l: Math.min(o, c), rawVal: filtered[i].value });
     }
-    // Aggregate to weekly for long timeframes (>200 daily candles)
-    const useWeekly = dailyCandles.length > 200;
+    // Aggregate to weekly only when daily would exceed ~500 candles (keeps 1Y daily at ~252; 3Y -> weekly ~156; 5Y -> ~260)
+    const useWeekly = dailyCandles.length > 500;
     let candles;
     if (useWeekly) {
       candles = [];
@@ -3451,7 +3463,10 @@ Instructions:
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
     const tChartBg = "171738"; // terminal chart is always dark navy, regardless of theme
     const tvTheme = theme === "light" ? "light" : "dark";
-    const tChartUrlFor = (s) => `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${s}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&theme=${tvTheme}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=en`;
+    // Cream for light theme, near-black for terminal — strip the "#"
+    const tvBg = theme === "light" ? "FAF7F2" : (theme === "terminal" ? "020208" : "171738");
+    const tvTbBg = theme === "light" ? "F4EFE4" : (theme === "terminal" ? "070714" : "1F1F45");
+    const tChartUrlFor = (s) => `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${s}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&theme=${tvTheme}&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=en&backgroundColor=%23${tvBg}&toolbar_bg=%23${tvTbBg}`;
     const tChartUrl = tChartUrlFor(terminalActiveSym);
     const tNow = tClockNow.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
     const tAllNews = (() => { const seen = new Set(); return [...(news || []), ...(broadNews || [])].filter(a => { const k = a.id || a.headline; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50); })();
@@ -4705,37 +4720,44 @@ Instructions:
           {tBriefView ? (
             <>
               <style>{`
-                .brief-native { color: ${C.t2}; font-family: inherit; font-size: 13px; line-height: 1.7; }
-                .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; line-height: 1.25; margin: 1.4em 0 0.5em; }
-                .brief-native h1 { font-size: 20px; padding-bottom: 6px; border-bottom: 1px solid ${C.accent}55; }
-                .brief-native h2 { font-size: 14px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; padding-bottom: 4px; border-bottom: 1px solid ${C.border}; }
+                .brief-native { color: ${C.t2}; font-family: inherit; font-size: 14px; line-height: 1.8; max-width: none; }
+                .brief-native > * { display: block; }
+                .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; line-height: 1.3; margin: 1.8em 0 0.7em; display: block; }
+                .brief-native h1 { font-size: 22px; padding-bottom: 8px; border-bottom: 1px solid ${C.accent}55; margin-top: 0.5em; }
+                .brief-native h2 { font-size: 15px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.4px; font-weight: 600; padding-bottom: 5px; border-bottom: 1px solid ${C.border}; }
                 .brief-native h3 { font-size: 13px; color: ${C.t1}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-                .brief-native h4 { font-size: 11px; color: ${C.t3}; text-transform: uppercase; letter-spacing: 1px; }
-                .brief-native p { margin: 0.6em 0; }
+                .brief-native h4 { font-size: 11px; color: ${C.t3}; text-transform: uppercase; letter-spacing: 1.2px; }
+                .brief-native p { margin: 0.9em 0; display: block; }
                 .brief-native a { color: ${C.accent}; text-decoration: none; border-bottom: 1px dashed ${C.accent}66; }
                 .brief-native a:hover { border-bottom-style: solid; }
                 .brief-native strong, .brief-native b { color: ${C.t1}; font-weight: 700; }
                 .brief-native em, .brief-native i { color: ${C.t1}; font-style: italic; }
                 .brief-native code { background: ${C.elevated}; color: ${C.accent}; padding: 1px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
-                .brief-native pre { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px; overflow-x: auto; }
+                .brief-native pre { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px; overflow-x: auto; margin: 1em 0; }
                 .brief-native pre code { background: transparent; padding: 0; }
-                .brief-native blockquote { border-left: 3px solid ${C.accent}; padding-left: 16px; margin: 1em 0; color: ${C.t3}; font-style: italic; }
-                .brief-native ul, .brief-native ol { margin: 0.6em 0; padding-left: 24px; }
-                .brief-native li { margin: 0.3em 0; }
-                .brief-native img { max-width: 100%; height: auto; border: 1px solid ${C.border}; }
-                .brief-native table { width: 100%; border-collapse: collapse; margin: 1em 0; font-variant-numeric: tabular-nums; font-size: 12px; }
-                .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 6px 10px; text-align: left; border-bottom: 1px solid ${C.border}; }
-                .brief-native td { padding: 5px 10px; border-bottom: 1px solid ${C.border}; }
-                .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 1.8em 0; }
-                .brief-native .snapshot, .brief-native .data-box { background: ${C.surface}; border: 1px solid ${C.border}; padding: 10px 14px; margin: 0.8em 0; }
-                .brief-native .section-start { margin-top: 1.4em; padding-top: 0.6em; border-top: 1px solid ${C.border}; }
-                .brief-native .bullet { margin: 0.5em 0; padding-left: 14px; position: relative; }
-                .brief-native .bullet::before { content: "—"; color: ${C.accent}; position: absolute; left: 0; }
-                .brief-native .radar-group { border: 1px solid ${C.border}; padding: 10px 14px; margin: 0.8em 0; }
-                .brief-native .label, .brief-native .eyebrow { color: ${C.accent}; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; }
+                .brief-native blockquote { border-left: 3px solid ${C.accent}; padding-left: 16px; margin: 1.2em 0; color: ${C.t3}; font-style: italic; }
+                .brief-native ul, .brief-native ol { margin: 0.9em 0; padding-left: 24px; }
+                .brief-native li { margin: 0.5em 0; line-height: 1.7; }
+                .brief-native table { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-variant-numeric: tabular-nums; font-size: 12px; }
+                .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 8px 12px; text-align: left; border-bottom: 1px solid ${C.border}; }
+                .brief-native td { padding: 7px 12px; border-bottom: 1px solid ${C.border}; }
+                .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 2em 0; }
+                .brief-native div { display: block; }
+                .brief-native span { display: inline; }
+                .brief-native .snapshot { background: ${C.surface}; border: 1px solid ${C.border}; padding: 14px 18px; margin: 1em 0 1.5em; display: block; }
+                .brief-native .snapshot > * { display: inline-block; margin-right: 14px; padding-right: 14px; border-right: 1px solid ${C.border}; line-height: 1.4; }
+                .brief-native .snapshot > *:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+                .brief-native .data-box { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px 16px; margin: 1em 0; }
+                .brief-native .section-start { margin-top: 2em; padding-top: 1em; border-top: 1px solid ${C.border}; display: block; }
+                .brief-native .bullet { margin: 0.8em 0; padding-left: 18px; position: relative; display: block; }
+                .brief-native .bullet::before { content: "—"; color: ${C.accent}; position: absolute; left: 0; top: 0; }
+                .brief-native .radar-group { border: 1px solid ${C.border}; padding: 12px 16px; margin: 1em 0; display: block; }
+                .brief-native .radar-group > * { display: block; margin: 0.4em 0; }
+                .brief-native .label, .brief-native .eyebrow { color: ${C.accent}; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; display: block; margin-bottom: 4px; }
                 .brief-native .ticker, .brief-native .price { color: ${C.t1}; font-weight: 700; font-variant-numeric: tabular-nums; }
                 .brief-native .up { color: ${C.up}; }
                 .brief-native .down, .brief-native .dn { color: ${C.dn}; }
+                .brief-native br + br { display: none; }
               `}</style>
               <div style={{ display: "flex", alignItems: "center", padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                 <span style={{ ...tEyebrow, marginRight: 12 }}>{tBriefView.category ? tBriefView.category.toUpperCase() : "BRIEF"}</span>
@@ -5032,8 +5054,9 @@ Instructions:
             </>);
           })()}
         </div>
+        </>)}
 
-        {/* ── RIGHT PANEL ── */}
+        {/* ── RIGHT PANEL (always visible — even when a drawer is open) ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* Portfolio Summary (sized to content so Bear Probability stays visible) */}
           <div style={{ flex: "0 0 auto", maxHeight: "58%", borderBottom: `1px solid ${C.border}`, padding: "8px 12px", overflowY: "auto" }}>
@@ -5041,7 +5064,7 @@ Instructions:
             {tPortfolioVal && <div style={{ fontSize: 20, fontWeight: 700, color: C.t1 }}>${tPortfolioVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
             {tDayChg != null && <div style={{ fontSize: 12, fontWeight: 600, color: tDayChg >= 0 ? C.up : C.dn, marginBottom: 8 }}>{tDayChg >= 0 ? "+" : ""}{tDayChgDollar?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({pct(tDayChg)})</div>}
             <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Sleeves</div>
-            {tSleeveKeys.map(k => { const sc = sleeveActualDay(k); return (
+            {tSleeveKeys.filter(k => k !== "sectors" && k !== "digital").map(k => { const sc = sleeveActualDay(k); return (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 11 }}>
                 <span style={{ color: C.t2 }}>{sleeves[k]?.name || k}</span>
                 <span style={{ color: sc != null ? (sc >= 0 ? C.up : C.dn) : C.t4, fontWeight: 600 }}>{sc != null ? pct(sc) : "—"}</span>
@@ -5119,22 +5142,30 @@ Instructions:
                   <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{`${report.date || ""}${report.author ? " · " + report.author : ""}`}</div>
                 </div>
               )))}
-              {tRailView === "briefs" && (!tBriefIndex.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>LOADING BRIEFS</div> : tBriefIndex.slice(0, 50).map((b, i) => (
-                <div key={b.url + i} onClick={() => { setTBriefView({ title: b.title, category: b.category, url: b.url }); setTDrawer(null); setTProfileSym(null); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                    <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent }}>{b.category}</span>
-                    <span style={{ fontSize: 9, color: C.t4 }}>{b.date}</span>
+              {tRailView === "briefs" && (!tBriefIndex.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>LOADING BRIEFS</div> : [
+                { cat: "Morning Brief", desc: "Daily pre-market analysis" },
+                { cat: "Market Commentary", desc: "Market outlook & strategy" },
+                { cat: "The Rich Report", desc: "Macro insights & thesis" },
+                { cat: "Quarterly Changes", desc: "Rebalance report" },
+              ].map(({ cat, desc }) => {
+                const latest = tBriefIndex.find(b => b.category === cat);
+                return (
+                  <div key={cat} onClick={() => { if (!latest) return; setTBriefView({ title: latest.title, category: latest.category, url: latest.url }); setTDrawer(null); setTProfileSym(null); }}
+                    style={{ padding: "8px 12px", borderBottom: `1px solid ${C.border}`, cursor: latest ? "pointer" : "not-allowed", opacity: latest ? 1 : 0.5 }}
+                    onMouseEnter={e => latest && (e.currentTarget.style.background = C.cardHover)} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                      <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent }}>{cat.toUpperCase()}</span>
+                      <span style={{ fontSize: 9, color: C.t4 }}>{latest?.date || "—"}</span>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: C.t1 }}>{latest?.title || cat}</div>
+                    <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{desc}</div>
                   </div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t1, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{b.title}</div>
-                  {b.subhead && <div style={{ fontSize: 10, color: C.t4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{b.subhead}</div>}
-                </div>
-              )))}
+                );
+              }))}
             </div>
           </div>
         </div>
 
-        </>)}
         {/* ── SECTION TABS ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", gap: 0, borderTop: `1px solid ${C.border}`, background: C.surface, flexShrink: 0 }}>
           {[
@@ -7546,18 +7577,6 @@ Instructions:
               icon: (c) => (<svg {...iconProps(c)}><rect x="6" y="4" width="12" height="17" rx="2" /><path d="M9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2h-6V4z" /><line x1="9" y1="11" x2="15" y2="11" /><line x1="9" y1="15" x2="13" y2="15" /></svg>) },
           ];
 
-          if (tBriefView) {
-            return (
-              <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20, display: "flex", flexDirection: "column", height: "calc(100vh - 100px)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                  <button onClick={() => setTBriefView(null)} style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 14px", color: C.t3, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>← Back to Briefs</button>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: C.t1 }}>{tBriefView.title}</div>
-                  <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.t4, textDecoration: "none" }}>Open in new tab ↗</a>
-                </div>
-                <iframe src={tBriefView.url} title={tBriefView.title} style={{ flex: 1, border: `1px solid ${C.border}`, borderRadius: 12, background: "#fff", width: "100%" }} />
-              </div>
-            );
-          }
           return (
             <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
               {!isDesktop && (
@@ -7569,7 +7588,7 @@ Instructions:
 
               <div style={{ display: isDesktop ? "grid" : "flex", gridTemplateColumns: isDesktop ? "repeat(3, 1fr)" : undefined, flexDirection: isDesktop ? undefined : "column", gap: 14 }}>
                 {BRIEFS.map(b => (
-                  <div key={b.id} onClick={() => setTBriefView({ title: b.title, url: b.url })} style={{
+                  <div key={b.id} onClick={() => window.open(b.url, "_blank", "noopener,noreferrer")} style={{
                     background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
                     padding: isDesktop ? "28px 24px" : "20px 18px",
                     cursor: "pointer", transition: "border-color 0.2s, transform 0.15s",
@@ -10559,7 +10578,7 @@ Instructions:
                 {localStorage.getItem("iown_theme_locked") ? `Locked to ${localStorage.getItem("iown_theme_locked")} mode` : "Auto: light during market hours, dark after close"}
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                {[{ v: "terminal", l: "Terminal" }, { v: "light", l: "Light" }].map(({ v, l }) => (
+                {[{ v: "dark", l: "Dark" }, { v: "light", l: "Light" }].map(({ v, l }) => (
                   <button key={v} onClick={() => toggleTheme(v)} style={{
                     flex: 1, padding: "10px 0", borderRadius: 10,
                     border: `1px solid ${theme === v ? C.borderActive : C.border}`,
