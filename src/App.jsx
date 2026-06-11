@@ -1002,17 +1002,19 @@ Instructions:
   const [tBriefHtml, setTBriefHtml] = useState("");
   const [tBriefLoading, setTBriefLoading] = useState(false);
   const [tBriefFailed, setTBriefFailed] = useState(false);
-  // Build the brief index from rich-report (morning briefs + Rich Report + quarterly) and IOWN-data (commentary)
+  // Build the brief index from rich-report (morning briefs + Rich Report + quarterly) and IOWN-data (commentary).
+  // We serve cache instantly (if any) so the UI renders fast, then always kick off a fresh fetch in the background.
+  // This guarantees the morning brief routine that runs at 5am ET is visible by the time the user opens the app,
+  // and that a brief published during an active session shows up within seconds of the next mount/refresh.
   useEffect(() => {
     let cancelled = false;
+    // Step 1: hydrate from cache immediately
+    try {
+      const cached = JSON.parse(localStorage.getItem("iown_brief_index_v1") || "{}");
+      if (cached.list && Array.isArray(cached.list)) setTBriefIndex(cached.list);
+    } catch {}
+    // Step 2: always refetch in the background
     (async () => {
-      try {
-        const cached = JSON.parse(localStorage.getItem("iown_brief_index_v1") || "{}");
-        if (cached.list && Date.now() - (cached.ts || 0) < 60 * 60 * 1000) { // 1h cache
-          if (!cancelled) setTBriefIndex(cached.list);
-          return;
-        }
-      } catch {}
       const list = [];
       try {
         // Morning briefs — GitHub Contents API listing the briefs/ folder
@@ -5157,7 +5159,7 @@ Instructions:
                       <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent }}>{cat.toUpperCase()}</span>
                       <span style={{ fontSize: 9, color: C.t4 }}>{latest?.date || "—"}</span>
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: C.t1 }}>{latest?.title || cat}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: C.t1 }}>{cat}</div>
                     <div style={{ fontSize: 10, color: C.t4, marginTop: 2 }}>{desc}</div>
                   </div>
                 );
