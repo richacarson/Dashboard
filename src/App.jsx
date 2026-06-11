@@ -3351,7 +3351,7 @@ Instructions:
     const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "260px 1fr minmax(240px, 300px)", overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: "320px 1fr minmax(240px, 300px)", overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
         {/* ── TOP STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -3406,11 +3406,11 @@ Instructions:
               </div>
               <div style={{ padding: "4px 10px", borderBottom: `1px solid ${C.border}`, background: C.surface, display: "flex", alignItems: "center", justifyContent: "space-between", borderLeft: "2px solid transparent", boxSizing: "border-box" }}>
                 {[
-                  { l: "SYM", w: tIsEtfSleeve ? 56 : 38, a: "left" },
-                  { l: "PRICE", w: tIsEtfSleeve ? 60 : 42 },
-                  { l: "CHG%", w: tIsEtfSleeve ? 54 : 38 },
-                  { l: "QTD%", w: tIsEtfSleeve ? 54 : 38 },
-                  ...(tIsEtfSleeve ? [] : [{ l: "P/E", w: 28 }, { l: "COMP", w: 26 }]),
+                  { l: "SYM", w: tIsEtfSleeve ? 72 : 48, a: "left" },
+                  { l: "PRICE", w: tIsEtfSleeve ? 72 : 54 },
+                  { l: "CHG%", w: tIsEtfSleeve ? 62 : 48 },
+                  { l: "QTD%", w: tIsEtfSleeve ? 62 : 48 },
+                  ...(tIsEtfSleeve ? [] : [{ l: "P/E", w: 36 }, { l: "COMP", w: 34 }]),
                   ...(tIsGrowth ? [{ l: "PEG", w: 28 }] : []),
                   ...(tIsDividend ? [{ l: "YLD", w: 28 }] : []),
                 ].map(h => (
@@ -3423,14 +3423,14 @@ Instructions:
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: tIsEtfSleeve ? 56 : 38, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
-                <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 60 : 42, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 54 : 38, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 54 : 38, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>
-                {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
-                {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 700, width: 26, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>}
-                {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
-                {tIsDividend && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.yieldFwd != null ? C.t2 : C.t4 }}>{f?.yieldFwd != null ? `${f.yieldFwd.toFixed(1)}%` : "—"}</span>}
+                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: tIsEtfSleeve ? 72 : 48, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>
+                {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
+                {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 700, width: 34, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>}
+                {tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
+                {tIsDividend && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.yieldFwd != null ? C.t2 : C.t4 }}>{f?.yieldFwd != null ? `${f.yieldFwd.toFixed(1)}%` : "—"}</span>}
               </div>
             ); })}
           </div>
