@@ -143,16 +143,16 @@ const LIGHT = {
   shadow: "0 1px 3px rgba(23,23,56,0.08), 0 1px 2px rgba(23,23,56,0.04)",
 };
 const TERMINAL = {
-  bg: "#0E0E26", surface: "#13132E", card: "#171738", cardHover: "#1F1F45", elevated: "#252551",
+  bg: "#020208", surface: "#070714", card: "#0C0C1E", cardHover: "#15152F", elevated: "#1C1C3D",
   border: "rgba(201,168,76,0.14)", borderHover: "rgba(201,168,76,0.24)", borderActive: "rgba(201,168,76,0.50)",
   t1: "#FAF7F2", t2: "#F4EFE4", t3: "#B8B4AC", t4: "#8B7355",
   up: "#34D399", upSoft: "#34D39920", upGlow: "#34D39940",
   dn: "#F87171", dnSoft: "#F8717120", dnGlow: "#F8717140",
   accent: "#C9A84C", accentSoft: "rgba(201,168,76,0.14)", accentGlow: "rgba(201,168,76,0.32)",
   warn: "#D9A441",
-  nav: "#0E0E26", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
+  nav: "#020208", navText: "#FAF7F2", navTextDim: "#B8B4AC", navTextMuted: "#8B7355",
   navBorder: "rgba(201,168,76,0.14)", navAccentSoft: "rgba(201,168,76,0.14)",
-  shadow: "0 2px 8px rgba(14,14,38,0.35)",
+  shadow: "0 2px 8px rgba(0,0,0,0.50)",
   isTerminal: true,
 };
 /* ── Benchmark overlay colors (muted, brand-adjacent) ── */
