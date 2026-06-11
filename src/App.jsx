@@ -4345,25 +4345,16 @@ Instructions:
               })())}
               {tDrawer === "performance" && (() => {
                 const SLEEVES_PERF = ["dividend", "growth", "fci100", "fciValues"];
-                // Find value at or before a target date (portfolio is ascending by date)
-                const valueAt = (portfolio, targetDateStr) => {
-                  if (!portfolio?.length) return null;
-                  for (let i = portfolio.length - 1; i >= 0; i--) if (portfolio[i].date <= targetDateStr) return portfolio[i].value;
-                  return null;
-                };
-                const today = new Date();
-                const yyyy = today.getFullYear();
-                const q = Math.floor(today.getMonth() / 3);
-                const qStart = `${yyyy}-${String(q * 3 + 1).padStart(2, "0")}-01`;
-                const yStart = `${yyyy}-01-01`;
-                const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const qm = Math.floor(now.getMonth() / 3) * 3;
+                const qtrStartDate = `${yyyy}-${String(qm + 1).padStart(2, "0")}-01`; // April 1 etc
+                const yearEnd = `${yyyy - 1}-12-31`;
+                // Live NAV for each sleeve (active sleeve gets liveValue, others compute from quotes × holdings)
                 const sleeveCurrentVal = k => {
                   const data = perfDataMap[k];
                   if (!data?.portfolio?.length) return null;
-                  // Active sleeve uses the live WS value as before
                   if (liveValue && perfSleeve === k) return liveValue.value;
-                  // Every other sleeve: compute live NAV from holdings × current quotes
-                  // (same pattern as sleeveActualDay) so the table ticks for ALL sleeves
                   if (data.holdings) {
                     const cash = data.cash || 0;
                     let val = cash;
@@ -4375,66 +4366,84 @@ Instructions:
                   }
                   return data.portfolio[data.portfolio.length - 1].value;
                 };
-                const ret = (k, fromDate) => {
+                // Mirror classic Trailing Total Returns calculation exactly
+                // (see ~line 10914 getReturn)
+                const sleeveReturn = (k, period) => {
                   const data = perfDataMap[k];
-                  if (!data?.portfolio?.length) return null;
-                  const cur = sleeveCurrentVal(k);
-                  const past = valueAt(data.portfolio, fromDate);
-                  if (!cur || !past) return null;
-                  return ((cur / past) - 1) * 100;
-                };
-                // Classic QTD (matches Metrics > Weight Comp > Since Rebalance):
-                // weighted average of per-stock (current / REBALANCE_ANCHOR - 1) by sleeve weights.
-                // CRITICAL: iterate sleeves[k].symbols (the configured list) — NOT
-                // data.holdings — to match classic exactly; the perf snapshot's
-                // holdings can lag behind a rebalance edit.
-                const sleeveSinceRebalance = k => {
-                  const syms = sleeves[k]?.symbols || [];
-                  if (!syms.length) return null;
-                  const tw = TARGET_WEIGHTS[k] || {};
-                  const ap = REBALANCE_ANCHORS;
-                  let wSum = 0, wTot = 0;
-                  for (const sym of syms) {
-                    const q = (quotesRef.current[sym] || quotes[sym])?.p;
-                    const anc = ap[sym];
-                    if (!q || !anc) continue;
-                    const sinceReb = ((q - anc) / anc) * 100;
-                    const w = liveWeights[k]?.[sym] ?? tw[sym] ?? 0;
-                    if (w > 0) { wSum += w * sinceReb; wTot += w; }
+                  const portfolio = data?.portfolio;
+                  if (!portfolio?.length) return null;
+                  const endVal = sleeveCurrentVal(k);
+                  const endDate = new Date(portfolio[portfolio.length - 1].date + "T12:00:00");
+                  let startPt;
+                  if (period === "QTD") {
+                    startPt = [...portfolio].reverse().find(pt => pt.date < qtrStartDate);
+                  } else if (period === "YTD") {
+                    startPt = [...portfolio].reverse().find(pt => pt.date <= yearEnd);
+                  } else if (period === "INCEP") {
+                    startPt = portfolio[0];
+                  } else {
+                    const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[period];
+                    if (!days) return null;
+                    const cutoff = new Date(endDate.getTime() - days * 86400000).toISOString().slice(0, 10);
+                    startPt = portfolio.find(pt => pt.date >= cutoff) || portfolio[0];
                   }
-                  return wTot > 0 ? wSum / wTot : null;
+                  if (!startPt || !startPt.value || startPt.value <= 0 || !endVal) return null;
+                  const raw = (endVal / startPt.value - 1) * 100;
+                  // Annualize for 3Y / 5Y / INCEP when more than 1 year
+                  if (period === "3Y" || period === "5Y" || period === "INCEP") {
+                    const years = (endDate - new Date(startPt.date + "T12:00:00")) / (365.25 * 86400000);
+                    return years > 1 ? (Math.pow(endVal / startPt.value, 1 / years) - 1) * 100 : raw;
+                  }
+                  return raw;
                 };
-                // Benchmarks reference the REBALANCE_DATE (when the portfolio was
-                // re-set), not the calendar quarter start — using qStart here gave
-                // benchmark QTD numbers ~1 week off vs the sleeve QTD they're
-                // compared against in the same table.
-                const REBAL_DATE_STR = REBALANCE_DATE;
                 const ranges = [
                   { l: "DAY", fn: k => sleeveActualDay(k) },
-                  { l: "QTD", fn: k => sleeveSinceRebalance(k) },
-                  { l: "YTD", fn: k => ret(k, yStart) },
-                  { l: "1Y", fn: k => ret(k, daysAgo(365)) },
-                  { l: "3Y", fn: k => ret(k, daysAgo(365 * 3)) },
-                  { l: "5Y", fn: k => ret(k, daysAgo(365 * 5)) },
-                  { l: "INCEP", fn: k => { const p = perfDataMap[k]?.portfolio; return p?.length ? ret(k, p[0].date) : null; } },
+                  { l: "QTD", fn: k => sleeveReturn(k, "QTD") },
+                  { l: "YTD", fn: k => sleeveReturn(k, "YTD") },
+                  { l: "1Y", fn: k => sleeveReturn(k, "1Y") },
+                  { l: "3Y", fn: k => sleeveReturn(k, "3Y") },
+                  { l: "5Y", fn: k => sleeveReturn(k, "5Y") },
+                  { l: "INCEP", fn: k => sleeveReturn(k, "INCEP") },
                 ];
                 const sleeveNames = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
                 const fmtVal = v => v != null ? `$${v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)}` : "—";
                 const fmtR = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
                 const cR = v => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
                 // Benchmark return — uses perfDataMap[k].benchmarks dictionary keyed by date
-                const bmRet = (sleeveKey, bmSym, fromDate) => {
+                // Mirror classic getBmReturn (~line 10948) — last close BEFORE quarter calendar start, etc.
+                const bmReturn = (sleeveKey, bmSym, period) => {
                   const bm = perfDataMap[sleeveKey]?.benchmarks?.[bmSym];
                   if (!bm) return null;
-                  const dates = Object.keys(bm).sort();
-                  if (dates.length < 2) return null;
-                  // Find closest date >= fromDate (anchor past)
-                  let pastClose = null;
-                  for (const d of dates) { if (d >= fromDate) { pastClose = bm[d]; break; } }
-                  if (pastClose == null) pastClose = bm[dates[0]];
+                  const prices = Object.entries(bm).sort((a, b) => a[0].localeCompare(b[0]));
+                  if (!prices.length) return null;
                   const liveQ = (bmQuotes[bmSym] || quotesRef.current?.[bmSym])?.p;
-                  const current = liveQ || bm[dates[dates.length - 1]];
-                  return pastClose ? ((current / pastClose) - 1) * 100 : null;
+                  const lastPrice = (liveQ > 0) ? liveQ : prices[prices.length - 1][1];
+                  const lastDate = (liveQ > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
+                  let startPrice, startDate;
+                  if (period === "QTD") {
+                    const found = [...prices].reverse().find(([d]) => d < qtrStartDate);
+                    if (found) { startPrice = found[1]; startDate = found[0]; }
+                  } else if (period === "YTD") {
+                    const found = [...prices].reverse().find(([d]) => d <= yearEnd);
+                    if (found) { startPrice = found[1]; startDate = found[0]; }
+                  } else if (period === "INCEP") {
+                    const pStart = perfDataMap[sleeveKey]?.portfolio?.[0]?.date || prices[0][0];
+                    const found = prices.find(([d]) => d >= pStart);
+                    if (found) { startPrice = found[1]; startDate = found[0]; } else { startPrice = prices[0][1]; startDate = prices[0][0]; }
+                  } else {
+                    const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[period];
+                    if (!days) return null;
+                    const cutoff = new Date(lastDate.getTime() - days * 86400000).toISOString().slice(0, 10);
+                    const found = prices.find(([d]) => d >= cutoff);
+                    if (found) { startPrice = found[1]; startDate = found[0]; } else { startPrice = prices[0][1]; startDate = prices[0][0]; }
+                  }
+                  if (!startPrice || startPrice <= 0) return null;
+                  const raw = (lastPrice / startPrice - 1) * 100;
+                  if (period === "3Y" || period === "5Y" || period === "INCEP") {
+                    const years = (lastDate - new Date(startDate + "T12:00:00")) / (365.25 * 86400000);
+                    return years > 1 ? (Math.pow(lastPrice / startPrice, 1 / years) - 1) * 100 : raw;
+                  }
+                  return raw;
                 };
                 const bmDay = (bmSym) => {
                   const q = bmQuotes[bmSym] || quotesRef.current?.[bmSym];
@@ -4448,20 +4457,11 @@ Instructions:
                   { sleeve: "fci100", bms: ["SPY"] },
                   { sleeve: "fciValues", bms: ["SPY"] },
                 ];
-                const sleeveRet = (k, label, fromDate) => label === "DAY" ? sleeveActualDay(k) : ret(k, fromDate);
                 const renderSection = ({ sleeve, bms }) => {
                   const sleeveRow = { label: sleeveNames[sleeve], nav: sleeveCurrentVal(sleeve), returns: ranges.map(r => r.fn(sleeve)), isPortfolio: true, sleeve };
                   const bmRows = bms.map(bmSym => ({
                     label: bmSym, nav: null, isBm: true, sym: bmSym,
-                    returns: ranges.map(r => r.l === "DAY" ? bmDay(bmSym) : (
-                      r.l === "QTD" ? bmRet(sleeve, bmSym, REBAL_DATE_STR) :
-                      r.l === "YTD" ? bmRet(sleeve, bmSym, yStart) :
-                      r.l === "1Y" ? bmRet(sleeve, bmSym, daysAgo(365)) :
-                      r.l === "3Y" ? bmRet(sleeve, bmSym, daysAgo(365 * 3)) :
-                      r.l === "5Y" ? bmRet(sleeve, bmSym, daysAgo(365 * 5)) :
-                      r.l === "INCEP" ? bmRet(sleeve, bmSym, (perfDataMap[sleeve]?.portfolio?.[0]?.date) || daysAgo(365 * 10)) :
-                      null
-                    )),
+                    returns: ranges.map(r => r.l === "DAY" ? bmDay(bmSym) : bmReturn(sleeve, bmSym, r.l)),
                   }));
                   const allRows = [sleeveRow, ...bmRows];
                   return (
