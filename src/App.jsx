@@ -5140,12 +5140,9 @@ Instructions:
 
         {/* ── RIGHT PANEL (always visible — even when a drawer is open) ── */}
         <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {/* Portfolio Summary (sized to content so Bear Probability stays visible) */}
+          {/* Sleeves + Benchmarks + Bear Probability (Portfolio Summary removed) */}
           <div style={{ flex: "0 0 auto", maxHeight: "58%", borderBottom: `1px solid ${C.border}`, padding: "8px 12px", overflowY: "auto" }}>
-            <div style={{ ...tEyebrow, marginBottom: 6 }}>Portfolio</div>
-            {tPortfolioVal && <div style={{ fontSize: 20, fontWeight: 700, color: C.t1 }}>${tPortfolioVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
-            {tDayChg != null && <div style={{ fontSize: 12, fontWeight: 600, color: tDayChg >= 0 ? C.up : C.dn, marginBottom: 8 }}>{tDayChg >= 0 ? "+" : ""}{tDayChgDollar?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({pct(tDayChg)})</div>}
-            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Sleeves</div>
+            <div style={{ ...tEyebrow, marginBottom: 4 }}>Sleeves</div>
             {tSleeveKeys.filter(k => k !== "sectors" && k !== "digital").map(k => { const sc = sleeveActualDay(k); return (
               <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 11 }}>
                 <span style={{ color: C.t2 }}>{sleeves[k]?.name || k}</span>
