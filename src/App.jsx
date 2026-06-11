@@ -4807,10 +4807,11 @@ Instructions:
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Layout</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Default Layout</div>
+                  <div style={{ fontSize: 10, color: C.t4, marginBottom: 8, lineHeight: 1.5 }}>Saved across sessions — the dashboard reopens in your selected layout.</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
-                      <button key={v} onClick={() => { setLayoutMode(v); localStorage.setItem("iown_layout", v); if (v === "classic") setTDrawer(null); if (!localStorage.getItem("iown_theme_locked")) setTheme(v === "terminal" ? "terminal" : getAutoTheme()); }} style={{ flex: 1, padding: "8px 0", border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`, background: layoutMode === v ? C.accentSoft : "transparent", color: layoutMode === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
+                      <button key={v} onClick={() => { setLayoutMode(v); localStorage.setItem("iown_layout", v); if (v === "classic") setTDrawer(null); if (!localStorage.getItem("iown_theme_locked")) setTheme(v === "terminal" ? "terminal" : getAutoTheme()); }} style={{ flex: 1, padding: "8px 0", border: `1px solid ${layoutMode === v ? C.borderActive : C.border}`, background: layoutMode === v ? C.accentSoft : "transparent", color: layoutMode === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}{layoutMode === v ? " · Default" : ""}</button>
                     ))}
                   </div>
                 </div>
@@ -10784,8 +10785,8 @@ Instructions:
                 }}>Auto</button>
               </div>
               <div style={{ marginTop: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 6 }}>Layout</div>
-                <div style={{ fontSize: 11, color: C.t4, marginBottom: 8 }}>{isWide ? "Terminal mode shows a multi-panel grid (desktop only)" : "Terminal mode needs a wider window — DESKTOP ≥1180PX"}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 6 }}>Default Layout</div>
+                <div style={{ fontSize: 11, color: C.t4, marginBottom: 8 }}>{isWide ? "Your choice is saved — the dashboard reopens in this layout on every visit. Terminal mode shows a multi-panel grid (desktop only)." : "Terminal mode needs a wider window — DESKTOP ≥1180PX"}</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {[{ v: "classic", l: "Classic" }, { v: "terminal", l: "Terminal" }].map(({ v, l }) => (
                     <button key={v} onClick={() => { setTDrawer(null); setLayoutMode(v); try { localStorage.setItem("iown_layout", v); } catch {} if (!localStorage.getItem("iown_theme_locked")) setTheme(v === "terminal" ? "terminal" : getAutoTheme()); }} style={{
@@ -10794,7 +10795,7 @@ Instructions:
                       background: layoutMode === v ? C.accentSoft : "transparent",
                       color: layoutMode === v ? C.t1 : C.t3, fontSize: 13, fontWeight: 700,
                       cursor: "pointer", fontFamily: "inherit",
-                    }}>{l}</button>
+                    }}>{l}{layoutMode === v ? " · Default" : ""}</button>
                   ))}
                 </div>
               </div>
