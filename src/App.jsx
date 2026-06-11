@@ -1066,13 +1066,14 @@ Instructions:
         const html = await r.text();
         if (cancelled) return;
         const doc = new DOMParser().parseFromString(html, "text/html");
-        doc.querySelectorAll("script, link, style, nav, header, footer, .header, .footer, .nav, .sidebar, button, input, form").forEach(el => el.remove());
+        doc.querySelectorAll("script, link, style, nav, header, footer, .header, .footer, .nav, .nav-inner, .sidebar, button, input, form, .fab, .btt, .sec-tog").forEach(el => el.remove());
         // Strip ALL images (internal — no logos needed)
         doc.querySelectorAll("img, svg, picture").forEach(el => el.remove());
         // Strip disclosure/disclaimer/legal sections — match by class, id, or heading text
         doc.querySelectorAll(
           ".disclosures, .disclosure, .disclaimer, .disclaimers, .legal, .footer-disclaimer, " +
-          "#disclosures, #disclosure, #disclaimer, #legal, .compliance, .footnotes"
+          "#disclosures, #disclosure, #disclaimer, #legal, .compliance, .footnotes, " +
+          ".disc, .disc-sec, .sec-disc"
         ).forEach(el => el.remove());
         // Strip any section whose heading contains "Disclosure" / "Disclaimer" / "Legal" / "Important Information"
         doc.querySelectorAll("h1, h2, h3, h4, h5").forEach(h => {
@@ -4722,44 +4723,126 @@ Instructions:
           {tBriefView ? (
             <>
               <style>{`
-                .brief-native { color: ${C.t2}; font-family: inherit; font-size: 14px; line-height: 1.8; max-width: none; }
+                /* ── Editorial base ── */
+                .brief-native { color: ${C.t2}; font-family: inherit; font-size: 14px; line-height: 1.85; max-width: none; }
                 .brief-native > * { display: block; }
-                .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; line-height: 1.3; margin: 1.8em 0 0.7em; display: block; }
-                .brief-native h1 { font-size: 22px; padding-bottom: 8px; border-bottom: 1px solid ${C.accent}55; margin-top: 0.5em; }
-                .brief-native h2 { font-size: 15px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.4px; font-weight: 600; padding-bottom: 5px; border-bottom: 1px solid ${C.border}; }
-                .brief-native h3 { font-size: 13px; color: ${C.t1}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+                .brief-native > :first-child { margin-top: 0 !important; }
+                .brief-native div { display: block; }
+                .brief-native span { display: inline; }
+                .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; line-height: 1.35; margin: 2em 0 0.8em; display: block; }
+                .brief-native h1 { font-size: 22px; padding-bottom: 10px; border-bottom: 1px solid ${C.accent}55; margin-top: 0.5em; }
+                .brief-native h2, .brief-native .section-head { display: block; font-size: 14px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.6px; font-weight: 600; margin: 2.4em 0 1em; padding-bottom: 7px; border-bottom: 1px solid ${C.accent}44; line-height: 1.4; }
+                .brief-native h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
                 .brief-native h4 { font-size: 11px; color: ${C.t3}; text-transform: uppercase; letter-spacing: 1.2px; }
-                .brief-native p { margin: 0.9em 0; display: block; }
+                .brief-native p { margin: 1.1em 0; display: block; line-height: 1.85; }
                 .brief-native a { color: ${C.accent}; text-decoration: none; border-bottom: 1px dashed ${C.accent}66; }
                 .brief-native a:hover { border-bottom-style: solid; }
                 .brief-native strong, .brief-native b { color: ${C.t1}; font-weight: 700; }
                 .brief-native em, .brief-native i { color: ${C.t1}; font-style: italic; }
-                .brief-native code { background: ${C.elevated}; color: ${C.accent}; padding: 1px 6px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+                .brief-native sup { color: ${C.accent}; font-size: 9px; margin-left: 2px; }
+                .brief-native code { background: ${C.surface}; color: ${C.accent}; padding: 1px 6px; font-family: inherit; font-size: 12px; }
                 .brief-native pre { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px; overflow-x: auto; margin: 1em 0; }
                 .brief-native pre code { background: transparent; padding: 0; }
-                .brief-native blockquote { border-left: 3px solid ${C.accent}; padding-left: 16px; margin: 1.2em 0; color: ${C.t3}; font-style: italic; }
-                .brief-native ul, .brief-native ol { margin: 0.9em 0; padding-left: 24px; }
-                .brief-native li { margin: 0.5em 0; line-height: 1.7; }
-                .brief-native table { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-variant-numeric: tabular-nums; font-size: 12px; }
-                .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 8px 12px; text-align: left; border-bottom: 1px solid ${C.border}; }
-                .brief-native td { padding: 7px 12px; border-bottom: 1px solid ${C.border}; }
-                .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 2em 0; }
-                .brief-native div { display: block; }
-                .brief-native span { display: inline; }
-                .brief-native .snapshot { background: ${C.surface}; border: 1px solid ${C.border}; padding: 14px 18px; margin: 1em 0 1.5em; display: block; }
-                .brief-native .snapshot > * { display: inline-block; margin-right: 14px; padding-right: 14px; border-right: 1px solid ${C.border}; line-height: 1.4; }
-                .brief-native .snapshot > *:last-child { border-right: none; margin-right: 0; padding-right: 0; }
-                .brief-native .data-box { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px 16px; margin: 1em 0; }
-                .brief-native .section-start { margin-top: 2em; padding-top: 1em; border-top: 1px solid ${C.border}; display: block; }
-                .brief-native .bullet { margin: 0.8em 0; padding-left: 18px; position: relative; display: block; }
-                .brief-native .bullet::before { content: "—"; color: ${C.accent}; position: absolute; left: 0; top: 0; }
-                .brief-native .radar-group { border: 1px solid ${C.border}; padding: 12px 16px; margin: 1em 0; display: block; }
-                .brief-native .radar-group > * { display: block; margin: 0.4em 0; }
-                .brief-native .label, .brief-native .eyebrow { color: ${C.accent}; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; display: block; margin-bottom: 4px; }
-                .brief-native .ticker, .brief-native .price { color: ${C.t1}; font-weight: 700; font-variant-numeric: tabular-nums; }
+                .brief-native blockquote, .brief-native .pullquote { display: block; border-left: 3px solid ${C.accent}; background: ${C.surface}; padding: 14px 20px; margin: 1.8em 0; color: ${C.t1}; font-style: italic; line-height: 1.8; }
+                .brief-native ul, .brief-native ol { margin: 1em 0; padding-left: 26px; }
+                .brief-native li { margin: 0.6em 0; line-height: 1.8; }
+                .brief-native table { width: 100%; border-collapse: collapse; margin: 1.4em 0; font-variant-numeric: tabular-nums; font-size: 12px; line-height: 1.6; }
+                .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 8px 12px; text-align: left; border-bottom: 1px solid ${C.accent}44; }
+                .brief-native td { padding: 8px 12px; border-bottom: 1px solid ${C.border}; vertical-align: top; }
+                .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 2.2em 0; }
                 .brief-native .up { color: ${C.up}; }
                 .brief-native .down, .brief-native .dn { color: ${C.dn}; }
                 .brief-native br + br { display: none; }
+
+                /* ── Morning brief: snapshot strip ── */
+                .brief-native .snapshot { display: flex; flex-wrap: wrap; gap: 0 22px; background: ${C.surface}; border: 1px solid ${C.border}; border-top: 2px solid ${C.accent}; padding: 14px 18px; margin: 0 0 2em; }
+                .brief-native .snap-item { display: block; padding: 4px 0; }
+                .brief-native .snap-label { display: block; color: ${C.t4}; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 3px; }
+                .brief-native .snap-val { display: block; color: ${C.t1}; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.5; }
+                .brief-native .snap-val.up { color: ${C.up}; } .brief-native .snap-val.dn { color: ${C.dn}; }
+
+                /* ── Morning brief: sections + bullets ── */
+                .brief-native .section-start { margin-top: 3em; }
+                .brief-native .section-start:first-child { margin-top: 0; }
+                .brief-native .section-label { display: block; color: ${C.accent}; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 2px; }
+                .brief-native .section-start h2 { margin: 0.2em 0 0.4em; border-bottom: none; font-size: 16px; }
+                .brief-native .section-rule { border-top: 1px solid ${C.accent}44; margin: 0 0 1.4em; }
+                .brief-native .bullet { display: block; margin: 1.8em 0; padding-left: 20px; border-left: 1px solid ${C.border}; }
+                .brief-native .bullet-heading { display: block; color: ${C.t1}; font-size: 11.5px; font-weight: 700; letter-spacing: 0.4px; line-height: 1.75; margin-bottom: 0.7em; position: relative; }
+                .brief-native .bullet-heading::before { content: "—"; color: ${C.accent}; position: absolute; left: -20px; top: 0; }
+                .brief-native .bullet-body { display: block; color: ${C.t2}; line-height: 1.85; }
+
+                /* ── Morning brief: data box (label/value rows) ── */
+                .brief-native .data-box { background: ${C.surface}; border: 1px solid ${C.border}; padding: 10px 16px; margin: 1.8em 0; }
+                .brief-native .data-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 6px 0; border-bottom: 1px solid ${C.border}; }
+                .brief-native .data-row:last-child { border-bottom: none; }
+                .brief-native .data-label { color: ${C.t4}; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+                .brief-native .data-val { color: ${C.t1}; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+                .brief-native .data-val.up { color: ${C.up}; } .brief-native .data-val.dn { color: ${C.dn}; }
+
+                /* ── Morning brief: radar ── */
+                .brief-native .radar-group { border: 1px solid ${C.border}; border-left: 2px solid ${C.accent}; padding: 4px 18px; margin: 1.4em 0; }
+                .brief-native .radar-item { display: block; margin: 1.3em 0; line-height: 1.85; }
+                .brief-native .radar-item > b { display: block; margin-bottom: 0.4em; line-height: 1.7; }
+
+                /* ── Commentary: headline + perf cards ── */
+                .brief-native .headline-display { display: block; color: ${C.t1}; font-size: 27px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.25; margin: 0 0 0.4em; }
+                .brief-native .headline-display.up { color: ${C.up}; } .brief-native .headline-display.dn { color: ${C.dn}; }
+                .brief-native .subhead-display { display: block; color: ${C.t3}; font-size: 13.5px; line-height: 1.8; margin: 0 0 1.6em; padding-bottom: 1.4em; border-bottom: 1px solid ${C.border}; }
+                .brief-native .perf-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 0 0 2em; }
+                .brief-native .perf-summary-card { background: ${C.surface}; border: 1px solid ${C.border}; padding: 14px 16px; }
+                .brief-native .strat-bar { width: 36px; height: 3px; background: ${C.accent}; margin-bottom: 10px; }
+                .brief-native .ps-label { display: block; color: ${C.t4}; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.4px; margin-bottom: 4px; }
+                .brief-native .ps-value { display: block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+                .brief-native .ps-bench { display: block; color: ${C.t3}; font-size: 11px; margin-top: 3px; }
+                .brief-native .ps-ytd { display: block; margin-top: 10px; padding-top: 8px; border-top: 1px solid ${C.border}; font-size: 11px; }
+                .brief-native .ps-ytd > span { margin-right: 8px; }
+                .brief-native .ps-ytd-label { color: ${C.t4}; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; }
+                .brief-native .ps-ytd-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+                .brief-native .ps-ytd-bench { color: ${C.t3}; }
+                .brief-native .cmt-flow p.lead { color: ${C.t1}; font-size: 14.5px; }
+
+                /* ── Commentary: movers ── */
+                .brief-native .movers-label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin: 1.6em 0 0.7em; }
+                .brief-native .movers-label.winners { color: ${C.up}; }
+                .brief-native .movers-label.decliners { color: ${C.dn}; }
+                .brief-native .movers-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 0 0 1.4em; }
+                .brief-native .mover { background: ${C.surface}; border: 1px solid ${C.border}; padding: 11px 14px; }
+                .brief-native .mover-ticker { display: inline-block; color: ${C.t1}; font-size: 13px; font-weight: 700; margin-right: 10px; }
+                .brief-native .mover-pct { display: inline-block; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; margin-right: 10px; }
+                .brief-native .mover-strategy { display: inline-block; color: ${C.t4}; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; border: 1px solid ${C.border}; padding: 1px 7px; vertical-align: middle; }
+                .brief-native .mover-catalyst { display: block; color: ${C.t2}; font-size: 13px; line-height: 1.75; margin-top: 7px; }
+
+                /* ── Rich Report / Quarterly: sections ── */
+                .brief-native .sec { display: block; margin: 0 0 3em; }
+                .brief-native .sec-hd { display: flex; align-items: baseline; gap: 12px; margin: 0 0 1.2em; padding-bottom: 8px; border-bottom: 1px solid ${C.accent}44; }
+                .brief-native .sec-hd h2, .brief-native .sec-t { margin: 0; border-bottom: none; font-size: 14px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.6px; font-weight: 600; }
+                .brief-native .sec-num { color: ${C.t4}; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+                .brief-native .sec-orn { margin-left: auto; color: ${C.accent}66; font-size: 8px; letter-spacing: 6px; white-space: nowrap; }
+                .brief-native .sec-body, .brief-native .sec-bi, .brief-native .sec-bc, .brief-native .sec-cnt { display: block; }
+
+                /* ── Rich Report: bullet cards (bg > bc > bh + bb) ── */
+                .brief-native .bg { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 1em 0; }
+                .brief-native .bc { background: ${C.card}; border: 1px solid ${C.border}; padding: 13px 16px; }
+                .brief-native .bh { display: block; color: ${C.accent}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 7px; }
+                .brief-native .bb { display: block; color: ${C.t2}; font-size: 13.5px; line-height: 1.8; }
+                .brief-native p.bb { margin: 1.1em 0 0.6em; }
+
+                /* ── Rich Report: past issues + refs ── */
+                .brief-native .pi { margin-top: 3em; }
+                .brief-native .pi-hd { display: block; color: ${C.accent}; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.8em; padding-bottom: 6px; border-bottom: 1px solid ${C.accent}44; }
+                .brief-native .pi-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 8px 0; border-bottom: 1px solid ${C.border}; }
+                .brief-native .pi-date, .brief-native .pi-title { color: ${C.t1}; font-size: 12px; font-weight: 600; }
+                .brief-native .pi-sub { display: block; color: ${C.t3}; font-size: 11px; }
+                .brief-native .pi-badge { display: inline-block; color: ${C.accent}; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; border: 1px solid ${C.accent}66; padding: 1px 7px; margin-left: 8px; }
+                .brief-native .pi-row-r { white-space: nowrap; }
+                .brief-native .pi-link { font-size: 11px; margin-left: 14px; }
+                .brief-native .refs { margin-top: 3em; padding-top: 1em; border-top: 1px solid ${C.border}; font-size: 11.5px; color: ${C.t3}; }
+
+                /* ── Quarterly: buy/sell tags ── */
+                .brief-native .tag { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; padding: 2px 9px; margin-right: 8px; }
+                .brief-native .tag-buy { color: ${C.up}; border: 1px solid ${C.up}; }
+                .brief-native .tag-sell { color: ${C.dn}; border: 1px solid ${C.dn}; }
               `}</style>
               <div style={{ display: "flex", alignItems: "center", padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
                 <span style={{ ...tEyebrow, marginRight: 12 }}>{tBriefView.category ? tBriefView.category.toUpperCase() : "BRIEF"}</span>
@@ -4776,7 +4859,7 @@ Instructions:
                     <iframe src={tBriefView.url} title={tBriefView.title} style={{ width: "100%", height: "calc(100vh - 200px)", border: `1px solid ${C.border}`, background: "#fff" }} />
                   </div>
                 ) : (
-                  <div className="brief-native" style={{ maxWidth: 860, margin: "0 auto" }} dangerouslySetInnerHTML={{ __html: tBriefHtml }} />
+                  <div className="brief-native" style={{ maxWidth: 720, margin: "0 auto" }} dangerouslySetInnerHTML={{ __html: tBriefHtml }} />
                 )}
               </div>
             </>
