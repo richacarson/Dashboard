@@ -69,6 +69,22 @@ const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 // Right-rail benchmark indices (BTC-USD omitted — not available via the Alpaca stock snapshot feed)
 const RAIL_BENCHMARKS = ["DVY", "IUSG", "SPY"];
+// Short sector codes for the dense terminal watchlist (sector subline)
+const SECTOR_SHORT = {
+  "Information Technology": "TECH", "Technology": "TECH",
+  "Health Care": "HEALTH", "Healthcare": "HEALTH",
+  "Financials": "FIN", "Financial Services": "FIN", "Financial": "FIN",
+  "Industrials": "INDUST", "Industrial": "INDUST",
+  "Consumer Discretionary": "CYCL", "Consumer Cyclical": "CYCL",
+  "Communication Services": "COMM", "Communication": "COMM", "Telecommunications": "COMM",
+  "Consumer Staples": "STAPLE", "Consumer Defensive": "STAPLE",
+  "Energy": "ENERGY", "Oil & Gas": "ENERGY",
+  "Utilities": "UTIL",
+  "Materials": "MTRL", "Basic Materials": "MTRL",
+  "Real Estate": "REIT",
+  "Digital Assets": "CRYPTO", "Crypto": "CRYPTO",
+};
+const shortSector = (s) => s ? (SECTOR_SHORT[s] || s.split(/[\s/]/)[0].slice(0, 6).toUpperCase()) : "";
 const RAIL_BM_EXTRA = RAIL_BENCHMARKS.filter(s => !BM_SYMS.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -3340,7 +3356,7 @@ Instructions:
     const tIsEtfSleeve = tChartSleeve === "sectors" || tChartSleeve === "digital"; // ETF sleeves have no P/E or screener composite
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
     const tChartBg = "171738"; // terminal chart is always dark navy, regardless of theme
-    const tChartUrlFor = (s) => `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${s}&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&hidevolume=0&toolbarbg=${tChartBg}&backgroundColor=%23${tChartBg}&gridColor=rgba(201%2C168%2C76%2C0.08)&studies=%5B%22Volume%40tv-basicstudies%22%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A50%7D%7D%2C%7B%22id%22%3A%22MASimple%40tv-basicstudies%22%2C%22inputs%22%3A%7B%22length%22%3A200%7D%7D%5D&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&overrides={"paneProperties.background"%3A"%23${tChartBg}"%2C"paneProperties.backgroundType"%3A"solid"%2C"paneProperties.vertGridProperties.color"%3A"rgba(201%2C168%2C76%2C0.08)"%2C"paneProperties.horzGridProperties.color"%3A"rgba(201%2C168%2C76%2C0.08)"}&enabled_features=%5B%22header_chart_type%22%2C%22header_indicators%22%5D&disabled_features=[]&locale=en`;
+    const tChartUrlFor = (s) => `https://s.tradingview.com/widgetembed/?frameElementId=tv_terminal&symbol=${s}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&theme=dark&style=1&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=en`;
     const tChartUrl = tChartUrlFor(terminalActiveSym);
     const tNow = tClockNow.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit" });
     const tAllNews = (() => { const seen = new Set(); return [...(news || []), ...(broadNews || [])].filter(a => { const k = a.id || a.headline; if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => new Date(b.created_at || b.datetime || 0) - new Date(a.created_at || a.datetime || 0)).slice(0, 50); })();
@@ -3412,20 +3428,19 @@ Instructions:
                   { l: "QTD%", w: tIsEtfSleeve ? 62 : 48 },
                   ...(tIsEtfSleeve ? [] : [{ l: "P/E", w: 36 }, { l: "COMP", w: 34 }]),
                   ...(tIsGrowth ? [{ l: "PEG", w: 28 }] : []),
-                  ...(tIsDividend ? [{ l: "YLD", w: 28 }] : []),
                 ].map(h => (
                   <span key={h.l} style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.t4, width: h.w, flexShrink: 0, textAlign: h.a || "right", overflow: "hidden" }}>{h.l}</span>
                 ))}
               </div>
             </div>
             {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
-              <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("overview"); setTDrawer(null); }}
+              <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); }}
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
                 <span style={{ width: tIsEtfSleeve ? 72 : 48, flexShrink: 0, display: "flex", flexDirection: "column", lineHeight: 1.1, overflow: "hidden" }}>
                   <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
-                  {(() => { const s = f?.sector; return s ? (<span title={s} style={{ fontSize: 8, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s}</span>) : null; })()}
+                  {(() => { const s = f?.sector; return s ? (<span title={s} style={{ fontSize: 8, color: C.t4, letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{shortSector(s)}</span>) : null; })()}
                 </span>
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
@@ -3433,7 +3448,6 @@ Instructions:
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 700, width: 34, flexShrink: 0, textAlign: "right", color: comp == null ? C.t4 : comp >= 70 ? C.up : comp >= 50 ? C.t2 : C.warn }}>{comp ?? "—"}</span>}
                 {tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
-                {tIsDividend && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.yieldFwd != null ? C.t2 : C.t4 }}>{f?.yieldFwd != null ? `${f.yieldFwd.toFixed(1)}%` : "—"}</span>}
               </div>
             ); })}
           </div>
@@ -4038,7 +4052,7 @@ Instructions:
                 <div style={{ ...tEyebrow, margin: "16px 0 8px" }}>Top Movers Today</div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6 }}>
                   {(() => { const allSyms = [...new Set(Object.values(sleeves).flatMap(s => s.symbols || []))]; return allSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return { sym, chg: c, price: q?.p }; }).filter(s => s.chg != null).sort((a, b) => Math.abs(b.chg) - Math.abs(a.chg)).slice(0, 30).map(s => (
-                    <div key={s.sym} onClick={() => { setTerminalActiveSym(s.sym); setTProfileSym(s.sym); setTProfileTab("overview"); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: 11 }}>
+                    <div key={s.sym} onClick={() => { setTerminalActiveSym(s.sym); setTProfileSym(s.sym); setTProfileTab("chart"); setTDrawer(null); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 8px", background: C.card, border: `1px solid ${C.border}`, cursor: "pointer", fontSize: 11 }}>
                       <span style={{ fontWeight: 700, color: C.t1 }}>{s.sym}</span>
                       <span style={{ fontWeight: 600, color: s.chg >= 0 ? C.up : C.dn }}>{pct(s.chg)}</span>
                     </div>
@@ -4161,7 +4175,7 @@ Instructions:
                             {sorted.map(s => {
                               const d = fundamentals[s] || {};
                               return (
-                                <tr key={s} onClick={() => { setTerminalActiveSym(s); setTProfileSym(s); setTProfileTab("overview"); setTDrawer(null); }} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                                <tr key={s} onClick={() => { setTerminalActiveSym(s); setTProfileSym(s); setTProfileTab("chart"); setTDrawer(null); }} style={{ borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                                   <td style={{ padding: "5px 8px", position: "sticky", left: 0, zIndex: 1, background: C.bg, borderRight: `1px solid ${C.border}`, fontWeight: 700, color: C.t1, whiteSpace: "nowrap" }}>{s}</td>
                                   {cols.map(col => {
                                     const val = col.fn(d, s);
