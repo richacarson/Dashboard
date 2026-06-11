@@ -381,6 +381,53 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
   if (!src) return <div style={{ width: size, height: size, borderRadius: size / 2, background: C.surface, flexShrink: 0 }} />;
   return <img src={src} alt={symbol} onError={() => { delete logoCache[symbol]; setFallback(true); }} style={{ width: size, height: size, borderRadius: size / 2, objectFit: "contain", flexShrink: 0, background: "#fff" }} />;
 });
+
+/* ──────────────────────────────────────────────────────────────────
+   TradingView Advanced Chart Widget — full drawing tools (boxes, fib,
+   trend lines, etc.). Uses the official embed-widget-advanced-chart.js
+   script instead of the basic widgetembed iframe which strips tools.
+   ────────────────────────────────────────────────────────────────── */
+const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTheme, bg, toolbarBg, studies, style: chartStyle = "1" }) {
+  const containerRef = useRef(null);
+  // Stable container id per mount so the script knows where to render
+  const idRef = useRef(`tv_${Math.random().toString(36).slice(2, 10)}`);
+  useEffect(() => {
+    const host = containerRef.current;
+    if (!host) return;
+    // Reset host and inject the script with the JSON config in its innerHTML
+    host.innerHTML = `<div id="${idRef.current}" style="width:100%;height:100%;"></div>`;
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol,
+      interval: "D",
+      timezone: "America/New_York",
+      theme: chartTheme === "light" ? "light" : "dark",
+      style: chartStyle,
+      locale: "en",
+      withdateranges: true,
+      hide_side_toolbar: false,   // ← drawing tools panel (boxes, fib, trend lines, etc.)
+      allow_symbol_change: false,
+      save_image: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      hide_volume: false,
+      backgroundColor: bg ? `#${bg}` : undefined,
+      toolbar_bg: toolbarBg ? `#${toolbarBg}` : undefined,
+      gridColor: chartTheme === "light" ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)",
+      details: false,
+      studies: studies || [],
+      container_id: idRef.current,
+      support_host: "https://www.tradingview.com",
+    });
+    host.appendChild(script);
+    return () => { try { host.innerHTML = ""; } catch {} };
+  }, [symbol, chartTheme, bg, toolbarBg, chartStyle, studies]);
+  return <div ref={containerRef} style={{ width: "100%", height: "100%", minHeight: 0, background: bg ? `#${bg}` : undefined }} />;
+});
 function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
   const [profileTab, setProfileTab] = useState(initTab || "overview");
   const [profile, setProfile] = useState(null);
@@ -5269,7 +5316,9 @@ Instructions:
               {/* Content */}
               {tProfileTab === "chart" ? (
                 <div style={{ flex: 1, display: "flex", background: C.bg }}>
-                  <iframe key={sym} src={tChartUrlFor(sym)} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+                  <div style={{ flex: 1, minHeight: 0, background: C.bg }}>
+                    <TradingViewChart symbol={sym} theme={theme} bg={tvBg} toolbarBg={tvTbBg} />
+                  </div>
                 </div>
               ) : (
                 <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px" }}>
@@ -5360,7 +5409,9 @@ Instructions:
               </div>
               {!isPortfolio ? (
                 <div style={{ flex: 1, display: "flex", background: C.bg }}>
-                  <iframe key={terminalActiveSym} src={tChartUrl} style={{ flex: 1, border: "none", width: "100%", background: C.bg }} title="Chart" />
+                  <div style={{ flex: 1, minHeight: 0, background: C.bg }}>
+                    <TradingViewChart symbol={terminalActiveSym} theme={theme} bg={tvBg} toolbarBg={tvTbBg} />
+                  </div>
                 </div>
               ) : (() => {
                 const emptyMsg = (txt) => <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", color: C.t4 }}>{txt}</div>;
