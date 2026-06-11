@@ -992,6 +992,7 @@ Instructions:
   const [tProfileSym, setTProfileSym] = useState(null); // terminal stock profile panel
   const [tProfileTab, setTProfileTab] = useState("overview"); // "overview" | "chart" | "screener"
   const [tChartHover, setTChartHover] = useState(null);
+  const [tWatchSort, setTWatchSort] = useState({ col: "chg", dir: "desc" }); // watchlist sort: col in sym|price|chg|qtd|pe|comp|peg
   const [tChartRange, setTChartRange] = useState("YTD");
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
@@ -3422,18 +3423,44 @@ Instructions:
               </div>
               <div style={{ padding: "4px 10px", borderBottom: `1px solid ${C.border}`, background: C.surface, display: "flex", alignItems: "center", justifyContent: "space-between", borderLeft: "2px solid transparent", boxSizing: "border-box" }}>
                 {[
-                  { l: "SYM", w: tIsEtfSleeve ? 72 : 48, a: "left" },
-                  { l: "PRICE", w: tIsEtfSleeve ? 72 : 54 },
-                  { l: "CHG%", w: tIsEtfSleeve ? 62 : 48 },
-                  { l: "QTD%", w: tIsEtfSleeve ? 62 : 48 },
-                  ...(tIsEtfSleeve ? [] : [{ l: "P/E", w: 36 }, { l: "COMP", w: 34 }]),
-                  ...(tIsGrowth ? [{ l: "PEG", w: 28 }] : []),
-                ].map(h => (
-                  <span key={h.l} style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.t4, width: h.w, flexShrink: 0, textAlign: h.a || "right", overflow: "hidden" }}>{h.l}</span>
-                ))}
+                  { l: "SYM", k: "sym", w: tIsEtfSleeve ? 72 : 48, a: "left" },
+                  { l: "PRICE", k: "price", w: tIsEtfSleeve ? 72 : 54 },
+                  { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
+                  { l: "QTD%", k: "qtd", w: tIsEtfSleeve ? 62 : 48 },
+                  ...(tIsEtfSleeve ? [] : [{ l: "P/E", k: "pe", w: 36 }, { l: "COMP", k: "comp", w: 34 }]),
+                  ...(tIsGrowth ? [{ l: "PEG", k: "peg", w: 28 }] : []),
+                ].map(h => {
+                  const active = tWatchSort.col === h.k;
+                  const arrow = active ? (tWatchSort.dir === "asc" ? "↑" : "↓") : "";
+                  return (
+                    <span key={h.l} onClick={() => setTWatchSort(prev => prev.col === h.k ? { col: h.k, dir: prev.dir === "asc" ? "desc" : "asc" } : { col: h.k, dir: h.k === "sym" ? "asc" : "desc" })}
+                      style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: active ? C.accent : C.t4, width: h.w, flexShrink: 0, textAlign: h.a || "right", overflow: "hidden", cursor: "pointer", userSelect: "none" }}>{h.l}{arrow}</span>
+                  );
+                })}
               </div>
             </div>
-            {tSleeveSyms.map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
+            {(() => {
+              const ext = {
+                sym: s => s,
+                price: s => (quotesRef.current[s] || quotes[s])?.p,
+                chg: s => { const q = quotesRef.current[s] || quotes[s]; const b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; },
+                qtd: s => tQtdOf(s),
+                pe: s => fundamentals[s]?.peTTM,
+                comp: s => screenerByTicker[s]?.overall_score,
+                peg: s => fundamentals[s]?.pegTTM,
+              };
+              return [...tSleeveSyms].sort((a, b) => {
+                const ka = ext[tWatchSort.col]?.(a);
+                const kb = ext[tWatchSort.col]?.(b);
+                const an = ka == null || (typeof ka === "number" && !isFinite(ka));
+                const bn = kb == null || (typeof kb === "number" && !isFinite(kb));
+                if (an && bn) return a.localeCompare(b);
+                if (an) return 1; // nulls last
+                if (bn) return -1;
+                const cmp = tWatchSort.col === "sym" ? ka.localeCompare(kb) : (ka - kb);
+                return tWatchSort.dir === "asc" ? cmp : -cmp;
+              });
+            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
               <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); }}
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
