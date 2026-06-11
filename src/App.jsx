@@ -1914,7 +1914,29 @@ Instructions:
       setMacroData(prev => ({ ...prev, ...results }));
     };
     fetchMacro();
+    // Re-fetch hourly so any GH-Action update to macro-data.json surfaces without a page reload
+    const id = setInterval(fetchMacro, 60 * 60 * 1000);
+    return () => clearInterval(id);
   }, [apiKey, apiSecret]);
+
+  /* ── Live SPY P/E from Finnhub (overrides static macroData.spyPE which can lag) ── */
+  useEffect(() => {
+    if (!FH) return;
+    const fetchSpyPE = async () => {
+      try {
+        const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=SPY&metric=all&token=${FH}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        const pe = d?.metric?.peTTM ?? d?.metric?.peBasicExclExtraTTM;
+        if (typeof pe === "number" && isFinite(pe) && pe > 0) {
+          setMacroData(prev => ({ ...prev, spyPE: pe }));
+        }
+      } catch {}
+    };
+    fetchSpyPE();
+    const id = setInterval(fetchSpyPE, 6 * 60 * 60 * 1000); // 6h — earnings move it slowly
+    return () => clearInterval(id);
+  }, []);
 
   /* ── Fetch economic + earnings calendar ── */
   const fetchCalendar = useCallback(async () => {
@@ -3662,10 +3684,8 @@ Instructions:
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
               </span>
             ) : null; })}
-            <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
-            {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? C.warn : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
-            {macroData.oilPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${macroData.oilPrice.toFixed(2)} <span style={{ color: macroData.oilChg >= 0 ? C.up : C.dn }}>{macroData.oilChg != null ? `${macroData.oilChg >= 0 ? "+" : ""}${macroData.oilChg.toFixed(2)}%` : ""}</span></span>}
-            {macroData.goldPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${macroData.goldPrice.toFixed(0)} <span style={{ color: macroData.goldChg >= 0 ? C.up : C.dn }}>{macroData.goldChg != null ? `${macroData.goldChg >= 0 ? "+" : ""}${macroData.goldChg.toFixed(2)}%` : ""}</span></span>}
+            {/* VIX / OIL / GOLD removed from top banner — macroData refreshes only on auth (stale).
+                VIX is reachable live via Alpaca's ^VIX index or Finnhub; will re-add when wired to live feed. */}
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>
@@ -3693,6 +3713,7 @@ Instructions:
                   return [
                     ...(tIsEtfSleeve ? [] : [
                       { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
+                      { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
                       { l: "DAY", v: sleeveDay != null ? pct(sleeveDay) : null, c: sleeveDay == null ? null : sleeveDay >= 0 ? C.up : C.dn },
                     ]),
                     ...(tIsDividend ? [{ l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null }] : []),
@@ -3710,8 +3731,9 @@ Instructions:
                   { l: "SYM", k: "sym", w: tIsEtfSleeve ? 72 : 48, a: "left" },
                   { l: "PRICE", k: "price", w: tIsEtfSleeve ? 72 : 54 },
                   { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
-                  ...(tIsEtfSleeve ? [] : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
-                  ...(tIsGrowth ? [{ l: "PEG", k: "peg", w: 28 }] : []),
+                  ...(tIsEtfSleeve ? [] : tIsGrowth
+                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "PEG", k: "peg", w: 28 }, { l: "WT%", k: "wt", w: 34 }]
+                    : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
                 ].map(h => {
                   const active = tWatchSort.col === h.k;
                   const arrow = active ? (tWatchSort.dir === "asc" ? "↑" : "↓") : "";
@@ -3761,11 +3783,11 @@ Instructions:
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>}
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
+                {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
                 {!tIsEtfSleeve && (() => {
                   const w = liveWeights[tChartSleeve]?.[sym] ?? TARGET_WEIGHTS[tChartSleeve]?.[sym];
                   return <span style={{ fontSize: 10, fontWeight: 600, width: 34, flexShrink: 0, textAlign: "right", color: w != null ? C.t2 : C.t4 }}>{w != null ? w.toFixed(1) : "—"}</span>;
                 })()}
-                {tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
               </div>
             ); })}
           </div>
@@ -4470,10 +4492,18 @@ Instructions:
                   { sleeve: "fciValues", bms: ["SPY"] },
                 ];
                 const renderSection = ({ sleeve, bms }) => {
-                  const sleeveRow = { label: sleeveNames[sleeve], nav: sleeveCurrentVal(sleeve), returns: ranges.map(r => r.fn(sleeve)), isPortfolio: true, sleeve };
+                  // Hide trailing-period columns whose lookback window pre-dates the sleeve's inception
+                  const pStart = perfDataMap[sleeve]?.portfolio?.[0]?.date;
+                  const daysAvailable = pStart ? (Date.now() - new Date(pStart + "T12:00:00").getTime()) / 86400000 : 0;
+                  const visibleRanges = ranges.filter(r => {
+                    if (r.l === "DAY" || r.l === "QTD" || r.l === "YTD" || r.l === "INCEP") return true;
+                    const need = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[r.l] || 0;
+                    return daysAvailable >= need * 0.9;
+                  });
+                  const sleeveRow = { label: sleeveNames[sleeve], nav: sleeveCurrentVal(sleeve), returns: visibleRanges.map(r => r.fn(sleeve)), isPortfolio: true, sleeve };
                   const bmRows = bms.map(bmSym => ({
                     label: bmSym, nav: null, isBm: true, sym: bmSym,
-                    returns: ranges.map(r => r.l === "DAY" ? bmDay(bmSym) : bmReturn(sleeve, bmSym, r.l)),
+                    returns: visibleRanges.map(r => r.l === "DAY" ? bmDay(bmSym) : bmReturn(sleeve, bmSym, r.l)),
                   }));
                   const allRows = [sleeveRow, ...bmRows];
                   return (
@@ -4483,7 +4513,7 @@ Instructions:
                         <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
                           <th style={tTh("left", false)}></th>
                           <th style={tTh("right", false)}>NAV</th>
-                          {ranges.map(r => <th key={r.l} style={tTh("right", false)}>{r.l}</th>)}
+                          {visibleRanges.map(r => <th key={r.l} style={tTh("right", false)}>{r.l}</th>)}
                         </tr></thead>
                         <tbody>
                           {allRows.map((row, i) => (
@@ -5634,17 +5664,13 @@ Instructions:
                 </div>
               );
             })}
-            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Bear Probability</div>
+            <div style={{ ...tEyebrow, margin: "8px 0 4px" }}>Market Stats</div>
             {(() => { const md = macroData; const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000)); return (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 8px", fontSize: 10 }}>
               <span style={{ color: C.t3 }}>Yield Curve</span><span style={{ color: md.yieldSpread != null ? (md.yieldSpread < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.yieldSpread != null ? `${md.yieldSpread >= 0 ? "+" : ""}${md.yieldSpread.toFixed(2)}%` : "—"}</span>
               <span style={{ color: C.t3 }}>SPY P/E</span><span style={{ color: md.spyPE > 30 ? C.dn : md.spyPE > 25 ? C.warn : C.up, textAlign: "right" }}>{md.spyPE ? `${md.spyPE.toFixed(1)}x` : "—"}</span>
               <span style={{ color: C.t3 }}>Bull Age</span><span style={{ color: bullAgeMo > 60 ? C.dn : bullAgeMo > 36 ? C.warn : C.up, textAlign: "right" }}>{bullAgeMo}mo</span>
-              <span style={{ color: C.t3 }}>Credit (BAA)</span><span style={{ color: md.baa10y > 3.5 ? C.dn : md.baa10y > 2.5 ? C.warn : C.up, textAlign: "right" }}>{md.baa10y ? `${md.baa10y.toFixed(2)}%` : "—"}</span>
               <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
-              <span style={{ color: C.t3 }}>Claims</span><span style={{ color: md.claimsTrend > 10 ? C.dn : md.claimsTrend > 0 ? C.warn : C.up, textAlign: "right" }}>{md.claims4wk ? `${(md.claims4wk / 1000).toFixed(0)}K` : "—"}</span>
-              <span style={{ color: C.t3 }}>CFNAI</span><span style={{ color: md.cfnai < -0.7 ? C.dn : md.cfnai < -0.2 ? C.warn : C.up, textAlign: "right" }}>{md.cfnai != null ? md.cfnai.toFixed(2) : "—"}</span>
-              <span style={{ color: C.t3 }}>Sahm Rule</span><span style={{ color: md.sahmVal > 0.5 ? C.dn : md.sahmVal > 0.3 ? C.warn : C.up, textAlign: "right" }}>{md.sahmVal != null ? `${md.sahmVal.toFixed(2)}pp` : "—"}</span>
             </div>
             ); })()}
           </div>
