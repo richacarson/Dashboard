@@ -724,9 +724,9 @@
     "date": "2026-06-11",
     "hour": "amc",
     "epsEstimate": 5.9385,
-    "epsActual": null,
+    "epsActual": 5.96,
     "revenueEstimate": 6584794456,
-    "revenueActual": null,
+    "revenueActual": 6618000000,
     "source": "finnhub"
   },
   {
@@ -964,9 +964,9 @@
     "date": "2026-06-11",
     "hour": "amc",
     "epsEstimate": 0.051,
-    "epsActual": null,
+    "epsActual": 0.07,
     "revenueEstimate": 7148160,
-    "revenueActual": null,
+    "revenueActual": 7990000,
     "source": "finnhub"
   },
   {
