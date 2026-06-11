@@ -524,9 +524,9 @@
     "date": "2026-06-10",
     "hour": "amc",
     "epsEstimate": 1.3974,
-    "epsActual": null,
+    "epsActual": -0.41,
     "revenueEstimate": 1596810,
-    "revenueActual": null,
+    "revenueActual": 1960000,
     "source": "finnhub"
   },
   {
@@ -1402,7 +1402,7 @@
   {
     "symbol": "KMX",
     "date": "2026-06-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.9357,
     "epsActual": null,
     "revenueEstimate": 7461204077,
@@ -1432,7 +1432,7 @@
   {
     "symbol": "SB",
     "date": "2026-06-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0927,
     "epsActual": null,
     "revenueEstimate": 67877000,
@@ -1442,7 +1442,7 @@
   {
     "symbol": "SWBI",
     "date": "2026-06-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.2295,
     "epsActual": null,
     "revenueEstimate": 158374890,
