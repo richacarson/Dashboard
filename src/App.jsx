@@ -5803,6 +5803,14 @@ Instructions:
           {loading && <div style={{ width: 6, height: 6, borderRadius: 3, background: C.up, boxShadow: `0 0 8px ${C.upGlow}`, animation: "pulse 1.2s ease-in-out infinite" }} />}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button onClick={() => setTickerSearchOpen(true)} aria-label="Search ticker" style={{
+            width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t2} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </button>
           {lastUp && <span data-last-updated style={{ fontSize: 11, color: C.t4 }}>{lastUp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
         </div>
       </div>
