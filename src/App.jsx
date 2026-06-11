@@ -55,7 +55,7 @@ const loadSleeves = () => {
 };
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
-const CORE_KEYS = ["dividend", "growth", "digital", "fci100", "fciValues"];
+const CORE_KEYS = ["dividend", "growth", "digital", "sectors", "fci100", "fciValues"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
 const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
@@ -997,7 +997,39 @@ Instructions:
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   const [tDrawer, setTDrawer] = useState(null);
   const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "research" | "briefs"
-  const [tBriefView, setTBriefView] = useState(null); // { title, url } when a brief is open in fullscreen iframe
+  const [tBriefView, setTBriefView] = useState(null); // { title, url } when a brief is open
+  const [tBriefContent, setTBriefContent] = useState("");
+  const [tBriefLoading, setTBriefLoading] = useState(false);
+  const [tBriefFailed, setTBriefFailed] = useState(false);
+  // Fetch + parse the brief HTML into native terminal-styled content
+  useEffect(() => {
+    if (!tBriefView) { setTBriefContent(""); setTBriefFailed(false); return; }
+    setTBriefLoading(true); setTBriefFailed(false);
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(tBriefView.url, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const html = await r.text();
+        if (cancelled) return;
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        doc.querySelectorAll("script, link[rel=stylesheet], nav, header, footer, .header, .footer, .nav, .sidebar").forEach(el => el.remove());
+        // Drop inline style attributes that clash with the terminal palette
+        doc.querySelectorAll("[style]").forEach(el => el.removeAttribute("style"));
+        doc.querySelectorAll("style").forEach(el => el.remove());
+        const main = doc.querySelector("main") || doc.querySelector("article") || doc.querySelector(".content") || doc.querySelector("#content") || doc.body;
+        const baseUrl = new URL(tBriefView.url);
+        main.querySelectorAll("a[href]").forEach(a => { try { a.href = new URL(a.getAttribute("href"), baseUrl).href; a.target = "_blank"; a.rel = "noopener noreferrer"; } catch {} });
+        main.querySelectorAll("img[src]").forEach(img => { try { img.src = new URL(img.getAttribute("src"), baseUrl).href; } catch {} });
+        setTBriefContent(main.innerHTML);
+      } catch (e) {
+        if (!cancelled) { console.warn("[brief]", e.message); setTBriefFailed(true); }
+      } finally {
+        if (!cancelled) setTBriefLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tBriefView]);
   const [ctxMenu, setCtxMenu] = useState(null); // { sym, x, y }
   const [screenerData, setScreenerData] = useState([]);
   const [screenerSleeve, setScreenerSleeve] = useState(null); // null = set on first load
@@ -1602,27 +1634,38 @@ Instructions:
 
   /* ── Dividend longevity (Yrs Paid / Yrs Grown) — dividend sleeve only ── */
   const fetchDividendHistory = useCallback(async (force = false) => {
-    if (!FK) return; // FMP free tier has the dividend endpoint; Finnhub's /dividend2 is premium
+    if (!FK) { console.warn("[dividend] VITE_FMP_KEY missing — Yrs Paid/Grown cannot populate"); return; }
     const divSyms = sleeves.dividend?.symbols || [];
     if (!divSyms.length) return;
     if (!force) {
       try {
-        const old = JSON.parse(localStorage.getItem("iown_dividend_history") || "{}");
+        const old = JSON.parse(localStorage.getItem("iown_dividend_history_v2") || "{}");
         const age = Date.now() - (old._ts || 0);
-        const hasData = divSyms.some(s => old[s]?.yearsPaid != null);
-        if (age < 24 * 3600000 && hasData) { setDividendHistory(old); return; } // 24h TTL
+        // Require at least 50% coverage to honor cache — otherwise refetch
+        const populated = divSyms.filter(s => old[s]?.yearsPaid != null).length;
+        if (age < 24 * 3600000 && populated / divSyms.length >= 0.5) { setDividendHistory(old); return; }
       } catch {}
     }
     const results = {};
     const curYear = new Date().getFullYear();
+    let firstFail = null;
     for (let i = 0; i < divSyms.length; i++) {
       const sym = divSyms[i];
       try {
-        const url = `https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/${sym}?apikey=${FK}`;
-        const r = await fetch(url);
-        if (!r.ok) continue;
-        const d = await r.json();
-        const payments = d?.historical || [];
+        // Primary: FMP v3 historical-price-full
+        let url = `https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/${sym}?apikey=${FK}`;
+        let r = await fetch(url);
+        let d = r.ok ? await r.json() : null;
+        let payments = d?.historical || [];
+        // Fallback: FMP stable dividends endpoint (different shape)
+        if (!payments.length) {
+          url = `https://financialmodelingprep.com/api/v3/stock_dividend_calendar?symbol=${sym}&apikey=${FK}`;
+          r = await fetch(url);
+          d = r.ok ? await r.json() : null;
+          payments = Array.isArray(d) ? d.filter(p => p.symbol === sym) : [];
+        }
+        if (i === 0) console.info("[dividend]", sym, "received", payments.length, "payments");
+        if (!payments.length && !firstFail) firstFail = `${sym}: empty response (status ${r.status})`;
         // Group payments by calendar year (use payment/declaration date when available, else event date)
         const yearSum = {};
         for (const p of payments) {
@@ -1647,8 +1690,10 @@ Instructions:
       } catch (e) { console.warn("Dividend history", sym, e.message); }
     }
     results._ts = Date.now();
+    const populated = Object.keys(results).filter(k => k !== "_ts" && results[k]?.yearsPaid != null).length;
+    console.info(`[dividend] populated ${populated}/${divSyms.length} symbols`, firstFail ? `(first failure: ${firstFail})` : "");
     setDividendHistory(results);
-    try { localStorage.setItem("iown_dividend_history", JSON.stringify(results)); } catch {}
+    try { localStorage.setItem("iown_dividend_history_v2", JSON.stringify(results)); } catch {}
   }, [sleeves]);
 
   /* ── Fetch macro indicators for bear probability composite ── */
@@ -3483,7 +3528,7 @@ Instructions:
 
         {/* ── CENTER + RIGHT: CHART or SECTION CONTENT ── */}
         {tDrawer ? (
-          <div style={{ gridColumn: "2 / 4", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ gridColumn: "2 / 3", display: "flex", flexDirection: "column", overflow: "hidden", borderRight: `1px solid ${C.border}` }}>
             <div style={{ padding: "6px 16px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
               <span style={tEyebrow}>{tDrawer}</span>
               <button onClick={() => setTDrawer(null)} aria-label="Close" title="Close" style={tCloseBtn}>{tCloseX}</button>
@@ -5038,13 +5083,47 @@ Instructions:
 
         {/* Brief overlay — embedded iframe */}
         {tBriefView && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", padding: "8px 16px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+          <div style={{ position: "fixed", inset: 0, background: C.bg, zIndex: 1000, display: "flex", flexDirection: "column" }}>
+            <style>{`
+              .brief-native { color: ${C.t2}; font-family: inherit; font-size: 13px; line-height: 1.7; }
+              .brief-native h1, .brief-native h2, .brief-native h3, .brief-native h4 { color: ${C.t1}; font-weight: 700; letter-spacing: -0.01em; margin: 1.4em 0 0.5em; line-height: 1.25; }
+              .brief-native h1 { font-size: 22px; padding-bottom: 6px; border-bottom: 1px solid ${C.accent}55; }
+              .brief-native h2 { font-size: 17px; color: ${C.accent}; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; }
+              .brief-native h3 { font-size: 14px; color: ${C.t1}; }
+              .brief-native h4 { font-size: 12px; color: ${C.t3}; text-transform: uppercase; letter-spacing: 1px; }
+              .brief-native p { margin: 0.6em 0; }
+              .brief-native a { color: ${C.accent}; text-decoration: none; border-bottom: 1px dashed ${C.accent}66; }
+              .brief-native a:hover { border-bottom-style: solid; }
+              .brief-native strong, .brief-native b { color: ${C.t1}; font-weight: 700; }
+              .brief-native em, .brief-native i { color: ${C.t1}; font-style: italic; }
+              .brief-native code { background: ${C.elevated}; color: ${C.accent}; padding: 1px 6px; border-radius: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+              .brief-native pre { background: ${C.surface}; border: 1px solid ${C.border}; padding: 12px; overflow-x: auto; border-radius: 2px; }
+              .brief-native pre code { background: transparent; padding: 0; }
+              .brief-native blockquote { border-left: 3px solid ${C.accent}; padding-left: 16px; margin: 1em 0; color: ${C.t3}; font-style: italic; }
+              .brief-native ul, .brief-native ol { margin: 0.6em 0; padding-left: 24px; }
+              .brief-native li { margin: 0.3em 0; }
+              .brief-native img { max-width: 100%; height: auto; border: 1px solid ${C.border}; }
+              .brief-native table { width: 100%; border-collapse: collapse; margin: 1em 0; font-variant-numeric: tabular-nums; }
+              .brief-native th { background: ${C.surface}; color: ${C.t4}; text-transform: uppercase; font-size: 10px; letter-spacing: 1.2px; padding: 8px 12px; text-align: left; border-bottom: 1px solid ${C.border}; }
+              .brief-native td { padding: 6px 12px; border-bottom: 1px solid ${C.border}; }
+              .brief-native hr { border: none; border-top: 1px solid ${C.border}; margin: 2em 0; }
+            `}</style>
+            <div style={{ display: "flex", alignItems: "center", padding: "12px 24px", background: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
               <span style={{ ...tEyebrow, marginRight: 16 }}>BRIEF</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{tBriefView.title}</span>
-              <button onClick={() => setTBriefView(null)} title="Close" style={{ ...tCloseBtn, marginLeft: "auto" }}>{tCloseX}</button>
+              <span style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{tBriefView.title}</span>
+              <a href={tBriefView.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", marginRight: 16, fontSize: 10, color: C.t4, textDecoration: "none", letterSpacing: 1.2, fontWeight: 600 }}>OPEN ORIGINAL ↗</a>
+              <button onClick={() => setTBriefView(null)} title="Close" style={tCloseBtn}>{tCloseX}</button>
             </div>
-            <iframe src={tBriefView.url} style={{ flex: 1, border: "none", background: "#fff", width: "100%" }} title={tBriefView.title} />
+            <div style={{ flex: 1, overflowY: "auto", padding: "32px 48px" }}>
+              {tBriefLoading ? (
+                <div style={{ ...tEyebrowMuted, padding: 20 }}>LOADING BRIEF</div>
+              ) : tBriefFailed ? (
+                // CORS or fetch failed — fall back to iframe so user can still read
+                <iframe src={tBriefView.url} style={{ width: "100%", height: "calc(100vh - 130px)", border: `1px solid ${C.border}`, background: "#fff" }} title={tBriefView.title} />
+              ) : (
+                <div className="brief-native" style={{ maxWidth: 900, margin: "0 auto" }} dangerouslySetInnerHTML={{ __html: tBriefContent }} />
+              )}
+            </div>
           </div>
         )}
 
@@ -10506,7 +10585,7 @@ Instructions:
               {fmpStatus && <div style={{ fontSize: 11, color: C.t2, marginTop: 8, padding: "6px 8px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
               {!(FH || FK) && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FINNHUB_KEY secret to GitHub repo, then re-deploy to enable metrics.</div>}
               {(FH || FK) && (
-                <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); localStorage.removeItem("iown_dividend_history"); } catch {} setFundamentals({}); setDividendHistory({}); fetchFundamentals(true).then(() => fetchDividendHistory(true)).catch(() => {}); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); localStorage.removeItem("iown_dividend_history"); localStorage.removeItem("iown_dividend_history_v2"); } catch {} setFundamentals({}); setDividendHistory({}); fetchFundamentals(true).then(() => fetchDividendHistory(true)).catch(() => {}); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
                 </button>
               )}
