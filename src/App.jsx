@@ -3423,7 +3423,10 @@ Instructions:
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 10px", height: 28, cursor: "pointer", background: isActive ? C.accentSoft : "transparent", borderLeft: isActive ? `2px solid ${C.accent}` : "2px solid transparent", boxSizing: "border-box" }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, width: tIsEtfSleeve ? 72 : 48, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                <span style={{ width: tIsEtfSleeve ? 72 : 48, flexShrink: 0, display: "flex", flexDirection: "column", lineHeight: 1.1, overflow: "hidden" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: isActive ? C.accent : C.t1, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
+                  {(() => { const s = f?.sector; return s ? (<span title={s} style={{ fontSize: 8, color: C.t4, textTransform: "uppercase", letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s}</span>) : null; })()}
+                </span>
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>
