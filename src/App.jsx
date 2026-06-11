@@ -1137,6 +1137,58 @@ Instructions:
   // Open stock profile with specific tab
   const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
 
+  // Universal ticker lookup — backfills quote + fundamentals for symbols outside the portfolio universe
+  // so search works for ANY stock (profile self-fetches the rest; screener tab 404s gracefully)
+  const lookupTicker = useCallback(async (raw) => {
+    const sym = (raw || "").trim().toUpperCase();
+    if (!/^[A-Z.\-]{1,10}$/.test(sym)) return null;
+    const jobs = [];
+    if (!(quotesRef.current[sym]?.p) && apiKey && apiSecret) {
+      jobs.push((async () => {
+        try {
+          const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${sym}&feed=iex`, { headers: hdrs });
+          if (!r.ok) return;
+          const d = await r.json();
+          const snap = d[sym];
+          if (snap?.latestTrade) {
+            quotesRef.current[sym] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
+            setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
+          }
+          if (snap?.prevDailyBar) {
+            barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.prevDailyBar.c };
+            setBars(prev => ({ ...prev, [sym]: barsRef.current[sym] }));
+          }
+        } catch {}
+      })());
+    }
+    if (!fundamentals[sym]?.peTTM && FH) {
+      jobs.push((async () => {
+        try {
+          const [mR, pR] = await Promise.all([
+            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`),
+          ]);
+          const m = mR.ok ? (await mR.json())?.metric || {} : {};
+          const p = pR.ok ? await pR.json() : {};
+          if (Object.keys(m).length || p?.name) {
+            const f = {
+              companyName: p.name, sector: p.finnhubIndustry, industry: p.finnhubIndustry, logo: p.logo,
+              peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null, peFwd: m.peAnnual ?? null, pegTTM: m.pegTTM ?? null,
+              yieldFwd: m.dividendYieldIndicatedAnnual ?? null, payoutRatio: m.payoutRatioTTM ?? null,
+              revenueYoY: m.revenueGrowthTTMYoy ?? null, revenue5Y: m.revenueGrowth5Y ?? null,
+              profitMargin: m.netProfitMarginTTM ?? null, roe: m.roeTTM ?? null, de: m["totalDebt/totalEquityQuarterly"] ?? null,
+              beta: m.beta ?? null, wk52h: m["52WeekHigh"] ?? null, wk52l: m["52WeekLow"] ?? null,
+              ytd: m.yearToDatePriceReturnDaily ?? null,
+            };
+            setFundamentals(prev => ({ ...prev, [sym]: { ...(prev[sym] || {}), ...f } }));
+          }
+        } catch {}
+      })());
+    }
+    await Promise.all(jobs);
+    return sym;
+  }, [apiKey, apiSecret, hdrs, fundamentals]);
+
   // Context menu handler (right-click on desktop, long-press on mobile)
   const stockContextHandlers = (sym) => {
     let longPressTimer = null;
@@ -2730,7 +2782,7 @@ Instructions:
           setScreenerSleeve(match || "All");
         }
         // Background-fetch per-report metadata for any tickers we don't already have cached
-        const missing = d.filter(s => !screenerSectors[s.ticker] || !screenerScores[s.ticker]).map(s => s.ticker);
+        const missing = d.filter(s => !screenerSectors[s.ticker] || !screenerScores[s.ticker] || screenerScores[s.ticker]?.inspire === undefined).map(s => s.ticker);
         if (missing.length === 0) return;
         const sectors = { ...screenerSectors };
         const scores = { ...screenerScores };
@@ -2756,11 +2808,15 @@ Instructions:
               const ev = rep.excellence_evaluation || {};
               const inn = ev.innovation?.score;
               const infra = ev.infrastructure?.score;
-              if (typeof inn === "number" || typeof infra === "number") {
+              const inspire = rep.faith_alignment?.inspire_impact_score;
+              if (typeof inn === "number" || typeof infra === "number" || typeof inspire === "number") {
                 scores[ticker] = {
                   ...(typeof inn === "number" ? { inn } : {}),
                   ...(typeof infra === "number" ? { infra } : {}),
+                  inspire: typeof inspire === "number" ? inspire : null, // null = report fetched, no score (prevents refetch loop)
                 };
+              } else {
+                scores[ticker] = { inspire: null };
               }
             } catch {}
             completed++;
@@ -3343,7 +3399,19 @@ Instructions:
             {a.recommendation && <span style={{ marginLeft: "auto", fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", padding: "2px 8px", borderRadius: 2, color: tRecColor(a.recommendation), background: tRecColor(a.recommendation) + "18" }}>{a.recommendation}</span>}
             {a.overall_score != null && <span style={{ fontSize: 18, fontWeight: 700, color: C.t1, marginLeft: a.recommendation ? 0 : "auto" }}>{a.overall_score}<span style={{ fontSize: 10, fontWeight: 400, color: C.t4 }}> / 100</span></span>}
           </div>
-          <div style={{ ...tEyebrowMuted, fontSize: 9, marginBottom: 14 }}>{[a.sleeve && `${a.sleeve} sleeve`, a.screen_date, ig?.mindset, fa?.inspire_impact_score != null && `Inspire ${fa.inspire_impact_score}`].filter(Boolean).join(" · ")}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{[a.sleeve && `${a.sleeve} sleeve`, a.screen_date, ig?.mindset, fa?.inspire_impact_score != null && `Inspire ${fa.inspire_impact_score}`].filter(Boolean).join(" · ")}</span>
+            {(a.ticker || a.symbol) && (() => {
+              const repSym = a.ticker || a.symbol;
+              const goBtn = (label, profTab) => (
+                <button key={label} onClick={() => { setTerminalActiveSym(repSym); setTProfileSym(repSym); setTProfileTab(profTab); setTDrawer(null); setTBriefView(null); lookupTicker(repSym); }}
+                  style={{ background: "none", border: `1px solid ${C.border}`, borderRadius: 2, padding: "2px 10px", color: C.t3, fontSize: 9, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t3; }}>{label}</button>
+              );
+              return <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>{goBtn("Overview", "overview")}{goBtn("Chart", "chart")}</span>;
+            })()}
+          </div>
           {loading ? (
             <div style={tEyebrowMuted}>LOADING REPORT</div>
           ) : (<>
@@ -3480,7 +3548,9 @@ Instructions:
     const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
 
     return (
-      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: `${tIsGrowth ? 348 : 320}px minmax(0, 1fr) minmax(240px, 300px)`, overflow: "hidden", fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ position: "fixed", inset: 0, background: C.bg, color: C.t1, fontFamily: tFont, fontSize: 12, display: "grid", gridTemplateRows: "32px 1fr auto 24px", gridTemplateColumns: `${tIsGrowth ? 348 : 320}px minmax(0, 1fr) minmax(240px, 300px)`, overflow: "hidden", fontVariantNumeric: "tabular-nums", caretColor: "transparent" }}>
+        {/* Suppress the stray text caret that appears when clicking non-input text; restore it for real inputs */}
+        <style>{`input, textarea, select, [contenteditable="true"] { caret-color: ${C.accent}; }`}</style>
         {/* ── TOP STATUS BAR ── */}
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", background: C.surface, borderBottom: `1px solid ${C.border}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -3498,6 +3568,19 @@ Instructions:
             {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? C.warn : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
             {macroData.oilPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${macroData.oilPrice.toFixed(2)} <span style={{ color: macroData.oilChg >= 0 ? C.up : C.dn }}>{macroData.oilChg != null ? `${macroData.oilChg >= 0 ? "+" : ""}${macroData.oilChg.toFixed(2)}%` : ""}</span></span>}
             {macroData.goldPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${macroData.goldPrice.toFixed(0)} <span style={{ color: macroData.goldChg >= 0 ? C.up : C.dn }}>{macroData.goldChg != null ? `${macroData.goldChg >= 0 ? "+" : ""}${macroData.goldChg.toFixed(2)}%` : ""}</span></span>}
+            <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
+            <input
+              type="text" placeholder="TICKER ⏎" spellCheck={false}
+              onKeyDown={async e => {
+                if (e.key !== "Enter") return;
+                const sym = await lookupTicker(e.currentTarget.value);
+                if (!sym) return;
+                e.currentTarget.value = "";
+                setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); setTBriefView(null);
+              }}
+              style={{ width: 84, padding: "2px 8px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 2, color: C.t1, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", fontFamily: "inherit", outline: "none", flexShrink: 0 }}
+              onFocus={e => e.currentTarget.style.borderColor = C.accent} onBlur={e => e.currentTarget.style.borderColor = C.border}
+            />
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>
@@ -4097,9 +4180,10 @@ Instructions:
                   { k: "_sector", l: "Sector", align: "left" },
                   { k: "recommendation", l: "Rec", align: "left" },
                   { k: "overall_score", l: "Score", align: "right" },
+                  { k: "_inspire", l: "Inspire", align: "right" },
                   { k: "screen_date", l: "Date", align: "right" },
                 ];
-                const sortVal = (s, k) => k === "_sector" ? (getSector(s) || "") : (s[k] ?? null);
+                const sortVal = (s, k) => k === "_sector" ? (getSector(s) || "") : k === "_inspire" ? (screenerScores[s.ticker]?.inspire ?? null) : (s[k] ?? null);
                 const sorted = [...filtered].sort((a, b) => {
                   const col = scrSort.col && scrCols.some(c2 => c2.k === scrSort.col) ? scrSort.col : null;
                   if (!col) return (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || "");
@@ -4165,6 +4249,7 @@ Instructions:
                             <td style={{ ...tTd("left"), color: C.t4, fontSize: 10 }}>{getSector(s) || "—"}</td>
                             <td style={tTd("left")}>{s.recommendation ? <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", padding: "1px 8px", borderRadius: 2, color: tRecColor(s.recommendation), background: tRecColor(s.recommendation) + "18" }}>{s.recommendation}</span> : "—"}</td>
                             <td style={{ ...tTd(), fontWeight: 700, color: s.overall_score >= 70 ? C.up : s.overall_score >= 50 ? C.t1 : C.warn }}>{s.overall_score ?? "—"}</td>
+                            <td style={{ ...tTd(), fontWeight: 600, color: (() => { const v = screenerScores[s.ticker]?.inspire; return v == null ? C.t4 : v >= 0 ? C.up : C.dn; })() }}>{screenerScores[s.ticker]?.inspire ?? "—"}</td>
                             <td style={{ ...tTd(), color: C.t4, fontSize: 10 }}>{s.screen_date || "—"}</td>
                           </tr>
                         ))}
@@ -5425,6 +5510,20 @@ Instructions:
         }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.navBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <img src="paradiem-logo-dark.png?v=6" alt="Paradiem" style={{ width: "80%", height: "auto" }} />
+          </div>
+          <div style={{ padding: "12px 20px 0" }}>
+            <input
+              type="text" placeholder="Search ticker…" spellCheck={false}
+              onKeyDown={async e => {
+                if (e.key !== "Enter") return;
+                const sym = await lookupTicker(e.currentTarget.value);
+                if (!sym) return;
+                e.currentTarget.value = "";
+                openStock(sym);
+              }}
+              style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", background: C.navAccentSoft, border: `1px solid ${C.navBorder}`, borderRadius: 8, color: C.navText, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none" }}
+              onFocus={e => e.currentTarget.style.borderColor = C.accent} onBlur={e => e.currentTarget.style.borderColor = C.navBorder}
+            />
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
@@ -9080,7 +9179,10 @@ Instructions:
                           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "none"; }}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: C.t1 }}>{s.ticker}</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, display: "flex", alignItems: "baseline", gap: 8 }}>
+                              {s.ticker}
+                              {(() => { const v = screenerScores[s.ticker]?.inspire; return v != null ? <span title="Inspire Impact Score" style={{ fontSize: 11, fontWeight: 700, color: v >= 0 ? C.up : C.dn }}>✦ {v}</span> : null; })()}
+                            </div>
                             <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
                             <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 3, flexWrap: "wrap" }}>
                               {sector && <span style={{ fontSize: 10, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 4 }}>{sector}</span>}
