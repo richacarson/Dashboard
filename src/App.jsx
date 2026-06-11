@@ -3643,6 +3643,7 @@ Instructions:
     const tAvgQtd = tAvg(tQtdOf);
     const tIsGrowth = tChartSleeve === "growth";
     const tIsDividend = tChartSleeve === "dividend";
+    const tIsFci = tChartSleeve === "fci100" || tChartSleeve === "fciValues";
     const tIsEtfSleeve = tChartSleeve === "sectors" || tChartSleeve === "digital"; // ETF sleeves have no P/E or screener composite
     const tIsPortfolio = terminalActiveSym === "__portfolio__";
     const tChartBg = "171738"; // terminal chart is always dark navy, regardless of theme
@@ -3710,15 +3711,16 @@ Instructions:
                   // Sleeve's weighted total day change — matches the live portfolio NAV % move.
                   // Uses the same calc as sleeveActualDay (shares × current price vs prev close).
                   const sleeveDay = sleeveActualDay(tChartSleeve);
-                  return [
-                    ...(tIsEtfSleeve ? [] : [
-                      { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null },
-                      { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null },
-                      { l: "DAY", v: sleeveDay != null ? pct(sleeveDay) : null, c: sleeveDay == null ? null : sleeveDay >= 0 ? C.up : C.dn },
-                    ]),
-                    ...(tIsDividend ? [{ l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null }] : []),
-                    ...(tIsGrowth ? [{ l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null }] : []),
-                  ];
+                  const day = { l: "DAY", v: sleeveDay != null ? pct(sleeveDay) : null, c: sleeveDay == null ? null : sleeveDay >= 0 ? C.up : C.dn };
+                  const pe = { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null };
+                  const comp = { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null };
+                  const yld = { l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null };
+                  const peg = { l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null };
+                  if (tIsEtfSleeve) return [day];
+                  if (tIsDividend) return [day, yld, comp, pe];
+                  if (tIsGrowth) return [day, comp, pe, peg];
+                  if (tIsFci) return [day, comp, pe];
+                  return [day, comp, pe];
                 })().map(({ l, v, c }) => (
                   <span key={l} style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
                     <span style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: C.accent }}>{l}</span>
@@ -3733,6 +3735,8 @@ Instructions:
                   { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
                   ...(tIsEtfSleeve ? [] : tIsGrowth
                     ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "PEG", k: "peg", w: 28 }, { l: "WT%", k: "wt", w: 34 }]
+                    : tIsFci
+                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }]
                     : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
                 ].map(h => {
                   const active = tWatchSort.col === h.k;
@@ -3784,7 +3788,7 @@ Instructions:
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>}
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
                 {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
-                {!tIsEtfSleeve && (() => {
+                {!tIsEtfSleeve && !tIsFci && (() => {
                   const w = liveWeights[tChartSleeve]?.[sym] ?? TARGET_WEIGHTS[tChartSleeve]?.[sym];
                   return <span style={{ fontSize: 10, fontWeight: 600, width: 34, flexShrink: 0, textAlign: "right", color: w != null ? C.t2 : C.t4 }}>{w != null ? w.toFixed(1) : "—"}</span>;
                 })()}
