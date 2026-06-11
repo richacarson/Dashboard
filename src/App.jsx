@@ -1380,22 +1380,27 @@ Instructions:
     const sym = (raw || "").trim().toUpperCase();
     if (!/^[A-Z.\-]{1,10}$/.test(sym)) return null;
     const jobs = [];
+    const diag = {
+      quote: quotesRef.current[sym]?.p ? "cached" : (apiKey && apiSecret ? "pending" : "no-keys"),
+      fundamentals: fundamentals[sym]?.peTTM ? "cached" : (FH ? "pending" : "no-finnhub-key"),
+    };
     if (!(quotesRef.current[sym]?.p) && apiKey && apiSecret) {
       jobs.push((async () => {
         try {
           const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${sym}&feed=iex`, { headers: hdrs });
-          if (!r.ok) return;
+          if (!r.ok) { diag.quote = `http-${r.status}`; return; }
           const d = await r.json();
           const snap = d[sym];
           if (snap?.latestTrade) {
             quotesRef.current[sym] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
             setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
-          }
+            diag.quote = "ok";
+          } else { diag.quote = "no-trade-data"; }
           if (snap?.prevDailyBar) {
             barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.prevDailyBar.c };
             setBars(prev => ({ ...prev, [sym]: barsRef.current[sym] }));
           }
-        } catch {}
+        } catch (err) { diag.quote = `error: ${err?.message || err}`; }
       })());
     }
     if (!fundamentals[sym]?.peTTM && FH) {
@@ -1418,13 +1423,36 @@ Instructions:
               ytd: m.yearToDatePriceReturnDaily ?? null,
             };
             setFundamentals(prev => ({ ...prev, [sym]: { ...(prev[sym] || {}), ...f } }));
-          }
-        } catch {}
+            diag.fundamentals = "ok";
+          } else { diag.fundamentals = "empty-response"; }
+        } catch (err) { diag.fundamentals = `error: ${err?.message || err}`; }
       })());
     }
     await Promise.all(jobs);
+    console.warn("[lookupTicker]", sym, diag);
     return sym;
   }, [apiKey, apiSecret, hdrs, fundamentals]);
+
+  /* ── Global ticker search modal — opened via "/" or Cmd/Ctrl+K in any layout ── */
+  const [tickerSearchOpen, setTickerSearchOpen] = useState(false);
+  const [tickerSearchQ, setTickerSearchQ] = useState("");
+  useEffect(() => {
+    if (!unlocked || !authed) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") { setTickerSearchOpen(false); return; } // no-op when already closed
+      const t = e.target, tag = t?.tagName;
+      const inField = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t?.isContentEditable;
+      const isCmdK = (e.metaKey || e.ctrlKey) && !e.altKey && (e.key === "k" || e.key === "K");
+      const isSlash = e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey;
+      if (!isCmdK && !isSlash) return;
+      if (inField) return; // don't hijack typing inside other inputs
+      e.preventDefault();
+      setTickerSearchQ("");
+      setTickerSearchOpen(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [unlocked, authed]);
 
 
   /* ── Fetch asset names ── */
@@ -3356,6 +3384,39 @@ Instructions:
   /* ═══════════════════════════════════════════════════════════════════
      TERMINAL LAYOUT — 4-panel Bloomberg-style grid (desktop only)
      ═══════════════════════════════════════════════════════════════════ */
+  /* ── Shared ticker-search modal (rendered by both layouts) ── */
+  const isTerminalView = layoutMode === "terminal" && isDesktop && isWide;
+  const openTickerSearch = () => { setTickerSearchQ(""); setTickerSearchOpen(true); };
+  const submitTickerSearch = async () => {
+    const q = tickerSearchQ; // controlled state — immune to synthetic-event invalidation across await
+    setTickerSearchOpen(false);
+    setTickerSearchQ("");
+    const sym = await lookupTicker(q);
+    if (!sym) return;
+    if (isTerminalView) {
+      setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); setTBriefView(null);
+    } else {
+      openStock(sym);
+    }
+  };
+  const tickerSearchModal = tickerSearchOpen ? (
+    <div onClick={() => setTickerSearchOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "18vh" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(460px, calc(100vw - 48px))", background: C.card, border: `1px solid ${C.border}`, borderRadius: isTerminalView ? 0 : 10, padding: "18px 20px 16px", boxShadow: "0 24px 80px rgba(0,0,0,0.55)" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: C.accent, marginBottom: 10 }}>Search</div>
+        <input
+          autoFocus type="text" spellCheck={false} placeholder="Search any ticker… AAPL"
+          value={tickerSearchQ} onChange={e => setTickerSearchQ(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Escape") { e.stopPropagation(); setTickerSearchOpen(false); return; }
+            if (e.key === "Enter") submitTickerSearch();
+          }}
+          style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", background: C.bg, border: `1px solid ${C.borderActive || C.border}`, borderRadius: isTerminalView ? 0 : 10, color: C.t1, fontSize: 16, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", fontFamily: "inherit", outline: "none" }}
+        />
+        <div style={{ fontSize: 11, color: C.t4, marginTop: 10 }}>Press Enter to open · Esc to close</div>
+      </div>
+    </div>
+  ) : null;
+
   if (layoutMode === "terminal" && isDesktop && isWide && authed) {
     const tFont = "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
     const tEyebrow = { fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.2, color: C.accent };
@@ -3558,6 +3619,13 @@ Instructions:
             <span style={{ fontSize: 11, fontWeight: 700, color: marketStatus.color }}>{marketStatus.label}</span>
           </div>
           <div style={{ display: "flex", gap: 16, alignItems: "center", overflowX: "auto" }}>
+            <button
+              onClick={openTickerSearch} title="Search any ticker (/ or Cmd+K)"
+              style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 8px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 2, color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, whiteSpace: "nowrap" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.t1; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t3; }}
+            >⌕ SEARCH · /</button>
+            <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
             {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? (
               <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(null); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
                 <span style={{ fontWeight: 700 }}>{sym}</span>{" "}${q.p.toFixed(2)}{" "}
@@ -3568,19 +3636,6 @@ Instructions:
             {macroData.vix != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>VIX</span> <span style={{ color: macroData.vix > 25 ? C.dn : macroData.vix > 18 ? C.warn : C.up }}>{macroData.vix.toFixed(1)}</span></span>}
             {macroData.oilPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>OIL</span> ${macroData.oilPrice.toFixed(2)} <span style={{ color: macroData.oilChg >= 0 ? C.up : C.dn }}>{macroData.oilChg != null ? `${macroData.oilChg >= 0 ? "+" : ""}${macroData.oilChg.toFixed(2)}%` : ""}</span></span>}
             {macroData.goldPrice != null && <span style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap" }}><span style={{ fontWeight: 700 }}>GOLD</span> ${macroData.goldPrice.toFixed(0)} <span style={{ color: macroData.goldChg >= 0 ? C.up : C.dn }}>{macroData.goldChg != null ? `${macroData.goldChg >= 0 ? "+" : ""}${macroData.goldChg.toFixed(2)}%` : ""}</span></span>}
-            <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
-            <input
-              type="text" placeholder="TICKER ⏎" spellCheck={false}
-              onKeyDown={async e => {
-                if (e.key !== "Enter") return;
-                const sym = await lookupTicker(e.currentTarget.value);
-                if (!sym) return;
-                e.currentTarget.value = "";
-                setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); setTBriefView(null);
-              }}
-              style={{ width: 84, padding: "2px 8px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 2, color: C.t1, fontSize: 10, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", fontFamily: "inherit", outline: "none", flexShrink: 0 }}
-              onFocus={e => e.currentTarget.style.borderColor = C.accent} onBlur={e => e.currentTarget.style.borderColor = C.border}
-            />
           </div>
           <span style={{ fontSize: 10, color: C.t3 }}>{tNow} ET</span>
         </div>
@@ -5617,12 +5672,15 @@ Instructions:
           </div>
         ); })()}
 
+        {tickerSearchModal}
       </div>
     );
   }
 
   return (
     <div ref={contentRef} onTouchStart={handleTabSwipeStart} onTouchEnd={handleTabSwipeEnd} style={{ minHeight: "100dvh", background: C.bg, color: C.t1, display: isDesktop ? "flex" : "block", paddingBottom: isDesktop ? 0 : 90, overflowY: "auto", fontFamily: theme === "terminal" ? "'IBM Plex Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace" : undefined, letterSpacing: theme === "terminal" ? "-0.2px" : undefined, fontSize: theme === "terminal" ? "13px" : undefined }}>
+
+      {tickerSearchModal}
 
       {/* DESKTOP SIDEBAR */}
       {isDesktop && (
@@ -5635,18 +5693,11 @@ Instructions:
             <img src="paradiem-logo-dark.png?v=6" alt="Paradiem" style={{ width: "80%", height: "auto" }} />
           </div>
           <div style={{ padding: "12px 20px 0" }}>
-            <input
-              type="text" placeholder="Search ticker…" spellCheck={false}
-              onKeyDown={async e => {
-                if (e.key !== "Enter") return;
-                const sym = await lookupTicker(e.currentTarget.value);
-                if (!sym) return;
-                e.currentTarget.value = "";
-                openStock(sym);
-              }}
-              style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px", background: C.navAccentSoft, border: `1px solid ${C.navBorder}`, borderRadius: 8, color: C.navText, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none" }}
-              onFocus={e => e.currentTarget.style.borderColor = C.accent} onBlur={e => e.currentTarget.style.borderColor = C.navBorder}
-            />
+            <button
+              onClick={openTickerSearch} title="Search any ticker (/ or Cmd+K)"
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxSizing: "border-box", padding: "8px 12px", background: C.navAccentSoft, border: `1px solid ${C.navBorder}`, borderRadius: 8, color: C.navText, fontSize: 12, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = C.accent} onMouseLeave={e => e.currentTarget.style.borderColor = C.navBorder}
+            >⌕ Search · /</button>
           </div>
           <nav style={{ flex: 1, padding: "12px 0" }}>
             {navItems.map(t => (
