@@ -1599,8 +1599,7 @@ Instructions:
 
   /* ── Dividend longevity (Yrs Paid / Yrs Grown) — dividend sleeve only ── */
   const fetchDividendHistory = useCallback(async (force = false) => {
-    const key = FH || FK;
-    if (!key) return;
+    if (!FK) return; // FMP free tier has the dividend endpoint; Finnhub's /dividend2 is premium
     const divSyms = sleeves.dividend?.symbols || [];
     if (!divSyms.length) return;
     if (!force) {
@@ -1608,26 +1607,24 @@ Instructions:
         const old = JSON.parse(localStorage.getItem("iown_dividend_history") || "{}");
         const age = Date.now() - (old._ts || 0);
         const hasData = divSyms.some(s => old[s]?.yearsPaid != null);
-        if (age < 24 * 3600000 && hasData) { setDividendHistory(old); return; } // 24h TTL — dividend history changes rarely
+        if (age < 24 * 3600000 && hasData) { setDividendHistory(old); return; } // 24h TTL
       } catch {}
     }
     const results = {};
-    const toDate = new Date().toISOString().slice(0, 10);
     const curYear = new Date().getFullYear();
     for (let i = 0; i < divSyms.length; i++) {
       const sym = divSyms[i];
       try {
-        const url = `https://finnhub.io/api/v1/stock/dividend2?symbol=${sym}&from=1995-01-01&to=${toDate}&token=${key}`;
-        let r = await fetch(url);
-        if (r.status === 429) { await new Promise(res => setTimeout(res, 61000)); r = await fetch(url); }
+        const url = `https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/${sym}?apikey=${FK}`;
+        const r = await fetch(url);
         if (!r.ok) continue;
         const d = await r.json();
-        const payments = Array.isArray(d) ? d : (d?.data || []);
-        // Group payments by calendar year
+        const payments = d?.historical || [];
+        // Group payments by calendar year (use payment/declaration date when available, else event date)
         const yearSum = {};
         for (const p of payments) {
-          const amt = Number(p.amount);
-          const dt = p.payDate || p.date || p.exDate || "";
+          const amt = Number(p.adjDividend ?? p.dividend);
+          const dt = p.paymentDate || p.date || p.declarationDate || "";
           const y = parseInt(String(dt).slice(0, 4), 10);
           if (!isFinite(amt) || amt <= 0 || !y) continue;
           yearSum[y] = (yearSum[y] || 0) + amt;
@@ -4229,19 +4226,19 @@ Instructions:
                     const ew = 100 / n;
                     const rows = mSyms.map(s => {
                       const w = mWOf(s) || 0;
-                      const c = mDayChg(s);
+                      const c = mQtd(s); // since rebalance (quarter-to-date vs anchor price)
                       return { s, w, diff: w - ew, c, alpha: c != null ? (w - ew) * c / 100 : null };
                     }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
                     const totW = rows.reduce((x, r) => x + r.w, 0);
                     const totAlpha = rows.reduce((x, r) => x + (r.alpha || 0), 0);
                     let wSum = 0, wTot = 0, eSum = 0, eTot = 0;
                     for (const r of rows) { if (r.c != null) { wSum += r.w * r.c; wTot += r.w; eSum += ew * r.c; eTot += ew; } }
-                    const wDay = wTot > 0 ? wSum / wTot : null;
-                    const eDay = eTot > 0 ? eSum / eTot : null;
+                    const wQ = wTot > 0 ? wSum / wTot : null;
+                    const eQ = eTot > 0 ? eSum / eTot : null;
                     return (
                       <div style={{ maxWidth: 640 }}>
                         <div style={{ display: "flex", gap: 20, marginBottom: 10 }}>
-                          {[{ l: "WT DAY", v: wDay }, { l: "EW DAY", v: eDay }, { l: "DAY ALPHA", v: (wDay != null && eDay != null) ? wDay - eDay : null }].map(({ l, v }) => (
+                          {[{ l: "WT QTD", v: wQ }, { l: "EW QTD", v: eQ }, { l: "QTD ALPHA", v: (wQ != null && eQ != null) ? wQ - eQ : null }].map(({ l, v }) => (
                             <span key={l} style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
                               <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{l}</span>
                               <span style={{ fontSize: 12, fontWeight: 700, color: mUpDn(v) }}>{mFmtSgn(v) ?? "—"}</span>
@@ -4251,7 +4248,7 @@ Instructions:
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                           <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
                             <th style={tTh("left", false)}>Ticker</th>
-                            {["Wt%", "EW%", "Diff", "Day%", "Day Alpha"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
+                            {["Wt%", "EW%", "Diff", "QTD%", "QTD Alpha"].map(h => <th key={h} style={tTh("right", false)}>{h}</th>)}
                           </tr></thead>
                           <tbody>
                             {rows.map(r => (
@@ -4271,7 +4268,7 @@ Instructions:
                               <td style={{ ...tTd(), fontWeight: 700, color: C.t1 }}>{totW.toFixed(1)}%</td>
                               <td style={{ ...tTd(), fontWeight: 700, color: C.t3 }}>100.0%</td>
                               <td style={{ ...tTd(), color: C.t4 }}>—</td>
-                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(wDay) }}>{mFmtSgn(wDay) ?? "—"}</td>
+                              <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(wQ) }}>{mFmtSgn(wQ) ?? "—"}</td>
                               <td style={{ ...tTd(), fontWeight: 700, color: mUpDn(totAlpha) }}>{totAlpha >= 0 ? "+" : ""}{totAlpha.toFixed(3)}%</td>
                             </tr>
                           </tfoot>
@@ -4296,13 +4293,13 @@ Instructions:
                       <div key={label} style={{ marginBottom: 16 }}>
                         <div style={{ ...tEyebrow, color, marginBottom: 6 }}>{label} ({list.length})</div>
                         {!list.length ? <div style={{ ...tEyebrowMuted, fontSize: 9 }}>NONE</div> : list.map(s => {
-                          const c = mDayChg(s);
+                          const qtd = mQtd(s);
                           const ytd = fundamentals[s]?.ytd;
                           return (
                             <div key={s} style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "3px 0", borderBottom: `1px solid ${C.border}` }}>
                               <span style={{ fontSize: 11, fontWeight: 700, color: C.t1, width: 56, flexShrink: 0 }}>{s}</span>
-                              <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(c) }}>{mFmtSgn(c) ?? "—"}</span>
-                              <span style={{ ...tEyebrowMuted, fontSize: 8 }}>DAY</span>
+                              <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(qtd) }}>{mFmtSgn(qtd) ?? "—"}</span>
+                              <span style={{ ...tEyebrowMuted, fontSize: 8 }}>QTD</span>
                               <span style={{ fontSize: 10, width: 64, textAlign: "right", fontWeight: 600, color: mUpDn(ytd) }}>{mFmtSgn(ytd, 1) ?? "—"}</span>
                               <span style={{ ...tEyebrowMuted, fontSize: 8 }}>YTD</span>
                             </div>
