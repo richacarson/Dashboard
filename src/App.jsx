@@ -5330,9 +5330,6 @@ Instructions:
                       {pSection("Identity", [
                         ["Sector", f.sector ?? scr?.profile?.sector ?? null],
                         ["Industry", f.industry ?? scr?.profile?.industry ?? null],
-                        ["Exchange", f.exchange ?? scr?.profile?.exchange ?? null],
-                        ["Country", f.country ?? scr?.profile?.country ?? null],
-                        ["Employees", (f.employees ?? scr?.profile?.employees) != null ? Number(f.employees ?? scr.profile.employees).toLocaleString() : null],
                       ])}
                       {pSection("Valuation", [
                         ["P/E TTM", fmt1(f.peTTM)],
