@@ -2979,7 +2979,18 @@ Instructions:
       .then(s => setOppSignals(s));
   }, [tab, tDrawer, layoutMode]);
 
-  const chg = s => { const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+  // Day-change helper. If the computed value exceeds ±60% we assume a stock split or
+  // other corporate action where the prev-close (bars.pc) didn't get adjusted to the
+  // post-event ratio (so a 4:1 split looks like a -75% intraday drop). Suppress the
+  // bogus number instead of misleading the user. Single source of truth — sleeve day
+  // returns and other consumers route through here.
+  const chg = s => {
+    const q = quotesRef.current[s] || quotes[s], b = barsRef.current[s] || bars[s];
+    if (!q?.p || !b?.pc) return null;
+    const c = ((q.p - b.pc) / b.pc) * 100;
+    if (Math.abs(c) > 60) return null;
+    return c;
+  };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
   const sleeveActualDay = (k) => {
     const h = perfDataMap[k]?.holdings;
@@ -2989,8 +3000,12 @@ Instructions:
     for (const [sym, sh] of Object.entries(h)) {
       const q = quotesRef.current[sym] || quotes[sym];
       if (q?.p && sh) {
-        cur += sh * q.p;
         const pc = (barsRef.current[sym] || bars[sym])?.pc;
+        // Guard against unadjusted-split prev-closes: if the implied per-stock day
+        // change is more extreme than ±60%, skip this position from BOTH sides of
+        // the ratio so a 4:1 split (-75%) doesn't sink the whole sleeve.
+        if (pc > 0 && Math.abs((q.p - pc) / pc) > 0.6) continue;
+        cur += sh * q.p;
         prev += sh * (pc > 0 ? pc : q.p);
       }
     }
@@ -3838,7 +3853,7 @@ Instructions:
                 const cmp = tWatchSort.col === "sym" ? ka.localeCompare(kb) : (ka - kb);
                 return tWatchSort.dir === "asc" ? cmp : -cmp;
               });
-            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
+            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = chg(sym); const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
               <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); }}
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
