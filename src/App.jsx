@@ -3397,8 +3397,11 @@ Instructions:
         const q = quotesRef.current[sym] || quotes[sym];
         const sh = holdings[sym];
         if (q?.p && sh) {
-          currentTotal += sh * q.p;
           const pc = (barsRef.current[sym] || bars[sym])?.pc;
+          // Split guard — same as liveValue: skip both sides of the ratio for any position
+          // whose pc implies >60% move (unadjusted-for-split prev close).
+          if (pc > 0 && Math.abs((q.p - pc) / pc) > 0.6) continue;
+          currentTotal += sh * q.p;
           prevTotal += sh * (pc > 0 ? pc : q.p);
         }
       }
