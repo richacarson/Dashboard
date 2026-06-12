@@ -1412,7 +1412,7 @@ Instructions:
             setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
             diag.quote = "ok";
           } else { diag.quote = "no-trade-data"; }
-          if (snap?.prevDailyBar) {
+          if (snap?.prevDailyBar && !splitFixedRef.current.has(sym)) { // keep split-corrected pc
             barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.prevDailyBar.c };
             setBars(prev => ({ ...prev, [sym]: barsRef.current[sym] }));
           }
@@ -1492,6 +1492,7 @@ Instructions:
   const bmQuotesRef = useRef({}); // per-trade WS benchmark quotes — synced to state at 1Hz
   const splitFixedRef = useRef(new Set()); // symbols whose pc has been corrected
   const splitAttemptRef = useRef({}); // symbol -> last attempt timestamp (throttles free-tier retries)
+  const splitFixedDayRef = useRef(new Date().toDateString()); // corrections expire on a new day
 
   // Re-fetch split-adjusted previous-day bars for symbols whose pc looks pre-split.
   // Alpaca's snapshots endpoint doesn't take an adjustment parameter, so when a corporate
@@ -1562,6 +1563,20 @@ Instructions:
     } catch (e) { console.warn("[split-adjust] Alpaca error", e); }
   };
 
+  // Debug escape hatch: force a re-fix from the browser console, e.g. window.__fixSplit('KLAC').
+  // Clears the fixed/attempt caches for the symbol so the refetch fires immediately.
+  useEffect(() => {
+    window.__fixSplit = (sym) => {
+      const s = String(sym || "").trim().toUpperCase();
+      if (!s) return "usage: window.__fixSplit('KLAC')";
+      splitFixedRef.current.delete(s);
+      delete splitAttemptRef.current[s];
+      refetchSplitAdjustedBars([s]);
+      return `[split-adjust] re-fix queued for ${s} — watch for "[split-adjust] ... corrected ${s}" in this console`;
+    };
+    return () => { delete window.__fixSplit; };
+  });
+
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
     if (showLoading) setLoading(true);
@@ -1572,10 +1587,26 @@ Instructions:
       const d = await r.json();
       const nq = {}, nb = {};
       const splitSuspects = [];
+      // New calendar day: Alpaca's prevDailyBar now reflects the post-split close itself,
+      // so expire yesterday's corrections and let the snapshot pc through again.
+      const todayKey = new Date().toDateString();
+      if (splitFixedDayRef.current !== todayKey) {
+        splitFixedDayRef.current = todayKey;
+        splitFixedRef.current.clear();
+        splitAttemptRef.current = {};
+      }
       for (const [s, snap] of Object.entries(d)) {
         if (snap.latestTrade) nq[s] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
         if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
-        if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
+        if (snap.prevDailyBar) {
+          if (!nb[s]) nb[s] = {};
+          // CRITICAL: don't stomp a split-corrected pc. refetchSplitAdjustedBars runs async
+          // while this loop fires every 1s — without this guard the unadjusted
+          // prevDailyBar.c always wins the race and the correction never sticks.
+          nb[s].pc = (splitFixedRef.current.has(s) && barsRef.current[s]?.pc > 0)
+            ? barsRef.current[s].pc
+            : snap.prevDailyBar.c;
+        }
         // Split detection: pc vs current implying >60% intraday move = unadjusted prev close
         const todayP = snap.latestTrade?.p ?? snap.dailyBar?.c;
         if (todayP > 0 && nb[s]?.pc > 0 && Math.abs((todayP - nb[s].pc) / nb[s].pc) > 0.6) {
