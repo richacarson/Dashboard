@@ -1498,38 +1498,61 @@ Instructions:
   // change look like a -67% crash. The /v2/stocks/bars endpoint with adjustment=split
   // returns the corrected close. Cached in splitFixedRef so we only fetch once per symbol.
   const refetchSplitAdjustedBars = async (syms) => {
-    if (!apiKey || !apiSecret) return;
     const todo = [...new Set(syms)].filter(s => s && !splitFixedRef.current.has(s));
     if (!todo.length) return;
     console.info("[split-adjust] suspecting splits for", todo.join(", "));
+    // Strategy 1 (fast, reliable): Finnhub /quote returns split-adjusted prev close
+    if (FH) {
+      const updates = {};
+      await Promise.all(todo.map(async (sym) => {
+        try {
+          const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${FH}`);
+          if (!r.ok) { console.warn("[split-adjust] Finnhub HTTP", r.status, "for", sym); return; }
+          const d = await r.json();
+          // pc is the adjusted previous close per Finnhub
+          if (typeof d?.pc === "number" && d.pc > 0) {
+            const cur = barsRef.current[sym] || {};
+            const next = { ...cur, pc: d.pc };
+            barsRef.current[sym] = next;
+            updates[sym] = next;
+            splitFixedRef.current.add(sym);
+            console.info("[split-adjust] Finnhub corrected", sym, "pc=", d.pc);
+          } else {
+            console.warn("[split-adjust] Finnhub gave no pc for", sym, d);
+          }
+        } catch (e) { console.warn("[split-adjust] Finnhub error for", sym, e); }
+      }));
+      if (Object.keys(updates).length) {
+        setBars(prev => ({ ...prev, ...updates }));
+      }
+    }
+    // Strategy 2 (fallback): Alpaca split-adjusted bars for any symbol still unfixed
+    if (!apiKey || !apiSecret) return;
+    const remaining = todo.filter(s => !splitFixedRef.current.has(s));
+    if (!remaining.length) return;
     try {
       const start = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
-      // No feed=iex — split-adjusted historical bars come from SIP. IEX-only can return
-      // empty / unadjusted data depending on the symbol.
-      const url = `${BASE}/v2/stocks/bars?symbols=${todo.join(",")}&timeframe=1Day&start=${start}&adjustment=split&limit=10`;
+      const url = `${BASE}/v2/stocks/bars?symbols=${remaining.join(",")}&timeframe=1Day&start=${start}&adjustment=split&limit=10`;
       const r = await fetch(url, { headers: hdrs });
-      if (!r.ok) { console.warn("[split-adjust] HTTP", r.status, await r.text().catch(() => "")); return; }
+      if (!r.ok) { console.warn("[split-adjust] Alpaca HTTP", r.status, await r.text().catch(() => "")); return; }
       const d = await r.json();
       const updates = {};
       for (const [sym, bars] of Object.entries(d.bars || {})) {
         if (Array.isArray(bars) && bars.length >= 2) {
-          const adjustedPc = bars[bars.length - 2].c; // second-to-last bar = yesterday's adjusted close
+          const adjustedPc = bars[bars.length - 2].c;
           if (adjustedPc > 0) {
             const cur = barsRef.current[sym] || {};
             const next = { ...cur, pc: adjustedPc };
             barsRef.current[sym] = next;
             updates[sym] = next;
-            splitFixedRef.current.add(sym); // ONLY mark fixed on success so retries can happen
+            splitFixedRef.current.add(sym);
+            console.info("[split-adjust] Alpaca corrected", sym, "pc=", adjustedPc);
           }
         }
       }
-      if (Object.keys(updates).length) {
-        setBars(prev => ({ ...prev, ...updates }));
-        console.info("[split-adjust] corrected prev-close:", Object.entries(updates).map(([s, b]) => `${s}=${b.pc}`).join(", "));
-      } else {
-        console.warn("[split-adjust] no usable bars returned for", todo.join(", "), "raw response:", d);
-      }
-    } catch (e) { console.warn("[split-adjust] error", e); }
+      if (Object.keys(updates).length) setBars(prev => ({ ...prev, ...updates }));
+      else console.warn("[split-adjust] no usable Alpaca bars for", remaining.join(", "));
+    } catch (e) { console.warn("[split-adjust] Alpaca error", e); }
   };
 
   const fetchData = useCallback(async (showLoading = false) => {
