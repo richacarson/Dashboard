@@ -1501,12 +1501,14 @@ Instructions:
     if (!apiKey || !apiSecret) return;
     const todo = [...new Set(syms)].filter(s => s && !splitFixedRef.current.has(s));
     if (!todo.length) return;
-    todo.forEach(s => splitFixedRef.current.add(s));
+    console.info("[split-adjust] suspecting splits for", todo.join(", "));
     try {
       const start = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
-      const url = `${BASE}/v2/stocks/bars?symbols=${todo.join(",")}&timeframe=1Day&start=${start}&adjustment=split&limit=10&feed=iex`;
+      // No feed=iex — split-adjusted historical bars come from SIP. IEX-only can return
+      // empty / unadjusted data depending on the symbol.
+      const url = `${BASE}/v2/stocks/bars?symbols=${todo.join(",")}&timeframe=1Day&start=${start}&adjustment=split&limit=10`;
       const r = await fetch(url, { headers: hdrs });
-      if (!r.ok) return;
+      if (!r.ok) { console.warn("[split-adjust] HTTP", r.status, await r.text().catch(() => "")); return; }
       const d = await r.json();
       const updates = {};
       for (const [sym, bars] of Object.entries(d.bars || {})) {
@@ -1517,14 +1519,17 @@ Instructions:
             const next = { ...cur, pc: adjustedPc };
             barsRef.current[sym] = next;
             updates[sym] = next;
+            splitFixedRef.current.add(sym); // ONLY mark fixed on success so retries can happen
           }
         }
       }
       if (Object.keys(updates).length) {
         setBars(prev => ({ ...prev, ...updates }));
-        console.info("[split-adjust] corrected prev-close for", Object.keys(updates).join(", "));
+        console.info("[split-adjust] corrected prev-close:", Object.entries(updates).map(([s, b]) => `${s}=${b.pc}`).join(", "));
+      } else {
+        console.warn("[split-adjust] no usable bars returned for", todo.join(", "), "raw response:", d);
       }
-    } catch {}
+    } catch (e) { console.warn("[split-adjust] error", e); }
   };
 
   const fetchData = useCallback(async (showLoading = false) => {
