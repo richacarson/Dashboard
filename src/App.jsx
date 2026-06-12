@@ -1587,7 +1587,9 @@ Instructions:
       // One call: Finnhub /news?category=general returns 100+ market articles.
       // We split into "broad" and "holdings" based on whether any of our coreSyms
       // appear in the article's `related` field — keeps us at 1 API call vs 20+.
-      const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FH}`);
+      // Cache-bust + no-store so the browser/edge doesn't serve a stale response
+      // on each interval poll (the URL would otherwise be identical every time).
+      const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FH}&_t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
       if (!r.ok) return;
       const raw = await r.json();
       if (!Array.isArray(raw)) return;
@@ -1598,8 +1600,17 @@ Instructions:
       const coreSet = new Set(coreSyms || []);
       const holdings = all.filter(a => a.symbols.some(s => coreSet.has(s))).slice(0, 60);
       const broad = all.slice(0, 60);
-      setNews(prev => prev.length === holdings.length && prev[0]?.id === holdings[0]?.id ? prev : holdings);
-      setBroadNews(broad);
+      // Update state when the newest article changes (by id OR created_at) — using only
+      // id and length was masking real updates because Finnhub sometimes serves the same
+      // top-of-feed id on a refresh while later items have rotated.
+      const changed = (prev, next) => {
+        if (prev.length !== next.length) return true;
+        if (prev[0]?.id !== next[0]?.id) return true;
+        if (prev[0]?.created_at !== next[0]?.created_at) return true;
+        return false;
+      };
+      setNews(prev => changed(prev, holdings) ? holdings : prev);
+      setBroadNews(prev => changed(prev, broad) ? broad : prev);
     } catch {}
   }, [coreSyms]);
 
