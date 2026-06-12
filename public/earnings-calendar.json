@@ -570,16 +570,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DAKT",
-    "date": "2026-06-10",
-    "hour": "",
-    "epsEstimate": 0.153,
-    "epsActual": null,
-    "revenueEstimate": 205020000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "FRD",
     "date": "2026-06-10",
     "hour": "",
