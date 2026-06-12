@@ -844,9 +844,9 @@
     "date": "2026-06-11",
     "hour": "amc",
     "epsEstimate": 1.261,
-    "epsActual": null,
+    "epsActual": 1.31,
     "revenueEstimate": 8098485646,
-    "revenueActual": null,
+    "revenueActual": 7939870000,
     "source": "finnhub"
   },
   {
@@ -1532,7 +1532,7 @@
   {
     "symbol": "KR",
     "date": "2026-06-18",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.637,
     "epsActual": null,
     "revenueEstimate": 46781307865,
