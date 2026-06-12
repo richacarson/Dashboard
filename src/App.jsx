@@ -1490,6 +1490,42 @@ Instructions:
   const quotesRef = useRef({});
   const barsRef = useRef({});
   const bmQuotesRef = useRef({}); // per-trade WS benchmark quotes — synced to state at 1Hz
+  const splitFixedRef = useRef(new Set()); // symbols whose pc has been re-fetched with adjustment=split
+
+  // Re-fetch split-adjusted previous-day bars for symbols whose pc looks pre-split.
+  // Alpaca's snapshots endpoint doesn't take an adjustment parameter, so when a corporate
+  // action lands (e.g. 3:1 split) the prevDailyBar.c can lag a day, making the live day
+  // change look like a -67% crash. The /v2/stocks/bars endpoint with adjustment=split
+  // returns the corrected close. Cached in splitFixedRef so we only fetch once per symbol.
+  const refetchSplitAdjustedBars = async (syms) => {
+    if (!apiKey || !apiSecret) return;
+    const todo = [...new Set(syms)].filter(s => s && !splitFixedRef.current.has(s));
+    if (!todo.length) return;
+    todo.forEach(s => splitFixedRef.current.add(s));
+    try {
+      const start = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
+      const url = `${BASE}/v2/stocks/bars?symbols=${todo.join(",")}&timeframe=1Day&start=${start}&adjustment=split&limit=10&feed=iex`;
+      const r = await fetch(url, { headers: hdrs });
+      if (!r.ok) return;
+      const d = await r.json();
+      const updates = {};
+      for (const [sym, bars] of Object.entries(d.bars || {})) {
+        if (Array.isArray(bars) && bars.length >= 2) {
+          const adjustedPc = bars[bars.length - 2].c; // second-to-last bar = yesterday's adjusted close
+          if (adjustedPc > 0) {
+            const cur = barsRef.current[sym] || {};
+            const next = { ...cur, pc: adjustedPc };
+            barsRef.current[sym] = next;
+            updates[sym] = next;
+          }
+        }
+      }
+      if (Object.keys(updates).length) {
+        setBars(prev => ({ ...prev, ...updates }));
+        console.info("[split-adjust] corrected prev-close for", Object.keys(updates).join(", "));
+      }
+    } catch {}
+  };
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
@@ -1500,11 +1536,18 @@ Instructions:
       if (!r.ok) throw new Error("fail");
       const d = await r.json();
       const nq = {}, nb = {};
+      const splitSuspects = [];
       for (const [s, snap] of Object.entries(d)) {
         if (snap.latestTrade) nq[s] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
         if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
         if (snap.prevDailyBar) { if (!nb[s]) nb[s] = {}; nb[s].pc = snap.prevDailyBar.c; }
+        // Split detection: pc vs current implying >60% intraday move = unadjusted prev close
+        const todayP = snap.latestTrade?.p ?? snap.dailyBar?.c;
+        if (todayP > 0 && nb[s]?.pc > 0 && Math.abs((todayP - nb[s].pc) / nb[s].pc) > 0.6) {
+          splitSuspects.push(s);
+        }
       }
+      if (splitSuspects.length) refetchSplitAdjustedBars(splitSuspects);
       // Non-IEX benchmarks: use Finnhub on first load, then rely on poller + cached refs
       const isFirstFetch = Object.keys(quotesRef.current).length === 0;
       if (isFirstFetch && FH) {
@@ -2538,9 +2581,12 @@ Instructions:
         const q = quotesRef.current[ticker];
         const pc = barsRef.current[ticker]?.pc;
         if (q && q.p > 0) {
+          // Split guard: if pc and current price imply >60% move, the prev-close hasn't been
+          // adjusted for a stock split. Use current price as pc so this position contributes
+          // 0% to the day change instead of dragging the portfolio with a fake -75% move.
+          const safePc = (pc > 0 && Math.abs((q.p - pc) / pc) <= 0.6) ? pc : q.p;
           stocks += shares * q.p;
-          // For previous close, use pc if available, else use current price (assumes 0% change)
-          pcStocks += shares * (pc > 0 ? pc : q.p);
+          pcStocks += shares * safePc;
           priced++;
         }
       }
@@ -2665,8 +2711,10 @@ Instructions:
           for (const [ticker, shares] of Object.entries(holdings)) {
             const pc = barsRef.current[ticker]?.pc;
             const fallbackPrice = quotesRef.current[ticker]?.p;
-            // Use pc if available; fall back to current price (assumes 0% change for that holding)
-            const price = (pc && pc > 0) ? pc : (fallbackPrice && fallbackPrice > 0) ? fallbackPrice : 0;
+            // Same split guard as in liveValue: if pc implies >60% move vs current, treat as
+            // unadjusted-for-split and use the current price (0% contribution) instead.
+            const split = pc > 0 && fallbackPrice > 0 && Math.abs((fallbackPrice - pc) / pc) > 0.6;
+            const price = (pc && pc > 0 && !split) ? pc : (fallbackPrice && fallbackPrice > 0) ? fallbackPrice : 0;
             if (price > 0) { pcStocks += shares * price; pcPriced++; }
           }
           if (pcPriced >= tickers.length * 0.8) {
