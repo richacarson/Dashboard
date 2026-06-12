@@ -1493,6 +1493,8 @@ Instructions:
   const splitFixedRef = useRef(new Set()); // symbols whose pc has been corrected
   const splitAttemptRef = useRef({}); // symbol -> last attempt timestamp (throttles free-tier retries)
   const splitFixedDayRef = useRef(new Date().toDateString()); // corrections expire on a new day
+  const [splitRatios, setSplitRatios] = useState({}); // sym -> split ratio (e.g. KLAC 3:1 = 3). State so Holdings/Perf re-render when set.
+  const splitRatiosRef = useRef({}); // ref mirror for useEffect / non-render consumers
 
   // Re-fetch split-adjusted previous-day bars for symbols whose pc looks pre-split.
   // Alpaca's snapshots endpoint doesn't take an adjustment parameter, so when a corporate
@@ -1520,10 +1522,23 @@ Instructions:
           // pc is the adjusted previous close per Finnhub
           if (typeof d?.pc === "number" && d.pc > 0) {
             const cur = barsRef.current[sym] || {};
+            const oldPc = cur.pc;
             const next = { ...cur, pc: d.pc };
             barsRef.current[sym] = next;
             updates[sym] = next;
             splitFixedRef.current.add(sym);
+            // Derive split ratio from the pc swap: e.g. KLAC went from $750 -> $250 → 3:1.
+            // Round to common denominators (2,3,4,5,10,20) and only record if confidently a split.
+            if (oldPc > 0 && d.pc > 0) {
+              const raw = oldPc / d.pc;
+              const candidates = [2, 3, 4, 5, 10, 20];
+              const ratio = candidates.find(c => Math.abs(raw - c) / c < 0.1);
+              if (ratio) {
+                splitRatiosRef.current[sym] = ratio;
+                setSplitRatios(prev => prev[sym] === ratio ? prev : ({ ...prev, [sym]: ratio }));
+                console.info("[split-adjust] inferred", sym, "split ratio", ratio + ":1");
+              }
+            }
             console.info("[split-adjust] Finnhub corrected", sym, "pc=", d.pc);
           } else {
             console.warn("[split-adjust] Finnhub gave no pc for", sym, d);
@@ -2643,13 +2658,15 @@ Instructions:
       const h = perfData.holdings;
       const cash = perfData.cash || 0;
       let stocks = 0, pcStocks = 0, priced = 0, total = Object.keys(h).length;
-      for (const [ticker, shares] of Object.entries(h)) {
+      for (const [ticker, rawShares] of Object.entries(h)) {
+        // Apply detected split ratio so KLAC-type positions don't undercount NAV.
+        const splitR = splitRatiosRef.current[ticker] || 1;
+        const shares = rawShares * splitR;
         const q = quotesRef.current[ticker];
         const pc = barsRef.current[ticker]?.pc;
         if (q && q.p > 0) {
-          // Split guard: if pc and current price imply >60% move, the prev-close hasn't been
-          // adjusted for a stock split. Use current price as pc so this position contributes
-          // 0% to the day change instead of dragging the portfolio with a fake -75% move.
+          // Split guard for unadjusted pc (separate from holdings-split): if pc/current implies
+          // >60% move and we haven't yet fixed the pc, treat as 0% contribution to day change.
           const safePc = (pc > 0 && Math.abs((q.p - pc) / pc) <= 0.6) ? pc : q.p;
           stocks += shares * q.p;
           pcStocks += shares * safePc;
@@ -3111,13 +3128,12 @@ Instructions:
     if (!h) return null;
     const cash = perfDataMap[k]?.cash || 0;
     let cur = cash, prev = cash;
-    for (const [sym, sh] of Object.entries(h)) {
+    for (const [sym, rawSh] of Object.entries(h)) {
+      const splitR = splitRatiosRef.current[sym] || 1;
+      const sh = rawSh * splitR;
       const q = quotesRef.current[sym] || quotes[sym];
       if (q?.p && sh) {
         const pc = (barsRef.current[sym] || bars[sym])?.pc;
-        // Guard against unadjusted-split prev-closes: if the implied per-stock day
-        // change is more extreme than ±60%, skip this position from BOTH sides of
-        // the ratio so a 4:1 split (-75%) doesn't sink the whole sleeve.
         if (pc > 0 && Math.abs((q.p - pc) / pc) > 0.6) continue;
         cur += sh * q.p;
         prev += sh * (pc > 0 ? pc : q.p);
@@ -3456,11 +3472,11 @@ Instructions:
       let currentTotal = cash, prevTotal = cash; // cash doesn't change day-to-day
       for (const sym of sleeve.symbols) {
         const q = quotesRef.current[sym] || quotes[sym];
-        const sh = holdings[sym];
+        const rawSh = holdings[sym];
+        const splitR = splitRatiosRef.current[sym] || 1;
+        const sh = rawSh * splitR;
         if (q?.p && sh) {
           const pc = (barsRef.current[sym] || bars[sym])?.pc;
-          // Split guard — same as liveValue: skip both sides of the ratio for any position
-          // whose pc implies >60% move (unadjusted-for-split prev close).
           if (pc > 0 && Math.abs((q.p - pc) / pc) > 0.6) continue;
           currentTotal += sh * q.p;
           prevTotal += sh * (pc > 0 ? pc : q.p);
@@ -4786,7 +4802,12 @@ Instructions:
                 ];
                 // Per-holding rows — same math as classic holdings table
                 const weightBase = liveValue ? liveValue.value : (lastPt?.value || 1);
-                const rows = Object.entries(hData.holdings).map(([ticker, shares]) => {
+                const rows = Object.entries(hData.holdings).map(([ticker, rawShares]) => {
+                  // Apply detected split ratio: shares × ratio, avg_cost / ratio. Total cost is
+                  // unchanged by a split (just re-denominated). KLAC 3:1 → 100 sh @ $750 becomes
+                  // 300 sh @ $250 with same $75K cost basis.
+                  const splitR = splitRatios[ticker] || 1;
+                  const shares = rawShares * splitR;
                   const q = quotesRef.current?.[ticker] || quotes[ticker];
                   const price = q?.p || 0;
                   const pc = (barsRef.current?.[ticker] || bars[ticker])?.pc || price;
@@ -4794,7 +4815,7 @@ Instructions:
                   const mktValue = shares * price;
                   const weight = weightBase > 0 ? (mktValue / weightBase) * 100 : 0;
                   const cb = hData.costBasis?.[ticker] || {};
-                  const avgCost = cb.avg_cost || 0;
+                  const avgCost = (cb.avg_cost || 0) / splitR;
                   const costBasis = cb.total_cost || 0;
                   const gainLoss = mktValue - costBasis;
                   const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
@@ -6348,7 +6369,9 @@ Instructions:
                   const totalVal = liveValue ? liveValue.value : 1;
                   const cashVal = liveValue?.cash || hPerfData.cash || 0;
                   const cashWeight = liveValue ? ((cashVal / liveValue.value) * 100) : 0;
-                  const rows = Object.entries(hPerfData.holdings).map(([ticker, shares]) => {
+                  const rows = Object.entries(hPerfData.holdings).map(([ticker, rawShares]) => {
+                    const splitR = splitRatios[ticker] || 1;
+                    const shares = rawShares * splitR;
                     const q = quotesRef.current?.[ticker];
                     const price = q?.p || 0;
                     const pc = bars[ticker]?.pc || price;
@@ -6357,7 +6380,7 @@ Instructions:
                     const mktValue = shares * price;
                     const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
                     const cb = hPerfData.costBasis[ticker] || {};
-                    const avgCost = cb.avg_cost || 0;
+                    const avgCost = (cb.avg_cost || 0) / splitR;
                     const costBasis = cb.total_cost || 0;
                     const gainLoss = mktValue - costBasis;
                     const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
@@ -10590,7 +10613,9 @@ Instructions:
                   const totalVal = liveValue ? liveValue.value : 1;
                   const cashVal = liveValue?.cash || hPerfData.cash || 0;
                   const cashWeight = liveValue ? ((cashVal / liveValue.value) * 100) : 0;
-                  const rows = Object.entries(hPerfData.holdings).map(([ticker, shares]) => {
+                  const rows = Object.entries(hPerfData.holdings).map(([ticker, rawShares]) => {
+                    const splitR = splitRatios[ticker] || 1;
+                    const shares = rawShares * splitR;
                     const q = quotesRef.current?.[ticker];
                     const price = q?.p || 0;
                     const pc = bars[ticker]?.pc || price;
@@ -10599,7 +10624,7 @@ Instructions:
                     const mktValue = shares * price;
                     const weight = totalVal > 0 ? (mktValue / totalVal) * 100 : 0;
                     const cb = hPerfData.costBasis[ticker] || {};
-                    const avgCost = cb.avg_cost || 0;
+                    const avgCost = (cb.avg_cost || 0) / splitR;
                     const costBasis = cb.total_cost || 0;
                     const gainLoss = mktValue - costBasis;
                     const gainLossPct = costBasis > 0 ? (gainLoss / costBasis) * 100 : 0;
