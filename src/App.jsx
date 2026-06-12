@@ -2339,7 +2339,6 @@ Instructions:
   const fhTimerRef = useRef(null);
   const pollFinnhubBenchmarks = useCallback(async () => {
     if (!FH) return;
-    const batchQ = {}, batchB = {};
     for (const sym of NON_IEX_BM) {
       try {
         const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${FH}`);
@@ -2348,21 +2347,24 @@ Instructions:
         if (!q.c) continue;
         const price = q.c;
         const pc = q.pc || barsRef.current[sym]?.pc;
-        // Update refs
-        const quoteVal = { p: price, t: new Date().toISOString() };
-        quotesRef.current[sym] = quoteVal;
-        batchQ[sym] = quoteVal;
-        if (pc) {
-          const barVal = { ...barsRef.current[sym], pc };
-          barsRef.current[sym] = barVal;
-          batchB[sym] = barVal;
+        // ONLY write to refs — the 1Hz sync at line ~2320 is the single source of truth for
+        // bmQuotes state. Previously this poll wrote directly via setBmQuotes which fought the
+        // WebSocket (also writing via the ref + sync path), producing a 5s back-and-forth flash
+        // when /quote returned a price even a few ms older than the latest WS trade.
+        const wsTime = bmQuotesRef.current[sym]?.t ? new Date(bmQuotesRef.current[sym].t).getTime() : 0;
+        const wsStale = !wsTime || (Date.now() - wsTime) > 15_000;
+        if (wsStale) {
+          // WS hasn't published a trade in 15s — safe to overwrite from the poll
+          const quoteVal = { p: price, t: new Date().toISOString() };
+          quotesRef.current[sym] = quoteVal;
+          bmQuotesRef.current[sym] = quoteVal;
+          if (pc) barsRef.current[sym] = { ...barsRef.current[sym], pc };
+        } else if (pc && !barsRef.current[sym]?.pc) {
+          // Backfill previous-close only — never overwrite a fresh WS price
+          barsRef.current[sym] = { ...barsRef.current[sym], pc };
         }
-        // React state sync below handles rendering
       } catch {}
     }
-    // Sync React state so re-renders don't revert to stale values
-    if (Object.keys(batchQ).length) setBmQuotes(prev => ({ ...prev, ...batchQ }));
-    if (Object.keys(batchB).length) setBmBars(prev => ({ ...prev, ...batchB }));
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
