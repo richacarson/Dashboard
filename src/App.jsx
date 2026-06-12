@@ -1490,7 +1490,8 @@ Instructions:
   const quotesRef = useRef({});
   const barsRef = useRef({});
   const bmQuotesRef = useRef({}); // per-trade WS benchmark quotes — synced to state at 1Hz
-  const splitFixedRef = useRef(new Set()); // symbols whose pc has been re-fetched with adjustment=split
+  const splitFixedRef = useRef(new Set()); // symbols whose pc has been corrected
+  const splitAttemptRef = useRef({}); // symbol -> last attempt timestamp (throttles free-tier retries)
 
   // Re-fetch split-adjusted previous-day bars for symbols whose pc looks pre-split.
   // Alpaca's snapshots endpoint doesn't take an adjustment parameter, so when a corporate
@@ -1498,8 +1499,14 @@ Instructions:
   // change look like a -67% crash. The /v2/stocks/bars endpoint with adjustment=split
   // returns the corrected close. Cached in splitFixedRef so we only fetch once per symbol.
   const refetchSplitAdjustedBars = async (syms) => {
-    const todo = [...new Set(syms)].filter(s => s && !splitFixedRef.current.has(s));
+    // Filter: not already fixed AND not attempted in the last 60s (free Finnhub is 60/min;
+    // fetchData runs every 1s so without this we'd burn through the rate limit retrying.)
+    const now = Date.now();
+    const todo = [...new Set(syms)].filter(s =>
+      s && !splitFixedRef.current.has(s) && (now - (splitAttemptRef.current[s] || 0) > 60_000)
+    );
     if (!todo.length) return;
+    todo.forEach(s => { splitAttemptRef.current[s] = now; });
     console.info("[split-adjust] suspecting splits for", todo.join(", "));
     // Strategy 1 (fast, reliable): Finnhub /quote returns split-adjusted prev close
     if (FH) {
