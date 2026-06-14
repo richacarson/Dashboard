@@ -905,7 +905,7 @@
     "hour": "",
     "epsEstimate": 0.4896,
     "epsActual": null,
-    "revenueEstimate": 55080000,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
