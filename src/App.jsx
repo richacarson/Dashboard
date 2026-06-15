@@ -2557,7 +2557,14 @@ Instructions:
           const pRes = await fetch(`${import.meta.env.BASE_URL}portfolio-history-${sleeve}.json?v=${Date.now()}`);
           if (!pRes.ok) continue;
           const pJson = await pRes.json();
-          const portfolio = (pJson.portfolio || []).sort((a, b) => a.date.localeCompare(b.date));
+          let portfolio = (pJson.portfolio || []).sort((a, b) => a.date.localeCompare(b.date));
+          if (!portfolio.length) continue;
+
+          // Clip pre-inception cash padding: trim to first transaction date so the
+          // benchmark line doesn't drift while the portfolio sits flat at cash.
+          const txs = (pJson.transactions || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+          const inception = txs.length ? txs[0].date : portfolio[0].date;
+          portfolio = portfolio.filter(p => p.date >= inception);
           if (!portfolio.length) continue;
 
           // Use pre-computed benchmarks from JSON if available
@@ -2571,7 +2578,7 @@ Instructions:
             for (const sym of bmSyms) {
               if (Array.isArray(jsonBm[sym])) {
                 benchmarks[sym] = {};
-                jsonBm[sym].forEach(pt => { benchmarks[sym][pt.date] = pt.close; });
+                jsonBm[sym].forEach(pt => { if (pt.date >= inception) benchmarks[sym][pt.date] = pt.close; });
               }
             }
           } else if (apiKey && apiSecret) {
