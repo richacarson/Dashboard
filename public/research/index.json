@@ -1,5 +1,14 @@
 [
   {
+    "id": "backlog-book-to-bill-screening",
+    "title": "Backlogs, Book-to-Bill & Contract Flow — Stock Screening Signals",
+    "date": "2026-06-17",
+    "author": "Paradiem Research",
+    "category": "Portfolio Strategy",
+    "summary": "Academic validation of order backlogs and book-to-bill ratios as stock screening signals. Rajgopal et al. found backlog changes predict 4-8% annual excess returns. Implementation framework: data sources, thresholds (book-to-bill >1.1x, backlog/revenue >40%), government contract flow screening via SAM.gov/FPDS, and integration into the quarterly rebalance process.",
+    "file": "Backlog-Book-to-Bill-Contract-Flow-Screening-2026-06-17.md"
+  },
+  {
     "id": "iran-ceasefire-capital-rotation",
     "title": "Iran Ceasefire Capital Rotation — Five-Wave Playbook for July Rebalance",
     "date": "2026-06-15",
