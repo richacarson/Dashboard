@@ -1,5 +1,14 @@
 [
   {
+    "id": "ai-infrastructure-bubble-risk",
+    "title": "The AI Infrastructure Paradox — Bubble Mechanics, Contagion Risk & Portfolio Positioning",
+    "date": "2026-06-19",
+    "author": "Paradiem Research",
+    "category": "Macro / Strategy",
+    "summary": "Hyperscalers spending $660-725B in 2026 to generate $50-150B in AI revenue — a 4-13x gap. GPU utilization at 5%. SoftBank at 13x leverage, CoreWeave at $25B debt. Portfolio has 14% direct AI exposure and 42% combined. Assessment of the five most fragile positions (CRDO, NVDA, MRVL, TSM, LRCX) and the 58% AI-insulated structural defense.",
+    "file": "AI-Infrastructure-Bubble-Risk-Assessment-2026-06-19.md"
+  },
+  {
     "id": "backlog-book-to-bill-screening",
     "title": "Backlogs, Book-to-Bill & Contract Flow — Stock Screening Signals",
     "date": "2026-06-17",
