@@ -1242,7 +1242,7 @@
   {
     "symbol": "CBRS",
     "date": "2026-06-23",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.1644,
     "epsActual": null,
     "revenueEstimate": 185221361,
@@ -1430,6 +1430,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CRWS",
+    "date": "2026-06-24",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "DAKT",
     "date": "2026-06-24",
     "hour": "bmo",
@@ -1462,7 +1472,7 @@
   {
     "symbol": "JEF",
     "date": "2026-06-24",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.0933,
     "epsActual": null,
     "revenueEstimate": 2189859275,
@@ -1622,7 +1632,7 @@
   {
     "symbol": "AYI",
     "date": "2026-06-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 5.2136,
     "epsActual": null,
     "revenueEstimate": 1188128791,
@@ -1682,7 +1692,7 @@
   {
     "symbol": "DRI",
     "date": "2026-06-25",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 3.6698,
     "epsActual": null,
     "revenueEstimate": 3765315208,
@@ -1730,16 +1740,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "LNN",
-    "date": "2026-06-25",
-    "hour": "",
-    "epsEstimate": 1.2196,
-    "epsActual": null,
-    "revenueEstimate": 159382040,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MSN",
     "date": "2026-06-25",
     "hour": "",
@@ -1772,7 +1772,7 @@
   {
     "symbol": "NNOX",
     "date": "2026-06-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.204,
     "epsActual": null,
     "revenueEstimate": 4615500,
@@ -1800,16 +1800,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SMPL",
-    "date": "2026-06-25",
-    "hour": "bmo",
-    "epsEstimate": 0.3625,
-    "epsActual": null,
-    "revenueEstimate": 344363689,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SNX",
     "date": "2026-06-25",
     "hour": "bmo",
@@ -1832,7 +1822,7 @@
   {
     "symbol": "VTIX",
     "date": "2026-06-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.3978,
     "epsActual": null,
     "revenueEstimate": 943500,
@@ -1842,7 +1832,7 @@
   {
     "symbol": "WGO",
     "date": "2026-06-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.7738,
     "epsActual": null,
     "revenueEstimate": 765730257,
@@ -1882,7 +1872,7 @@
   {
     "symbol": "YRD",
     "date": "2026-06-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
