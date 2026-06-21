@@ -1780,6 +1780,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "OMSE",
+    "date": "2026-06-25",
+    "hour": "",
+    "epsEstimate": 0.153,
+    "epsActual": null,
+    "revenueEstimate": 37267740,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "PEVM",
     "date": "2026-06-25",
     "hour": "",
