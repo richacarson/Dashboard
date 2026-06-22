@@ -57,6 +57,24 @@ const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.strin
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
 const CORE_KEYS = ["dividend", "growth", "digital", "sectors", "fci100", "fciValues"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
+const daysSince = (dateStr) => {
+  if (!dateStr) return null;
+  const d = new Date(String(dateStr).slice(0, 10) + "T00:00:00");
+  if (isNaN(d.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+};
+const freshnessMatch = (dateStr, mode) => {
+  if (mode === "All" || !mode) return true;
+  const ds = daysSince(dateStr);
+  if (ds == null) return mode === "stale";
+  if (mode === "7d") return ds <= 7;
+  if (mode === "30d") return ds <= 30;
+  if (mode === "90d") return ds <= 90;
+  if (mode === "stale") return ds > 90;
+  return true;
+};
+const REC_RANK = { BUY: 0, HOLD: 1, WATCH: 2, SELL: 3 };
+const CONV_RANK = { "High Conviction": 0, "On Our Radar": 1 };
 const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "IUSG", name: "IUSG" },
@@ -1118,6 +1136,8 @@ Instructions:
   const [screenerTypeFilter, setScreenerTypeFilter] = useState("All"); // "All" | "Dividend" | "Growth"
   const [screenerRecFilter, setScreenerRecFilter] = useState("All"); // "All" | "BUY" | "HOLD" | "WATCH" | "SELL"
   const [screenerSectorFilter, setScreenerSectorFilter] = useState("All");
+  const [screenerFreshness, setScreenerFreshness] = useState("All"); // "All" | "7d" | "30d" | "90d" | "stale"
+  const [screenerSortBy, setScreenerSortBy] = useState("score"); // "score" | "freshness" | "ticker" | "rec" | "inspire"
   const [screenerSectors, setScreenerSectors] = useState(() => {
     try {
       const c = JSON.parse(localStorage.getItem("iown_screener_sectors") || "{}");
@@ -1149,6 +1169,13 @@ Instructions:
   const [oppSignals, setOppSignals] = useState(null);
   const [oppStalking, setOppStalking] = useState([]);
   const [oppView, setOppView] = useState("opportunities"); // "opportunities" | "ledger" | "signals" | "stalking"
+  const [oppSearch, setOppSearch] = useState("");
+  const [oppPatternFilter, setOppPatternFilter] = useState("All");
+  const [oppConvictionFilter, setOppConvictionFilter] = useState("All");
+  const [oppTimeframeFilter, setOppTimeframeFilter] = useState("All");
+  const [oppSleeveFilter, setOppSleeveFilter] = useState("All");
+  const [oppInPortfolioOnly, setOppInPortfolioOnly] = useState(false);
+  const [oppSortBy, setOppSortBy] = useState("newest"); // "newest" | "conviction" | "pattern" | "ticker"
 
   // Open stock profile with specific tab
   const openStock = (sym, tab = "overview") => { setProfileInitTab(tab); setChartSymbol(sym); setCtxMenu(null); };
@@ -4409,20 +4436,83 @@ Instructions:
                 </div>
                 {oppView === "opportunities" && (!opportunities.length ? (
                   <div style={tEyebrowMuted}>{oppLoadDone ? "NO DATA AVAILABLE" : "LOADING OPPORTUNITIES…"}</div>
-                ) : opportunities.map(opp => {
-                  const convColor = opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? C.accent : C.t3;
-                  return (
-                    <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                        <span style={{ ...tEyebrowMuted, fontSize: 9, color: convColor }}>{opp.conviction}{opp.pattern ? ` · ${opp.pattern}` : ""}</span>
-                        <span style={{ fontSize: 9, color: C.t4 }}>{[opp.date_identified, opp.timeframe].filter(Boolean).join(" · ")}</span>
-                      </div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{opp.title}</div>
-                      {opp.tickers?.length > 0 && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 4 }}>{opp.tickers.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 700, padding: "1px 8px", borderRadius: 2, background: C.accentSoft, color: C.accent }}>{t}</span>)}</div>}
-                      {opp.catalyst && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                ) : (() => {
+                  const selStyle3 = { flex: "1 1 130px", padding: "6px 10px", borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 11, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" };
+                  const oppSleeveOf = o => Object.values(o.key_metrics || {}).map(m => m?.sleeve).find(Boolean) || null;
+                  const patterns = Array.from(new Set(opportunities.map(o => o.pattern).filter(Boolean))).sort();
+                  const convictions = Array.from(new Set(opportunities.map(o => o.conviction).filter(Boolean)));
+                  const timeframes = Array.from(new Set(opportunities.map(o => o.timeframe).filter(Boolean))).sort();
+                  const sleeves2 = Array.from(new Set(opportunities.map(oppSleeveOf).filter(Boolean))).sort();
+                  const oq = oppSearch.toLowerCase();
+                  const oppFiltered = opportunities.filter(o => {
+                    if (oppPatternFilter !== "All" && o.pattern !== oppPatternFilter) return false;
+                    if (oppConvictionFilter !== "All" && o.conviction !== oppConvictionFilter) return false;
+                    if (oppTimeframeFilter !== "All" && o.timeframe !== oppTimeframeFilter) return false;
+                    if (oppSleeveFilter !== "All" && oppSleeveOf(o) !== oppSleeveFilter) return false;
+                    if (oppInPortfolioOnly && !o.in_portfolio) return false;
+                    if (oq) {
+                      const hay = `${o.title || ""} ${o.summary || ""} ${(o.tickers || []).join(" ")}`.toLowerCase();
+                      if (!hay.includes(oq)) return false;
+                    }
+                    return true;
+                  }).sort((a, b) => {
+                    if (oppSortBy === "conviction") {
+                      const ra = CONV_RANK[a.conviction] ?? 99, rb = CONV_RANK[b.conviction] ?? 99;
+                      return ra - rb || (b.date_identified || "").localeCompare(a.date_identified || "");
+                    }
+                    if (oppSortBy === "pattern") return (a.pattern || "").localeCompare(b.pattern || "");
+                    if (oppSortBy === "ticker") return ((a.tickers?.[0]) || "").localeCompare((b.tickers?.[0]) || "");
+                    return (b.date_identified || "").localeCompare(a.date_identified || "");
+                  });
+                  return (<>
+                    <input value={oppSearch} onChange={e => setOppSearch(e.target.value)} placeholder="Search title, summary, or ticker..." style={{ width: "100%", padding: "8px 12px", marginBottom: 8, borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                    <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                      <select value={oppPatternFilter} onChange={e => setOppPatternFilter(e.target.value)} style={selStyle3}>
+                        <option value="All">All Patterns</option>
+                        {patterns.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                      <select value={oppConvictionFilter} onChange={e => setOppConvictionFilter(e.target.value)} style={selStyle3}>
+                        <option value="All">All Conviction</option>
+                        {convictions.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <select value={oppTimeframeFilter} onChange={e => setOppTimeframeFilter(e.target.value)} style={selStyle3}>
+                        <option value="All">All Timeframes</option>
+                        {timeframes.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <select value={oppSleeveFilter} onChange={e => setOppSleeveFilter(e.target.value)} style={selStyle3}>
+                        <option value="All">All Sleeves</option>
+                        {sleeves2.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <select value={oppSortBy} onChange={e => setOppSortBy(e.target.value)} style={selStyle3}>
+                        <option value="newest">Sort: Newest</option>
+                        <option value="conviction">Sort: Conviction</option>
+                        <option value="pattern">Sort: Pattern</option>
+                        <option value="ticker">Sort: Ticker A–Z</option>
+                      </select>
                     </div>
-                  );
-                }))}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 10, color: C.t3, cursor: "pointer" }}>
+                        <input type="checkbox" checked={oppInPortfolioOnly} onChange={e => setOppInPortfolioOnly(e.target.checked)} />
+                        In portfolio only
+                      </label>
+                      <span style={{ ...tEyebrowMuted, fontSize: 9 }}>{oppFiltered.length} of {opportunities.length}</span>
+                    </div>
+                    {!oppFiltered.length ? <div style={tEyebrowMuted}>NO OPPORTUNITIES MATCH</div> : oppFiltered.map(opp => {
+                      const convColor = opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? C.accent : C.t3;
+                      return (
+                        <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.background = C.cardHover} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                            <span style={{ ...tEyebrowMuted, fontSize: 9, color: convColor }}>{opp.conviction}{opp.pattern ? ` · ${opp.pattern}` : ""}{opp.in_portfolio ? " · IN PORT" : ""}</span>
+                            <span style={{ fontSize: 9, color: C.t4 }}>{[opp.date_identified, opp.timeframe].filter(Boolean).join(" · ")}</span>
+                          </div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginBottom: 4 }}>{opp.title}</div>
+                          {opp.tickers?.length > 0 && <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 4 }}>{opp.tickers.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 700, padding: "1px 8px", borderRadius: 2, background: C.accentSoft, color: C.accent }}>{t}</span>)}</div>}
+                          {opp.catalyst && <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                        </div>
+                      );
+                    })}
+                  </>);
+                })())}
                 {oppView === "stalking" && (!oppStalking.length ? (
                   <div style={tEyebrowMuted}>NOTHING ON THE STALKING LIST</div>
                 ) : oppStalking.map((s, i) => (
@@ -4525,6 +4615,7 @@ Instructions:
                   if (sSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
                   if (sSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
                   if (sSleeve === "All" && screenerSectorFilter !== "All" && getSector(s) !== screenerSectorFilter) return false;
+                  if (!freshnessMatch(s.screen_date, screenerFreshness)) return false;
                   if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                   return true;
                 });
@@ -4538,9 +4629,27 @@ Instructions:
                   { k: "screen_date", l: "Date", align: "right" },
                 ];
                 const sortVal = (s, k) => k === "_sector" ? (getSector(s) || "") : k === "_inspire" ? (screenerScores[s.ticker]?.inspire ?? null) : (s[k] ?? null);
+                const defaultSort = (a, b) => {
+                  if (screenerSortBy === "freshness") {
+                    const da = daysSince(a.screen_date), db = daysSince(b.screen_date);
+                    if (da == null && db == null) return 0; if (da == null) return 1; if (db == null) return -1;
+                    return da - db;
+                  }
+                  if (screenerSortBy === "ticker") return (a.ticker || "").localeCompare(b.ticker || "");
+                  if (screenerSortBy === "rec") {
+                    const ra = REC_RANK[a.recommendation] ?? 99, rb = REC_RANK[b.recommendation] ?? 99;
+                    return ra - rb || (b.overall_score || 0) - (a.overall_score || 0);
+                  }
+                  if (screenerSortBy === "inspire") {
+                    const ia = screenerScores[a.ticker]?.inspire, ib = screenerScores[b.ticker]?.inspire;
+                    if (ia == null && ib == null) return 0; if (ia == null) return 1; if (ib == null) return -1;
+                    return ib - ia;
+                  }
+                  return (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || "");
+                };
                 const sorted = [...filtered].sort((a, b) => {
                   const col = scrSort.col && scrCols.some(c2 => c2.k === scrSort.col) ? scrSort.col : null;
-                  if (!col) return (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || "");
+                  if (!col) return defaultSort(a, b);
                   const av = sortVal(a, col), bv = sortVal(b, col);
                   if (av == null && bv == null) return 0; if (av == null) return 1; if (bv == null) return -1;
                   const cmp = (typeof av === "string") ? av.localeCompare(bv) : av - bv;
@@ -4588,6 +4697,23 @@ Instructions:
                       </select>
                     </div>
                   )}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                    <select value={screenerFreshness} onChange={e => setScreenerFreshness(e.target.value)} style={selStyle}>
+                      <option value="All">Any Freshness</option>
+                      <option value="7d">Last 7 days</option>
+                      <option value="30d">Last 30 days</option>
+                      <option value="90d">Last 90 days</option>
+                      <option value="stale">Stale (&gt;90d)</option>
+                    </select>
+                    <select value={screenerSortBy} onChange={e => { setScreenerSortBy(e.target.value); setScrSort({ col: null, dir: "desc" }); }} style={selStyle}>
+                      <option value="score">Sort: Score ↓</option>
+                      <option value="freshness">Sort: Freshness (newest)</option>
+                      <option value="ticker">Sort: Ticker A–Z</option>
+                      <option value="rec">Sort: Recommendation</option>
+                      <option value="inspire">Sort: Inspire ↓</option>
+                    </select>
+                    <div style={{ ...tEyebrowMuted, fontSize: 9, alignSelf: "center", marginLeft: "auto" }}>{sorted.length} of {screenerData.length}</div>
+                  </div>
                   {!screenerData.length ? <div style={tEyebrowMuted}>{screenerLoadDone ? "NO DATA AVAILABLE" : "LOADING SCREENER DATA…"}</div> : !sorted.length ? <div style={tEyebrowMuted}>NO STOCKS MATCH</div> : (
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                       <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -4604,7 +4730,7 @@ Instructions:
                             <td style={tTd("left")}>{s.recommendation ? <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", padding: "1px 8px", borderRadius: 2, color: tRecColor(s.recommendation), background: tRecColor(s.recommendation) + "18" }}>{s.recommendation}</span> : "—"}</td>
                             <td style={{ ...tTd(), fontWeight: 700, color: s.overall_score >= 70 ? C.up : s.overall_score >= 50 ? C.t1 : C.warn }}>{s.overall_score ?? "—"}</td>
                             <td style={{ ...tTd(), fontWeight: 600, color: (() => { const v = screenerScores[s.ticker]?.inspire; return v == null ? C.t4 : v >= 0 ? C.up : C.dn; })() }}>{screenerScores[s.ticker]?.inspire ?? "—"}</td>
-                            <td style={{ ...tTd(), color: C.t4, fontSize: 10 }}>{s.screen_date || "—"}</td>
+                            <td style={{ ...tTd(), fontSize: 10 }}>{(() => { const ds = daysSince(s.screen_date); const col = ds == null ? C.t4 : ds <= 30 ? C.up : ds <= 90 ? "#D97706" : C.dn; return <span title={s.screen_date || ""} style={{ color: col, fontWeight: 600 }}>{ds == null ? "—" : `${ds}d`}</span>; })()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -9681,25 +9807,42 @@ Instructions:
               {/* Search + filters */}
               <div style={{ marginBottom: 14 }}>
                 <input value={screenerSearch} onChange={e => setScreenerSearch(e.target.value)} placeholder="Search ticker or company..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
-                {screenerSleeve === "All" && (() => {
+                {(() => {
+                  const selStyle2 = { flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" };
                   const sectorOptions = Array.from(new Set(screenerData.map(s => screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector).filter(Boolean))).sort();
                   return (
                     <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-                      <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                        <option value="All">All Types</option>
-                        <option value="Dividend">Dividend Candidates</option>
-                        <option value="Growth">Growth Candidates</option>
+                      {screenerSleeve === "All" && (<>
+                        <select value={screenerTypeFilter} onChange={e => setScreenerTypeFilter(e.target.value)} style={selStyle2}>
+                          <option value="All">All Types</option>
+                          <option value="Dividend">Dividend Candidates</option>
+                          <option value="Growth">Growth Candidates</option>
+                        </select>
+                        <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={selStyle2}>
+                          <option value="All">All Ratings</option>
+                          <option value="BUY">BUY Only</option>
+                          <option value="HOLD">HOLD Only</option>
+                          <option value="WATCH">WATCH Only</option>
+                          <option value="SELL">SELL Only</option>
+                        </select>
+                        <select value={screenerSectorFilter} onChange={e => setScreenerSectorFilter(e.target.value)} style={selStyle2}>
+                          <option value="All">All Sectors</option>
+                          {sectorOptions.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                        </select>
+                      </>)}
+                      <select value={screenerFreshness} onChange={e => setScreenerFreshness(e.target.value)} style={selStyle2}>
+                        <option value="All">Any Freshness</option>
+                        <option value="7d">Last 7 days</option>
+                        <option value="30d">Last 30 days</option>
+                        <option value="90d">Last 90 days</option>
+                        <option value="stale">Stale (&gt;90d)</option>
                       </select>
-                      <select value={screenerRecFilter} onChange={e => setScreenerRecFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                        <option value="All">All Ratings</option>
-                        <option value="BUY">BUY Only</option>
-                        <option value="HOLD">HOLD Only</option>
-                        <option value="WATCH">WATCH Only</option>
-                        <option value="SELL">SELL Only</option>
-                      </select>
-                      <select value={screenerSectorFilter} onChange={e => setScreenerSectorFilter(e.target.value)} style={{ flex: "1 1 140px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" }}>
-                        <option value="All">All Sectors</option>
-                        {sectorOptions.map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                      <select value={screenerSortBy} onChange={e => setScreenerSortBy(e.target.value)} style={selStyle2}>
+                        <option value="score">Sort: Score ↓</option>
+                        <option value="freshness">Sort: Freshness (newest)</option>
+                        <option value="ticker">Sort: Ticker A–Z</option>
+                        <option value="rec">Sort: Recommendation</option>
+                        <option value="inspire">Sort: Inspire ↓</option>
                       </select>
                     </div>
                   );
@@ -9722,9 +9865,27 @@ Instructions:
                   if (screenerSleeve === "All" && screenerTypeFilter !== "All" && s.sleeve !== screenerTypeFilter) return false;
                   if (screenerSleeve === "All" && screenerRecFilter !== "All" && s.recommendation !== screenerRecFilter) return false;
                   if (screenerSleeve === "All" && screenerSectorFilter !== "All" && (screenerSectors[s.ticker] || s.sector || s.profile?.sector || fundamentals[s.ticker]?.sector) !== screenerSectorFilter) return false;
+                  if (!freshnessMatch(s.screen_date, screenerFreshness)) return false;
                   if (q && !s.ticker.toLowerCase().includes(q) && !(s.name || "").toLowerCase().includes(q)) return false;
                   return true;
-                }).sort((a, b) => (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || ""));
+                }).sort((a, b) => {
+                  if (screenerSortBy === "freshness") {
+                    const da = daysSince(a.screen_date), db = daysSince(b.screen_date);
+                    if (da == null && db == null) return 0; if (da == null) return 1; if (db == null) return -1;
+                    return da - db;
+                  }
+                  if (screenerSortBy === "ticker") return (a.ticker || "").localeCompare(b.ticker || "");
+                  if (screenerSortBy === "rec") {
+                    const ra = REC_RANK[a.recommendation] ?? 99, rb = REC_RANK[b.recommendation] ?? 99;
+                    return ra - rb || (b.overall_score || 0) - (a.overall_score || 0);
+                  }
+                  if (screenerSortBy === "inspire") {
+                    const ia = screenerScores[a.ticker]?.inspire, ib = screenerScores[b.ticker]?.inspire;
+                    if (ia == null && ib == null) return 0; if (ia == null) return 1; if (ib == null) return -1;
+                    return ib - ia;
+                  }
+                  return (b.overall_score || 0) - (a.overall_score || 0) || (a.ticker || "").localeCompare(b.ticker || "");
+                });
                 if (filtered.length === 0) return <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No stocks match your search</div>;
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -9743,7 +9904,12 @@ Instructions:
                             <div style={{ fontSize: 11, color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
                             <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 3, flexWrap: "wrap" }}>
                               {sector && <span style={{ fontSize: 10, fontWeight: 600, color: C.accent, background: C.accentSoft, padding: "2px 8px", borderRadius: 4 }}>{sector}</span>}
-                              {s.screen_date && <span style={{ fontSize: 10, color: C.t4 }}>{s.screen_date}</span>}
+                              {s.screen_date && (() => {
+                                const ds = daysSince(s.screen_date);
+                                const col = ds == null ? C.t4 : ds <= 30 ? C.up : ds <= 90 ? "#D97706" : C.dn;
+                                const bg = ds == null ? "transparent" : ds <= 30 ? C.upSoft : ds <= 90 ? "#D9760620" : C.dnSoft;
+                                return <span title={s.screen_date} style={{ fontSize: 10, fontWeight: 700, color: col, background: bg, padding: "2px 8px", borderRadius: 4 }}>{ds == null ? s.screen_date : `${ds}d`}</span>;
+                              })()}
                             </div>
                           </div>
                           {s.recommendation && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, marginRight: 10, background: ({"BUY": C.upSoft, "HOLD": "#D9760620", "WATCH": "#2563EB20", "SELL": C.dnSoft})[s.recommendation] || C.accentSoft, color: ({"BUY": C.up, "HOLD": "#D97706", "WATCH": "#2563EB", "SELL": C.dn})[s.recommendation] || C.t2 }}>{s.recommendation}</span>}
@@ -9992,23 +10158,91 @@ Instructions:
                     <div style={{ width: 28, height: 28, border: `3px solid ${C.border}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
                     <div style={{ fontSize: 13, color: C.t4 }}>Loading opportunities...</div>
                   </div>
-                ) : opportunities.map(opp => (
-                  <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-                      {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : opp.conviction === "On Our Radar" ? "#2563EB20" : C.t4 + "20", color: opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? "#2563EB" : C.t3 }}>{opp.conviction}</span>
+                ) : (() => {
+                  const selStyle4 = { flex: "1 1 150px", padding: "8px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 12, fontWeight: 600, fontFamily: "inherit", outline: "none", appearance: "auto" };
+                  const oppSleeveOf = o => Object.values(o.key_metrics || {}).map(m => m?.sleeve).find(Boolean) || null;
+                  const patterns = Array.from(new Set(opportunities.map(o => o.pattern).filter(Boolean))).sort();
+                  const convictions = Array.from(new Set(opportunities.map(o => o.conviction).filter(Boolean)));
+                  const timeframes = Array.from(new Set(opportunities.map(o => o.timeframe).filter(Boolean))).sort();
+                  const sleeves2 = Array.from(new Set(opportunities.map(oppSleeveOf).filter(Boolean))).sort();
+                  const oq = oppSearch.toLowerCase();
+                  const oppFiltered = opportunities.filter(o => {
+                    if (oppPatternFilter !== "All" && o.pattern !== oppPatternFilter) return false;
+                    if (oppConvictionFilter !== "All" && o.conviction !== oppConvictionFilter) return false;
+                    if (oppTimeframeFilter !== "All" && o.timeframe !== oppTimeframeFilter) return false;
+                    if (oppSleeveFilter !== "All" && oppSleeveOf(o) !== oppSleeveFilter) return false;
+                    if (oppInPortfolioOnly && !o.in_portfolio) return false;
+                    if (oq) {
+                      const hay = `${o.title || ""} ${o.summary || ""} ${(o.tickers || []).join(" ")}`.toLowerCase();
+                      if (!hay.includes(oq)) return false;
+                    }
+                    return true;
+                  }).sort((a, b) => {
+                    if (oppSortBy === "conviction") {
+                      const ra = CONV_RANK[a.conviction] ?? 99, rb = CONV_RANK[b.conviction] ?? 99;
+                      return ra - rb || (b.date_identified || "").localeCompare(a.date_identified || "");
+                    }
+                    if (oppSortBy === "pattern") return (a.pattern || "").localeCompare(b.pattern || "");
+                    if (oppSortBy === "ticker") return ((a.tickers?.[0]) || "").localeCompare((b.tickers?.[0]) || "");
+                    return (b.date_identified || "").localeCompare(a.date_identified || "");
+                  });
+                  return (<>
+                    <div style={{ marginBottom: 12 }}>
+                      <input value={oppSearch} onChange={e => setOppSearch(e.target.value)} placeholder="Search title, summary, or ticker..." style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+                      <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+                        <select value={oppPatternFilter} onChange={e => setOppPatternFilter(e.target.value)} style={selStyle4}>
+                          <option value="All">All Patterns</option>
+                          {patterns.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <select value={oppConvictionFilter} onChange={e => setOppConvictionFilter(e.target.value)} style={selStyle4}>
+                          <option value="All">All Conviction</option>
+                          {convictions.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <select value={oppTimeframeFilter} onChange={e => setOppTimeframeFilter(e.target.value)} style={selStyle4}>
+                          <option value="All">All Timeframes</option>
+                          {timeframes.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <select value={oppSleeveFilter} onChange={e => setOppSleeveFilter(e.target.value)} style={selStyle4}>
+                          <option value="All">All Sleeves</option>
+                          {sleeves2.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <select value={oppSortBy} onChange={e => setOppSortBy(e.target.value)} style={selStyle4}>
+                          <option value="newest">Sort: Newest</option>
+                          <option value="conviction">Sort: Conviction</option>
+                          <option value="pattern">Sort: Pattern</option>
+                          <option value="ticker">Sort: Ticker A–Z</option>
+                        </select>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+                        <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: C.t3, cursor: "pointer" }}>
+                          <input type="checkbox" checked={oppInPortfolioOnly} onChange={e => setOppInPortfolioOnly(e.target.checked)} />
+                          In portfolio only
+                        </label>
+                        <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>{oppFiltered.length} of {opportunities.length}</span>
+                      </div>
                     </div>
-                    {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
-                      {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
-                    </div>
-                    <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
-                      {opp.date_identified && <span>{opp.date_identified}</span>}
-                      {opp.timeframe && <span>{opp.timeframe}</span>}
-                    </div>
-                  </div>
-                ))
+                    {!oppFiltered.length ? (
+                      <div style={{ textAlign: "center", padding: 40, color: C.t4, fontSize: 13 }}>No opportunities match your filters</div>
+                    ) : oppFiltered.map(opp => (
+                      <div key={opp.id} onClick={() => setOppDetail(opp)} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "18px 16px", marginBottom: 14, cursor: "pointer" }}>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 8 }}>{opp.title}</div>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                          {opp.pattern && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.accentSoft, color: C.accent }}>{opp.pattern}</span>}
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: opp.conviction === "High Conviction" ? C.upSoft : opp.conviction === "On Our Radar" ? "#2563EB20" : C.t4 + "20", color: opp.conviction === "High Conviction" ? C.up : opp.conviction === "On Our Radar" ? "#2563EB" : C.t3 }}>{opp.conviction}</span>
+                          {opp.in_portfolio && <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, background: C.upSoft, color: C.up }}>In Portfolio</span>}
+                        </div>
+                        {opp.catalyst && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{opp.catalyst}</div>}
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+                          {opp.tickers?.map(t => <span key={t} style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 16, background: C.accentSoft, color: C.accent }}>{t}</span>)}
+                        </div>
+                        <div style={{ display: "flex", gap: 12, fontSize: 10, color: C.t4, marginTop: 8 }}>
+                          {opp.date_identified && <span>{opp.date_identified}</span>}
+                          {opp.timeframe && <span>{opp.timeframe}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </>);
+                })()
               )}
 
               {oppView === "stalking" && (() => {
