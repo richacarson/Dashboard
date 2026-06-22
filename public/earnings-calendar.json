@@ -1122,11 +1122,11 @@
   {
     "symbol": "EBF",
     "date": "2026-06-22",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3939,
-    "epsActual": null,
+    "epsActual": 0.39,
     "revenueEstimate": 99182000,
-    "revenueActual": null,
+    "revenueActual": 98620000,
     "source": "finnhub"
   },
   {
@@ -1134,9 +1134,9 @@
     "date": "2026-06-22",
     "hour": "bmo",
     "epsEstimate": -0.0706,
-    "epsActual": null,
+    "epsActual": -3.72,
     "revenueEstimate": 489600,
-    "revenueActual": null,
+    "revenueActual": 60000,
     "source": "finnhub"
   },
   {
@@ -1204,9 +1204,9 @@
     "date": "2026-06-22",
     "hour": "bmo",
     "epsEstimate": -0.0102,
-    "epsActual": null,
+    "epsActual": -0.03,
     "revenueEstimate": 12954000,
-    "revenueActual": null,
+    "revenueActual": 13890000,
     "source": "finnhub"
   },
   {
