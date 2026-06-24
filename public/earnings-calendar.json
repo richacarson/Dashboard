@@ -1210,6 +1210,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "BSET",
+    "date": "2026-07-01",
+    "hour": "",
+    "epsEstimate": 0.1989,
+    "epsActual": null,
+    "revenueEstimate": 85072590,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CULP",
     "date": "2026-07-01",
     "hour": "amc",
