@@ -1390,16 +1390,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "LEVI",
-    "date": "2026-07-02",
-    "hour": "",
-    "epsEstimate": 0.2452,
-    "epsActual": null,
-    "revenueEstimate": 1546627091,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "LNN",
     "date": "2026-07-02",
     "hour": "",
