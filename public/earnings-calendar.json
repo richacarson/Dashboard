@@ -584,9 +584,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": 5.2376,
-    "epsActual": null,
+    "epsActual": 5.31,
     "revenueEstimate": 1189138791,
-    "revenueActual": null,
+    "revenueActual": 1198000000,
     "source": "finnhub"
   },
   {
@@ -614,9 +614,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": 1.7728,
-    "epsActual": null,
+    "epsActual": 1.73,
     "revenueEstimate": 2434813312,
-    "revenueActual": null,
+    "revenueActual": 2483250000,
     "source": "finnhub"
   },
   {
@@ -634,19 +634,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": 3.6697,
-    "epsActual": null,
+    "epsActual": 3.66,
     "revenueEstimate": 3765477051,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "EPAC",
-    "date": "2026-06-25",
-    "hour": "",
-    "epsEstimate": 0.5032,
-    "epsActual": null,
-    "revenueEstimate": 167803596,
-    "revenueActual": null,
+    "revenueActual": 3718800000,
     "source": "finnhub"
   },
   {
@@ -714,9 +704,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": -0.204,
-    "epsActual": null,
+    "epsActual": -0.2,
     "revenueEstimate": 4615500,
-    "revenueActual": null,
+    "revenueActual": 4310000,
     "source": "finnhub"
   },
   {
@@ -754,9 +744,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": 4.182,
-    "epsActual": null,
+    "epsActual": 4.85,
     "revenueEstimate": 16971753271,
-    "revenueActual": null,
+    "revenueActual": 19574810000,
     "source": "finnhub"
   },
   {
@@ -774,9 +764,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": -0.374,
-    "epsActual": null,
+    "epsActual": -0.39,
     "revenueEstimate": 935003,
-    "revenueActual": null,
+    "revenueActual": 1270000,
     "source": "finnhub"
   },
   {
@@ -784,9 +774,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": 0.7663,
-    "epsActual": null,
+    "epsActual": 0.66,
     "revenueEstimate": 763224680,
-    "revenueActual": null,
+    "revenueActual": 698700000,
     "source": "finnhub"
   },
   {
@@ -824,9 +814,9 @@
     "date": "2026-06-25",
     "hour": "bmo",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": -5.576327999999999,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 902209067,
     "source": "finnhub"
   },
   {
