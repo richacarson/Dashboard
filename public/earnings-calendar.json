@@ -982,7 +982,7 @@
   {
     "symbol": "ELTP",
     "date": "2026-06-29",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -1232,7 +1232,7 @@
   {
     "symbol": "BSET",
     "date": "2026-07-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.1989,
     "epsActual": null,
     "revenueEstimate": 85072590,
@@ -1392,7 +1392,7 @@
   {
     "symbol": "LNN",
     "date": "2026-07-02",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.2196,
     "epsActual": null,
     "revenueEstimate": 159382040,
