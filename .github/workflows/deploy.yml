@@ -10,6 +10,7 @@ on:
       - "Build Portfolio History"
       - "Update Calendars"
       - "Execute Q2 2026 Rebalance"
+      - "Performance Attribution"
     types: [completed]
     branches: [main]
 
