@@ -385,12 +385,15 @@ def apply_split_adjustments(prices, split_schedule):
     return prices
 
 
-def fetch_yahoo_prices(tickers, start_date, end_date):
+def fetch_yahoo_prices(tickers, start_date, end_date, adjusted=False):
     """
     Fetch daily close prices from Yahoo Finance.
     No API key needed. Returns {ticker: {date_str: close_price}}.
-    Uses regular close (split-adjusted, not dividend-adjusted) to match
-    Yahoo Finance's displayed price and YTD return.
+    adjusted=False (default): regular close (split-adjusted, NOT dividend-adjusted)
+      to match Yahoo Finance's displayed price and YTD return. Used everywhere the
+      price-only series is required (holdings prices + the app's `benchmarks` block).
+    adjusted=True: adjclose (split + dividend adjusted = total return). Used ONLY for
+      the separate `benchmarks_tr` series consumed by performance attribution.
     """
     all_prices = {}
     ticker_list = sorted(tickers)
@@ -419,9 +422,15 @@ def fetch_yahoo_prices(tickers, start_date, end_date):
                 if result:
                     r = result[0]
                     timestamps = r.get("timestamp", [])
-                    # Use regular close (split-adjusted, not dividend-adjusted)
-                    # to match Yahoo Finance's displayed prices
-                    adjclose = r.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+                    if adjusted:
+                        # Total-return basis: split + dividend adjusted close
+                        adjclose = r.get("indicators", {}).get("adjclose", [{}])[0].get("adjclose", [])
+                        if not adjclose:  # fall back to regular close if adjclose absent
+                            adjclose = r.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+                    else:
+                        # Regular close (split-adjusted, not dividend-adjusted)
+                        # to match Yahoo Finance's displayed prices
+                        adjclose = r.get("indicators", {}).get("quote", [{}])[0].get("close", [])
 
                     if timestamps and adjclose:
                         all_prices[ticker] = {}
@@ -466,10 +475,12 @@ def fetch_yahoo_prices(tickers, start_date, end_date):
     return all_prices
 
 
-def fetch_alpaca_prices(tickers, start_date, end_date):
+def fetch_alpaca_prices(tickers, start_date, end_date, adjusted=False):
     """
     Fetch daily close prices from Alpaca Markets API.
     Uses ALPACA_KEY and ALPACA_SECRET env vars.
+    adjusted=True uses adjustment=all (split + dividend = total return); default
+    uses adjustment=split (price-only), matching the live feed and the app series.
     Returns {ticker: {date_str: close_price}} — same format as fetch_yahoo_prices.
     """
     import os
@@ -477,7 +488,7 @@ def fetch_alpaca_prices(tickers, start_date, end_date):
     api_secret = os.environ.get("ALPACA_SECRET", "")
     if not api_key or not api_secret:
         print("    Warning: No Alpaca credentials, falling back to Yahoo")
-        return fetch_yahoo_prices(tickers, start_date, end_date)
+        return fetch_yahoo_prices(tickers, start_date, end_date, adjusted=adjusted)
 
     all_prices = {}
     base = "https://data.alpaca.markets"
@@ -490,7 +501,8 @@ def fetch_alpaca_prices(tickers, start_date, end_date):
 
     for ticker in sorted(tickers):
         try:
-            url = f"{base}/v2/stocks/bars?symbols={ticker}&timeframe=1Day&start={start_str}&end={end_str}&limit=10000&adjustment=split&feed=iex"
+            adj = "all" if adjusted else "split"
+            url = f"{base}/v2/stocks/bars?symbols={ticker}&timeframe=1Day&start={start_str}&end={end_str}&limit=10000&adjustment={adj}&feed=iex"
             req = urllib.request.Request(url)
             for k, v in headers.items():
                 req.add_header(k, v)
@@ -807,6 +819,33 @@ def main():
             print(f"  {sym}: {len(bm_points)} data points")
     print()
 
+    # Total-return benchmark series (split + dividend adjusted). Built from a SINGLE
+    # self-consistent source (Yahoo adjclose) — adjusted series from different
+    # providers are anchored differently and must NOT be scale-merged. Alpaca
+    # adjustment=all only fills tickers Yahoo lacks. Consumed ONLY by performance
+    # attribution; the app's price-only `benchmarks` block above is left unchanged
+    # (its Performance chart appends live raw-price quotes and would mis-scale here).
+    print("Fetching total-return benchmark data (adjusted close)...")
+    bm_tr_prices = fetch_yahoo_prices(set(benchmark_syms), start_date, end_date, adjusted=True)
+    missing_tr = [s for s in benchmark_syms if s not in bm_tr_prices or not bm_tr_prices[s]]
+    if missing_tr:
+        alpaca_tr = fetch_alpaca_prices(set(missing_tr), start_date, end_date, adjusted=True)
+        for s in missing_tr:
+            if alpaca_tr.get(s):
+                bm_tr_prices[s] = alpaca_tr[s]
+    benchmarks_tr = {}
+    for sym in benchmark_syms:
+        if sym in bm_tr_prices and bm_tr_prices[sym]:
+            pts = []
+            for h in history:
+                d = datetime.strptime(h["date"], "%Y-%m-%d")
+                price = get_price_on_date(bm_tr_prices, sym, d)
+                if price is not None:
+                    pts.append({"date": h["date"], "close": round(price, 4)})
+            benchmarks_tr[sym] = pts
+            print(f"  {sym} (TR): {len(pts)} data points")
+    print()
+
     # Current holdings from simulation replay (accurate share counts).
     # IMPORTANT: For "By Security" exports, the per-ticker header rows in the
     # Morningstar file reflect the file's "As of <date>" timestamp, which can
@@ -860,30 +899,28 @@ def main():
             if start_v > 0:
                 annual_returns[yr] = round(((end_v / start_v) - 1) * 100, 2)
 
-    # Benchmark annual returns
-    bm_annual = {}
-    for sym, bm_points in benchmarks.items():
-        if not bm_points:
-            continue
-        bm_by_year = {}
-        for bp in bm_points:
-            yr = bp["date"][:4]
-            if yr not in bm_by_year:
-                bm_by_year[yr] = []
-            bm_by_year[yr].append(bp)
-        bm_ann = {}
-        bm_years = sorted(bm_by_year.keys())
-        for i, yr in enumerate(bm_years):
-            pts = bm_by_year[yr]
-            if i == 0:
-                start_v = pts[0]["close"]
-            else:
-                prev_yr = bm_years[i - 1]
-                start_v = bm_by_year[prev_yr][-1]["close"]
-            end_v = pts[-1]["close"]
-            if start_v > 0:
-                bm_ann[yr] = round(((end_v / start_v) - 1) * 100, 2)
-        bm_annual[sym] = bm_ann
+    # Benchmark annual returns (calendar-year, prior-year-close anchored)
+    def _bm_annual(bm_dict):
+        result = {}
+        for sym, bm_points in bm_dict.items():
+            if not bm_points:
+                continue
+            bm_by_year = {}
+            for bp in bm_points:
+                bm_by_year.setdefault(bp["date"][:4], []).append(bp)
+            bm_ann = {}
+            bm_years = sorted(bm_by_year.keys())
+            for i, yr in enumerate(bm_years):
+                pts = bm_by_year[yr]
+                start_v = pts[0]["close"] if i == 0 else bm_by_year[bm_years[i - 1]][-1]["close"]
+                end_v = pts[-1]["close"]
+                if start_v > 0:
+                    bm_ann[yr] = round(((end_v / start_v) - 1) * 100, 2)
+            result[sym] = bm_ann
+        return result
+
+    bm_annual = _bm_annual(benchmarks)
+    bm_annual_tr = _bm_annual(benchmarks_tr)
 
     # Compute cost basis per holding using average cost method
     cost_basis = {}
@@ -935,6 +972,7 @@ def main():
         "end_date": end_date.strftime("%Y-%m-%d"),
         "portfolio": history,
         "benchmarks": benchmarks,
+        "benchmarks_tr": benchmarks_tr,
         "holdings": holdings_map,
         "cash": live_cash,
         "cost_basis": cost_basis,
@@ -942,6 +980,7 @@ def main():
 
         "annual_returns": annual_returns,
         "bm_annual_returns": bm_annual,
+        "bm_annual_returns_tr": bm_annual_tr,
     }
 
     out_file = f"portfolio-history-{sleeve_name}.json"

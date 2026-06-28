@@ -80,7 +80,7 @@ def main():
         "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
         "sleeves": {},
         "methodology_caveats": [
-            "Benchmark returns use the benchmark `close` series in portfolio-history. If that is price-only (not total return), active return is overstated vs dividend-paying benchmarks (DVY especially). Verify the series is adjusted/total-return before citing active return at IC.",
+            "Active return is computed on a MATCHED price-only basis: both the portfolio value series and the benchmark `close` series exclude dividends. A total-return benchmark series (`benchmarks_tr`) is now generated in portfolio-history but is not yet consumed — it will be switched on together with a total-return portfolio series so the comparison stays like-for-like. Until then, treat absolute return levels as price-return, not total return.",
             "Position contribution = current value minus cost basis = UNREALIZED gain since purchase, NOT contribution measured over the since-stewardship window (per-name historical prices are not available in the committed data). Labeled accordingly.",
         ],
     }
@@ -96,6 +96,11 @@ def main():
             continue
 
         port = d.get("portfolio") or []
+        # NOTE: still reads the price-only `benchmarks` series so portfolio (price-only)
+        # and benchmark are on a MATCHED basis. A total-return series (`benchmarks_tr`)
+        # is now generated and committed, but is intentionally NOT consumed until the
+        # portfolio value series is also total-return — flipping this one line then makes
+        # the active-return comparison like-for-like.
         bms = d.get("benchmarks") or {}
         data_start = port[0]["date"] if port else None
         # stewardship start for this sleeve = later of Carson's start and the sleeve's data start
