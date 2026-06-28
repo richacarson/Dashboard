@@ -1031,6 +1031,9 @@ Instructions:
   const [terminalActiveSym, setTerminalActiveSym] = useState("__portfolio__");
   const [tProfileSym, setTProfileSym] = useState(null); // terminal stock profile panel
   const [tProfileTab, setTProfileTab] = useState("overview"); // "overview" | "chart" | "screener"
+  // Per-symbol rich profile data for the terminal Overview (financials/recommendation/
+  // earnings/profile) — the same on-open fetch the classic StockProfile does.
+  const [tProfileData, setTProfileData] = useState({}); // { sym, fm, rec, earn, prof, descr, loading }
   const [tChartHover, setTChartHover] = useState(null);
   const [tWatchSort, setTWatchSort] = useState({ col: "chg", dir: "desc" }); // watchlist sort: col in sym|price|chg|qtd|pe|comp|peg
   const [tChartRange, setTChartRange] = useState("3Y");
@@ -3176,6 +3179,40 @@ Instructions:
       .then(d => setRiskData(d))
       .finally(() => setRiskLoadDone(true));
   }, [tab, tDrawer]);
+
+  // Terminal stock-profile rich data — fetch financials/recommendation/earnings/profile
+  // on open (mirrors the classic StockProfile fetch) so the terminal Overview reaches parity.
+  useEffect(() => {
+    if (layoutMode !== "terminal") return;
+    const sym = tProfileSym;
+    if (!sym || sym === "__portfolio__") return;
+    if (tProfileData.sym === sym && !tProfileData.loading) return;
+    let cancelled = false;
+    setTProfileData({ sym, loading: true });
+    (async () => {
+      const out = { sym, loading: false };
+      try {
+        const r = await fetch(`${import.meta.env.BASE_URL}company-descriptions.json?v=${Math.floor(Date.now() / 3600000)}`);
+        if (r.ok) { const d = await r.json(); if (d[sym]) out.descr = d[sym]; }
+      } catch {}
+      if (FH) {
+        try {
+          const [profR, recR, earnR, finR] = await Promise.all([
+            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${sym}&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&limit=8&token=${FH}`),
+            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
+          ]);
+          if (profR.ok) { const d = await profR.json(); if (d?.name) out.prof = d; }
+          if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) out.rec = d; }
+          if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) out.earn = d; }
+          if (finR.ok) { const d = await finR.json(); if (d?.metric) out.fm = d.metric; }
+        } catch {}
+      }
+      if (!cancelled) setTProfileData(out);
+    })();
+    return () => { cancelled = true; };
+  }, [tProfileSym, layoutMode]);
 
   // Day-change helper. If the computed value exceeds ±60% we assume a stock split or
   // other corporate action where the prev-close (bars.pc) didn't get adjusted to the
@@ -5814,8 +5851,19 @@ Instructions:
                 <div>{items.map(pItem)}</div>
               </div>
             );
-            const desc = f.description || scr?.profile?.description || null;
+            // Rich per-symbol data fetched on open (parity with classic StockProfile)
+            const pd = tProfileData.sym === sym ? tProfileData : {};
+            const desc = pd.descr || f.description || scr?.profile?.description || null;
             const isEtf = (sleeves.sectors?.symbols || []).includes(sym) || (sleeves.digital?.symbols || []).includes(sym) || (f.peTTM == null && !scr);
+            const fm = pd.fm || {};
+            const prof = pd.prof || {};
+            const rec = pd.rec; const earn = pd.earn;
+            const latestRec = rec?.[0];
+            const totalAnalysts = latestRec ? ((latestRec.strongBuy || 0) + (latestRec.buy || 0) + (latestRec.hold || 0) + (latestRec.sell || 0) + (latestRec.strongSell || 0)) : 0;
+            const consensusLabel = latestRec ? ((latestRec.strongBuy + latestRec.buy) > (latestRec.hold + latestRec.sell + latestRec.strongSell) ? "Buy" : (latestRec.sell + latestRec.strongSell) > (latestRec.strongBuy + latestRec.buy + latestRec.hold) ? "Sell" : "Hold") : null;
+            const consensusColor = consensusLabel === "Buy" ? C.up : consensusLabel === "Sell" ? C.dn : "#F59E0B";
+            const volFmt = n => n == null ? null : n >= 1e12 ? `$${(n / 1e12).toFixed(2)}T` : n >= 1e9 ? `$${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : `$${n.toFixed(0)}`;
+            const mktCap = prof.marketCapitalization ? prof.marketCapitalization * 1e6 : (fm.marketCapitalization || null);
             return (<>
               {/* Top bar */}
               <div style={{ padding: "8px 12px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
@@ -5877,7 +5925,104 @@ Instructions:
                         ["Sleeve", scr.sleeve ?? null],
                         ["Screen Date", scr.screen_date ?? null],
                       ])}
+                      {(prof.exchange || prof.country || prof.ipo || mktCap || prof.weburl) && pSection("Company", [
+                        ["Exchange", prof.exchange ?? null],
+                        ["Country", prof.country ?? null],
+                        ["IPO", prof.ipo ?? null],
+                        ["Market Cap", volFmt(mktCap)],
+                        ["Website", prof.weburl ? <a href={prof.weburl} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none" }}>link ↗</a> : null],
+                      ])}
+                      {(mktCap || fm.epsNormalizedAnnual != null || b?.v) && pSection("Key Stats", [
+                        ["Market Cap", volFmt(mktCap)],
+                        ["EPS (TTM)", fmt2(fm.epsNormalizedAnnual ?? f.epsTTM)],
+                        ["Dividend Yield", fm.dividendYieldIndicatedAnnual != null ? `${fm.dividendYieldIndicatedAnnual.toFixed(2)}%` : (f.yieldFwd != null ? `${f.yieldFwd.toFixed(2)}%` : null)],
+                        ["Volume", b?.v ? b.v.toLocaleString() : null],
+                      ])}
+                      {(fm["3MonthPriceReturnDaily"] != null || fm["6MonthPriceReturnDaily"] != null) && pSection("Momentum", [
+                        ["3 Month", fmtPct(fm["3MonthPriceReturnDaily"]), upDn(fm["3MonthPriceReturnDaily"])],
+                        ["6 Month", fmtPct(fm["6MonthPriceReturnDaily"]), upDn(fm["6MonthPriceReturnDaily"])],
+                        ["1 Year", fmtPct(fm["yearToDatePriceReturnDaily"]), upDn(fm["yearToDatePriceReturnDaily"])],
+                      ])}
+                      {(fm.pbAnnual != null || fm.psAnnual != null) && pSection("Valuation+", [
+                        ["Price/Book", fmt1(fm.pbAnnual)],
+                        ["Price/Sales", fmt1(fm.psAnnual)],
+                        ["EV/EBITDA", fmt1(fm["currentEv/freeCashFlowAnnual"])],
+                      ])}
+                      {(fm.grossMarginTTM != null || fm.operatingMarginTTM != null || fm.roaTTM != null) && pSection("Profitability", [
+                        ["Gross Margin", fm.grossMarginTTM != null ? `${fm.grossMarginTTM.toFixed(1)}%` : null],
+                        ["Operating Margin", fm.operatingMarginTTM != null ? `${fm.operatingMarginTTM.toFixed(1)}%` : null],
+                        ["Net Margin", fm.netProfitMarginTTM != null ? `${fm.netProfitMarginTTM.toFixed(1)}%` : (f.profitMargin != null ? `${f.profitMargin.toFixed(1)}%` : null)],
+                        ["ROA", fm.roaTTM != null ? `${fm.roaTTM.toFixed(1)}%` : null],
+                      ])}
+                      {(fm.dividendPerShareAnnual != null || fm.dividendYield5Y != null) && pSection("Dividends", [
+                        ["Dividend/Share", fm.dividendPerShareAnnual != null ? `$${fm.dividendPerShareAnnual.toFixed(2)}` : (f.dps != null ? `$${f.dps.toFixed(2)}` : null)],
+                        ["Payout Ratio", fm.payoutRatioAnnual != null ? `${fm.payoutRatioAnnual.toFixed(0)}%` : (f.payoutRatio != null ? `${f.payoutRatio.toFixed(0)}%` : null)],
+                        ["5Y Avg Yield", fm.dividendYield5Y != null ? `${fm.dividendYield5Y.toFixed(2)}%` : null],
+                      ])}
+                      {(fm.currentRatioQuarterly != null || fm.bookValuePerShareQuarterly != null) && pSection("Balance Sheet", [
+                        ["Debt/Equity", fmt1(f.de ?? fm["totalDebt/totalEquityQuarterly"])],
+                        ["Current Ratio", fmt1(fm.currentRatioQuarterly)],
+                        ["Quick Ratio", fmt1(fm.quickRatioQuarterly)],
+                        ["Book Value/Share", fm.bookValuePerShareQuarterly != null ? `$${fm.bookValuePerShareQuarterly.toFixed(2)}` : null],
+                      ])}
                     </div>
+                    {/* Earnings History */}
+                    {Array.isArray(earn) && earn.length > 0 && (
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ ...tEyebrow, marginBottom: 6 }}>Earnings History</div>
+                        <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6 }}>
+                          {earn.slice(0, 8).map((e, i) => {
+                            const beat = e.actual != null && e.estimate != null && e.actual >= e.estimate;
+                            const miss = e.actual != null && e.estimate != null && e.actual < e.estimate;
+                            return (
+                              <div key={i} style={{ flex: "0 0 auto", minWidth: 76, padding: "8px 7px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, textAlign: "center" }}>
+                                <div style={{ fontSize: 9, color: C.t4, marginBottom: 4 }}>{e.period}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{e.actual != null ? e.actual.toFixed(2) : "—"}</div>
+                                <div style={{ fontSize: 9, color: C.t4 }}>Est {e.estimate != null ? e.estimate.toFixed(2) : "—"}</div>
+                                {(beat || miss) && <div style={{ fontSize: 9, fontWeight: 700, color: beat ? C.up : C.dn, marginTop: 3 }}>{beat ? "BEAT" : "MISS"} {e.surprisePercent != null ? `${e.surprisePercent >= 0 ? "+" : ""}${e.surprisePercent.toFixed(1)}%` : ""}</div>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {/* Analyst Ratings */}
+                    {latestRec && (
+                      <div style={{ marginTop: 14, maxWidth: 420 }}>
+                        <div style={{ ...tEyebrow, marginBottom: 6 }}>Analyst Ratings</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: consensusColor, padding: "3px 12px", borderRadius: 6, background: consensusColor + "18", border: `1px solid ${consensusColor}44` }}>{consensusLabel}</span>
+                          <span style={{ fontSize: 11, color: C.t4 }}>{totalAnalysts} analysts</span>
+                        </div>
+                        {[
+                          { label: "Strong Buy", val: latestRec.strongBuy, color: "#16A34A" },
+                          { label: "Buy", val: latestRec.buy, color: "#34D399" },
+                          { label: "Hold", val: latestRec.hold, color: "#F59E0B" },
+                          { label: "Sell", val: latestRec.sell, color: "#F87171" },
+                          { label: "Strong Sell", val: latestRec.strongSell, color: "#DC2626" },
+                        ].map(r => (
+                          <div key={r.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                            <span style={{ fontSize: 10, color: C.t3, width: 70 }}>{r.label}</span>
+                            <div style={{ flex: 1, height: 7, background: C.border, borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ width: `${totalAnalysts ? ((r.val || 0) / totalAnalysts) * 100 : 0}%`, height: "100%", background: r.color, borderRadius: 4 }} />
+                            </div>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: C.t2, width: 18, textAlign: "right" }}>{r.val || 0}</span>
+                          </div>
+                        ))}
+                        {fm.targetMedianPrice != null && (
+                          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                              <span style={{ fontSize: 11, color: C.t4 }}>Price Target</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>${fm.targetMedianPrice.toFixed(2)}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: C.t4 }}>
+                              <span>Low: ${fm.targetLowPrice != null ? fm.targetLowPrice.toFixed(2) : "—"}</span>
+                              <span>High: ${fm.targetHighPrice != null ? fm.targetHighPrice.toFixed(2) : "—"}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {desc && (
                       <div style={{ marginTop: 12 }}>
                         <div style={{ ...tEyebrow, marginBottom: 6 }}>About</div>
