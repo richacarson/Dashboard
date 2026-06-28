@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T16:43:54Z",
+  "generated_at": "2026-06-28T16:52:25Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -15,37 +15,38 @@
         "ytd": 13.46,
         "since_stewardship": 32.33
       },
+      "bm_basis": "total_return",
       "benchmarks": {
         "DVY": {
           "returns": {
-            "week": 2.69,
-            "mtd": 2.94,
-            "qtd": 4.75,
-            "ytd": 10.99,
-            "since_stewardship": 19.08
+            "week": 2.6,
+            "mtd": 3.71,
+            "qtd": 5.55,
+            "ytd": 12.62,
+            "since_stewardship": 25.57
           },
           "active_return": {
-            "week": -1.82,
-            "mtd": -1.28,
-            "qtd": 3.8,
-            "ytd": 2.47,
-            "since_stewardship": 13.25
+            "week": -1.73,
+            "mtd": -2.05,
+            "qtd": 3.0,
+            "ytd": 0.84,
+            "since_stewardship": 6.76
           }
         },
         "SPY": {
           "returns": {
-            "week": -2.0,
-            "mtd": -3.84,
-            "qtd": 11.32,
-            "ytd": 6.73,
-            "since_stewardship": 23.05
+            "week": -2.07,
+            "mtd": -3.65,
+            "qtd": 11.54,
+            "ytd": 7.27,
+            "since_stewardship": 25.08
           },
           "active_return": {
-            "week": 2.87,
-            "mtd": 5.5,
-            "qtd": -2.77,
-            "ytd": 6.73,
-            "since_stewardship": 9.28
+            "week": 2.94,
+            "mtd": 5.31,
+            "qtd": -2.99,
+            "ytd": 6.19,
+            "since_stewardship": 7.25
           }
         }
       },
@@ -137,37 +138,38 @@
         "ytd": 17.43,
         "since_stewardship": 31.25
       },
+      "bm_basis": "total_return",
       "benchmarks": {
         "IUSG": {
           "returns": {
-            "week": -2.94,
-            "mtd": -5.96,
-            "qtd": 15.74,
-            "ytd": 8.09,
-            "since_stewardship": 16.45
+            "week": -2.91,
+            "mtd": -5.81,
+            "qtd": 15.8,
+            "ytd": 8.39,
+            "since_stewardship": 17.13
           },
           "active_return": {
-            "week": -1.77,
-            "mtd": 6.71,
-            "qtd": 5.1,
-            "ytd": 9.34,
-            "since_stewardship": 14.8
+            "week": -1.8,
+            "mtd": 6.56,
+            "qtd": 5.04,
+            "ytd": 9.04,
+            "since_stewardship": 14.12
           }
         },
         "SPY": {
           "returns": {
-            "week": -2.0,
-            "mtd": -3.84,
-            "qtd": 11.32,
-            "ytd": 6.73,
-            "since_stewardship": 14.51
+            "week": -2.07,
+            "mtd": -3.65,
+            "qtd": 11.54,
+            "ytd": 7.27,
+            "since_stewardship": 15.72
           },
           "active_return": {
-            "week": -2.71,
-            "mtd": 4.59,
-            "qtd": 9.52,
-            "ytd": 10.7,
-            "since_stewardship": 16.74
+            "week": -2.64,
+            "mtd": 4.4,
+            "qtd": 9.3,
+            "ytd": 10.16,
+            "since_stewardship": 15.53
           }
         }
       },
@@ -249,7 +251,7 @@
     }
   },
   "methodology_caveats": [
-    "Active return is computed on a MATCHED price-only basis: both the portfolio value series and the benchmark `close` series exclude dividends. A total-return benchmark series (`benchmarks_tr`) is now generated in portfolio-history but is not yet consumed \u2014 it will be switched on together with a total-return portfolio series so the comparison stays like-for-like. Until then, treat absolute return levels as price-return, not total return.",
+    "Active return is computed on a MATCHED total-return basis (bm_basis = 'total_return'): the portfolio value series already reflects dividends (booked as cash deposits and reinvested via purchases in the Morningstar export), and the benchmark uses the split + dividend adjusted `benchmarks_tr` series. Both sides include dividends, so active return is like-for-like. (Benchmark TR is reconstructed from adjusted close and can differ from official NAV total return by ~1-2pt in heavy-distribution years.)",
     "Position contribution = current value minus cost basis = UNREALIZED gain since purchase, NOT contribution measured over the since-stewardship window (per-name historical prices are not available in the committed data). Labeled accordingly."
   ],
   "combined": {
@@ -258,6 +260,6 @@
     "basis": "value-weighted blend of sleeve since-stewardship returns"
   },
   "ic_summary": {
-    "headline": "Stewardship record since 2025-01-15: Dividend +32.33% (vs DVY active +13.25%), Growth +31.25% (vs IUSG active +14.8%)."
+    "headline": "Stewardship record since 2025-01-15: Dividend +32.33% (vs DVY active +6.76%), Growth +31.25% (vs IUSG active +14.12%)."
   }
 }
