@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import IOWNDashboard from './App.jsx'
+import { AuthProvider, AuthGate } from './lib/auth'
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
@@ -27,9 +28,13 @@ class ErrorBoundary extends React.Component {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <IOWNDashboard />
-    </ErrorBoundary>
+    <AuthProvider>
+      <AuthGate>
+        <ErrorBoundary>
+          <IOWNDashboard />
+        </ErrorBoundary>
+      </AuthGate>
+    </AuthProvider>
   </React.StrictMode>,
 )
 
