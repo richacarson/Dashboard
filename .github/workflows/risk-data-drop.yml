@@ -1,15 +1,19 @@
 name: Risk Data Drop
 
 # Pre-market quantitative sweep of the 52 holdings for the Risk Sentinel.
-# Runs inside Actions so the data-API secrets (FINHUB_API, FMP_API) stay where
-# they belong. Writes public/risk-data-drop.json; the Sentinel routine reads
-# that committed file (and self-dispatches this workflow if the file is stale).
+# Runs inside Actions so the data-API secrets stay where they belong. Writes
+# public/risk-data-drop.json; the Sentinel routine reads that committed file
+# (and self-dispatches this workflow if the file is stale).
+#
+# Source split (all free tiers, each used for what it's best at):
+#   Alpaca  — batch snapshot, 1 call -> price + settled % move for all 52 (primary)
+#   Polygon — grouped-daily -> same, fallback if Alpaca is empty
+#   Finnhub — recommendation trend ONLY (its 60/min budget is no longer shared)
 
 on:
   schedule:
-    # 6:17 AM CT (11:17 UTC) on weekdays. Odd, off-peak minute — GitHub's
-    # scheduler is congested at :00/:30, so an odd minute lands far more reliably.
-    # ~28 min of headroom before the 6:45 CT Sentinel run.
+    # 6:17 AM CT (11:17 UTC) weekdays — odd, off-peak minute lands far more
+    # reliably than :00/:30. ~28 min headroom before the 6:45 CT Sentinel.
     - cron: '17 11 * * 1-5'
   workflow_dispatch:
 
@@ -20,8 +24,10 @@ jobs:
   risk-data-drop:
     runs-on: ubuntu-latest
     env:
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+      POLYGON_API_KEY: ${{ secrets.POLYGON_API_KEY }}
       FINNHUB_KEY: ${{ secrets.FINHUB_API }}
-      FMP_KEY: ${{ secrets.FMP_API }}
     steps:
       - uses: actions/checkout@v4
 

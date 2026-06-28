@@ -2,20 +2,19 @@
 """
 Risk Data Drop — pre-market quantitative sweep of the 52 holdings.
 
-Runs inside GitHub Actions (where FINHUB_API / FMP_API secrets are injected).
-Produces public/risk-data-drop.json: raw facts per holding, NOT judgments.
-The Risk Sentinel routine reads this file and does the interpretation
-(severity, thesis cross-check, deal watch).
+Runs inside GitHub Actions. Produces public/risk-data-drop.json: raw facts per
+holding, NOT judgments. The Risk Sentinel routine interprets them.
 
-Design notes:
-  - Thin on purpose. We fetch only the three things nothing else in the repos
-    already provides: per-name price/% move, per-name earnings surprise, and
-    analyst-recommendation drift. Calendars, theses, and levels are read by the
-    Sentinel from their existing committed sources.
-  - Defensive by default. Any single failed call records an error and leaves the
-    field null. One bad ticker never sinks the run. Missing data stays missing.
-  - FMP batch quote is one call for all 52 (price/% move). Finnhub provides the
-    per-name recommendation trend and earnings surprise.
+Source split (all free tiers, each used for its strength):
+  - Alpaca batch snapshot (1 call): price + settled day % move for all 52. PRIMARY.
+  - Polygon grouped-daily (<=3 calls): same data, FALLBACK if Alpaca is empty.
+  - Finnhub: recommendation trend ONLY, paced under the free 60/min cap.
+  - Earnings surprise: read the committed earnings-calendar.json to find the few
+    names with a recent print, and call Finnhub /stock/earnings for those only.
+  - FMP: removed (free tier 403's the batch quote and lacks grade actions).
+
+Defensive throughout: one failed call records an error and nulls the field;
+it never sinks the run. A zero-priced drop screams instead of going green.
 """
 
 import json
@@ -23,18 +22,17 @@ import os
 import sys
 import time
 import urllib.request
-import urllib.parse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
+ALPACA_KEY = os.environ.get("ALPACA_API_KEY", "")
+ALPACA_SECRET = os.environ.get("ALPACA_API_SECRET", "")
+POLYGON_KEY = os.environ.get("POLYGON_API_KEY", "")
 FINNHUB_KEY = os.environ.get("FINNHUB_KEY", "")
-FMP_KEY = os.environ.get("FMP_KEY", "")
 
 OUT_PATH = "public/risk-data-drop.json"
+EARNINGS_CAL = "public/earnings-calendar.json"
 
-# --- The universe -----------------------------------------------------------
-# Keep in sync with the live book. NOTE: uses DVN (Coterra merged into Devon
-# 2026-05-07); Stock-Screener/data/portfolios.json still says CTRA — the
-# Sentinel's roster-integrity step flags that drift. Digital sleeve included.
+# --- Universe (keep in sync with the live book; uses DVN, not CTRA) ---------
 SLEEVES = {
     "Dividend": ["ABT", "ADI", "ATO", "ADP", "BKH", "CAT", "CHD", "CL", "DVN",
                  "FAST", "GD", "GPC", "LRCX", "LMT", "NEE", "NTR", "ORI", "PCAR",
@@ -50,78 +48,127 @@ UNIVERSE = [t for ts in SLEEVES.values() for t in ts]
 errors = []
 
 
-def fetch_json(url, timeout=15):
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "RiskDataDrop/1.0"})
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read())
-    except Exception as e:
-        return {"__error__": str(e)}
-
-
 def log_err(ticker, field, msg):
     errors.append({"ticker": ticker, "field": field, "msg": str(msg)[:200]})
 
 
-# --- 1. FMP batch quote (one call) for price + % move -----------------------
-quotes = {}
-if FMP_KEY:
+def http_json(url, headers=None, timeout=20):
+    try:
+        req = urllib.request.Request(url, headers=headers or {"User-Agent": "RiskDataDrop/1.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read()), r.status
+    except urllib.error.HTTPError as e:
+        return {"__error__": f"HTTP {e.code}"}, e.code
+    except Exception as e:
+        return {"__error__": str(e)}, 0
+
+
+def pct(cur, prev):
+    try:
+        if cur is not None and prev not in (None, 0):
+            return round((cur / prev - 1) * 100, 2)
+    except Exception:
+        pass
+    return None
+
+
+# =============================================================================
+# 1. PRICES — Alpaca batch snapshot (primary)
+# =============================================================================
+prices = {}  # ticker -> {price, pct_change, prev_close, quote_source}
+
+if ALPACA_KEY and ALPACA_SECRET:
     syms = ",".join(UNIVERSE)
-    url = f"https://financialmodelingprep.com/api/v3/quote/{syms}?apikey={FMP_KEY}"
-    data = fetch_json(url)
-    if isinstance(data, list):
-        for q in data:
-            s = q.get("symbol")
-            if s:
-                quotes[s] = {
-                    "price": q.get("price"),
-                    "pct_change": q.get("changesPercentage"),
-                    "prev_close": q.get("previousClose"),
-                    "source": "fmp",
-                }
-        print(f"FMP batch quote: {len(quotes)}/{len(UNIVERSE)} names")
-    else:
-        log_err("*", "fmp_batch_quote", data.get("__error__", "unexpected shape")
-                if isinstance(data, dict) else "unexpected shape")
+    url = f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={syms}&feed=iex"
+    hdrs = {"APCA-API-KEY-ID": ALPACA_KEY, "APCA-API-SECRET-KEY": ALPACA_SECRET}
+    data, status = http_json(url, headers=hdrs)
+    snaps = data.get("snapshots", data) if isinstance(data, dict) else {}
+    if isinstance(data, dict) and "__error__" in data:
+        log_err("*", "alpaca_snapshot", data["__error__"])
+    for t in UNIVERSE:
+        s = snaps.get(t) if isinstance(snaps, dict) else None
+        if not s:
+            continue
+        daily = s.get("dailyBar") or {}
+        prevd = s.get("prevDailyBar") or {}
+        latest = (s.get("latestTrade") or {}).get("p")
+        close = daily.get("c")
+        prev_close = prevd.get("c")
+        price = latest if latest is not None else close
+        prices[t] = {
+            "price": price,
+            "pct_change": pct(close, prev_close),
+            "prev_close": prev_close,
+            "quote_source": "alpaca",
+        }
+    print(f"Alpaca snapshot: {len(prices)}/{len(UNIVERSE)} priced (HTTP {status})")
 else:
-    print("No FMP_KEY — skipping batch quote, will rely on Finnhub /quote")
+    print("No Alpaca creds — will try Polygon fallback")
+
+# --- Polygon grouped-daily fallback (only if Alpaca came up short) ----------
+missing = [t for t in UNIVERSE if t not in prices]
+if missing and POLYGON_KEY:
+    print(f"Polygon fallback for {len(missing)} names…")
+
+    def grouped(date_str):
+        url = (f"https://api.polygon.io/v2/aggs/grouped/locale/us/market/stocks/"
+               f"{date_str}?adjusted=true&apiKey={POLYGON_KEY}")
+        d, _ = http_json(url)
+        if isinstance(d, dict) and d.get("results"):
+            return {r["T"]: r.get("c") for r in d["results"] if "T" in r}
+        return None
+
+    # Walk back to find the two most recent trading days with data
+    day_maps = []
+    probe = datetime.now(timezone.utc).date() - timedelta(days=1)
+    tries = 0
+    while len(day_maps) < 2 and tries < 8:
+        m = grouped(probe.isoformat())
+        if m:
+            day_maps.append(m)
+        probe -= timedelta(days=1)
+        tries += 1
+        time.sleep(13)  # free Polygon ~5/min
+    if len(day_maps) >= 2:
+        latest_map, prev_map = day_maps[0], day_maps[1]
+        for t in missing:
+            c, p = latest_map.get(t), prev_map.get(t)
+            if c is not None:
+                prices[t] = {"price": c, "pct_change": pct(c, p),
+                             "prev_close": p, "quote_source": "polygon"}
+        print(f"Polygon filled {sum(1 for t in missing if t in prices)} names")
+    else:
+        log_err("*", "polygon_grouped", "could not find 2 trading days with data")
+
+# =============================================================================
+# 2. RECOMMENDATION TREND — Finnhub only, paced under the 60/min cap
+# =============================================================================
+recs = {}
+FINNHUB_MIN_INTERVAL = 1.3  # ~46/min — comfortably under the free 60/min cap
+_last_fh = [0.0]
 
 
-# --- 2. Per-name Finnhub: quote fallback, recommendation, earnings ----------
 def finnhub(path, ticker):
     if not FINNHUB_KEY:
         return None
+    wait = FINNHUB_MIN_INTERVAL - (time.time() - _last_fh[0])
+    if wait > 0:
+        time.sleep(wait)
     url = f"https://finnhub.io/api/v1/{path}{'&' if '?' in path else '?'}token={FINNHUB_KEY}"
-    d = fetch_json(url)
+    d, status = http_json(url)
+    _last_fh[0] = time.time()
     if isinstance(d, dict) and "__error__" in d:
         log_err(ticker, path.split("?")[0], d["__error__"])
         return None
     return d
 
 
-holdings = {}
 for i, t in enumerate(UNIVERSE):
-    h = {"sleeve": SLEEVE_OF.get(t)}
-
-    # Price (FMP batch preferred; Finnhub /quote fallback)
-    if t in quotes:
-        h.update({k: quotes[t][k] for k in ("price", "pct_change", "prev_close")})
-        h["quote_source"] = "fmp"
-    else:
-        q = finnhub(f"quote?symbol={t}", t)
-        if q and q.get("c") is not None:
-            h.update({"price": q.get("c"), "pct_change": q.get("dp"),
-                      "prev_close": q.get("pc"), "quote_source": "finnhub"})
-        else:
-            h.update({"price": None, "pct_change": None, "prev_close": None,
-                      "quote_source": None})
-
-    # Recommendation trend (current vs prior period → Sentinel computes drift)
     rec = finnhub(f"stock/recommendation?symbol={t}", t)
     if isinstance(rec, list) and rec:
         cur = rec[0]
         prev = rec[1] if len(rec) > 1 else None
-        h["recommendation"] = {
+        recs[t] = {
             "period": cur.get("period"),
             "strongBuy": cur.get("strongBuy"), "buy": cur.get("buy"),
             "hold": cur.get("hold"), "sell": cur.get("sell"),
@@ -132,66 +179,74 @@ for i, t in enumerate(UNIVERSE):
                 "sell": prev.get("sell"), "strongSell": prev.get("strongSell"),
             } if prev else None),
         }
-    else:
-        h["recommendation"] = None
+    if (i + 1) % 15 == 0:
+        print(f"  …rec {i + 1}/{len(UNIVERSE)}")
+print(f"Finnhub recommendation: {len(recs)}/{len(UNIVERSE)} names")
 
-    # Earnings surprise (most recent actual vs estimate)
+# =============================================================================
+# 3. EARNINGS SURPRISE — only for names with a recent print (from the calendar)
+# =============================================================================
+earnings = {}
+recent_reporters = []
+try:
+    cal = json.load(open(EARNINGS_CAL))
+    today = datetime.now(timezone.utc).date()
+    uni = set(UNIVERSE)
+    for e in cal:
+        sym = e.get("symbol")
+        ds = (e.get("date") or "")[:10]
+        if sym in uni and ds:
+            try:
+                d = datetime.strptime(ds, "%Y-%m-%d").date()
+                if 0 <= (today - d).days <= 5:  # reported within last 5 days
+                    recent_reporters.append(sym)
+            except Exception:
+                pass
+    recent_reporters = sorted(set(recent_reporters))
+    print(f"Recent reporters to check: {recent_reporters or 'none'}")
+except Exception as ex:
+    print(f"earnings-calendar.json unavailable ({ex}); skipping surprise check")
+
+for t in recent_reporters:
     earn = finnhub(f"stock/earnings?symbol={t}&limit=4", t)
     if isinstance(earn, list) and earn:
         last = earn[0]
-        h["earnings"] = {
+        earnings[t] = {
             "period": last.get("period"),
             "eps_actual": last.get("actual"),
             "eps_estimate": last.get("estimate"),
             "surprise": last.get("surprise"),
             "surprise_pct": last.get("surprisePercent"),
         }
-    else:
-        h["earnings"] = None
 
-    holdings[t] = h
+# =============================================================================
+# 4. ASSEMBLE & WRITE
+# =============================================================================
+holdings = {}
+for t in UNIVERSE:
+    p = prices.get(t, {})
+    holdings[t] = {
+        "sleeve": SLEEVE_OF.get(t),
+        "price": p.get("price"),
+        "pct_change": p.get("pct_change"),
+        "prev_close": p.get("prev_close"),
+        "quote_source": p.get("quote_source"),
+        "recommendation": recs.get(t),
+        "earnings": earnings.get(t),  # null unless it reported in the last 5 days
+    }
 
-    # Pace Finnhub to stay under the 60/min free-tier limit (2 calls/name here)
-    if FINNHUB_KEY:
-        time.sleep(1.1)
-    if (i + 1) % 10 == 0:
-        print(f"  …{i + 1}/{len(UNIVERSE)} processed")
-
-
-# --- 3. FMP analyst grade actions (best-effort enhancement) -----------------
-# Recent upgrades/downgrades per name. FMP has reshuffled these endpoints over
-# time, so this is best-effort: if it returns nothing, we degrade silently and
-# the Finnhub recommendation trend above remains the dependable rec signal.
-if FMP_KEY:
-    grade_hits = 0
-    for t in UNIVERSE:
-        url = f"https://financialmodelingprep.com/api/v3/upgrades-downgrades?symbol={t}&apikey={FMP_KEY}"
-        d = fetch_json(url)
-        if isinstance(d, list) and d:
-            recent = [{
-                "date": g.get("publishedDate", "")[:10],
-                "firm": g.get("gradingCompany"),
-                "action": g.get("action"),
-                "from": g.get("previousGrade"),
-                "to": g.get("newGrade"),
-            } for g in d[:3]]
-            holdings.setdefault(t, {})["recent_grades"] = recent
-            grade_hits += 1
-        time.sleep(0.3)
-    print(f"FMP grade actions: {grade_hits}/{len(UNIVERSE)} names had recent activity")
-
-
-# --- 4. Write -----------------------------------------------------------------
 out = {
     "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "universe_count": len(UNIVERSE),
     "universe": UNIVERSE,
     "sleeves": SLEEVES,
     "holdings": holdings,
+    "recent_reporters": recent_reporters,
     "errors": errors,
     "sources": {
-        "finnhub": bool(FINNHUB_KEY),
-        "fmp": bool(FMP_KEY),
+        "price": "alpaca" if any(h.get("quote_source") == "alpaca" for h in holdings.values())
+                 else ("polygon" if any(h.get("quote_source") == "polygon" for h in holdings.values()) else None),
+        "recommendation": "finnhub" if recs else None,
     },
 }
 
@@ -200,8 +255,9 @@ with open(OUT_PATH, "w") as f:
     json.dump(out, f, indent=2)
 
 priced = sum(1 for h in holdings.values() if h.get("price") is not None)
-print(f"Wrote {OUT_PATH}: {len(holdings)} holdings, {priced} priced, {len(errors)} errors")
+print(f"Wrote {OUT_PATH}: {len(holdings)} holdings, {priced} priced, "
+      f"{len(recs)} rec, {len(earnings)} earnings, {len(errors)} errors")
 if not priced:
-    # No prices at all almost always means a bad/empty key — surface loudly so
-    # the Sentinel (and Carson) don't trust an empty drop.
-    print("WARNING: zero holdings priced — check FINHUB_API / FMP_API secrets", file=sys.stderr)
+    print("WARNING: zero holdings priced — check Alpaca/Polygon creds; "
+          "do NOT trust this drop as 'all clear'", file=sys.stderr)
+    sys.exit(1)
