@@ -188,7 +188,9 @@ function NotOwner({ C, email }) {
 
 // ---------------------------------------------------------------- The queue
 function Queue({ C, isDesktop, email }) {
+  const [view, setView] = useState('active')   // 'active' | 'decided'
   const [items, setItems] = useState(null)
+  const [decided, setDecided] = useState(null)
   const [err, setErr] = useState('')
   const [busyId, setBusyId] = useState(null)
 
@@ -204,6 +206,20 @@ function Queue({ C, isDesktop, email }) {
     setItems(sorted)
   }, [])
 
+  // Decision history — approved/rejected items, most-recently-decided first.
+  const loadDecided = useCallback(async () => {
+    setDecided(null)
+    const { data, error } = await supabase
+      .from('cio_desk')
+      .select('*')
+      .in('status', ['approved', 'rejected'])
+      .not('decided_at', 'is', null)
+      .order('decided_at', { ascending: false })
+      .limit(50)
+    if (error) { setErr(error.message); return }
+    setDecided(data || [])
+  }, [])
+
   useEffect(() => {
     load()
     const ch = supabase
@@ -212,6 +228,9 @@ function Queue({ C, isDesktop, email }) {
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [load])
+
+  const showActive = () => setView('active')
+  const showDecided = () => { setView('decided'); loadDecided() }   // always refetch fresh
 
   const decide = async (item, toStatus) => {
     let note = null
@@ -229,6 +248,7 @@ function Queue({ C, isDesktop, email }) {
         item_id: item.id, actor: email, from_status: item.status, to_status: toStatus, note,
       })
       setItems((prev) => (prev || []).filter((x) => x.id !== item.id))
+      setDecided(null)   // mark history stale; refetches next time Decided is opened
     } catch (e) {
       setErr(e?.message || 'Update failed')
     } finally {
@@ -253,12 +273,17 @@ function Queue({ C, isDesktop, email }) {
       {/* Pinned private performance record — Carson-only (inside the owner-gated Queue) */}
       <StewardshipPanel C={C} isDesktop={isDesktop} />
 
-      <div style={{ fontSize: 12, color: C.t3, marginBottom: 16 }}>
-        {items.length === 0 ? 'Queue clear — nothing needs your call right now.' : `${items.length} item${items.length === 1 ? '' : 's'} awaiting your decision`}
+      {/* Active | Decided toggle */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        <button onClick={showActive} style={tabBtn(C, view === 'active')}>
+          Active{items.length ? ` · ${items.length}` : ''}
+        </button>
+        <button onClick={showDecided} style={tabBtn(C, view === 'decided')}>Decided</button>
       </div>
       {err && <div style={{ fontSize: 12, color: C.dn, marginBottom: 12 }}>{err}</div>}
 
-      {items.length === 0 ? (
+      {/* ---- ACTIVE ---- */}
+      {view === 'active' && (items.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 36, color: C.t4 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.up, marginBottom: 4 }}>All clear</div>
           <div style={{ fontSize: 12 }}>The Chief of Staff will surface items here each morning.</div>
@@ -295,7 +320,59 @@ function Queue({ C, isDesktop, email }) {
               style={{ ...btn(C.t3, busyId === it.id), background: 'transparent', color: C.t3, border: `1px solid ${C.border}` }}>Defer</button>
           </div>
         </div>
-      ))}
+      )))}
+
+      {/* ---- DECIDED (history) ---- */}
+      {view === 'decided' && <DecidedList C={C} decided={decided} catLabel={catLabel} />}
+    </div>
+  )
+}
+
+// ---------------------------------------------------- Decision history view
+function DecidedList({ C, decided, catLabel }) {
+  if (decided === null) {
+    return <div style={{ textAlign: 'center', padding: 40, color: C.t4, fontSize: 13 }}>Loading your decisions…</div>
+  }
+  if (decided.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: 36, color: C.t4 }}>
+        <div style={{ fontSize: 13 }}>No decisions yet — approved and rejected items will show here.</div>
+      </div>
+    )
+  }
+  const fmtDate = (s) => {
+    if (!s) return ''
+    const d = new Date(s)
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: C.t4, marginBottom: 12 }}>Your last {decided.length} decision{decided.length === 1 ? '' : 's'} · most recent first</div>
+      {decided.map((it) => {
+        const approved = it.status === 'approved'
+        const col = approved ? C.up : C.dn
+        return (
+          <div key={it.id} style={{ padding: '12px 14px', borderRadius: 10, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${col}`, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: col, textTransform: 'uppercase', letterSpacing: 1 }}>{approved ? 'Approved' : 'Rejected'}</span>
+              <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: 999, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 10, color: C.t4 }}>{fmtDate(it.decided_at)}</span>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: it.suggested_action ? 4 : 0 }}>{it.title}</div>
+            {it.suggested_action && (
+              <div style={{ fontSize: 11.5, color: C.t3, lineHeight: 1.45 }}>↳ {it.suggested_action}</div>
+            )}
+            {it.decision_note && (
+              <div style={{ marginTop: 7, fontSize: 11.5, color: C.t2, lineHeight: 1.5, padding: '6px 9px', borderRadius: 7, background: C.surface, borderLeft: `2px solid ${C.accent}` }}>
+                <span style={{ color: C.t4, fontStyle: 'italic' }}>your note: </span>{it.decision_note}
+              </div>
+            )}
+            {Array.isArray(it.tickers) && it.tickers.length > 0 && (
+              <div style={{ fontSize: 10.5, color: C.t4, marginTop: 6 }}>{it.tickers.join(' · ')}</div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -303,6 +380,7 @@ function Queue({ C, isDesktop, email }) {
 // ---------------------------------------------------------------- helpers
 const inputStyle = (C) => ({ width: '100%', padding: '11px 12px', borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, boxSizing: 'border-box' })
 const btn = (color, busy) => ({ flex: 1, padding: '9px 0', borderRadius: 10, border: 'none', background: color, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: busy ? 0.5 : 1 })
+const tabBtn = (C, active) => ({ padding: '6px 14px', borderRadius: 999, border: `1px solid ${active ? C.accent : C.border}`, background: active ? C.accent : 'transparent', color: active ? '#fff' : C.t3, fontSize: 12, fontWeight: 700, cursor: 'pointer' })
 function friendly(msg = '') {
   if (/invalid login/i.test(msg)) return 'Wrong email or password.'
   if (/not authorized/i.test(msg)) return 'That email is not authorized for this app.'
