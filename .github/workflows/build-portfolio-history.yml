@@ -49,6 +49,8 @@ jobs:
           fi
 
       - name: Credit dividends (update ledgers)
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"   # importing the builder must not write a .pyc
         run: |
           # Runs BEFORE the build so the build's replay credits each ledger entry
           # using share counts as-of-ex-date. Idempotent: only new (ticker, ex_date)
