@@ -5580,10 +5580,15 @@ Instructions:
                 </div>
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Theme</div>
+                  <div style={{ fontSize: 10, color: C.t4, marginBottom: 8 }}>{localStorage.getItem("iown_theme_locked") ? `Locked to ${localStorage.getItem("iown_theme_locked")} mode` : "Auto: light during market hours, dark after close"}</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {[{ v: "terminal", l: "Terminal" }, { v: "light", l: "Light" }].map(({ v, l }) => (
                       <button key={v} onClick={() => toggleTheme(v)} style={{ flex: 1, padding: "8px 0", border: `1px solid ${theme === v ? C.borderActive : C.border}`, background: theme === v ? C.accentSoft : "transparent", color: theme === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
                     ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                    <button onClick={() => lockTheme(theme)} style={{ flex: 1, padding: "7px 0", border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Set as Default</button>
+                    <button onClick={resetThemeAuto} style={{ flex: 1, padding: "7px 0", border: `1px solid ${localStorage.getItem("iown_theme_locked") ? C.border : C.borderActive}`, background: localStorage.getItem("iown_theme_locked") ? "transparent" : C.accentSoft, color: localStorage.getItem("iown_theme_locked") ? C.t3 : C.t1, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Auto</button>
                   </div>
                 </div>
                 <div>
@@ -5603,6 +5608,39 @@ Instructions:
                       <button key={l} onClick={() => setRefresh(v)} style={{ flex: "1 1 28%", padding: "8px 0", border: `1px solid ${refresh === v ? C.borderActive : C.border}`, background: refresh === v ? C.accentSoft : "transparent", color: refresh === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
                     ))}
                   </div>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Connection Status</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 4, background: C.up }} />
+                    <span style={{ fontSize: 12, color: C.t2 }}>{Object.keys(quotes).length} symbols via REST</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 4, background: wsRef.current?.readyState === 1 ? C.up : C.dn }} />
+                    <span style={{ fontSize: 12, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.t4, marginTop: 6 }}>Data: IEX · Alpaca Markets · News: Benzinga</div>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Data Loaded</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <div style={{ fontSize: 11, color: C.t3 }}>Company names: <span style={{ color: C.t2 }}>{Object.keys(names).length}/{ALL.length}</span></div>
+                    <div style={{ fontSize: 11, color: C.t3 }}>News: <span style={{ color: C.t2 }}>{news.length}</span></div>
+                    <div style={{ fontSize: 11, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
+                    <div style={{ fontSize: 11, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
+                    <div style={{ fontSize: 11, color: C.t3 }}>Metrics key: <span style={{ color: (FH || FK) ? C.up : C.dn }}>{FH ? "Finnhub" : FK ? "FMP" : "missing"}</span></div>
+                  </div>
+                  {fmpStatus && <div style={{ fontSize: 10, color: C.t2, marginTop: 6, padding: "5px 7px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
+                  {(FH || FK) && (
+                    <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); localStorage.removeItem("iown_dividend_history"); localStorage.removeItem("iown_dividend_history_v2"); } catch {} setFundamentals({}); setDividendHistory({}); fetchFundamentals(true).then(() => fetchDividendHistory(true)).catch(() => {}); }} style={{ marginTop: 8, width: "100%", padding: "8px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                      {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
+                    </button>
+                  )}
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Security</div>
+                  <button onClick={() => { try { localStorage.removeItem("iown_remembered"); } catch {} setUnlocked(false); setAuthed(false); setCode(""); }} style={{ width: "100%", padding: "10px 0", background: "transparent", border: `1px solid ${C.dn}44`, borderRadius: 8, color: C.dn, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Lock App</button>
+                  <div style={{ fontSize: 10, color: C.t4, marginTop: 6 }}>Locks the app and requires the access code to re-enter.</div>
                 </div>
               </div>)}
             </div>
