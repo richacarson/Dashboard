@@ -1,111 +1,93 @@
 {
-  "generated_at": "2026-06-28T04:25:00Z",
+  "generated_at": "2026-06-28T11:50:00Z",
   "as_of_session": "2026-06-27",
-  "data_drop_age_min": 8,
-  "data_drop_priced": 52,
+  "data_drop_generated_at": "2026-06-28T04:08:10Z",
+  "data_drop_note": "Drop is 458 min old (>180 min freshness threshold). Weekend run — Friday June 27 close prices are the most current available. Data is valid; staleness is expected on Saturday/Sunday.",
   "universe_count": 52,
   "universe_incomplete": true,
-  "universe_note": "portfolios.json has 50 names (25 dividend + 25 growth). ETHA and IBIT (Digital Asset ETFs, sleeve='Digital') are priced in the data drop but absent from portfolios.json \u2014 the Digital-Asset-ETF sleeve is monitored by the drop but not formally listed. Desk should confirm intended coverage.",
+  "universe_note": "portfolios.json lists 50 names (25 dividend, 25 growth). Data drop tracks 52 including ETHA and IBIT (digital ETF sleeve). Digital sleeve is monitored in the data drop but not represented in portfolios.json — coverage is partial for reporting and roster purposes.",
   "roster_integrity": {
     "ok": false,
     "issues": [
       {
         "ticker": "CWAN",
-        "type": "completed_position",
+        "type": "delisted",
+        "severity": "red",
+        "detail": "CWAN (Clearwater Analytics) completed its $24.55 take-private by Permira/Warburg Pincus/Francisco Partners/Temasek on June 25, 2026 after FIRB clearance on June 19. The stock is delisted from NYSE. Data drop still shows CWAN at $24.56 (deal settlement artifact). This position no longer exists as a traded equity.",
+        "action": "Remove CWAN from data/portfolios.json growth sleeve immediately."
+      },
+      {
+        "ticker": "ETHA",
+        "type": "not_in_roster",
         "severity": "amber",
-        "detail": "Clearwater Analytics take-private completed June 25, 2026 at $24.55/share. Australian FIRB granted June 19; deal closed June 25. CWAN delisted; stub still pricing at $24.56. Remove from portfolios.json and record successful merger-arb exit.",
-        "action": "Remove CWAN from data/portfolios.json growth sleeve."
+        "detail": "ETHA (iShares Ethereum Trust ETF) appears in the data drop under the Digital sleeve but is absent from portfolios.json. Digital sleeve is not represented in portfolios.json.",
+        "action": "Add ETHA to portfolios.json under a 'digital' sleeve, or confirm the digital sleeve is intentionally omitted."
+      },
+      {
+        "ticker": "IBIT",
+        "type": "not_in_roster",
+        "severity": "amber",
+        "detail": "IBIT (iShares Bitcoin Trust ETF) appears in the data drop under the Digital sleeve but is absent from portfolios.json. Digital sleeve is not represented in portfolios.json.",
+        "action": "Add IBIT to portfolios.json under a 'digital' sleeve, or confirm the digital sleeve is intentionally omitted."
       }
     ]
   },
   "summary": {
-    "red": 4,
-    "amber": 5,
-    "green": 43,
-    "headline": "AI-chip rout: CRDO -10.5%, QCOM/ADI -8%, NXPI/KEYS -7.6% on SK Hynix HBM4 slowdown + Broadcom capex miss; CAT -5.5% as tariff headwinds materialize. CWAN merger-arb closed June 25 at $24.55 \u2014 resolved. Hyperscaler late-July prints are next key signal."
+    "red": 2,
+    "amber": 4,
+    "green": 46,
+    "headline": "CRDO -10.51% with thesis-matched AI capex risk now materializing (Broadcom AI networking revenue missed estimates); broad semi selloff hit 6 more held names; CWAN delisted — roster cleanup required."
   },
   "flags": [
     {
-      "id": "CRDO_AI_capex_selloff_2026-06-28",
+      "id": "CRDO_broadcom_capex_miss_2026-06-27",
       "ticker": "CRDO",
       "sleeve": "Growth",
       "severity": "red",
       "category": "sector_shock",
-      "headline": "CRDO -10.5%: AI capex cycle risk materializing; largest single-day drop in portfolio",
-      "detail": "Credo Technology fell 10.51% \u2014 the largest move in the book \u2014 as the AI-infrastructure selloff triggered by SK Hynix announcing HBM4/NAND production slowdown (June 23) and Broadcom's Q3 AI chip guidance miss ($16B vs $17.2B consensus, June 5) hit custom-silicon connectivity names hardest. Despite CRDO's record Q4 revenue (+157% YoY, $437M), the stock had priced in continued hyper-aggressive capex from the major cloud providers; that assumption is now being repriced. Competitive entry from Broadcom in AI connectivity adds a second headwind.",
+      "headline": "CRDO -10.51% as Broadcom AI networking miss signals hyperscaler capex moderation — thesis risk materializing",
+      "detail": "Credo Technology fell $28.22 (from $268.13 to $239.91) on Friday June 27. The catalyst: Broadcom reported AI networking revenue of $4.1B vs. $4.8B consensus estimate (a 14% miss), and CEO Hock Tan held his 2027 AI semiconductor revenue outlook flat rather than raising it. This repriced the entire hyperscaler AI capex narrative. CRDO derives nearly all revenue from AI data center connectivity (AECs, optical DSPs) and holds concentrated exposure to Microsoft, Google, Meta, and Amazon spending. The Broadcom miss is a direct read-through to CRDO demand. Analyst consensus remains bullish (10 strong buy / 15 buy / 2 hold) but the thesis risk has moved from hypothetical to active.",
       "metric": {
         "price": 239.91,
+        "prev_close": 268.13,
         "day_move_pct": -10.51,
         "level_ref": null
       },
-      "thesis_link": "Matches CRDO key_risk: 'AI capex cycle dependency \u2014 a slowdown in hyperscaler data center spending due to ROI concerns or macroeconomic headwinds.' Also matches: 'Competitive entry from Broadcom, Marvell, and other large semiconductor companies.' Broadcom's guidance miss is both the macro trigger and the competitive signal.",
+      "thesis_link": "Matches CRDO key_risk: 'AI capex cycle dependency — a slowdown in hyperscaler data center spending due to ROI concerns or macroeconomic headwinds would directly reduce demand for Credo's products given near-total AI exposure.'",
       "evidence": [
         {
-          "source": "Intellectia AI \u2014 Semiconductor Stocks Selloff June 2026: $1.3T Wiped Out in AI Chip Crash",
+          "source": "Intellectia AI — Semiconductor Stocks Selloff June 2026",
           "url": "https://intellectia.ai/blog/semiconductor-stocks-selloff-june-2026",
-          "as_of": "2026-06-28"
+          "as_of": "2026-06-27"
         },
         {
-          "source": "Kavout \u2014 What Triggered the Recent Semiconductor Sell-Off",
-          "url": "https://www.kavout.com/market-lens/what-triggered-the-recent-semiconductor-sell-off",
-          "as_of": "2026-06-28"
-        },
-        {
-          "source": "Seeking Alpha \u2014 Credo Q4 revenue surges 157% but fails to satisfy investors",
-          "url": "https://seekingalpha.com/news/4599412-credos-q4-revenue-surges-157-but-fails-to-satisfy-all-investors-as-shares-fall",
-          "as_of": "2026-06-28"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "new"
-    },
-    {
-      "id": "QCOM_memory_selloff_2026-06-28",
-      "ticker": "QCOM",
-      "sleeve": "Dividend",
-      "severity": "red",
-      "category": "sector_shock",
-      "headline": "QCOM -8.0%: Memory shortage thesis confirmed; handset concentration headwind",
-      "detail": "Qualcomm fell 8.0% as the semiconductor sector selloff compounded pre-existing handset weakness. Handset revenues fell 13% YoY in recent quarters. SK Hynix's production slowdown directly impacts the memory supply chain that QCOM identified as constraining handset production. Qualcomm's AI data-center revenue push is not expected to contribute meaningfully until 2028, leaving the name without a near-term offset for handset softness.",
-      "metric": {
-        "price": 188.615,
-        "day_move_pct": -8.0,
-        "level_ref": null
-      },
-      "thesis_link": "Matches QCOM key_risk: 'Global memory shortage constraining handset production \u2014 Q2 FY2026 guidance cut reflects supply limitations.' SK Hynix slowing HBM4/NAND production directly hits the supply chain this risk describes. Also matches 'Handset concentration \u2014 QCT Handsets at $7.8B quarterly (74% of QCT).'",
-      "evidence": [
-        {
-          "source": "TradingKey \u2014 QCOM Moved Down on Jun 5 (initial Broadcom-driven drop, with follow-on moves through June)",
-          "url": "https://www.tradingkey.com/news/market-movers/261950088-market-movers-qcom-20260605",
-          "as_of": "2026-06-28"
-        },
-        {
-          "source": "CNBC \u2014 Tech rout intensifies as sell-off grips global stocks",
+          "source": "CNBC — Tech rout intensifies as sell-off grips global stocks",
           "url": "https://www.cnbc.com/2026/06/23/tech-stocks-sell-off-mag7-samsung-sk-hynix.html",
-          "as_of": "2026-06-23"
+          "as_of": "2026-06-27"
         }
       ],
       "first_seen": "2026-06-28",
       "status": "new"
     },
     {
-      "id": "KEYS_AI_capex_selloff_2026-06-28",
-      "ticker": "KEYS",
+      "id": "CWAN_roster_delisted_2026-06-28",
+      "ticker": "CWAN",
       "sleeve": "Growth",
       "severity": "red",
-      "category": "sector_shock",
-      "headline": "KEYS -7.6%: Valuation compression + AI capex dependency risk emerging simultaneously",
-      "detail": "Keysight fell 7.64% despite record quarterly results and raised guidance. GF Value estimated the stock 66% overvalued at ~$328 vs. a $197.99 intrinsic estimate. The combination of extreme valuation (51x trailing P/E per thesis report) and the emerging narrative that AI test equipment demand could moderate if hyperscaler capex slows is creating multiple compression. This flag is thesis-linked on two dimensions: capex cycle AND valuation.",
+      "category": "roster_integrity",
+      "headline": "CWAN delisted June 25 — take-private closed at $24.55; remove from portfolios.json",
+      "detail": "The Clearwater Analytics take-private by Permira/Warburg Pincus/Francisco Partners/Temasek completed on June 25, 2026 at $24.55/share (FIRB clearance received June 19). CWAN is no longer a publicly traded equity. The data drop still shows it at $24.56 (settlement artifact). No position exists to monitor. portfolios.json growth sleeve still lists CWAN — this must be corrected so the sentinel monitors the correct 51-name universe.",
       "metric": {
-        "price": 332.625,
-        "day_move_pct": -7.64,
+        "price": 24.56,
+        "prev_close": 24.55,
+        "day_move_pct": 0.06,
         "level_ref": null
       },
-      "thesis_link": "Matches KEYS key_risks: (1) 'AI capex cycle dependency \u2014 any slowdown in hyperscaler data center spending would directly impact Keysight's fastest-growing segment.' (2) 'Valuation compression risk \u2014 at 51.2x trailing P/E and 28.3x forward P/E, KEYS requires continued 20%+ growth; any deceleration triggers multiple compression.' Both risks are now manifesting simultaneously.",
+      "thesis_link": null,
       "evidence": [
         {
-          "source": "GuruFocus \u2014 Keysight Technologies (KEYS) Shares Fall 8.7% \u2014 GF Value Says Still Overvalued",
-          "url": "https://www.gurufocus.com/news/8934872/keysight-technologies-inc-keys-shares-fall-87-gf-value-says-still-overvalued",
+          "source": "Dashboard deal-watch.json — confirmed deal close June 25, FIRB June 19",
+          "url": null,
           "as_of": "2026-06-28"
         }
       ],
@@ -113,142 +95,180 @@
       "status": "new"
     },
     {
-      "id": "CAT_tariff_headwind_2026-06-28",
-      "ticker": "CAT",
-      "sleeve": "Dividend",
-      "severity": "red",
-      "category": "macro_headwind",
-      "headline": "CAT -5.5%: Tariff headwind ($2.2-2.4B FY2026) and Fed hawkishness compressing premium valuation",
-      "detail": "Caterpillar fell 5.53% from near its all-time high (~$1,057) to $998.18. Drivers: (1) reports projecting $2.2-2.4B in incremental FY2026 tariff costs are being priced into the forward earnings model, (2) stronger-than-expected jobs data raised expectations for prolonged elevated rates, adding rate-sensitivity pressure to an industrial name that had rallied ~60% YTD and was trading at ~48-51x P/E. The thesis key_risk is now visibly materializing in the stock price.",
-      "metric": {
-        "price": 998.18,
-        "day_move_pct": -5.53,
-        "level_ref": null
-      },
-      "thesis_link": "Directly matches CAT key_risk: '$2.6B in incremental tariff costs in 2026 that could compress adjusted operating profit margins below 2025's ~17% despite efficiency efforts.' The market is now pricing in this specific risk. Also relates to 'Premium valuation at 38.8x trailing P/E leaves limited margin of safety if EPS growth fails to materialize.'",
-      "evidence": [
-        {
-          "source": "TradingKey \u2014 Caterpillar (CAT) Moved Down by 4.31% on Jun 26",
-          "url": "https://www.tradingkey.com/news/market-movers/261994590-market-movers-cat-20260626",
-          "as_of": "2026-06-28"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "new"
-    },
-    {
-      "id": "ADI_sector_selloff_2026-06-28",
-      "ticker": "ADI",
-      "sleeve": "Dividend",
+      "id": "SEMI_sector_selloff_2026-06-27",
+      "ticker": "MULTI",
+      "sleeve": "Mixed",
       "severity": "amber",
       "category": "sector_shock",
-      "headline": "ADI -8.0%: Sector contagion; no company-specific negative; record Q2 revenue intact",
-      "detail": "Analog Devices fell 7.99%, the second-largest Dividend-sleeve decline. No company-specific catalyst identified \u2014 the move is entirely sector contagion from SK Hynix / Broadcom headlines. ADI posted record Q2 revenue of $3.62B on May 20. The stock's cyclicality risk is a portfolio-level concern, but the underlying thesis (industrial, automotive, and comms recovery) is not directly challenged by HBM4 memory production decisions. Watch for company-specific news before escalating.",
-      "metric": {
-        "price": 384.61,
-        "day_move_pct": -7.99,
-        "level_ref": null
-      },
-      "thesis_link": "Relates to ADI key_risk: 'Semiconductor cyclicality \u2014 FY2024's 23% revenue decline from FY2023 peak demonstrates that current 30% growth is partially cyclical recovery.' No specific ADI catalyst \u2014 sector-level sentiment only.",
-      "evidence": [
-        {
-          "source": "TradingKey \u2014 ADI Moved Down by 7.56% on Jun 26",
-          "url": "https://www.tradingkey.com/news/market-movers/261994939-market-movers-adi-20260626",
-          "as_of": "2026-06-28"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "new"
-    },
-    {
-      "id": "NXPI_sector_selloff_2026-06-28",
-      "ticker": "NXPI",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "sector_shock",
-      "headline": "NXPI -7.7%: Sector contagion on a HOLD name; automotive recovery thesis intact",
-      "detail": "NXP Semiconductors fell 7.65% despite Citi raising its price target to $370 the same day \u2014 a sign the move was entirely sector-driven rather than company-specific. Q1 2026 revenue came in at $3.18B (+12% YoY). NXPI is already rated HOLD (score 65); the sector shock magnifies an already cautious view. Automotive semiconductor recovery and CEO transition execution remain the two thesis-level watches.",
-      "metric": {
-        "price": 275.98,
-        "day_move_pct": -7.65,
-        "level_ref": null
-      },
-      "thesis_link": "Sector contagion touches NXPI key_risk: 'Automotive semiconductor cyclicality' and 'U.S.-China trade tensions and tariff uncertainty creating demand visibility challenges.' No specific automotive negative emerged; watch for follow-through.",
-      "evidence": [
-        {
-          "source": "TIKR \u2014 NXP Semiconductors Stock Fell 7% the Same Day Citi Raised Target to $370",
-          "url": "https://www.tikr.com/blog/nxp-semiconductors-stock-fell-7-the-same-day-citi-raised-its-target-to-370-what-the-numbers-say-for-2026",
-          "as_of": "2026-06-28"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "new"
-    },
-    {
-      "id": "LRCX_sk_hynix_wfe_2026-06-28",
-      "ticker": "LRCX",
-      "sleeve": "Dividend",
-      "severity": "amber",
-      "category": "sector_shock",
-      "headline": "LRCX -5.9%: SK Hynix HBM4 slowdown directly reduces near-term WFE tool demand",
-      "detail": "Lam Research fell 5.93% after a ~115% YTD rally. Unlike pure sector contagion, SK Hynix slowing HBM4 production is directly relevant to Lam \u2014 it sells the etch and deposition tools used in advanced memory fabs. WFE spending moderation from a major DRAM customer is a real operational headwind. Director Eric Brandt liquidated $19.1M (21.48% stake reduction) added to near-term selling pressure.",
-      "metric": {
-        "price": 377.99,
-        "day_move_pct": -5.93,
-        "level_ref": null
-      },
-      "thesis_link": "Matches LRCX key_risk: 'Semiconductor equipment cyclicality \u2014 WFE spending has historically experienced 20-30% peak-to-trough swings.' SK Hynix's production pullback is a direct, not derivative, headwind to Lam's order pipeline.",
-      "evidence": [
-        {
-          "source": "GuruFocus \u2014 Lam Research (LRCX) Stock Down 9.3% but Still Overvalued \u2014 GF Score: 85/100",
-          "url": "https://www.gurufocus.com/news/8928517/lam-research-corp-lrcx-stock-down-93-but-still-overvalued-gf-score-85100",
-          "as_of": "2026-06-28"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "new"
-    },
-    {
-      "id": "MRVL_cfo_selling_sector_2026-06-28",
-      "ticker": "MRVL",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "sector_shock",
-      "headline": "MRVL -5.7%: CFO selling 211K shares + sector weakness on a 91x P/E name",
-      "detail": "Marvell fell 5.69%, compounded by CFO insider selling (211,329 shares) and a 'sell-the-news' dynamic after S&P 500 inclusion on June 22. At ~91x forward P/E, MRVL is priced for perfection on AI custom silicon. The sector-level AI capex moderation narrative \u2014 while not yet confirmed \u2014 is a direct risk to the valuation model. Core thesis (hyperscaler custom AI ASICs, data center interconnect) remains intact but the stock has no margin for deceleration.",
-      "metric": {
-        "price": 265.84,
-        "day_move_pct": -5.69,
-        "level_ref": null
-      },
-      "thesis_link": "Matches MRVL key_risk: 'AI capex cycle moderation \u2014 if hyperscalers reduce data center investment due to ROI concerns or macro headwinds.' CFO selling is an additional caution signal worth monitoring.",
-      "evidence": [
-        {
-          "source": "Timothy Sykes \u2014 MRVL Stock Slumps As CFO Sale And Chip Weakness Rattle Traders",
-          "url": "https://www.timothysykes.com/news/marvell-technology-inc-mrvl-news-2026_06_26/",
-          "as_of": "2026-06-28"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "new"
-    },
-    {
-      "id": "hyperscaler_earnings_calendar_2026-06-28",
-      "ticker": "PORTFOLIO",
-      "sleeve": "Multiple",
-      "severity": "amber",
-      "category": "calendar",
-      "headline": "Late-July hyperscaler earnings \u2014 capex commentary is now the highest-priority macro signal for 8 AI-infra holdings",
-      "detail": "With SK Hynix's HBM4 slowdown (June 23) and Broadcom's guidance miss (June 5) already in the tape, the late-July 2026 hyperscaler earnings prints (Amazon, Microsoft, Alphabet, Meta) carry elevated importance. Tone on data center capex will either confirm or contradict the current selloff narrative across NVDA, MRVL, AMD, TSM, CRDO, LRCX, KEYS, and ADI. NVDA (-2.0%) is holding up better than the semicon ecosystem names, suggesting the market is not yet pricing a full capex reversal at the market leader \u2014 but that could change on any guidance miss.",
+      "headline": "Broad semi selloff on Broadcom capex miss: QCOM -8.0%, ADI -8.0%, NXPI -7.6%, KEYS -7.6%, LRCX -5.9%, MRVL -5.7%",
+      "detail": "Friday's Broadcom AI networking miss cascaded across the semiconductor book. Six held names fell 5-8%+ in a single session: QCOM ($188.62, -8.00%), ADI ($384.61, -7.99%), NXPI ($275.98, -7.65%), KEYS ($332.63, -7.64%), LRCX ($377.99, -5.93%), MRVL ($265.84, -5.69%). The iShares Semiconductor ETF was down ~6.2% on the day. Each of these names carries thesis-linked AI capex or semiconductor cyclicality risk. None had company-specific negative news — this is a sector reprice. The moves are material but not necessarily thesis-breaking on their own; they become significant if hyperscaler capex guidance continues to disappoint into the July earnings season.",
       "metric": {
         "price": null,
         "day_move_pct": null,
-        "level_ref": null
+        "level_ref": null,
+        "affected": {
+          "QCOM": { "price": 188.62, "day_move_pct": -8.00 },
+          "ADI":  { "price": 384.61, "day_move_pct": -7.99 },
+          "NXPI": { "price": 275.98, "day_move_pct": -7.65 },
+          "KEYS": { "price": 332.63, "day_move_pct": -7.64 },
+          "LRCX": { "price": 377.99, "day_move_pct": -5.93 },
+          "MRVL": { "price": 265.84, "day_move_pct": -5.69 }
+        }
       },
-      "thesis_link": "Standing watch per Risk Sentinel mandate. Per-holding thesis: CRDO, MRVL, KEYS, LRCX all list 'AI capex cycle dependency' as an explicit key_risk.",
+      "thesis_link": "CRDO/MRVL: 'AI capex cycle moderation'; LRCX: 'WFE spending peak-to-trough swings if hyperscaler ROI disappoints'; KEYS: 'AI capex cycle dependency'; QCOM: semiconductor cyclicality; NXPI: US-China trade/tariff uncertainty amplifying moves.",
+      "evidence": [
+        {
+          "source": "Intellectia AI — Semiconductor Stocks Selloff June 2026",
+          "url": "https://intellectia.ai/blog/semiconductor-stocks-selloff-june-2026",
+          "as_of": "2026-06-27"
+        }
+      ],
+      "first_seen": "2026-06-28",
+      "status": "new"
+    },
+    {
+      "id": "CAT_profit_taking_2026-06-27",
+      "ticker": "CAT",
+      "sleeve": "Dividend",
+      "severity": "amber",
+      "category": "price_action",
+      "headline": "CAT -5.53% to $998 after ATH run — approaching $1,000 psychological level; tariff risk flag",
+      "detail": "Caterpillar fell $58.47 from $1,056.65 to $998.18, breaking below the $1,000 psychological level. CAT had reached an all-time high of $1,022.28 on June 22 (up ~60% YTD) driven by record $51B backlog and AI data center construction demand. The decline appears to be profit-taking following extreme overextension, potentially amplified by tariff concerns ($2.6B incremental tariff cost in 2026 is the known key risk). Not thesis-breaking at this level but the premium valuation (38.8x trailing P/E) leaves limited margin of safety. Watch for any deterioration in backlog or management tone.",
+      "metric": {
+        "price": 998.18,
+        "prev_close": 1056.65,
+        "day_move_pct": -5.53,
+        "level_ref": 1000.0
+      },
+      "thesis_link": "Matches CAT key_risk: '$2.6B in incremental tariff costs in 2026 that could compress adjusted operating profit margins' and 'Premium valuation at 38.8x trailing P/E leaves limited margin of safety if EPS growth fails to materialize.'",
+      "evidence": [
+        {
+          "source": "Tikr Blog — Caterpillar Stock up over 60% in 2026",
+          "url": "https://www.tikr.com/blog/caterpillar-stock-is-up-over-60-in-2026-heres-where-cat-could-go",
+          "as_of": "2026-06-27"
+        }
+      ],
+      "first_seen": "2026-06-28",
+      "status": "new"
+    },
+    {
+      "id": "HYPERSCALER_EARNINGS_WATCH_2026-07",
+      "ticker": "MULTI",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "calendar",
+      "headline": "Late-July hyperscaler earnings season is the desk's highest-priority macro risk signal for AI-exposed names",
+      "detail": "NVDA, MRVL, AMD, TSM, CRDO, LRCX, KEYS, ADI are all materially exposed to hyperscaler capex. The desk considers late-July 2026 hyperscaler prints (Microsoft, Alphabet, Meta, Amazon) the single most important macro signal for these names. Broadcom's guidance miss on June 27 has pre-loaded anxiety into the tape. On the day after each hyperscaler print, this sentinel will summarize capex tone for affected holdings. Calendar entries being tracked separately below.",
+      "metric": null,
+      "thesis_link": "Standing watch item per RISK_SENTINEL_PROMPT.md Step 4.",
       "evidence": [],
       "first_seen": "2026-06-28",
       "status": "new"
+    },
+    {
+      "id": "UNIVERSE_digital_sleeve_incomplete_2026-06-28",
+      "ticker": "MULTI",
+      "sleeve": "Digital",
+      "severity": "amber",
+      "category": "roster_integrity",
+      "headline": "Digital sleeve (ETHA, IBIT) monitored in data drop but absent from portfolios.json — coverage acknowledged as partial",
+      "detail": "The data drop tracks 52 holdings including ETHA ($11.82, +1.11%) and IBIT ($33.78, +0.87%) under a Digital sleeve. These two positions are not listed in portfolios.json (which shows 50 names: 25 dividend, 25 growth). The firm describes 52 holdings across Dividend, Growth, and a Digital-Asset-ETF sleeve. Until portfolios.json is updated to include the digital sleeve, the sentinel's roster-level checks are incomplete for these two positions.",
+      "metric": {
+        "ETHA": { "price": 11.82, "day_move_pct": 1.11 },
+        "IBIT": { "price": 33.78, "day_move_pct": 0.87 }
+      },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-06-28",
+      "status": "new"
+    },
+    {
+      "id": "SYK_patent_win_2026-06-27",
+      "ticker": "SYK",
+      "sleeve": "Dividend",
+      "severity": "green",
+      "category": "positive",
+      "headline": "SYK +5.11% on OptaBlate patent win and 4.8% dividend increase",
+      "detail": "Stryker gained $16.15 (from $316.15 to $332.30) on a federal court ruling in its favor on the OptaBlate patent dispute. The company also announced a 4.8% Q3 2026 dividend increase. Catalysts on track; thesis not stressed.",
+      "metric": {
+        "price": 332.30,
+        "prev_close": 316.15,
+        "day_move_pct": 5.11,
+        "level_ref": null
+      },
+      "thesis_link": null,
+      "evidence": [
+        {
+          "source": "SimplyWallSt — Stryker patent ruling",
+          "url": "https://simplywall.st/stocks/us/healthcare/nyse-syk/stryker/news/stryker-syk-stock-could-be-212-undervalued-after-key-legal-w",
+          "as_of": "2026-06-27"
+        }
+      ],
+      "first_seen": "2026-06-28",
+      "status": "new"
+    },
+    {
+      "id": "HOOD_bitstamp_launch_2026-06-27",
+      "ticker": "HOOD",
+      "sleeve": "Growth",
+      "severity": "green",
+      "category": "positive",
+      "headline": "HOOD +5.62% on Bitstamp acquisition close, new crypto product launch July 2, and analyst Buy initiation",
+      "detail": "Robinhood gained $5.25 (from $93.46 to $98.71) driven by: (1) Bitstamp acquisition closing, significantly strengthening crypto product suite; (2) announcement of a 'next-generation crypto financial product' launching July 2; (3) analyst Buy initiation at $125 price target on June 26; (4) $2B convertible notes with ~$290M earmarked for share repurchases. Approaching the $100 psychological level. Catalysts ahead of plan.",
+      "metric": {
+        "price": 98.71,
+        "prev_close": 93.46,
+        "day_move_pct": 5.62,
+        "level_ref": 100.0
+      },
+      "thesis_link": null,
+      "evidence": [
+        {
+          "source": "Yahoo Finance — HOOD products, diversification, crypto 2026",
+          "url": "https://finance.yahoo.com/news/products-diversification-crypto-drive-hood-121400670.html",
+          "as_of": "2026-06-27"
+        }
+      ],
+      "first_seen": "2026-06-28",
+      "status": "new"
+    },
+    {
+      "id": "CRYPTO_rally_2026-06-27",
+      "ticker": "MULTI",
+      "sleeve": "Growth/Digital",
+      "severity": "green",
+      "category": "positive",
+      "headline": "Crypto-exposed names rally Friday: COIN +4.69%, HUT +4.38%, MARA +4.18%, IBIT +0.87%, ETHA +1.11%",
+      "detail": "Bitcoin in $60K-$62K range on June 27, driving gains across crypto-adjacent holdings. COIN ($149.20, +4.69%), HUT ($122.78, +4.38%), MARA ($14.47, +4.18%). Digital ETF sleeve calm (IBIT +0.87%, ETHA +1.11%). No company-specific catalysts beyond broad crypto sentiment. Note: HUT and MARA are high-volatility crypto miners — moves of this magnitude are normal for these names.",
+      "metric": {
+        "COIN": { "price": 149.20, "day_move_pct": 4.69 },
+        "HUT":  { "price": 122.78, "day_move_pct": 4.38 },
+        "MARA": { "price": 14.47,  "day_move_pct": 4.18 },
+        "IBIT": { "price": 33.78,  "day_move_pct": 0.87 },
+        "ETHA": { "price": 11.82,  "day_move_pct": 1.11 }
+      },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-06-28",
+      "status": "new"
+    },
+    {
+      "id": "CWAN_deal_closed_info",
+      "ticker": "CWAN",
+      "sleeve": "Growth",
+      "severity": "green",
+      "category": "deal_watch_resolved",
+      "headline": "CWAN take-private closed cleanly at $24.55 on June 25 — no spread blow-up, no FIRB issues",
+      "detail": "The Clearwater Analytics merger-arb position resolved exactly as underwritten. FIRB clearance received June 19, deal closed June 25 at the full $24.55/share terms. No haircut, no last-minute regulatory friction. This is the thesis working as intended for a merger-arb position.",
+      "metric": {
+        "price": 24.56,
+        "day_move_pct": 0.06,
+        "level_ref": 24.55
+      },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-06-28",
+      "status": "resolved"
     }
   ],
   "deal_watch": [
@@ -260,72 +280,43 @@
       "status": "closed",
       "firb_cleared_date": "2026-06-19",
       "close_date": "2026-06-25",
-      "transaction_value_bn": 8.4,
       "last_checked": "2026-06-28",
       "severity": "green",
-      "note": "Deal completed June 25 at $24.55/share. Australian FIRB approved June 19. No slippage reported \u2014 deal progressed on schedule and closed Q2 2026 as initially anticipated. CWAN delisted from NYSE. Stub still pricing at $24.56 in data drop. Action: remove CWAN from portfolios.json growth sleeve."
+      "note": "Deal closed at full terms June 25. FIRB received June 19. No open gates. Remove CWAN from portfolios.json. No further monitoring needed."
     }
   ],
   "levels": [
     {
       "ticker": "SPY",
-      "level": 645.8,
+      "level": 645.80,
       "type": "support",
       "state": "active",
-      "distance_pct": "unavailable \u2014 SPY not a holding; not in data drop",
-      "interaction": "none",
-      "note": "Carson's retracement support set April 13, 2026. SPY last confirmed above $694 (April 14 close after major resistance breakout). Current SPY price not available in holdings data drop. Based on last known data, well above this level. No breach risk visible."
+      "distance_pct": "unavailable — SPY not in the held portfolio; price not in data drop",
+      "interaction": "not_assessed",
+      "note": "Active support set 2026-04-13. All 4 resistance levels (683.70, 685.85, 691.90, 693.20) have already been hit and cleared as of April 13-14. Support at 645.80 has not been tested. Cannot assess current distance without a live SPY quote."
     }
   ],
   "calendar": [
     {
-      "ticker": "NVDA / MRVL / AMD / TSM / CRDO / LRCX / KEYS / ADI",
-      "event": "Late-July 2026 hyperscaler earnings season \u2014 data-center capex guidance",
-      "date_approx": "2026-07-28",
+      "ticker": "NVDA",
+      "event": "Q2 FY2027 earnings — hyperscaler capex commentary watch",
+      "expected_date": "approx 2026-08",
       "severity": "amber",
-      "note": "Elevated importance given SK Hynix HBM4 slowdown (June 23) and Broadcom capex guidance miss (June 5). Will confirm or refute current selloff narrative. NVDA holding at -2.0% vs. -7-10% for ecosystem names \u2014 market not yet pricing a full capex reversal at the leader."
-    }
-  ],
-  "green_info": [
+      "note": "Exact date TBD. Watch for AI infrastructure capex tone from Microsoft, Alphabet, Meta, Amazon in late July — their commentary is a leading indicator for NVDA, MRVL, CRDO, LRCX, AMD, KEYS, ADI demand."
+    },
     {
-      "ticker": "CWAN",
-      "note": "Merger-arb CLOSED at $24.55 June 25 \u2014 successful outcome. Remove from portfolio watchlist."
+      "ticker": "MULTI",
+      "event": "Hyperscaler Q2 earnings — Microsoft, Alphabet, Meta, Amazon capex commentary",
+      "expected_date": "approx 2026-07-28 to 2026-08-05",
+      "severity": "amber",
+      "note": "The desk's highest-priority macro signal for AI-exposed names. Broadcom's June 27 miss has elevated the stakes. On the day-after each print, this sentinel will summarize capex tone and update flags for NVDA, MRVL, CRDO, LRCX, KEYS, ADI, AMD, TSM."
     },
     {
       "ticker": "HOOD",
-      "sleeve": "Growth",
-      "pct_change": 5.62,
-      "note": "Strong gainer; no specific negative flags."
-    },
-    {
-      "ticker": "SYK",
-      "sleeve": "Dividend",
-      "pct_change": 5.11,
-      "note": "Strong gainer in Dividend sleeve; BUY-rated."
-    },
-    {
-      "ticker": "COIN",
-      "sleeve": "Growth",
-      "pct_change": 4.69,
-      "note": "Risk-on in crypto; digital-asset sleeve positive."
-    },
-    {
-      "ticker": "HUT",
-      "sleeve": "Growth",
-      "pct_change": 4.38,
-      "note": "Bitcoin miner; crypto tailwind."
-    },
-    {
-      "ticker": "MARA",
-      "sleeve": "Growth",
-      "pct_change": 4.18,
-      "note": "Bitcoin miner; crypto tailwind."
-    },
-    {
-      "ticker": "NVDA",
-      "sleeve": "Growth",
-      "pct_change": -2.0,
-      "note": "Holding up significantly better than ecosystem names (-7-10%); market leader not yet pricing full AI capex reversal."
+      "event": "New crypto financial product launch",
+      "expected_date": "2026-07-02",
+      "severity": "green",
+      "note": "Announced June 27. Watch for reception and any related HOOD price action in the days following launch."
     }
   ]
 }
