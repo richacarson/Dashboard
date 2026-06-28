@@ -46,6 +46,8 @@ jobs:
           VITE_FINNHUB_KEY: ${{ secrets.FINHUB_API }}
           VITE_ANTHROPIC_KEY: ${{ secrets.VITE_ANTHROPIC_KEY }}
           VITE_FRED_KEY: ${{ secrets.FRED_API_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
