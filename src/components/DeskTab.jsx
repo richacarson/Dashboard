@@ -10,7 +10,7 @@ import { supabase, useDeskSession, OWNER_EMAIL } from '../lib/desk'
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 }
 const PRIMARY_BM = { dividend: 'DVY', growth: 'IUSG' }
 
-export default function DeskTab({ C, isDesktop }) {
+export default function DeskTab({ C, isDesktop, terminal = false }) {
   const { session, email, isOwner, loading } = useDeskSession()
 
   if (loading) {
@@ -23,11 +23,12 @@ export default function DeskTab({ C, isDesktop }) {
   }
   if (!session) return <LoginGate C={C} />
   if (!isOwner) return <NotOwner C={C} email={email} />
-  return <Queue C={C} isDesktop={isDesktop} email={email} />
+  return <Queue C={C} isDesktop={isDesktop} email={email} terminal={terminal} />
 }
 
 // ---------------------------------------------------- Stewardship panel (pinned)
-function StewardshipPanel({ C, isDesktop }) {
+function StewardshipPanel({ C, isDesktop, terminal = false }) {
+  const R = terminal ? 2 : 12;
   const [perf, setPerf] = useState(null)
   const [failed, setFailed] = useState(false)
   const [open, setOpen] = useState(false)
@@ -84,7 +85,7 @@ function StewardshipPanel({ C, isDesktop }) {
   }
 
   return (
-    <div style={{ borderRadius: 12, background: C.card, border: `1px solid ${C.border}`, borderTop: `2px solid ${C.accent}`, padding: '13px 15px', marginBottom: 18 }}>
+    <div style={{ borderRadius: R, background: C.card, border: `1px solid ${C.border}`, borderTop: `2px solid ${C.accent}`, padding: '13px 15px', marginBottom: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
         <span style={{ fontSize: 12.5, fontWeight: 800, color: C.t1, letterSpacing: 0.2 }}>YOUR STEWARDSHIP RECORD</span>
         <span style={{ fontSize: 10, color: C.t4, padding: '1px 6px', borderRadius: 4, background: C.surface, border: `1px solid ${C.border}` }}>PRIVATE</span>
@@ -187,7 +188,9 @@ function NotOwner({ C, email }) {
 }
 
 // ---------------------------------------------------------------- The queue
-function Queue({ C, isDesktop, email }) {
+function Queue({ C, isDesktop, email, terminal = false }) {
+  const R = terminal ? 2 : 12;
+  const RP = terminal ? 2 : 999;
   const [view, setView] = useState('active')   // 'active' | 'decided'
   const [items, setItems] = useState(null)
   const [decided, setDecided] = useState(null)
@@ -271,14 +274,14 @@ function Queue({ C, isDesktop, email }) {
       </div>
 
       {/* Pinned private performance record — Carson-only (inside the owner-gated Queue) */}
-      <StewardshipPanel C={C} isDesktop={isDesktop} />
+      <StewardshipPanel C={C} isDesktop={isDesktop} terminal={terminal} />
 
       {/* Active | Decided toggle */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-        <button onClick={showActive} style={tabBtn(C, view === 'active')}>
+        <button onClick={showActive} style={tabBtn(C, view === 'active', terminal)}>
           Active{items.length ? ` · ${items.length}` : ''}
         </button>
-        <button onClick={showDecided} style={tabBtn(C, view === 'decided')}>Decided</button>
+        <button onClick={showDecided} style={tabBtn(C, view === 'decided', terminal)}>Decided</button>
       </div>
       {err && <div style={{ fontSize: 12, color: C.dn, marginBottom: 12 }}>{err}</div>}
 
@@ -289,10 +292,10 @@ function Queue({ C, isDesktop, email }) {
           <div style={{ fontSize: 12 }}>The Chief of Staff will surface items here each morning.</div>
         </div>
       ) : items.map((it) => (
-        <div key={it.id} style={{ padding: '14px 15px', borderRadius: 12, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${sevColor(it.priority)}`, marginBottom: 12 }}>
+        <div key={it.id} style={{ padding: '14px 15px', borderRadius: R, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${sevColor(it.priority)}`, marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 10, fontWeight: 800, color: sevColor(it.priority), textTransform: 'uppercase', letterSpacing: 1 }}>{it.priority}</span>
-            <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: 999, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
+            <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: RP, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
             {it.status === 'deferred' && <span style={{ fontSize: 10, color: C.warn, fontStyle: 'italic' }}>deferred</span>}
             <span style={{ marginLeft: 'auto', fontSize: 10, color: C.t4 }}>{(it.source_agent || '').replace('_', ' ')}</span>
           </div>
@@ -323,13 +326,15 @@ function Queue({ C, isDesktop, email }) {
       )))}
 
       {/* ---- DECIDED (history) ---- */}
-      {view === 'decided' && <DecidedList C={C} decided={decided} catLabel={catLabel} />}
+      {view === 'decided' && <DecidedList C={C} decided={decided} catLabel={catLabel} terminal={terminal} />}
     </div>
   )
 }
 
 // ---------------------------------------------------- Decision history view
-function DecidedList({ C, decided, catLabel }) {
+function DecidedList({ C, decided, catLabel, terminal = false }) {
+  const R = terminal ? 2 : 10;
+  const RP = terminal ? 2 : 999;
   if (decided === null) {
     return <div style={{ textAlign: 'center', padding: 40, color: C.t4, fontSize: 13 }}>Loading your decisions…</div>
   }
@@ -352,10 +357,10 @@ function DecidedList({ C, decided, catLabel }) {
         const approved = it.status === 'approved'
         const col = approved ? C.up : C.dn
         return (
-          <div key={it.id} style={{ padding: '12px 14px', borderRadius: 10, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${col}`, marginBottom: 10 }}>
+          <div key={it.id} style={{ padding: '12px 14px', borderRadius: R, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${col}`, marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 10, fontWeight: 800, color: col, textTransform: 'uppercase', letterSpacing: 1 }}>{approved ? 'Approved' : 'Rejected'}</span>
-              <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: 999, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
+              <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: RP, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
               <span style={{ marginLeft: 'auto', fontSize: 10, color: C.t4 }}>{fmtDate(it.decided_at)}</span>
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: it.suggested_action ? 4 : 0 }}>{it.title}</div>
@@ -363,7 +368,7 @@ function DecidedList({ C, decided, catLabel }) {
               <div style={{ fontSize: 11.5, color: C.t3, lineHeight: 1.45 }}>↳ {it.suggested_action}</div>
             )}
             {it.decision_note && (
-              <div style={{ marginTop: 7, fontSize: 11.5, color: C.t2, lineHeight: 1.5, padding: '6px 9px', borderRadius: 7, background: C.surface, borderLeft: `2px solid ${C.accent}` }}>
+              <div style={{ marginTop: 7, fontSize: 11.5, color: C.t2, lineHeight: 1.5, padding: '6px 9px', borderRadius: R, background: C.surface, borderLeft: `2px solid ${C.accent}` }}>
                 <span style={{ color: C.t4, fontStyle: 'italic' }}>your note: </span>{it.decision_note}
               </div>
             )}
@@ -380,7 +385,7 @@ function DecidedList({ C, decided, catLabel }) {
 // ---------------------------------------------------------------- helpers
 const inputStyle = (C) => ({ width: '100%', padding: '11px 12px', borderRadius: 10, border: `1px solid ${C.border}`, background: C.surface, color: C.t1, fontSize: 14, boxSizing: 'border-box' })
 const btn = (color, busy) => ({ flex: 1, padding: '9px 0', borderRadius: 10, border: 'none', background: color, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: busy ? 0.5 : 1 })
-const tabBtn = (C, active) => ({ padding: '6px 14px', borderRadius: 999, border: `1px solid ${active ? C.accent : C.border}`, background: active ? C.accent : 'transparent', color: active ? '#fff' : C.t3, fontSize: 12, fontWeight: 700, cursor: 'pointer' })
+const tabBtn = (C, active, terminal = false) => ({ padding: '6px 14px', borderRadius: terminal ? 2 : 999, border: `1px solid ${active ? C.accent : C.border}`, background: active ? C.accent : 'transparent', color: active ? '#fff' : C.t3, fontSize: 12, fontWeight: 700, cursor: 'pointer' })
 function friendly(msg = '') {
   if (/invalid login/i.test(msg)) return 'Wrong email or password.'
   if (/not authorized/i.test(msg)) return 'That email is not authorized for this app.'

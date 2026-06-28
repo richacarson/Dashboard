@@ -4135,8 +4135,8 @@ Instructions:
               <button onClick={() => setTDrawer(null)} aria-label="Close" title="Close" style={tCloseBtn}>{tCloseX}</button>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
-              {tDrawer === "risk" && <RiskView riskData={riskData} riskLoadDone={riskLoadDone} C={C} isDesktop={isDesktop} />}
-              {tDrawer === "desk" && <DeskTab C={C} isDesktop={isDesktop} />}
+              {tDrawer === "risk" && <RiskView riskData={riskData} riskLoadDone={riskLoadDone} C={C} isDesktop={isDesktop} terminal />}
+              {tDrawer === "desk" && <DeskTab C={C} isDesktop={isDesktop} terminal />}
               {/* Render inline playbook content */}
               {tDrawer === "playbook" && (() => {
                 const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
@@ -5975,7 +5975,7 @@ Instructions:
                             const beat = e.actual != null && e.estimate != null && e.actual >= e.estimate;
                             const miss = e.actual != null && e.estimate != null && e.actual < e.estimate;
                             return (
-                              <div key={i} style={{ flex: "0 0 auto", minWidth: 76, padding: "8px 7px", background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, textAlign: "center" }}>
+                              <div key={i} style={{ flex: "0 0 auto", minWidth: 76, padding: "8px 7px", background: C.surface, borderRadius: 2, border: `1px solid ${C.border}`, textAlign: "center" }}>
                                 <div style={{ fontSize: 9, color: C.t4, marginBottom: 4 }}>{e.period}</div>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{e.actual != null ? e.actual.toFixed(2) : "—"}</div>
                                 <div style={{ fontSize: 9, color: C.t4 }}>Est {e.estimate != null ? e.estimate.toFixed(2) : "—"}</div>
