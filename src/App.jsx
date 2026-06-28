@@ -2604,16 +2604,29 @@ Instructions:
 
           // Use pre-computed benchmarks from JSON if available
           const jsonBm = pJson.benchmarks || {};
+          const jsonBmTr = pJson.benchmarks_tr || {};   // total-return series (split + dividend adjusted)
           const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["DVY", "SPY", "DIA"]);
           const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 1);
 
           let benchmarks = {};
+          // Per-symbol factor to place a live raw-price quote onto the total-return
+          // basis: lastTRclose / lastRawClose. 1 when no TR series (graceful fallback).
+          const bmTrScale = {};
 
           if (hasPrebaked) {
             for (const sym of bmSyms) {
-              if (Array.isArray(jsonBm[sym])) {
-                benchmarks[sym] = {};
-                jsonBm[sym].forEach(pt => { if (pt.date >= inception) benchmarks[sym][pt.date] = pt.close; });
+              const trArr = (Array.isArray(jsonBmTr[sym]) && jsonBmTr[sym].length > 1) ? jsonBmTr[sym] : null;
+              const srcArr = trArr || (Array.isArray(jsonBm[sym]) ? jsonBm[sym] : null);
+              if (!srcArr) continue;
+              benchmarks[sym] = {};
+              srcArr.forEach(pt => { if (pt.date >= inception) benchmarks[sym][pt.date] = pt.close; });
+              // Scale factor only meaningful when we switched to TR and have raw too
+              if (trArr && Array.isArray(jsonBm[sym]) && jsonBm[sym].length) {
+                const lastTr = trArr[trArr.length - 1]?.close;
+                const lastRaw = jsonBm[sym][jsonBm[sym].length - 1]?.close;
+                bmTrScale[sym] = (lastTr && lastRaw) ? lastTr / lastRaw : 1;
+              } else {
+                bmTrScale[sym] = 1;   // price-only fallback: live raw quote already matches
               }
             }
           } else if (apiKey && apiSecret) {
@@ -2654,7 +2667,7 @@ Instructions:
             }
           }
 
-          newMap[sleeve] = { portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {} };
+          newMap[sleeve] = { portfolio, benchmarks, bmTrScale, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {}, bmAnnualReturnsTr: pJson.bm_annual_returns_tr || {} };
         } catch (e) {
           console.warn(`Failed to load ${sleeve} portfolio:`, e);
         }
@@ -3354,7 +3367,7 @@ Instructions:
         dailyBm.push({ o: op, c: cl, h: Math.max(op, cl), l: Math.min(op, cl) });
       }
       const lq = bmQuotes[sym];
-      if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
+      if (lq?.p && dailyBm.length) { const scale = tSleeveData.bmTrScale?.[sym] ?? 1; const lv = ((lq.p * scale / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
       // Aggregate to weekly if portfolio uses weekly
       if (useWeekly) {
         const wkBm = []; let wIdx = 0;
@@ -11265,12 +11278,14 @@ Instructions:
                     bmPoints.push({ date: pt.date, val: ((prices[priceIdx][1] / basePrice) - 1) * 100 });
                   }
                 }
-                // Append live/latest benchmark price
+                // Append live/latest benchmark price, scaled onto the total-return
+                // basis (history is now TR) so the right edge stays continuous.
                 {
                   const liveQ = bmQuotes[sym];
                   if (liveQ?.p && filtered.length > 0) {
                     const lastPortDate = filtered[filtered.length - 1].date;
-                    bmPoints.push({ date: lastPortDate, val: ((liveQ.p / basePrice) - 1) * 100 });
+                    const scale = perfData.bmTrScale?.[sym] ?? 1;
+                    bmPoints.push({ date: lastPortDate, val: ((liveQ.p * scale / basePrice) - 1) * 100 });
                   }
                 }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
@@ -11767,7 +11782,8 @@ Instructions:
                         {/* ── Annual Return History (hidden for growth — only partial year) ── */}
                         {perfSleeve !== "growth" && (() => {
                           const annReturns = perfData.annualReturns || {};
-                          const bmAnnReturns = perfData.bmAnnualReturns || {};
+                          // Total-return benchmark annuals (matched to the TR portfolio); price-only fallback
+                          const bmAnnReturns = (perfData.bmAnnualReturnsTr && Object.keys(perfData.bmAnnualReturnsTr).length ? perfData.bmAnnualReturnsTr : perfData.bmAnnualReturns) || {};
                           const years = Object.keys(annReturns).sort();
                           if (!years.length) return null;
 
