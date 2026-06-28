@@ -1,13 +1,14 @@
 // src/components/DeskTab.jsx
-// The CIO Desk: Carson-only decision queue from Supabase `cio_desk`.
-// Login gate (mirrors Trade-Instructions auth) → queue → approve/reject/defer.
-// Styled with the dashboard's `C` theme tokens (passed as a prop), inline styles
-// to match the rest of App.jsx (no Tailwind here).
+// The CIO Desk: Carson-only. Pinned stewardship panel (private performance record,
+// read from public/performance.json — rendered in NO other tab) + decision queue
+// from Supabase `cio_desk` (approve/reject/defer).
+// Styled with the dashboard's `C` theme tokens (passed as a prop), inline styles.
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, useDeskSession, OWNER_EMAIL } from '../lib/desk'
 
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 }
+const PRIMARY_BM = { dividend: 'DVY', growth: 'IUSG' }
 
 export default function DeskTab({ C, isDesktop }) {
   const { session, email, isOwner, loading } = useDeskSession()
@@ -25,6 +26,99 @@ export default function DeskTab({ C, isDesktop }) {
   return <Queue C={C} isDesktop={isDesktop} email={email} />
 }
 
+// ---------------------------------------------------- Stewardship panel (pinned)
+function StewardshipPanel({ C, isDesktop }) {
+  const [perf, setPerf] = useState(null)
+  const [failed, setFailed] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}performance.json?v=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(setPerf)
+      .catch(() => setFailed(true))
+  }, [])
+
+  if (failed) return null // silently hide if not computed yet
+  if (!perf) {
+    return <div style={{ fontSize: 12, color: C.t4, padding: '10px 0 16px' }}>Loading your record…</div>
+  }
+
+  const fmtPct = (v) => (v == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`)
+  const fmtUsd = (v) => (v == null ? '—' : `${v >= 0 ? '+' : '−'}$${Math.abs(Math.round(v)).toLocaleString()}`)
+  const sleeves = perf.sleeves || {}
+  const asOf = (perf.generated_at || '').slice(0, 10)
+
+  const SleeveRow = ({ id, label }) => {
+    const s = sleeves[id]; if (!s) return null
+    const ret = s.returns?.since_stewardship
+    const bm = PRIMARY_BM[id]
+    const active = s.benchmarks?.[bm]?.active_return?.since_stewardship
+    return (
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '7px 0', borderTop: `1px solid ${C.border}` }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: C.t1, width: 78 }}>{label}</span>
+        <span style={{ fontSize: 17, fontWeight: 800, color: ret >= 0 ? C.up : C.dn, fontVariantNumeric: 'tabular-nums' }}>{fmtPct(ret)}</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11.5, color: active >= 0 ? C.up : C.dn, fontVariantNumeric: 'tabular-nums' }}>
+          {fmtPct(active)} <span style={{ color: C.t4 }}>vs {bm}</span>
+        </span>
+      </div>
+    )
+  }
+
+  const Contributors = ({ id, label }) => {
+    const s = sleeves[id]; if (!s) return null
+    const chip = (c, positive) => (
+      <span key={c.ticker} style={{ fontSize: 10.5, fontWeight: 600, padding: '2px 7px', borderRadius: 4, background: (positive ? C.up : C.dn) + '14', color: positive ? C.up : C.dn, whiteSpace: 'nowrap' }}>
+        {c.ticker} {fmtUsd(c.unrealized_gain)}
+      </span>
+    )
+    return (
+      <div style={{ marginTop: 8 }}>
+        <div style={{ fontSize: 10, color: C.t4, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{label}</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+          {(s.top_contributors || []).slice(0, 3).map((c) => chip(c, true))}
+          {(s.bottom_contributors || []).slice(0, 2).map((c) => chip(c, false))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ borderRadius: 12, background: C.card, border: `1px solid ${C.border}`, borderTop: `2px solid ${C.accent}`, padding: '13px 15px', marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+        <span style={{ fontSize: 12.5, fontWeight: 800, color: C.t1, letterSpacing: 0.2 }}>YOUR STEWARDSHIP RECORD</span>
+        <span style={{ fontSize: 10, color: C.t4, padding: '1px 6px', borderRadius: 4, background: C.surface, border: `1px solid ${C.border}` }}>PRIVATE</span>
+        {asOf && <span style={{ marginLeft: 'auto', fontSize: 10, color: C.t4 }}>as of {asOf}</span>}
+      </div>
+      <div style={{ fontSize: 10.5, color: C.t4, marginBottom: 8 }}>since {perf.stewardship_start} · your decisions, not the strategy's full inception</div>
+
+      <SleeveRow id="dividend" label="Dividend" />
+      <SleeveRow id="growth" label="Growth" />
+      {perf.combined?.since_stewardship_return != null && (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '7px 0', borderTop: `1px solid ${C.border}` }}>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: C.t2, width: 78 }}>Combined</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: perf.combined.since_stewardship_return >= 0 ? C.up : C.dn, fontVariantNumeric: 'tabular-nums' }}>{fmtPct(perf.combined.since_stewardship_return)}</span>
+        </div>
+      )}
+
+      <button onClick={() => setOpen((o) => !o)} style={{ marginTop: 8, background: 'none', border: 'none', color: C.accent, fontSize: 11, cursor: 'pointer', padding: 0 }}>
+        {open ? 'Hide contributors ▴' : 'Show contributors ▾'}
+      </button>
+      {open && (
+        <div style={{ marginTop: 4 }}>
+          <Contributors id="dividend" label="Dividend · top / drag" />
+          <Contributors id="growth" label="Growth · top / drag" />
+          {Array.isArray(perf.methodology_caveats) && (
+            <div style={{ marginTop: 10, fontSize: 9.5, color: C.t4, lineHeight: 1.5, fontStyle: 'italic' }}>
+              {perf.methodology_caveats[0]}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------- Login gate
 function LoginGate({ C }) {
   const [mode, setMode] = useState('signin') // signin | signup
@@ -39,7 +133,6 @@ function LoginGate({ C }) {
     try {
       const em = emailInput.trim().toLowerCase()
       if (mode === 'signup') {
-        // Allowlist precheck so a non-approved email gets a clear message.
         const { data: allowed, error: rpcErr } = await supabase.rpc('is_email_allowed', { check_email: em })
         if (rpcErr) throw rpcErr
         if (!allowed) { setError('That email is not authorized for this app.'); setBusy(false); return }
@@ -50,7 +143,6 @@ function LoginGate({ C }) {
       } else {
         const { error: siErr } = await supabase.auth.signInWithPassword({ email: em, password })
         if (siErr) throw siErr
-        // success → onAuthStateChange flips the view
       }
     } catch (e) {
       setError(friendly(e?.message))
@@ -136,7 +228,7 @@ function Queue({ C, isDesktop, email }) {
       await supabase.from('cio_desk_log').insert({
         item_id: item.id, actor: email, from_status: item.status, to_status: toStatus, note,
       })
-      setItems((prev) => (prev || []).filter((x) => x.id !== item.id)) // optimistic
+      setItems((prev) => (prev || []).filter((x) => x.id !== item.id))
     } catch (e) {
       setErr(e?.message || 'Update failed')
     } finally {
@@ -153,10 +245,14 @@ function Queue({ C, isDesktop, email }) {
 
   return (
     <div style={{ animation: 'fadeIn 0.3s ease', paddingTop: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <div style={{ fontSize: isDesktop ? 20 : 24, fontWeight: 800, color: C.t1 }}>CIO Desk</div>
         <button onClick={() => supabase.auth.signOut()} style={{ marginLeft: 'auto', fontSize: 11, color: C.t4, background: 'none', border: 'none', cursor: 'pointer' }}>Sign out</button>
       </div>
+
+      {/* Pinned private performance record — Carson-only (inside the owner-gated Queue) */}
+      <StewardshipPanel C={C} isDesktop={isDesktop} />
+
       <div style={{ fontSize: 12, color: C.t3, marginBottom: 16 }}>
         {items.length === 0 ? 'Queue clear — nothing needs your call right now.' : `${items.length} item${items.length === 1 ? '' : 's'} awaiting your decision`}
       </div>
