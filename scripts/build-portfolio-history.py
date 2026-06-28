@@ -8,6 +8,7 @@ Price source: Yahoo Finance close (split-adjusted, matching displayed prices)
 """
 
 import re
+import os
 import json
 import sys
 import time
@@ -15,6 +16,8 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import urllib.request
 import urllib.error
+
+_DIV_DEBUG = None  # list capture of dividend credits when DIV_DEBUG env is set
 
 
 ## ── Company-name-to-ticker map (for "By Activity" exports) ──────────────────
@@ -544,12 +547,21 @@ def get_price_on_date(prices, ticker, target_date, fridays_list=None):
     return None
 
 
-def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None):
+DIVIDEND_CUTOVER = "2026-03-18"  # absolute floor for automated dividend credits
+
+
+def build_portfolio_history(transactions, cash_transactions, prices, start_balance=100000, current_holdings=None, dividend_credits=None):
     """
     Replay all transactions and calculate daily portfolio values.
 
     Uses daily sampling (every trading day) for accurate period returns.
     Truncates DRIP fractional shares to match Morningstar's rounding.
+
+    dividend_credits=[{ticker, ex_date, dps}] (from the committed ledger) credits
+    cash income on each ex-date as shares_held_on_ex_date (from replay state) x dps.
+    Hard-guarded to ex_date >= DIVIDEND_CUTOVER so it can never overlap the manual
+    pre-cutover deposits already in `cash_transactions` (double-count prevention).
+    Credited to cash, not reinvested — the rebalance redeploys it.
 
     Cash tracking uses the cash section exclusively (DEPOSIT/WITHDRAWAL).
     Stock transactions only update share counts, not cash — because
@@ -584,13 +596,23 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
             has_initial_deposit = False  # Only skip first match
             continue
         all_events.append({"date": ctx["date"], "kind": "cash", **ctx})
-    # Sort by date, then deposits/sales before withdrawals/purchases
+    # Automated dividend credits (ledger-sourced). Hard cutover guard: never on or
+    # before the manual Q1 deposits. Amount resolved at replay time from share state.
+    for dc in (dividend_credits or []):
+        ex_date = dc.get("ex_date")
+        if ex_date and ex_date >= DIVIDEND_CUTOVER:
+            all_events.append({"date": ex_date, "kind": "dividend", "type": "DIVIDEND",
+                               "ticker": dc["ticker"], "dps": dc["dps"]})
+    # Sort by date, then deposits/income/sales before withdrawals/purchases
     # so cash inflows are processed before outflows on the same day
-    ORDER = {"DEPOSIT": 0, "SALE": 1, "DIVIDEND REINVESTMENT": 2, "PURCHASE": 3, "WITHDRAWAL": 4, "SPLIT": 5}
+    ORDER = {"DEPOSIT": 0, "DIVIDEND": 1, "SALE": 2, "DIVIDEND REINVESTMENT": 3, "PURCHASE": 4, "WITHDRAWAL": 5, "SPLIT": 6}
     all_events.sort(key=lambda x: (x["date"], ORDER.get(x.get("type", ""), 5)))
 
     holdings = defaultdict(float)
     cash = start_balance
+
+    global _DIV_DEBUG
+    _DIV_DEBUG = [] if os.environ.get("DIV_DEBUG") else None
 
     if not all_events:
         return []
@@ -622,7 +644,15 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
 
         while event_idx < len(all_events) and all_events[event_idx]["date"] <= day_str:
             evt = all_events[event_idx]
-            if evt["kind"] == "stock":
+            if evt["kind"] == "dividend":
+                sh = holdings.get(evt["ticker"], 0)
+                if sh > 0:
+                    credit = sh * evt["dps"]
+                    cash += credit
+                    if _DIV_DEBUG is not None:
+                        _DIV_DEBUG.append({"date": evt["date"], "ticker": evt["ticker"],
+                                           "shares": round(sh, 4), "dps": evt["dps"], "credit": round(credit, 2)})
+            elif evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
                     if evt.get("moves_cash"):
@@ -764,6 +794,15 @@ def main():
     # adjustment needed. The close prices match Morningstar's post-split basis.
     print()
 
+    # Automated dividend-credit ledger (post-cutover income; see scripts/credit-dividends.py).
+    dividend_credits = []
+    ledger_file = os.path.join(os.path.dirname(tx_file), f"dividend_credits_{sleeve_name}.json")
+    if os.path.exists(ledger_file):
+        with open(ledger_file) as f:
+            dividend_credits = json.load(f)
+        print(f"Loaded {len(dividend_credits)} dividend credits from {os.path.basename(ledger_file)} (ex_date >= {DIVIDEND_CUTOVER})")
+        print()
+
     # Build portfolio history
     print("Building portfolio history...")
     # For FCI portfolios (100 stocks × $4K each), start balance needs to match total purchases
@@ -773,7 +812,11 @@ def main():
         computed_start = max(100000, int(round(total_purchased / 1000) * 1000))
     else:
         computed_start = 100000
-    history = build_portfolio_history(transactions, cash_transactions, prices, start_balance=computed_start, current_holdings=current_holdings)
+    history = build_portfolio_history(transactions, cash_transactions, prices, start_balance=computed_start, current_holdings=current_holdings, dividend_credits=dividend_credits)
+    if os.environ.get("DIV_DEBUG") and _DIV_DEBUG is not None:
+        with open(f"div_debug_{sleeve_name}.json", "w") as f:
+            json.dump(_DIV_DEBUG, f, indent=2)
+        print(f"  [DIV_DEBUG] {len(_DIV_DEBUG)} credits, total ${sum(c['credit'] for c in _DIV_DEBUG):,.2f} -> div_debug_{sleeve_name}.json")
     print(f"  Daily data points: {len(history)}")
     if history:
         print(f"  Start: ${history[0]['value']:,.2f}")

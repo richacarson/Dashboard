@@ -1,0 +1,82 @@
+[
+  {
+    "ticker": "VST",
+    "ex_date": "2026-03-20",
+    "dps": 0.228
+  },
+  {
+    "ticker": "NXPI",
+    "ex_date": "2026-03-25",
+    "dps": 1.014
+  },
+  {
+    "ticker": "EIX",
+    "ex_date": "2026-04-07",
+    "dps": 0.878
+  },
+  {
+    "ticker": "MRVL",
+    "ex_date": "2026-04-10",
+    "dps": 0.06
+  },
+  {
+    "ticker": "TOL",
+    "ex_date": "2026-04-10",
+    "dps": 0.26
+  },
+  {
+    "ticker": "FCX",
+    "ex_date": "2026-04-15",
+    "dps": 0.15
+  },
+  {
+    "ticker": "FINV",
+    "ex_date": "2026-04-16",
+    "dps": 0.306
+  },
+  {
+    "ticker": "OKE",
+    "ex_date": "2026-05-04",
+    "dps": 1.07
+  },
+  {
+    "ticker": "SYF",
+    "ex_date": "2026-05-05",
+    "dps": 0.3
+  },
+  {
+    "ticker": "CVX",
+    "ex_date": "2026-05-19",
+    "dps": 1.78
+  },
+  {
+    "ticker": "AEM",
+    "ex_date": "2026-06-01",
+    "dps": 0.45
+  },
+  {
+    "ticker": "NVDA",
+    "ex_date": "2026-06-04",
+    "dps": 0.25
+  },
+  {
+    "ticker": "ATAT",
+    "ex_date": "2026-06-05",
+    "dps": 0.54
+  },
+  {
+    "ticker": "TSM",
+    "ex_date": "2026-06-11",
+    "dps": 0.955
+  },
+  {
+    "ticker": "VST",
+    "ex_date": "2026-06-22",
+    "dps": 0.229
+  },
+  {
+    "ticker": "NXPI",
+    "ex_date": "2026-06-24",
+    "dps": 1.014
+  }
+]

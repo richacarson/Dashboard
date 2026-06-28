@@ -15,7 +15,9 @@ on:
     paths:
       - 'transactions/user_transactions.json'
       - 'transactions/*_strategy_transactions.txt'
+      - 'transactions/dividend_credits_*.json'
       - 'scripts/build-portfolio-history.py'
+      - 'scripts/credit-dividends.py'
 
 permissions:
   contents: write
@@ -46,6 +48,17 @@ jobs:
             echo "names=${SLEEVES:-dividend}" >> $GITHUB_OUTPUT
           fi
 
+      - name: Credit dividends (update ledgers)
+        run: |
+          # Runs BEFORE the build so the build's replay credits each ledger entry
+          # using share counts as-of-ex-date. Idempotent: only new (ticker, ex_date)
+          # keys are appended; existing ones are skipped.
+          IFS=',' read -ra SLEEVES <<< "${{ steps.sleeve.outputs.names }}"
+          for sleeve in "${SLEEVES[@]}"; do
+            echo "--- crediting dividends: $sleeve ---"
+            python3 scripts/credit-dividends.py "$sleeve"
+          done
+
       - name: Build portfolio history
         env:
           ALPACA_KEY: ${{ secrets.ALPACA_API_KEY }}
@@ -73,7 +86,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/portfolio-history-*.json
+          git add public/portfolio-history-*.json transactions/dividend_credits_*.json
           git commit -m "Update portfolio history [${{ steps.sleeve.outputs.names }}]" || echo "No changes"
           git pull --rebase origin main
           git push
