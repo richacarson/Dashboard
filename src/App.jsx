@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import DeskTab from './components/DeskTab'
 import { useDeskSession } from './lib/desk'
+import { useAuth } from './lib/auth'
 
 /* ═══════════════════════════════════════════════════════════════════
    PARADIEM COMMAND CENTER
@@ -986,6 +987,7 @@ Instructions:
   const contentRef = useRef(null);
   const tabSwipeRef = useRef(null);
   const { isOwner: deskOwner } = useDeskSession();
+  const { email: authEmail, signOut: authSignOut } = useAuth();
   const tabIds = ["home", "risk", ...(deskOwner ? ["desk"] : []), "performance", "metrics", "charts", "news", "briefs", "research", "playbook", "screener", "opportunities", "settings"];
   // Swipe between tabs on mobile
   const handleTabSwipeStart = (e) => {
@@ -11823,6 +11825,16 @@ Instructions:
           <div style={{ animation: "fadeIn 0.3s ease", paddingTop: 20 }}>
             {!isDesktop && <div style={{ fontSize: 24, fontWeight: 800, color: C.t1, marginBottom: 20 }}>Settings</div>}
             <div style={{ display: isDesktop ? "grid" : "block", gridTemplateColumns: isDesktop ? "1fr 1fr" : undefined, gap: isDesktop ? 16 : 0 }}>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12, gridColumn: isDesktop ? "1 / -1" : undefined }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Account</div>
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 12 }}>{authEmail ? `Signed in as ${authEmail}` : "Signed in"}</div>
+              <button onClick={() => authSignOut()} style={{
+                padding: "10px 20px", borderRadius: 10,
+                border: `1px solid ${C.border}`, background: "transparent",
+                color: C.t2, fontSize: 13, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}>Sign out</button>
+            </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Appearance</div>
               <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>
