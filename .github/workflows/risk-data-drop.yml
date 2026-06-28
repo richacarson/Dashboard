@@ -1,0 +1,41 @@
+name: Risk Data Drop
+
+# Pre-market quantitative sweep of the 52 holdings for the Risk Sentinel.
+# Runs inside Actions so the data-API secrets (FINHUB_API, FMP_API) stay where
+# they belong. Writes public/risk-data-drop.json; the Sentinel routine reads
+# that committed file (and self-dispatches this workflow if the file is stale).
+
+on:
+  schedule:
+    # 6:17 AM CT (11:17 UTC) on weekdays. Odd, off-peak minute — GitHub's
+    # scheduler is congested at :00/:30, so an odd minute lands far more reliably.
+    # ~28 min of headroom before the 6:45 CT Sentinel run.
+    - cron: '17 11 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  risk-data-drop:
+    runs-on: ubuntu-latest
+    env:
+      FINNHUB_KEY: ${{ secrets.FINHUB_API }}
+      FMP_KEY: ${{ secrets.FMP_API }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch per-holding risk data
+        run: python3 scripts/risk-data-drop.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/risk-data-drop.json
+          git diff --cached --quiet || (git commit -m "Risk Data Drop $(date -u +%Y-%m-%d\ %H:%M) UTC" && git push)
