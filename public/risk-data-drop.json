@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T03:41:08Z",
+  "generated_at": "2026-06-28T04:08:10Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -118,10 +118,10 @@
   "holdings": {
     "ABT": {
       "sleeve": "Dividend",
-      "price": 94.12,
-      "pct_change": 0.9438,
-      "prev_close": 93.24,
-      "quote_source": "finnhub",
+      "price": 93.86,
+      "pct_change": 0.66,
+      "prev_close": 93.245,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 10,
@@ -138,20 +138,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.15,
-        "eps_estimate": 1.1552,
-        "surprise": -0.0052,
-        "surprise_pct": -0.4501
-      }
+      "earnings": null
     },
     "ADI": {
       "sleeve": "Dividend",
-      "price": 386.91,
-      "pct_change": -7.4223,
-      "prev_close": 417.93,
-      "quote_source": "finnhub",
+      "price": 384.61,
+      "pct_change": -7.99,
+      "prev_close": 418.02,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 12,
@@ -168,20 +162,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 3.09,
-        "eps_estimate": 2.9337,
-        "surprise": 0.1563,
-        "surprise_pct": 5.3277
-      }
+      "earnings": null
     },
     "ATO": {
       "sleeve": "Dividend",
-      "price": 175.17,
-      "pct_change": 0.8637,
-      "prev_close": 173.67,
-      "quote_source": "finnhub",
+      "price": 175.08,
+      "pct_change": 0.81,
+      "prev_close": 173.675,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 2,
@@ -198,20 +186,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 3.47,
-        "eps_estimate": 3.4315,
-        "surprise": 0.0385,
-        "surprise_pct": 1.122
-      }
+      "earnings": null
     },
     "ADP": {
       "sleeve": "Dividend",
-      "price": 223.55,
-      "pct_change": 3.347,
-      "prev_close": 216.31,
-      "quote_source": "finnhub",
+      "price": 223.53,
+      "pct_change": 3.38,
+      "prev_close": 216.23,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 3,
@@ -228,20 +210,14 @@
           "strongSell": 1
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 3.38,
-        "eps_estimate": 3.3251,
-        "surprise": 0.0549,
-        "surprise_pct": 1.6511
-      }
+      "earnings": null
     },
     "BKH": {
       "sleeve": "Dividend",
-      "price": 76.04,
-      "pct_change": 2.3281,
-      "prev_close": 74.31,
-      "quote_source": "finnhub",
+      "price": 76.055,
+      "pct_change": 2.57,
+      "prev_close": 74.15,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 3,
@@ -258,20 +234,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.79,
-        "eps_estimate": 1.8584,
-        "surprise": -0.0684,
-        "surprise_pct": -3.6806
-      }
+      "earnings": null
     },
     "CAT": {
       "sleeve": "Dividend",
-      "price": 997.47,
-      "pct_change": -5.6329,
-      "prev_close": 1057.01,
-      "quote_source": "finnhub",
+      "price": 998.18,
+      "pct_change": -5.53,
+      "prev_close": 1056.65,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 8,
@@ -288,20 +258,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 5.54,
-        "eps_estimate": 4.6619,
-        "surprise": 0.8781,
-        "surprise_pct": 18.8357
-      }
+      "earnings": null
     },
     "CHD": {
       "sleeve": "Dividend",
-      "price": 99.58,
-      "pct_change": 1.457,
-      "prev_close": 98.15,
-      "quote_source": "finnhub",
+      "price": 99.44,
+      "pct_change": 1.34,
+      "prev_close": 98.125,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 6,
@@ -318,20 +282,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.95,
-        "eps_estimate": 0.9402,
-        "surprise": 0.0098,
-        "surprise_pct": 1.0423
-      }
+      "earnings": null
     },
     "CL": {
       "sleeve": "Dividend",
-      "price": 92.07,
-      "pct_change": 1.1092,
-      "prev_close": 91.06,
-      "quote_source": "finnhub",
+      "price": 92.01,
+      "pct_change": 1.02,
+      "prev_close": 91.08,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 5,
@@ -348,20 +306,14 @@
           "strongSell": 1
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.97,
-        "eps_estimate": 0.9734,
-        "surprise": -0.0034,
-        "surprise_pct": -0.3493
-      }
+      "earnings": null
     },
     "DVN": {
       "sleeve": "Dividend",
-      "price": 42.21,
-      "pct_change": -0.9155,
-      "prev_close": 42.6,
-      "quote_source": "finnhub",
+      "price": 42.18,
+      "pct_change": -1.01,
+      "prev_close": 42.61,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 11,
@@ -378,20 +330,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.04,
-        "eps_estimate": 1.0713,
-        "surprise": -0.0313,
-        "surprise_pct": -2.9217
-      }
+      "earnings": null
     },
     "FAST": {
       "sleeve": "Dividend",
-      "price": 47.1,
-      "pct_change": 0.3836,
-      "prev_close": 46.92,
-      "quote_source": "finnhub",
+      "price": 47.09,
+      "pct_change": 0.38,
+      "prev_close": 46.91,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 5,
@@ -408,20 +354,14 @@
           "strongSell": 4
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.3,
-        "eps_estimate": 0.3054,
-        "surprise": -0.0054,
-        "surprise_pct": -1.7682
-      }
+      "earnings": null
     },
     "GD": {
       "sleeve": "Dividend",
-      "price": 346.71,
-      "pct_change": 0.5831,
-      "prev_close": 344.7,
-      "quote_source": "finnhub",
+      "price": 346.42,
+      "pct_change": 0.52,
+      "prev_close": 344.62,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 6,
@@ -438,20 +378,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 4.1,
-        "eps_estimate": 3.7893,
-        "surprise": 0.3107,
-        "surprise_pct": 8.1994
-      }
+      "earnings": null
     },
     "GPC": {
       "sleeve": "Dividend",
-      "price": 116.02,
-      "pct_change": 2.6817,
-      "prev_close": 112.99,
-      "quote_source": "finnhub",
+      "price": 116.01,
+      "pct_change": 2.64,
+      "prev_close": 113.03,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 3,
@@ -468,20 +402,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.77,
-        "eps_estimate": 1.7787,
-        "surprise": -0.0087,
-        "surprise_pct": -0.4891
-      }
+      "earnings": null
     },
     "LRCX": {
       "sleeve": "Dividend",
-      "price": 379.09,
-      "pct_change": -5.6568,
-      "prev_close": 401.82,
-      "quote_source": "finnhub",
+      "price": 377.99,
+      "pct_change": -5.93,
+      "prev_close": 401.83,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 10,
@@ -498,20 +426,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.46,
-        "eps_estimate": 1.3914,
-        "surprise": 0.0686,
-        "surprise_pct": 4.9303
-      }
+      "earnings": null
     },
     "LMT": {
       "sleeve": "Dividend",
-      "price": 507.4,
-      "pct_change": 0.4713,
-      "prev_close": 505.02,
-      "quote_source": "finnhub",
+      "price": 507.095,
+      "pct_change": 0.42,
+      "prev_close": 504.955,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 5,
@@ -528,20 +450,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 6.44,
-        "eps_estimate": 6.793,
-        "surprise": -0.353,
-        "surprise_pct": -5.1965
-      }
+      "earnings": null
     },
     "NEE": {
       "sleeve": "Dividend",
-      "price": 88.56,
-      "pct_change": 0.9806,
-      "prev_close": 87.7,
-      "quote_source": "finnhub",
+      "price": 88.26,
+      "pct_change": 0.63,
+      "prev_close": 87.71,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 7,
@@ -558,20 +474,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.09,
-        "eps_estimate": 0.9692,
-        "surprise": 0.1208,
-        "surprise_pct": 12.4639
-      }
+      "earnings": null
     },
     "NTR": {
       "sleeve": "Dividend",
-      "price": 60.98,
-      "pct_change": 0.0328,
-      "prev_close": 60.96,
-      "quote_source": "finnhub",
+      "price": 60.985,
+      "pct_change": 0.07,
+      "prev_close": 60.945,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 6,
@@ -588,20 +498,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.51,
-        "eps_estimate": 0.5353,
-        "surprise": -0.0253,
-        "surprise_pct": -4.7263
-      }
+      "earnings": null
     },
     "ORI": {
       "sleeve": "Dividend",
-      "price": 41.23,
-      "pct_change": 3.0492,
-      "prev_close": 40.01,
-      "quote_source": "finnhub",
+      "price": 41.22,
+      "pct_change": 3.05,
+      "prev_close": 40,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 2,
@@ -618,20 +522,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.68,
-        "eps_estimate": 0.8007,
-        "surprise": -0.1207,
-        "surprise_pct": -15.0743
-      }
+      "earnings": null
     },
     "PCAR": {
       "sleeve": "Dividend",
-      "price": 120.68,
-      "pct_change": -0.8218,
-      "prev_close": 121.68,
-      "quote_source": "finnhub",
+      "price": 120.75,
+      "pct_change": -0.74,
+      "prev_close": 121.655,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 5,
@@ -648,20 +546,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.15,
-        "eps_estimate": 1.1693,
-        "surprise": -0.0193,
-        "surprise_pct": -1.6506
-      }
+      "earnings": null
     },
     "QCOM": {
       "sleeve": "Dividend",
-      "price": 189.39,
-      "pct_change": -7.5695,
-      "prev_close": 204.9,
-      "quote_source": "finnhub",
+      "price": 188.615,
+      "pct_change": -8.0,
+      "prev_close": 205.01,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 4,
@@ -678,20 +570,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 2.65,
-        "eps_estimate": 2.6128,
-        "surprise": 0.0372,
-        "surprise_pct": 1.4238
-      }
+      "earnings": null
     },
     "DGX": {
       "sleeve": "Dividend",
-      "price": 209.88,
-      "pct_change": 1.7649,
-      "prev_close": 206.24,
-      "quote_source": "finnhub",
+      "price": 209.79,
+      "pct_change": 1.58,
+      "prev_close": 206.53,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 6,
@@ -708,20 +594,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 2.5,
-        "eps_estimate": 2.369,
-        "surprise": 0.131,
-        "surprise_pct": 5.5298
-      }
+      "earnings": null
     },
     "SSNC": {
       "sleeve": "Dividend",
-      "price": 63.66,
-      "pct_change": 1.0156,
-      "prev_close": 63.02,
-      "quote_source": "finnhub",
+      "price": 63.7,
+      "pct_change": 1.05,
+      "prev_close": 63.04,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 5,
@@ -738,20 +618,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.69,
-        "eps_estimate": 1.6842,
-        "surprise": 0.0058,
-        "surprise_pct": 0.3444
-      }
+      "earnings": null
     },
     "STLD": {
       "sleeve": "Dividend",
-      "price": 245.49,
-      "pct_change": -2.1952,
-      "prev_close": 251,
-      "quote_source": "finnhub",
+      "price": 245.54,
+      "pct_change": -2.17,
+      "prev_close": 250.99,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 4,
@@ -768,20 +642,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 2.78,
-        "eps_estimate": 2.8409,
-        "surprise": -0.0609,
-        "surprise_pct": -2.1437
-      }
+      "earnings": null
     },
     "SYK": {
       "sleeve": "Dividend",
-      "price": 332.71,
-      "pct_change": 5.2513,
-      "prev_close": 316.11,
-      "quote_source": "finnhub",
+      "price": 332.3,
+      "pct_change": 5.11,
+      "prev_close": 316.15,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 13,
@@ -798,20 +666,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 2.6,
-        "eps_estimate": 3.0144,
-        "surprise": -0.4144,
-        "surprise_pct": -13.7473
-      }
+      "earnings": null
     },
     "TEL": {
       "sleeve": "Dividend",
-      "price": 197.74,
-      "pct_change": -1.1646,
-      "prev_close": 200.07,
-      "quote_source": "finnhub",
+      "price": 198.01,
+      "pct_change": -1.1,
+      "prev_close": 200.22,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 7,
@@ -828,20 +690,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 2.73,
-        "eps_estimate": 2.7236,
-        "surprise": 0.0064,
-        "surprise_pct": 0.235
-      }
+      "earnings": null
     },
     "VLO": {
       "sleeve": "Dividend",
-      "price": 259.37,
-      "pct_change": 1.6898,
-      "prev_close": 255.06,
-      "quote_source": "finnhub",
+      "price": 259.41,
+      "pct_change": 1.72,
+      "prev_close": 255.03,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 4,
@@ -858,20 +714,14 @@
           "strongSell": 1
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 4.22,
-        "eps_estimate": 3.1927,
-        "surprise": 1.0273,
-        "surprise_pct": 32.1765
-      }
+      "earnings": null
     },
     "AMD": {
       "sleeve": "Growth",
-      "price": 521.58,
-      "pct_change": -2.0636,
-      "prev_close": 532.57,
-      "quote_source": "finnhub",
+      "price": 520.2,
+      "pct_change": -2.28,
+      "prev_close": 532.34,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 14,
@@ -888,20 +738,14 @@
           "strongSell": 1
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.37,
-        "eps_estimate": 1.3074,
-        "surprise": 0.0626,
-        "surprise_pct": 4.7881
-      }
+      "earnings": null
     },
     "AEM": {
       "sleeve": "Growth",
-      "price": 157.23,
-      "pct_change": 0.6723,
-      "prev_close": 156.18,
-      "quote_source": "finnhub",
+      "price": 157.18,
+      "pct_change": 0.61,
+      "prev_close": 156.22,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 4,
@@ -918,20 +762,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 3.4,
-        "eps_estimate": 3.2912,
-        "surprise": 0.1088,
-        "surprise_pct": 3.3058
-      }
+      "earnings": null
     },
     "ATAT": {
       "sleeve": "Growth",
-      "price": 32.13,
-      "pct_change": 1.9353,
-      "prev_close": 31.52,
-      "quote_source": "finnhub",
+      "price": 32.09,
+      "pct_change": 1.74,
+      "prev_close": 31.54,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 7,
@@ -948,20 +786,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 3.51,
-        "eps_estimate": 2.8076,
-        "surprise": 0.7024,
-        "surprise_pct": 25.0178
-      }
+      "earnings": null
     },
     "CVX": {
       "sleeve": "Growth",
-      "price": 171.06,
-      "pct_change": -0.6851,
-      "prev_close": 172.24,
-      "quote_source": "finnhub",
+      "price": 170.89,
+      "pct_change": -0.82,
+      "prev_close": 172.31,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 7,
@@ -978,20 +810,14 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.41,
-        "eps_estimate": 0.9623,
-        "surprise": 0.4477,
-        "surprise_pct": 46.524
-      }
+      "earnings": null
     },
     "CWAN": {
       "sleeve": "Growth",
       "price": 24.56,
-      "pct_change": 0.0407,
-      "prev_close": 24.55,
-      "quote_source": "finnhub",
+      "pct_change": 0.06,
+      "prev_close": 24.545,
+      "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-06-01",
         "strongBuy": 3,
@@ -1008,422 +834,511 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.16,
-        "eps_estimate": 0.1647,
-        "surprise": -0.0047,
-        "surprise_pct": -2.8537
-      }
+      "earnings": null
     },
     "CNX": {
       "sleeve": "Growth",
-      "price": 33.73,
-      "pct_change": 0.357,
-      "prev_close": 33.61,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 33.71,
+      "pct_change": 0.27,
+      "prev_close": 33.62,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 1,
+        "buy": 0,
+        "hold": 10,
+        "sell": 7,
+        "strongSell": 1,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 1,
+          "buy": 0,
+          "hold": 9,
+          "sell": 8,
+          "strongSell": 2
+        }
+      },
       "earnings": null
     },
     "COIN": {
       "sleeve": "Growth",
-      "price": 149.06,
-      "pct_change": 4.5888,
+      "price": 149.2,
+      "pct_change": 4.69,
       "prev_close": 142.52,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 11,
+        "buy": 19,
+        "hold": 11,
+        "sell": 1,
+        "strongSell": 2,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 11,
+          "buy": 17,
+          "hold": 12,
+          "sell": 1,
+          "strongSell": 2
+        }
+      },
       "earnings": null
     },
     "CRDO": {
       "sleeve": "Growth",
-      "price": 238,
-      "pct_change": -11.204,
-      "prev_close": 268.03,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 239.91,
+      "pct_change": -10.51,
+      "prev_close": 268.13,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 10,
+        "buy": 15,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 9,
+          "buy": 14,
+          "hold": 2,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "EIX": {
       "sleeve": "Growth",
-      "price": 75.67,
-      "pct_change": 1.2308,
-      "prev_close": 74.75,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 75.655,
+      "pct_change": 1.22,
+      "prev_close": 74.74,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 4,
+        "buy": 6,
+        "hold": 8,
+        "sell": 3,
+        "strongSell": 1,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 4,
+          "buy": 6,
+          "hold": 8,
+          "sell": 3,
+          "strongSell": 1
+        }
+      },
       "earnings": null
     },
     "FCX": {
       "sleeve": "Growth",
-      "price": 62.45,
-      "pct_change": -0.5573,
-      "prev_close": 62.8,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 62.315,
+      "pct_change": -0.75,
+      "prev_close": 62.785,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 5,
+        "buy": 19,
+        "hold": 5,
+        "sell": 0,
+        "strongSell": 1,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 5,
+          "buy": 18,
+          "hold": 5,
+          "sell": 0,
+          "strongSell": 1
+        }
+      },
       "earnings": null
     },
     "FTNT": {
       "sleeve": "Growth",
-      "price": 151.35,
-      "pct_change": 0.9471,
-      "prev_close": 149.93,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 151.29,
+      "pct_change": 0.95,
+      "prev_close": 149.87,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 6,
+        "buy": 11,
+        "hold": 31,
+        "sell": 4,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 6,
+          "buy": 11,
+          "hold": 31,
+          "sell": 4,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "SUPV": {
       "sleeve": "Growth",
-      "price": 9.57,
-      "pct_change": 1.3771,
-      "prev_close": 9.44,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 9.56,
+      "pct_change": 0.95,
+      "prev_close": 9.47,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 4,
+        "buy": 4,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 4,
+          "buy": 4,
+          "hold": 2,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "HRMY": {
       "sleeve": "Growth",
-      "price": 35.47,
-      "pct_change": 3.9262,
-      "prev_close": 34.13,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 35.49,
+      "pct_change": 3.92,
+      "prev_close": 34.15,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 3,
+        "buy": 8,
+        "hold": 5,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 3,
+          "buy": 8,
+          "hold": 5,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "HUT": {
       "sleeve": "Growth",
-      "price": 123.02,
-      "pct_change": 4.5377,
-      "prev_close": 117.68,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 122.78,
+      "pct_change": 4.38,
+      "prev_close": 117.63,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2025-01-01",
+        "strongBuy": 1,
+        "buy": 9,
+        "hold": 1,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2024-12-01",
+          "strongBuy": 1,
+          "buy": 8,
+          "hold": 1,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "HOOD": {
       "sleeve": "Growth",
-      "price": 98.69,
-      "pct_change": 5.5847,
-      "prev_close": 93.47,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 98.71,
+      "pct_change": 5.62,
+      "prev_close": 93.46,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 8,
+        "buy": 18,
+        "hold": 5,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 9,
+          "buy": 19,
+          "hold": 5,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "KEYS": {
       "sleeve": "Growth",
-      "price": 328.66,
-      "pct_change": -8.7208,
-      "prev_close": 360.06,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 332.625,
+      "pct_change": -7.64,
+      "prev_close": 360.15,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 5,
+        "buy": 11,
+        "hold": 4,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 5,
+          "buy": 11,
+          "hold": 3,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "MARA": {
       "sleeve": "Growth",
-      "price": 14.54,
-      "pct_change": 4.755,
-      "prev_close": 13.88,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 14.47,
+      "pct_change": 4.18,
+      "prev_close": 13.89,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 4,
+        "buy": 9,
+        "hold": 7,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 4,
+          "buy": 9,
+          "hold": 8,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 266.77,
-      "pct_change": -5.1518,
-      "prev_close": 281.26,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 265.84,
+      "pct_change": -5.69,
+      "prev_close": 281.87,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 13,
+        "buy": 29,
+        "hold": 7,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 13,
+          "buy": 29,
+          "hold": 8,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 192.53,
-      "pct_change": -1.6399,
-      "prev_close": 195.74,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 191.88,
+      "pct_change": -2.0,
+      "prev_close": 195.89,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 24,
+        "buy": 39,
+        "hold": 4,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 24,
+          "buy": 42,
+          "hold": 4,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "NXPI": {
       "sleeve": "Growth",
-      "price": 277.02,
-      "pct_change": -7.2395,
-      "prev_close": 298.64,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 275.98,
+      "pct_change": -7.65,
+      "prev_close": 298.855,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 8,
+        "buy": 22,
+        "hold": 7,
+        "sell": 2,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 8,
+          "buy": 23,
+          "hold": 7,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "OKE": {
       "sleeve": "Growth",
       "price": 89.22,
-      "pct_change": -0.3351,
-      "prev_close": 89.52,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "pct_change": -0.32,
+      "prev_close": 89.51,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 7,
+        "buy": 7,
+        "hold": 13,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 7,
+          "buy": 8,
+          "hold": 14,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "SYF": {
       "sleeve": "Growth",
-      "price": 78.66,
-      "pct_change": 0.1783,
-      "prev_close": 78.52,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 78.62,
+      "pct_change": 0.14,
+      "prev_close": 78.51,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 6,
+        "buy": 12,
+        "hold": 9,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 6,
+          "buy": 13,
+          "hold": 8,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "TSM": {
       "sleeve": "Growth",
-      "price": 432.35,
-      "pct_change": -0.6069,
-      "prev_close": 434.99,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 431.91,
+      "pct_change": -0.77,
+      "prev_close": 435.27,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 11,
+        "buy": 29,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 12,
+          "buy": 29,
+          "hold": 2,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "TOL": {
       "sleeve": "Growth",
       "price": 164.14,
-      "pct_change": 1.271,
-      "prev_close": 162.08,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "pct_change": 1.25,
+      "prev_close": 162.12,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 6,
+        "buy": 10,
+        "hold": 7,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 6,
+          "buy": 9,
+          "hold": 7,
+          "sell": 2,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "VST": {
       "sleeve": "Growth",
-      "price": 163.49,
-      "pct_change": -2.5511,
-      "prev_close": 167.77,
-      "quote_source": "finnhub",
-      "recommendation": null,
+      "price": 163.605,
+      "pct_change": -2.43,
+      "prev_close": 167.675,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-06-01",
+        "strongBuy": 6,
+        "buy": 15,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-05-01",
+          "strongBuy": 6,
+          "buy": 16,
+          "hold": 2,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
       "earnings": null
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 33.85,
-      "pct_change": 0.9845,
-      "prev_close": 33.52,
-      "quote_source": "finnhub",
+      "price": 33.78,
+      "pct_change": 0.87,
+      "prev_close": 33.51,
+      "quote_source": "alpaca",
       "recommendation": null,
       "earnings": null
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 11.89,
-      "pct_change": 1.2777,
+      "price": 11.82,
+      "pct_change": 1.11,
       "prev_close": 11.74,
-      "quote_source": "finnhub",
+      "quote_source": "alpaca",
       "recommendation": null,
       "earnings": null
     }
   },
-  "errors": [
-    {
-      "ticker": "*",
-      "field": "fmp_batch_quote",
-      "msg": "HTTP Error 403: Forbidden"
-    },
-    {
-      "ticker": "CNX",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "CNX",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "COIN",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "COIN",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "CRDO",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "CRDO",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "EIX",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "EIX",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "FCX",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "FCX",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "FTNT",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "FTNT",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "SUPV",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "SUPV",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "HRMY",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "HRMY",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "HUT",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "HUT",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "HOOD",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "HOOD",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "KEYS",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "KEYS",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "MARA",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "MARA",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "MRVL",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "MRVL",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "NVDA",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "NVDA",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "NXPI",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "NXPI",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "OKE",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "OKE",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "SYF",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "SYF",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "TSM",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "TSM",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "TOL",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "TOL",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "VST",
-      "field": "stock/recommendation",
-      "msg": "HTTP Error 429: Too Many Requests"
-    },
-    {
-      "ticker": "VST",
-      "field": "stock/earnings",
-      "msg": "HTTP Error 429: Too Many Requests"
-    }
-  ],
+  "recent_reporters": [],
+  "errors": [],
   "sources": {
-    "finnhub": true,
-    "fmp": true
+    "price": "alpaca",
+    "recommendation": "finnhub"
   }
 }
