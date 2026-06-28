@@ -1,0 +1,263 @@
+{
+  "generated_at": "2026-06-28T15:29:39Z",
+  "stewardship_start": "2025-01-15",
+  "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
+  "sleeves": {
+    "dividend": {
+      "stewardship_start": "2025-01-15",
+      "stewardship_label": "since stewardship (2025-01-15)",
+      "data_start": "2011-10-02",
+      "current_value": 631977.07,
+      "returns": {
+        "week": 1.17,
+        "mtd": 1.97,
+        "qtd": 8.88,
+        "ytd": 13.8,
+        "since_stewardship": 32.74
+      },
+      "benchmarks": {
+        "DVY": {
+          "returns": {
+            "week": 1.86,
+            "mtd": 2.11,
+            "qtd": 3.91,
+            "ytd": 10.1,
+            "since_stewardship": 18.12
+          },
+          "active_return": {
+            "week": -0.69,
+            "mtd": -0.14,
+            "qtd": 4.97,
+            "ytd": 3.7,
+            "since_stewardship": 14.62
+          }
+        },
+        "SPY": {
+          "returns": {
+            "week": -1.47,
+            "mtd": -3.31,
+            "qtd": 11.93,
+            "ytd": 7.32,
+            "since_stewardship": 23.72
+          },
+          "active_return": {
+            "week": 2.64,
+            "mtd": 5.28,
+            "qtd": -3.05,
+            "ytd": 6.48,
+            "since_stewardship": 9.02
+          }
+        }
+      },
+      "top_contributors": [
+        {
+          "ticker": "STLD",
+          "mkt_value": 51128.67,
+          "cost_basis": 25994.35,
+          "unrealized_gain": 25134.32,
+          "pct_of_sleeve": 8.24
+        },
+        {
+          "ticker": "VLO",
+          "mkt_value": 41670.77,
+          "cost_basis": 17506.59,
+          "unrealized_gain": 24164.18,
+          "pct_of_sleeve": 6.72
+        },
+        {
+          "ticker": "CAT",
+          "mkt_value": 29940.71,
+          "cost_basis": 5936.65,
+          "unrealized_gain": 24004.06,
+          "pct_of_sleeve": 4.83
+        },
+        {
+          "ticker": "LRCX",
+          "mkt_value": 21087.72,
+          "cost_basis": 3629.09,
+          "unrealized_gain": 17458.63,
+          "pct_of_sleeve": 3.4
+        },
+        {
+          "ticker": "ORI",
+          "mkt_value": 23273.93,
+          "cost_basis": 11979.87,
+          "unrealized_gain": 11294.06,
+          "pct_of_sleeve": 3.75
+        }
+      ],
+      "bottom_contributors": [
+        {
+          "ticker": "ADP",
+          "mkt_value": 16512.5,
+          "cost_basis": 24980.79,
+          "unrealized_gain": -8468.29,
+          "pct_of_sleeve": 2.66
+        },
+        {
+          "ticker": "NTR",
+          "mkt_value": 36021.5,
+          "cost_basis": 41712.53,
+          "unrealized_gain": -5691.03,
+          "pct_of_sleeve": 5.81
+        },
+        {
+          "ticker": "ABT",
+          "mkt_value": 17332.06,
+          "cost_basis": 21298.85,
+          "unrealized_gain": -3966.79,
+          "pct_of_sleeve": 2.79
+        },
+        {
+          "ticker": "GPC",
+          "mkt_value": 24476.81,
+          "cost_basis": 28250.57,
+          "unrealized_gain": -3773.76,
+          "pct_of_sleeve": 3.95
+        },
+        {
+          "ticker": "SSNC",
+          "mkt_value": 13221.88,
+          "cost_basis": 15962.91,
+          "unrealized_gain": -2741.03,
+          "pct_of_sleeve": 2.13
+        }
+      ],
+      "contribution_basis": "unrealized gain by current position since purchase"
+    },
+    "growth": {
+      "stewardship_start": "2025-07-28",
+      "stewardship_label": "since launch (2025-07-28)",
+      "data_start": "2025-07-28",
+      "current_value": 132765.76,
+      "returns": {
+        "week": -3.61,
+        "mtd": 1.91,
+        "qtd": 22.24,
+        "ytd": 18.78,
+        "since_stewardship": 32.77
+      },
+      "benchmarks": {
+        "IUSG": {
+          "returns": {
+            "week": -2.47,
+            "mtd": -5.49,
+            "qtd": 16.31,
+            "ytd": 8.62,
+            "since_stewardship": 17.02
+          },
+          "active_return": {
+            "week": -1.14,
+            "mtd": 7.4,
+            "qtd": 5.93,
+            "ytd": 10.16,
+            "since_stewardship": 15.75
+          }
+        },
+        "SPY": {
+          "returns": {
+            "week": -1.47,
+            "mtd": -3.31,
+            "qtd": 11.93,
+            "ytd": 7.32,
+            "since_stewardship": 15.13
+          },
+          "active_return": {
+            "week": -2.14,
+            "mtd": 5.22,
+            "qtd": 10.31,
+            "ytd": 11.46,
+            "since_stewardship": 17.64
+          }
+        }
+      },
+      "top_contributors": [
+        {
+          "ticker": "HUT",
+          "mkt_value": 5599.15,
+          "cost_basis": 898.38,
+          "unrealized_gain": 4700.77,
+          "pct_of_sleeve": 4.3
+        },
+        {
+          "ticker": "AMD",
+          "mkt_value": 8510.06,
+          "cost_basis": 3903.31,
+          "unrealized_gain": 4606.75,
+          "pct_of_sleeve": 6.54
+        },
+        {
+          "ticker": "FTNT",
+          "mkt_value": 8418.99,
+          "cost_basis": 4172.49,
+          "unrealized_gain": 4246.5,
+          "pct_of_sleeve": 6.47
+        },
+        {
+          "ticker": "MRVL",
+          "mkt_value": 8667.02,
+          "cost_basis": 4554.23,
+          "unrealized_gain": 4112.79,
+          "pct_of_sleeve": 6.66
+        },
+        {
+          "ticker": "TSM",
+          "mkt_value": 5309.08,
+          "cost_basis": 2966.45,
+          "unrealized_gain": 2342.63,
+          "pct_of_sleeve": 4.08
+        }
+      ],
+      "bottom_contributors": [
+        {
+          "ticker": "COIN",
+          "mkt_value": 2469.92,
+          "cost_basis": 5252.04,
+          "unrealized_gain": -2782.12,
+          "pct_of_sleeve": 1.9
+        },
+        {
+          "ticker": "AEM",
+          "mkt_value": 4878.47,
+          "cost_basis": 5921.43,
+          "unrealized_gain": -1042.96,
+          "pct_of_sleeve": 3.75
+        },
+        {
+          "ticker": "FCX",
+          "mkt_value": 6063.17,
+          "cost_basis": 6831.35,
+          "unrealized_gain": -768.18,
+          "pct_of_sleeve": 4.66
+        },
+        {
+          "ticker": "ATAT",
+          "mkt_value": 2901.24,
+          "cost_basis": 3164.97,
+          "unrealized_gain": -263.73,
+          "pct_of_sleeve": 2.23
+        },
+        {
+          "ticker": "HOOD",
+          "mkt_value": 3715.28,
+          "cost_basis": 3911.55,
+          "unrealized_gain": -196.27,
+          "pct_of_sleeve": 2.86
+        }
+      ],
+      "contribution_basis": "unrealized gain by current position since purchase"
+    }
+  },
+  "methodology_caveats": [
+    "Benchmark returns use the benchmark `close` series in portfolio-history. If that is price-only (not total return), active return is overstated vs dividend-paying benchmarks (DVY especially). Verify the series is adjusted/total-return before citing active return at IC.",
+    "Position contribution = current value minus cost basis = UNREALIZED gain since purchase, NOT contribution measured over the since-stewardship window (per-name historical prices are not available in the committed data). Labeled accordingly."
+  ],
+  "combined": {
+    "since_stewardship_return": 32.75,
+    "total_value": 764742.83,
+    "basis": "value-weighted blend of sleeve since-stewardship returns"
+  },
+  "ic_summary": {
+    "headline": "Stewardship record since 2025-01-15: Dividend +32.74% (vs DVY active +14.62%), Growth +32.77% (vs IUSG active +15.75%)."
+  }
+}
