@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T04:08:10Z",
+  "generated_at": "2026-06-28T12:14:44Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -1333,6 +1333,20 @@
       "quote_source": "alpaca",
       "recommendation": null,
       "earnings": null
+    }
+  },
+  "index_refs": {
+    "SPY": {
+      "price": 732.14,
+      "pct_change": -0.54,
+      "prev_close": 733.33,
+      "quote_source": "alpaca"
+    },
+    "QQQ": {
+      "price": 704.94,
+      "pct_change": -1.49,
+      "prev_close": 716.315,
+      "quote_source": "alpaca"
     }
   },
   "recent_reporters": [],
