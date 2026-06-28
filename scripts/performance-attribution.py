@@ -80,7 +80,7 @@ def main():
         "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
         "sleeves": {},
         "methodology_caveats": [
-            "Active return is computed on a MATCHED price-only basis: both the portfolio value series and the benchmark `close` series exclude dividends. A total-return benchmark series (`benchmarks_tr`) is now generated in portfolio-history but is not yet consumed — it will be switched on together with a total-return portfolio series so the comparison stays like-for-like. Until then, treat absolute return levels as price-return, not total return.",
+            "Active return is computed on a MATCHED total-return basis (bm_basis = 'total_return'): the portfolio value series already reflects dividends (booked as cash deposits and reinvested via purchases in the Morningstar export), and the benchmark uses the split + dividend adjusted `benchmarks_tr` series. Both sides include dividends, so active return is like-for-like. (Benchmark TR is reconstructed from adjusted close and can differ from official NAV total return by ~1-2pt in heavy-distribution years.)",
             "Position contribution = current value minus cost basis = UNREALIZED gain since purchase, NOT contribution measured over the since-stewardship window (per-name historical prices are not available in the committed data). Labeled accordingly.",
         ],
     }
@@ -96,12 +96,13 @@ def main():
             continue
 
         port = d.get("portfolio") or []
-        # NOTE: still reads the price-only `benchmarks` series so portfolio (price-only)
-        # and benchmark are on a MATCHED basis. A total-return series (`benchmarks_tr`)
-        # is now generated and committed, but is intentionally NOT consumed until the
-        # portfolio value series is also total-return — flipping this one line then makes
-        # the active-return comparison like-for-like.
-        bms = d.get("benchmarks") or {}
+        # The portfolio value series is already total return: in the Morningstar "By
+        # Security" export, dividends are booked as cash DEPOSITs and reinvested via
+        # PURCHASEs, so received-and-reinvested income is captured in `value`. To compare
+        # like-for-like we use the total-return benchmark series (`benchmarks_tr`,
+        # split + dividend adjusted). Falls back to price-only if TR is absent.
+        bms = d.get("benchmarks_tr") or d.get("benchmarks") or {}
+        bm_basis = "total_return" if d.get("benchmarks_tr") else "price_only"
         data_start = port[0]["date"] if port else None
         # stewardship start for this sleeve = later of Carson's start and the sleeve's data start
         steward = max(STEWARDSHIP_START, data_start) if data_start else STEWARDSHIP_START
@@ -149,6 +150,7 @@ def main():
             "data_start": data_start,
             "current_value": round(port[-1]["value"], 2) if port else None,
             "returns": rets,
+            "bm_basis": bm_basis,
             "benchmarks": bm_block,
             "top_contributors": contribs[:5],
             "bottom_contributors": contribs[-5:][::-1],
