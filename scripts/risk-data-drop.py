@@ -6,11 +6,12 @@ Runs inside GitHub Actions. Produces public/risk-data-drop.json: raw facts per
 holding, NOT judgments. The Risk Sentinel routine interprets them.
 
 Source split (all free tiers, each used for its strength):
-  - Alpaca batch snapshot (1 call): price + settled day % move for all 52. PRIMARY.
+  - Alpaca batch snapshot (1 call): price + settled day % move for all 52
+    PLUS index refs (SPY, QQQ) so index-level signals in levels.json resolve. PRIMARY.
   - Polygon grouped-daily (<=3 calls): same data, FALLBACK if Alpaca is empty.
   - Finnhub: recommendation trend ONLY, paced under the free 60/min cap.
-  - Earnings surprise: read the committed earnings-calendar.json to find the few
-    names with a recent print, and call Finnhub /stock/earnings for those only.
+  - Earnings surprise: read committed earnings-calendar.json for the few names
+    with a recent print; call Finnhub /stock/earnings for those only.
   - FMP: removed (free tier 403's the batch quote and lacks grade actions).
 
 Defensive throughout: one failed call records an error and nulls the field;
@@ -45,6 +46,14 @@ SLEEVES = {
 SLEEVE_OF = {t: s for s, ts in SLEEVES.items() for t in ts}
 UNIVERSE = [t for ts in SLEEVES.values() for t in ts]
 
+# Index references — priced so the Sentinel's level check (levels.json) can
+# assess index-level supports/resistances (e.g. SPY 645.80). Not holdings;
+# emitted in a separate index_refs block. Add tickers here if levels.json
+# starts tracking others.
+INDEX_REFS = ["SPY", "QQQ"]
+
+ALL_SYMS = UNIVERSE + INDEX_REFS
+
 errors = []
 
 
@@ -73,19 +82,19 @@ def pct(cur, prev):
 
 
 # =============================================================================
-# 1. PRICES — Alpaca batch snapshot (primary)
+# 1. PRICES — Alpaca batch snapshot (primary), 52 holdings + index refs
 # =============================================================================
 prices = {}  # ticker -> {price, pct_change, prev_close, quote_source}
 
 if ALPACA_KEY and ALPACA_SECRET:
-    syms = ",".join(UNIVERSE)
+    syms = ",".join(ALL_SYMS)
     url = f"https://data.alpaca.markets/v2/stocks/snapshots?symbols={syms}&feed=iex"
     hdrs = {"APCA-API-KEY-ID": ALPACA_KEY, "APCA-API-SECRET-KEY": ALPACA_SECRET}
     data, status = http_json(url, headers=hdrs)
     snaps = data.get("snapshots", data) if isinstance(data, dict) else {}
     if isinstance(data, dict) and "__error__" in data:
         log_err("*", "alpaca_snapshot", data["__error__"])
-    for t in UNIVERSE:
+    for t in ALL_SYMS:
         s = snaps.get(t) if isinstance(snaps, dict) else None
         if not s:
             continue
@@ -101,12 +110,12 @@ if ALPACA_KEY and ALPACA_SECRET:
             "prev_close": prev_close,
             "quote_source": "alpaca",
         }
-    print(f"Alpaca snapshot: {len(prices)}/{len(UNIVERSE)} priced (HTTP {status})")
+    print(f"Alpaca snapshot: {len(prices)}/{len(ALL_SYMS)} priced (HTTP {status})")
 else:
     print("No Alpaca creds — will try Polygon fallback")
 
 # --- Polygon grouped-daily fallback (only if Alpaca came up short) ----------
-missing = [t for t in UNIVERSE if t not in prices]
+missing = [t for t in ALL_SYMS if t not in prices]
 if missing and POLYGON_KEY:
     print(f"Polygon fallback for {len(missing)} names…")
 
@@ -118,7 +127,6 @@ if missing and POLYGON_KEY:
             return {r["T"]: r.get("c") for r in d["results"] if "T" in r}
         return None
 
-    # Walk back to find the two most recent trading days with data
     day_maps = []
     probe = datetime.now(timezone.utc).date() - timedelta(days=1)
     tries = 0
@@ -141,7 +149,7 @@ if missing and POLYGON_KEY:
         log_err("*", "polygon_grouped", "could not find 2 trading days with data")
 
 # =============================================================================
-# 2. RECOMMENDATION TREND — Finnhub only, paced under the 60/min cap
+# 2. RECOMMENDATION TREND — Finnhub only, holdings only, paced under 60/min
 # =============================================================================
 recs = {}
 FINNHUB_MIN_INTERVAL = 1.3  # ~46/min — comfortably under the free 60/min cap
@@ -235,12 +243,23 @@ for t in UNIVERSE:
         "earnings": earnings.get(t),  # null unless it reported in the last 5 days
     }
 
+index_refs = {}
+for t in INDEX_REFS:
+    p = prices.get(t, {})
+    index_refs[t] = {
+        "price": p.get("price"),
+        "pct_change": p.get("pct_change"),
+        "prev_close": p.get("prev_close"),
+        "quote_source": p.get("quote_source"),
+    }
+
 out = {
     "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "universe_count": len(UNIVERSE),
     "universe": UNIVERSE,
     "sleeves": SLEEVES,
     "holdings": holdings,
+    "index_refs": index_refs,
     "recent_reporters": recent_reporters,
     "errors": errors,
     "sources": {
@@ -255,8 +274,10 @@ with open(OUT_PATH, "w") as f:
     json.dump(out, f, indent=2)
 
 priced = sum(1 for h in holdings.values() if h.get("price") is not None)
+idx_priced = sum(1 for v in index_refs.values() if v.get("price") is not None)
 print(f"Wrote {OUT_PATH}: {len(holdings)} holdings, {priced} priced, "
-      f"{len(recs)} rec, {len(earnings)} earnings, {len(errors)} errors")
+      f"{idx_priced}/{len(INDEX_REFS)} index refs, {len(recs)} rec, "
+      f"{len(earnings)} earnings, {len(errors)} errors")
 if not priced:
     print("WARNING: zero holdings priced — check Alpaca/Polygon creds; "
           "do NOT trust this drop as 'all clear'", file=sys.stderr)
