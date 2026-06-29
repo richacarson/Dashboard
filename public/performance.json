@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-28T20:24:19Z",
+  "generated_at": "2026-06-29T00:32:34Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -49,6 +49,39 @@
             "since_stewardship": 7.87
           }
         }
+      },
+      "risk_metrics": {
+        "max_drawdown": -17.11,
+        "current_drawdown": -1.08,
+        "annualized_volatility": 16.87,
+        "annualized_return": 21.93,
+        "sharpe": 1.04,
+        "sortino": 1.51,
+        "information_ratio": 0.58,
+        "tracking_error": 8.22,
+        "beta": 1.01,
+        "correlation": 0.87,
+        "up_capture": 94.1,
+        "down_capture": 94.43,
+        "batting_average": 52.9,
+        "best_month": 8.72,
+        "worst_month": -5.97,
+        "months": 17,
+        "risk_free_annual": 4.3,
+        "vs_benchmark": {
+          "dividend": "DVY",
+          "growth": "IUSG"
+        }
+      },
+      "income": {
+        "projected_annual_income": 13247.91,
+        "yield_on_cost": 2.73,
+        "current_yield": 2.14,
+        "dividend_growth_yoy": 3.07,
+        "received_ytd": 7253.45,
+        "received_qtr": 2726.05,
+        "paying_positions": 26,
+        "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares"
       },
       "top_contributors": [
         {
@@ -172,6 +205,39 @@
             "since_stewardship": 16.12
           }
         }
+      },
+      "risk_metrics": {
+        "max_drawdown": -12.03,
+        "current_drawdown": -4.67,
+        "annualized_volatility": 24.72,
+        "annualized_return": 35.2,
+        "sharpe": 1.25,
+        "sortino": 1.86,
+        "information_ratio": 1.09,
+        "tracking_error": 15.05,
+        "beta": 1.14,
+        "correlation": 0.8,
+        "up_capture": 129.28,
+        "down_capture": 103.63,
+        "batting_average": 63.6,
+        "best_month": 11.03,
+        "worst_month": -5.19,
+        "months": 11,
+        "risk_free_annual": 4.3,
+        "vs_benchmark": {
+          "dividend": "DVY",
+          "growth": "IUSG"
+        }
+      },
+      "income": {
+        "projected_annual_income": 1181.17,
+        "yield_on_cost": 2.0,
+        "current_yield": 1.73,
+        "dividend_growth_yoy": 5.91,
+        "received_ytd": 613.48,
+        "received_qtr": 333.99,
+        "paying_positions": 13,
+        "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares"
       },
       "top_contributors": [
         {
