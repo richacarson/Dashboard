@@ -3346,6 +3346,9 @@ Instructions:
       filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio;
     } else if (tChartRange === "ALL") {
       filtered = portfolio;
+    } else if (tChartRange === "STEW") {
+      // Carson stewardship window — since first influence (Jan 15 2025)
+      filtered = portfolio.filter(p => p.date >= STEW_START);
     } else {
       const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[tChartRange] || 365;
       const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
@@ -6054,16 +6057,18 @@ Instructions:
                 {["dividend", "growth", "fci100", "fciValues"].map(k => {
                   const names = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
                   const active = isPortfolio && tChartSleeve === k;
-                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); setPerfSleeve(k); setTChartHover(null); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
+                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); setPerfSleeve(k); setTChartHover(null); if (k !== "dividend" && tChartRange === "STEW") setTChartRange("3Y"); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
                 })}
-                {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "ALL"].filter(r => {
-                  if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
+                {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "STEW", "ALL"].filter(r => {
                   const tPort = (perfDataMap[tChartSleeve] || perfData || {}).portfolio || [];
+                  // Carson stewardship — dividend sleeve only, once data reaches the start
+                  if (r === "STEW") return tChartSleeve === "dividend" && tPort.some(p => p.date >= STEW_START);
+                  if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
                   const daysAvailable = tPort.length > 1 ? (new Date(tPort[tPort.length - 1].date) - new Date(tPort[0].date)) / 86400000 : 0;
                   const need = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[r] || 0;
                   return daysAvailable >= need * 0.9;
                 }).map(r => (
-                  <button key={r} onClick={() => { setTChartRange(r); setTChartHover(null); }} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
+                  <button key={r} onClick={() => { setTChartRange(r); setTChartHover(null); }} title={r === "STEW" ? "Carson stewardship — since Jan 15 2025" : undefined} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
                 ))}
                 {isPortfolio && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
                 {isPortfolio && ({ dividend: ["SPY", "DVY", "DIA"], growth: ["SPY", "IUSG", "QQQ"], fci100: ["SPY", "QQQ", "DIA"], fciValues: ["SPY", "QQQ", "DIA"] }[tChartSleeve] || ["SPY", "DVY", "DIA"]).map(bm => {
