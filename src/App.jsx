@@ -26,6 +26,7 @@ const TARGET_WEIGHTS = {
   growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
 };
 const REBALANCE_DATE = "2026-04-08";
+const STEW_START = "2025-01-15";   // Carson's first decision — dividend stewardship window
 const REBALANCE_ANCHORS = {
   // 4/8/26 OPEN prices from Yahoo Finance
   ABT:103.13, ADI:345.81, ADP:204.51, ATO:186.7, BKH:73.03, CAT:764.62, CHD:93.0, CL:83.75, DVN:44.13, DGX:196.18,
@@ -4850,6 +4851,8 @@ Instructions:
                     startPt = [...portfolio].reverse().find(pt => pt.date <= yearEnd);
                   } else if (period === "INCEP") {
                     startPt = portfolio[0];
+                  } else if (period === "STEW") {
+                    startPt = portfolio.find(pt => pt.date >= STEW_START);
                   } else {
                     const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[period];
                     if (!days) return null;
@@ -4872,6 +4875,7 @@ Instructions:
                   { l: "1Y", fn: k => sleeveReturn(k, "1Y") },
                   { l: "3Y", fn: k => sleeveReturn(k, "3Y") },
                   { l: "5Y", fn: k => sleeveReturn(k, "5Y") },
+                  { l: "STEW", fn: k => sleeveReturn(k, "STEW") },
                   { l: "INCEP", fn: k => sleeveReturn(k, "INCEP") },
                 ];
                 const sleeveNames = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
@@ -4899,6 +4903,9 @@ Instructions:
                     const pStart = perfDataMap[sleeveKey]?.portfolio?.[0]?.date || prices[0][0];
                     const found = prices.find(([d]) => d >= pStart);
                     if (found) { startPrice = found[1]; startDate = found[0]; } else { startPrice = prices[0][1]; startDate = prices[0][0]; }
+                  } else if (period === "STEW") {
+                    const found = prices.find(([d]) => d >= STEW_START);
+                    if (found) { startPrice = found[1]; startDate = found[0]; }
                   } else {
                     const days = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[period];
                     if (!days) return null;
@@ -4931,6 +4938,7 @@ Instructions:
                   const pStart = perfDataMap[sleeve]?.portfolio?.[0]?.date;
                   const daysAvailable = pStart ? (Date.now() - new Date(pStart + "T12:00:00").getTime()) / 86400000 : 0;
                   const visibleRanges = ranges.filter(r => {
+                    if (r.l === "STEW") return sleeve === "dividend";   // Carson stewardship — dividend only
                     if (r.l === "DAY" || r.l === "QTD" || r.l === "YTD" || r.l === "INCEP") return true;
                     const need = { "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 }[r.l] || 0;
                     return daysAvailable >= need * 0.9;
@@ -11268,6 +11276,9 @@ Instructions:
                   const yearEnd = `${now.getFullYear() - 1}-12-31`;
                   const ytdStart = [...portfolio].reverse().find(p => p.date <= yearEnd);
                   filtered = ytdStart ? portfolio.filter(p => p.date >= ytdStart.date) : portfolio.filter(p => p.date >= `${now.getFullYear()}-01-01`);
+                } else if (perfRange === "STEW") {
+                  // Carson stewardship window — performance since the first decision (Jan 15 2025)
+                  filtered = portfolio.filter(p => p.date >= STEW_START);
                 } else {
                   filtered = cutoff ? portfolio.filter(p => p.date >= cutoff) : portfolio;
                 }
@@ -11438,6 +11449,12 @@ Instructions:
 
               return (
                 <>
+                  {perfRange === "STEW" && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 10, background: C.accentSoft, border: `1px solid ${C.accent}33`, marginBottom: isDesktop ? 16 : 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: 1 }}>Carson Stewardship</span>
+                      <span style={{ fontSize: 12, color: C.t3 }}>Dividend performance since first decision — Jan 15, 2025 vs DVY &amp; SPY (total return)</span>
+                    </div>
+                  )}
                   {/* Summary cards */}
                   <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(4, 1fr)", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
                     {[
@@ -11458,20 +11475,22 @@ Instructions:
                   {/* Time range selector + benchmark toggles */}
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: isDesktop ? 12 : 6, marginBottom: isDesktop ? 16 : 8 }}>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "ALL"].filter(r => {
+                      {["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "10Y", "STEW", "ALL"].filter(r => {
                         const isFCI = perfSleeve === "fci100" || perfSleeve === "fciValues";
                         if (isFCI) return r === "1D" || r === "ALL";
+                        // Carson stewardship window — dividend sleeve only, and only once the data reaches the start
+                        if (r === "STEW") return perfSleeve === "dividend" && portfolio.some(p => p.date >= STEW_START);
                         if (r === "1D" || r === "QTD" || r === "YTD" || r === "ALL") return true;
                         const daysAvailable = portfolio.length > 1 ? (new Date(portfolio[portfolio.length - 1].date) - new Date(portfolio[0].date)) / 86400000 : 0;
                         const need = { "1Y": 365, "3Y": 365*3, "5Y": 365*5, "10Y": 365*10 }[r] || 0;
                         return daysAvailable >= need * 0.9;
                       }).map(r => (
-                        <button key={r} onClick={() => setPerfRange(r)} style={{
+                        <button key={r} onClick={() => setPerfRange(r)} title={r === "STEW" ? "Carson stewardship — since Jan 15 2025" : undefined} style={{
                           padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 700,
-                          border: `1px solid ${perfRange === r ? C.borderActive : C.border}`,
+                          border: `1px solid ${perfRange === r ? C.borderActive : (r === "STEW" ? C.accent + "55" : C.border)}`,
                           background: perfRange === r ? C.accentSoft : "transparent",
-                          color: perfRange === r ? C.t1 : C.t3, cursor: "pointer", fontFamily: "inherit",
-                        }}>{r}</button>
+                          color: perfRange === r ? C.t1 : (r === "STEW" ? C.accent : C.t3), cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                        }}>{r === "STEW" ? "Carson '25" : r}</button>
                       ))}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
