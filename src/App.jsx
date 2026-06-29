@@ -6145,6 +6145,13 @@ Instructions:
                         <span style={{ color: hc2.c >= hc2.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc2.c >= 0 ? "+" : ""}{hc2.c.toFixed(2)}%</span>
                         {dlt2 != null && <span style={{ color: dlt2 >= 0 ? C.up : C.dn }}>Δ {dlt2 >= 0 ? "+" : ""}{dlt2.toFixed(2)}%</span>}
                         <span style={{ color: C.t4 }}>${hc2.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                        {/* Spread vs each benchmark, measured from session open */}
+                        {Object.entries(bmL).map(([sym, bc]) => {
+                          const bv = bc[tChartHover]?.c;
+                          if (bv == null) return null;
+                          const sp = hc2.c - bv;
+                          return <span key={sym}><span style={{ color: BM_COLORS[sym] }}>vs {sym} </span><span style={{ color: sp >= 0 ? C.up : C.dn, fontWeight: 700 }}>{sp >= 0 ? "+" : ""}{sp.toFixed(2)}%</span></span>;
+                        })}
                       </div>}
                       <svg width={cW2} height={H2} viewBox={`0 0 ${cW2} ${H2}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }} onMouseMove={e => { const r2 = e.currentTarget.getBoundingClientRect(); const sX = cW2 / r2.width; const mX = (e.clientX - r2.left) * sX; const idx = Math.round((mX - PAD.left) / gp - 0.5); setTChartHover(idx >= 0 && idx < candles5m.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
                           <rect x={0} y={0} width={cW2} height={H2} fill={C.bg} />
@@ -6208,6 +6215,13 @@ Instructions:
                         <span style={{ color: hc.c >= hc.o ? C.up : C.dn, fontWeight: 700 }}>C: {hc.c >= 0 ? "+" : ""}{hc.c.toFixed(2)}%</span>
                         {dlt != null && <span style={{ color: dlt >= 0 ? C.up : C.dn }}>Δ {dlt >= 0 ? "+" : ""}{dlt.toFixed(2)}%</span>}
                         <span style={{ color: C.t4 }}>${hc.rawVal?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                        {/* Spread vs each benchmark, measured from the window start */}
+                        {Object.entries(bmLines).map(([sym, bc]) => {
+                          const bv = bc[tChartHover]?.c;
+                          if (bv == null) return null;
+                          const sp = hc.c - bv;
+                          return <span key={sym}><span style={{ color: BM_COLORS[sym] }}>vs {sym} </span><span style={{ color: sp >= 0 ? C.up : C.dn, fontWeight: 700 }}>{sp >= 0 ? "+" : ""}{sp.toFixed(2)}%</span></span>;
+                        })}
                       </div>
                     )}
                     <svg width={chartW} height={H} viewBox={`0 0 ${chartW} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }} onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
