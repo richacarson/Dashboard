@@ -23,16 +23,163 @@ METHODOLOGY (stated for defensibility):
     since-stewardship sleeve return and is labeled as such.
 """
 
-import json, os
+import json, os, math, time, bisect, statistics
+import urllib.request, urllib.error
 from datetime import datetime, timedelta, timezone
 
 PUB = "public"
 STEWARDSHIP_START = "2025-01-15"   # Carson's first decision
 PRIMARY_BM = {"dividend": "DVY", "growth": "IUSG"}
 SLEEVES = ["dividend", "growth"]
+RISK_FREE_ANNUAL = 0.043           # ~3-month T-bill, for Sharpe/Sortino excess return
+TRADING_DAYS = 252
 
 def load(p):
     with open(p) as f: return json.load(f)
+
+# ---------------------------------------------------------------- risk metrics
+def _daily_rets(vals):
+    return [vals[i] / vals[i - 1] - 1 for i in range(1, len(vals)) if vals[i - 1]]
+
+def _monthly_rets(pairs):
+    """pairs = [(date, value)] ascending -> month-over-month returns (last value per month)."""
+    bym = {}
+    for d, v in pairs:
+        if v: bym[d[:7]] = v   # ascending, so last day of month wins
+    keys = sorted(bym); vals = [bym[k] for k in keys]
+    return [vals[i] / vals[i - 1] - 1 for i in range(1, len(vals)) if vals[i - 1]]
+
+def risk_metrics(port, bm_series, steward):
+    """Risk-adjusted + consistency metrics from the since-stewardship daily value
+    series vs the (total-return) primary benchmark."""
+    p = [(x["date"], x["value"]) for x in port if x.get("date", "") >= steward and x.get("value")]
+    if len(p) < 20:
+        return None
+    pv = [v for _, v in p]
+    bm_sorted = sorted(((x["date"], x["close"]) for x in (bm_series or []) if x.get("close")), key=lambda z: z[0])
+    bm_dates = [d for d, _ in bm_sorted]; bm_vals = [v for _, v in bm_sorted]
+    def bm_on(date):
+        i = bisect.bisect_right(bm_dates, date) - 1
+        return bm_vals[i] if i >= 0 else None
+    bv = [bm_on(d) for d, _ in p]
+
+    # drawdown (running peak; final peak == max so current dd is vs all-time high)
+    peak = pv[0]; maxdd = 0.0
+    for v in pv:
+        peak = max(peak, v); maxdd = min(maxdd, v / peak - 1)
+    cur_dd = pv[-1] / max(pv) - 1
+
+    rp = _daily_rets(pv)
+    years = len(rp) / TRADING_DAYS if rp else 0
+    ann_vol = statistics.pstdev(rp) * math.sqrt(TRADING_DAYS) if len(rp) > 1 else None
+    cagr = (pv[-1] / pv[0]) ** (1 / years) - 1 if years > 0 and pv[0] > 0 else None
+    sharpe = (cagr - RISK_FREE_ANNUAL) / ann_vol if (ann_vol and cagr is not None) else None
+    downs = [r for r in rp if r < 0]
+    dvol = statistics.pstdev(downs) * math.sqrt(TRADING_DAYS) if len(downs) > 1 else None
+    sortino = (cagr - RISK_FREE_ANNUAL) / dvol if (dvol and cagr is not None) else None
+
+    # vs benchmark (aligned daily)
+    rb_full = [bv[i] / bv[i - 1] - 1 if (bv[i - 1] and bv[i]) else 0 for i in range(1, len(bv))]
+    m = min(len(rp), len(rb_full)); rp2, rb2 = rp[:m], rb_full[:m]
+    active = [rp2[i] - rb2[i] for i in range(m)]
+    te = statistics.pstdev(active) * math.sqrt(TRADING_DAYS) if m > 1 else None
+    bm_cagr = (bv[-1] / bv[0]) ** (1 / years) - 1 if (years > 0 and bv and bv[0]) else None
+    info_ratio = ((cagr - bm_cagr) / te) if (te and cagr is not None and bm_cagr is not None) else None
+    try:
+        beta = statistics.covariance(rp2, rb2) / statistics.variance(rb2) if m > 2 else None
+        corr = statistics.correlation(rp2, rb2) if m > 2 else None
+    except Exception:
+        beta = corr = None
+    up_p = up_b = dn_p = dn_b = 1.0; nu = nd = 0
+    for i in range(m):
+        if rb2[i] > 0: up_p *= (1 + rp2[i]); up_b *= (1 + rb2[i]); nu += 1
+        elif rb2[i] < 0: dn_p *= (1 + rp2[i]); dn_b *= (1 + rb2[i]); nd += 1
+    up_cap = ((up_p - 1) / (up_b - 1) * 100) if (nu and up_b != 1) else None
+    dn_cap = ((dn_p - 1) / (dn_b - 1) * 100) if (nd and dn_b != 1) else None
+
+    pm = _monthly_rets(p)
+    bmm = _monthly_rets([(d, bm_on(d)) for d, _ in p])
+    mm = min(len(pm), len(bmm))
+    batting = round(sum(1 for i in range(mm) if pm[i] > bmm[i]) / mm * 100, 1) if mm else None
+
+    rnd = lambda v, n=2: round(v, n) if isinstance(v, (int, float)) else None
+    return {
+        "max_drawdown": rnd(maxdd * 100), "current_drawdown": rnd(cur_dd * 100),
+        "annualized_volatility": rnd(ann_vol * 100) if ann_vol else None,
+        "annualized_return": rnd(cagr * 100) if cagr is not None else None,
+        "sharpe": rnd(sharpe), "sortino": rnd(sortino),
+        "information_ratio": rnd(info_ratio), "tracking_error": rnd(te * 100) if te else None,
+        "beta": rnd(beta), "correlation": rnd(corr),
+        "up_capture": rnd(up_cap), "down_capture": rnd(dn_cap),
+        "batting_average": batting,
+        "best_month": rnd(max(pm) * 100) if pm else None,
+        "worst_month": rnd(min(pm) * 100) if pm else None,
+        "months": mm, "risk_free_annual": RISK_FREE_ANNUAL * 100,
+        "vs_benchmark": PRIMARY_BM,
+    }
+
+# ---------------------------------------------------------------- income / dividends
+def fetch_div_history(ticker):
+    """Yahoo events=div over ~2.5y -> sorted [(ex_date, dps)]. Keyless."""
+    p2 = int(datetime.now(timezone.utc).timestamp()) + 86400
+    p1 = p2 - int(2.6 * 365 * 86400)
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+           f"?period1={p1}&period2={p2}&interval=1d&events=div")
+    for _ in range(3):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                data = json.loads(r.read())
+            ev = ((data.get("chart", {}).get("result") or [{}])[0].get("events", {}) or {}).get("dividends", {}) or {}
+            out = []
+            for _, v in ev.items():
+                ts, amt = v.get("date"), v.get("amount")
+                if ts is not None and amt:
+                    out.append((datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d"), float(amt)))
+            return sorted(out)
+        except urllib.error.HTTPError as e:
+            if e.code == 429: time.sleep(1.2); continue
+            return []
+        except Exception:
+            time.sleep(0.6)
+    return []
+
+def income_metrics(holdings, cb, prices, today):
+    """Forward income, yield-on-cost, current yield, dividend growth, received YTD/QTD."""
+    ytd0 = f"{today.year}-01-01"
+    qtr0 = datetime(today.year, 3 * ((today.month - 1) // 3) + 1, 1).date().isoformat()
+    d365 = (today - timedelta(days=365)).isoformat()
+    d730 = (today - timedelta(days=730)).isoformat()
+    ttm_inc = prior_inc = cost = mktval = recv_ytd = recv_qtr = 0.0
+    payers = 0
+    for t, shares in (holdings or {}).items():
+        if not shares or shares <= 0: continue
+        divs = fetch_div_history(t)
+        if not divs: continue
+        ttm = sum(a for dt, a in divs if d365 <= dt <= today.isoformat())
+        prior = sum(a for dt, a in divs if d730 <= dt < d365)
+        if ttm <= 0: continue
+        payers += 1
+        ttm_inc += shares * ttm
+        prior_inc += shares * prior
+        c = (cb.get(t) or {}).get("total_cost")
+        if c: cost += c
+        px = prices.get(t)
+        if px: mktval += shares * px
+        recv_ytd += shares * sum(a for dt, a in divs if ytd0 <= dt <= today.isoformat())
+        recv_qtr += shares * sum(a for dt, a in divs if qtr0 <= dt <= today.isoformat())
+    if payers == 0:
+        return None
+    rnd = lambda v: round(v, 2) if isinstance(v, (int, float)) else None
+    return {
+        "projected_annual_income": rnd(ttm_inc),
+        "yield_on_cost": rnd(ttm_inc / cost * 100) if cost else None,
+        "current_yield": rnd(ttm_inc / mktval * 100) if mktval else None,
+        "dividend_growth_yoy": rnd((ttm_inc / prior_inc - 1) * 100) if prior_inc else None,
+        "received_ytd": rnd(recv_ytd), "received_qtr": rnd(recv_qtr),
+        "paying_positions": payers,
+        "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares",
+    }
 
 def series_value_on_or_after(series, date_str, key):
     for pt in series:
@@ -144,6 +291,13 @@ def main():
             c["pct_of_sleeve"] = round(c["mkt_value"] / sleeve_mkt * 100, 2) if sleeve_mkt else None
         contribs.sort(key=lambda c: c["unrealized_gain"], reverse=True)
 
+        # risk-adjusted + consistency (vs the primary TR benchmark)
+        prim = PRIMARY_BM.get(s)
+        rm = risk_metrics(port, bms.get(prim), steward) if prim else None
+        # income / dividends (Yahoo TTM dividends x current shares)
+        print(f"  {s}: computing income from dividends…")
+        inc = income_metrics(holdings, cb, prices, today)
+
         out["sleeves"][s] = {
             "stewardship_start": steward,
             "stewardship_label": steward_label,
@@ -152,6 +306,8 @@ def main():
             "returns": rets,
             "bm_basis": bm_basis,
             "benchmarks": bm_block,
+            "risk_metrics": rm,
+            "income": inc,
             "top_contributors": contribs[:5],
             "bottom_contributors": contribs[-5:][::-1],
             "contribution_basis": "unrealized gain by current position since purchase",
