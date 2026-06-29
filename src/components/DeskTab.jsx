@@ -55,12 +55,19 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
     const ret = s.returns?.since_stewardship
     const bm = PRIMARY_BM[id]
     const active = s.benchmarks?.[bm]?.active_return?.since_stewardship
+    const activeSpy = s.benchmarks?.SPY?.active_return?.since_stewardship
+    const vs = (v, name) => (
+      <span style={{ fontSize: 11.5, color: v == null ? C.t4 : v >= 0 ? C.up : C.dn, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+        {fmtPct(v)} <span style={{ color: C.t4 }}>vs {name}</span>
+      </span>
+    )
     return (
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '7px 0', borderTop: `1px solid ${C.border}` }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '7px 0', borderTop: `1px solid ${C.border}`, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12.5, fontWeight: 700, color: C.t1, width: 78 }}>{label}</span>
         <span style={{ fontSize: 17, fontWeight: 800, color: ret >= 0 ? C.up : C.dn, fontVariantNumeric: 'tabular-nums' }}>{fmtPct(ret)}</span>
-        <span style={{ marginLeft: 'auto', fontSize: 11.5, color: active >= 0 ? C.up : C.dn, fontVariantNumeric: 'tabular-nums' }}>
-          {fmtPct(active)} <span style={{ color: C.t4 }}>vs {bm}</span>
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+          {vs(active, bm)}
+          {activeSpy != null && vs(activeSpy, 'SPY')}
         </span>
       </div>
     )
