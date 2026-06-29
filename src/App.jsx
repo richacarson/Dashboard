@@ -1039,6 +1039,17 @@ Instructions:
   const [tWatchSort, setTWatchSort] = useState({ col: "chg", dir: "desc" }); // watchlist sort: col in sym|price|chg|qtd|pe|comp|peg
   const [tChartRange, setTChartRange] = useState("3Y");
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
+  // Carson's personal default: open the terminal portfolio chart on the stewardship
+  // (STEW) window. Applied once when ownership is known, and only if the range is
+  // still at the app default — never overrides a manual selection.
+  const stewDefaultApplied = useRef(false);
+  useEffect(() => {
+    if (deskOwner && !stewDefaultApplied.current) {
+      stewDefaultApplied.current = true;
+      setTChartSleeve("dividend");
+      setTChartRange(prev => prev === "3Y" ? "STEW" : prev);
+    }
+  }, [deskOwner]);
   const [tDrawer, setTDrawer] = useState(null);
   const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "research" | "briefs"
   const [tBriefView, setTBriefView] = useState(null); // { title, category, url } when a brief is open
