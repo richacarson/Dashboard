@@ -11490,7 +11490,7 @@ Instructions:
                           border: `1px solid ${perfRange === r ? C.borderActive : (r === "STEW" ? C.accent + "55" : C.border)}`,
                           background: perfRange === r ? C.accentSoft : "transparent",
                           color: perfRange === r ? C.t1 : (r === "STEW" ? C.accent : C.t3), cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-                        }}>{r === "STEW" ? "Carson '25" : r}</button>
+                        }}>{r === "STEW" ? "Q1 25" : r}</button>
                       ))}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
