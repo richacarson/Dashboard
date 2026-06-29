@@ -84,6 +84,43 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
     )
   }
 
+  // --- richer metrics (risk-adjusted + income) from performance.json ---
+  const pctv = (v) => (v == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`)
+  const numv = (v, suf = '') => (v == null ? '—' : `${v.toFixed(2)}${suf}`)
+  const usd0 = (v) => (v == null ? '—' : `$${Math.round(v).toLocaleString()}`)
+  const detailRow = (label, val) => (
+    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '2.5px 0', fontSize: 11 }}>
+      <span style={{ color: C.t4 }}>{label}</span>
+      <span style={{ color: C.t2, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{val}</span>
+    </div>
+  )
+  const MetricGrid = ({ heading, rows }) => (
+    <div style={{ marginTop: 10 }}>
+      <div style={{ fontSize: 10, color: C.t4, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{heading}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>{rows.map(([l, v]) => detailRow(l, v))}</div>
+    </div>
+  )
+  const RiskMini = ({ id, label }) => {
+    const rm = sleeves[id]?.risk_metrics; if (!rm) return null
+    return <MetricGrid heading={`${label} · risk & consistency`} rows={[
+      ['Ann. return', pctv(rm.annualized_return)], ['Volatility', pctv(rm.annualized_volatility)],
+      ['Sharpe', numv(rm.sharpe)], ['Sortino', numv(rm.sortino)],
+      ['Max drawdown', pctv(rm.max_drawdown)], ['Current DD', pctv(rm.current_drawdown)],
+      ['Info ratio', numv(rm.information_ratio)], ['Tracking err', pctv(rm.tracking_error)],
+      ['Up capture', numv(rm.up_capture, '%')], ['Down capture', numv(rm.down_capture, '%')],
+      ['Beta', numv(rm.beta)], ['Batting avg', numv(rm.batting_average, '%')],
+      ['Best month', pctv(rm.best_month)], ['Worst month', pctv(rm.worst_month)],
+    ]} />
+  }
+  const IncomeMini = ({ id, label }) => {
+    const inc = sleeves[id]?.income; if (!inc) return null
+    return <MetricGrid heading={`${label} · income`} rows={[
+      ['Proj. annual', usd0(inc.projected_annual_income)], ['Yield on cost', numv(inc.yield_on_cost, '%')],
+      ['Current yield', numv(inc.current_yield, '%')], ['Div growth YoY', pctv(inc.dividend_growth_yoy)],
+      ['Received YTD', usd0(inc.received_ytd)], ['Received qtr', usd0(inc.received_qtr)],
+    ]} />
+  }
+
   return (
     <div style={{ borderRadius: R, background: C.card, border: `1px solid ${C.border}`, borderTop: `2px solid ${C.accent}`, padding: '13px 15px', marginBottom: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
@@ -103,10 +140,14 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
       )}
 
       <button onClick={() => setOpen((o) => !o)} style={{ marginTop: 8, background: 'none', border: 'none', color: C.accent, fontSize: 11, cursor: 'pointer', padding: 0 }}>
-        {open ? 'Hide contributors ▴' : 'Show contributors ▾'}
+        {open ? 'Hide details ▴' : 'Show details ▾'}
       </button>
       {open && (
         <div style={{ marginTop: 4 }}>
+          <RiskMini id="dividend" label="Dividend" />
+          <RiskMini id="growth" label="Growth" />
+          <IncomeMini id="dividend" label="Dividend" />
+          <IncomeMini id="growth" label="Growth" />
           <Contributors id="dividend" label="Dividend · top / drag" />
           <Contributors id="growth" label="Growth · top / drag" />
           {Array.isArray(perf.methodology_caveats) && (
@@ -116,6 +157,60 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------- Decision scorecard
+// The literal stewardship record: how you've worked the queue. Aggregated from cio_desk.
+function DecisionScorecard({ C, terminal = false }) {
+  const R = terminal ? 2 : 12
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    let cancel = false
+    supabase.from('cio_desk').select('status,decided_at,category').limit(2000)
+      .then(({ data, error }) => {
+        if (cancel || error || !data) return
+        const c = { approved: 0, rejected: 0, deferred: 0, pending: 0 }
+        const cutoff = Date.now() - 30 * 86400000
+        let last30 = 0
+        const cat = {}
+        for (const r of data) {
+          if (r.status in c) c[r.status]++
+          const dec = r.status === 'approved' || r.status === 'rejected'
+          if (dec && r.decided_at && new Date(r.decided_at).getTime() > cutoff) last30++
+          if (dec && r.category) cat[r.category] = (cat[r.category] || 0) + 1
+        }
+        const decided = c.approved + c.rejected
+        const topCat = Object.entries(cat).sort((a, b) => b[1] - a[1])[0]
+        setStats({ ...c, decided, approveRate: decided ? Math.round((c.approved / decided) * 100) : null, last30, topCat })
+      })
+    return () => { cancel = true }
+  }, [])
+
+  if (!stats || (stats.decided + stats.deferred + stats.pending) === 0) return null
+  const pill = (label, n, color) => (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+      <span style={{ fontSize: 14, fontWeight: 800, color, fontVariantNumeric: 'tabular-nums' }}>{n}</span>
+      <span style={{ fontSize: 10, color: C.t4, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
+    </div>
+  )
+  return (
+    <div style={{ borderRadius: R, background: C.card, border: `1px solid ${C.border}`, padding: '12px 15px', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 800, color: C.t1, letterSpacing: 0.2 }}>DECISION SCORECARD</span>
+        {stats.approveRate != null && <span style={{ marginLeft: 'auto', fontSize: 11, color: C.t3 }}>{stats.approveRate}% approved · {stats.decided} decided</span>}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
+        {pill('Approved', stats.approved, C.up)}
+        {pill('Rejected', stats.rejected, C.dn)}
+        {pill('Deferred', stats.deferred, C.warn)}
+        {pill('Pending', stats.pending, C.t2)}
+      </div>
+      <div style={{ fontSize: 10.5, color: C.t4, marginTop: 8 }}>
+        {stats.last30} decided in last 30 days{stats.topCat ? ` · most acted: ${(stats.topCat[0] || '').replace('_', ' ')} (${stats.topCat[1]})` : ''}
+      </div>
     </div>
   )
 }
@@ -275,6 +370,9 @@ function Queue({ C, isDesktop, email, terminal = false }) {
 
       {/* Pinned private performance record — Carson-only (inside the owner-gated Queue) */}
       <StewardshipPanel C={C} isDesktop={isDesktop} terminal={terminal} />
+
+      {/* Decision scorecard — how you've worked the queue */}
+      <DecisionScorecard C={C} terminal={terminal} />
 
       {/* Active | Decided toggle */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
