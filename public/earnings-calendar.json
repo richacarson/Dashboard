@@ -1470,16 +1470,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "ESI",
-    "date": "2026-07-06",
-    "hour": "amc",
-    "epsEstimate": 0.4306,
-    "epsActual": null,
-    "revenueEstimate": 861306487,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "FAX",
     "date": "2026-07-06",
     "hour": "",
