@@ -6387,7 +6387,7 @@ Instructions:
                 setTProfileSym(null);
                 setTerminalActiveSym("__portfolio__");
                 setTChartSleeve("dividend");
-                setTChartRange("3Y");
+                setTChartRange(deskOwner ? "STEW" : "3Y");   // owner's personal default
                 setPerfSleeve("dividend");
                 setTChartHover(null);
               } else {
