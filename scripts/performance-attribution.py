@@ -115,7 +115,6 @@ def risk_metrics(port, bm_series, steward):
         "best_month": rnd(max(pm) * 100) if pm else None,
         "worst_month": rnd(min(pm) * 100) if pm else None,
         "months": mm, "risk_free_annual": RISK_FREE_ANNUAL * 100,
-        "vs_benchmark": PRIMARY_BM,
     }
 
 # ---------------------------------------------------------------- income / dividends
@@ -291,9 +290,14 @@ def main():
             c["pct_of_sleeve"] = round(c["mkt_value"] / sleeve_mkt * 100, 2) if sleeve_mkt else None
         contribs.sort(key=lambda c: c["unrealized_gain"], reverse=True)
 
-        # risk-adjusted + consistency (vs the primary TR benchmark)
+        # risk-adjusted + consistency, computed vs BOTH the primary TR benchmark and SPY
         prim = PRIMARY_BM.get(s)
-        rm = risk_metrics(port, bms.get(prim), steward) if prim else None
+        rm = {}
+        for bmk in [prim, "SPY"]:
+            if bmk and bms.get(bmk):
+                r = risk_metrics(port, bms[bmk], steward)
+                if r: rm[bmk] = r
+        rm = rm or None
         # income / dividends (Yahoo TTM dividends x current shares)
         print(f"  {s}: computing income from dividends…")
         inc = income_metrics(holdings, cb, prices, today)

@@ -32,6 +32,7 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
   const [perf, setPerf] = useState(null)
   const [failed, setFailed] = useState(false)
   const [open, setOpen] = useState(false)
+  const [statBm, setStatBm] = useState('primary')   // 'primary' | 'spy' — benchmark for risk stats
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}performance.json?v=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' })
@@ -108,8 +109,12 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
     </div>
   )
   const RiskMini = ({ id, label }) => {
-    const rm = sleeves[id]?.risk_metrics; if (!rm) return null
-    return <MetricGrid heading={`${label} · risk & consistency`} rows={[
+    const all = sleeves[id]?.risk_metrics; if (!all) return null
+    const key = statBm === 'spy' ? 'SPY' : PRIMARY_BM[id]
+    // new shape is keyed by benchmark; fall back to the other key or legacy flat shape
+    const rm = all[key] || all[PRIMARY_BM[id]] || all.SPY || (all.sharpe != null ? all : null)
+    if (!rm) return null
+    return <MetricGrid heading={`${label} · risk vs ${key}`} rows={[
       ['Ann. return', pctv(rm.annualized_return)], ['Volatility', pctv(rm.annualized_volatility)],
       ['Sharpe', numv(rm.sharpe)], ['Sortino', numv(rm.sortino)],
       ['Max drawdown', pctv(rm.max_drawdown)], ['Current DD', pctv(rm.current_drawdown)],
@@ -151,6 +156,14 @@ function StewardshipPanel({ C, isDesktop, terminal = false }) {
       </button>
       {open && (
         <div style={{ marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+            <span style={{ fontSize: 10, color: C.t4, textTransform: 'uppercase', letterSpacing: 0.5 }}>Stats vs</span>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {[['primary', 'Primary'], ['spy', 'SPY']].map(([v, l]) => (
+                <button key={v} onClick={() => setStatBm(v)} style={{ padding: '3px 11px', borderRadius: R, border: `1px solid ${statBm === v ? C.accent : C.border}`, background: statBm === v ? C.accent : 'transparent', color: statBm === v ? '#fff' : C.t3, fontSize: 10, fontWeight: 700, cursor: 'pointer' }}>{l}</button>
+              ))}
+            </div>
+          </div>
           <RiskMini id="dividend" label="Dividend" />
           <RiskMini id="growth" label="Growth" />
           <IncomeMini id="dividend" label="Dividend" />
