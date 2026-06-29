@@ -11452,7 +11452,7 @@ Instructions:
                   {perfRange === "STEW" && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", borderRadius: 10, background: C.accentSoft, border: `1px solid ${C.accent}33`, marginBottom: isDesktop ? 16 : 8 }}>
                       <span style={{ fontSize: 11, fontWeight: 800, color: C.accent, textTransform: "uppercase", letterSpacing: 1 }}>Carson Stewardship</span>
-                      <span style={{ fontSize: 12, color: C.t3 }}>Dividend performance since first decision — Jan 15, 2025 vs DVY &amp; SPY (total return)</span>
+                      <span style={{ fontSize: 12, color: C.t3 }}>Dividend performance since first influence — Jan 15, 2025 vs DVY &amp; SPY (total return)</span>
                     </div>
                   )}
                   {/* Summary cards */}
