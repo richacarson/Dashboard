@@ -8,6 +8,10 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from './desk'
 
+// Anyone with a paradiem.org email may access the dashboard. A small explicit
+// allowlist (allowed_users) still covers any outside guests Carson adds by hand.
+const isParadiemEmail = (email) => (email ?? '').trim().toLowerCase().endsWith('@paradiem.org')
+
 const NAVY = '#171738'
 const GOLD = '#C9A84C'
 const PARCHMENT = '#F4EFE4'
@@ -27,6 +31,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (session === undefined) return
     if (!session) { setAllowed(null); return }
+    // Fast path: any paradiem.org member is allowed without a table lookup.
+    if (isParadiemEmail(session.user.email)) { setAllowed(true); return }
     let cancelled = false
     setAllowed(null)
     supabase
@@ -90,9 +96,11 @@ function Login() {
     try {
       const em = email.trim().toLowerCase()
       if (mode === 'signup') {
-        const { data: ok, error: rpcErr } = await supabase.rpc('is_email_allowed', { check_email: em })
-        if (rpcErr) throw rpcErr
-        if (!ok) { setError("This email isn't approved. Ask Carson to add you."); setBusy(false); return }
+        if (!isParadiemEmail(em)) {
+          const { data: ok, error: rpcErr } = await supabase.rpc('is_email_allowed', { check_email: em })
+          if (rpcErr) throw rpcErr
+          if (!ok) { setError("This email isn't approved. Ask Carson to add you."); setBusy(false); return }
+        }
         const { error: suErr } = await supabase.auth.signUp({ email: em, password })
         if (suErr) throw suErr
         setInfo('Account created. If confirmation is on, check your inbox, then sign in.')
@@ -110,7 +118,7 @@ function Login() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: NAVY, padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 360, background: PARCHMENT, borderRadius: 16, padding: 26 }}>
         <div style={{ fontSize: 22, fontWeight: 800, color: NAVY }}>Paradiem</div>
-        <div style={{ fontSize: 13, color: '#5b5b6b', marginBottom: 18 }}>{mode === 'signin' ? 'Sign in to continue.' : 'Create your account (approved emails only).'}</div>
+        <div style={{ fontSize: 13, color: '#5b5b6b', marginBottom: 18 }}>{mode === 'signin' ? 'Sign in to continue.' : 'Create your account with your paradiem.org email.'}</div>
         <input type="email" inputMode="email" autoComplete="email" placeholder="you@paradiem.org"
           value={email} onChange={(e) => setEmail(e.target.value)} style={field} />
         <input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} placeholder="Password"
