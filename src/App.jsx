@@ -106,8 +106,13 @@ const SECTOR_SHORT = {
   "Materials": "MTRL", "Basic Materials": "MTRL",
   "Real Estate": "REIT",
   "Digital Assets": "CRYPTO", "Crypto": "CRYPTO",
+  "Software": "SOFTW",
 };
 const shortSector = (s) => s ? (SECTOR_SHORT[s] || s.split(/[\s/]/)[0].slice(0, 6).toUpperCase()) : "";
+// Carve a dedicated "Software" sector out of the broad "Technology" bucket so the
+// screener can group/filter software names on their own. Driven by the screener
+// report's industry field (e.g. "Software - Infrastructure" / "Software - Application").
+const refineSector = (sector, industry) => (industry && /software/i.test(industry)) ? "Software" : (sector || null);
 const RAIL_BM_EXTRA = RAIL_BENCHMARKS.filter(s => !BM_SYMS.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -1161,7 +1166,7 @@ Instructions:
   const [screenerSortBy, setScreenerSortBy] = useState("score"); // "score" | "freshness" | "ticker" | "rec" | "inspire"
   const [screenerSectors, setScreenerSectors] = useState(() => {
     try {
-      const c = JSON.parse(localStorage.getItem("iown_screener_sectors") || "{}");
+      const c = JSON.parse(localStorage.getItem("iown_screener_sectors_v2") || "{}");
       const age = Date.now() - (c._ts || 0);
       return age < 7 * 24 * 3600000 ? c : {};
     } catch { return {}; }
@@ -3126,7 +3131,7 @@ Instructions:
               const r = await fetch(`https://richacarson.github.io/Stock-Screener/reports/${ticker}.json`);
               if (!r.ok) continue;
               const rep = await r.json();
-              const sec = rep.profile?.sector || rep.sector;
+              const sec = refineSector(rep.profile?.sector || rep.sector, rep.profile?.industry || rep.industry);
               if (sec) sectors[ticker] = sec;
               const ev = rep.excellence_evaluation || {};
               const inn = ev.innovation?.score;
@@ -3151,7 +3156,7 @@ Instructions:
         const scoresOut = { ...scores, _ts: Date.now() };
         setScreenerSectors(sectorsOut);
         setScreenerScores(scoresOut);
-        try { localStorage.setItem("iown_screener_sectors", JSON.stringify(sectorsOut)); } catch {}
+        try { localStorage.setItem("iown_screener_sectors_v2", JSON.stringify(sectorsOut)); } catch {}
         try { localStorage.setItem("iown_screener_scores", JSON.stringify(scoresOut)); } catch {}
       })
       .catch(() => { setScreenerLoadDone(true); });
