@@ -21,10 +21,16 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined) // undefined while loading
   const [allowed, setAllowed] = useState(null)       // null until checked
+  const [recovery, setRecovery] = useState(false)    // true while completing a password reset
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, next) => setSession(next))
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      // Clicking a reset email lands here with a recovery session — show the
+      // "set new password" screen until the user picks one.
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true)
+      setSession(next)
+    })
     return () => sub.subscription.unsubscribe()
   }, [])
 
@@ -48,7 +54,8 @@ export function AuthProvider({ children }) {
 
   const value = {
     session, user: session?.user ?? null, email: session?.user?.email ?? null,
-    allowed, loading, signOut: () => supabase.auth.signOut(),
+    allowed, loading, recovery, endRecovery: () => setRecovery(false),
+    signOut: () => supabase.auth.signOut(),
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
@@ -61,8 +68,9 @@ export function useAuth() {
 
 // Gate the whole app. Wrap <App/> with this (see main.jsx change).
 export function AuthGate({ children }) {
-  const { session, allowed, loading, email, signOut } = useAuth()
+  const { session, allowed, loading, email, signOut, recovery, endRecovery } = useAuth()
 
+  if (recovery) return <SetNewPassword onDone={endRecovery} signOut={signOut} />
   if (loading) return <Splash>Loading…</Splash>
   if (!session) return <Login />
   if (!allowed) return (
@@ -90,6 +98,21 @@ function Login() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
+
+  const resetPassword = async () => {
+    const em = email.trim().toLowerCase()
+    if (!em) { setError('Enter your email first, then tap "Forgot password?"'); return }
+    setError(null); setInfo(null); setBusy(true)
+    try {
+      const { error: rErr } = await supabase.auth.resetPasswordForEmail(em, {
+        redirectTo: window.location.origin + window.location.pathname,
+      })
+      if (rErr) throw rErr
+      setInfo('Password reset link sent — check your inbox (and spam), then follow the link to set a new password.')
+    } catch (e) {
+      setError(friendly(e?.message))
+    } finally { setBusy(false) }
+  }
 
   const submit = async () => {
     setError(null); setInfo(null); setBusy(true)
@@ -134,6 +157,65 @@ function Login() {
           style={{ width: '100%', marginTop: 10, background: 'none', border: 'none', color: '#5b5b6b', fontSize: 12, cursor: 'pointer' }}>
           {mode === 'signin' ? 'Need an account? Create one' : 'Have an account? Sign in'}
         </button>
+        {mode === 'signin' && (
+          <button onClick={resetPassword} disabled={busy}
+            style={{ width: '100%', marginTop: 2, background: 'none', border: 'none', color: '#5b5b6b', fontSize: 12, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
+            Forgot password?
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Shown after a user clicks the reset link in their email (recovery session active).
+function SetNewPassword({ onDone, signOut }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const [done, setDone] = useState(false)
+
+  const save = async () => {
+    setError(null)
+    if (password.length < 6) { setError('Use at least 6 characters.'); return }
+    if (password !== confirm) { setError('Passwords don\'t match.'); return }
+    setBusy(true)
+    try {
+      const { error: uErr } = await supabase.auth.updateUser({ password })
+      if (uErr) throw uErr
+      setDone(true)
+    } catch (e) {
+      setError(friendly(e?.message))
+    } finally { setBusy(false) }
+  }
+
+  if (done) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: NAVY, padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 360, background: PARCHMENT, borderRadius: 16, padding: 26, textAlign: 'center' }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Password updated</div>
+        <div style={{ fontSize: 13, color: '#5b5b6b', marginBottom: 18 }}>You're all set. Continue to the dashboard.</div>
+        <button onClick={onDone} style={{ width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>Continue</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: NAVY, padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 360, background: PARCHMENT, borderRadius: 16, padding: 26 }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: NAVY }}>Set a new password</div>
+        <div style={{ fontSize: 13, color: '#5b5b6b', marginBottom: 18 }}>Choose a new password for your account.</div>
+        <input type="password" autoComplete="new-password" placeholder="New password"
+          value={password} onChange={(e) => setPassword(e.target.value)} style={field} />
+        <input type="password" autoComplete="new-password" placeholder="Confirm new password"
+          value={confirm} onChange={(e) => setConfirm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()}
+          style={{ ...field, marginTop: 8 }} />
+        {error && <div style={{ fontSize: 12, color: '#b3261e', marginTop: 8 }}>{error}</div>}
+        <button onClick={save} disabled={busy || !password || !confirm}
+          style={{ width: '100%', marginTop: 16, padding: '12px 0', borderRadius: 10, border: 'none', background: GOLD, color: NAVY, fontWeight: 800, fontSize: 14, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
+          {busy ? '…' : 'Save password'}
+        </button>
+        <button onClick={signOut} style={{ width: '100%', marginTop: 10, background: 'none', border: 'none', color: '#5b5b6b', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
       </div>
     </div>
   )
