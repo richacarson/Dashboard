@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-30T13:20:16Z",
+  "generated_at": "2026-07-01T05:56:32Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -7,63 +7,59 @@
       "stewardship_start": "2025-01-15",
       "stewardship_label": "since stewardship (2025-01-15)",
       "data_start": "2011-10-02",
-      "current_value": 634602.47,
+      "current_value": 633558.77,
       "returns": {
-        "week": 1.72,
-        "mtd": 2.09,
-        "qtd": 9.3,
-        "ytd": 14.27,
-        "since_stewardship": 33.29
+        "week": 1.4,
+        "mtd": null,
+        "qtd": null,
+        "ytd": 14.09,
+        "since_stewardship": 33.07
       },
       "bm_basis": "total_return",
       "benchmarks": {
         "DVY": {
           "returns": {
-            "week": 1.49,
-            "mtd": 3.54,
-            "qtd": 5.38,
-            "ytd": 12.44,
-            "since_stewardship": 25.36
+            "week": 0.28,
+            "mtd": null,
+            "qtd": null,
+            "ytd": 11.3,
+            "since_stewardship": 24.09
           },
           "active_return": {
-            "week": 0.23,
-            "mtd": -1.45,
-            "qtd": 3.92,
-            "ytd": 1.83,
-            "since_stewardship": 7.93
+            "week": 1.12,
+            "ytd": 2.79,
+            "since_stewardship": 8.98
           }
         },
         "SPY": {
           "returns": {
-            "week": 1.01,
-            "mtd": -2.06,
-            "qtd": 13.38,
-            "ytd": 9.04,
-            "since_stewardship": 27.14
+            "week": 1.85,
+            "mtd": null,
+            "qtd": null,
+            "ytd": 9.89,
+            "since_stewardship": 28.13
           },
           "active_return": {
-            "week": 0.71,
-            "mtd": 4.15,
-            "qtd": -4.08,
-            "ytd": 5.23,
-            "since_stewardship": 6.15
+            "week": -0.45,
+            "ytd": 4.2,
+            "since_stewardship": 4.94
           }
         }
       },
       "risk_metrics": {
         "DVY": {
           "max_drawdown": -17.11,
-          "current_drawdown": -0.82,
-          "annualized_volatility": 16.85,
-          "annualized_return": 22.08,
-          "sharpe": 1.06,
-          "sortino": 1.52,
-          "information_ratio": 0.62,
-          "tracking_error": 8.21,
+          "current_drawdown": -0.99,
+          "annualized_volatility": 16.83,
+          "annualized_return": 21.87,
+          "sharpe": 1.04,
+          "sortino": 1.51,
+          "information_ratio": 0.7,
+          "tracking_error": 8.23,
           "beta": 1.01,
           "correlation": 0.87,
           "up_capture": 94.1,
-          "down_capture": 94.2,
+          "down_capture": 93.8,
           "batting_average": 52.9,
           "best_month": 8.72,
           "worst_month": -5.97,
@@ -72,16 +68,16 @@
         },
         "SPY": {
           "max_drawdown": -17.11,
-          "current_drawdown": -0.82,
-          "annualized_volatility": 16.85,
-          "annualized_return": 22.08,
-          "sharpe": 1.06,
-          "sortino": 1.52,
-          "information_ratio": 0.38,
-          "tracking_error": 10.31,
-          "beta": 0.78,
+          "current_drawdown": -0.99,
+          "annualized_volatility": 16.83,
+          "annualized_return": 21.87,
+          "sharpe": 1.04,
+          "sortino": 1.51,
+          "information_ratio": 0.3,
+          "tracking_error": 10.33,
+          "beta": 0.77,
           "correlation": 0.83,
-          "up_capture": 63.19,
+          "up_capture": 62.4,
           "down_capture": 80.11,
           "batting_average": 41.2,
           "best_month": 8.72,
@@ -91,12 +87,12 @@
         }
       },
       "income": {
-        "projected_annual_income": 13247.91,
+        "projected_annual_income": 13259.2,
         "yield_on_cost": 2.73,
         "current_yield": 2.13,
-        "dividend_growth_yoy": 3.07,
-        "received_ytd": 7253.45,
-        "received_qtr": 2726.05,
+        "dividend_growth_yoy": -0.48,
+        "received_ytd": 7734.49,
+        "received_qtr": 0.0,
         "paying_positions": 26,
         "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares"
       },
@@ -180,62 +176,58 @@
       "stewardship_start": "2025-07-28",
       "stewardship_label": "since launch (2025-07-28)",
       "data_start": "2025-07-28",
-      "current_value": 132944.35,
+      "current_value": 134990.23,
       "returns": {
-        "week": -0.71,
-        "mtd": 1.66,
-        "qtd": 22.38,
-        "ytd": 18.94,
-        "since_stewardship": 32.94
+        "week": 2.06,
+        "mtd": null,
+        "qtd": null,
+        "ytd": 20.77,
+        "since_stewardship": 34.99
       },
       "bm_basis": "total_return",
       "benchmarks": {
         "IUSG": {
           "returns": {
-            "week": 1.46,
-            "mtd": -3.84,
-            "qtd": 18.22,
-            "ytd": 10.65,
-            "since_stewardship": 19.58
+            "week": 3.05,
+            "mtd": null,
+            "qtd": null,
+            "ytd": 12.12,
+            "since_stewardship": 21.17
           },
           "active_return": {
-            "week": -2.17,
-            "mtd": 5.5,
-            "qtd": 4.16,
-            "ytd": 8.29,
-            "since_stewardship": 13.36
+            "week": -0.99,
+            "ytd": 8.65,
+            "since_stewardship": 13.82
           }
         },
         "SPY": {
           "returns": {
-            "week": 1.01,
-            "mtd": -2.06,
-            "qtd": 13.38,
-            "ytd": 9.04,
-            "since_stewardship": 17.63
+            "week": 1.85,
+            "mtd": null,
+            "qtd": null,
+            "ytd": 9.89,
+            "since_stewardship": 18.54
           },
           "active_return": {
-            "week": -1.72,
-            "mtd": 3.72,
-            "qtd": 9.0,
-            "ytd": 9.9,
-            "since_stewardship": 15.31
+            "week": 0.21,
+            "ytd": 10.88,
+            "since_stewardship": 16.45
           }
         }
       },
       "risk_metrics": {
         "IUSG": {
           "max_drawdown": -12.03,
-          "current_drawdown": -3.88,
-          "annualized_volatility": 24.68,
-          "annualized_return": 36.25,
-          "sharpe": 1.29,
-          "sortino": 1.93,
-          "information_ratio": 0.98,
-          "tracking_error": 15.08,
+          "current_drawdown": -2.4,
+          "annualized_volatility": 24.67,
+          "annualized_return": 38.33,
+          "sharpe": 1.38,
+          "sortino": 2.05,
+          "information_ratio": 1.01,
+          "tracking_error": 15.05,
           "beta": 1.13,
           "correlation": 0.8,
-          "up_capture": 126.72,
+          "up_capture": 126.91,
           "down_capture": 103.63,
           "batting_average": 63.6,
           "best_month": 11.03,
@@ -245,16 +237,16 @@
         },
         "SPY": {
           "max_drawdown": -12.03,
-          "current_drawdown": -3.88,
-          "annualized_volatility": 24.68,
-          "annualized_return": 36.25,
-          "sharpe": 1.29,
-          "sortino": 1.93,
-          "information_ratio": 1.06,
-          "tracking_error": 15.96,
+          "current_drawdown": -2.4,
+          "annualized_volatility": 24.67,
+          "annualized_return": 38.33,
+          "sharpe": 1.38,
+          "sortino": 2.05,
+          "information_ratio": 1.14,
+          "tracking_error": 15.94,
           "beta": 1.57,
           "correlation": 0.82,
-          "up_capture": 219.76,
+          "up_capture": 221.27,
           "down_capture": 136.01,
           "batting_average": 63.6,
           "best_month": 11.03,
@@ -269,7 +261,7 @@
         "current_yield": 1.72,
         "dividend_growth_yoy": 5.91,
         "received_ytd": 613.48,
-        "received_qtr": 333.99,
+        "received_qtr": 0.0,
         "paying_positions": 13,
         "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares"
       },
@@ -355,11 +347,11 @@
     "Position contribution = current value minus cost basis = UNREALIZED gain since purchase, NOT contribution measured over the since-stewardship window (per-name historical prices are not available in the committed data). Labeled accordingly."
   ],
   "combined": {
-    "since_stewardship_return": 33.23,
-    "total_value": 767546.82,
+    "since_stewardship_return": 33.41,
+    "total_value": 768549.0,
     "basis": "value-weighted blend of sleeve since-stewardship returns"
   },
   "ic_summary": {
-    "headline": "Stewardship record since 2025-01-15: Dividend +33.29% (vs DVY active +7.93%), Growth +32.94% (vs IUSG active +13.36%)."
+    "headline": "Stewardship record since 2025-01-15: Dividend +33.07% (vs DVY active +8.98%), Growth +34.99% (vs IUSG active +13.82%)."
   }
 }
