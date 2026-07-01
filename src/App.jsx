@@ -426,14 +426,36 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
    script instead of the basic widgetembed iframe which strips tools.
    ────────────────────────────────────────────────────────────────── */
 const TradingViewChart = memo(function TradingViewChart({ symbol, theme: chartTheme, bg, toolbarBg, style: chartStyle = "1" }) {
-  // Direct iframe to TradingView's hosted widget — known to render reliably.
-  // hidesidetoolbar=0 exposes the left drawing-tool panel (trend lines, fib,
-  // boxes, channels). The advanced-chart script embed approach (srcDoc or
-  // dynamic <script> injection) had document.currentScript issues that
-  // resulted in black panes; this simple iframe just works.
+  // Advanced-chart embed via iframe srcDoc. The script runs inside the iframe's
+  // OWN document, so document.currentScript resolves correctly (the earlier
+  // in-parent injection gave black panes). This variant lets us pin the exact
+  // 50-day and 200-day simple moving averages, which the simple widgetembed URL
+  // can't do (its studies param only adds default-length indicators). Drawing
+  // tools (trend lines, fib, boxes) stay available via hide_side_toolbar:false.
   const tvTheme = chartTheme === "light" ? "light" : "dark";
-  const url = `https://s.tradingview.com/widgetembed/?frameElementId=tv_chart&symbol=${encodeURIComponent(symbol)}&interval=D&hidesidetoolbar=0&symboledit=0&saveimage=0&hideideas=1&hidetrading=1&theme=${tvTheme}&style=${chartStyle}&timezone=America%2FNew_York&withdateranges=1&showpopupbutton=0&locale=en${bg ? `&backgroundColor=%23${bg}` : ""}${toolbarBg ? `&toolbar_bg=%23${toolbarBg}` : ""}`;
-  return <iframe key={`${symbol}-${tvTheme}`} src={url} style={{ width: "100%", height: "100%", border: "none", display: "block", background: bg ? `#${bg}` : undefined }} title={`Chart: ${symbol}`} />;
+  const cfg = {
+    autosize: true,
+    symbol,
+    interval: "D",
+    timezone: "America/New_York",
+    theme: tvTheme,
+    style: chartStyle,
+    locale: "en",
+    withdateranges: true,
+    hide_side_toolbar: false,
+    allow_symbol_change: false,
+    save_image: false,
+    hide_top_toolbar: false,
+    studies: [
+      { id: "MASimple@tv-basicstudies", inputs: { length: 50 } },
+      { id: "MASimple@tv-basicstudies", inputs: { length: 200 } },
+    ],
+    ...(bg ? { backgroundColor: `#${bg}` } : {}),
+    ...(toolbarBg ? { toolbar_bg: `#${toolbarBg}` } : {}),
+  };
+  const bgCss = bg ? `#${bg}` : "transparent";
+  const srcDoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{height:100%;margin:0;padding:0;background:${bgCss};overflow:hidden}.tradingview-widget-container,.tradingview-widget-container__widget{height:100%;width:100%}</style></head><body><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>${JSON.stringify(cfg)}</script></div></body></html>`;
+  return <iframe key={`${symbol}-${tvTheme}-${chartStyle}`} srcDoc={srcDoc} style={{ width: "100%", height: "100%", border: "none", display: "block", background: bgCss }} title={`Chart: ${symbol}`} />;
 });
 function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, theme, quotesRef, barsRef, fundamentals, news, coreSyms }) {
   const [profileTab, setProfileTab] = useState(initTab || "overview");
