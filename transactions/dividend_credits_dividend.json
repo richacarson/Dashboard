@@ -133,5 +133,25 @@
     "ticker": "LRCX",
     "ex_date": "2026-06-17",
     "dps": 0.26
+  },
+  {
+    "ticker": "A",
+    "ex_date": "2026-06-30",
+    "dps": 0.255
+  },
+  {
+    "ticker": "NTR",
+    "ex_date": "2026-06-30",
+    "dps": 0.55
+  },
+  {
+    "ticker": "STLD",
+    "ex_date": "2026-06-30",
+    "dps": 0.53
+  },
+  {
+    "ticker": "SYK",
+    "ex_date": "2026-06-30",
+    "dps": 0.88
   }
 ]
