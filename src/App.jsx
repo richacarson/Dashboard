@@ -113,6 +113,16 @@ const shortSector = (s) => s ? (SECTOR_SHORT[s] || s.split(/[\s/]/)[0].slice(0, 
 // screener can group/filter software names on their own. Driven by the screener
 // report's industry field (e.g. "Software - Infrastructure" / "Software - Application").
 const refineSector = (sector, industry) => (industry && /software/i.test(industry)) ? "Software" : (sector || null);
+// Forward valuation helpers for the terminal watchlist. Finnhub provides a
+// forward (annual) P/E but no forward PEG, so PEG is put on a forward basis by
+// holding the trailing growth assumption constant: pegFwd = pegTTM × (peFwd/peTTM).
+const peFwdOf = (f) => (f?.peFwd != null && isFinite(f.peFwd) && f.peFwd > 0) ? f.peFwd : (f?.peTTM ?? null);
+const pegFwdOf = (f) => {
+  if (!f) return null;
+  if (f.pegTTM != null && f.peFwd != null && f.peTTM != null && f.peTTM > 0 && isFinite(f.peFwd) && isFinite(f.peTTM))
+    return f.pegTTM * (f.peFwd / f.peTTM);
+  return f.pegTTM ?? null;
+};
 const RAIL_BM_EXTRA = RAIL_BENCHMARKS.filter(s => !BM_SYMS.includes(s));
 const BASE = "https://data.alpaca.markets";
 const PAPER = "https://paper-api.alpaca.markets";
@@ -3278,6 +3288,19 @@ Instructions:
     }
     return Object.fromEntries(Object.entries(agg).map(([k, v]) => [k, v.sum / v.n]));
   }, [fundamentals]);
+  // Forward-basis sector average P/E — mirrors sectorPE but uses forward P/E so
+  // the watchlist "beats sector" highlight stays on the same basis as the column.
+  const sectorPeFwd = useMemo(() => {
+    const agg = {};
+    for (const [sym, f] of Object.entries(fundamentals)) {
+      if (sym === "_ts" || !f || typeof f !== "object") continue;
+      const sec = f.sector, pe = peFwdOf(f);
+      if (!sec || pe == null || !isFinite(pe) || pe <= 0) continue;
+      if (!agg[sec]) agg[sec] = { sum: 0, n: 0 };
+      agg[sec].sum += pe; agg[sec].n++;
+    }
+    return Object.fromEntries(Object.entries(agg).map(([k, v]) => [k, v.sum / v.n]));
+  }, [fundamentals]);
 
   /* ── Terminal layout: measured chart dimensions (exact crosshair math, no letterboxing) ── */
   const [tChartDims, setTChartDims] = useState({ w: 900, h: 400 });
@@ -3958,10 +3981,10 @@ Instructions:
       return ws > 0 ? wsum / ws : (n ? esum / n : null);
     };
     const tQtdOf = s => { const p = (quotesRef.current[s] || quotes[s])?.p; const anc = REBALANCE_ANCHORS[s]; return (anc && p) ? (p / anc - 1) * 100 : (fundamentals[s]?.thisQtr ?? null); };
-    const tAvgPE = tAvg(s => fundamentals[s]?.peTTM);
+    const tAvgPE = tAvg(s => peFwdOf(fundamentals[s]));
     const tAvgComp = tAvg(s => screenerByTicker[s]?.overall_score);
     const tAvgYld = tAvg(s => fundamentals[s]?.yieldFwd);
-    const tAvgPeg = tAvg(s => fundamentals[s]?.pegTTM);
+    const tAvgPeg = tAvg(s => pegFwdOf(fundamentals[s]));
     const tAvgQtd = tAvg(tQtdOf);
     const tIsGrowth = tChartSleeve === "growth";
     const tIsDividend = tChartSleeve === "dividend";
@@ -4055,10 +4078,10 @@ Instructions:
                   // Uses the same calc as sleeveActualDay (shares × current price vs prev close).
                   const sleeveDay = sleeveActualDay(tChartSleeve);
                   const day = { l: "DAY", v: sleeveDay != null ? pct(sleeveDay) : null, c: sleeveDay == null ? null : sleeveDay >= 0 ? C.up : C.dn };
-                  const pe = { l: "P/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null };
+                  const pe = { l: "FP/E", v: tAvgPE != null ? tAvgPE.toFixed(1) : null };
                   const comp = { l: "COMP", v: tAvgComp != null ? Math.round(tAvgComp).toString() : null };
                   const yld = { l: "YLD", v: tAvgYld != null ? `${tAvgYld.toFixed(1)}%` : null };
-                  const peg = { l: "PEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null };
+                  const peg = { l: "FPEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null };
                   if (tIsEtfSleeve) return [day];
                   if (tIsDividend) return [day, yld, comp, pe];
                   if (tIsGrowth) return [day, comp, pe, peg];
@@ -4077,10 +4100,10 @@ Instructions:
                   { l: "PRICE", k: "price", w: tIsEtfSleeve ? 72 : 54 },
                   { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
                   ...(tIsEtfSleeve ? [] : tIsGrowth
-                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "PEG", k: "peg", w: 28 }, { l: "WT%", k: "wt", w: 34 }]
+                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FP/E", k: "pe", w: 36 }, { l: "FPEG", k: "peg", w: 28 }, { l: "WT%", k: "wt", w: 34 }]
                     : tIsFci
-                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }]
-                    : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "P/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
+                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FP/E", k: "pe", w: 36 }]
+                    : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FP/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
                 ].map(h => {
                   const active = tWatchSort.col === h.k;
                   const arrow = active ? (tWatchSort.dir === "asc" ? "↑" : "↓") : "";
@@ -4097,9 +4120,9 @@ Instructions:
                 price: s => (quotesRef.current[s] || quotes[s])?.p,
                 chg: s => { const q = quotesRef.current[s] || quotes[s]; const b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; },
                 qtd: s => tQtdOf(s),
-                pe: s => fundamentals[s]?.peTTM,
+                pe: s => peFwdOf(fundamentals[s]),
                 wt: s => liveWeights[tChartSleeve]?.[s] ?? TARGET_WEIGHTS[tChartSleeve]?.[s] ?? null,
-                peg: s => fundamentals[s]?.pegTTM,
+                peg: s => pegFwdOf(fundamentals[s]),
               };
               return [...tSleeveSyms].sort((a, b) => {
                 const ka = ext[tWatchSort.col]?.(a);
@@ -4112,7 +4135,7 @@ Instructions:
                 const cmp = tWatchSort.col === "sym" ? ka.localeCompare(kb) : (ka - kb);
                 return tWatchSort.dir === "asc" ? cmp : -cmp;
               });
-            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = chg(sym); const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peBeat = f?.peTTM != null && f.sector && sectorPE[f.sector] && f.peTTM < sectorPE[f.sector]; return (
+            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = chg(sym); const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peF = peFwdOf(f); const pegF = pegFwdOf(f); const peBeat = peF != null && f?.sector && sectorPeFwd[f.sector] && peF < sectorPeFwd[f.sector]; return (
               <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); }}
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
@@ -4136,8 +4159,8 @@ Instructions:
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>}
-                {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: f?.peTTM == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{f?.peTTM != null ? f.peTTM.toFixed(1) : "—"}</span>}
-                {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: f?.pegTTM != null ? C.t2 : C.t4 }}>{f?.pegTTM != null ? f.pegTTM.toFixed(1) : "—"}</span>}
+                {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: peF == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{peF != null ? peF.toFixed(1) : "—"}</span>}
+                {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: pegF != null ? C.t2 : C.t4 }}>{pegF != null ? pegF.toFixed(1) : "—"}</span>}
                 {!tIsEtfSleeve && !tIsFci && (() => {
                   const w = liveWeights[tChartSleeve]?.[sym] ?? TARGET_WEIGHTS[tChartSleeve]?.[sym];
                   return <span style={{ fontSize: 10, fontWeight: 600, width: 34, flexShrink: 0, textAlign: "right", color: w != null ? C.t2 : C.t4 }}>{w != null ? w.toFixed(1) : "—"}</span>;
