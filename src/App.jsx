@@ -4084,7 +4084,7 @@ Instructions:
                   const peg = { l: "FPEG", v: tAvgPeg != null ? tAvgPeg.toFixed(1) : null };
                   if (tIsEtfSleeve) return [day];
                   if (tIsDividend) return [day, yld, comp, pe];
-                  if (tIsGrowth) return [day, comp, pe, peg];
+                  if (tIsGrowth) return [day, comp, peg];
                   if (tIsFci) return [day, comp, pe];
                   return [day, comp, pe];
                 })().map(({ l, v, c }) => (
@@ -4100,7 +4100,7 @@ Instructions:
                   { l: "PRICE", k: "price", w: tIsEtfSleeve ? 72 : 54 },
                   { l: "CHG%", k: "chg", w: tIsEtfSleeve ? 62 : 48 },
                   ...(tIsEtfSleeve ? [] : tIsGrowth
-                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FP/E", k: "pe", w: 36 }, { l: "FPEG", k: "peg", w: 28 }, { l: "WT%", k: "wt", w: 34 }]
+                    ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FPEG", k: "peg", w: 36 }, { l: "WT%", k: "wt", w: 34 }]
                     : tIsFci
                     ? [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FP/E", k: "pe", w: 36 }]
                     : [{ l: "QTD%", k: "qtd", w: 48 }, { l: "FP/E", k: "pe", w: 36 }, { l: "WT%", k: "wt", w: 34 }]),
@@ -4159,8 +4159,8 @@ Instructions:
                 <span style={{ fontSize: 10, color: C.t1, width: tIsEtfSleeve ? 72 : 54, flexShrink: 0, textAlign: "right" }}>{q?.p != null ? (q.p >= 1000 ? q.p.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : q.p.toFixed(2)) : "—"}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, width: tIsEtfSleeve ? 62 : 48, flexShrink: 0, textAlign: "right", color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
                 {!tIsEtfSleeve && <span style={{ fontSize: 10, fontWeight: 600, width: 48, flexShrink: 0, textAlign: "right", color: qtd == null ? C.t4 : qtd >= 0 ? C.up : C.dn }}>{qtd != null ? pct(qtd) : "—"}</span>}
-                {!tIsEtfSleeve && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: peF == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{peF != null ? peF.toFixed(1) : "—"}</span>}
-                {tIsGrowth && <span style={{ fontSize: 10, width: 28, flexShrink: 0, textAlign: "right", color: pegF != null ? C.t2 : C.t4 }}>{pegF != null ? pegF.toFixed(1) : "—"}</span>}
+                {!tIsEtfSleeve && !tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: peF == null ? C.t4 : peBeat ? C.accent : C.t2 }}>{peF != null ? peF.toFixed(1) : "—"}</span>}
+                {tIsGrowth && <span style={{ fontSize: 10, width: 36, flexShrink: 0, textAlign: "right", color: pegF != null ? C.t2 : C.t4 }}>{pegF != null ? pegF.toFixed(1) : "—"}</span>}
                 {!tIsEtfSleeve && !tIsFci && (() => {
                   const w = liveWeights[tChartSleeve]?.[sym] ?? TARGET_WEIGHTS[tChartSleeve]?.[sym];
                   return <span style={{ fontSize: 10, fontWeight: 600, width: 34, flexShrink: 0, textAlign: "right", color: w != null ? C.t2 : C.t4 }}>{w != null ? w.toFixed(1) : "—"}</span>;
