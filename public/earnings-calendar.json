@@ -742,7 +742,7 @@
   {
     "symbol": "EPAC",
     "date": "2026-07-07",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.5032,
     "epsActual": null,
     "revenueEstimate": 167803596,
@@ -762,7 +762,7 @@
   {
     "symbol": "KRUS",
     "date": "2026-07-07",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0107,
     "epsActual": null,
     "revenueEstimate": 88121370,
@@ -802,7 +802,7 @@
   {
     "symbol": "SAR",
     "date": "2026-07-07",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.5565,
     "epsActual": null,
     "revenueEstimate": 31570075,
