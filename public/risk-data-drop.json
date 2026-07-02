@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-02T11:49:55Z",
+  "generated_at": "2026-07-02T13:10:16Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -430,7 +430,7 @@
     },
     "LMT": {
       "sleeve": "Dividend",
-      "price": 521.27,
+      "price": 524.79,
       "pct_change": 2.38,
       "prev_close": 509.17,
       "quote_source": "alpaca",
@@ -718,7 +718,7 @@
     },
     "AMD": {
       "sleeve": "Growth",
-      "price": 540.89,
+      "price": 550.14,
       "pct_change": -6.83,
       "prev_close": 580.52,
       "quote_source": "alpaca",
@@ -1054,7 +1054,7 @@
     },
     "HOOD": {
       "sleeve": "Growth",
-      "price": 108.49,
+      "price": 112.7,
       "pct_change": 8.38,
       "prev_close": 100.28,
       "quote_source": "alpaca",
@@ -1102,7 +1102,7 @@
     },
     "MARA": {
       "sleeve": "Growth",
-      "price": 13.38,
+      "price": 13.59,
       "pct_change": -3.74,
       "prev_close": 13.9,
       "quote_source": "alpaca",
@@ -1126,7 +1126,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 271.84,
+      "price": 274.51,
       "pct_change": -8.5,
       "prev_close": 297.59,
       "quote_source": "alpaca",
@@ -1150,7 +1150,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 197.16,
+      "price": 197.82,
       "pct_change": -1.2,
       "prev_close": 199.93,
       "quote_source": "alpaca",
@@ -1246,7 +1246,7 @@
     },
     "TSM": {
       "sleeve": "Growth",
-      "price": 444.1,
+      "price": 451.51,
       "pct_change": -6.94,
       "prev_close": 477.24,
       "quote_source": "alpaca",
@@ -1318,7 +1318,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 34.02,
+      "price": 34.88,
       "pct_change": 2.13,
       "prev_close": 33.27,
       "quote_source": "alpaca",
@@ -1327,7 +1327,7 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 12.21,
+      "price": 12.55,
       "pct_change": 2.35,
       "prev_close": 11.91,
       "quote_source": "alpaca",
@@ -1337,13 +1337,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 745.665,
+      "price": 749.37,
       "pct_change": -0.13,
       "prev_close": 746.65,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 724.65,
+      "price": 727.57,
       "pct_change": -1.46,
       "prev_close": 736.07,
       "quote_source": "alpaca"
