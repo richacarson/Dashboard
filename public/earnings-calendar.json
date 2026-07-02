@@ -504,9 +504,9 @@
     "date": "2026-07-02",
     "hour": "bmo",
     "epsEstimate": 1.2196,
-    "epsActual": null,
+    "epsActual": 1.53,
     "revenueEstimate": 159382040,
-    "revenueActual": null,
+    "revenueActual": 160760000,
     "source": "finnhub"
   },
   {
@@ -986,16 +986,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CTAS",
-    "date": "2026-07-09",
-    "hour": "amc",
-    "epsEstimate": 1.2642,
-    "epsActual": null,
-    "revenueEstimate": 2930039556,
     "revenueActual": null,
     "source": "finnhub"
   },
