@@ -942,7 +942,7 @@
   {
     "symbol": "BYRN",
     "date": "2026-07-09",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1199,
     "epsActual": null,
     "revenueEstimate": 22751610,
@@ -992,7 +992,7 @@
   {
     "symbol": "EDUC",
     "date": "2026-07-09",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -1162,7 +1162,7 @@
   {
     "symbol": "WDFC",
     "date": "2026-07-09",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.5902,
     "epsActual": null,
     "revenueEstimate": 176447760,
