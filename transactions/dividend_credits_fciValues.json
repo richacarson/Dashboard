@@ -323,5 +323,15 @@
     "ticker": "PWR",
     "ex_date": "2026-07-01",
     "dps": 0.11
+  },
+  {
+    "ticker": "EMBJ",
+    "ex_date": "2026-07-02",
+    "dps": 0.218
+  },
+  {
+    "ticker": "PGR",
+    "ex_date": "2026-07-02",
+    "dps": 0.1
   }
 ]
