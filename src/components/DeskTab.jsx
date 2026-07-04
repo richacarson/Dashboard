@@ -404,44 +404,65 @@ function Queue({ C, isDesktop, email, terminal = false }) {
       {err && <div style={{ fontSize: 12, color: C.dn, marginBottom: 12 }}>{err}</div>}
 
       {/* ---- ACTIVE ---- */}
-      {view === 'active' && (items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 36, color: C.t4 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.up, marginBottom: 4 }}>All clear</div>
-          <div style={{ fontSize: 12 }}>The Chief of Staff will surface items here each morning.</div>
-        </div>
-      ) : items.map((it) => (
-        <div key={it.id} style={{ padding: '14px 15px', borderRadius: R, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${sevColor(it.priority)}`, marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: sevColor(it.priority), textTransform: 'uppercase', letterSpacing: 1 }}>{it.priority}</span>
-            <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: RP, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
-            {it.status === 'deferred' && <span style={{ fontSize: 10, color: C.warn, fontStyle: 'italic' }}>deferred</span>}
-            <span style={{ marginLeft: 'auto', fontSize: 10, color: C.t4 }}>{(it.source_agent || '').replace('_', ' ')}</span>
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 5 }}>{it.title}</div>
-          {it.context && <div style={{ fontSize: 12.5, color: C.t2, lineHeight: 1.5, marginBottom: 6 }}>{it.context}</div>}
-          {it.suggested_action && (
-            <div style={{ fontSize: 12, color: C.accent, lineHeight: 1.45, marginBottom: 8 }}>↳ {it.suggested_action}</div>
-          )}
-          {Array.isArray(it.tickers) && it.tickers.length > 0 && (
-            <div style={{ fontSize: 11, color: C.t3, marginBottom: 8 }}>{it.tickers.join(' · ')}</div>
-          )}
-          {Array.isArray(it.evidence) && it.evidence.length > 0 && (
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, marginBottom: 10 }}>
-              {it.evidence.map((e, j) => e?.url && (
-                <a key={j} href={e.url} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: 'none' }}>{e.source || 'source'} ↗</a>
-              ))}
+      {view === 'active' && (() => {
+        const pending = items.filter((x) => x.status !== 'deferred')
+        const deferredItems = items.filter((x) => x.status === 'deferred')
+        const card = (it) => (
+          <div key={it.id} style={{ padding: '14px 15px', borderRadius: R, background: C.card, border: `1px solid ${C.border}`, borderLeft: `3px solid ${sevColor(it.priority)}`, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: sevColor(it.priority), textTransform: 'uppercase', letterSpacing: 1 }}>{it.priority}</span>
+              <span style={{ fontSize: 10, color: C.t3, padding: '2px 8px', borderRadius: RP, background: C.surface, border: `1px solid ${C.border}`, textTransform: 'uppercase', letterSpacing: 0.5 }}>{catLabel(it.category)}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 10, color: C.t4 }}>{(it.source_agent || '').replace('_', ' ')}</span>
             </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <button disabled={busyId === it.id} onClick={() => decide(it, 'approved')}
-              style={btn(C.up, busyId === it.id)}>Approve</button>
-            <button disabled={busyId === it.id} onClick={() => decide(it, 'rejected')}
-              style={btn(C.dn, busyId === it.id)}>Reject</button>
-            <button disabled={busyId === it.id} onClick={() => decide(it, 'deferred')}
-              style={{ ...btn(C.t3, busyId === it.id), background: 'transparent', color: C.t3, border: `1px solid ${C.border}` }}>Defer</button>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.t1, marginBottom: 5 }}>{it.title}</div>
+            {it.context && <div style={{ fontSize: 12.5, color: C.t2, lineHeight: 1.5, marginBottom: 6 }}>{it.context}</div>}
+            {it.suggested_action && (
+              <div style={{ fontSize: 12, color: C.accent, lineHeight: 1.45, marginBottom: 8 }}>↳ {it.suggested_action}</div>
+            )}
+            {Array.isArray(it.tickers) && it.tickers.length > 0 && (
+              <div style={{ fontSize: 11, color: C.t3, marginBottom: 8 }}>{it.tickers.join(' · ')}</div>
+            )}
+            {Array.isArray(it.evidence) && it.evidence.length > 0 && (
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 11, marginBottom: 10 }}>
+                {it.evidence.map((e, j) => e?.url && (
+                  <a key={j} href={e.url} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: 'none' }}>{e.source || 'source'} ↗</a>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button disabled={busyId === it.id} onClick={() => decide(it, 'approved')}
+                style={btn(C.up, busyId === it.id)}>Approve</button>
+              <button disabled={busyId === it.id} onClick={() => decide(it, 'rejected')}
+                style={btn(C.dn, busyId === it.id)}>Reject</button>
+              {it.status !== 'deferred' && <button disabled={busyId === it.id} onClick={() => decide(it, 'deferred')}
+                style={{ ...btn(C.t3, busyId === it.id), background: 'transparent', color: C.t3, border: `1px solid ${C.border}` }}>Defer</button>}
+            </div>
           </div>
-        </div>
-      )))}
+        )
+        if (items.length === 0) return (
+          <div style={{ textAlign: 'center', padding: 36, color: C.t4 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.up, marginBottom: 4 }}>All clear</div>
+            <div style={{ fontSize: 12 }}>The Chief of Staff will surface items here each morning.</div>
+          </div>
+        )
+        return (
+          <>
+            {pending.length === 0
+              ? <div style={{ fontSize: 12, color: C.t4, marginBottom: 12 }}>Nothing pending — deferred items below.</div>
+              : pending.map(card)}
+            {deferredItems.length > 0 && (
+              <div style={{ marginTop: pending.length ? 22 : 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: C.warn, textTransform: 'uppercase', letterSpacing: 1.2 }}>Deferred</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: C.t4 }}>{deferredItems.length}</span>
+                  <div style={{ flex: 1, height: 1, background: C.border }} />
+                </div>
+                {deferredItems.map(card)}
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* ---- DECIDED (history) ---- */}
       {view === 'decided' && <DecidedList C={C} decided={decided} catLabel={catLabel} terminal={terminal} />}
