@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-03T13:19:10Z",
+  "generated_at": "2026-07-06T05:44:48Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -9,7 +9,7 @@
       "data_start": "2011-10-02",
       "current_value": 636788.13,
       "returns": {
-        "week": 0.6,
+        "week": 0.34,
         "mtd": 0.96,
         "qtd": 0.96,
         "ytd": 14.67,
@@ -19,14 +19,14 @@
       "benchmarks": {
         "DVY": {
           "returns": {
-            "week": 0.58,
+            "week": 0.75,
             "mtd": 1.32,
             "qtd": 1.32,
             "ytd": 13.28,
             "since_stewardship": 26.3
           },
           "active_return": {
-            "week": 0.02,
+            "week": -0.41,
             "mtd": -0.36,
             "qtd": -0.36,
             "ytd": 1.39,
@@ -35,14 +35,14 @@
         },
         "SPY": {
           "returns": {
-            "week": 2.17,
+            "week": 0.51,
             "mtd": -0.13,
             "qtd": -0.13,
             "ytd": 9.6,
             "since_stewardship": 27.79
           },
           "active_return": {
-            "week": -1.57,
+            "week": -0.17,
             "mtd": 1.09,
             "qtd": 1.09,
             "ytd": 5.07,
@@ -91,11 +91,11 @@
         }
       },
       "income": {
-        "projected_annual_income": 13371.89,
-        "yield_on_cost": 2.76,
-        "current_yield": 2.14,
-        "dividend_growth_yoy": 0.36,
-        "received_ytd": 7847.19,
+        "projected_annual_income": 13060.31,
+        "yield_on_cost": 2.69,
+        "current_yield": 2.09,
+        "dividend_growth_yoy": -2.02,
+        "received_ytd": 7641.92,
         "received_qtr": 112.7,
         "paying_positions": 26,
         "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares"
@@ -182,7 +182,7 @@
       "data_start": "2025-07-28",
       "current_value": 129354.97,
       "returns": {
-        "week": -1.89,
+        "week": -2.7,
         "mtd": -1.85,
         "qtd": -1.85,
         "ytd": 15.73,
@@ -192,14 +192,14 @@
       "benchmarks": {
         "IUSG": {
           "returns": {
-            "week": 1.91,
+            "week": -0.17,
             "mtd": -1.08,
             "qtd": -1.08,
             "ytd": 10.46,
             "since_stewardship": 19.37
           },
           "active_return": {
-            "week": -3.8,
+            "week": -2.53,
             "mtd": -0.77,
             "qtd": -0.77,
             "ytd": 5.27,
@@ -208,14 +208,14 @@
         },
         "SPY": {
           "returns": {
-            "week": 2.17,
+            "week": 0.51,
             "mtd": -0.13,
             "qtd": -0.13,
             "ytd": 9.6,
             "since_stewardship": 18.23
           },
           "active_return": {
-            "week": -4.06,
+            "week": -3.21,
             "mtd": -1.72,
             "qtd": -1.72,
             "ytd": 6.13,
@@ -264,11 +264,11 @@
         }
       },
       "income": {
-        "projected_annual_income": 1181.17,
-        "yield_on_cost": 2.0,
-        "current_yield": 1.77,
-        "dividend_growth_yoy": 5.91,
-        "received_ytd": 613.48,
+        "projected_annual_income": 1167.2,
+        "yield_on_cost": 1.98,
+        "current_yield": 1.75,
+        "dividend_growth_yoy": 5.16,
+        "received_ytd": 599.52,
         "received_qtr": 0.0,
         "paying_positions": 13,
         "basis": "trailing-12mo dividends per share (Yahoo) x current shares; received uses current shares"
