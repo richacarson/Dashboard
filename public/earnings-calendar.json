@@ -960,16 +960,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "H",
-    "date": "2026-07-10",
-    "hour": "",
-    "epsEstimate": 0.9255,
-    "epsActual": null,
-    "revenueEstimate": 1844188855,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "HIFS",
     "date": "2026-07-10",
     "hour": "",
@@ -1535,7 +1525,7 @@
     "hour": "",
     "epsEstimate": -0.6076,
     "epsActual": null,
-    "revenueEstimate": 27008580,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2115,7 +2105,7 @@
     "hour": "",
     "epsEstimate": -0.1734,
     "epsActual": null,
-    "revenueEstimate": 0,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
