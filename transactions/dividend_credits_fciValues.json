@@ -333,5 +333,20 @@
     "ticker": "PGR",
     "ex_date": "2026-07-02",
     "dps": 0.1
+  },
+  {
+    "ticker": "CSCO",
+    "ex_date": "2026-07-06",
+    "dps": 0.42
+  },
+  {
+    "ticker": "GE",
+    "ex_date": "2026-07-06",
+    "dps": 0.47
+  },
+  {
+    "ticker": "MU",
+    "ex_date": "2026-07-06",
+    "dps": 0.15
   }
 ]
