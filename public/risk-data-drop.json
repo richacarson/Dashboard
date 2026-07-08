@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-08T11:49:22Z",
+  "generated_at": "2026-07-08T12:54:40Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -1102,7 +1102,7 @@
     },
     "MARA": {
       "sleeve": "Growth",
-      "price": 12.06,
+      "price": 11.79,
       "pct_change": -6.73,
       "prev_close": 12.93,
       "quote_source": "alpaca",
@@ -1126,7 +1126,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 232.12,
+      "price": 227.58,
       "pct_change": -7.42,
       "prev_close": 249.2,
       "quote_source": "alpaca",
@@ -1150,7 +1150,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 196.97,
+      "price": 195.09,
       "pct_change": 0.71,
       "prev_close": 195.59,
       "quote_source": "alpaca",
@@ -1318,7 +1318,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.04,
+      "price": 35.13,
       "pct_change": 0.14,
       "prev_close": 36.09,
       "quote_source": "alpaca",
@@ -1337,13 +1337,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 747.49,
+      "price": 743.74,
       "pct_change": -0.47,
       "prev_close": 751.27,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 710.01,
+      "price": 704.67,
       "pct_change": -1.83,
       "prev_close": 722.68,
       "quote_source": "alpaca"
