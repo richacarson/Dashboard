@@ -1,5 +1,10 @@
 [
   {
+    "ticker": "NWG",
+    "ex_date": "2026-03-20",
+    "dps": 0.621
+  },
+  {
     "ticker": "A",
     "ex_date": "2026-03-31",
     "dps": 0.255
@@ -65,6 +70,11 @@
     "dps": 0.703
   },
   {
+    "ticker": "CEG",
+    "ex_date": "2026-05-15",
+    "dps": 0.427
+  },
+  {
     "ticker": "CHD",
     "ex_date": "2026-05-15",
     "dps": 0.308
@@ -83,6 +93,11 @@
     "ticker": "ATO",
     "ex_date": "2026-05-26",
     "dps": 1.0
+  },
+  {
+    "ticker": "SPGI",
+    "ex_date": "2026-05-29",
+    "dps": 0.917692
   },
   {
     "ticker": "LMT",
@@ -133,5 +148,35 @@
     "ticker": "LRCX",
     "ex_date": "2026-06-17",
     "dps": 0.26
+  },
+  {
+    "ticker": "A",
+    "ex_date": "2026-06-30",
+    "dps": 0.255
+  },
+  {
+    "ticker": "NTR",
+    "ex_date": "2026-06-30",
+    "dps": 0.55
+  },
+  {
+    "ticker": "STLD",
+    "ex_date": "2026-06-30",
+    "dps": 0.53
+  },
+  {
+    "ticker": "SYK",
+    "ex_date": "2026-06-30",
+    "dps": 0.88
+  },
+  {
+    "ticker": "GD",
+    "ex_date": "2026-07-02",
+    "dps": 1.59
+  },
+  {
+    "ticker": "DGX",
+    "ex_date": "2026-07-08",
+    "dps": 0.86
   }
 ]

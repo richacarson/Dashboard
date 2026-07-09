@@ -25,14 +25,16 @@
       "forward_pe": 23.73,
       "overall_score": 80,
       "recommendation": "BUY",
-      "sleeve": "Growth"
+      "sleeve": "Growth",
+      "screen_date": "2026-05-11"
     },
     "ANET": {
-      "stock_price": 120.77,
-      "forward_pe": 28.33,
-      "overall_score": 80,
+      "stock_price": 162.2,
+      "forward_pe": 45.05,
+      "overall_score": 83,
       "recommendation": "BUY",
-      "sleeve": "Growth"
+      "sleeve": "Growth",
+      "screen_date": "2026-06-24"
     }
   },
   "risks": [
@@ -130,5 +132,6 @@
       "date": "2026-05-05",
       "accessed": "2026-05-27"
     }
-  ]
+  ],
+  "metrics_note": "Refreshed key_metrics from latest reports/*.json"
 }

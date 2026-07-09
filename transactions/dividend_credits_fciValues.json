@@ -1,0 +1,352 @@
+[
+  {
+    "ticker": "MSI",
+    "ex_date": "2026-03-20",
+    "dps": 1.21
+  },
+  {
+    "ticker": "VST",
+    "ex_date": "2026-03-20",
+    "dps": 0.228
+  },
+  {
+    "ticker": "APH",
+    "ex_date": "2026-03-23",
+    "dps": 0.25
+  },
+  {
+    "ticker": "AVGO",
+    "ex_date": "2026-03-23",
+    "dps": 0.65
+  },
+  {
+    "ticker": "CP",
+    "ex_date": "2026-03-27",
+    "dps": 0.165
+  },
+  {
+    "ticker": "MU",
+    "ex_date": "2026-03-30",
+    "dps": 0.15
+  },
+  {
+    "ticker": "DE",
+    "ex_date": "2026-03-31",
+    "dps": 1.62
+  },
+  {
+    "ticker": "SYK",
+    "ex_date": "2026-03-31",
+    "dps": 0.88
+  },
+  {
+    "ticker": "CSCO",
+    "ex_date": "2026-04-02",
+    "dps": 0.42
+  },
+  {
+    "ticker": "PGR",
+    "ex_date": "2026-04-02",
+    "dps": 0.1
+  },
+  {
+    "ticker": "PWR",
+    "ex_date": "2026-04-02",
+    "dps": 0.11
+  },
+  {
+    "ticker": "MRVL",
+    "ex_date": "2026-04-10",
+    "dps": 0.06
+  },
+  {
+    "ticker": "FCX",
+    "ex_date": "2026-04-15",
+    "dps": 0.15
+  },
+  {
+    "ticker": "CAT",
+    "ex_date": "2026-04-20",
+    "dps": 1.51
+  },
+  {
+    "ticker": "NVT",
+    "ex_date": "2026-04-24",
+    "dps": 0.21
+  },
+  {
+    "ticker": "ASML",
+    "ex_date": "2026-04-27",
+    "dps": 3.177
+  },
+  {
+    "ticker": "NRG",
+    "ex_date": "2026-05-01",
+    "dps": 0.475
+  },
+  {
+    "ticker": "PNFP",
+    "ex_date": "2026-05-01",
+    "dps": 0.5
+  },
+  {
+    "ticker": "SAP",
+    "ex_date": "2026-05-05",
+    "dps": 2.929
+  },
+  {
+    "ticker": "TXN",
+    "ex_date": "2026-05-05",
+    "dps": 1.42
+  },
+  {
+    "ticker": "ETN",
+    "ex_date": "2026-05-08",
+    "dps": 1.1
+  },
+  {
+    "ticker": "SCHW",
+    "ex_date": "2026-05-08",
+    "dps": 0.32
+  },
+  {
+    "ticker": "LNG",
+    "ex_date": "2026-05-11",
+    "dps": 0.555
+  },
+  {
+    "ticker": "AWK",
+    "ex_date": "2026-05-12",
+    "dps": 0.895
+  },
+  {
+    "ticker": "RMD",
+    "ex_date": "2026-05-14",
+    "dps": 0.6
+  },
+  {
+    "ticker": "AMGN",
+    "ex_date": "2026-05-15",
+    "dps": 2.52
+  },
+  {
+    "ticker": "CEG",
+    "ex_date": "2026-05-15",
+    "dps": 0.427
+  },
+  {
+    "ticker": "EMBJ",
+    "ex_date": "2026-05-15",
+    "dps": 0.009
+  },
+  {
+    "ticker": "LLY",
+    "ex_date": "2026-05-15",
+    "dps": 1.73
+  },
+  {
+    "ticker": "KLAC",
+    "ex_date": "2026-05-18",
+    "dps": 0.23
+  },
+  {
+    "ticker": "AMAT",
+    "ex_date": "2026-05-21",
+    "dps": 0.53
+  },
+  {
+    "ticker": "YUMC",
+    "ex_date": "2026-05-27",
+    "dps": 0.29
+  },
+  {
+    "ticker": "XYL",
+    "ex_date": "2026-05-28",
+    "dps": 0.43
+  },
+  {
+    "ticker": "BAM",
+    "ex_date": "2026-05-29",
+    "dps": 0.502
+  },
+  {
+    "ticker": "DOV",
+    "ex_date": "2026-05-29",
+    "dps": 0.52
+  },
+  {
+    "ticker": "GLW",
+    "ex_date": "2026-05-29",
+    "dps": 0.28
+  },
+  {
+    "ticker": "SPGI",
+    "ex_date": "2026-05-29",
+    "dps": 0.97
+  },
+  {
+    "ticker": "AEM",
+    "ex_date": "2026-06-01",
+    "dps": 0.45
+  },
+  {
+    "ticker": "ADI",
+    "ex_date": "2026-06-02",
+    "dps": 1.1
+  },
+  {
+    "ticker": "BSY",
+    "ex_date": "2026-06-02",
+    "dps": 0.07
+  },
+  {
+    "ticker": "MCD",
+    "ex_date": "2026-06-02",
+    "dps": 1.86
+  },
+  {
+    "ticker": "RCL",
+    "ex_date": "2026-06-03",
+    "dps": 1.5
+  },
+  {
+    "ticker": "HD",
+    "ex_date": "2026-06-04",
+    "dps": 2.33
+  },
+  {
+    "ticker": "LIN",
+    "ex_date": "2026-06-04",
+    "dps": 1.6
+  },
+  {
+    "ticker": "NVDA",
+    "ex_date": "2026-06-04",
+    "dps": 0.25
+  },
+  {
+    "ticker": "QCOM",
+    "ex_date": "2026-06-04",
+    "dps": 0.92
+  },
+  {
+    "ticker": "NEE",
+    "ex_date": "2026-06-05",
+    "dps": 0.623
+  },
+  {
+    "ticker": "WDC",
+    "ex_date": "2026-06-05",
+    "dps": 0.15
+  },
+  {
+    "ticker": "CNI",
+    "ex_date": "2026-06-09",
+    "dps": 0.656
+  },
+  {
+    "ticker": "YOU",
+    "ex_date": "2026-06-10",
+    "dps": 0.15
+  },
+  {
+    "ticker": "AGI",
+    "ex_date": "2026-06-11",
+    "dps": 0.04
+  },
+  {
+    "ticker": "TSM",
+    "ex_date": "2026-06-11",
+    "dps": 0.955
+  },
+  {
+    "ticker": "CB",
+    "ex_date": "2026-06-12",
+    "dps": 1.02
+  },
+  {
+    "ticker": "ICE",
+    "ex_date": "2026-06-15",
+    "dps": 0.52
+  },
+  {
+    "ticker": "VRT",
+    "ex_date": "2026-06-15",
+    "dps": 0.063
+  },
+  {
+    "ticker": "GEV",
+    "ex_date": "2026-06-16",
+    "dps": 0.5
+  },
+  {
+    "ticker": "LRCX",
+    "ex_date": "2026-06-17",
+    "dps": 0.26
+  },
+  {
+    "ticker": "MSI",
+    "ex_date": "2026-06-17",
+    "dps": 1.21
+  },
+  {
+    "ticker": "AVGO",
+    "ex_date": "2026-06-22",
+    "dps": 0.65
+  },
+  {
+    "ticker": "VST",
+    "ex_date": "2026-06-22",
+    "dps": 0.229
+  },
+  {
+    "ticker": "APH",
+    "ex_date": "2026-06-23",
+    "dps": 0.25
+  },
+  {
+    "ticker": "CP",
+    "ex_date": "2026-06-26",
+    "dps": 0.189
+  },
+  {
+    "ticker": "DE",
+    "ex_date": "2026-06-30",
+    "dps": 1.62
+  },
+  {
+    "ticker": "SYK",
+    "ex_date": "2026-06-30",
+    "dps": 0.88
+  },
+  {
+    "ticker": "PWR",
+    "ex_date": "2026-07-01",
+    "dps": 0.11
+  },
+  {
+    "ticker": "EMBJ",
+    "ex_date": "2026-07-02",
+    "dps": 0.218
+  },
+  {
+    "ticker": "PGR",
+    "ex_date": "2026-07-02",
+    "dps": 0.1
+  },
+  {
+    "ticker": "CSCO",
+    "ex_date": "2026-07-06",
+    "dps": 0.42
+  },
+  {
+    "ticker": "GE",
+    "ex_date": "2026-07-06",
+    "dps": 0.47
+  },
+  {
+    "ticker": "MU",
+    "ex_date": "2026-07-06",
+    "dps": 0.15
+  }
+]

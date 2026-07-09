@@ -306,5 +306,357 @@
     "what_worked": "Macro setup (5-10M tonne copper deficit by 2030) remains directionally correct.",
     "what_didnt": "No falsifiable 18-month catalyst tied to FCX specifically \u2014 pure 'secular trend' framing matches our worst-performing pattern in the ledger.",
     "would_have_done": "Either tie to a specific FCX catalyst (Grasberg ramp inflection, smelter expansion completion) or downgrade to Stalking from day one."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Hormuz Supply Shock",
+    "opened": "2026-05-12",
+    "closed": "2026-06-28",
+    "days_held": 47,
+    "pattern": "Supply Shock",
+    "theme": "Geopolitics/Aluminum",
+    "tickers": [
+      "AA"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Duplicate of aluminum-supply-shock (High Conviction, same date_identified 2026-05-12, same primary ticker AA). Re-synced from prior screening branch claude/daily-screening-2026-05-13 in Step 0. Closed again \u2014 this opp has now been closed as a duplicate 5 times in ledger.",
+    "what_worked": "Aluminum supply-shock thesis is correctly represented by aluminum-supply-shock (broader: adds CENX).",
+    "what_didnt": "Stock-Screener Step-0 sync continues to resurrect this stale On Our Radar file from a 6-week-old branch. Need a tombstone/blocklist mechanism, since closures alone don't prevent re-pull.",
+    "would_have_done": "Add explicit ignore for IDs that already appear in ledger before checking-out files from old branches."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Copper Datacenter Demand",
+    "opened": "2026-03-01",
+    "closed": "2026-06-28",
+    "days_held": 119,
+    "pattern": "Secular Trend",
+    "theme": "AI Infrastructure / Copper",
+    "tickers": [
+      "FCX"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Expired \u2014 119 days on radar (limit is 30 days). Already closed as Expired 4 prior times for the same reason: single-name (FCX), no trade construction, no specific dated catalyst, thesis never firmed up. File keeps being re-synced from claude/daily-screening-2026-05-13.",
+    "what_worked": "Directional copper-AI thesis is sound; copper is implicitly captured in ai-power-bottleneck and data-center-grid-buildout active opps.",
+    "what_didnt": "Repeated re-emergence of the same single-name unforced On Our Radar opp without a catalyst.",
+    "would_have_done": "Block re-syncing of any opp ID already present in ledger."
+  },
+  {
+    "id": "hbm-memory-shortage",
+    "title": "HBM Memory Shortage",
+    "opened": "2026-05-17",
+    "closed": "2026-06-28",
+    "days_held": 42,
+    "pattern": "Supply Chain",
+    "theme": "AI Infrastructure / Memory",
+    "tickers": [
+      "MU"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Duplicate of dram-hbm-shortage (High Conviction, same primary ticker MU, broader thesis covering both DRAM and HBM with SNDK added). Re-introduced in opportunities/ folder via prior-branch sync. Already closed as duplicate once in ledger.",
+    "what_worked": "MU/HBM thesis remains live and is captured by dram-hbm-shortage.",
+    "what_didnt": "Same root-cause issue as copper/aluminum \u2014 stale branches resurrect dead opps.",
+    "would_have_done": "Add a tombstone check in Step 0."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "opened": "2026-05-12",
+    "closed": "2026-06-29",
+    "days_held": 48,
+    "pattern": "Supply Shock",
+    "theme": "Geopolitics/Aluminum",
+    "tickers": [
+      "AA"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Thesis Broken \u2014 US-Iran peace deal signed June 19, 2026; Strait of Hormuz reopened; aluminum prices retreated 10-12% from $3,850/MT highs. The opp's own Risks section explicitly identified 'A ceasefire or Hormuz reopening would normalize aluminum supply within months, collapsing prices and the thesis' as invalidating trigger \u2014 both happened.",
+    "what_worked": "Identified an under-covered angle of the Hormuz disruption (aluminum vs. the more-discussed oil play). Held for ~7 weeks while supply premium persisted.",
+    "what_didnt": "Entry price was never recorded; cannot quantify the trade. The opp lacked an explicit invalidation field \u2014 only the risks paragraph flagged this trigger. Future supply-shock opps should include explicit numeric invalidation triggers (e.g., 'aluminum closes below $X/MT for 2 weeks') in the dedicated invalidation field, not just risks.",
+    "would_have_done": "On June 14 announcement, would have closed immediately on the news of the peace deal rather than waiting for the price data to confirm \u2014 supply-shock plays die on the announcement of resolution, not the resolution itself."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "opened": "2026-05-12",
+    "closed": "2026-06-30",
+    "days_held": 49,
+    "pattern": "Supply Shock",
+    "theme": "Geopolitics/Aluminum",
+    "tickers": [
+      "AA"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Duplicate \u2014 aluminum-supply-shock (High Conviction) opened same day with the same AA + Hormuz thesis. This narrower On Our Radar entry was synced in from a prior screening branch.",
+    "what_worked": "Identified the Hormuz aluminum supply shock thesis correctly.",
+    "what_didnt": "Filed a redundant single-ticker On Our Radar entry parallel to the broader AA+CENX High Conviction opp covering the same catalyst.",
+    "would_have_done": "Run de-dup check before opening; amend the existing aluminum-supply-shock opp instead of creating a parallel narrower one."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Data Center Copper Demand Supercycle",
+    "opened": "2026-03-01",
+    "closed": "2026-06-30",
+    "days_held": 121,
+    "pattern": "Secular Trend",
+    "theme": "AI Infrastructure / Copper",
+    "tickers": [
+      "FCX"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Expired \u2014 On Our Radar for 121 days (limit is 30) without ever firming up to High Conviction. No falsifiable near-term catalyst was identified; copper supercycle remains a directionally valid but slow-moving secular thesis better tracked via other vehicles.",
+    "what_worked": "The directional call on copper demand from data centers has been correct.",
+    "what_didnt": "Never tightened the catalyst to a falsifiable 18-month event; sat as a generic 'secular trend' too long.",
+    "would_have_done": "Either close earlier or convert to a specific catalyst \u2014 e.g., a major FCX project milestone, a Grasberg ramp data point, or a regulatory copper-supply event."
+  },
+  {
+    "id": "hbm-memory-shortage",
+    "title": "HBM Memory Shortage",
+    "opened": "2026-05-17",
+    "closed": "2026-07-01",
+    "days_held": 45,
+    "pattern": "Supply Chain",
+    "theme": "AI Infrastructure / Memory",
+    "tickers": [
+      "MU"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Duplicate of dram-hbm-shortage (High Conviction). Re-introduced by prior Step-0 sync from stale branch. Already closed in ledger three times.",
+    "what_worked": "MU/HBM thesis remains live and is captured by dram-hbm-shortage.",
+    "what_didnt": "Same root-cause: stale claude/ branches resurrect closed opps.",
+    "would_have_done": "Add tombstone check in Step 0 to skip syncing any id already in the ledger."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Hormuz Disruption",
+    "closed": "2026-07-02",
+    "pattern": "Supply Shock",
+    "tickers": [
+      "AA"
+    ],
+    "return_pct": null,
+    "close_reason": "Duplicate of aluminum-supply-shock (High Conviction). Re-introduced by Step-0 sync from stale claude/daily-screening branch. Same date_identified, same primary ticker AA, same thesis. Deleted without re-ledgering trade result \u2014 see prior ledger entries for full history."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Copper Datacenter Demand",
+    "closed": "2026-07-02",
+    "pattern": "Secular Trend",
+    "tickers": [
+      "FCX"
+    ],
+    "return_pct": null,
+    "close_reason": "Re-introduced by Step-0 sync from stale claude/daily-screening branch. Already expired 6 prior times for the same reason (On Our Radar > 30 days without firming up). Deleted; broader AI-power thesis remains covered by ai-power-bottleneck and data-center-grid-buildout."
+  },
+  {
+    "id": "hbm-memory-shortage",
+    "title": "HBM Memory Shortage",
+    "closed": "2026-07-02",
+    "pattern": "Secular Trend",
+    "tickers": [
+      "MU"
+    ],
+    "return_pct": null,
+    "close_reason": "Duplicate of dram-hbm-shortage (High Conviction, same primary ticker MU). Re-introduced by Step-0 sync from stale claude/daily-screening branch. Deleted; theme fully covered by dram-hbm-shortage."
+  },
+  {
+    "id": "hbm-memory-shortage",
+    "title": "HBM Memory Shortage",
+    "opened": "2026-05-17",
+    "closed": "2026-07-04",
+    "days_held": 48,
+    "pattern": "Supply Shock",
+    "theme": "AI Memory",
+    "tickers": [
+      "MU"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": 0.0,
+    "close_reason": "Duplicate of dram-hbm-shortage (High Conviction). Re-introduced by Step-0 sync from claude/daily-screening-2026-05-19. Deleting again.",
+    "what_worked": "N/A \u2014 duplicate close.",
+    "what_didnt": "Persistent re-sync issue: this stale file lives on multiple screening branches and re-appears each run. Need Step-0 to skip files that already exist in ledger.",
+    "would_have_done": "Add a filter in Step-0 that excludes IDs already present in ledger.json."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Hormuz Supply Shock",
+    "opened": "2026-05-12",
+    "closed": "2026-07-04",
+    "days_held": 53,
+    "pattern": "Supply Shock",
+    "theme": "Metals/Geopolitics",
+    "tickers": [
+      "AA"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": 0.0,
+    "close_reason": "Duplicate of aluminum-supply-shock (High Conviction). Also thesis broken (Hormuz reopened June 19). Re-introduced by Step-0 sync from claude/daily-screening-2026-05-13. Deleting again.",
+    "what_worked": "N/A \u2014 duplicate close.",
+    "what_didnt": "Same as hbm-memory-shortage \u2014 Step-0 needs a ledger-aware filter.",
+    "would_have_done": "Filter Step-0 candidates against ledger IDs."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Data Center Copper Demand Supercycle",
+    "opened": "2026-03-01",
+    "closed": "2026-07-05",
+    "days_held": 126,
+    "pattern": "Secular Trend",
+    "theme": "AI Infrastructure / Copper",
+    "tickers": [
+      "FCX"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Expired \u2014 On Our Radar exceeded 30-day age-out with no promotion. Broad secular copper-AI thesis is now well-recognized; FCX has been covered by consensus and the mispricing edge has decayed. Better copper exposure through more specific catalyst-driven opps.",
+    "what_worked": "Correctly identified the copper-datacenter demand tailwind early. FCX and copper miners saw meaningful re-rating on AI capex narrative in 2026.",
+    "what_didnt": "Entry_price_avg was never recorded; trade construction never firmed up \u2014 remained qualitative for 4+ months. Secular Trend pattern is broadly known and doesn't offer edge without a specific inflection catalyst.",
+    "would_have_done": "Should have paired with a specific catalyst (mine outage, contract announcement) to sharpen entry timing, or amended into a more focused datacenter-electrical opp."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "opened": "2026-05-12",
+    "closed": "2026-07-05",
+    "days_held": 54,
+    "pattern": "Supply Shock",
+    "theme": "Geopolitics / Aluminum",
+    "tickers": [
+      "AA"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Expired \u2014 On Our Radar exceeded 30-day age-out with no promotion. Superseded by active High Conviction opp 'aluminum-supply-shock' (AA + CENX) which covers the same catalyst and ticker with tighter framing.",
+    "what_worked": "Correctly identified that Gulf aluminum exposure was overlooked vs. the Hormuz oil narrative.",
+    "what_didnt": "Filed the same day as aluminum-supply-shock High Conviction \u2014 this radar entry was a parallel filing on the same catalyst and same primary ticker (AA). De-dup should have caught it at filing.",
+    "would_have_done": "Amend aluminum-supply-shock with any incremental angle rather than open a second entry on the same catalyst/ticker."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "opened": "2026-05-12",
+    "closed": "2026-07-06",
+    "pattern": "Supply Shock",
+    "theme": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "tickers": [
+      "AA"
+    ],
+    "close_reason": "Expired \u2014 theme fully covered by aluminum-supply-shock (High Conviction, AA+CENX). Also: US-Iran ceasefire signed June 19, 2026 partially triggers invalidation on Hormuz-only variant.",
+    "what_worked": "Correctly identified aluminum as an overlooked commodity supply shock \u2014 the parent opp aluminum-supply-shock captured the same thesis with better sourcing and broader ticker exposure (CENX added).",
+    "what_didnt": "Filed a narrower duplicate of an existing High Conviction opp on the same day; should have amended the existing opp rather than opening a second one.",
+    "would_have_done": "Would have amended the existing High Conviction opp when the theme overlapped, and required at least approximate trade construction before moving from Stalking \u2192 On Our Radar."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Data Center Copper Demand Supercycle",
+    "opened": "2026-03-01",
+    "closed": "2026-07-06",
+    "pattern": "Secular Trend",
+    "theme": "Data Center Copper Demand Supercycle",
+    "tickers": [
+      "FCX"
+    ],
+    "close_reason": "Expired \u2014 127 days on Radar without upgrade to High Conviction. FCX screener now HOLD (score 75). Copper thesis remains valid long-term but does not clear the bar; will re-open if a specific inflection catalyst emerges.",
+    "what_worked": "Correct macro-directional bet \u2014 copper is up materially from 2026-03-01 open.",
+    "what_didnt": "No trade construction, no primary sources, and no forcing catalyst \u2014 a pure secular trend without a dated inflection point should have been Stalking, not On Our Radar.",
+    "would_have_done": "Would have amended the existing High Conviction opp when the theme overlapped, and required at least approximate trade construction before moving from Stalking \u2192 On Our Radar."
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "opened": "2026-05-12",
+    "closed": "2026-07-07",
+    "days_held": 56,
+    "pattern": "Supply Shock",
+    "theme": "Commodities/Aluminum",
+    "tickers": [
+      "AA"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Expired \u2014 consolidated. Age-out at 56 days. Same underlying thesis is covered by active High Conviction opp `aluminum-supply-shock` (AA, CENX) which was filed the same day and remains active.",
+    "what_worked": "The overall supply-shock thesis is being tracked at HC tier through aluminum-supply-shock.",
+    "what_didnt": "Duplicative filing \u2014 should have amended the HC opp instead of filing a second Radar version.",
+    "would_have_done": "De-dup at file time; merge related Gulf-outage angles into the primary AA/CENX opp."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Data Center Copper Demand Supercycle",
+    "opened": "2026-03-01",
+    "closed": "2026-07-07",
+    "days_held": 128,
+    "pattern": "Secular Trend",
+    "theme": "AI/Copper",
+    "tickers": [
+      "FCX"
+    ],
+    "entry_price_avg": null,
+    "exit_price_avg": null,
+    "return_pct": null,
+    "close_reason": "Expired \u2014 age-out at 128 days without promotion to High Conviction. The AI-datacenter-copper thesis is real but the trade construction never firmed up, and copper price action has been driven more by China-stimulus / grid buildout than by AI-datacenter demand specifically.",
+    "what_worked": "Directionally correct on secular copper demand; FCX has outperformed base metals broadly.",
+    "what_didnt": "Never articulated a falsifiable AI-specific catalyst; 128 days is well past On Our Radar age limit.",
+    "would_have_done": "Either promote to HC with entry/target/stop within 30 days or expire quickly. Sitting on a Radar item for 4+ months is exactly what the age-out rule was designed to prevent."
+  },
+  {
+    "id": "copper-datacenter-demand",
+    "title": "Data Center Copper Demand Supercycle",
+    "closed": "2026-07-08",
+    "pattern": "Housekeeping",
+    "tickers": [
+      "FCX"
+    ],
+    "close_reason": "Re-introduced by Step-0 sync from stale claude/daily-screening-2026-05-13 branch. File deleted without appending duplicate ledger entry beyond this consolidated note. Original closure reasons remain on prior entries. Root cause: stale screening branches persist on origin.",
+    "what_worked": null,
+    "what_didnt": null,
+    "would_have_done": "Consider a housekeeping script to prune old claude/daily-screening-* branches from origin, since Step-0 keeps pulling stale opp files from them.",
+    "return_pct": null
+  },
+  {
+    "id": "aluminum-hormuz-supply-shock",
+    "title": "Aluminum Supply Shock \u2014 Gulf Smelters Stranded by Hormuz Closure",
+    "closed": "2026-07-08",
+    "pattern": "Housekeeping",
+    "tickers": [
+      "AA"
+    ],
+    "close_reason": "Re-introduced by Step-0 sync from stale claude/daily-screening-2026-05-13 branch. File deleted without appending duplicate ledger entry beyond this consolidated note. Original closure reasons remain on prior entries. Root cause: stale screening branches persist on origin. Superseded by aluminum-supply-shock.",
+    "what_worked": null,
+    "what_didnt": null,
+    "would_have_done": "Consider a housekeeping script to prune old claude/daily-screening-* branches from origin, since Step-0 keeps pulling stale opp files from them.",
+    "return_pct": null
+  },
+  {
+    "id": "hbm-memory-shortage",
+    "title": "HBM Memory Sold Out Through 2026",
+    "closed": "2026-07-08",
+    "pattern": "Housekeeping",
+    "tickers": [
+      "MU"
+    ],
+    "close_reason": "Re-introduced by Step-0 sync from stale claude/daily-screening-2026-05-13 branch. File deleted without appending duplicate ledger entry beyond this consolidated note. Original closure reasons remain on prior entries. Root cause: stale screening branches persist on origin. Superseded by dram-hbm-shortage.",
+    "what_worked": null,
+    "what_didnt": null,
+    "would_have_done": "Consider a housekeeping script to prune old claude/daily-screening-* branches from origin, since Step-0 keeps pulling stale opp files from them.",
+    "return_pct": null
   }
 ]
