@@ -1,5 +1,10 @@
 [
   {
+    "ticker": "NWG",
+    "ex_date": "2026-03-20",
+    "dps": 0.621
+  },
+  {
     "ticker": "A",
     "ex_date": "2026-03-31",
     "dps": 0.255
@@ -65,6 +70,11 @@
     "dps": 0.703
   },
   {
+    "ticker": "CEG",
+    "ex_date": "2026-05-15",
+    "dps": 0.427
+  },
+  {
     "ticker": "CHD",
     "ex_date": "2026-05-15",
     "dps": 0.308
@@ -83,6 +93,11 @@
     "ticker": "ATO",
     "ex_date": "2026-05-26",
     "dps": 1.0
+  },
+  {
+    "ticker": "SPGI",
+    "ex_date": "2026-05-29",
+    "dps": 0.917692
   },
   {
     "ticker": "LMT",
