@@ -48,7 +48,12 @@ from scripts.q3_2026_rebalance.ic_targets import (
     DIVIDEND_EXITS, GROWTH_EXITS, NEW_COMPANY_NAMES, MORNINGSTAR_CASH,
 )
 
-REBALANCE_DATE_ISO = "2026-07-09"  # YYYY-MM-DD
+REBALANCE_DATE_ISO = "2026-07-09"  # YYYY-MM-DD — date the trades are BOOKED
+# Sizing/pricing basis. The rebalance executed the MORNING of 7/9, so fills
+# reflect the prior (7/8) close, not the 7/9 close. Pricing off 7/8 makes the
+# booked shares faithful to the morning execution and lets the 7/9-close
+# valuation show one realistic day of drift.
+PRICE_DATE_ISO = "2026-07-08"
 DIVIDEND_FILE = REPO / "transactions" / "dividend_strategy_transactions.txt"
 GROWTH_FILE = REPO / "transactions" / "growth_strategy_transactions.txt"
 REPORT_FILE = REPO / "public" / "research" / "Q3 2026 Rebalance Execution Report.md"
@@ -326,7 +331,7 @@ def compute_rebalance_trades(state, targets, prices, new_deposits, sleeve_name,
             unpriced.append(t)
     total_value = stock_value + eff_cash
     print(f"  Effective cash (post-dividend gap): ${eff_cash:,.2f}")
-    print(f"  Stock value @ 4/17/26:              ${stock_value:,.2f}")
+    print(f"  Stock value @ 7/8 close:                    ${stock_value:,.2f}")
     print(f"  Total sleeve value:                  ${total_value:,.2f}")
     if unpriced:
         print(f"  ! UNPRICED tickers: {unpriced}")
@@ -656,7 +661,7 @@ def write_report(div_result, grw_result, dry_run=False):
         f"**Mode:** {'DRY RUN (proposed, not executed)' if dry_run else 'EXECUTED'}",
         f"**Executed:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}",
         f"**Rebalance Date:** 07-09-26 (rebalance executed AM)",
-        f"**Pricing Source:** Yahoo Finance close for 2026-07-09",
+        f"**Pricing Source:** Yahoo Finance close for 2026-07-08 (trades booked 2026-07-09)",
         f"**IC Proposal:** [IC Proposal Q3 2026 (Carson target sheet)]"
         "(./Research%20-%20IC%20Proposal%20Q2%202026%20Rebalance.md)",
         "",
@@ -712,7 +717,7 @@ def write_report(div_result, grw_result, dry_run=False):
             report_lines.append("_No dividends found in gap period._")
         report_lines += [
             "",
-            "### Phase 2 — Valuation (4/17/26 close)",
+            "### Phase 2 — Valuation (7/8/26 close)",
             f"- Stock value: **${r['stock_value']:,.2f}**",
             f"- Effective cash: **${r['eff_cash']:,.2f}**",
             f"- **Total sleeve value: ${r['total_value']:,.2f}**",
@@ -799,8 +804,8 @@ def run_sleeve(sleeve_name, tx_file, targets):
 
     # Phase 2 — prices for all current + target tickers
     all_tickers = set(pre["shares"].keys()) | set(targets.keys())
-    print(f"\n[{sleeve_name}] Phase 2: Pricing {len(all_tickers)} tickers @ 4/17/26")
-    prices, missing = fetch_all_prices(all_tickers, REBALANCE_DATE_ISO)
+    print(f"\n[{sleeve_name}] Phase 2: Pricing {len(all_tickers)} tickers @ {PRICE_DATE_ISO}")
+    prices, missing = fetch_all_prices(all_tickers, PRICE_DATE_ISO)
     if missing:
         print(f"  ! MISSING PRICES: {missing}")
 
