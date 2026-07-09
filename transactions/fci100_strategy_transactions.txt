@@ -306,4 +306,367 @@ PURCHASENetflix Inc
  	05-06-26	
 PURCHASEMDA Space Ltd
 125.9049	31.7700	4,000.00	Edit	 
+ 	07-09-26	
+SALEApple Inc
+13.9806	313.3900	4,381.38	Edit	 
+ 	07-09-26	
+SALEAdobe Inc
+15.9598	220.9400	3,526.16	Edit	 
+ 	07-09-26	
+PURCHASEAnalog Devices Inc
+0.9994	385.4000	385.15	Edit	 
+ 	07-09-26	
+SALEAgnico Eagle Mines Ltd
+21.1338	144.8900	3,062.08	Edit	 
+ 	07-09-26	
+PURCHASEAmerican Electric Power Company, Inc.
+30.3072	135.9000	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEAlamos Gold Inc
+45.0311	29.2300	1,316.26	Edit	 
+ 	07-09-26	
+SALEAstera Labs Inc
+7.8836	393.1600	3,099.51	Edit	 
+ 	07-09-26	
+SALEApplied Materials Inc
+2.1544	570.5000	1,229.11	Edit	 
+ 	07-09-26	
+SALEAdvanced Micro Devices Inc
+1.5995	517.4100	827.58	Edit	 
+ 	07-09-26	
+SALEAmgen Inc
+0.9062	367.9900	333.48	Edit	 
+ 	07-09-26	
+PURCHASEAmazon.com Inc
+2.3324	243.6200	568.21	Edit	 
+ 	07-09-26	
+SALEArista Networks Inc
+4.1795	181.0500	756.71	Edit	 
+ 	07-09-26	
+SALEAmphenol Corp
+2.8804	158.2200	455.73	Edit	 
+ 	07-09-26	
+SALEArm Holdings PLC
+16.9506	300.2400	5,089.25	Edit	 
+ 	07-09-26	
+PURCHASEASM International N.V.
+718.8052	5.7300	4,118.75	Edit	 
+ 	07-09-26	
+SALEASML Holding NV
+0.2782	1,768.6500	492.12	Edit	 
+ 	07-09-26	
+PURCHASEAngloGold Ashanti PLC
+51.5941	79.8300	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEBroadcom Inc
+1.2501	388.6900	485.90	Edit	 
+ 	07-09-26	
+PURCHASEAmerican Water Works Co Inc
+31.2311	131.8800	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEAstraZeneca PLC
+0.1174	189.2800	22.22	Edit	 
+ 	07-09-26	
+SALEBrookfield Asset Management Ltd
+82.0176	45.5000	3,731.80	Edit	 
+ 	07-09-26	
+SALEBloom Energy Corp
+13.8480	254.2900	3,521.41	Edit	 
+ 	07-09-26	
+PURCHASEBoston Scientific Corporation
+91.9159	44.8100	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEBWX Technologies, Inc.
+22.3712	184.1100	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASECaterpillar Inc
+0.0133	948.0800	12.62	Edit	 
+ 	07-09-26	
+SALEChubb Limited
+0.8139	355.0900	289.01	Edit	 
+ 	07-09-26	
+PURCHASECameco Corporation
+43.4789	94.7300	4,118.75	Edit	 
+ 	07-09-26	
+SALECadence Design Systems Inc
+0.2710	374.0600	101.35	Edit	 
+ 	07-09-26	
+PURCHASEConstellation Energy Corp
+4.4292	244.5200	1,083.04	Edit	 
+ 	07-09-26	
+PURCHASECiena Corporation
+9.3402	440.9700	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASECelestica Inc
+1.8344	360.7400	661.75	Edit	 
+ 	07-09-26	
+PURCHASECostco Wholesale Corp
+0.3199	953.1300	304.90	Edit	 
+ 	07-09-26	
+SALECopart Inc
+120.1562	28.5900	3,435.27	Edit	 
+ 	07-09-26	
+SALECredo Technology Group Holding Ltd
+4.2600	258.6900	1,102.02	Edit	 
+ 	07-09-26	
+SALESalesforce Inc
+21.9455	166.5800	3,655.68	Edit	 
+ 	07-09-26	
+SALECisco Systems Inc
+43.5303	113.8200	4,954.62	Edit	 
+ 	07-09-26	
+SALEDatadog Inc
+27.8338	261.0900	7,267.13	Edit	 
+ 	07-09-26	
+SALEEcolab Inc
+0.1849	274.1200	50.69	Edit	 
+ 	07-09-26	
+PURCHASEEmbraer SA
+6.0079	63.4200	381.02	Edit	 
+ 	07-09-26	
+PURCHASEEaton Corp PLC
+0.8304	399.5600	331.80	Edit	 
+ 	07-09-26	
+SALEFreeport-McMoRan Inc
+65.7678	57.5000	3,781.65	Edit	 
+ 	07-09-26	
+SALEFigma Inc
+207.1466	21.6700	4,488.87	Edit	 
+ 	07-09-26	
+SALEGE Aerospace
+1.5686	356.0300	558.48	Edit	 
+ 	07-09-26	
+PURCHASEGE Vernova Inc
+0.2670	1,070.9900	286.00	Edit	 
+ 	07-09-26	
+PURCHASEGilead Sciences, Inc.
+30.3251	135.8200	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASECorning Inc
+0.5849	184.0300	107.64	Edit	 
+ 	07-09-26	
+SALEGenmab AS
+4.4035	29.5400	130.08	Edit	 
+ 	07-09-26	
+PURCHASEAlphabet Inc Class C
+1.3234	358.7100	474.73	Edit	 
+ 	07-09-26	
+PURCHASEAlphabet Inc Class A
+1.3070	361.9200	473.02	Edit	 
+ 	07-09-26	
+PURCHASEGrab Holdings Limited
+1,081.0377	3.8100	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEGarmin Ltd.
+16.9127	243.5300	4,118.75	Edit	 
+ 	07-09-26	
+SALEHome Depot Inc
+12.3923	336.2100	4,166.42	Edit	 
+ 	07-09-26	
+SALEHilton Worldwide Holdings Inc
+0.1120	333.1300	37.31	Edit	 
+ 	07-09-26	
+PURCHASEIntercontinental Exchange Inc
+4.0306	137.1700	552.88	Edit	 
+ 	07-09-26	
+SALEInnodata Inc
+26.7930	69.0200	1,849.25	Edit	 
+ 	07-09-26	
+SALEIntuit Inc
+10.2852	272.1000	2,798.60	Edit	 
+ 	07-09-26	
+PURCHASESamsara Inc.
+113.0284	36.4400	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEIntuitive Surgical Inc
+1.0669	415.1000	442.88	Edit	 
+ 	07-09-26	
+SALEJohnson and Johnson
+2.1583	263.4000	568.50	Edit	 
+ 	07-09-26	
+SALEJPMorgan Chase and Co
+0.2795	330.6200	92.42	Edit	 
+ 	07-09-26	
+PURCHASEKeysight Technologies Inc
+2.0245	317.2400	642.25	Edit	 
+ 	07-09-26	
+PURCHASEKKR and Co Inc
+4.7170	93.3000	440.09	Edit	 
+ 	07-09-26	
+PURCHASEKLA Corp
+16.4098	221.1800	3,629.53	Edit	 
+ 	07-09-26	
+SALELinde PLC
+0.1820	527.6700	96.01	Edit	 
+ 	07-09-26	
+SALELumentum Holdings Inc
+4.1788	707.1000	2,954.83	Edit	 
+ 	07-09-26	
+SALEEli Lilly and Co
+0.6605	1,215.8300	803.05	Edit	 
+ 	07-09-26	
+SALELemonade Inc
+15.9921	71.0300	1,135.92	Edit	 
+ 	07-09-26	
+PURCHASECheniere Energy Inc
+0.4739	260.9400	123.66	Edit	 
+ 	07-09-26	
+SALELam Research Corp
+1.2132	333.1500	404.19	Edit	 
+ 	07-09-26	
+SALEMastercard Inc
+8.1021	519.8600	4,211.96	Edit	 
+ 	07-09-26	
+SALEMcDonalds Corp
+14.0415	278.2500	3,907.05	Edit	 
+ 	07-09-26	
+SALEMDA Space Ltd
+19.3946	38.6700	749.99	Edit	 
+ 	07-09-26	
+PURCHASEMeta Platforms Inc
+0.2709	603.1200	163.37	Edit	 
+ 	07-09-26	
+PURCHASEModine Manufacturing Co
+2.9176	235.6200	687.44	Edit	 
+ 	07-09-26	
+PURCHASEMerck & Co., Inc.
+32.6911	125.9900	4,118.75	Edit	 
+ 	07-09-26	
+SALEMarvell Technology Inc
+5.4452	231.7100	1,261.71	Edit	 
+ 	07-09-26	
+PURCHASEMicrosoft Corp
+1.0467	383.3400	401.24	Edit	 
+ 	07-09-26	
+PURCHASEMotorola Solutions Inc
+0.5774	420.5400	242.80	Edit	 
+ 	07-09-26	
+SALEMicron Technology Inc
+1.6737	948.8000	1,587.99	Edit	 
+ 	07-09-26	
+PURCHASENebius Group N.V.
+19.0260	216.4800	4,118.75	Edit	 
+ 	07-09-26	
+SALENeurocrine Biosciences Inc
+4.0089	178.2400	714.54	Edit	 
+ 	07-09-26	
+PURCHASENextEra Energy Inc
+5.2497	87.4400	459.03	Edit	 
+ 	07-09-26	
+PURCHASENetflix Inc
+9.0284	75.5900	682.46	Edit	 
+ 	07-09-26	
+SALEServiceNow Inc
+6.3836	107.7800	688.03	Edit	 
+ 	07-09-26	
+PURCHASENRG Energy Inc
+3.5161	137.4800	483.40	Edit	 
+ 	07-09-26	
+SALENu Holdings Ltd
+276.2431	13.3700	3,693.37	Edit	 
+ 	07-09-26	
+PURCHASENVIDIA Corp
+0.7465	204.1200	152.38	Edit	 
+ 	07-09-26	
+PURCHASENovo Nordisk A/S
+84.2453	48.8900	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEnVent Electric PLC
+3.4710	154.7600	537.17	Edit	 
+ 	07-09-26	
+PURCHASENextpower Inc
+5.7329	109.7400	629.13	Edit	 
+ 	07-09-26	
+SALEOracle Corp
+20.8257	140.4900	2,925.80	Edit	 
+ 	07-09-26	
+SALEPalo Alto Networks Inc
+21.8735	320.5900	7,012.43	Edit	 
+ 	07-09-26	
+PURCHASEPalantir Technologies Inc
+1.2487	132.2200	165.10	Edit	 
+ 	07-09-26	
+PURCHASEPinnacle Financial Partners Inc
+2.0054	97.8100	196.15	Edit	 
+ 	07-09-26	
+PURCHASEInsulet Corporation
+26.1575	157.4600	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEPTC Inc
+4.2840	122.6100	525.26	Edit	 
+ 	07-09-26	
+PURCHASEQUALCOMM Inc
+1.3756	186.5600	256.63	Edit	 
+ 	07-09-26	
+PURCHASERoyal Caribbean Cruises Ltd
+0.6408	280.9500	180.03	Edit	 
+ 	07-09-26	
+PURCHASEReddit, Inc.
+21.0883	195.3100	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASERambus Inc
+6.5103	109.6400	713.78	Edit	 
+ 	07-09-26	
+PURCHASEResMed Inc
+0.8717	205.8400	179.43	Edit	 
+ 	07-09-26	
+PURCHASESAP SE
+3.2415	157.4200	510.28	Edit	 
+ 	07-09-26	
+SALECharles Schwab Corp
+2.8848	101.7000	293.39	Edit	 
+ 	07-09-26	
+SALESea Limited
+44.9035	105.3100	4,728.79	Edit	 
+ 	07-09-26	
+SALEShopify Inc
+3.1066	119.2200	370.37	Edit	 
+ 	07-09-26	
+PURCHASESynopsys Inc
+1.5502	434.5000	673.56	Edit	 
+ 	07-09-26	
+PURCHASES&P Global Inc
+0.1098	430.7900	47.31	Edit	 
+ 	07-09-26	
+SALEStryker Corp
+1.0203	326.8500	333.50	Edit	 
+ 	07-09-26	
+PURCHASETE Connectivity plc
+20.9883	196.2400	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASETempus AI, Inc.
+71.9182	57.2700	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASETeradyne, Inc.
+11.7153	351.5700	4,118.75	Edit	 
+ 	07-09-26	
+SALETaiwan Semiconductor Manufacturing Co Ltd ADR
+0.2079	436.9800	90.85	Edit	 
+ 	07-09-26	
+PURCHASETTM Technologies Inc
+4.0663	145.2900	590.79	Edit	 
+ 	07-09-26	
+SALEVeeva Systems Inc
+1.9551	188.1700	367.90	Edit	 
+ 	07-09-26	
+PURCHASEVista Energy SAB de CV
+4.9240	65.2500	321.29	Edit	 
+ 	07-09-26	
+PURCHASEVertiv Holdings Co
+1.7578	317.8100	558.65	Edit	 
+ 	07-09-26	
+SALEVertex Pharmaceuticals Inc
+1.1174	498.4300	556.97	Edit	 
+ 	07-09-26	
+PURCHASEWalmart Inc.
+36.4169	113.1000	4,118.75	Edit	 
+ 	07-09-26	
+PURCHASEXylem Inc
+0.9585	118.6200	113.69	Edit	 
+ 	07-09-26	
+PURCHASEYum China Holdings Inc
+14.3110	42.7200	611.36	Edit	 
+ 	07-09-26	
+SALEZscaler Inc
+0.1263	143.5500	18.13	Edit	 
 As of Wed 05-07-26 07:00 AM CSTDone
