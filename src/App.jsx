@@ -370,6 +370,9 @@ const LOGO_DOMAINS = {
   PNC:"pnc.com",TFC:"truist.com",COF:"capitalone.com",ADP:"adp.com",FIS:"fisglobal.com",
   FISV:"fiserv.com",ICE:"ice.com",CME:"cmegroup.com",SPGI:"spglobal.com",MCO:"moodys.com",
   AON:"aon.com",MMC:"mmc.com",TRV:"travelers.com",CB:"chubb.com",AFL:"aflac.com",
+  // Q3 2026 rebalance additions
+  CEG:"constellationenergy.com",NWG:"natwestgroup.com",NOW:"servicenow.com",
+  SOFI:"sofi.com",YMM:"fulltruckalliance.com",
 };
 const logoCache = {};
 function tryLoadImage(url) {
