@@ -14,30 +14,33 @@ import { useAuth } from './lib/auth'
    ═══════════════════════════════════════════════════════════════════ */
 
 const DEFAULT_SLEEVES = {
-  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","DVN","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO"], icon: "💰" },
-  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST"], icon: "🚀" },
+  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","SPGI","CEG","NWG"], icon: "💰" },
+  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CNX","CRDO","EIX","FCX","FTNT","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST","NOW","SOFI","YMM"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
   sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLC","XLU"], icon: "📊" },
   fci100: { name: "FCI 100", symbols: ["NVDA","MSFT","GOOGL","TSM","META","CDNS","QCOM","AMD","MRVL","GOOG","KLAC","AMAT","GE","BAM","AAPL","CRM","NOW","KEYS","AZN","SHOP","LLY","VRT","ASML","XYL","CRDO","NEE","AMZN","APH","CEG","NVT","JPM","COST","ETN","RMBS","AGI","RCL","MCD","KKR","MA","CLS","HLT","NRG","MU","ZS","JNJ","ANET","LRCX","SAP","ISRG","VRTX","RMD","MSI","PLTR","NU","INTU","DDOG","CSCO","AVGO","PTC","ADI","LNG","CB","SYK","LITE","PNFP","GEV","AEM","EMBJ","ECL","VEEV","GLW","SNPS","VIST","GMAB","TTMI","ICE","BE","NBIX","ALAB","NXT","FCX","MOD","SCHW","ORCL","ADBE","CPRT","FIG","HD","ARM","SPGI","LMND","INOD","PANW","YUMC","AMGN","LIN","CAT","SE","NFLX","MDA"], icon: "🏆" },
   fciValues: { name: "FCI Values 100", symbols: ["NVDA","TSM","CDNS","QCOM","MRVL","KLAC","AMAT","GE","BAM","NOW","KEYS","SHOP","LLY","VRT","ASML","XYL","CRDO","NEE","APH","CEG","NVT","ETN","RMBS","AGI","RCL","MCD","CLS","NRG","MU","ZS","ANET","LRCX","SAP","ISRG","RMD","MSI","PLTR","NU","DDOG","CSCO","AVGO","PTC","ADI","LNG","CB","SYK","LITE","PNFP","GEV","AEM","EMBJ","VEEV","GLW","SNPS","VIST","GMAB","TTMI","ICE","BE","NBIX","ALAB","NXT","FCX","MOD","SCHW","CPRT","FIG","HD","ARM","SPGI","LMND","INOD","PANW","YUMC","AMGN","LIN","CAT","SE","MDA","DECK","CLBT","WDC","PGR","SERV","YOU","IBN","AWK","DT","BSY","DE","KTOS","TOST","VST","DOV","PWR","CNI","FTNT","CP","MBLY","TXN"], icon: "✝️" },
 };
 const TARGET_WEIGHTS = {
-  dividend: { CAT:4.0, FAST:4.0, GD:4.0, LMT:3.0, PCAR:3.0, ADI:2.5, ADP:2.5, LRCX:2.5, QCOM:2.5, SSNC:2.5, TEL:2.5, STLD:7.0, NTR:7.0, CHD:6.0, CL:6.0, ATO:4.0, BKH:4.0, NEE:4.0, DVN:6.0, VLO:6.0, ABT:3.0, DGX:3.0, SYK:3.0, GPC:4.0, ORI:4.0 },
-  growth: { AMD:4.0, CRDO:4.0, CWAN:4.0, FTNT:4.0, KEYS:4.0, MRVL:4.0, NVDA:4.0, NXPI:4.0, TSM:4.0, COIN:3.0, HOOD:3.0, HUT:3.0, MARA:3.0, SYF:3.0, SUPV:3.0, CNX:4.0, CVX:4.0, OKE:4.0, AEM:6.0, FCX:6.0, EIX:6.0, VST:6.0, ATAT:3.0, TOL:3.0, HRMY:4.0 },
+  dividend: { SYK:6.0, SSNC:6.0, ADP:6.0, SPGI:6.0, CEG:6.0, QCOM:5.0, GPC:4.0, STLD:4.0, NTR:4.0, LMT:4.0, TEL:4.0, CHD:4.0, CL:4.0, NWG:4.0, GD:3.5, NEE:3.0, LRCX:3.0, FAST:3.0, PCAR:3.0, ADI:3.0, CAT:3.0, ORI:3.0, ABT:3.0, DGX:3.0, ATO:2.5 },
+  growth: { NOW:8.0, NVDA:6.5, SOFI:6.5, FCX:6.5, VST:6.0, HOOD:5.5, AEM:5.0, MRVL:4.0, TSM:4.0, CRDO:4.0, YMM:4.0, KEYS:3.5, NXPI:3.5, AMD:3.0, FTNT:3.0, HRMY:3.0, TOL:3.0, HUT:3.0, MARA:3.0, CVX:2.5, ATAT:2.5, CNX:2.5, OKE:2.5, EIX:2.5, SYF:2.5 },
 };
-const REBALANCE_DATE = "2026-04-08";
+const REBALANCE_DATE = "2026-07-09";
 const STEW_START = "2025-01-15";   // Carson's first decision — dividend stewardship window
 const REBALANCE_ANCHORS = {
-  // 4/8/26 OPEN prices from Yahoo Finance
-  ABT:103.13, ADI:345.81, ADP:204.51, ATO:186.7, BKH:73.03, CAT:764.62, CHD:93.0, CL:83.75, DVN:44.13, DGX:196.18,
-  FAST:46.41, GD:346.86, GPC:106.62, LMT:612.27, LRCX:242.75, NEE:93.08, NTR:70.62, ORI:40.45, PCAR:120.3, QCOM:128.65,
-  SSNC:69.99, STLD:184.13, SYK:336.29, TEL:220.74, VLO:235.0,
-  AEM:220.35, AMD:232.12, ATAT:37.2, CNX:38.1, COIN:187.89, CRDO:160.69, CVX:191.41, CWAN:24.04, EIX:72.97, FCX:70.21,
-  FTNT:85.1, HOOD:76.8, HRMY:28.11, HUT:57.08, KEYS:312.75, MARA:9.51, MRVL:139.69, NVDA:184.5, NXPI:205.95, OKE:85.45,
-  SUPV:9.88, SYF:72.18, TOL:139.21, TSM:370.29, VST:163.46,
-  IBIT:41.08, ETHA:17.06,
-  // Q1 sold stocks
-  A:115.98, MATX:174.8, GFI:52.77, FINV:5.17, PDD:102.51,
+  // Q3 2026 rebalance — 7/8/26 close prices (sizing basis; rebalance booked 7/9).
+  // Dividend sleeve
+  ABT:95.18, ADI:385.4, ATO:177.09, ADP:241.37, CAT:948.08, CHD:96.17, CL:93.04, DGX:208.21, FAST:46.51, GD:374.31,
+  GPC:124.73, LRCX:333.15, LMT:527.96, NEE:87.44, NTR:66.76, ORI:41.5, PCAR:122.5, QCOM:186.56, SSNC:65.42, STLD:228.76,
+  SYK:326.85, TEL:196.24, SPGI:430.79, CEG:244.52, NWG:17.51,
+  // Growth sleeve
+  AMD:517.41, AEM:144.89, ATAT:31.84, CVX:175.97, CNX:33.18, CRDO:258.69, EIX:74.78, FCX:57.5, FTNT:156.71, HRMY:38.08,
+  HUT:106.11, HOOD:113.53, KEYS:317.24, MARA:12.02, MRVL:231.71, NVDA:204.12, NXPI:283.81, OKE:91.16, SYF:68.26, TSM:436.98,
+  TOL:145.57, VST:154.82, NOW:107.78, SOFI:17.73, YMM:8.58,
+  // Digital sleeve (unchanged)
+  IBIT:35.23, ETHA:13.11,
+  // Q2-exited names (kept for reference)
+  BKH:73.28, DVN:42.02, VLO:281.25, COIN:158.44, CWAN:24.56, SUPV:9.28,
 };
 const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
 const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
