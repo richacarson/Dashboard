@@ -51,6 +51,8 @@ NAME_TO_TICKER = {
     "PDD Holdings Inc ADR": "PDD",
     "Robinhood Markets Inc Class A": "HOOD",
     "SoFi Technologies Inc Ordinary Shares": "SOFI",
+    "SoFi Technologies Inc": "SOFI",
+    "Full Truck Alliance Co Ltd": "YMM",
     "Super Micro Computer Inc": "SMCI",
     "Synchrony Financial": "SYF",
     "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
