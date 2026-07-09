@@ -780,27 +780,14 @@ def run_sleeve(sleeve_name, tx_file, targets):
               f"cash (${ms_cash:,.2f}) which already includes period dividends")
         dividends = []
 
-    # Phase 1.5 — Morningstar cash reconciliation
-    # The app's replayed cash can drift from Morningstar due to historical
-    # DRIP-as-cash accounting. Record the delta as a one-time WITHDRAWAL or
-    # DEPOSIT dated 4/17/26 labeled as DRIP reconciliation. This also captures
-    # any dividends paid in the gap period (they're in Morningstar's cash).
+    # Phase 1.5 — DISABLED (would double-count dividends). MORNINGSTAR_CASH is the
+    # REAL total cash (base + ledger dividend credits). The builder re-adds those
+    # ledger credits at replay time, so reconciling the file's replayed BASE up to
+    # the full real cash would count the dividends twice. Instead we leave the base
+    # untouched and deploy the excess down to 1% via the cash leg below, sized off
+    # the real total cash — the builder then re-adds credits, landing on 1%.
     app_cash = pre["cash"] + sum(d["amount"] for d in dividends)
     reconciliation = None
-    if ms_cash is not None:
-        drift = app_cash - ms_cash
-        if abs(drift) > 1.00:
-            print(f"\n[{sleeve_name}] Phase 1.5: Morningstar cash reconciliation")
-            print(f"  App cash (replayed):  ${app_cash:,.2f}")
-            print(f"  Morningstar cash:     ${ms_cash:,.2f}")
-            print(f"  Drift to reconcile:   ${drift:+,.2f}")
-            reconciliation = {
-                "date": REBALANCE_DATE_ISO,
-                "amount": round(abs(drift), 2),
-                "type": "WITHDRAWAL" if drift > 0 else "DEPOSIT",
-                "note": "DRIP + gap-period dividend reconciliation to Morningstar",
-            }
-            print(f"  Recording {reconciliation['type']} of ${reconciliation['amount']:,.2f}")
 
     # Phase 2 — prices for all current + target tickers
     all_tickers = set(pre["shares"].keys()) | set(targets.keys())
@@ -822,16 +809,19 @@ def run_sleeve(sleeve_name, tx_file, targets):
     # ('By Activity' sleeves move cash on the stock rows themselves, so skip.)
     if pre["format"] == "security" and reconciliation is None:
         target_cash = total_value * CASH_TARGET
-        delta = pre["cash"] - target_cash   # >0 → net buyer, withdraw the difference
+        # Basis is the REAL total cash (ms_cash), NOT the replayed base — the base
+        # is left as-is and the builder adds the ledger credits back, so
+        # (base − this_withdrawal) + credits == target_cash exactly.
+        delta = effective_cash_for_rebalance - target_cash   # >0 → withdraw the excess above 1%
         if abs(delta) > 1.00:
             reconciliation = {
                 "date": REBALANCE_DATE_ISO,
                 "amount": round(abs(delta), 2),
                 "type": "WITHDRAWAL" if delta > 0 else "DEPOSIT",
-                "note": "Rebalance net cash deployment to 1% target",
+                "note": "Rebalance cash deployment to 1% target",
             }
             print(f"\n[{sleeve_name}] Cash deployment: {reconciliation['type']} "
-                  f"${reconciliation['amount']:,.2f} (cash {pre['cash']:,.2f} -> target {target_cash:,.2f})")
+                  f"${reconciliation['amount']:,.2f} (real cash {effective_cash_for_rebalance:,.2f} -> target {target_cash:,.2f})")
 
     stock_value = sum(pre["shares"].get(t, 0) * prices.get(t, 0) for t in pre["shares"])
 

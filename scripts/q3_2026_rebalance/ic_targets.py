@@ -41,10 +41,14 @@ GROWTH_TARGETS = {
 CASH_TARGET = 0.01
 
 # Ground-truth cash balances used as the starting cash (supersedes replay).
-# Per Carson: use what the dashboard shows now — NOT the modeled figures.
+# These are the REAL 7/9-morning cash balances (base cash + dividend credits
+# accrued through 7/9), taken from the scheduled build that ran 7/9 05:16 ET —
+# i.e. "what it was when the rebalance took place". Using the full real cash
+# (not just the base) makes the deployment leg withdraw enough that, once the
+# builder re-adds the dividend credits, both sleeves land at exactly 1%.
 MORNINGSTAR_CASH = {
-    "dividend": 8147.33,
-    "growth":   1150.14,
+    "dividend": 11756.70,
+    "growth":   1828.93,
 }
 
 # Company-name mapping for NEW additions (required so the "By Activity" growth
