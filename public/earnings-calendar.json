@@ -822,11 +822,11 @@
   {
     "symbol": "SLP",
     "date": "2026-07-09",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.1279,
-    "epsActual": null,
+    "epsActual": 0.3,
     "revenueEstimate": 21127513,
-    "revenueActual": null,
+    "revenueActual": 21890000,
     "source": "finnhub"
   },
   {
@@ -1752,7 +1752,7 @@
   {
     "symbol": "KARO",
     "date": "2026-07-15",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 9.0196,
     "epsActual": null,
     "revenueEstimate": 1538403372,
@@ -2002,7 +2002,7 @@
   {
     "symbol": "BSVN",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.0588,
     "epsActual": null,
     "revenueEstimate": 24333456,
@@ -2022,7 +2022,7 @@
   {
     "symbol": "CBSH",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.073,
     "epsActual": null,
     "revenueEstimate": 498035604,
@@ -2042,7 +2042,7 @@
   {
     "symbol": "CFG",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.251,
     "epsActual": null,
     "revenueEstimate": 2270248922,
@@ -2122,7 +2122,7 @@
   {
     "symbol": "FNB",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.4245,
     "epsActual": null,
     "revenueEstimate": 473144266,
@@ -2142,7 +2142,7 @@
   {
     "symbol": "HOVR",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1734,
     "epsActual": null,
     "revenueEstimate": 0,
@@ -2172,7 +2172,7 @@
   {
     "symbol": "IIIN",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.4539,
     "epsActual": null,
     "revenueEstimate": 195903750,
@@ -2182,7 +2182,7 @@
   {
     "symbol": "INDB",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.8124,
     "epsActual": null,
     "revenueEstimate": 263102625,
@@ -2282,7 +2282,7 @@
   {
     "symbol": "PLD",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.7979,
     "epsActual": null,
     "revenueEstimate": 2247931457,
@@ -2312,7 +2312,7 @@
   {
     "symbol": "SFNC",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.5304,
     "epsActual": null,
     "revenueEstimate": 256339464,
@@ -2412,7 +2412,7 @@
   {
     "symbol": "USB",
     "date": "2026-07-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.2807,
     "epsActual": null,
     "revenueEstimate": 7609879804,
