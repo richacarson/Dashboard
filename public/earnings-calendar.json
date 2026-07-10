@@ -974,7 +974,7 @@
     "date": "2026-07-10",
     "hour": "",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.58,
     "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
