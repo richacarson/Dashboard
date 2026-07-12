@@ -1525,7 +1525,17 @@
     "hour": "amc",
     "epsEstimate": -0.6076,
     "epsActual": null,
-    "revenueEstimate": 27008580,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "LOOP",
+    "date": "2026-07-14",
+    "hour": "",
+    "epsEstimate": -0.051,
+    "epsActual": null,
+    "revenueEstimate": 918000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1672,7 +1682,7 @@
   {
     "symbol": "FEIM",
     "date": "2026-07-15",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.2499,
     "epsActual": null,
     "revenueEstimate": 18946500,
@@ -1766,16 +1776,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LOOP",
-    "date": "2026-07-15",
-    "hour": "",
-    "epsEstimate": -0.051,
-    "epsActual": null,
-    "revenueEstimate": 918000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1890,16 +1890,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "AAL",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 0.0205,
-    "epsActual": null,
-    "revenueEstimate": 16864852628,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "ABT",
     "date": "2026-07-16",
     "hour": "bmo",
@@ -1916,16 +1906,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ALK",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": -0.9883,
-    "epsActual": null,
-    "revenueEstimate": 4134847009,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2155,7 +2135,7 @@
     "hour": "bmo",
     "epsEstimate": -0.1734,
     "epsActual": null,
-    "revenueEstimate": null,
+    "revenueEstimate": 0,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2230,16 +2210,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MCB",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 2.2961,
-    "epsActual": null,
-    "revenueEstimate": 94328950,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MCBS",
     "date": "2026-07-16",
     "hour": "",
@@ -2300,16 +2270,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "POOL",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 5.4549,
-    "epsActual": null,
-    "revenueEstimate": 1853657077,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SBSAA",
     "date": "2026-07-16",
     "hour": "",
@@ -2336,26 +2296,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": 190332000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SNA",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 5.0035,
-    "epsActual": null,
-    "revenueEstimate": 1230859103,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SNAP",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 0.0804,
-    "epsActual": null,
-    "revenueEstimate": 1572656012,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2482,7 +2422,7 @@
   {
     "symbol": "ALV",
     "date": "2026-07-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 2.4483,
     "epsActual": null,
     "revenueEstimate": 2790478500,
@@ -2532,7 +2472,7 @@
   {
     "symbol": "FITB",
     "date": "2026-07-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.9755,
     "epsActual": null,
     "revenueEstimate": 3319414641,
@@ -2572,7 +2512,7 @@
   {
     "symbol": "RF",
     "date": "2026-07-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.6475,
     "epsActual": null,
     "revenueEstimate": 1995655972,
@@ -2582,7 +2522,7 @@
   {
     "symbol": "SPFI",
     "date": "2026-07-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.839,
     "epsActual": null,
     "revenueEstimate": 64603485,
@@ -2592,7 +2532,7 @@
   {
     "symbol": "TFC",
     "date": "2026-07-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.0904,
     "epsActual": null,
     "revenueEstimate": 5295981823,
