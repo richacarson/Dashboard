@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-12T11:48:44Z",
+  "generated_at": "2026-07-13T11:49:25Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -354,7 +354,13 @@
           "strongSell": 4
         }
       },
-      "earnings": null
+      "earnings": {
+        "period": "2026-03-31",
+        "eps_actual": 0.3,
+        "eps_estimate": 0.3054,
+        "surprise": -0.0054,
+        "surprise_pct": -1.7682
+      }
     },
     "GD": {
       "sleeve": "Dividend",
@@ -1349,7 +1355,9 @@
       "quote_source": "alpaca"
     }
   },
-  "recent_reporters": [],
+  "recent_reporters": [
+    "FAST"
+  ],
   "errors": [],
   "sources": {
     "price": "alpaca",
