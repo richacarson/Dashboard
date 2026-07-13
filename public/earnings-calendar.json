@@ -1110,16 +1110,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "EGY",
-    "date": "2026-07-13",
-    "hour": "",
-    "epsEstimate": 0.0808,
-    "epsActual": null,
-    "revenueEstimate": 111100000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "ENRT",
     "date": "2026-07-13",
     "hour": "",
@@ -3526,16 +3516,6 @@
     "epsEstimate": 2.5953,
     "epsActual": null,
     "revenueEstimate": 2046474960,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "IPAR",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.9758,
-    "epsActual": null,
-    "revenueEstimate": 341666003,
     "revenueActual": null,
     "source": "finnhub"
   },
