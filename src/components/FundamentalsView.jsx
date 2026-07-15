@@ -7,7 +7,31 @@
 // Data: public/fundamentals/<ticker>.json (built by scripts/build-fundamentals.py,
 // USD-reporting holdings only). Live price from the parent's quotes.
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+// Self-fetching fundamentals block for a single stock — drops into the stock
+// overview (classic + terminal). Renders the EPS-vs-price + FCF/P-FCF charts,
+// or nothing if the name has no USD statement data (ADRs).
+export function StockFundamentals({ symbol, price, name, C, isDesktop }) {
+  const [f, setF] = useState(undefined) // undefined = loading, null = unavailable
+  useEffect(() => {
+    if (!symbol) return
+    let cancelled = false
+    setF(undefined)
+    fetch(`${import.meta.env.BASE_URL}fundamentals/${symbol}.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setF(d) })
+      .catch(() => { if (!cancelled) setF(null) })
+    return () => { cancelled = true }
+  }, [symbol])
+  if (f === undefined || f === null) return null
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: isDesktop ? 16 : 12, marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: C.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>Fundamentals</div>
+      <FundamentalsDetail f={f} px={price} name={name || symbol} C={C} isDesktop={isDesktop} R={12} />
+    </div>
+  )
+}
 
 const fmt1 = (v) => (v == null || !isFinite(v)) ? '—' : v.toFixed(1)
 const fmtB = (v) => {
