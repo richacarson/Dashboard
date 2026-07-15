@@ -238,6 +238,25 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const epsX = epsPts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
   const lastEps = epsPts[epsPts.length - 1]
 
+  // ---------- P/E (quarterly, TTM) over time + historical average ----------
+  const peC = '#7EA6FF'
+  const pePts = q.filter((a) => a.pe != null && a.pe > 0)
+  const peV = pePts.map((a) => a.pe)
+  const peSorted = [...peV].sort((a, b) => a - b)
+  const peMed = peSorted.length ? peSorted[Math.floor(peSorted.length / 2)] : null
+  const peCapV = peMed != null ? peMed * 3 : Infinity  // clamp trough-earnings spikes
+  const clampPe = (v) => Math.min(v, peCapV)
+  const avgPe = peV.length ? peV.reduce((s, v) => s + clampPe(v), 0) / peV.length : null
+  const liveTtmPe = (px && f.ttm?.eps > 0) ? px / f.ttm.eps : null
+  const peAxis = peV.map(clampPe).concat([avgPe, liveTtmPe].filter((v) => v != null && v > 0))
+  const peLo = Math.max(0, (peAxis.length ? Math.min(...peAxis) : 0) * 0.9)
+  const peHi = (peAxis.length ? Math.max(...peAxis) : 40) * 1.08
+  const peTk = ticks(peLo, peHi, 5)
+  const peBot = Math.min(peLo, peTk[0]), peTop = Math.max(peHi, peTk[peTk.length - 1])
+  const yPe = (v) => PAD.t + ch - ((clampPe(v) - peBot) / ((peTop - peBot) || 1)) * ch
+  const peX = pePts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
+  const peLine = pePts.map((a, i) => `${i ? 'L' : 'M'}${peX[i].toFixed(1)},${yPe(a.pe).toFixed(1)}`).join(' ')
+
   // ---------- FCF (quarterly) + single average-P/FCF line ----------
   const fcfPts = q.filter((a) => a.fcf != null)
   const fcfVals = fcfPts.map((a) => a.fcf)
@@ -289,6 +308,15 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
           <path d={pxLine} fill="none" stroke={C.accent} strokeWidth={1.4} />
           {epsPts.map((a, i) => <circle key={a.date} cx={epsX[i]} cy={yEps(a.eps)} r={R} fill={C.up} />)}
           {nextQ != null && lastEps && <g><line x1={epsX[epsPts.length - 1]} y1={yEps(lastEps.eps)} x2={rightX} y2={yEps(nextQ)} stroke={C.up} strokeWidth={1.2} strokeDasharray="3,3" /><rect x={rightX - 3.2} y={yEps(nextQ) - 3.2} width={6.4} height={6.4} fill={C.up} transform={`rotate(45 ${rightX} ${yEps(nextQ)})`} /></g>}
+        </Chart>
+
+        <Chart title="P/E (quarterly, TTM) vs historical average" W={W} H={H} C={C}
+          legend={<><span><span style={{ color: peC }}>—</span> P/E</span>{avgPe != null ? <span><span style={{ color: C.t1 }}>—</span> avg {fmt1(avgPe)}×</span> : null}{liveTtmPe != null ? <span><span style={{ color: C.accent }}>--</span> live {fmt1(liveTtmPe)}×</span> : null}</>}>
+          {peTk.map((v) => <g key={v}><line x1={PAD.l} y1={yPe(v)} x2={W - PAD.r} y2={yPe(v)} stroke={gx} strokeWidth={0.5} /><text x={PAD.l - 5} y={yPe(v) + 3} textAnchor="end" {...axL}>{v.toFixed(0)}×</text></g>)}
+          {yrLabels.map((l, i) => <text key={i} x={l.x} y={H - 8} textAnchor="middle" {...axL}>{l.y}</text>)}
+          <path d={peLine} fill="none" stroke={peC} strokeWidth={1.8} />
+          {avgPe != null && <g><line x1={PAD.l} y1={yPe(avgPe)} x2={W - PAD.r} y2={yPe(avgPe)} stroke={C.t1} strokeWidth={1.4} /><text x={PAD.l + 3} y={yPe(avgPe) - 4} {...dot} fill={C.t1}>avg {fmt1(avgPe)}×</text></g>}
+          {liveTtmPe != null && <g><line x1={PAD.l} y1={yPe(liveTtmPe)} x2={W - PAD.r} y2={yPe(liveTtmPe)} stroke={C.accent} strokeWidth={1.2} strokeDasharray="4,3" /><text x={W - PAD.r - 3} y={yPe(liveTtmPe) - 4} textAnchor="end" {...dot} fill={C.accent}>live {fmt1(liveTtmPe)}×</text></g>}
         </Chart>
 
         <Chart title="Free Cash Flow (quarterly)" W={W} H={H} C={C}
