@@ -218,6 +218,15 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
 
   // ---------- EPS vs Price ----------
   const epsPts = annual.filter((a) => a.eps != null)
+  // Thin EPS value labels so early clustered years don't overprint each other;
+  // always keep the most recent point's label.
+  const epsLblX = epsPts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
+  let _lastLx = -99
+  const epsShow = epsLblX.map((x, i) => {
+    if (i === epsPts.length - 1) return true
+    if (x - _lastLx >= 26) { _lastLx = x; return true }
+    return false
+  })
   const fwdEps = f.fwd?.eps
   const pxs = price.map((p) => p.c)
   const pxLo = Math.min(...pxs), pxHi = Math.max(...pxs)
@@ -235,12 +244,21 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   // ---------- FCF + P/FCF ----------
   const fcfPts = annual.filter((a) => a.fcf != null)
   const fcfHi = Math.max(0, ...fcfPts.map((a) => a.fcf)) * 1.12 || 1
-  const pfVals = annual.map((a) => a.pfcf).filter((v) => v != null).concat(lpfcf != null ? [lpfcf] : [])
-  const pfLo = Math.min(...pfVals) * 0.9, pfHi = Math.max(...pfVals) * 1.05
+  // Clamp the P/FCF axis: a single near-zero-FCF year sends P/FCF to hundreds×,
+  // which would flatten every normal year. Cap at a robust multiple of the
+  // typical level; outlier years ride the top of the axis instead of dominating.
+  const pfRaw = annual.map((a) => a.pfcf).filter((v) => v != null && v > 0)
+  const pfSorted = [...pfRaw].sort((a, b) => a - b)
+  const pfAt = (p) => (pfSorted.length ? pfSorted[Math.min(pfSorted.length - 1, Math.floor(pfSorted.length * p))] : 0)
+  const pfMed = pfSorted.length ? pfSorted[Math.floor(pfSorted.length / 2)] : 20
+  const pfCap = Math.max(pfAt(0.9) * 1.35, pfMed * 2.5) || 60
+  const clampPf = (v) => Math.min(v, pfCap)
+  const pfVals = pfRaw.map(clampPf).concat(lpfcf != null ? [clampPf(lpfcf)] : [])
+  const pfLo = Math.max(0, Math.min(...pfVals) * 0.9), pfHi = Math.max(...pfVals) * 1.05
   const fcfTk = ticks(0, fcfHi, 4), pfTk = ticks(pfLo, pfHi, 4)
   const yFcf = (v) => PAD.t + ch - (v / (fcfTk[fcfTk.length - 1] || 1)) * ch
   const pfB = Math.min(pfLo, pfTk[0]), pfT = Math.max(pfHi, pfTk[pfTk.length - 1])
-  const yPf = (v) => PAD.t + ch - ((v - pfB) / ((pfT - pfB) || 1)) * ch
+  const yPf = (v) => PAD.t + ch - ((clampPf(v) - pfB) / ((pfT - pfB) || 1)) * ch
   const bw = fcfPts.length ? Math.min(38, (cw / fcfPts.length) * 0.55) : 12
   const fcfX = (i) => PAD.l + (cw / fcfPts.length) * (i + 0.5)
   const pfLine = annual.filter((a) => a.pfcf != null).map((a, i) => { const gi = fcfPts.findIndex((p) => p.date === a.date); return `${i ? 'L' : 'M'}${(fcfX(gi < 0 ? i : gi)).toFixed(1)},${yPf(a.pfcf).toFixed(1)}` }).join(' ')
@@ -268,7 +286,7 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
           <path d={pxArea} fill={`url(#g-${f.ticker})`} />
           <path d={pxLine} fill="none" stroke={C.accent} strokeWidth={1.4} />
           <path d={epsLine} fill="none" stroke={C.up} strokeWidth={2} />
-          {epsPts.map((a) => { const x = xAt(mIdx(a.date.slice(0, 7)), price.length); return <g key={a.date}><circle cx={x} cy={yEps(a.eps)} r={2.6} fill={C.up} /><text x={x} y={yEps(a.eps) - 6} textAnchor="middle" {...dot} fill={C.up}>${a.eps.toFixed(2)}</text></g> })}
+          {epsPts.map((a, i) => { const x = epsLblX[i]; return <g key={a.date}><circle cx={x} cy={yEps(a.eps)} r={2.6} fill={C.up} />{epsShow[i] && <text x={x} y={yEps(a.eps) - 6} textAnchor="middle" {...dot} fill={C.up}>${a.eps.toFixed(2)}</text>}</g> })}
           {fwdEps && (() => { const lx = xAt(price.length - 1, price.length), lastReal = epsPts[epsPts.length - 1]; const rx = xAt(mIdx(lastReal.date.slice(0, 7)), price.length); return <g><line x1={rx} y1={yEps(lastReal.eps)} x2={lx} y2={yEps(fwdEps)} stroke={C.up} strokeWidth={1.4} strokeDasharray="3,3" /><rect x={lx - 3} y={yEps(fwdEps) - 3} width={6} height={6} fill={C.up} transform={`rotate(45 ${lx} ${yEps(fwdEps)})`} /><text x={lx} y={yEps(fwdEps) - 6} textAnchor="end" {...dot} fill={C.up}>${fwdEps.toFixed(2)}</text></g> })()}
         </Chart>
 
