@@ -106,7 +106,16 @@ export default function FundamentalsView({ tickers, quotes, names, fundMap, C, i
       </div>
 
       {sel && fundMap[sel] && (
-        <FundamentalsDetail f={fundMap[sel]} px={quotes?.[sel]?.p} name={names?.[sel] || sel} C={C} isDesktop={isDesktop} R={R} />
+        <div onClick={() => setSel(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: isDesktop ? 'center' : 'flex-end', justifyContent: 'center', padding: isDesktop ? 24 : 0 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: isDesktop ? R : '16px 16px 0 0', padding: isDesktop ? 20 : 16, width: '100%', maxWidth: isDesktop ? 1180 : '100%', maxHeight: isDesktop ? '88vh' : '86vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+              <button onClick={() => setSel(null)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.t2, borderRadius: 8, width: 32, height: 32, fontSize: 16, cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
+            </div>
+            <FundamentalsDetail f={fundMap[sel]} px={quotes?.[sel]?.p} name={names?.[sel] || sel} C={C} isDesktop={isDesktop} R={R} />
+          </div>
+        </div>
       )}
     </div>
   )
@@ -117,6 +126,18 @@ function FundamentalsDetail({ f, px, name, C, isDesktop, R }) {
   const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b
   const price = f.price || []
   const annual = f.annual || []
+  const livePeQ = (px && f.ttm?.eps > 0) ? px / f.ttm.eps : null
+  const livePfcfQ = (px && f.ttm?.fcfps > 0) ? px / f.ttm.fcfps : null
+  if (price.length < 2 || !annual.some((a) => a.eps != null)) {
+    return (
+      <div style={{ padding: 8 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{f.ticker} <span style={{ fontSize: 12, fontWeight: 400, color: C.t3 }}>{name}</span></div>
+        <div style={{ fontSize: 12.5, color: C.t3 }}>
+          Live P/E {fmt1(livePeQ)} · P/FCF {fmt1(livePfcfQ)}. Not enough historical statement data to draw the charts for this name.
+        </div>
+      </div>
+    )
+  }
 
   // ---- EPS vs Price chart ----
   const epsPts = annual.filter((a) => a.eps != null)
