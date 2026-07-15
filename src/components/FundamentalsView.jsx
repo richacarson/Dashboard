@@ -236,6 +236,7 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const pxLine = price.map((p, i) => `${i ? 'L' : 'M'}${xAt(i, price.length).toFixed(1)},${yPx(p.c).toFixed(1)}`).join(' ')
   const pxArea = `${pxLine} L${rightX.toFixed(1)},${PAD.t + ch} L${PAD.l},${PAD.t + ch} Z`
   const epsX = epsPts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
+  const epsLine = epsPts.map((a, i) => `${i ? 'L' : 'M'}${epsX[i].toFixed(1)},${yEps(a.eps).toFixed(1)}`).join(' ')
   const lastEps = epsPts[epsPts.length - 1]
 
   // ---------- P/E (quarterly, TTM) over time + historical average ----------
@@ -285,7 +286,6 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
 
   const dot = { fontSize: 10, fontWeight: 700 }
   const axL = { fontSize: 10, fill: C.t4 }
-  const R = isDesktop ? 2.4 : 2.8
 
   return (
     <div>
@@ -299,15 +299,15 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
         <Chart title="EPS (quarterly) vs Price" W={W} H={H} C={C}
-          legend={<><span><span style={{ color: C.accent }}>—</span> Price</span><span><span style={{ color: C.up }}>●</span> Quarterly EPS</span>{nextQ != null ? <span><span style={{ color: C.up }}>◇</span> Next Q est</span> : null}</>}>
+          legend={<><span><span style={{ color: C.accent }}>—</span> Price</span><span><span style={{ color: C.up }}>—</span> Quarterly EPS</span>{nextQ != null ? <span><span style={{ color: C.up }}>◇</span> Next Q est</span> : null}</>}>
           <defs><linearGradient id={`g-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity="0.22" /><stop offset="100%" stopColor={C.accent} stopOpacity="0" /></linearGradient></defs>
           {pxTk.map((v) => <g key={v}><line x1={PAD.l} y1={yPx(v)} x2={W - PAD.r} y2={yPx(v)} stroke={gx} strokeWidth={0.5} /><text x={PAD.l - 5} y={yPx(v) + 3} textAnchor="end" {...axL}>${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text></g>)}
           {epsTk.map((v) => <text key={v} x={W - PAD.r + 5} y={yEps(v) + 3} {...axL} fill={C.up}>${v.toFixed(v < 10 ? 1 : 0)}</text>)}
           {yrLabels.map((l, i) => <text key={i} x={l.x} y={H - 8} textAnchor="middle" {...axL}>{l.y}</text>)}
           <path d={pxArea} fill={`url(#g-${f.ticker})`} />
           <path d={pxLine} fill="none" stroke={C.accent} strokeWidth={1.4} />
-          {epsPts.map((a, i) => <circle key={a.date} cx={epsX[i]} cy={yEps(a.eps)} r={R} fill={C.up} />)}
-          {nextQ != null && lastEps && <g><line x1={epsX[epsPts.length - 1]} y1={yEps(lastEps.eps)} x2={rightX} y2={yEps(nextQ)} stroke={C.up} strokeWidth={1.2} strokeDasharray="3,3" /><rect x={rightX - 3.2} y={yEps(nextQ) - 3.2} width={6.4} height={6.4} fill={C.up} transform={`rotate(45 ${rightX} ${yEps(nextQ)})`} /></g>}
+          <path d={epsLine} fill="none" stroke={C.up} strokeWidth={2} />
+          {nextQ != null && lastEps && <g><line x1={epsX[epsPts.length - 1]} y1={yEps(lastEps.eps)} x2={rightX} y2={yEps(nextQ)} stroke={C.up} strokeWidth={1.2} strokeDasharray="3,3" /><rect x={rightX - 3.4} y={yEps(nextQ) - 3.4} width={6.8} height={6.8} fill={C.up} transform={`rotate(45 ${rightX} ${yEps(nextQ)})`} /></g>}
         </Chart>
 
         <Chart title="P/E (quarterly, TTM) vs historical average" W={W} H={H} C={C}
