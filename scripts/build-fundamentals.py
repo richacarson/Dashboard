@@ -13,8 +13,8 @@ across dividend, growth, fci100, fciValues.
 
 Writes public/fundamentals/<TICKER>.json + public/fundamentals/index.json.
 """
-import json, sys, time, urllib.request, urllib.parse, concurrent.futures, http.cookiejar
-from datetime import datetime, timezone, date
+import json, os, sys, time, threading, urllib.request, urllib.parse, concurrent.futures, http.cookiejar
+from datetime import datetime, timezone, date, timedelta
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -166,6 +166,47 @@ def forward(sym):
     return {}
 
 
+# ─────────────────────────── Finnhub (forward EPS) ───────────────────────────
+# Yahoo's forward endpoint needs a crumb+cookie that Yahoo blocks from datacenter
+# IPs (this sandbox AND GitHub Actions), so forward estimates come from Finnhub's
+# free earnings calendar. Paced under the free 60/min cap, thread-safe.
+FINNHUB_KEY = os.environ.get("FINNHUB_KEY", "")
+_FH_LOCK = threading.Lock()
+_FH_LAST = [0.0]
+_FH_MIN_INTERVAL = 1.3
+
+
+def finnhub(path):
+    if not FINNHUB_KEY:
+        return None
+    with _FH_LOCK:
+        wait = _FH_MIN_INTERVAL - (time.time() - _FH_LAST[0])
+        if wait > 0:
+            time.sleep(wait)
+        _FH_LAST[0] = time.time()
+    url = f"https://finnhub.io/api/v1/{path}{'&' if '?' in path else '?'}token={FINNHUB_KEY}"
+    return _get(url)
+
+
+def finnhub_forward(sym, trailing4, ttm_eps):
+    """Rolling forward-12-month EPS: swap the oldest trailing actual quarters for
+    the nearest analyst estimates. 4 estimates → pure NTM; fewer → TTM rolled
+    forward by however many quarters are covered."""
+    if not FINNHUB_KEY:
+        return {}
+    today = datetime.now(timezone.utc).date()
+    d = finnhub(f"calendar/earnings?from={today}&to={today + timedelta(days=400)}&symbol={urllib.parse.quote(sym)}")
+    rows = (d or {}).get("earningsCalendar", []) or []
+    ests = sorted((r["date"], r["epsEstimate"]) for r in rows
+                  if r.get("epsEstimate") is not None and r.get("epsActual") is None and r.get("date", "") >= str(today))
+    fut = [v for _, v in ests[:4]]
+    if not fut or ttm_eps is None or len(trailing4) < 4:
+        return {}
+    k = len(fut)
+    fwd_eps = round(ttm_eps - sum(trailing4[:k]) + sum(fut), 4)  # drop oldest k actuals, add k estimates
+    return {"eps": fwd_eps, "nextQ": round(fut[0], 4), "nextQDate": ests[0][0], "src": "finnhub"}
+
+
 def close_on_or_before(prices, ym):
     prev = None
     for d, c in prices:
@@ -215,16 +256,20 @@ def build(sym):
     q = yahoo_ts(sym, "quarterlyDilutedEPS,quarterlyFreeCashFlow")
     qe = sorted(q.get("quarterlyDilutedEPS", []))
     qf = sorted(q.get("quarterlyFreeCashFlow", []))
-    ttm_eps = sum(v for _, v, _ in qe[-4:]) if len(qe) >= 4 else None
+    trailing4 = [v for _, v, _ in qe[-4:]]
+    ttm_eps = sum(trailing4) if len(trailing4) >= 4 else None
     ttm_fcf = sum(v for _, v, _ in qf[-4:]) if len(qf) >= 4 else None
     latest_sh = next((a["shares"] for a in reversed(annual) if a["shares"]), None)
     ttm_fcfps = (ttm_fcf / latest_sh) if (ttm_fcf and latest_sh) else None
+
+    # forward EPS: Finnhub calendar (reliable from datacenters), Yahoo as fallback
+    fwd = finnhub_forward(sym, trailing4, ttm_eps) or forward(sym)
 
     return sym, {
         "ticker": sym, "currency": "USD", "source": "SEC EDGAR + Yahoo",
         "asof": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "ttm": {"eps": ttm_eps, "fcf": ttm_fcf, "fcfps": ttm_fcfps, "shares": latest_sh},
-        "fwd": forward(sym),
+        "fwd": fwd,
         "annual": annual,
         "quarterly": [{"date": d, "eps": v} for d, v, _ in qe[-8:]],
         "price": [{"m": m, "c": round(c, 2)} for m, c in prices[-200:]],
