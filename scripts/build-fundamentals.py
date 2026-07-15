@@ -26,6 +26,20 @@ OUT = REPO / "public" / "fundamentals"
 OUT.mkdir(parents=True, exist_ok=True)
 UA = {"User-Agent": "Mozilla/5.0"}
 
+# Crumb-authenticated opener (needed for quoteSummary forward estimates)
+import http.cookiejar
+_OP = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+_OP.addheaders = [("User-Agent", "Mozilla/5.0")]
+_CRUMB = None
+try:
+    _OP.open("https://fc.yahoo.com", timeout=15)
+except Exception:
+    pass
+try:
+    _CRUMB = _OP.open("https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=15).read().decode()
+except Exception:
+    _CRUMB = None
+
 
 def _get(url):
     for _ in range(4):
@@ -35,6 +49,23 @@ def _get(url):
         except Exception:
             time.sleep(0.5)
     return None
+
+
+def forward(sym):
+    """Forward EPS / forward P/E from Yahoo quoteSummary (crumb-auth)."""
+    if not _CRUMB:
+        return {}
+    url = (f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{urllib.parse.quote(sym)}"
+           f"?modules=defaultKeyStatistics&crumb={urllib.parse.quote(_CRUMB)}")
+    for _ in range(3):
+        try:
+            d = json.loads(_OP.open(url, timeout=20).read())
+            ks = d["quoteSummary"]["result"][0].get("defaultKeyStatistics", {}) or {}
+            return {"eps": (ks.get("forwardEps") or {}).get("raw"),
+                    "pe": (ks.get("forwardPE") or {}).get("raw")}
+        except Exception:
+            time.sleep(0.4)
+    return {}
 
 
 def timeseries(sym, types):
@@ -120,6 +151,7 @@ def build(sym):
         "ticker": sym, "currency": cur or "USD",
         "asof": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "ttm": {"eps": ttm_eps, "fcf": ttm_fcf, "fcfps": ttm_fcfps, "shares": latest_sh},
+        "fwd": forward(sym),
         "annual": annual,
         "quarterly": [{"date": d, "eps": v} for d, v, _ in qe[-8:]],
         "price": [{"m": m, "c": round(c, 2)} for m, c in prices[-72:]],  # last 6y monthly

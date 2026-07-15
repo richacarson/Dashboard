@@ -679,9 +679,6 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
 
           {/* ── OVERVIEW ── */}
           <div id="section-overview" style={{ display: "contents" }}>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <StockFundamentals symbol={symbol} price={quotesRef.current?.[symbol]?.p} name={names?.[symbol]} C={C} isDesktop={window.innerWidth >= 768} />
-          </div>
           {profile && (
             <div style={{ gridColumn: "1 / -1" }}>
                 <Card title="Company Profile">
@@ -744,6 +741,10 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
               )}
 
               {profileLoading && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>Loading profile...</div>}
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <StockFundamentals symbol={symbol} price={quotesRef.current?.[symbol]?.p} name={names?.[symbol]} C={C} isDesktop={window.innerWidth >= 768} />
+              </div>
           </div>
 
           {/* ── FINANCIALS ── */}
@@ -6002,7 +6003,6 @@ Instructions:
                     <div style={tEyebrowMuted}>ETF — FUNDAMENTALS UNAVAILABLE</div>
                   )}
                   {tProfileTab === "overview" && !isEtf && (<>
-                    <StockFundamentals symbol={sym} price={(quotesRef.current?.[sym] || quotes[sym])?.p} name={names?.[sym]} C={C} isDesktop={isDesktop} />
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
                       {pSection("Identity", [
                         ["Sector", f.sector ?? scr?.profile?.sector ?? null],
@@ -6140,6 +6140,9 @@ Instructions:
                         <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, maxWidth: 760 }}>{desc}</div>
                       </div>
                     )}
+                    <div style={{ marginTop: 12 }}>
+                      <StockFundamentals symbol={sym} price={(quotesRef.current?.[sym] || quotes[sym])?.p} name={names?.[sym]} C={C} isDesktop={isDesktop} />
+                    </div>
                   </>)}
                   {tProfileTab === "screener" && (
                     (screenerDetail && (screenerDetail.ticker || screenerDetail.symbol) === sym)
