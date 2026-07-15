@@ -1149,7 +1149,7 @@ Instructions:
       } catch {}
       // Singular reports
       list.push({ category: "The Rich Report", title: "The Rich Report", date: new Date().toISOString().slice(0, 10), url: "https://raw.githubusercontent.com/richacarson/rich-report/main/The_Rich_Report.html", viewerUrl: "https://richacarson.github.io/rich-report/The_Rich_Report.html" });
-      list.push({ category: "Quarterly Changes", title: "Q2 2026 Portfolio Changes", date: "2026-04-01", url: "https://raw.githubusercontent.com/richacarson/rich-report/main/rebalance/q2-2026/client.html", viewerUrl: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html" });
+      list.push({ category: "Quarterly Changes", title: "Q3 2026 Portfolio Changes", date: "2026-07-09", url: "https://raw.githubusercontent.com/richacarson/rich-report/main/rebalance/q3-2026/client.html", viewerUrl: "https://richacarson.github.io/rich-report/rebalance/q3-2026/client.html" });
       // Sort by date desc
       list.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
       if (!cancelled) setTBriefIndex(list);
@@ -5716,7 +5716,7 @@ Instructions:
                   { label: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", desc: "Daily pre-market analysis" },
                   { label: "Market Commentary", url: "https://richacarson.github.io/iown-data", desc: "Market outlook & strategy" },
                   { label: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", desc: "Macro insights & thesis" },
-                  { label: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", desc: "Portfolio rebalance report" },
+                  { label: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q3-2026/client.html", desc: "Portfolio rebalance report" },
                 ].map(l => <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: C.card, border: `1px solid ${C.border}`, marginBottom: 8, color: C.t1, textDecoration: "none" }}><div><div style={{ fontSize: 13, fontWeight: 700 }}>{l.label}</div><div style={{ fontSize: 10, color: C.t3 }}>{l.desc}</div></div><span style={{ color: C.accent, fontSize: 12 }}>→</span></a>)}
               </div>)}
               {tDrawer === "settings" && (<div>
@@ -8907,7 +8907,7 @@ Instructions:
               icon: (c) => (<svg {...iconProps(c)}><line x1="3" y1="20" x2="21" y2="20" /><rect x="5" y="12" width="3" height="6" rx="0.5" /><rect x="10.5" y="8" width="3" height="10" rx="0.5" /><rect x="16" y="4" width="3" height="14" rx="0.5" /></svg>) },
             { id: "report", title: "The Rich Report", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5",
               icon: (c) => (<svg {...iconProps(c)}><path d="M4 4h12a2 2 0 0 1 2 2v13a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4z" /><line x1="7" y1="8" x2="15" y2="8" /><line x1="7" y1="12" x2="15" y2="12" /><line x1="7" y1="16" x2="12" y2="16" /></svg>) },
-            { id: "quarterly", title: "Quarterly Changes", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q2-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED",
+            { id: "quarterly", title: "Quarterly Changes", desc: "Portfolio rebalance report", url: "https://richacarson.github.io/rich-report/rebalance/q3-2026/client.html", color: theme !== "light" ? "#A78BFA" : "#7C3AED",
               icon: (c) => (<svg {...iconProps(c)}><rect x="6" y="4" width="12" height="17" rx="2" /><path d="M9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2h-6V4z" /><line x1="9" y1="11" x2="15" y2="11" /><line x1="9" y1="15" x2="13" y2="15" /></svg>) },
           ];
 
