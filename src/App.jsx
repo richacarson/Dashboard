@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import DeskTab from './components/DeskTab'
 import RiskView from './components/RiskView'
-import FundamentalsView from './components/FundamentalsView'
+import FundamentalsView, { StockFundamentals } from './components/FundamentalsView'
 import { useDeskSession } from './lib/desk'
 import { useAuth } from './lib/auth'
 
@@ -679,6 +679,9 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
 
           {/* ── OVERVIEW ── */}
           <div id="section-overview" style={{ display: "contents" }}>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <StockFundamentals symbol={symbol} price={quotesRef.current?.[symbol]?.p} name={names?.[symbol]} C={C} isDesktop={window.innerWidth >= 768} />
+          </div>
           {profile && (
             <div style={{ gridColumn: "1 / -1" }}>
                 <Card title="Company Profile">
@@ -5999,6 +6002,7 @@ Instructions:
                     <div style={tEyebrowMuted}>ETF — FUNDAMENTALS UNAVAILABLE</div>
                   )}
                   {tProfileTab === "overview" && !isEtf && (<>
+                    <StockFundamentals symbol={sym} price={(quotesRef.current?.[sym] || quotes[sym])?.p} name={names?.[sym]} C={C} isDesktop={isDesktop} />
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
                       {pSection("Identity", [
                         ["Sector", f.sector ?? scr?.profile?.sector ?? null],
