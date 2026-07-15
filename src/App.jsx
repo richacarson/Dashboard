@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import DeskTab from './components/DeskTab'
 import RiskView from './components/RiskView'
+import FundamentalsView from './components/FundamentalsView'
 import { useDeskSession } from './lib/desk'
 import { useAuth } from './lib/auth'
 
@@ -1388,6 +1389,29 @@ Instructions:
   const [metricsEditMode, setMetricsEditMode] = useState(false);
   const [peerSymbol, setPeerSymbol] = useState(null); // for peer comparison overlay
   const [metricsSubView, setMetricsSubView] = useState("table"); // "table" | "attribution" | "peers" | "sector" | "scatter" | "yieldheat"
+  const [fundMap, setFundMap] = useState({}); // ticker -> fundamentals JSON (public/fundamentals/<t>.json)
+  const fundFetched = useRef(new Set());
+  useEffect(() => {
+    if (metricsSubView !== "fundamentals") return;
+    const syms = sleeves[metricsView]?.symbols || [];
+    const missing = syms.filter(s => !fundFetched.current.has(s));
+    if (!missing.length) return;
+    missing.forEach(s => fundFetched.current.add(s));
+    let cancelled = false;
+    (async () => {
+      const CONC = 8;
+      for (let i = 0; i < missing.length; i += CONC) {
+        const batch = missing.slice(i, i + CONC);
+        const results = await Promise.all(batch.map(async s => {
+          try { const r = await fetch(`${import.meta.env.BASE_URL}fundamentals/${s}.json`); return r.ok ? [s, await r.json()] : [s, null]; }
+          catch { return [s, null]; }
+        }));
+        if (cancelled) return;
+        setFundMap(prev => { const n = { ...prev }; results.forEach(([s, d]) => { n[s] = d; }); return n; });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [metricsSubView, metricsView, sleeves]);
   const [sectorExpanded, setSectorExpanded] = useState({});
   const [metricsTickerInput, setMetricsTickerInput] = useState("");
   const [homeView, setHomeView] = useState("lists"); // "holdings" | "lists"
@@ -5211,7 +5235,7 @@ Instructions:
                   </div>
                   {/* Sub-tabs */}
                   <div style={tTabRow}>
-                    {[{ v: "table", l: "Table" }, { v: "weightcomp", l: "Weight Alpha" }, { v: "attribution", l: "Attribution" }, { v: "sector", l: "Sector" }, { v: "matrix", l: "Matrix" }].map(({ v, l }) => (
+                    {[{ v: "table", l: "Table" }, { v: "fundamentals", l: "Fundamentals" }, { v: "weightcomp", l: "Weight Alpha" }, { v: "attribution", l: "Attribution" }, { v: "sector", l: "Sector" }, { v: "matrix", l: "Matrix" }].map(({ v, l }) => (
                       <button key={v} onClick={() => setMetricsSubView(v)} style={tTabBtn(metricsSubView === v)}>{l}</button>
                     ))}
                   </div>
@@ -5322,6 +5346,11 @@ Instructions:
                       </div>
                     );
                   })()}
+
+                  {/* ── FUNDAMENTALS ── */}
+                  {metricsSubView === "fundamentals" && (
+                    <FundamentalsView tickers={sleeves[metricsView]?.symbols || []} quotes={quotes} names={names} fundMap={fundMap} C={C} isDesktop={isDesktop} terminal={true} />
+                  )}
 
                   {/* ── WEIGHT COMP ── */}
                   {metricsSubView === "weightcomp" && (() => {
@@ -7603,7 +7632,7 @@ Instructions:
             </div>
             {/* Sub-view toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ v: "table", l: "📊 Table" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }, { v: "attribution", l: "📈 Attribution" }, { v: "sector", l: "🥧 Sectors" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
+              {[{ v: "table", l: "📊 Table" }, { v: "fundamentals", l: "💵 Fundamentals" }, { v: "weightcomp", l: "⚖️ Weight Alpha" }, { v: "attribution", l: "📈 Attribution" }, { v: "sector", l: "🥧 Sectors" }, { v: "matrix", l: "⊞ G/V Matrix" }].map(({ v, l }) => (
                 <button key={v} onClick={() => setMetricsSubView(v)} style={{
                   flex: "0 0 auto", padding: "9px 14px", borderRadius: 10, border: `1px solid ${metricsSubView === v ? C.borderActive : C.border}`,
                   background: metricsSubView === v ? C.accentSoft : "transparent",
@@ -8691,6 +8720,11 @@ Instructions:
               );
             })()}
             </>)}
+
+            {/* ── FUNDAMENTALS ── */}
+            {metricsSubView === "fundamentals" && (
+              <FundamentalsView tickers={sleeves[metricsView]?.symbols || []} quotes={quotes} names={names} fundMap={fundMap} C={C} isDesktop={isDesktop} terminal={false} />
+            )}
 
             {/* ── WEIGHT ALPHA ── */}
             {metricsSubView === "weightcomp" && (() => {
