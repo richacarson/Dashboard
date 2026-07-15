@@ -13,7 +13,7 @@ across dividend, growth, fci100, fciValues.
 
 Writes public/fundamentals/<TICKER>.json + public/fundamentals/index.json.
 """
-import json, os, sys, time, threading, urllib.request, urllib.parse, concurrent.futures, http.cookiejar
+import json, os, sys, time, threading, urllib.request, urllib.parse, concurrent.futures
 from datetime import datetime, timezone, date, timedelta
 from pathlib import Path
 
@@ -23,17 +23,6 @@ OUT.mkdir(parents=True, exist_ok=True)
 UA = {"User-Agent": "Mozilla/5.0"}
 # SEC requires a descriptive UA with contact.
 SEC_UA = {"User-Agent": "Paradiem Dashboard admin carson.rich@paradiem.org"}
-
-# Yahoo crumb opener (for forward estimates)
-_OP = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
-_OP.addheaders = [("User-Agent", "Mozilla/5.0")]
-_CRUMB = None
-try:
-    _OP.open("https://fc.yahoo.com", timeout=15)
-    _CRUMB = _OP.open("https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=15).read().decode()
-except Exception:
-    _CRUMB = None
-
 
 def _get(url, headers=UA, tries=4):
     for _ in range(tries):
@@ -87,18 +76,25 @@ def _annual_from_facts(facts, tags, unit):
     return {k: v[0] for k, v in out.items()}
 
 
-def edgar_annual(cik):
+_EPS_TAGS = ["EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted"]
+_OCF_TAGS = ["NetCashProvidedByUsedInOperatingActivities",
+             "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"]
+_CAPEX_TAGS = ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"]
+_SHARE_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding",
+               "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"]
+
+
+def edgar_facts(cik):
+    """Fetch a filer's XBRL us-gaap facts once; annual + TTM derive from it."""
     d = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json", SEC_UA)
-    if not d:
-        return []
-    g = d.get("facts", {}).get("us-gaap", {})
-    eps = _annual_from_facts(g, ["EarningsPerShareDiluted", "EarningsPerShareBasicAndDiluted"], "USD/shares")
-    ocf = _annual_from_facts(g, ["NetCashProvidedByUsedInOperatingActivities",
-                                 "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"], "USD")
-    capex = _annual_from_facts(g, ["PaymentsToAcquirePropertyPlantAndEquipment",
-                                   "PaymentsToAcquireProductiveAssets"], "USD")
-    sh = _annual_from_facts(g, ["WeightedAverageNumberOfDilutedSharesOutstanding",
-                                "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"], "shares")
+    return (d or {}).get("facts", {}).get("us-gaap", {}) if d else None
+
+
+def edgar_annual(g):
+    eps = _annual_from_facts(g, _EPS_TAGS, "USD/shares")
+    ocf = _annual_from_facts(g, _OCF_TAGS, "USD")
+    capex = _annual_from_facts(g, _CAPEX_TAGS, "USD")
+    sh = _annual_from_facts(g, _SHARE_TAGS, "shares")
     ends = sorted(set(eps) | set(ocf))
     ann = []
     for en in ends:
@@ -109,20 +105,57 @@ def edgar_annual(cik):
     return ann
 
 
-# ─────────────────────────── Yahoo ───────────────────────────
-def yahoo_ts(sym, types):
-    url = (f"https://query1.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/{sym}"
-           f"?symbol={urllib.parse.quote(sym)}&type={types}&period1=1262304000&period2=1799999999&merge=false")
-    d = _get(url)
-    out = {}
-    for b in ((d or {}).get("timeseries", {}) or {}).get("result", []) or []:
-        t = b.get("meta", {}).get("type", ["?"])[0]
-        vals = [(v["asOfDate"], v["reportedValue"]["raw"], v.get("currencyCode")) for v in b.get(t, []) or [] if v and v.get("reportedValue")]
-        if vals:
-            out[t] = vals
-    return out
+def _disc_quarters(g, tags, unit):
+    """Discrete 3-month value per quarter-end, derived from XBRL.
+
+    A fiscal-year-end appears as cumulative periods sharing a start (Q1=3mo,
+    H1=6mo, 9mo, FY=12mo); differencing consecutive ends within each start
+    yields discrete quarters — including fiscal Q4 (FY − 9mo), which is never
+    filed on its own. Works for both EPS (already-discrete 3mo entries collapse
+    to the same values) and cumulative cash-flow items."""
+    per = {}
+    for tag in tags:
+        for e in g.get(tag, {}).get("units", {}).get(unit, []) or []:
+            s, en = e.get("start"), e.get("end")
+            if not s or not en:
+                continue
+            try:
+                days = (date.fromisoformat(en) - date.fromisoformat(s)).days
+            except Exception:
+                continue
+            if days > 400:
+                continue
+            k = (s, en); fl = e.get("filed", "")
+            if k not in per or fl > per[k][1]:
+                per[k] = (e["val"], fl)
+    groups = {}
+    for (s, en), (val, _) in per.items():
+        groups.setdefault(s, []).append((en, val))
+    disc = {}
+    for s, items in groups.items():
+        items.sort()
+        for i, (en, val) in enumerate(items):
+            disc[en] = val - (items[i - 1][1] if i > 0 else 0.0)
+    return disc  # {end_iso: discrete_quarter_value}
 
 
+def edgar_ttm(g):
+    """Trailing-twelve-month EPS + FCF and the last 8 discrete EPS quarters."""
+    epsq = _disc_quarters(g, _EPS_TAGS, "USD/shares")
+    ocfq = _disc_quarters(g, _OCF_TAGS, "USD")
+    capq = _disc_quarters(g, _CAPEX_TAGS, "USD")
+    eps_ends = sorted(epsq)
+    ttm_eps = sum(epsq[e] for e in eps_ends[-4:]) if len(eps_ends) >= 4 else None
+    trailing4 = [epsq[e] for e in eps_ends[-4:]] if len(eps_ends) >= 4 else []
+    ocf_ends, cap_ends = sorted(ocfq), sorted(capq)
+    ttm_ocf = sum(ocfq[e] for e in ocf_ends[-4:]) if len(ocf_ends) >= 4 else None
+    ttm_cap = sum(capq[e] for e in cap_ends[-4:]) if len(cap_ends) >= 4 else None
+    ttm_fcf = (ttm_ocf - ttm_cap) if (ttm_ocf is not None and ttm_cap is not None) else None
+    quarterly = [{"date": e, "eps": round(epsq[e], 4)} for e in eps_ends[-8:]]
+    return {"eps": ttm_eps, "fcf": ttm_fcf, "trailing4": trailing4, "quarterly": quarterly}
+
+
+# ─────────────────────────── Yahoo (prices only) ───────────────────────────
 def monthly_prices(sym):
     d = _get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?period1=1199145600&period2=1799999999&interval=1mo&events=split")
     prices, splits = [], []
@@ -149,21 +182,6 @@ def split_factor(splits, iso_date):
         if d > iso_date:
             f *= ratio
     return f
-
-
-def forward(sym):
-    if not _CRUMB:
-        return {}
-    url = (f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{urllib.parse.quote(sym)}"
-           f"?modules=defaultKeyStatistics&crumb={urllib.parse.quote(_CRUMB)}")
-    for _ in range(3):
-        try:
-            d = json.loads(_OP.open(url, timeout=20).read())
-            ks = d["quoteSummary"]["result"][0].get("defaultKeyStatistics", {}) or {}
-            return {"eps": (ks.get("forwardEps") or {}).get("raw"), "pe": (ks.get("forwardPE") or {}).get("raw")}
-        except Exception:
-            time.sleep(0.4)
-    return {}
 
 
 # ─────────────────────────── Finnhub (forward EPS) ───────────────────────────
@@ -227,16 +245,13 @@ def build(sym):
     cik = _CIK.get(sym)
     if not cik:
         return sym, {"skip": "no-SEC-filing"}
-    # currency guard via Yahoo statements
-    ann_ts = yahoo_ts(sym, "annualDilutedEPS")
-    cur = None
-    for s in ann_ts.get("annualDilutedEPS", []):
-        if s[2]:
-            cur = s[2]; break
-    if cur and cur != "USD":
-        return sym, {"skip": "non-USD", "currency": cur}
-
-    annual = edgar_annual(cik)
+    # EDGAR us-gaap facts gate the universe to US USD filers: foreign 20-F/40-F
+    # reporters (ADRs) simply have no us-gaap 10-K diluted EPS, so they drop out
+    # here — no separate Yahoo currency call needed.
+    g = edgar_facts(cik)
+    if g is None:
+        return sym, {"skip": "no-SEC-filing"}
+    annual = edgar_annual(g)
     if not annual or not any(a["eps"] is not None for a in annual):
         return sym, {"skip": "no-edgar-eps"}
 
@@ -244,7 +259,7 @@ def build(sym):
     if not prices:
         return sym, {"skip": "no-price"}
     for a in annual:
-        # split-adjust as-filed EDGAR figures onto Yahoo's split-adjusted price scale
+        # split-adjust as-filed EDGAR figures onto the split-adjusted price scale
         sf = split_factor(splits, a["date"])
         if sf != 1.0:
             if a["eps"] is not None:
@@ -257,26 +272,19 @@ def build(sym):
         a["pe"] = (px / a["eps"]) if (px and a["eps"] and a["eps"] > 0) else None
         a["pfcf"] = (px / a["fcfps"]) if (px and a["fcfps"] and a["fcfps"] > 0) else None
 
-    # TTM from Yahoo quarterly
-    q = yahoo_ts(sym, "quarterlyDilutedEPS,quarterlyFreeCashFlow")
-    qe = sorted(q.get("quarterlyDilutedEPS", []))
-    qf = sorted(q.get("quarterlyFreeCashFlow", []))
-    trailing4 = [v for _, v, _ in qe[-4:]]
-    ttm_eps = sum(trailing4) if len(trailing4) >= 4 else None
-    ttm_fcf = sum(v for _, v, _ in qf[-4:]) if len(qf) >= 4 else None
+    # TTM from EDGAR quarterly (Q4 = FY − 9mo; cash flows differenced from YTD)
+    ttm = edgar_ttm(g)
     latest_sh = next((a["shares"] for a in reversed(annual) if a["shares"]), None)
-    ttm_fcfps = (ttm_fcf / latest_sh) if (ttm_fcf and latest_sh) else None
-
-    # forward EPS: Finnhub calendar (reliable from datacenters), Yahoo as fallback
-    fwd = finnhub_forward(sym, trailing4, ttm_eps) or forward(sym)
+    ttm_fcfps = (ttm["fcf"] / latest_sh) if (ttm["fcf"] and latest_sh) else None
+    fwd = finnhub_forward(sym, ttm["trailing4"], ttm["eps"])
 
     return sym, {
-        "ticker": sym, "currency": "USD", "source": "SEC EDGAR + Yahoo",
+        "ticker": sym, "currency": "USD", "source": "SEC EDGAR + Yahoo prices",
         "asof": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "ttm": {"eps": ttm_eps, "fcf": ttm_fcf, "fcfps": ttm_fcfps, "shares": latest_sh},
+        "ttm": {"eps": ttm["eps"], "fcf": ttm["fcf"], "fcfps": ttm_fcfps, "shares": latest_sh},
         "fwd": fwd,
         "annual": annual,
-        "quarterly": [{"date": d, "eps": v} for d, v, _ in qe[-8:]],
+        "quarterly": ttm["quarterly"],
         "price": [{"m": m, "c": round(c, 2)} for m, c in prices[-200:]],
     }
 
@@ -306,7 +314,7 @@ def main():
                 (OUT / f"{sym}.json").write_text(json.dumps(data, separators=(",", ":")))
                 built.append((sym, len(data["annual"])))
     (OUT / "index.json").write_text(json.dumps({
-        "generated": datetime.now(timezone.utc).isoformat(), "source": "SEC EDGAR + Yahoo",
+        "generated": datetime.now(timezone.utc).isoformat(), "source": "SEC EDGAR + Yahoo prices",
         "available": sorted(s for s, _ in built),
         "excluded": {s: r for s, r in skipped},
     }, indent=1))
