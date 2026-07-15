@@ -43,10 +43,13 @@ function livePE(f, px, basis) {
   return f.ttm?.eps > 0 ? px / f.ttm.eps : null
 }
 
-function valuationBand(live, annualVals, C) {
-  const xs = (annualVals || []).filter((v) => v != null && isFinite(v) && v > 0)
-  if (!live || !isFinite(live) || xs.length < 2) return null
-  const lo = Math.min(...xs), hi = Math.max(...xs)
+function valuationBand(live, histVals, C) {
+  // Robust 10th–90th percentile range: quarterly TTM P/E includes trough-earnings
+  // quarters that spike to hundreds×, so raw min/max would distort the band.
+  const xs = (histVals || []).filter((v) => v != null && isFinite(v) && v > 0).sort((a, b) => a - b)
+  if (!live || !isFinite(live) || xs.length < 4) return null
+  const pct = (p) => xs[Math.min(xs.length - 1, Math.max(0, Math.floor(xs.length * p)))]
+  const lo = pct(0.10), hi = pct(0.90)
   const pos = hi > lo ? (live - lo) / (hi - lo) : 0.5
   const label = pos <= 0.15 ? 'CHEAP' : pos >= 0.85 ? 'RICH' : 'MID'
   const color = pos <= 0.15 ? C.up : pos >= 0.85 ? C.dn : C.t3
@@ -64,7 +67,8 @@ export default function FundamentalsView({ tickers, quotes, names, fundMap, C, i
     if (!f || !f.ttm) return { t, f: null, px }
     const pe = livePE(f, px, basis)
     const pfcf = (px && f.ttm.fcfps > 0) ? px / f.ttm.fcfps : null
-    const band = valuationBand(pe, f.annual.map((a) => a.pe), C)
+    const hist = (f.quarterly && f.quarterly.length ? f.quarterly : (f.annual || []))
+    const band = valuationBand(pe, hist.map((a) => a.pe), C)
     return { t, f, px, pe, pfcf, band }
   })
   const sorted = [...rows].sort((a, b) => {
@@ -195,12 +199,14 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const PAD = { t: 18, r: 52, b: 26, l: 56 }
   const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b
   const price = f.price || []
-  const annual = f.annual || []
+  // Quarterly series drives the charts; fall back to annual for JSONs built
+  // before the quarterly field existed (same shape, renders gracefully).
+  const q = (f.quarterly && f.quarterly.length ? f.quarterly : (f.annual || []))
   const lpe = livePE(f, px, basis)
   const lpfcf = (px && f.ttm?.fcfps > 0) ? px / f.ttm.fcfps : null
   const gx = C.border + '66'
 
-  if (price.length < 2 || !annual.some((a) => a.eps != null)) {
+  if (price.length < 2 || !q.some((a) => a.eps != null)) {
     return (
       <div style={{ padding: 6 }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 4 }}>{f.ticker} <span style={{ fontSize: 12, fontWeight: 400, color: C.t3 }}>{name}</span></div>
@@ -209,45 +215,39 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
     )
   }
 
-  const years = price.map((p) => p.m)
   const xAt = (i, n) => PAD.l + (n > 1 ? (i / (n - 1)) * cw : cw / 2)
   const mIdx = (ym) => { const i = price.findIndex((p) => p.m >= ym); return i < 0 ? price.length - 1 : i }
-  // x-year labels (~5)
+  const rightX = xAt(price.length - 1, price.length)
+  // x-year labels (~6)
   const yrLabels = []
   { const seen = new Set(); price.forEach((p, i) => { const y = p.m.slice(0, 4); if (!seen.has(y) && i % Math.ceil(price.length / 6) === 0) { seen.add(y); yrLabels.push({ x: xAt(i, price.length), y }) } }) }
 
-  // ---------- EPS vs Price ----------
-  const epsPts = annual.filter((a) => a.eps != null)
-  // Thin EPS value labels so early clustered years don't overprint each other;
-  // always keep the most recent point's label.
-  const epsLblX = epsPts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
-  let _lastLx = -99
-  const epsShow = epsLblX.map((x, i) => {
-    if (i === epsPts.length - 1) return true
-    if (x - _lastLx >= 26) { _lastLx = x; return true }
-    return false
-  })
-  const fwdEps = f.fwd?.eps
+  // ---------- EPS (quarterly) vs Price ----------
+  const epsPts = q.filter((a) => a.eps != null)
+  const nextQ = f.fwd?.nextQ, nextQDate = f.fwd?.nextQDate
   const pxs = price.map((p) => p.c)
   const pxLo = Math.min(...pxs), pxHi = Math.max(...pxs)
-  const epsAll = epsPts.map((a) => a.eps).concat(fwdEps ? [fwdEps] : [])
-  const epsLo = Math.min(0, ...epsAll), epsHi = Math.max(...epsAll) * 1.08
+  const epsAll = epsPts.map((a) => a.eps).concat(nextQ != null ? [nextQ] : [])
+  const epsLo = Math.min(0, ...epsAll), epsHi = Math.max(...epsAll) * 1.12
   const pxTk = ticks(pxLo, pxHi, 4), epsTk = ticks(epsLo, epsHi, 4)
   const pT = Math.min(pxLo, pxTk[0]), pB = Math.max(pxHi, pxTk[pxTk.length - 1])
   const eT = Math.min(epsLo, epsTk[0]), eB = Math.max(epsHi, epsTk[epsTk.length - 1])
   const yPx = (v) => PAD.t + ch - ((v - pT) / ((pB - pT) || 1)) * ch
   const yEps = (v) => PAD.t + ch - ((v - eT) / ((eB - eT) || 1)) * ch
   const pxLine = price.map((p, i) => `${i ? 'L' : 'M'}${xAt(i, price.length).toFixed(1)},${yPx(p.c).toFixed(1)}`).join(' ')
-  const pxArea = `${pxLine} L${xAt(price.length - 1, price.length).toFixed(1)},${PAD.t + ch} L${PAD.l},${PAD.t + ch} Z`
-  const epsLine = epsPts.map((a, i) => `${i ? 'L' : 'M'}${xAt(mIdx(a.date.slice(0, 7)), price.length).toFixed(1)},${yEps(a.eps).toFixed(1)}`).join(' ')
+  const pxArea = `${pxLine} L${rightX.toFixed(1)},${PAD.t + ch} L${PAD.l},${PAD.t + ch} Z`
+  const epsX = epsPts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
+  const epsLine = epsPts.map((a, i) => `${i ? 'L' : 'M'}${epsX[i].toFixed(1)},${yEps(a.eps).toFixed(1)}`).join(' ')
+  const lastEps = epsPts[epsPts.length - 1]
 
-  // ---------- FCF + P/FCF ----------
-  const fcfPts = annual.filter((a) => a.fcf != null)
-  const fcfHi = Math.max(0, ...fcfPts.map((a) => a.fcf)) * 1.12 || 1
-  // Clamp the P/FCF axis: a single near-zero-FCF year sends P/FCF to hundreds×,
-  // which would flatten every normal year. Cap at a robust multiple of the
-  // typical level; outlier years ride the top of the axis instead of dominating.
-  const pfRaw = annual.map((a) => a.pfcf).filter((v) => v != null && v > 0)
+  // ---------- FCF (quarterly) + P/FCF ----------
+  const fcfPts = q.filter((a) => a.fcf != null)
+  const fcfVals = fcfPts.map((a) => a.fcf)
+  const fMax = (Math.max(0, ...fcfVals) * 1.12) || 1
+  const fMin = Math.min(0, ...fcfVals) * 1.12
+  // Clamp the P/FCF axis: a single near-zero-FCF quarter sends P/FCF to
+  // hundreds×; cap at a robust multiple so normal quarters stay readable.
+  const pfRaw = q.map((a) => a.pfcf).filter((v) => v != null && v > 0)
   const pfSorted = [...pfRaw].sort((a, b) => a - b)
   const pfAt = (p) => (pfSorted.length ? pfSorted[Math.min(pfSorted.length - 1, Math.floor(pfSorted.length * p))] : 0)
   const pfMed = pfSorted.length ? pfSorted[Math.floor(pfSorted.length / 2)] : 20
@@ -255,13 +255,19 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const clampPf = (v) => Math.min(v, pfCap)
   const pfVals = pfRaw.map(clampPf).concat(lpfcf != null ? [clampPf(lpfcf)] : [])
   const pfLo = Math.max(0, Math.min(...pfVals) * 0.9), pfHi = Math.max(...pfVals) * 1.05
-  const fcfTk = ticks(0, fcfHi, 4), pfTk = ticks(pfLo, pfHi, 4)
-  const yFcf = (v) => PAD.t + ch - (v / (fcfTk[fcfTk.length - 1] || 1)) * ch
+  const fcfTk = ticks(fMin, fMax, 4), pfTk = ticks(pfLo, pfHi, 4)
+  const fT = Math.max(fMax, fcfTk[fcfTk.length - 1]), fB = Math.min(fMin, fcfTk[0])
+  const yFcf = (v) => PAD.t + ch - ((v - fB) / ((fT - fB) || 1)) * ch
   const pfB = Math.min(pfLo, pfTk[0]), pfT = Math.max(pfHi, pfTk[pfTk.length - 1])
   const yPf = (v) => PAD.t + ch - ((clampPf(v) - pfB) / ((pfT - pfB) || 1)) * ch
-  const bw = fcfPts.length ? Math.min(38, (cw / fcfPts.length) * 0.55) : 12
+  const y0 = yFcf(0)
+  const bw = fcfPts.length ? Math.max(1.5, Math.min(24, (cw / fcfPts.length) * 0.6)) : 12
   const fcfX = (i) => PAD.l + (cw / fcfPts.length) * (i + 0.5)
-  const pfLine = annual.filter((a) => a.pfcf != null).map((a, i) => { const gi = fcfPts.findIndex((p) => p.date === a.date); return `${i ? 'L' : 'M'}${(fcfX(gi < 0 ? i : gi)).toFixed(1)},${yPf(a.pfcf).toFixed(1)}` }).join(' ')
+  const pfPts = q.filter((a) => a.pfcf != null)
+  const pfLine = pfPts.map((a, i) => { const gi = fcfPts.findIndex((p) => p.date === a.date); return `${i ? 'L' : 'M'}${(fcfX(gi < 0 ? i : gi)).toFixed(1)},${yPf(a.pfcf).toFixed(1)}` }).join(' ')
+  // FCF x is bar-indexed (not time), so its year labels must be too
+  const fcfYr = []
+  { const seen = new Set(); fcfPts.forEach((a, i) => { const y = a.date.slice(0, 4); if (!seen.has(y) && i % Math.ceil(fcfPts.length / 6) === 0) { seen.add(y); fcfYr.push({ x: fcfX(i), y }) } }) }
 
   const dot = { fontSize: 8.5, fontWeight: 700 }
   const axL = { fontSize: 8.5, fill: C.t4 }
@@ -277,28 +283,27 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap: 12 }}>
-        <Chart title="EPS (annual) vs Price" W={W} H={H} C={C}
-          legend={<><span><span style={{ color: C.accent }}>—</span> Price</span><span><span style={{ color: C.up }}>—</span> Diluted EPS</span>{fwdEps ? <span><span style={{ color: C.up }}>◇</span> Fwd EPS est</span> : null}</>}>
+        <Chart title="EPS (quarterly) vs Price" W={W} H={H} C={C}
+          legend={<><span><span style={{ color: C.accent }}>—</span> Price</span><span><span style={{ color: C.up }}>—</span> Quarterly EPS</span>{nextQ != null ? <span><span style={{ color: C.up }}>◇</span> Next Q est</span> : null}</>}>
           <defs><linearGradient id={`g-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity="0.22" /><stop offset="100%" stopColor={C.accent} stopOpacity="0" /></linearGradient></defs>
           {pxTk.map((v) => <g key={v}><line x1={PAD.l} y1={yPx(v)} x2={W - PAD.r} y2={yPx(v)} stroke={gx} strokeWidth={0.5} /><text x={PAD.l - 5} y={yPx(v) + 3} textAnchor="end" {...axL}>${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text></g>)}
           {epsTk.map((v) => <text key={v} x={W - PAD.r + 5} y={yEps(v) + 3} {...axL} fill={C.up}>${v.toFixed(v < 10 ? 1 : 0)}</text>)}
           {yrLabels.map((l, i) => <text key={i} x={l.x} y={H - 8} textAnchor="middle" {...axL}>{l.y}</text>)}
           <path d={pxArea} fill={`url(#g-${f.ticker})`} />
           <path d={pxLine} fill="none" stroke={C.accent} strokeWidth={1.4} />
-          <path d={epsLine} fill="none" stroke={C.up} strokeWidth={2} />
-          {epsPts.map((a, i) => { const x = epsLblX[i]; return <g key={a.date}><circle cx={x} cy={yEps(a.eps)} r={2.6} fill={C.up} />{epsShow[i] && <text x={x} y={yEps(a.eps) - 6} textAnchor="middle" {...dot} fill={C.up}>${a.eps.toFixed(2)}</text>}</g> })}
-          {fwdEps && (() => { const lx = xAt(price.length - 1, price.length), lastReal = epsPts[epsPts.length - 1]; const rx = xAt(mIdx(lastReal.date.slice(0, 7)), price.length); return <g><line x1={rx} y1={yEps(lastReal.eps)} x2={lx} y2={yEps(fwdEps)} stroke={C.up} strokeWidth={1.4} strokeDasharray="3,3" /><rect x={lx - 3} y={yEps(fwdEps) - 3} width={6} height={6} fill={C.up} transform={`rotate(45 ${lx} ${yEps(fwdEps)})`} /><text x={lx} y={yEps(fwdEps) - 6} textAnchor="end" {...dot} fill={C.up}>${fwdEps.toFixed(2)}</text></g> })()}
+          <path d={epsLine} fill="none" stroke={C.up} strokeWidth={1.8} />
+          {lastEps && <g><circle cx={epsX[epsPts.length - 1]} cy={yEps(lastEps.eps)} r={2.6} fill={C.up} /><text x={epsX[epsPts.length - 1]} y={yEps(lastEps.eps) - 6} textAnchor="middle" {...dot} fill={C.up}>${lastEps.eps.toFixed(2)}</text></g>}
+          {nextQ != null && lastEps && (() => { const lx = rightX; return <g><line x1={epsX[epsPts.length - 1]} y1={yEps(lastEps.eps)} x2={lx} y2={yEps(nextQ)} stroke={C.up} strokeWidth={1.4} strokeDasharray="3,3" /><rect x={lx - 3} y={yEps(nextQ) - 3} width={6} height={6} fill={C.up} transform={`rotate(45 ${lx} ${yEps(nextQ)})`} /><text x={lx} y={yEps(nextQ) - 6} textAnchor="end" {...dot} fill={C.up}>${nextQ.toFixed(2)}</text></g> })()}
         </Chart>
 
-        <Chart title="Free Cash Flow (annual) + P/FCF" W={W} H={H} C={C}
-          legend={<><span><span style={{ color: C.dn }}>▮</span> FCF</span><span><span style={{ color: C.t1 }}>—</span> P/FCF</span>{lpfcf != null ? <span><span style={{ color: C.accent }}>--</span> live {fmt1(lpfcf)}×</span> : null}</>}>
+        <Chart title="Free Cash Flow (quarterly) + P/FCF" W={W} H={H} C={C}
+          legend={<><span><span style={{ color: C.dn }}>▮</span> Quarterly FCF</span><span><span style={{ color: C.t1 }}>—</span> P/FCF ttm</span>{lpfcf != null ? <span><span style={{ color: C.accent }}>--</span> live {fmt1(lpfcf)}×</span> : null}</>}>
           <defs><linearGradient id={`fg-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.dn} stopOpacity="0.85" /><stop offset="100%" stopColor={C.dn} stopOpacity="0.45" /></linearGradient></defs>
-          {fcfTk.map((v) => <g key={v}><line x1={PAD.l} y1={yFcf(v)} x2={W - PAD.r} y2={yFcf(v)} stroke={gx} strokeWidth={0.5} /><text x={PAD.l - 5} y={yFcf(v) + 3} textAnchor="end" {...axL}>{bil(v)}</text></g>)}
+          {fcfTk.map((v) => <g key={v}><line x1={PAD.l} y1={yFcf(v)} x2={W - PAD.r} y2={yFcf(v)} stroke={Math.abs(v) < 1e-6 ? C.border : gx} strokeWidth={Math.abs(v) < 1e-6 ? 0.8 : 0.5} /><text x={PAD.l - 5} y={yFcf(v) + 3} textAnchor="end" {...axL}>{bil(v)}</text></g>)}
           {pfTk.map((v) => <text key={v} x={W - PAD.r + 5} y={yPf(v) + 3} {...axL} fill={C.t2}>{v.toFixed(0)}×</text>)}
-          {fcfPts.map((a, i) => { const x = fcfX(i), y = yFcf(Math.max(0, a.fcf)); return <rect key={a.date} x={x - bw / 2} y={y} width={bw} height={Math.max(1, PAD.t + ch - y)} fill={`url(#fg-${f.ticker})`} rx={2} /> })}
-          {fcfPts.map((a, i) => <text key={a.date} x={fcfX(i)} y={H - 8} textAnchor="middle" {...axL}>{a.date.slice(0, 4)}</text>)}
-          <path d={pfLine} fill="none" stroke={C.t1} strokeWidth={1.8} />
-          {annual.filter((a) => a.pfcf != null).map((a) => { const gi = fcfPts.findIndex((p) => p.date === a.date); return <circle key={a.date} cx={fcfX(gi < 0 ? 0 : gi)} cy={yPf(a.pfcf)} r={2.2} fill={C.t1} /> })}
+          {fcfPts.map((a, i) => { const yv = yFcf(a.fcf); const top = Math.min(y0, yv); return <rect key={a.date} x={fcfX(i) - bw / 2} y={top} width={bw} height={Math.max(1, Math.abs(yv - y0))} fill={`url(#fg-${f.ticker})`} rx={1} /> })}
+          {fcfYr.map((l, i) => <text key={i} x={l.x} y={H - 8} textAnchor="middle" {...axL}>{l.y}</text>)}
+          <path d={pfLine} fill="none" stroke={C.t1} strokeWidth={1.6} />
           {lpfcf != null && <g><line x1={PAD.l} y1={yPf(lpfcf)} x2={W - PAD.r} y2={yPf(lpfcf)} stroke={C.accent} strokeWidth={1} strokeDasharray="4,3" /><text x={PAD.l + 3} y={yPf(lpfcf) - 3} {...dot} fill={C.accent}>live {fmt1(lpfcf)}×</text></g>}
         </Chart>
       </div>
