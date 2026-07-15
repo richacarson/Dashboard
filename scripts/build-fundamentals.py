@@ -57,7 +57,13 @@ def load_cik():
 
 
 def _annual_from_facts(facts, tags, unit):
-    """Latest-filed full-year (10-K) value per fiscal-year-end, across tag fallbacks."""
+    """Full-year (10-K) value per fiscal-year-end, as ORIGINALLY reported.
+
+    A fiscal-year-end appears in several 10-Ks (the original plus restated
+    comparatives in later filings). Later filings restate comparatives for
+    stock splits, so mixing latest-filed values across years breaks a uniform
+    split adjustment. Take the earliest-filed value so every year is on its own
+    era's share basis; split_factor() then rescales them consistently."""
     out = {}
     for tag in tags:
         node = facts.get(tag)
@@ -76,7 +82,7 @@ def _annual_from_facts(facts, tags, unit):
             if days < 300 or days > 400:  # full fiscal year only
                 continue
             cur = out.get(en)
-            if not cur or (e.get("filed", "") > cur[1]):
+            if not cur or (e.get("filed", "") < cur[1]):
                 out[en] = (e["val"], e.get("filed", ""))
     return {k: v[0] for k, v in out.items()}
 
@@ -118,12 +124,31 @@ def yahoo_ts(sym, types):
 
 
 def monthly_prices(sym):
-    d = _get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?period1=1199145600&period2=1799999999&interval=1mo")
+    d = _get(f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?period1=1199145600&period2=1799999999&interval=1mo&events=split")
+    prices, splits = [], []
     try:
         r = d["chart"]["result"][0]
-        return [(datetime.utcfromtimestamp(t).strftime("%Y-%m"), c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c]
+        prices = [(datetime.utcfromtimestamp(t).strftime("%Y-%m"), c) for t, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]) if c]
     except Exception:
-        return []
+        return [], []
+    for ev in (r.get("events", {}).get("splits", {}) or {}).values():
+        try:
+            ratio = float(ev["numerator"]) / float(ev["denominator"])
+            splits.append((datetime.utcfromtimestamp(ev["date"]).strftime("%Y-%m-%d"), ratio))
+        except Exception:
+            pass
+    return prices, sorted(splits)
+
+
+def split_factor(splits, iso_date):
+    """Cumulative split ratio for events strictly AFTER iso_date. Yahoo prices are
+    split-adjusted; EDGAR EPS/shares are as-filed, so divide historical per-share
+    figures by this to line them up with the price scale."""
+    f = 1.0
+    for d, ratio in splits:
+        if d > iso_date:
+            f *= ratio
+    return f
 
 
 def forward(sym):
@@ -169,10 +194,18 @@ def build(sym):
     if not annual or not any(a["eps"] is not None for a in annual):
         return sym, {"skip": "no-edgar-eps"}
 
-    prices = monthly_prices(sym)
+    prices, splits = monthly_prices(sym)
     if not prices:
         return sym, {"skip": "no-price"}
     for a in annual:
+        # split-adjust as-filed EDGAR figures onto Yahoo's split-adjusted price scale
+        sf = split_factor(splits, a["date"])
+        if sf != 1.0:
+            if a["eps"] is not None:
+                a["eps"] = round(a["eps"] / sf, 4)
+            if a["shares"] is not None:
+                a["shares"] = a["shares"] * sf
+            a["fcfps"] = (a["fcf"] / a["shares"]) if (a["fcf"] is not None and a["shares"]) else None
         px = close_on_or_before(prices, a["date"][:7])
         a["px"] = px
         a["pe"] = (px / a["eps"]) if (px and a["eps"] and a["eps"] > 0) else None
