@@ -38,7 +38,7 @@ function livePE(f, px, basis) {
   if (basis === 'fwd') {
     if (f.fwd?.eps > 0) return px / f.fwd.eps
     if (f.fwd?.pe) return f.fwd.pe
-    return null
+    // no forward estimate available — fall back to TTM so the column stays populated
   }
   return f.ttm?.eps > 0 ? px / f.ttm.eps : null
 }
