@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-09T13:15:00Z",
-  "as_of_session": "2026-07-08",
+  "generated_at": "2026-07-14T11:55:00Z",
+  "as_of_session": "2026-07-14",
   "universe_count": 50,
   "universe_incomplete": true,
   "roster_integrity": {
@@ -10,370 +10,118 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "CWAN (Clearwater Analytics) completed its $8.4B take-private acquisition by Permira/Warburg Pincus/Francisco Partners/Temasek on 2026-06-25 at $24.55/share; NYSE delisting effective 2026-07-06; Form 15-12G filed 2026-07-06, completing SEC deregistration. No change since last run. portfolios.json growth sleeve still lists CWAN \u2014 unresolved for a 10th consecutive run (first flagged 2026-06-30). The data drop still shows a frozen ~$24.56 print; that is the deal price, not real trading.",
-        "action": "Remove CWAN from data/portfolios.json growth sleeve \u2014 the company is fully deregistered and has not traded since June 25."
+        "detail": "CWAN (Clearwater Analytics) completed its $8.4B take-private acquisition by Permira/Warburg Pincus/Francisco Partners/Temasek on 2026-06-25 at $24.55/share; NYSE delisting effective 2026-07-06; Form 15-12G filed 2026-07-06, completing SEC deregistration. Unresolved for a 15th consecutive run (first flagged 2026-06-30) — data/portfolios.json growth sleeve still lists CWAN. Today's data drop again shows a frozen $24.56 print (0.06% 'move'); that is the settled deal price, not live trading.",
+        "action": "Remove CWAN from data/portfolios.json growth sleeve — the company is fully deregistered and has not traded since June 25. This has now been flagged 15 times without correction."
       }
     ],
-    "universe_note": "ETHA and IBIT (Digital-Asset-ETF sleeve) appear in the Risk Data Drop (52 holdings total, all priced, zero pricing errors) but are absent from data/portfolios.json (50 tickers). portfolios.json covers 50 of 52 priced holdings. universe_incomplete=true until corrected. All 50 listed tickers returned a live price in today's drop \u2014 no additional stale/non-tradable tickers found this run beyond CWAN. Note: the data drop's 12 non-fatal errors this run were all Finnhub 'recommendation trend' HTTP 429 rate-limits (EIX, FCX, FTNT, SUPV, HRMY, HUT, HOOD, KEYS, MARA, MRVL, and 2 others) \u2014 price/pct_change data for all 52 holdings was unaffected."
+    "universe_note": "ETHA and IBIT (Digital-Asset-ETF sleeve) appear in the Risk Data Drop (52 holdings total, all priced, zero pricing errors) but are absent from data/portfolios.json (50 tickers). portfolios.json covers 50 of 52 priced holdings. universe_incomplete=true until corrected. All 50 listed tickers returned a live price in today's drop — no additional stale/non-tradable tickers found this run beyond CWAN."
   },
   "summary": {
-    "red": 2,
-    "amber": 7,
-    "green": 43,
-    "headline": "Sharp whipsaw reversal one session later (7/8): the chip/AI-infrastructure names that re-escalated to RED on 7/7's Samsung-driven selloff (MRVL, CRDO, LRCX, AMD) round-tripped back to green, alongside a broad semiconductor rally (NVDA, NXPI, QCOM, ADI, KEYS all up). New RED: SYF -9.64%, the sleeve's worst single-day move, on tier-1-confirmed (CNBC) 30-year Treasury yields holding above 5% pressuring consumer-finance funding costs ahead of SYF's 7/21 earnings \u2014 a direct materialization of its 'net interest margin pressure from higher funding costs' key_risk. AEM remains the lone persisting RED (Barnat guidance-cut risk still unresolved, formal update due 7/29, -3.65% today with no fresh catalyst). New/upgraded AMBER band: TOL -3.74% (margin compression, elevated mortgage-rate sensitivity), GPC -3.08% (O'Reilly's confirmed $10B NAPA bid still undecided, Bloomberg reports a decision possible 'late summer'), FCX -3.01% (second consecutive ~-3% session, no confirmed catalyst), CHD -2.84%, COIN -2.47% (crypto-tape softness \u2014 ETHA -2.74% and IBIT -2.48% also down), SUPV -2.2% (Argentina macro, ongoing), FTNT -1.21% (FortiBleed reporting still static). On the positive side: HUT +9.82% on $7.5B in confirmed project financing plus a wave of analyst price-target increases (Rosenblatt, B. Riley, Jefferies, KBW); VLO +6.28% on strong refining crack spreads ahead of its 7/30 print. CWAN roster issue persists a 10th consecutive run. TSM's 7/16 earnings (confirmed via TSMC investor relations) falls inside the 2-week hyperscaler-capex calendar watch.",
-    "prior_session_note": "Data reflects the 2026-07-08 (Wednesday) session, read pre-market on 2026-07-09."
+    "red": 3,
+    "amber": 3,
+    "green": 36,
+    "headline": "New RED: AI-capex-durability selloff re-erupted across the chip/AI-infrastructure complex (CRDO -8.18%, MRVL -7.78%, LRCX -5.79%, AMD -4.33%, NVDA -3.56%, TSM -2.96%) on SK Hynix HBM-expansion-slowdown reports plus growing Street skepticism about AI capex ROI — this is the same thesis-linked pattern that has whipsawed this cluster RED/AMBER/green repeatedly since late June, and it matches each name's stated valuation/capex-deceleration key_risk almost verbatim. Separately, the Hormuz macro RED escalated further and is now confirmed in price: US-Iran strikes are in a third consecutive night, the ceasefire has fractured, Trump has reinstated an Iran shipping blockade and proposed a 20% Hormuz transit toll, Brent is above $87 (+4.45% today, +9.6% Monday) and WTI is near $81 — the book's energy sleeve is rallying hard in response (VLO +5.41%, DVN +3.52%, CVX +3.33%, OKE +2.57%). The same energy shock is pushing Fed rate-HIKE odds higher (September hike probability near 76%, up from 57% a week ago) ahead of today's 8:30am CPI print and the start of bank earnings (JPM/GS/WFC/C). AEM holds as the third persisting RED (Barnat guidance-cut risk unresolved, formal update due 7/29). STLD holds AMBER (guidance-cut thesis unresolved despite the rebound continuing, +2.51% today; Q2 earnings now confirmed for release after close 7/20 with a 7/21 call). Growth-sleeve digital-asset names persist AMBER (MARA -3.29%, HUT -2.96%, HRMY -3.53%, alongside IBIT -2.71%/ETHA -1.04%) — FTNT has decoupled positively (+1.99%) and drops out of this flag. SYF persists AMBER into 7/21 earnings (7 days out). TSM's 7/16 hyperscaler-capex print is now 2 days out and directly in play given today's move. CWAN roster issue persists a 15th consecutive run, still uncorrected in portfolios.json.",
+    "data_note": "Today's Risk Data Drop was stale (1 day old) on load, so it was dispatched on-demand at 11:48 UTC and completed successfully 1.5 minutes later — 52/52 holdings priced, zero errors, generated_at 2026-07-14T11:49:36Z. This reflects today's live pre/intraday session, not a frozen prior-day snapshot."
   },
   "flags": [
     {
-      "id": "SYF_rates_2026-07-09",
-      "ticker": "SYF",
-      "sleeve": "Growth",
+      "id": "AI_CAPEX_ROUT_2026-07-14",
+      "ticker": null,
+      "sleeve": "Growth/Dividend (AI infrastructure & semis)",
       "severity": "red",
-      "category": "macro_rate_sensitivity",
-      "headline": "SYF -9.64% \u2014 sleeve's worst single-day move, on confirmed 30-year Treasury yield pressure ahead of 7/21 earnings",
-      "detail": "Synchrony fell 9.64% ($75.52\u2192$68.24) in the largest single-day decline in the book this run. The 30-year Treasury yield has been holding above the 5% level since 7/7 (CNBC, tier-1), a level last seen before the financial crisis, which pressures consumer-finance funding costs and valuations broadly. Secondary reporting (GuruFocus, TipRanks, MarketBeat) attributes the SYF-specific magnitude to a mix of broad risk-off trading and caution ahead of Synchrony's July 21 earnings, where Wall Street expects a double-digit EPS decline. This is a direct, thesis-relevant development, though the company-specific causal chain (vs. the macro yield move itself) rests on secondary sources \u2014 no company release or exchange notice found this run.",
-      "metric": {
-        "price": 68.24,
-        "day_move_pct": -9.64,
-        "level_ref": null
-      },
-      "thesis_link": "Matches SYF key_risks: 'Revenue growth deceleration... suggests net interest margin pressure from higher funding costs' and 'Consumer credit cycle normalization... could compress earnings.' Rising long-end yields are a direct materialization of the funding-cost risk already identified in the screener report.",
+      "category": "ai_capex_thesis",
+      "headline": "AI-capex-durability selloff re-erupts: CRDO -8.18%, MRVL -7.78%, LRCX -5.79%, AMD -4.33%, NVDA -3.56%, TSM -2.96% — thesis key_risk materializing again",
+      "detail": "The same AI-capex-sustainability fear that has whipsawed this cluster repeatedly since late June (Meta excess-capacity report 7/2, Samsung earnings 7/7-7/8) re-erupted today. Catalyst: reports that SK Hynix is slowing its HBM (high-bandwidth memory) production-capacity expansion, combined with broader Street skepticism about whether record AI infrastructure capex is generating commensurate returns, and a hawkish Fed backdrop (see macro flag) pressuring growth multiples generally. Sympathy decliners without a direct thesis match: NXPI -4.71% (automotive-cyclicality thesis, not AI-capex) and QCOM -3.0% (China-handset/Apple-modem thesis, not AI-capex) — both moved with the sector tape, not on name-specific news; held at the sector level rather than separately flagged.",
+      "metric": { "price": null, "day_move_pct": null, "level_ref": null },
+      "thesis_link": "Matches CRDO key_risk ('...any execution miss or AI capex slowdown'), MRVL key_risk ('...any miss against the $16.5B FY2028 revenue target or moderation in hyperscaler [capex]'), LRCX key_risk ('...any deceleration in AI infrastructure spending... the current AI-driven super-cycle could reverse if AI capital spending moderates'), AMD key_risk ('...any AI spending deceleration or customer pause would trigger severe multiple compression'), NVDA key_risk ('AI capex sustainability risk...any normalization of hyperscaler spending could cause rapid growth deceleration'), and TSM key_risk ('AI infrastructure spending cyclicality...could decelerate the >30% revenue gro[wth]') — six independent thesis statements converging on the same catalyst in one session.",
       "evidence": [
-        {
-          "source": "CNBC",
-          "url": "https://www.cnbc.com/2026/07/07/us-treasury-yields-investors-await-trade-deficit-data-.html",
-          "as_of": "2026-07-07"
-        },
-        {
-          "source": "GuruFocus (secondary, color only)",
-          "url": "https://www.gurufocus.com/news/8950499/synchrony-financial-syf-shares-fall-96-what-gf-score-of-75-tells-investors",
-          "as_of": "2026-07-08"
-        },
-        {
-          "source": "TipRanks (secondary, color only)",
-          "url": "https://www.tipranks.com/news/catalyst/synchrony-financial-sinks-as-bond-yields-rattle-investors",
-          "as_of": "2026-07-08"
-        }
+        { "source": "Yahoo Finance — Semiconductor stocks retreat over worries about memory costs", "url": "https://finance.yahoo.com/markets/article/semiconductor-stocks-retreat-over-worries-about-memory-costs-131508185.html", "as_of": "2026-07-14" },
+        { "source": "Forbes — Semiconductor Selloff Deepens As AI Spending Fears Hit Intel", "url": "https://www.forbes.com/sites/petercohan/2026/07/08/intel-stock-down-21-inside-the-july-2026-semiconductor-selloff/", "as_of": "2026-07-08" }
       ],
-      "first_seen": "2026-07-09",
+      "first_seen": "2026-07-14",
       "status": "new"
     },
     {
-      "id": "AEM_barnat_2026-07-09",
+      "id": "MACRO_hormuz_2026-07-14",
+      "ticker": null,
+      "sleeve": "Dividend/Growth (energy)",
+      "severity": "red",
+      "category": "macro_geopolitical",
+      "headline": "Hormuz conflict escalates further — third consecutive night of US-Iran strikes, ceasefire fractured, Brent above $87 — now confirmed in the book's energy-sleeve price action",
+      "detail": "Escalation continues from yesterday's flag: U.S. forces carried out a third consecutive night of strikes against Iran; the ceasefire/ MoU reached last month has fractured; President Trump reinstated a blockade of Iranian shipping and proposed a 20% fee to guard the Strait of Hormuz. Ship-tracking data shows transits through the Strait at their lowest level in two months (57 transits Fri-Sun, >50% below the prior week's pace). Brent crude is above $87/bbl (+4.45% today on top of +9.6% Monday, now +19% versus its pre-conflict level); WTI is near $81 (+3.34%). Unlike yesterday's pre-market read (still pricing Friday's close), today's data drop reflects live pricing and confirms the energy sleeve responding: VLO +5.41%, DVN +3.52%, CVX +3.33%, OKE +2.57%, CNX +1.13% (natural-gas name, smaller Hormuz linkage, smaller move). The same energy shock is feeding into Fed policy expectations: June CPI prints at 8:30am ET today (consensus 3.8%, cooling), but odds of a Fed rate HIKE (not cut) at the July 28-29 meeting have risen to ~43%, and September hike odds on CME FedWatch have jumped to ~76% from 57% a week ago, as escalating energy costs keep inflation risk elevated even as headline CPI cools. Bank earnings season also opens today (JPM, GS, WFC, C) — a macro tone-setter with no direct held-name overlap. Direction for the energy sleeve remains genuinely two-sided long-term (upstream/refining benefit from higher prices; broader risk-off and rate-hike risk are negative for growth multiples), but the magnitude and stacking of catalysts (war escalation + CPI + bank earnings + Fed repricing) keeps this at RED for gap/event risk, not because any single held name's thesis has broken.",
+      "metric": { "price": null, "day_move_pct": null, "level_ref": null },
+      "thesis_link": null,
+      "evidence": [
+        { "source": "CNBC — U.S. crude jumps above $80 as Iran ceasefire fractures; Trump's Hormuz toll plans reignite supply fears", "url": "https://www.cnbc.com/2026/07/14/oil-prices-today-brent-wti-hormuz-trump-toll-iran.html", "as_of": "2026-07-14" },
+        { "source": "Al Jazeera — Oil hits 1-month high as US-Iran attacks dim Strait of Hormuz outlook", "url": "https://www.aljazeera.com/economy/2026/7/14/oil-hits-1-month-high-as-us-iran-fighting-clouds-strait-of-hormuz-outlook", "as_of": "2026-07-14" },
+        { "source": "Reuters (via WTVB) — Wall St futures mixed ahead of CPI, bank earnings; US-Iran tensions in focus", "url": "https://wtvbam.com/2026/07/14/wall-st-futures-mixed-ahead-of-cpi-bank-earnings-us-iran-tensions-in-focus/", "as_of": "2026-07-14" }
+      ],
+      "first_seen": "2026-07-08",
+      "status": "persisting"
+    },
+    {
+      "id": "AEM_barnat_2026-07-14",
       "ticker": "AEM",
       "sleeve": "Growth",
       "severity": "red",
       "category": "guidance_risk",
-      "headline": "AEM -3.65% \u2014 persisting RED, Barnat guidance-cut risk still unresolved, formal update due 7/29",
-      "detail": "AEM pulled back 3.65% with no fresh catalyst found this run. The lone open thesis risk \u2014 a possible Barnat guidance cut \u2014 remains unresolved with a formal update still expected 2026-07-29. No new regulatory or Indigenous-consultation development found in this run's search (contrary to language carried in the report's static key_risks text, which describes a standing/background risk, not a new event).",
-      "metric": {
-        "price": 144.86,
-        "day_move_pct": -3.65,
-        "level_ref": null
-      },
-      "thesis_link": "Matches AEM key_risk: 'Forward PEG of 2.12 indicates the stock is priced for continued gold price strength and production growth \u2014 any execution miss... could trigger meaningful valuation compression.' Held at RED on persistence of the unresolved Barnat catalyst, not on today's move alone.",
-      "evidence": [],
+      "headline": "AEM — persisting RED, Barnat production-cut risk unresolved, formal update still due 7/29",
+      "detail": "No new development this run. The July 1 Barnat pit wall-movement incident (Canadian Malartic complex) remains expected to cut H2 2026 production by 60,000-80,000 oz of gold, with full-year 2026 guidance likely landing near the low end of the prior 3.3-3.5Moz range, and reduced 2027-2028 output of up to ~150,000 oz/year. No injuries, equipment damage, or environmental impact reported; the Odyssey mine development and >1M oz/year 2030s pathway for Canadian Malartic are stated as unaffected. Formal updated guidance confirmed for release with Q2 results on 2026-07-29. Today's -2.28% move looks like broad market/gold softness rather than name-specific news (spot gold recovering off a two-week low, +0.3%, as of this morning).",
+      "metric": { "price": 143.53, "day_move_pct": -2.28, "level_ref": null },
+      "thesis_link": "Matches AEM key_risk: 'Forward PEG of 2.12 indicates the stock is priced for continued gold price strength and production growth — any execution miss on the 4M+ oz production target or gold price weakness could trigger meaningful valuation compression.' A confirmed multi-year production cut is a direct materialization of that execution-miss risk, still unresolved pending the 7/29 formal guidance update.",
+      "evidence": [
+        { "source": "Agnico Eagle Mines — Wall Movement at Barnat Open Pit", "url": "https://www.agnicoeagle.com/English/news-and-media/news-releases/news-details/2026/AGNICO-EAGLE-REPORTS-WALL-MOVEMENT-AT-BARNAT-OPEN-PIT-AT-CANADIAN-MALARTIC/default.aspx", "as_of": "2026-07-01" },
+        { "source": "The Globe and Mail — Agnico Eagle Halts Barnat Pit Mining After Wall Movement, Trims 2026-2028 Output Outlook", "url": "https://www.theglobeandmail.com/investing/markets/stocks/AEM/pressreleases/3118317/agnico-eagle-halts-barnat-pit-mining-after-wall-movement-trims-20262028-output-outlook/", "as_of": "2026-07-02" }
+      ],
       "first_seen": "2026-06-27",
       "status": "persisting"
     },
     {
-      "id": "TOL_housing_2026-07-09",
-      "ticker": "TOL",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "rate_sensitivity",
-      "headline": "TOL -3.74% \u2014 margin compression and elevated-mortgage-rate sensitivity, no single new catalyst",
-      "detail": "Toll Brothers fell 3.74%. Secondary sources cite overbought technicals, a valuation premium to GF Value estimates, and $13.5M in insider selling over the trailing 3 months with no offsetting buys. No single new news item found; consistent with the stock's existing margin/rate-sensitivity thesis risk.",
-      "metric": {
-        "price": 145.62,
-        "day_move_pct": -3.74,
-        "level_ref": null
-      },
-      "thesis_link": "Matches TOL key_risk: 'Luxury homebuilding is acutely sensitive to interest rate and wealth effects \u2014 sustained elevated mortgage rates... could simultaneously reduce demand and compress pricing.'",
-      "evidence": [
-        {
-          "source": "GuruFocus (secondary, color only)",
-          "url": "https://www.gurufocus.com/news/8941927/toll-brothers-inc-tol-shares-fall-45-what-gf-score-of-93-tells-investors",
-          "as_of": "2026-07-08"
-        }
-      ],
-      "first_seen": "2026-07-09",
-      "status": "new"
-    },
-    {
-      "id": "GPC_napa_2026-07-09",
-      "ticker": "GPC",
+      "id": "STLD_guidance_2026-07-14",
+      "ticker": "STLD",
       "sleeve": "Dividend",
       "severity": "amber",
-      "category": "corporate_action",
-      "headline": "GPC -3.08% \u2014 O'Reilly's confirmed $10B NAPA bid still undecided, decision possible 'late summer'",
-      "detail": "GPC fell 3.08%. O'Reilly Automotive's $10B cash bid for GPC's NAPA automotive unit was confirmed by Bloomberg on 7/2; GPC has not announced a decision and could retain the business, proceed with its planned spinoff, or accept the bid, with a decision potentially landing by late summer 2026. No decision this run \u2014 upgraded from prior INFO to AMBER given the size of today's move and the approaching decision window.",
-      "metric": {
-        "price": 124.72,
-        "day_move_pct": -3.08,
-        "level_ref": null
-      },
-      "thesis_link": "Matches GPC key_risk: 'Business separation execution risk \u2014 $225-250M in transformation costs, management distraction, and Moody's negative outlook create uncertainty around whether the breakup will actually unlock value or destroy it.'",
+      "category": "guidance",
+      "headline": "STLD — held AMBER, rebound continues (+2.51%), Q2 earnings now confirmed 7/20 release / 7/21 call",
+      "detail": "No new negative development this run; the rebound from the Q2 guidance cut continues (+2.51% today after Friday's +2.92%). Q2 2026 earnings are now confirmed for release after market close Monday 2026-07-20, with the conference call at 11:00am ET Tuesday 2026-07-21. Board declared a $0.53/share quarterly dividend (paid ~7/10). Analyst price target raised ($255.91 -> $272.09) even as the stock pulled back sharply after the guidance cut — the earnings-cyclicality thesis risk that guidance cut confirmed has not reversed, so held at AMBER rather than resolved, pending the 7/20-21 print.",
+      "metric": { "price": 234.15, "day_move_pct": 2.51, "level_ref": null },
+      "thesis_link": "Matches STLD key_risk: 'Steel price cyclicality — profit margin of 7.22% is thin and earnings can swing 20%+ year-to-year with steel price cycles.' Held at AMBER rather than resolved since the guidance cut itself is not reversed.",
       "evidence": [
-        {
-          "source": "Bloomberg (via Modern Distribution Management report)",
-          "url": "https://www.mdm.com/news/top-distributor-sectors/automotive/report-oreilly-submits-10b-bid-for-genuine-parts-automotive-unit/",
-          "as_of": "2026-07-02"
-        }
+        { "source": "StockTitan — Steel Dynamics Announces Second Quarter 2026 Earnings Conference Call (7/20 release, 7/21 call)", "url": "https://www.stocktitan.net/news/STLD/steel-dynamics-announces-second-quarter-2026-earnings-conference-t301aq0c82ki.html", "as_of": "2026-07-14" }
       ],
-      "first_seen": "2026-06-30",
+      "first_seen": "2026-07-10",
       "status": "persisting"
     },
     {
-      "id": "FCX_copper_2026-07-09",
-      "ticker": "FCX",
+      "id": "GROWTH_pullback_2026-07-14",
+      "ticker": null,
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "commodity_price",
-      "headline": "FCX -3.01% \u2014 second consecutive ~-3% session, no confirmed catalyst",
-      "detail": "FCX fell 3.01%, its second straight session down roughly 3%. No name-specific catalyst found this run; consistent with the stock's generic copper-price-cyclicality risk. Worth watching for a third consecutive down session.",
-      "metric": {
-        "price": 57.47,
-        "day_move_pct": -3.01,
-        "level_ref": null
-      },
-      "thesis_link": "Matches FCX key_risk: 'Copper price cyclicality \u2014 a correction... would slash EBITDA by 40%+ and stress the... capex program.'",
-      "evidence": [],
-      "first_seen": "2026-07-08",
-      "status": "persisting"
-    },
-    {
-      "id": "CHD_valuation_2026-07-09",
-      "ticker": "CHD",
-      "sleeve": "Dividend",
-      "severity": "amber",
-      "category": "valuation",
-      "headline": "CHD -2.84% \u2014 no specific catalyst found, consistent with premium-valuation risk",
-      "detail": "CHD fell 2.84% with no name-specific news found this run. Move is consistent with the stock's already-identified thin margin-of-safety risk at current multiples.",
-      "metric": {
-        "price": 96.095,
-        "day_move_pct": -2.84,
-        "level_ref": null
-      },
-      "thesis_link": "Matches CHD key_risk: 'Premium valuation at 26.3x forward P/E and PEG of 3.66 leaves minimal margin of safety against any organic growth shortfall.'",
-      "evidence": [],
-      "first_seen": "2026-07-09",
-      "status": "new"
-    },
-    {
-      "id": "COIN_crypto_2026-07-09",
-      "ticker": "COIN",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "sector_sentiment",
-      "headline": "COIN -2.47% \u2014 crypto-tape softness, ETHA and IBIT also down",
-      "detail": "COIN fell 2.47%, tracking a broader pullback in crypto-sentiment-linked names \u2014 ETHA -2.74% and IBIT -2.48% (Digital-Asset-ETF sleeve, both outside portfolios.json coverage; see universe_note) moved in the same direction. No COIN-specific news found this run; the previously-noted 'Open USD' stablecoin-consortium reporting remains unconfirmed by a tier-1 source.",
-      "metric": {
-        "price": 159.35,
-        "day_move_pct": -2.47,
-        "level_ref": null
-      },
-      "thesis_link": "Matches COIN key_risk: 'Revenue concentration in crypto trading volumes makes Coinbase a leveraged bet on crypto market sentiment.'",
-      "evidence": [],
-      "first_seen": "2026-07-08",
-      "status": "persisting"
-    },
-    {
-      "id": "SUPV_argentina_2026-07-09",
-      "ticker": "SUPV",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "macro",
-      "headline": "SUPV -2.2% \u2014 ongoing Argentina macro risk, no new catalyst",
-      "detail": "SUPV fell 2.2% with no Argentina- or company-specific catalyst found this run, tracking the standing macro-instability risk already identified in the thesis.",
-      "metric": {
-        "price": 9.55,
-        "day_move_pct": -2.2,
-        "level_ref": null
-      },
-      "thesis_link": "Matches SUPV key_risk: 'Argentine macroeconomic instability \u2014 inflation volatility, peso devaluation risk, and potential policy reversals... could reverse reform progress and compress bank margins.'",
-      "evidence": [],
-      "first_seen": "2026-07-08",
-      "status": "persisting"
-    },
-    {
-      "id": "FTNT_fortibleed_2026-07-09",
-      "ticker": "FTNT",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "cybersecurity",
-      "headline": "FTNT -1.21% \u2014 FortiBleed reporting static, no confirmed customer/analyst impact",
-      "detail": "FTNT fell 1.21%. FortiBleed credential-exposure reporting remains unchanged from prior runs; no new confirmed customer or analyst impact found this run.",
-      "metric": {
-        "price": 156.7,
-        "day_move_pct": -1.21,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-07-05",
-      "status": "persisting"
-    },
-    {
-      "id": "HUT_financing_2026-07-09",
-      "ticker": "HUT",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "corporate_milestone",
-      "headline": "HUT +9.82% \u2014 confirmed $7.5B project financing plus a wave of analyst price-target increases",
-      "detail": "Hut 8 rallied 9.82% on continued momentum in its AI-data-center transformation, building on $7.5B in confirmed investment-grade project financing across its River Bend and Beacon Point Texas campuses, plus recent buy-equivalent ratings/price-target hikes from Rosenblatt, B. Riley, Jefferies, and KBW ($124-$138 targets). Resolved from persisting AMBER.",
-      "metric": {
-        "price": 106.21,
-        "day_move_pct": 9.82,
-        "level_ref": null
-      },
-      "thesis_link": "Positive development against HUT key_risk 'material AI revenue not expected until Q2 2027' \u2014 financing progress reduces execution risk on that timeline without resolving it.",
+      "category": "price_action",
+      "headline": "Digital-asset growth names persist AMBER: MARA -3.29%, HUT -2.96%, HRMY -3.53%, alongside IBIT -2.71%/ETHA -1.04% — FTNT decouples positively and drops out",
+      "detail": "MARA, HUT, and HRMY remain lower again today, moving with the broader risk-off tape (both crypto ETFs also down) rather than on a fresh name-specific catalyst. Context: earlier this month MARA drew a bullish Citizens Outperform call ($24 PT) on its pivot toward hyperscale/HPC compute plus Strategic Bitcoin Reserve policy chatter, and MARA/HUT jointly added $1.63B of BTC to reserves — none of that has reversed today's session move, but it does complicate a purely negative read on the name. FTNT (+1.99%) has decoupled positively this run and is removed from this flag; no negative FTNT-specific news found.",
+      "metric": { "price": null, "day_move_pct": null, "level_ref": null },
+      "thesis_link": "Touches MARA/HUT's digital-asset-price-volatility key_risk, though the move is not large or confirmed enough to escalate beyond AMBER.",
       "evidence": [
-        {
-          "source": "Investing.com",
-          "url": "https://ca.investing.com/news/stock-market-news/why-is-hut-8-stock-surging-today-93CH-4721188",
-          "as_of": "2026-07-08"
-        }
+        { "source": "StocksToTrade — MARA Stock Climbs As Outperform Call Meets Bitcoin Policy Buzz", "url": "https://stockstotrade.com/news/mara-holdings-inc-mara-news-2026_07_09-2/", "as_of": "2026-07-09" }
+      ],
+      "first_seen": "2026-07-11",
+      "status": "persisting"
+    },
+    {
+      "id": "SYF_recovering_2026-07-14",
+      "ticker": "SYF",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "macro_rate_sensitivity",
+      "headline": "SYF — held AMBER, 7/21 earnings now 7 days out, no new development this run",
+      "detail": "No new news found this run beyond the confirmed 2026-07-21 Q2 earnings date (release ~6am ET, call 8am ET). Stock +1.11% today; no change to the funding-cost/rate-sensitivity thesis link. Today's hawkish Fed repricing (rate-hike odds rising on the energy shock) is a relevant macro input into this thesis ahead of earnings.",
+      "metric": { "price": 73.205, "day_move_pct": 1.11, "level_ref": null },
+      "thesis_link": "Matches SYF key_risk: 'Revenue growth deceleration to 3.88% YoY despite 6% purchase volume growth suggests net interest margin pressure from higher funding costs.' Risk stays open pending 7/21 earnings.",
+      "evidence": [
+        { "source": "Synchrony Financial Investor Relations — Q2 2026 results date", "url": "https://investors.synchrony.com/news-events/financial-news/detail/578/synchrony-to-announce-second-quarter-2026-financial-results-on-july-21-2026", "as_of": "2026-07-12" }
       ],
       "first_seen": "2026-07-09",
-      "status": "resolved"
-    },
-    {
-      "id": "VLO_margins_2026-07-09",
-      "ticker": "VLO",
-      "sleeve": "Dividend",
-      "severity": "green",
-      "category": "sector_tailwind",
-      "headline": "VLO +6.28% \u2014 strong refining crack spreads ahead of 7/30 Q2 print",
-      "detail": "Valero rose 6.28% on tight refined-product supply and high refinery utilization supporting crack spreads; Q2 earnings scheduled for 2026-07-30.",
-      "metric": {
-        "price": 282.84,
-        "day_move_pct": 6.28,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [
-        {
-          "source": "TradingKey",
-          "url": "https://www.tradingkey.com/news/market-movers/262018398-market-movers-vlo-20260708",
-          "as_of": "2026-07-08"
-        }
-      ],
-      "first_seen": "2026-07-09",
-      "status": "new"
-    },
-    {
-      "id": "CRDO_reversal_2026-07-09",
-      "ticker": "CRDO",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "reversal",
-      "headline": "CRDO +4.92% \u2014 resolved from RED, AI-connectivity analyst target hikes (Evercore, Stifel, BofA)",
-      "detail": "CRDO reversed 4.92% higher one session after re-escalating to RED on 7/7's whipsaw. Evercore ISI, Stifel ($350 target), and BofA ($340 target) all raised or initiated bullish coverage this month.",
-      "metric": {
-        "price": 258.52,
-        "day_move_pct": 4.92,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [
-        {
-          "source": "StocksToTrade",
-          "url": "https://stockstotrade.com/news/credo-technology-group-holding-ltd-crdo-news-2026_07_06-3/",
-          "as_of": "2026-07-06"
-        }
-      ],
-      "first_seen": "2026-07-09",
-      "status": "resolved"
-    },
-    {
-      "id": "MRVL_reversal_2026-07-09",
-      "ticker": "MRVL",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "reversal",
-      "headline": "MRVL +0.39% \u2014 resolved from RED, no further deterioration after 7/7's Samsung-driven selloff",
-      "detail": "MRVL stabilized after re-escalating to RED on 7/7. Resolved from persisting RED; no fresh negative catalyst found.",
-      "metric": {
-        "price": 244.92,
-        "day_move_pct": 0.39,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-07-09",
-      "status": "resolved"
-    },
-    {
-      "id": "LRCX_reversal_2026-07-09",
-      "ticker": "LRCX",
-      "sleeve": "Dividend",
-      "severity": "green",
-      "category": "reversal",
-      "headline": "LRCX +2.22% \u2014 resolved from RED",
-      "detail": "LRCX rose 2.22%, resolving from persisting RED after 7/7's re-escalation. No fresh catalyst found; part of the broader semiconductor-sector reversal this session.",
-      "metric": {
-        "price": 333.19,
-        "day_move_pct": 2.22,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-07-09",
-      "status": "resolved"
-    },
-    {
-      "id": "AMD_reversal_2026-07-09",
-      "ticker": "AMD",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "reversal",
-      "headline": "AMD +0.3% \u2014 resolved from RED, stabilized after 7/7's whipsaw",
-      "detail": "AMD stabilized (+0.3%) after re-escalating to RED on 7/7. Resolved; no fresh catalyst found.",
-      "metric": {
-        "price": 514.56,
-        "day_move_pct": 0.3,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-07-09",
-      "status": "resolved"
-    },
-    {
-      "id": "NVDA_decoupled_2026-07-09",
-      "ticker": "NVDA",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "info",
-      "headline": "NVDA +3.6% \u2014 continues to decouple from sector-specific pullbacks",
-      "detail": "NVDA rose 3.6%, extending its pattern of decoupling from the memory/equipment-led moves affecting the rest of the AI-infrastructure sleeve. No dedicated news search this run given the informational nature of the move.",
-      "metric": {
-        "price": 205.97,
-        "day_move_pct": 3.6,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-07-08",
-      "status": "persisting"
-    },
-    {
-      "id": "DVN_firming_2026-07-09",
-      "ticker": "DVN",
-      "sleeve": "Dividend",
-      "severity": "green",
-      "category": "info",
-      "headline": "DVN +2.09% \u2014 continues to firm, no new news",
-      "detail": "DVN rose 2.09%, continuing its recent firming trend. No new news found this run.",
-      "metric": {
-        "price": 43.305,
-        "day_move_pct": 2.09,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-07-08",
       "status": "persisting"
     }
   ],
@@ -384,9 +132,9 @@
       "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
       "gate": "Australian FIRB clearance",
       "status": "deregistered",
-      "last_checked": "2026-07-09",
+      "last_checked": "2026-07-14",
       "severity": "green",
-      "note": "No change since last run. Deal completed June 25 at $24.55/share; fully deregistered as of 2026-07-06. Only open item is the portfolios.json data-hygiene issue (see roster_integrity), unresolved for a 10th consecutive run."
+      "note": "No change since last run. Deal completed June 25 at $24.55/share; FIRB granted June 19; NYSE Form 25-NSE delisting effective 2026-07-06; Form 15-12G filed 2026-07-06, completing SEC deregistration. Checked for post-close developments this run: only the pre-existing Kaskela Law LLC and Scott+Scott shareholder-fairness/breach-of-fiduciary-duty investigations found, no new filings. The only open item remains data hygiene: CWAN still listed in data/portfolios.json growth sleeve despite being fully delisted and deregistered (15th consecutive run flagging this; see roster_integrity above)."
     }
   ],
   "levels": [
@@ -395,34 +143,18 @@
       "level": 645.8,
       "type": "support",
       "state": "active",
-      "distance_pct": 15.75,
+      "distance_pct": 16.0,
       "interaction": "not_engaged"
     }
   ],
   "calendar": [
-    {
-      "ticker": "TSM",
-      "event": "Q2 2026 earnings \u2014 hyperscaler capex watch",
-      "date": "2026-07-16",
-      "severity": "amber"
-    },
-    {
-      "ticker": "VLO",
-      "event": "Q2 2026 earnings",
-      "date": "2026-07-30",
-      "severity": "info"
-    },
-    {
-      "ticker": "SYF",
-      "event": "Q2 2026 earnings",
-      "date": "2026-07-21",
-      "severity": "amber"
-    },
-    {
-      "ticker": "AEM",
-      "event": "Formal Barnat guidance update",
-      "date": "2026-07-29",
-      "severity": "amber"
-    }
+    { "ticker": "TSM", "event": "Q2 2026 earnings — hyperscaler capex watch (now directly in play given today's AI-capex-rout move)", "date": "2026-07-16", "severity": "amber" },
+    { "ticker": "STLD", "event": "Q2 2026 earnings — release after close 7/20, call 7/21", "date": "2026-07-20", "severity": "amber" },
+    { "ticker": "SYF", "event": "Q2 2026 earnings", "date": "2026-07-21", "severity": "amber" },
+    { "ticker": "AEM", "event": "Formal Barnat guidance update with Q2 results", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "LRCX", "event": "Q2 (June quarter) earnings call", "date": "2026-07-29", "severity": "info" },
+    { "ticker": "FTNT", "event": "Q2 2026 earnings", "date": "2026-07-29", "severity": "info" },
+    { "ticker": "VLO", "event": "Q2 2026 earnings", "date": "2026-07-30", "severity": "info" },
+    { "ticker": "DVN", "event": "Q2 2026 earnings", "date": "2026-08-04", "severity": "info" }
   ]
 }

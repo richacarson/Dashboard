@@ -70,6 +70,11 @@
     "dps": 1.51
   },
   {
+    "ticker": "MKC",
+    "ex_date": "2026-04-20",
+    "dps": 0.48
+  },
+  {
     "ticker": "NVT",
     "ex_date": "2026-04-24",
     "dps": 0.21
@@ -103,6 +108,11 @@
     "ticker": "ETN",
     "ex_date": "2026-05-08",
     "dps": 1.1
+  },
+  {
+    "ticker": "HWM",
+    "ex_date": "2026-05-08",
+    "dps": 0.12
   },
   {
     "ticker": "SCHW",
@@ -150,9 +160,24 @@
     "dps": 0.23
   },
   {
+    "ticker": "BWXT",
+    "ex_date": "2026-05-19",
+    "dps": 0.27
+  },
+  {
     "ticker": "AMAT",
     "ex_date": "2026-05-21",
     "dps": 0.53
+  },
+  {
+    "ticker": "TER",
+    "ex_date": "2026-05-21",
+    "dps": 0.13
+  },
+  {
+    "ticker": "TEL",
+    "ex_date": "2026-05-22",
+    "dps": 0.78
   },
   {
     "ticker": "YUMC",
@@ -163,6 +188,11 @@
     "ticker": "XYL",
     "ex_date": "2026-05-28",
     "dps": 0.43
+  },
+  {
+    "ticker": "AU",
+    "ex_date": "2026-05-29",
+    "dps": 1.16
   },
   {
     "ticker": "BAM",
@@ -188,6 +218,11 @@
     "ticker": "AEM",
     "ex_date": "2026-06-01",
     "dps": 0.45
+  },
+  {
+    "ticker": "LMT",
+    "ex_date": "2026-06-01",
+    "dps": 3.45
   },
   {
     "ticker": "ADI",
@@ -263,6 +298,16 @@
     "ticker": "CB",
     "ex_date": "2026-06-12",
     "dps": 1.02
+  },
+  {
+    "ticker": "NDAQ",
+    "ex_date": "2026-06-12",
+    "dps": 0.31
+  },
+  {
+    "ticker": "GRMN",
+    "ex_date": "2026-06-15",
+    "dps": 1.05
   },
   {
     "ticker": "ICE",
@@ -345,8 +390,18 @@
     "dps": 0.47
   },
   {
+    "ticker": "MKC",
+    "ex_date": "2026-07-06",
+    "dps": 0.48
+  },
+  {
     "ticker": "MU",
     "ex_date": "2026-07-06",
     "dps": 0.15
+  },
+  {
+    "ticker": "MRVL",
+    "ex_date": "2026-07-10",
+    "dps": 0.06
   }
 ]

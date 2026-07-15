@@ -93,5 +93,15 @@
     "ticker": "YMM",
     "ex_date": "2026-07-07",
     "dps": 0.084
+  },
+  {
+    "ticker": "MRVL",
+    "ex_date": "2026-07-10",
+    "dps": 0.06
+  },
+  {
+    "ticker": "TOL",
+    "ex_date": "2026-07-10",
+    "dps": 0.26
   }
 ]

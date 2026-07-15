@@ -574,5 +574,105 @@
     },
     "what_would_promote": "Confirmed FID announcement by end of Q3 2026, plus at least one additional independent primary source (SEC 6-K, YPF investor presentation) sizing capex and first-cargo timing. A second insider cluster purchase or a Milei-era energy tax reform passage would also promote to On Our Radar.",
     "checks_remaining": "Trade construction (entry/target/stop) not built. Second primary source needed for On Our Radar. Argentine sovereign risk / peso volatility discount factor needs sizing."
+  },
+  {
+    "id": "brcb-post-ipo-cluster-buy",
+    "title": "Black Rock Coffee Bar \u2014 3-Insider $73M Cluster Buy at Post-IPO Trough",
+    "added": "2026-07-10",
+    "catalyst": "Three BRCB insiders reported ~$73.3M in cumulative open-market purchases (filings landing early July 2026, openinsider cluster data). BRCB IPO'd Sep 2025 at $20; shares now trade ~$7.72, a 61% drawdown, with a securities class action filed June 18, 2026 alleging IPO-disclosure omissions about a 'sales transfer phenomenon.'",
+    "thesis": "Insider buying at this scale during an active class action is unusual: management is signaling confidence in the unit economics of the 100% company-owned drive-thru coffee model at a moment when the market has abandoned the story. Black Rock has 190 drive-thrus, 23.7% Q1 2026 revenue growth, and a 1,000-store 2035 target \u2014 if the class-action overhang resolves without material restatement, the trough valuation looks like a Dutch Bros analog setup. The 3-insider signal is huge on a dollar basis (~$24M average per insider) even if the class-action overhang is real.",
+    "tickers": [
+      "BRCB"
+    ],
+    "source": {
+      "title": "OpenInsider \u2014 BRCB latest cluster buys (3 insiders, $73M, filings early July 2026)",
+      "url": "http://openinsider.com/screener?s=BRCB"
+    },
+    "what_would_promote": "(a) A ruling on the class action or a settlement estimate that bounds legal exposure; (b) a follow-up Q2 earnings print that confirms unit economics haven't deteriorated (comparable Dutch Bros AUV trend); (c) trade construction anchored on tangible book value and a fair-value multiple against DUTCH or SBUX.",
+    "checks_remaining": "Class action outcome unknown; need to identify the 'sales transfer phenomenon' scope; trade construction not built; IOWN score is 48 (WATCH) \u2014 need a bull case for why the score under-weights growth."
+  },
+  {
+    "id": "mrp-land-bank-insider-cluster",
+    "title": "Millrose Properties \u2014 4-Insider Cluster in Under-Followed Lennar Spinoff Land Bank",
+    "added": "2026-07-10",
+    "catalyst": "Four MRP insiders reported open-market purchases in the 30 days ending early July 2026 (~$6.6M aggregate). MRP is the Feb 2025 Lennar spin-off homesite option platform trading at $28.32, a 10.7% dividend yield, 10x forward P/E, and 21% below its 52-week high \u2014 the whole spinoff cohort is unloved despite record dividend hikes.",
+    "thesis": "Millrose is a levered read on the same US homebuilder revaluation thesis that anchors our active berkshire-homebuilder-revaluation opp (PHM/MTH), but from the land-bank side rather than the builder side. HOPP'R is a genuinely differentiated model: it turns land into an asset-light option platform ($9.2B in options) that homebuilders finance through option premium payments. If the Fed pauses/cuts and homebuilder purchase demand returns, MRP's fee income and dividend coverage inflect. Insiders buying at trough valuation with a 10.7% yield is a classic 'we know the land bank is safer than the multiple suggests' signal.",
+    "tickers": [
+      "MRP"
+    ],
+    "source": {
+      "title": "OpenInsider \u2014 MRP latest cluster buys (4 insiders, $6.6M, filings early July 2026)",
+      "url": "http://openinsider.com/screener?s=MRP"
+    },
+    "what_would_promote": "(a) A rate-cut catalyst or Fed pause that unlocks homebuilder purchase demand; (b) MRP quarterly print showing HOPP'R option volume acceleration or fee-income growth; (c) sanity check on dividend sustainability \u2014 10.7% yield is either a bug or a feature depending on AFFO trajectory. Would pair naturally with berkshire-homebuilder-revaluation as a same-theme sibling opp.",
+    "checks_remaining": "Need to confirm Q2 2026 results date; validate that the insider buyers are officers/directors not passive holders; check whether 3-active-opps-per-theme concentration limit applies (currently only 1 active homebuilder-linked opp = berkshire-homebuilder-revaluation, so headroom exists)."
+  },
+  {
+    "id": "tsm-cowos-q2-earnings-catalyst",
+    "title": "TSM Q2 2026 Earnings - CoWoS Capacity Expansion Catalyst",
+    "added": "2026-07-11",
+    "catalyst": "TSMC reports Q2 2026 earnings on July 16, 2026. Focus on three specific signals: (1) whether full-year US-dollar revenue growth guide gets raised to ~35%; (2) whether CoWoS advanced packaging capacity target for end-2026 gets lifted above the current 125-130K wafers/month plan; (3) whether Q3 sequential revenue guide breaks double digits and 2026 capex breaks the $56B ceiling.",
+    "thesis": "TSM is the upstream bottleneck for every AI chip - Nvidia's GPUs, Broadcom's ASICs, AMD's MI-series, Apple silicon - all gated by CoWoS packaging. CoWoS has been sold out through 2026 per CEO C.C. Wei at the June 4 shareholders meeting; capacity is scaling 80% YoY (35K -> 75K -> 130K). A capex raise combined with a full-year guide raise on July 16 would validate that hyperscaler $700B capex is landing in TSM's revenue line, not just in NVDA and AVGO. Differentiates from existing AI opps by being one layer upstream - foundry rather than chip designer or system builder.",
+    "tickers": [
+      "TSM"
+    ],
+    "source": {
+      "title": "TSMC's Second Quarter Will Test Whether The AI Buildout Has A Ceiling",
+      "url": "https://www.forbes.com/sites/drewbernstein/2026/07/09/tsmcs-second-quarter-will-test-whether-the-ai-buildout-has-a-ceiling/",
+      "date": "2026-07-09"
+    },
+    "what_would_promote": "A guide-raise print on July 16 (revenue guide -> 35% or capex above $56B) with CoWoS capacity target lifted -> promote to On Our Radar with concrete entry/target/stop. If print just meets guide, close the stalk.",
+    "checks_remaining": "Need a second primary source (Q2 press release + earnings deck on July 16). Trade construction requires post-print pricing."
+  },
+  {
+    "id": "uuuu-heavy-ree-commercial-scale",
+    "title": "Energy Fuels \u2014 First US Heavy REE Commercial Producer (Dy + Tb)",
+    "added": "2026-07-13",
+    "catalyst": "Energy Fuels (UUUU) plans to bring commercial-scale dysprosium (up to 48 tpa) and terbium (up to 14 tpa) oxide production online at its White Mesa Mill in Utah as soon as Q4 2026, targeting the exact heavy REE categories China restricted in April 2025 and reaffirmed against MP Materials/USA Rare Earth via the 2026-06-22 entity list. Two insiders bought $1.0M in cluster form on 2026-07-08.",
+    "thesis": "Existing MP Materials thesis is a light-REE / NdPr magnet story; UUUU is a distinct heavy-REE story addressing the specific elements (Dy, Tb) that give NdFeB magnets their high-temperature performance and that China has singled out for controls. UUUU already produced 30 kg 99.9% Dy oxide at pilot in 2025 and first Tb oxide in Mar 2026 \u2014 commercialization risk is manufacturing scaling, not chemistry. Not yet at High Conviction because (a) screener rating is WATCH (score 48), (b) 2026 revenue still dominated by uranium, (c) commercial scale is >5 months out.",
+    "tickers": [
+      "UUUU"
+    ],
+    "source": {
+      "title": "Energy Fuels Announces First U.S. Primary Production of Critical 'Heavy' Rare Earth Material in Decades",
+      "url": "https://investors.energyfuels.com/2026-03-25-Energy-Fuels-Announces-First-U-S-Primary-Production-of-Critical-Heavy-Rare-Earth-Material-in-Decades",
+      "date": "2026-03-25"
+    },
+    "what_would_promote": "Q4 2026 commercial-scale Dy or Tb production disclosure with named defense/EV/robotics offtake customer at a disclosed price. Or a DoD price-floor / preferred equity announcement paralleling the MP arrangement. Screener re-rate from WATCH to HOLD or better.",
+    "checks_remaining": "Screener rec is WATCH not HOLD/BUY (Step 5 doesn't require it, but position-sizing would be constrained); trade construction not yet specified; only 1 primary source (need offtake/pricing confirmation)."
+  },
+  {
+    "id": "gloo-gelsinger-cluster-buy",
+    "title": "Gloo \u2014 Gelsinger-Led Insider Cluster Buys Into $3.25 Secondary",
+    "added": "2026-07-14",
+    "catalyst": "On 2026-07-09, GLOO priced a 7M-share secondary at $3.25. Board directors including Pat Gelsinger and Scott Beck, plus Grace & Mercy Foundation, participated for \u2265$6M \u2014 with Grace & Mercy alone buying 923,076 shares on 2026-07-09. Openinsider records a 4-insider cluster totaling $9.5M filed 2026-07-13.",
+    "thesis": "Gloo is the emerging category leader in the faith-tech vertical (140,000+ church relationships, 238% Q1 2026 YoY revenue growth to $41.5M, unchallenged competitive position per Benchmark). A cluster of insider participation in a discounted secondary \u2014 including an ex-Intel CEO \u2014 signals conviction that the platform is worth accumulating even after a raise. Second-order: a durable faith-tech platform is a defensible SaaS niche that few competitors can penetrate. Highly Paradiem-relevant given the faith-alignment lens.",
+    "tickers": [
+      "GLOO"
+    ],
+    "source": {
+      "title": "Insider Buying: Gloo (NASDAQ:GLOO) Major Shareholder Buys 923,076 Shares",
+      "url": "https://www.marketbeat.com/instant-alerts/insider-buying-gloo-nasdaqgloo-major-shareholder-buys-923076-shares-2026-07-13/",
+      "date": "2026-07-13"
+    },
+    "what_would_promote": "Q2 earnings that repeat 200%+ YoY growth, or a partnership with a top-25 denomination, or open-market (non-offering) insider buys below $3.50.",
+    "checks_remaining": "Trade construction absent; only 1 primary source (SEC Form 4 aggregation via openinsider); needs verified open-market cluster (this is offering-participation, weaker signal). Screener currently HOLD 60 \u2014 need score to firm before promoting."
+  },
+  {
+    "id": "iperionx-dod-titanium-domestic",
+    "title": "IperionX \u2014 DoD-Backed Domestic Titanium Reaches Commercial Cadence",
+    "added": "2026-07-14",
+    "catalyst": "DoD IBAS awarded IperionX $47.1M in 2026 including $12.7M for local titanium production. Virginia HAMR titanium plant transitioned to 24/7 in Q1 2026 (~4.2 metric tons monthly HAMR powder). July 7, 2026: priced $50M ADS offering at $21.98, with management participating (2-insider $4.9M cluster filed 2026-07-13 per openinsider).",
+    "thesis": "US titanium supply has been ~90% import-dependent (VSMPO-Russia, China, Japan) for decades. IPX's UL-validated 100%-recycled HAMR process gives DoD a domestic, geopolitically-secure alternative to Russian sponge \u2014 strategically similar to the MP Materials rare-earth thesis in a different metal. Insider participation in the $50M raise plus $47M DoD funding = capital fully secured through mid-2027; execution risk shifts from balance-sheet to offtake conversion. Second-order: first commercial offtake contract or DoD long-term supply agreement is the re-rating trigger.",
+    "tickers": [
+      "IPX"
+    ],
+    "source": {
+      "title": "IperionX Announces Pricing of Public Offering of American Depositary Shares",
+      "url": "https://www.globenewswire.com/news-release/2026/07/07/3323767/0/en/IperionX-Announces-Pricing-of-Public-Offering-of-American-Depositary-Shares.html",
+      "date": "2026-07-07"
+    },
+    "what_would_promote": "First DoD long-term titanium supply contract signed, or first named commercial customer (aerospace prime), or gross margin above break-even on quarterly print.",
+    "checks_remaining": "Screener WATCH 45 \u2014 needs to firm to HOLD. No dated near-term binary catalyst. Insider buys are offering-participation not open-market. Trade construction absent \u2014 HAMR-to-P&L cadence still uncertain."
   }
 ]

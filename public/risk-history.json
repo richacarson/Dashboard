@@ -75,5 +75,40 @@
     "amber": 7,
     "green": 43,
     "headline": "Whipsaw reversal one session later: MRVL, CRDO, LRCX, AMD all resolved from RED back to green as a broad semiconductor rally reversed 7/7's Samsung-driven AI-capex selloff (NVDA, NXPI, QCOM, ADI, KEYS also up). New RED: SYF -9.64%, the book's worst move, tier-1-confirmed (CNBC) 30-year Treasury yields holding above 5% pressuring consumer-finance names ahead of SYF's 7/21 earnings. AEM remains the lone persisting RED (Barnat guidance update due 7/29). New/upgraded AMBER band: TOL, GPC (O'Reilly's confirmed $10B NAPA bid still undecided), FCX (2nd consecutive ~-3% session), CHD, COIN (crypto-tape softness with ETHA/IBIT also down), SUPV, FTNT. HUT +9.82% (confirmed $7.5B project financing, analyst upgrades) and VLO +6.28% (strong refining margins) led gainers. CWAN roster issue persists a 10th consecutive run. TSM's 7/16 earnings confirmed inside the hyperscaler-capex calendar watch."
+  },
+  {
+    "date": "2026-07-10",
+    "red": 2,
+    "amber": 5,
+    "green": 43,
+    "headline": "STLD new RED (guidance-cut/aluminum write-down, thesis-linked cyclicality risk); AEM persisting RED (Barnat now quantified at 60-80k oz lost 2H2026 production, guidance due 7/29). New macro AMBER: Strait of Hormuz shipping halt amid renewed US-Iran fighting. NTR -3.34% (largest decline, analyst-downgrade drift) and DVN -2.93% (no catalyst) new AMBER; SUPV persisting AMBER (Argentina). SYF downgraded RED->AMBER on partial rebound (+4.87%) ahead of 7/21 earnings. Broad chip rally (LRCX, AMD, MRVL, FTNT) on SK Hynix's oversubscribed Nasdaq debut; FCX reversed to green; MARA +9.91% led gainers on crypto strength. CWAN roster issue persists an 11th consecutive run, still uncorrected in portfolios.json."
+  },
+  {
+    "date": "2026-07-11",
+    "red": 1,
+    "amber": 4,
+    "green": 45,
+    "headline": "Saturday read built on an on-demand Risk Data Drop dispatch (repo file was a stale Friday pre-market snapshot); this captured Friday 7/10's actual close. STLD downgraded RED->AMBER on partial rebound (+2.92%), no new negative news. AEM remains the lone persisting RED (Barnat guidance update due 7/29, unchanged). New AMBER: broad catalyst-less Growth-sleeve pullback (MARA -4.58%, HUT -3.85%, FTNT -3.78%, HRMY -3.66%, MRVL -3.08%, CRDO -2.98%, HOOD -2.78%) while SPY/QQQ were flat-to-up, consistent with profit-taking after last week's rally and Bitcoin's ongoing -18% MTD downtrend. Strait of Hormuz macro AMBER persists, no change (Bloomberg/Al Jazeera confirm shipping still near-standstill). SYF persisting AMBER into 7/21 earnings. NTR, DVN, SUPV all resolved GREEN on rebounds with no negative catalyst (SUPV +5.92%). CWAN roster issue persists a 12th consecutive run, still uncorrected in portfolios.json."
+  },
+  {
+    "date": "2026-07-12",
+    "red": 1,
+    "amber": 4,
+    "green": 45,
+    "headline": "Second consecutive weekend read off the same Friday 7/10 close (no new session); on-demand dispatch reproduced identical prices to yesterday. AEM lone persisting RED (Barnat, guidance due 7/29). STLD, Growth-sleeve pullback (MARA/HUT/FTNT/HRMY/MRVL/CRDO/HOOD), Hormuz shipping, and SYF all persist AMBER, no new catalysts found this run. TSM 7/16 capex print now 4 days out. CWAN roster issue persists 13th consecutive run."
+  },
+  {
+    "date": "2026-07-13",
+    "red": 2,
+    "amber": 3,
+    "green": 45,
+    "headline": "New RED: Hormuz conflict escalated over the weekend (fresh US-Iran airstrikes), oil +6-7% on the week, Nasdaq futures -0.89% pre-open \u2014 none of it priced into the book yet (drop still Friday close). AEM persisting RED (Barnat, guidance due 7/29). STLD, Growth-sleeve pullback (MARA/HUT/FTNT/HRMY/MRVL/CRDO/HOOD), and SYF (earnings 7/21) all persist AMBER. TSM capex print now 3 days out. CWAN roster issue persists 14th consecutive run."
+  },
+  {
+    "date": "2026-07-14",
+    "red": 3,
+    "amber": 3,
+    "green": 36,
+    "headline": "New RED: AI-capex-durability selloff re-erupts across chip/AI-infra complex (CRDO -8.18%, MRVL -7.78%, LRCX -5.79%, AMD -4.33%, NVDA -3.56%, TSM -2.96%) on SK Hynix HBM-slowdown reports + AI-ROI skepticism, matching each name's stated key_risk. Hormuz macro RED escalates further and is now confirmed in price: 3rd consecutive night of US-Iran strikes, ceasefire fractured, Brent >$87, energy sleeve rallying (VLO +5.41%, DVN +3.52%, CVX +3.33%, OKE +2.57%); Fed rate-hike odds rising into today's CPI + bank earnings. AEM persists RED (Barnat, guidance due 7/29). STLD persists AMBER (rebound continues, Q2 earnings now confirmed 7/20/7/21). Growth-sleeve digital-asset names (MARA/HUT/HRMY) persist AMBER; FTNT decouples positively and drops out. SYF persists AMBER into 7/21 earnings. CWAN roster issue persists a 15th consecutive run."
   }
 ]
