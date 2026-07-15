@@ -189,22 +189,27 @@ def finnhub(path):
 
 
 def finnhub_forward(sym, trailing4, ttm_eps):
-    """Rolling forward-12-month EPS: swap the oldest trailing actual quarters for
-    the nearest analyst estimates. 4 estimates → pure NTM; fewer → TTM rolled
-    forward by however many quarters are covered."""
-    if not FINNHUB_KEY:
+    """Forward-12-month EPS by rolling ONE quarter: drop the oldest trailing
+    actual quarter and add the next-quarter consensus estimate.
+
+    Summing 4 forward quarters is tempting but free-tier consensus is noisy and
+    sometimes non-GAAP/mislabeled, which compounds into absurd totals (e.g. a
+    forward EPS 2x TTM). A single-quarter roll can't blow up that way, and a
+    sanity band drops anything that still looks wrong so the chart stays honest."""
+    if not FINNHUB_KEY or ttm_eps is None or len(trailing4) < 4:
         return {}
     today = datetime.now(timezone.utc).date()
-    d = finnhub(f"calendar/earnings?from={today}&to={today + timedelta(days=400)}&symbol={urllib.parse.quote(sym)}")
+    d = finnhub(f"calendar/earnings?from={today}&to={today + timedelta(days=200)}&symbol={urllib.parse.quote(sym)}")
     rows = (d or {}).get("earningsCalendar", []) or []
     ests = sorted((r["date"], r["epsEstimate"]) for r in rows
                   if r.get("epsEstimate") is not None and r.get("epsActual") is None and r.get("date", "") >= str(today))
-    fut = [v for _, v in ests[:4]]
-    if not fut or ttm_eps is None or len(trailing4) < 4:
+    if not ests:
         return {}
-    k = len(fut)
-    fwd_eps = round(ttm_eps - sum(trailing4[:k]) + sum(fut), 4)  # drop oldest k actuals, add k estimates
-    return {"eps": fwd_eps, "nextQ": round(fut[0], 4), "nextQDate": ests[0][0], "src": "finnhub"}
+    nq_date, nq = ests[0]
+    fwd_eps = round(ttm_eps - trailing4[0] + nq, 4)  # last 3 actual quarters + next estimate
+    if not (0.5 * ttm_eps <= fwd_eps <= 1.5 * ttm_eps):  # reject noisy/non-GAAP consensus
+        return {}
+    return {"eps": fwd_eps, "nextQ": round(nq, 4), "nextQDate": nq_date, "src": "finnhub"}
 
 
 def close_on_or_before(prices, ym):
