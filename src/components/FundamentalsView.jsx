@@ -255,19 +255,27 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const yPe = (v) => PAD.t + ch - (Math.min(v, peTop) / (peTop || 1)) * ch
   const peLine = pePts.map((a, i) => `${i ? 'L' : 'M'}${xT(a.date).toFixed(1)},${yPe(a.pe).toFixed(1)}`).join(' ')
 
-  // ============ Panel 2: Revenue (bars) + Price ============
+  // ============ Panel 2: Revenue (bars) + P/S ============
   const revPts = q.filter((a) => a.rev != null && a.rev > 0)
   const revHi = (revPts.length ? Math.max(...revPts.map((a) => a.rev)) : 1) * 1.14
   const revTk = ticks(0, revHi, 5)
   const revTop = Math.max(revHi, revTk[revTk.length - 1])
   const yRev = (v) => PAD.t + ch - (v / (revTop || 1)) * ch
   const rbw = barW(revPts.length)
-  const pxs = price.map((p) => p.c)
-  const pxLo = Math.min(...pxs), pxHi = Math.max(...pxs)
-  const pxTk = ticks(pxLo, pxHi, 5)
-  const pT = Math.min(pxLo, pxTk[0]), pB = Math.max(pxHi, pxTk[pxTk.length - 1])
-  const yPxR = (v) => PAD.t + ch - ((v - pT) / ((pB - pT) || 1)) * ch
-  const pxLine2 = price.map((p, i) => `${i ? 'L' : 'M'}${xAt(i, price.length).toFixed(1)},${yPxR(p.c).toFixed(1)}`).join(' ')
+  const psPts = q.filter((a) => a.ps != null && a.ps > 0)
+  const psV = psPts.map((a) => a.ps)
+  const psSorted = [...psV].sort((a, b) => a - b)
+  const psMed = psSorted.length ? psSorted[Math.floor(psSorted.length / 2)] : null
+  const psCapV = psMed != null ? psMed * 3 : Infinity
+  const clampPs = (v) => Math.min(v, psCapV)
+  const avgPs = psV.length ? psV.reduce((s, v) => s + clampPs(v), 0) / psV.length : null
+  const livePs = (px && f.ttm?.revps > 0) ? px / f.ttm.revps : null
+  const psAxisV = psV.map(clampPs).concat([avgPs, livePs].filter((v) => v != null && v > 0))
+  const psHi = (psAxisV.length ? Math.max(...psAxisV) : 5) * 1.08
+  const psTk = ticks(0, psHi, 5)
+  const psTop = Math.max(psHi, psTk[psTk.length - 1])
+  const yPs = (v) => PAD.t + ch - (Math.min(v, psTop) / (psTop || 1)) * ch
+  const psLine = psPts.map((a, i) => `${i ? 'L' : 'M'}${xT(a.date).toFixed(1)},${yPs(a.ps).toFixed(1)}`).join(' ')
 
   // ============ Panel 3: FCF (bars) + avg P/FCF ============
   const fcfPts = q.filter((a) => a.fcf != null)
@@ -314,16 +322,18 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
           {fwdEps != null && lastEps && <g><line x1={epsX[ttmPts.length - 1]} y1={yEps(lastEps.eps)} x2={rightX} y2={yEps(fwdEps)} stroke={C.up} strokeWidth={1.3} strokeDasharray="3,3" /><rect x={rightX - 3.6} y={yEps(fwdEps) - 3.6} width={7.2} height={7.2} fill={C.up} transform={`rotate(45 ${rightX} ${yEps(fwdEps)})`} /></g>}
         </Chart>
 
-        <Chart title="Revenue (quarterly) & Price" W={W} H={H} C={C}
-          legend={<>{lgd(REVc, 'Revenue', 'bar')}{lgd(C.accent, 'Price')}</>}>
+        <Chart title="Revenue (quarterly) & P/S" W={W} H={H} C={C}
+          legend={<>{lgd(REVc, 'Revenue', 'bar')}{lgd(PEc, 'P/S')}{avgPs != null ? lgd(C.t1, `avg P/S ${fmt1(avgPs)}×`) : null}{livePs != null ? lgd(C.accent, `live ${fmt1(livePs)}×`, 'dash') : null}</>}>
           <defs><linearGradient id={`rv-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={REVc} stopOpacity="0.95" /><stop offset="100%" stopColor={REVc} stopOpacity="0.55" /></linearGradient></defs>
           {revTk.map((v) => <g key={v}><line x1={PAD.l} y1={yRev(v)} x2={W - PAD.r} y2={yRev(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yRev(v) + 3.5} textAnchor="end" {...num}>{bil(v)}</text></g>)}
-          {pxTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPxR(v) + 3.5} {...num} fill={C.accent}>${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text>)}
+          {psTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPs(v) + 3.5} {...num} fill={PEc}>{v.toFixed(0)}×</text>)}
           {axTitle(PAD.l - 7, 'REV', REVc, 'end')}
-          {axTitle(W - PAD.r + 7, 'PRICE', C.accent, 'start')}
+          {axTitle(W - PAD.r + 7, 'P/S', PEc, 'start')}
           {yearAxis}
           {revPts.map((a) => { const x = xT(a.date), y = yRev(a.rev); return <rect key={a.date} x={x - rbw / 2} y={y} width={rbw} height={Math.max(1, PAD.t + ch - y)} fill={`url(#rv-${f.ticker})`} rx={1.5} /> })}
-          <path d={pxLine2} fill="none" stroke={C.accent} strokeWidth={1.8} />
+          {avgPs != null && <line x1={PAD.l} y1={yPs(avgPs)} x2={W - PAD.r} y2={yPs(avgPs)} stroke={C.t1} strokeWidth={1.4} />}
+          {livePs != null && <line x1={PAD.l} y1={yPs(livePs)} x2={W - PAD.r} y2={yPs(livePs)} stroke={C.accent} strokeWidth={1.3} strokeDasharray="5,4" />}
+          <path d={psLine} fill="none" stroke={PEc} strokeWidth={1.7} />
         </Chart>
 
         <Chart title="Free Cash Flow (quarterly)" W={W} H={H} C={C}

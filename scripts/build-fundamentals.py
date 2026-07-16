@@ -170,18 +170,20 @@ def _rolling_ttm(dq):
 
 
 def edgar_ttm(g):
-    """Latest trailing-twelve-month EPS + FCF and the trailing 4 discrete EPS quarters."""
+    """Latest trailing-twelve-month EPS + FCF + revenue and the trailing 4 discrete EPS quarters."""
     epsq = _disc_quarters(g, _EPS_TAGS, "USD/shares")
     ocfq = _disc_quarters(g, _OCF_TAGS, "USD")
     capq = _disc_quarters(g, _CAPEX_TAGS, "USD")
+    revq = _disc_quarters(g, _REV_TAGS, "USD")
     eps_ends = sorted(epsq)
     ttm_eps = sum(epsq[e][0] for e in eps_ends[-4:]) if len(eps_ends) >= 4 else None
     trailing4 = [epsq[e][0] for e in eps_ends[-4:]] if len(eps_ends) >= 4 else []
-    ocf_ends, cap_ends = sorted(ocfq), sorted(capq)
+    ocf_ends, cap_ends, rev_ends = sorted(ocfq), sorted(capq), sorted(revq)
     ttm_ocf = sum(ocfq[e][0] for e in ocf_ends[-4:]) if len(ocf_ends) >= 4 else None
     ttm_cap = sum(capq[e][0] for e in cap_ends[-4:]) if len(cap_ends) >= 4 else None
     ttm_fcf = (ttm_ocf - ttm_cap) if (ttm_ocf is not None and ttm_cap is not None) else None
-    return {"eps": ttm_eps, "fcf": ttm_fcf, "trailing4": trailing4}
+    ttm_rev = sum(revq[e][0] for e in rev_ends[-4:]) if len(rev_ends) >= 4 else None
+    return {"eps": ttm_eps, "fcf": ttm_fcf, "rev": ttm_rev, "trailing4": trailing4}
 
 
 def edgar_quarterly(g, splits, prices, annual):
@@ -195,11 +197,13 @@ def edgar_quarterly(g, splits, prices, annual):
     capq = _disc_quarters(g, _CAPEX_TAGS, "USD")
     revq = _disc_quarters(g, _REV_TAGS, "USD")          # absolute $ — no split adjust
     fcfq = {e: ocfq[e][0] - capq[e][0] for e in (set(ocfq) & set(capq))}
+    revv = {e: v[0] for e, v in revq.items()}
     # split-adjust by FILING date: a quarter filed after a split is already
     # reported on the post-split basis, so it needs no further adjustment.
     eps_adj = {e: v[0] / split_factor(splits, v[1]) for e, v in epsq.items()}
     ttm_eps = _rolling_ttm(eps_adj)
     ttm_fcf = _rolling_ttm(fcfq)
+    ttm_rev = _rolling_ttm(revv)
     ann_sh = [(a["date"], a["shares"]) for a in annual if a.get("shares")]  # split-adjusted
 
     def shares_at(en):
@@ -214,7 +218,7 @@ def edgar_quarterly(g, splits, prices, annual):
     out = []
     for en in sorted(epsq):
         px = close_on_or_before(prices, en[:7])
-        te, tf, sh = ttm_eps.get(en), ttm_fcf.get(en), shares_at(en)
+        te, tf, tr, sh = ttm_eps.get(en), ttm_fcf.get(en), ttm_rev.get(en), shares_at(en)
         rv = revq.get(en)
         out.append({
             "date": en,
@@ -224,6 +228,7 @@ def edgar_quarterly(g, splits, prices, annual):
             "px": px,
             "pe": (px / te) if (px and te and te > 0) else None,
             "pfcf": (px / (tf / sh)) if (px and tf and sh and tf > 0) else None,
+            "ps": (px / (tr / sh)) if (px and tr and sh and tr > 0) else None,
         })
     return out
 
@@ -349,13 +354,14 @@ def build(sym):
     ttm = edgar_ttm(g)
     latest_sh = next((a["shares"] for a in reversed(annual) if a["shares"]), None)
     ttm_fcfps = (ttm["fcf"] / latest_sh) if (ttm["fcf"] and latest_sh) else None
+    ttm_revps = (ttm["rev"] / latest_sh) if (ttm["rev"] and latest_sh) else None
     fwd = finnhub_forward(sym, ttm["trailing4"], ttm["eps"])
     quarterly = edgar_quarterly(g, splits, prices, annual)
 
     return sym, {
         "ticker": sym, "currency": "USD", "source": "SEC EDGAR + Yahoo prices",
         "asof": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "ttm": {"eps": ttm["eps"], "fcf": ttm["fcf"], "fcfps": ttm_fcfps, "shares": latest_sh},
+        "ttm": {"eps": ttm["eps"], "fcf": ttm["fcf"], "fcfps": ttm_fcfps, "rev": ttm["rev"], "revps": ttm_revps, "shares": latest_sh},
         "fwd": fwd,
         "annual": annual,
         "quarterly": quarterly,
