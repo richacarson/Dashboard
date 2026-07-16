@@ -56,10 +56,12 @@ function valuationBand(live, histVals, C) {
   return { pos: Math.max(0, Math.min(1, pos)), lo, hi, label, color }
 }
 
-export default function FundamentalsView({ tickers, quotes, names, fundMap, C, isDesktop, terminal = false }) {
+export default function FundamentalsView({ tickers, quotes, names, fundMap, sleeveKey, C, isDesktop, terminal = false }) {
   const [sel, setSel] = useState(null)
+  const [showPort, setShowPort] = useState(false)
   const [basis, setBasis] = useState('fwd') // 'fwd' | 'ttm'
   const R = terminal ? 2 : 12
+  const SLEEVE_NAMES = { dividend: 'Dividend', growth: 'Growth', fci100: 'FCI 100', fciValues: 'FCI Values' }
 
   const rows = (tickers || []).map((t) => {
     const f = fundMap?.[t]
@@ -80,13 +82,21 @@ export default function FundamentalsView({ tickers, quotes, names, fundMap, C, i
   const cell = { padding: '8px 10px', fontSize: 12, fontVariantNumeric: 'tabular-nums' }
 
   const toggle = (
-    <div style={{ display: 'inline-flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-      {['fwd', 'ttm'].map((b) => (
-        <button key={b} onClick={() => setBasis(b)} style={{
-          padding: '4px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', border: 'none',
-          background: basis === b ? C.accentSoft : 'transparent', color: basis === b ? C.accent : C.t4,
-        }}>{b.toUpperCase()}</button>
-      ))}
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      {sleeveKey && (
+        <button onClick={() => setShowPort(true)} style={{
+          padding: '5px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer',
+          border: `1px solid ${C.border}`, borderRadius: 8, background: C.accentSoft, color: C.accent, whiteSpace: 'nowrap',
+        }}>📊 Portfolio vs S&P 500</button>
+      )}
+      <div style={{ display: 'inline-flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
+        {['fwd', 'ttm'].map((b) => (
+          <button key={b} onClick={() => setBasis(b)} style={{
+            padding: '4px 12px', fontSize: 11, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', border: 'none',
+            background: basis === b ? C.accentSoft : 'transparent', color: basis === b ? C.accent : C.t4,
+          }}>{b.toUpperCase()}</button>
+        ))}
+      </div>
     </div>
   )
 
@@ -150,6 +160,17 @@ export default function FundamentalsView({ tickers, quotes, names, fundMap, C, i
           </div>
         </div>
       )}
+
+      {showPort && sleeveKey && (
+        <div onClick={() => setShowPort(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: C.bg, padding: isDesktop ? '18px 24px' : `calc(56px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))`, width: '100%', maxWidth: 1500, height: '100dvh', overflowY: 'auto', position: 'relative' }}>
+            <button onClick={() => setShowPort(false)} aria-label="Close" style={{ position: 'fixed', top: `calc(env(safe-area-inset-top, 0px) + 12px)`, right: 16, zIndex: 1010, background: C.surface, border: `1px solid ${C.border}`, color: C.t2, borderRadius: 10, width: 38, height: 38, fontSize: 18, lineHeight: 1, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 10px rgba(0,0,0,0.35)' }}>✕</button>
+            <PortfolioFundamentals sleeveKey={sleeveKey} sleeveName={SLEEVE_NAMES[sleeveKey] || sleeveKey} C={C} isDesktop={isDesktop} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -179,6 +200,123 @@ export function StockFundamentals({ symbol, price, name, C, isDesktop }) {
         </div>
       </div>
       <FundamentalsDetail f={f} px={price} name={name || symbol} basis={basis} C={C} isDesktop={isDesktop} />
+    </div>
+  )
+}
+
+
+// Portfolio-blended fundamentals for a sleeve, with the S&P 500's multiple overlaid.
+export function PortfolioFundamentals({ sleeveKey, sleeveName, C, isDesktop }) {
+  const [d, setD] = useState(undefined)
+  const [bench, setBench] = useState(null)
+  useEffect(() => {
+    if (!sleeveKey) return
+    let cancel = false
+    setD(undefined)
+    fetch(`${import.meta.env.BASE_URL}portfolio-fundamentals-${sleeveKey}.json`)
+      .then((r) => (r.ok ? r.json() : null)).then((x) => { if (!cancel) setD(x) }).catch(() => { if (!cancel) setD(null) })
+    fetch(`${import.meta.env.BASE_URL}benchmark-fundamentals.json`)
+      .then((r) => (r.ok ? r.json() : null)).then((x) => { if (!cancel) setBench(x) }).catch(() => {})
+    return () => { cancel = true }
+  }, [sleeveKey])
+
+  if (d === undefined) return <div style={{ padding: 24, color: C.t3, fontSize: 13 }}>Loading portfolio fundamentals…</div>
+  if (!d || !(d.series || []).length) return <div style={{ padding: 24, color: C.t3, fontSize: 13 }}>Blended fundamentals aren't available for this sleeve yet.</div>
+
+  const W = isDesktop ? 720 : 372, H = isDesktop ? 296 : 258
+  const PAD = { t: 24, r: 66, b: 40, l: 62 }
+  const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b
+  const gx = C.border + '55'
+  const BLc = '#A78BFA', PEc = '#7EA6FF', GRc = '#93C5FD'
+  const series = d.series
+  const dn = (m) => { const y = +m.slice(0, 4), mo = +m.slice(5, 7); return y + (mo - 1) / 12 }
+  const dmin = dn(series[0].date), dmax = dn(series[series.length - 1].date)
+  const xD = (m) => PAD.l + ((dn(m) - dmin) / ((dmax - dmin) || 1)) * cw
+  const num = { fontSize: 11, fill: C.t3 }
+  const lgd = (color, label, dash) => <span><span style={{ color, letterSpacing: dash ? -1 : 0 }}>{dash === 'bar' ? '▮' : dash === 'dash' ? '--' : '—'}</span> {label}</span>
+  const axTitle = (x, txt, color, anchor) => <text x={x} y={PAD.t - 9} textAnchor={anchor} fontSize={10} fontWeight={700} fill={color} letterSpacing={0.4}>{txt}</text>
+  const pctf = (v) => `${(v * 100).toFixed(0)}%`
+  const spyPE = (bench?.benchmarks?.SPY?.pe || []).filter((r) => dn(r.m) >= dmin - 0.1 && dn(r.m) <= dmax + 0.1)
+  const spyPS = (bench?.benchmarks?.SPY?.ps || []).filter((r) => dn(r.m) >= dmin - 0.1 && dn(r.m) <= dmax + 0.1)
+  const yr = []
+  { const seen = new Set(); series.forEach((r) => { const y = r.date.slice(0, 4); if (!seen.has(y) && (+y % 2 === 0)) { seen.add(y); yr.push({ x: xD(r.date), y }) } }) }
+  const yearAxis = yr.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" {...num}>{l.y}</text>)
+  const line = (pts, xf, yf) => pts.map((a, i) => `${i ? 'L' : 'M'}${xf(a).toFixed(1)},${yf(a).toFixed(1)}`).join(' ')
+
+  // ---- valuation panel: blended multiple + avg + live + S&P 500 overlay ----
+  const MulPanel = ({ title, k, live, spy, unit = '×' }) => {
+    const bl = series.filter((r) => r[k] != null && r[k] > 0)
+    const blV = bl.map((r) => r[k])
+    if (!blV.length) return null
+    const avg = blV.reduce((s, v) => s + v, 0) / blV.length
+    const spyV = (spy || []).map((r) => r.v)
+    // clamp the S&P line's influence on the axis so a crisis-year P/E spike
+    // (e.g. 2009 ~120×) doesn't compress the normal 15–35× range
+    const spySorted = [...spyV].sort((a, b) => a - b)
+    const spyCap = spySorted.length ? spySorted[Math.floor(spySorted.length * 0.92)] : 0
+    const hi = Math.max(...blV, avg, live || 0, spyCap) * 1.12
+    const tk = ticks(0, hi, 5), top = Math.max(hi, tk[tk.length - 1])
+    const y = (v) => PAD.t + ch - (Math.min(v, top) / (top || 1)) * ch
+    return (
+      <Chart title={title} W={W} H={H} C={C}
+        legend={<>{lgd(BLc, `Portfolio ${fmt1(live)}${unit}`)}{lgd(C.t1, `avg ${fmt1(avg)}${unit}`)}{spyV.length ? lgd(C.accent, `S&P 500 ${fmt1(spyV[spyV.length - 1])}${unit}`) : null}</>}>
+        {tk.map((v) => <g key={v}><line x1={PAD.l} y1={y(v)} x2={W - PAD.r} y2={y(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={y(v) + 3.5} textAnchor="end" {...num}>{v.toFixed(0)}{unit}</text></g>)}
+        {axTitle(PAD.l - 7, title.toUpperCase().split(' ')[0], BLc, 'end')}{yearAxis}
+        <line x1={PAD.l} y1={y(avg)} x2={W - PAD.r} y2={y(avg)} stroke={C.t1} strokeWidth={1.3} />
+        <text x={PAD.l + 3} y={y(avg) - 4} fontSize={10} fontWeight={700} fill={C.t1}>avg {fmt1(avg)}{unit}</text>
+        {spyV.length > 1 && <path d={line(spy, (r) => xD(r.m), (r) => y(r.v))} fill="none" stroke={C.accent} strokeWidth={1.7} opacity={0.85} />}
+        <path d={line(bl, (r) => xD(r.date), (r) => y(r[k]))} fill="none" stroke={BLc} strokeWidth={2.4} />
+        {live != null && <><line x1={PAD.l} y1={y(live)} x2={W - PAD.r} y2={y(live)} stroke={PEc} strokeWidth={1.3} strokeDasharray="5,4" /><text x={W - PAD.r - 3} y={y(live) - 4} textAnchor="end" fontSize={10} fontWeight={700} fill={PEc}>live {fmt1(live)}{unit}</text></>}
+      </Chart>
+    )
+  }
+
+  // ---- margins panel ----
+  const gmP = series.filter((r) => r.gm != null), omP = series.filter((r) => r.om != null), nmP = series.filter((r) => r.nm != null)
+  const mAll = gmP.map((r) => r.gm).concat(omP.map((r) => r.om), nmP.map((r) => r.nm))
+  const mHi = Math.max(0.1, ...(mAll.length ? mAll : [0.1])) * 1.1, mLo = Math.min(0, ...(mAll.length ? mAll : [0]))
+  const mTk = ticks(mLo, mHi, 5), mT = Math.max(mHi, mTk[mTk.length - 1]), mB = Math.min(mLo, mTk[0])
+  const yM = (v) => PAD.t + ch - ((v - mB) / ((mT - mB) || 1)) * ch
+
+  // ---- growth panel ----
+  const rg = series.filter((r) => r.revYoY != null), eg = series.filter((r) => r.epsYoY != null)
+  const cG = (v) => Math.max(-0.6, Math.min(1, v))
+  const gAll = rg.map((r) => cG(r.revYoY)).concat(eg.map((r) => cG(r.epsYoY)))
+  const gHi = Math.max(0.1, ...(gAll.length ? gAll : [0.1])), gLo = Math.min(0, ...(gAll.length ? gAll : [0]))
+  const gTk = ticks(gLo, gHi, 5), gT = Math.max(gHi, gTk[gTk.length - 1]), gB = Math.min(gLo, gTk[0])
+  const yG = (v) => PAD.t + ch - ((cG(v) - gB) / ((gT - gB) || 1)) * ch
+  const gy0 = yG(0), gbw = Math.max(2, Math.min(16, (cw / Math.max(1, rg.length)) * 0.6))
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{sleeveName || sleeveKey} — blended fundamentals</span>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: C.t3 }}>{d.covered}/{d.holdings} holdings · {Math.round((d.coverage || 0) * 100)}% by weight</span>
+      </div>
+      <div style={{ fontSize: 11.5, color: C.t4, marginBottom: 12 }}>Market-weighted across the sleeve's holdings vs. the S&P 500. Multiples are weighted harmonic means; margins and growth are weighted averages.</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+        <MulPanel title="P/E vs S&P 500" k="pe" live={d.live?.pe} spy={spyPE} />
+        <MulPanel title="P/S vs S&P 500" k="ps" live={d.live?.ps} spy={spyPS} />
+
+        <Chart title="Margins (blended, TTM)" W={W} H={H} C={C}
+          legend={<>{gmP.length ? lgd(GRc, 'Gross') : null}{omP.length ? lgd(PEc, 'Operating') : null}{nmP.length ? lgd(C.up, 'Net') : null}</>}>
+          {mTk.map((v) => <g key={v}><line x1={PAD.l} y1={yM(v)} x2={W - PAD.r} y2={yM(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yM(v) + 3.5} textAnchor="end" {...num}>{pctf(v)}</text></g>)}
+          {axTitle(PAD.l - 7, 'MARGIN', C.up, 'end')}{yearAxis}
+          {gmP.length > 1 && <path d={line(gmP, (r) => xD(r.date), (r) => yM(r.gm))} fill="none" stroke={GRc} strokeWidth={1.6} />}
+          {omP.length > 1 && <path d={line(omP, (r) => xD(r.date), (r) => yM(r.om))} fill="none" stroke={PEc} strokeWidth={1.6} />}
+          {nmP.length > 1 && <path d={line(nmP, (r) => xD(r.date), (r) => yM(r.nm))} fill="none" stroke={C.up} strokeWidth={2.4} />}
+        </Chart>
+
+        <Chart title="Growth (blended, YoY)" W={W} H={H} C={C}
+          legend={<>{lgd(BLc, 'Revenue YoY', 'bar')}{eg.length ? lgd(C.up, 'EPS YoY') : null}</>}>
+          {gTk.map((v) => <g key={v}><line x1={PAD.l} y1={yG(v)} x2={W - PAD.r} y2={yG(v)} stroke={Math.abs(v) < 1e-6 ? C.border : gx} strokeWidth={Math.abs(v) < 1e-6 ? 0.9 : 0.6} /><text x={PAD.l - 7} y={yG(v) + 3.5} textAnchor="end" {...num}>{pctf(v)}</text></g>)}
+          {axTitle(PAD.l - 7, 'YoY', BLc, 'end')}{yearAxis}
+          {rg.map((r) => { const x = xD(r.date), yv = yG(r.revYoY), top = Math.min(gy0, yv); return <rect key={r.date} x={x - gbw / 2} y={top} width={gbw} height={Math.max(1, Math.abs(yv - gy0))} fill={BLc} opacity={0.7} rx={1.5} /> })}
+          {eg.length > 1 && <path d={line(eg, (r) => xD(r.date), (r) => yG(r.epsYoY))} fill="none" stroke={C.up} strokeWidth={2.2} />}
+        </Chart>
+
+        <MulPanel title="P/FCF" k="pfcf" live={d.live?.pfcf} spy={null} />
+      </div>
     </div>
   )
 }
