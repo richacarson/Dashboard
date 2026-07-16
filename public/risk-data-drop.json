@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-16T11:49:28Z",
+  "generated_at": "2026-07-16T12:53:58Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -139,11 +139,11 @@
         }
       },
       "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 1.15,
-        "eps_estimate": 1.1552,
-        "surprise": -0.0052,
-        "surprise_pct": -0.4501
+        "period": "2026-06-30",
+        "eps_actual": 1.31,
+        "eps_estimate": 1.2922,
+        "surprise": 0.0178,
+        "surprise_pct": 1.3775
       }
     },
     "ADI": {
@@ -1138,7 +1138,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 206.43,
+      "price": 197.37,
       "pct_change": -7.31,
       "prev_close": 222.49,
       "quote_source": "alpaca",
@@ -1162,7 +1162,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 212.4,
+      "price": 208.7,
       "pct_change": 0.34,
       "prev_close": 211.79,
       "quote_source": "alpaca",
@@ -1258,7 +1258,7 @@
     },
     "TSM": {
       "sleeve": "Growth",
-      "price": 421.93,
+      "price": 400.98,
       "pct_change": -0.27,
       "prev_close": 420.71,
       "quote_source": "alpaca",
@@ -1330,7 +1330,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.83,
+      "price": 36.2,
       "pct_change": 0.6,
       "prev_close": 36.57,
       "quote_source": "alpaca",
@@ -1339,7 +1339,7 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 14.53,
+      "price": 14.11,
       "pct_change": 2.44,
       "prev_close": 14.16,
       "quote_source": "alpaca",
@@ -1349,13 +1349,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 754.77,
+      "price": 751.83,
       "pct_change": 0.38,
       "prev_close": 751.94,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 717.63,
+      "price": 710.5,
       "pct_change": -0.28,
       "prev_close": 719.71,
       "quote_source": "alpaca"
