@@ -6000,7 +6000,9 @@ Instructions:
               ) : (
                 <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px" }}>
                   {tProfileTab === "overview" && isEtf && (
-                    <div style={tEyebrowMuted}>ETF — FUNDAMENTALS UNAVAILABLE</div>
+                    sym === "SPY"
+                      ? <div style={{ marginTop: 12 }}><StockFundamentals symbol={sym} price={(quotesRef.current?.[sym] || quotes[sym])?.p} name={names?.[sym]} C={C} isDesktop={isDesktop} /></div>
+                      : <div style={tEyebrowMuted}>ETF — FUNDAMENTALS UNAVAILABLE</div>
                   )}
                   {tProfileTab === "overview" && !isEtf && (<>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
@@ -6387,7 +6389,7 @@ Instructions:
               const b = bmBars[sym] || barsRef.current?.[sym] || bars[sym];
               const c = (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
               return (
-                <div key={sym} style={{ display: "flex", alignItems: "baseline", padding: "4px 0", borderBottom: i < RAIL_BENCHMARKS.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("overview"); setTDrawer(null); }} style={{ display: "flex", alignItems: "baseline", padding: "4px 0", borderBottom: i < RAIL_BENCHMARKS.length - 1 ? `1px solid ${C.border}` : "none", cursor: "pointer" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: C.t1, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{sym}</span>
                   <span style={{ fontSize: 10, color: q?.p != null ? C.t1 : C.t4, width: 58, textAlign: "right", flexShrink: 0 }}>{q?.p != null ? q.p.toFixed(2) : "—"}</span>
                   <span style={{ fontSize: 10, fontWeight: 600, width: 52, textAlign: "right", flexShrink: 0, color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{c != null ? pct(c) : "—"}</span>
