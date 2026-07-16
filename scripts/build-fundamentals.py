@@ -82,6 +82,9 @@ _OCF_TAGS = ["NetCashProvidedByUsedInOperatingActivities",
 _CAPEX_TAGS = ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets"]
 _SHARE_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding",
                "WeightedAverageNumberOfShareOutstandingBasicAndDiluted"]
+_REV_TAGS = ["RevenueFromContractWithCustomerExcludingAssessedTax",
+             "RevenueFromContractWithCustomerIncludingAssessedTax",
+             "Revenues", "SalesRevenueNet"]
 
 
 def edgar_facts(cik):
@@ -144,7 +147,16 @@ def _disc_quarters(g, tags, unit):
     for s, items in groups.items():
         items.sort()
         for i, (en, val, fl) in enumerate(items):
-            disc[en] = (val - (items[i - 1][1] if i > 0 else 0.0), fl)
+            dv = val - (items[i - 1][1] if i > 0 else 0.0)
+            prev_end = items[i - 1][0] if i > 0 else s
+            try:
+                dur = (date.fromisoformat(en) - date.fromisoformat(prev_end)).days
+            except Exception:
+                dur = 90
+            # only emit clean ~1-quarter periods — drops the leading stub (a 6/9mo
+            # cumulative with no prior quarter to difference) and any non-adjacent gap
+            if 60 <= dur <= 100:
+                disc[en] = (dv, fl)
     return disc  # {end_iso: (discrete_quarter_value, filed)}
 
 
@@ -181,6 +193,7 @@ def edgar_quarterly(g, splits, prices, annual):
     epsq = _disc_quarters(g, _EPS_TAGS, "USD/shares")   # {end: (val, filed)}
     ocfq = _disc_quarters(g, _OCF_TAGS, "USD")
     capq = _disc_quarters(g, _CAPEX_TAGS, "USD")
+    revq = _disc_quarters(g, _REV_TAGS, "USD")          # absolute $ — no split adjust
     fcfq = {e: ocfq[e][0] - capq[e][0] for e in (set(ocfq) & set(capq))}
     # split-adjust by FILING date: a quarter filed after a split is already
     # reported on the post-split basis, so it needs no further adjustment.
@@ -202,10 +215,12 @@ def edgar_quarterly(g, splits, prices, annual):
     for en in sorted(epsq):
         px = close_on_or_before(prices, en[:7])
         te, tf, sh = ttm_eps.get(en), ttm_fcf.get(en), shares_at(en)
+        rv = revq.get(en)
         out.append({
             "date": en,
             "eps": round(eps_adj[en], 4),
             "fcf": fcfq.get(en),
+            "rev": (rv[0] if rv else None),
             "px": px,
             "pe": (px / te) if (px and te and te > 0) else None,
             "pfcf": (px / (tf / sh)) if (px and tf and sh and tf > 0) else None,

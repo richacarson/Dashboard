@@ -143,10 +143,9 @@ export default function FundamentalsView({ tickers, quotes, names, fundMap, C, i
         <div onClick={() => setSel(null)}
           style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'stretch', justifyContent: 'center' }}>
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: C.bg, padding: isDesktop ? '18px 24px' : '12px 12px calc(12px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 1500, height: '100dvh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4, position: 'sticky', top: 0 }}>
-              <button onClick={() => setSel(null)} style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.t2, borderRadius: 8, width: 34, height: 34, fontSize: 17, cursor: 'pointer', fontFamily: 'inherit' }}>✕</button>
-            </div>
+            style={{ background: C.bg, padding: isDesktop ? '18px 24px' : `calc(56px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))`, width: '100%', maxWidth: 1500, height: '100dvh', overflowY: 'auto', position: 'relative' }}>
+            {/* Fixed close button — sits clear of the status bar / notch on mobile */}
+            <button onClick={() => setSel(null)} aria-label="Close" style={{ position: 'fixed', top: `calc(env(safe-area-inset-top, 0px) + 12px)`, right: 16, zIndex: 1010, background: C.surface, border: `1px solid ${C.border}`, color: C.t2, borderRadius: 10, width: 38, height: 38, fontSize: 18, lineHeight: 1, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 10px rgba(0,0,0,0.35)' }}>✕</button>
             <FundamentalsDetail f={fundMap[sel]} px={quotes?.[sel]?.p} name={names?.[sel] || sel} basis={basis} C={C} isDesktop={isDesktop} />
           </div>
         </div>
@@ -184,29 +183,29 @@ export function StockFundamentals({ symbol, price, name, C, isDesktop }) {
   )
 }
 
-function Chart({ title, W, H, C, children, legend }) {
+function Chart({ title, right, W, H, C, children, legend }) {
   return (
-    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 12 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{title}</div>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }} fontFamily="inherit">{children}</svg>
-      <div style={{ display: 'flex', gap: 14, fontSize: 10.5, color: C.t3, marginTop: 6, flexWrap: 'wrap' }}>{legend}</div>
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px 16px 11px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: C.t3, textTransform: 'uppercase', letterSpacing: 1.3 }}>{title}</div>
+        {right ? <div style={{ marginLeft: 'auto', fontSize: 12, color: C.t2, fontVariantNumeric: 'tabular-nums' }}>{right}</div> : null}
+      </div>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', fontVariantNumeric: 'tabular-nums' }} fontFamily="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">{children}</svg>
+      {legend ? <div style={{ display: 'flex', gap: 18, fontSize: 11, color: C.t3, marginTop: 9, flexWrap: 'wrap', fontWeight: 500 }}>{legend}</div> : null}
     </div>
   )
 }
 
 function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
-  const W = isDesktop ? 760 : 380, H = isDesktop ? 360 : 300
-  const PAD = { t: 18, r: isDesktop ? 92 : 68, b: 30, l: 60 }
+  const W = isDesktop ? 720 : 372, H = isDesktop ? 316 : 268
+  const PAD = { t: 24, r: 66, b: 40, l: 66 }
   const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b
-  const padRf = isDesktop ? 58 : 52, cwF = W - PAD.l - padRf  // FCF has a single right axis
   const price = f.price || []
-  // Quarterly series drives the charts; fall back to annual for JSONs built
-  // before the quarterly field existed (same shape, renders gracefully).
   const q = (f.quarterly && f.quarterly.length ? f.quarterly : (f.annual || []))
   const lpe = livePE(f, px, basis)
   const lpfcf = (px && f.ttm?.fcfps > 0) ? px / f.ttm.fcfps : null
-  const gx = C.border + '66'
-  const peC = '#7EA6FF'
+  const gx = C.border + '55'
+  const REVc = '#A78BFA', PEc = '#7EA6FF'
 
   if (price.length < 2 || !q.some((a) => a.eps != null)) {
     return (
@@ -219,111 +218,125 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
 
   const xAt = (i, n) => PAD.l + (n > 1 ? (i / (n - 1)) * cw : cw / 2)
   const mIdx = (ym) => { const i = price.findIndex((p) => p.m >= ym); return i < 0 ? price.length - 1 : i }
+  const xT = (iso) => xAt(mIdx(iso.slice(0, 7)), price.length)      // time-based x for a quarter-end
   const rightX = xAt(price.length - 1, price.length)
   const yrLabels = []
   { const seen = new Set(); price.forEach((p, i) => { const y = p.m.slice(0, 4); if (!seen.has(y) && i % Math.ceil(price.length / 7) === 0) { seen.add(y); yrLabels.push({ x: xAt(i, price.length), y }) } }) }
+  const num = { fontSize: 11, fill: C.t3 }
+  const lgd = (color, label, dash) => <span><span style={{ color, letterSpacing: dash ? -1 : 0 }}>{dash === 'bar' ? '▮' : dash === 'dash' ? '--' : dash === 'diamond' ? '◇' : '—'}</span> {label}</span>
+  const axTitle = (x, txt, color, anchor) => <text x={x} y={PAD.t - 9} textAnchor={anchor} fontSize={10} fontWeight={700} fill={color} letterSpacing={0.4}>{txt}</text>
+  const yearAxis = yrLabels.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" {...num}>{l.y}</text>)
+  const barW = (n) => Math.max(1.5, Math.min(22, (cw / Math.max(1, n)) * 0.6))
 
-  // ---------- Chart 1: Price + EPS (TTM) + P/E ----------
-  // EPS line is rolling trailing-twelve-month (sum of the 4 discrete quarters),
-  // so one-time GAAP items don't spike it and it shares the P/E line's basis.
+  // ============ Panel 1: EPS (TTM) + P/E ============
   const qe = q.filter((a) => a.eps != null)
   const ttmPts = []
   for (let i = 3; i < qe.length; i++) ttmPts.push({ date: qe[i].date, eps: qe[i].eps + qe[i - 1].eps + qe[i - 2].eps + qe[i - 3].eps })
   const fwdEps = f.fwd?.eps
-  const pxs = price.map((p) => p.c)
-  const pxLo = Math.min(...pxs), pxHi = Math.max(...pxs)
   const epsAll = ttmPts.map((a) => a.eps).concat(fwdEps != null ? [fwdEps] : [])
   const epsLo = Math.min(0, ...epsAll), epsHi = (epsAll.length ? Math.max(...epsAll) : 1) * 1.12
-  const pxTk = ticks(pxLo, pxHi, 5), epsTk = ticks(epsLo, epsHi, 5)
-  const pT = Math.min(pxLo, pxTk[0]), pB = Math.max(pxHi, pxTk[pxTk.length - 1])
+  const epsTk = ticks(epsLo, epsHi, 5)
   const eT = Math.min(epsLo, epsTk[0]), eB = Math.max(epsHi, epsTk[epsTk.length - 1])
-  const yPx = (v) => PAD.t + ch - ((v - pT) / ((pB - pT) || 1)) * ch
   const yEps = (v) => PAD.t + ch - ((v - eT) / ((eB - eT) || 1)) * ch
-  const pxLine = price.map((p, i) => `${i ? 'L' : 'M'}${xAt(i, price.length).toFixed(1)},${yPx(p.c).toFixed(1)}`).join(' ')
-  const pxArea = `${pxLine} L${rightX.toFixed(1)},${PAD.t + ch} L${PAD.l},${PAD.t + ch} Z`
-  const epsX = ttmPts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
+  const epsX = ttmPts.map((a) => xT(a.date))
   const epsLine = ttmPts.map((a, i) => `${i ? 'L' : 'M'}${epsX[i].toFixed(1)},${yEps(a.eps).toFixed(1)}`).join(' ')
   const lastEps = ttmPts[ttmPts.length - 1]
-
   const pePts = q.filter((a) => a.pe != null && a.pe > 0)
   const peV = pePts.map((a) => a.pe)
   const peSorted = [...peV].sort((a, b) => a - b)
   const peMed = peSorted.length ? peSorted[Math.floor(peSorted.length / 2)] : null
-  const peCapV = peMed != null ? peMed * 3 : Infinity  // clamp trough-earnings spikes
+  const peCapV = peMed != null ? peMed * 3 : Infinity
   const clampPe = (v) => Math.min(v, peCapV)
   const avgPe = peV.length ? peV.reduce((s, v) => s + clampPe(v), 0) / peV.length : null
-  const liveTtmPe = (px && f.ttm?.eps > 0) ? px / f.ttm.eps : null
-  const peAxis = peV.map(clampPe).concat([avgPe, liveTtmPe].filter((v) => v != null && v > 0))
-  const peLo = Math.max(0, (peAxis.length ? Math.min(...peAxis) : 0) * 0.9)
+  const peAxis = peV.map(clampPe).concat(avgPe != null ? [avgPe] : [])
   const peHi = (peAxis.length ? Math.max(...peAxis) : 40) * 1.08
-  const peTk = ticks(peLo, peHi, 5)
-  const peBot = Math.min(peLo, peTk[0]), peTop = Math.max(peHi, peTk[peTk.length - 1])
-  const yPe = (v) => PAD.t + ch - ((clampPe(v) - peBot) / ((peTop - peBot) || 1)) * ch
-  const peX = pePts.map((a) => xAt(mIdx(a.date.slice(0, 7)), price.length))
-  const peLine = pePts.map((a, i) => `${i ? 'L' : 'M'}${peX[i].toFixed(1)},${yPe(a.pe).toFixed(1)}`).join(' ')
+  const peTk = ticks(0, peHi, 5)
+  const peTop = Math.max(peHi, peTk[peTk.length - 1])
+  const yPe = (v) => PAD.t + ch - (Math.min(v, peTop) / (peTop || 1)) * ch
+  const peLine = pePts.map((a, i) => `${i ? 'L' : 'M'}${xT(a.date).toFixed(1)},${yPe(a.pe).toFixed(1)}`).join(' ')
 
-  // ---------- Chart 2: FCF (quarterly) + single average-P/FCF line ----------
+  // ============ Panel 2: Revenue (bars) + Price ============
+  const revPts = q.filter((a) => a.rev != null && a.rev > 0)
+  const revHi = (revPts.length ? Math.max(...revPts.map((a) => a.rev)) : 1) * 1.14
+  const revTk = ticks(0, revHi, 5)
+  const revTop = Math.max(revHi, revTk[revTk.length - 1])
+  const yRev = (v) => PAD.t + ch - (v / (revTop || 1)) * ch
+  const rbw = barW(revPts.length)
+  const pxs = price.map((p) => p.c)
+  const pxLo = Math.min(...pxs), pxHi = Math.max(...pxs)
+  const pxTk = ticks(pxLo, pxHi, 5)
+  const pT = Math.min(pxLo, pxTk[0]), pB = Math.max(pxHi, pxTk[pxTk.length - 1])
+  const yPxR = (v) => PAD.t + ch - ((v - pT) / ((pB - pT) || 1)) * ch
+  const pxLine2 = price.map((p, i) => `${i ? 'L' : 'M'}${xAt(i, price.length).toFixed(1)},${yPxR(p.c).toFixed(1)}`).join(' ')
+
+  // ============ Panel 3: FCF (bars) + avg P/FCF ============
   const fcfPts = q.filter((a) => a.fcf != null)
   const fcfVals = fcfPts.map((a) => a.fcf)
-  const fMax = (Math.max(0, ...fcfVals) * 1.12) || 1
-  const fMin = Math.min(0, ...fcfVals) * 1.12
+  const fMax = (Math.max(0, ...fcfVals) * 1.14) || 1
+  const fMin = Math.min(0, ...fcfVals) * 1.14
   const fcfTk = ticks(fMin, fMax, 5)
   const fT = Math.max(fMax, fcfTk[fcfTk.length - 1]), fB = Math.min(fMin, fcfTk[0])
   const yFcf = (v) => PAD.t + ch - ((v - fB) / ((fT - fB) || 1)) * ch
   const y0 = yFcf(0)
-  const bw = fcfPts.length ? Math.max(1.5, Math.min(24, (cwF / fcfPts.length) * 0.62)) : 12
-  const fcfX = (i) => PAD.l + (cwF / fcfPts.length) * (i + 0.5)
+  const fbw = barW(fcfPts.length)
   const pfPos = q.map((a) => a.pfcf).filter((v) => v != null && v > 0)
   const pfSorted = [...pfPos].sort((a, b) => a - b)
   const pfMed = pfSorted.length ? pfSorted[Math.floor(pfSorted.length / 2)] : null
   const pfCap = pfMed != null ? pfMed * 3 : Infinity
   const avgPfcf = pfPos.length ? pfPos.reduce((s, v) => s + Math.min(v, pfCap), 0) / pfPos.length : null
   const pfRef = [avgPfcf, lpfcf].filter((v) => v != null && v > 0)
-  const pfHi = (pfRef.length ? Math.max(...pfRef, pfMed || 0) : (pfMed || 20)) * 1.4
+  const pfHi = (pfRef.length ? Math.max(...pfRef, pfMed || 0) : (pfMed || 20)) * 1.35
   const pfTk = ticks(0, pfHi, 4)
   const pfT = Math.max(pfHi, pfTk[pfTk.length - 1] || pfHi)
   const yPf = (v) => PAD.t + ch - (Math.min(v, pfT) / (pfT || 1)) * ch
-  const fcfYr = []
-  { const seen = new Set(); fcfPts.forEach((a, i) => { const y = a.date.slice(0, 4); if (!seen.has(y) && i % Math.ceil(fcfPts.length / 7) === 0) { seen.add(y); fcfYr.push({ x: fcfX(i), y }) } }) }
-
-  const dot = { fontSize: 10, fontWeight: 700 }
-  const axL = { fontSize: 10, fill: C.t4 }
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 18, fontWeight: 800, color: C.t1 }}>{f.ticker}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 19, fontWeight: 800, color: C.t1, letterSpacing: -0.2 }}>{f.ticker}</span>
         <span style={{ fontSize: 13, color: C.t3 }}>{name}</span>
-        <span style={{ marginLeft: 'auto', fontSize: 13, color: C.t3 }}>
-          <b style={{ color: C.t1 }}>{money(px)}</b> · P/E {basis.toUpperCase()} <b style={{ color: C.t1 }}>{fmt1(lpe)}</b> · P/FCF <b style={{ color: C.t1 }}>{fmt1(lpfcf)}</b>
+        <span style={{ marginLeft: 'auto', fontSize: 13, color: C.t3, fontVariantNumeric: 'tabular-nums' }}>
+          <b style={{ color: C.t1 }}>{money(px)}</b>&nbsp; P/E {basis.toUpperCase()} <b style={{ color: C.t1 }}>{fmt1(lpe)}</b> &nbsp; P/FCF <b style={{ color: C.t1 }}>{fmt1(lpfcf)}</b>
         </span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
-        <Chart title="Price · EPS (TTM) · P/E" W={W} H={H} C={C}
-          legend={<><span><span style={{ color: C.accent }}>—</span> Price</span><span><span style={{ color: C.up }}>—</span> EPS ttm</span>{fwdEps != null ? <span><span style={{ color: C.up }}>◇</span> fwd</span> : null}<span><span style={{ color: peC }}>—</span> P/E</span>{avgPe != null ? <span><span style={{ color: C.t2 }}>--</span> avg P/E {fmt1(avgPe)}×</span> : null}</>}>
-          <defs><linearGradient id={`g-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity="0.18" /><stop offset="100%" stopColor={C.accent} stopOpacity="0" /></linearGradient></defs>
-          {pxTk.map((v) => <g key={v}><line x1={PAD.l} y1={yPx(v)} x2={W - PAD.r} y2={yPx(v)} stroke={gx} strokeWidth={0.5} /><text x={PAD.l - 5} y={yPx(v) + 3} textAnchor="end" {...axL}>${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text></g>)}
-          {epsTk.map((v) => <text key={v} x={W - PAD.r + 6} y={yEps(v) + 3} {...axL} fill={C.up}>${v.toFixed(v < 10 ? 1 : 0)}</text>)}
-          {peTk.map((v) => <text key={v} x={W - 4} y={yPe(v) + 3} textAnchor="end" {...axL} fill={peC}>{v.toFixed(0)}×</text>)}
-          {yrLabels.map((l, i) => <text key={i} x={l.x} y={H - 8} textAnchor="middle" {...axL}>{l.y}</text>)}
-          <path d={pxArea} fill={`url(#g-${f.ticker})`} />
-          <path d={pxLine} fill="none" stroke={C.accent} strokeWidth={1.3} />
-          {avgPe != null && <line x1={PAD.l} y1={yPe(avgPe)} x2={W - PAD.r} y2={yPe(avgPe)} stroke={C.t2} strokeWidth={1} strokeDasharray="4,4" />}
-          <path d={peLine} fill="none" stroke={peC} strokeWidth={1.5} />
-          <path d={epsLine} fill="none" stroke={C.up} strokeWidth={2} />
-          {fwdEps != null && lastEps && <g><line x1={epsX[ttmPts.length - 1]} y1={yEps(lastEps.eps)} x2={rightX} y2={yEps(fwdEps)} stroke={C.up} strokeWidth={1.2} strokeDasharray="3,3" /><rect x={rightX - 3.4} y={yEps(fwdEps) - 3.4} width={6.8} height={6.8} fill={C.up} transform={`rotate(45 ${rightX} ${yEps(fwdEps)})`} /></g>}
+        <Chart title="EPS (TTM) & P/E" W={W} H={H} C={C}
+          legend={<>{lgd(C.up, 'EPS ttm')}{fwdEps != null ? lgd(C.up, 'forward', 'diamond') : null}{lgd(PEc, 'P/E')}{avgPe != null ? lgd(C.t2, `avg P/E ${fmt1(avgPe)}×`, 'dash') : null}</>}>
+          {epsTk.map((v) => <g key={v}><line x1={PAD.l} y1={yEps(v)} x2={W - PAD.r} y2={yEps(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yEps(v) + 3.5} textAnchor="end" {...num}>${v.toFixed(v < 10 ? 1 : 0)}</text></g>)}
+          {peTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPe(v) + 3.5} {...num} fill={PEc}>{v.toFixed(0)}×</text>)}
+          {axTitle(PAD.l - 7, 'EPS', C.up, 'end')}
+          {axTitle(W - PAD.r + 7, 'P/E', PEc, 'start')}
+          {yearAxis}
+          {avgPe != null && <line x1={PAD.l} y1={yPe(avgPe)} x2={W - PAD.r} y2={yPe(avgPe)} stroke={C.t2} strokeWidth={1} strokeDasharray="5,4" />}
+          <path d={peLine} fill="none" stroke={PEc} strokeWidth={1.6} opacity={0.9} />
+          <path d={epsLine} fill="none" stroke={C.up} strokeWidth={2.2} />
+          {fwdEps != null && lastEps && <g><line x1={epsX[ttmPts.length - 1]} y1={yEps(lastEps.eps)} x2={rightX} y2={yEps(fwdEps)} stroke={C.up} strokeWidth={1.3} strokeDasharray="3,3" /><rect x={rightX - 3.6} y={yEps(fwdEps) - 3.6} width={7.2} height={7.2} fill={C.up} transform={`rotate(45 ${rightX} ${yEps(fwdEps)})`} /></g>}
+        </Chart>
+
+        <Chart title="Revenue (quarterly) & Price" W={W} H={H} C={C}
+          legend={<>{lgd(REVc, 'Revenue', 'bar')}{lgd(C.accent, 'Price')}</>}>
+          <defs><linearGradient id={`rv-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={REVc} stopOpacity="0.95" /><stop offset="100%" stopColor={REVc} stopOpacity="0.55" /></linearGradient></defs>
+          {revTk.map((v) => <g key={v}><line x1={PAD.l} y1={yRev(v)} x2={W - PAD.r} y2={yRev(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yRev(v) + 3.5} textAnchor="end" {...num}>{bil(v)}</text></g>)}
+          {pxTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPxR(v) + 3.5} {...num} fill={C.accent}>${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text>)}
+          {axTitle(PAD.l - 7, 'REV', REVc, 'end')}
+          {axTitle(W - PAD.r + 7, 'PRICE', C.accent, 'start')}
+          {yearAxis}
+          {revPts.map((a) => { const x = xT(a.date), y = yRev(a.rev); return <rect key={a.date} x={x - rbw / 2} y={y} width={rbw} height={Math.max(1, PAD.t + ch - y)} fill={`url(#rv-${f.ticker})`} rx={1.5} /> })}
+          <path d={pxLine2} fill="none" stroke={C.accent} strokeWidth={1.8} />
         </Chart>
 
         <Chart title="Free Cash Flow (quarterly)" W={W} H={H} C={C}
-          legend={<><span><span style={{ color: C.dn }}>▮</span> Quarterly FCF</span>{avgPfcf != null ? <span><span style={{ color: C.t1 }}>—</span> avg P/FCF {fmt1(avgPfcf)}×</span> : null}{lpfcf != null ? <span><span style={{ color: C.accent }}>--</span> live {fmt1(lpfcf)}×</span> : null}</>}>
-          <defs><linearGradient id={`fg-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.dn} stopOpacity="0.85" /><stop offset="100%" stopColor={C.dn} stopOpacity="0.45" /></linearGradient></defs>
-          {fcfTk.map((v) => <g key={v}><line x1={PAD.l} y1={yFcf(v)} x2={W - padRf} y2={yFcf(v)} stroke={Math.abs(v) < 1e-6 ? C.border : gx} strokeWidth={Math.abs(v) < 1e-6 ? 0.8 : 0.5} /><text x={PAD.l - 5} y={yFcf(v) + 3} textAnchor="end" {...axL}>{bil(v)}</text></g>)}
-          {pfTk.map((v) => <text key={v} x={W - padRf + 5} y={yPf(v) + 3} {...axL} fill={C.t2}>{v.toFixed(0)}×</text>)}
-          {fcfPts.map((a, i) => { const yv = yFcf(a.fcf); const top = Math.min(y0, yv); return <rect key={a.date} x={fcfX(i) - bw / 2} y={top} width={bw} height={Math.max(1, Math.abs(yv - y0))} fill={`url(#fg-${f.ticker})`} rx={1} /> })}
-          {fcfYr.map((l, i) => <text key={i} x={l.x} y={H - 8} textAnchor="middle" {...axL}>{l.y}</text>)}
-          {avgPfcf != null && <g><line x1={PAD.l} y1={yPf(avgPfcf)} x2={W - padRf} y2={yPf(avgPfcf)} stroke={C.t1} strokeWidth={1.4} /><text x={PAD.l + 3} y={yPf(avgPfcf) - 4} {...dot} fill={C.t1}>avg {fmt1(avgPfcf)}×</text></g>}
-          {lpfcf != null && <g><line x1={PAD.l} y1={yPf(lpfcf)} x2={W - padRf} y2={yPf(lpfcf)} stroke={C.accent} strokeWidth={1.2} strokeDasharray="4,3" /><text x={W - padRf - 3} y={yPf(lpfcf) - 4} textAnchor="end" {...dot} fill={C.accent}>live {fmt1(lpfcf)}×</text></g>}
+          legend={<>{lgd(C.dn, 'Quarterly FCF', 'bar')}{avgPfcf != null ? lgd(C.t1, `avg P/FCF ${fmt1(avgPfcf)}×`) : null}{lpfcf != null ? lgd(C.accent, `live ${fmt1(lpfcf)}×`, 'dash') : null}</>}>
+          <defs><linearGradient id={`fg-${f.ticker}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.dn} stopOpacity="0.9" /><stop offset="100%" stopColor={C.dn} stopOpacity="0.5" /></linearGradient></defs>
+          {fcfTk.map((v) => <g key={v}><line x1={PAD.l} y1={yFcf(v)} x2={W - PAD.r} y2={yFcf(v)} stroke={Math.abs(v) < 1e-6 ? C.border : gx} strokeWidth={Math.abs(v) < 1e-6 ? 0.9 : 0.6} /><text x={PAD.l - 7} y={yFcf(v) + 3.5} textAnchor="end" {...num}>{bil(v)}</text></g>)}
+          {pfTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPf(v) + 3.5} {...num} fill={C.t2}>{v.toFixed(0)}×</text>)}
+          {axTitle(PAD.l - 7, 'FCF', C.dn, 'end')}
+          {axTitle(W - PAD.r + 7, 'P/FCF', C.t2, 'start')}
+          {yearAxis}
+          {fcfPts.map((a) => { const x = xT(a.date), yv = yFcf(a.fcf), top = Math.min(y0, yv); return <rect key={a.date} x={x - fbw / 2} y={top} width={fbw} height={Math.max(1, Math.abs(yv - y0))} fill={`url(#fg-${f.ticker})`} rx={1.5} /> })}
+          {avgPfcf != null && <line x1={PAD.l} y1={yPf(avgPfcf)} x2={W - PAD.r} y2={yPf(avgPfcf)} stroke={C.t1} strokeWidth={1.5} />}
+          {lpfcf != null && <line x1={PAD.l} y1={yPf(lpfcf)} x2={W - PAD.r} y2={yPf(lpfcf)} stroke={C.accent} strokeWidth={1.3} strokeDasharray="5,4" />}
         </Chart>
       </div>
     </div>
