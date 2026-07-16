@@ -43,14 +43,14 @@ def multpl(slug):
         return re.sub(r"&[#\w]+;", " ", re.sub(r"<[^>]+>", "", s))
     for dcell, vcell in re.findall(r"<tr[^>]*>\s*<td[^>]*>(.*?)</td>\s*<td[^>]*>(.*?)</td>", m.group(0), re.S):
         ds = clean(dcell).strip()
-        vm = re.search(r"-?\d+\.?\d*", clean(vcell))
+        vm = re.search(r"-?[\d,]+\.?\d*", clean(vcell))  # allow thousands separators (e.g. 6,715.79)
         if not vm:
             continue
         try:
             dt = datetime.strptime(ds, "%b %d, %Y")
         except Exception:
             continue
-        out.append({"m": dt.strftime("%Y-%m"), "v": float(vm.group(0))})
+        out.append({"m": dt.strftime("%Y-%m"), "v": float(vm.group(0).replace(",", ""))})
     out.sort(key=lambda r: r["m"])
     # de-dup by month (keep last)
     seen = {}
@@ -181,9 +181,35 @@ def build_sleeve(sleeve):
     }
 
 
+def spy_index():
+    """S&P 500 as a clickable 'stock': price + P/E from multpl, with EPS derived
+    as price ÷ P/E so all three are internally consistent. Scaled to SPY terms
+    (~index/10) so the price lines up with the SPY quote users see."""
+    peser = multpl("s-p-500-pe-ratio")
+    ps = multpl("s-p-500-price-to-sales")
+    pe = {r["m"]: r["v"] for r in peser}
+    px = {r["m"]: r["v"] / 10.0 for r in multpl("s-p-500-historical-prices")}   # index → SPY-ish
+    months = sorted(set(px) & set(pe))
+    price = [{"m": m, "c": round(px[m], 2)} for m in months]
+    epsser = [{"m": m, "v": round(px[m] / pe[m], 2)} for m in months if pe[m] and pe[m] > 0]
+    pe_vals = [pe[m] for m in months if 3 < pe[m] < 80]  # drop crisis spikes for the average
+    live_px = price[-1]["c"] if price else None
+    live_pe = pe[months[-1]] if months else None
+    return {
+        "pe": peser, "ps": ps,
+        "price": price, "eps": epsser,
+        "live": {
+            "price": live_px, "pe": round(live_pe, 2) if live_pe else None,
+            "eps": round(live_px / live_pe, 2) if (live_px and live_pe) else None,
+            "avgPe": round(sum(pe_vals) / len(pe_vals), 2) if pe_vals else None,
+        },
+    }
+
+
 def main():
     print("Fetching S&P 500 valuation history (multpl)…")
-    bench = {"SPY": {"pe": multpl("s-p-500-pe-ratio"), "ps": multpl("s-p-500-price-to-sales")}}
+    spy = spy_index()
+    bench = {"SPY": spy}
     (PUB / "benchmark-fundamentals.json").write_text(json.dumps({
         "source": "multpl.com (S&P 500)", "generated": datetime.now(timezone.utc).isoformat(),
         "benchmarks": bench,

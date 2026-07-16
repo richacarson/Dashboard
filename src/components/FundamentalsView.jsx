@@ -175,16 +175,20 @@ export default function FundamentalsView({ tickers, quotes, names, fundMap, slee
   )
 }
 
-// Self-fetching block for the stock overview.
+// Self-fetching block for the stock overview. Index benchmarks (e.g. SPY) have
+// no EDGAR statements — they render the multpl-sourced index Price·EPS·P/E panel.
 export function StockFundamentals({ symbol, price, name, C, isDesktop }) {
   const [f, setF] = useState(undefined)
   const [basis, setBasis] = useState('fwd')
+  const isIndex = !!(symbol && INDEX_SYMS[symbol])
   useEffect(() => {
     if (!symbol) return
     let cancelled = false
     setF(undefined)
-    fetch(`${import.meta.env.BASE_URL}fundamentals/${symbol}.json`)
-      .then((r) => (r.ok ? r.json() : null)).then((d) => { if (!cancelled) setF(d) })
+    const url = isIndex ? `${import.meta.env.BASE_URL}benchmark-fundamentals.json` : `${import.meta.env.BASE_URL}fundamentals/${symbol}.json`
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (!cancelled) setF(isIndex ? (d?.benchmarks?.[symbol] || null) : d) })
       .catch(() => { if (!cancelled) setF(null) })
     return () => { cancelled = true }
   }, [symbol])
@@ -193,13 +197,17 @@ export function StockFundamentals({ symbol, price, name, C, isDesktop }) {
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: isDesktop ? 16 : 12, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: C.accent, textTransform: 'uppercase', letterSpacing: 1 }}>Fundamentals</div>
-        <div style={{ marginLeft: 'auto', display: 'inline-flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
-          {['fwd', 'ttm'].map((b) => (
-            <button key={b} onClick={() => setBasis(b)} style={{ padding: '3px 10px', fontSize: 10, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: basis === b ? C.accentSoft : 'transparent', color: basis === b ? C.accent : C.t4 }}>{b.toUpperCase()}</button>
-          ))}
-        </div>
+        {!isIndex && (
+          <div style={{ marginLeft: 'auto', display: 'inline-flex', border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
+            {['fwd', 'ttm'].map((b) => (
+              <button key={b} onClick={() => setBasis(b)} style={{ padding: '3px 10px', fontSize: 10, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', border: 'none', background: basis === b ? C.accentSoft : 'transparent', color: basis === b ? C.accent : C.t4 }}>{b.toUpperCase()}</button>
+            ))}
+          </div>
+        )}
       </div>
-      <FundamentalsDetail f={f} px={price} name={name || symbol} basis={basis} C={C} isDesktop={isDesktop} />
+      {isIndex
+        ? <IndexFundamentals data={f} symbol={symbol} name={name} livePrice={price} C={C} isDesktop={isDesktop} />
+        : <FundamentalsDetail f={f} px={price} name={name || symbol} basis={basis} C={C} isDesktop={isDesktop} />}
     </div>
   )
 }
@@ -317,6 +325,72 @@ export function PortfolioFundamentals({ sleeveKey, sleeveName, C, isDesktop }) {
 
         <MulPanel title="P/FCF" k="pfcf" live={d.live?.pfcf} spy={null} />
       </div>
+    </div>
+  )
+}
+
+
+// S&P 500 (SPY) as an index "stock": price + trailing EPS + avg/live P/E.
+// Data from multpl.com (public/benchmark-fundamentals.json); no EDGAR statements.
+const INDEX_SYMS = { SPY: 'S&P 500' }
+
+function IndexFundamentals({ data, symbol, name, livePrice, C, isDesktop }) {
+  const W = isDesktop ? 720 : 372, H = isDesktop ? 330 : 288
+  const PAD = { t: 24, r: isDesktop ? 92 : 72, b: 40, l: 62 }
+  const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b
+  const gx = C.border + '55', PEc = '#7EA6FF'
+  const price = (data.price || []).slice(-224), eps = (data.eps || []).slice(-224) // ~18y
+  if (price.length < 2 || eps.length < 2) return null
+  const dn = (m) => +m.slice(0, 4) + (+m.slice(5, 7) - 1) / 12
+  const dmin = dn(price[0].m), dmax = dn(price[price.length - 1].m)
+  const xD = (m) => PAD.l + ((dn(m) - dmin) / ((dmax - dmin) || 1)) * cw
+  const num = { fontSize: 11, fill: C.t3 }
+  const latestEps = eps[eps.length - 1].v
+  const curPrice = livePrice || price[price.length - 1].c
+  const livePe = latestEps ? curPrice / latestEps : (data.live?.pe)
+  const avgPe = data.live?.avgPe
+  const pxs = price.map((p) => p.c), pxLo = Math.min(...pxs), pxHi = Math.max(...pxs, curPrice || 0)
+  const pxTk = ticks(pxLo, pxHi, 5), pT = Math.min(pxLo, pxTk[0]), pB = Math.max(pxHi, pxTk[pxTk.length - 1])
+  const yPx = (v) => PAD.t + ch - ((v - pT) / ((pB - pT) || 1)) * ch
+  const epsV = eps.map((e) => e.v), epsLo = Math.min(0, ...epsV), epsHi = Math.max(...epsV) * 1.12
+  const epsTk = ticks(epsLo, epsHi, 5), eT = Math.min(epsLo, epsTk[0]), eB = Math.max(epsHi, epsTk[epsTk.length - 1])
+  const yEps = (v) => PAD.t + ch - ((v - eT) / ((eB - eT) || 1)) * ch
+  const peHi = Math.max(avgPe || 0, livePe || 0, 1) * 1.28
+  const peTk = ticks(0, peHi, 4), peTop = Math.max(peHi, peTk[peTk.length - 1])
+  const yPe = (v) => PAD.t + ch - (Math.min(v, peTop) / (peTop || 1)) * ch
+  const pxLineD = price.map((a, i) => `${i ? 'L' : 'M'}${xD(a.m).toFixed(1)},${yPx(a.c).toFixed(1)}`).join(' ')
+  const epsLineD = eps.map((a, i) => `${i ? 'L' : 'M'}${xD(a.m).toFixed(1)},${yEps(a.v).toFixed(1)}`).join(' ')
+  const rightX = xD(price[price.length - 1].m)
+  const $ax = (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)
+  const axTitle = (x, txt, color, anchor) => <text x={x} y={PAD.t - 9} textAnchor={anchor} fontSize={10} fontWeight={700} fill={color} letterSpacing={0.4}>{txt}</text>
+  const lgd = (color, label, dash) => <span><span style={{ color, letterSpacing: dash ? -1 : 0 }}>{dash === 'dash' ? '--' : '—'}</span> {label}</span>
+  const yr = []
+  { const seen = new Set(); price.forEach((p) => { const y = p.m.slice(0, 4); if (!seen.has(y) && (+y % 2 === 0)) { seen.add(y); yr.push({ x: xD(p.m), y }) } }) }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 19, fontWeight: 800, color: C.t1 }}>{symbol}</span>
+        <span style={{ fontSize: 13, color: C.t3 }}>{INDEX_SYMS[symbol] || name} · index valuation</span>
+        <span style={{ marginLeft: 'auto', fontSize: 13, color: C.t3, fontVariantNumeric: 'tabular-nums' }}>
+          <b style={{ color: C.t1 }}>{money(curPrice)}</b>&nbsp; P/E <b style={{ color: C.t1 }}>{fmt1(livePe)}</b> &nbsp; avg <b style={{ color: C.t1 }}>{fmt1(avgPe)}</b>
+        </span>
+      </div>
+      <Chart title="Price · EPS (TTM) · P/E" W={W} H={H} C={C}
+        legend={<>{lgd(C.accent, 'Price')}{lgd(C.up, 'EPS ttm')}{avgPe != null ? lgd(C.t1, `avg P/E ${fmt1(avgPe)}×`) : null}{livePe != null ? lgd(PEc, `live ${fmt1(livePe)}×`, 'dash') : null}</>}>
+        <defs><linearGradient id="ix-px" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity="0.14" /><stop offset="100%" stopColor={C.accent} stopOpacity="0" /></linearGradient></defs>
+        {epsTk.map((v) => <g key={v}><line x1={PAD.l} y1={yEps(v)} x2={W - PAD.r} y2={yEps(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yEps(v) + 3.5} textAnchor="end" {...num}>${v.toFixed(v < 10 ? 1 : 0)}</text></g>)}
+        {pxTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPx(v) + 3.5} {...num} fill={C.accent}>${$ax(v)}</text>)}
+        {peTk.map((v) => <text key={v} x={W - 5} y={yPe(v) + 3.5} textAnchor="end" {...num} fill={PEc}>{v.toFixed(0)}×</text>)}
+        {axTitle(PAD.l - 7, 'EPS', C.up, 'end')}{axTitle(W - PAD.r + 7, 'PRICE', C.accent, 'start')}{axTitle(W - 5, 'P/E', PEc, 'end')}
+        {yr.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" {...num}>{l.y}</text>)}
+        <path d={`${pxLineD} L${rightX.toFixed(1)},${PAD.t + ch} L${PAD.l},${PAD.t + ch} Z`} fill="url(#ix-px)" />
+        {avgPe != null && <><line x1={PAD.l} y1={yPe(avgPe)} x2={W - PAD.r} y2={yPe(avgPe)} stroke={C.t1} strokeWidth={1.5} /><text x={PAD.l + 3} y={yPe(avgPe) - 4} fontSize={10} fontWeight={700} fill={C.t1}>avg {fmt1(avgPe)}×</text></>}
+        {livePe != null && <><line x1={PAD.l} y1={yPe(livePe)} x2={W - PAD.r} y2={yPe(livePe)} stroke={PEc} strokeWidth={1.4} strokeDasharray="5,4" /><text x={W - PAD.r - 3} y={yPe(livePe) - 4} textAnchor="end" fontSize={10} fontWeight={700} fill={PEc}>live {fmt1(livePe)}×</text></>}
+        <path d={pxLineD} fill="none" stroke={C.accent} strokeWidth={1.7} />
+        <path d={epsLineD} fill="none" stroke={C.up} strokeWidth={2.2} />
+      </Chart>
+      <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>S&P 500 index (SPY-scaled) · price &amp; P/E from multpl.com, EPS = price ÷ P/E. Live P/E {fmt1(livePe)}× vs {fmt1(avgPe)}× long-run average.</div>
     </div>
   )
 }
