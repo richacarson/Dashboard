@@ -5353,7 +5353,7 @@ Instructions:
 
                   {/* ── FUNDAMENTALS ── */}
                   {metricsSubView === "fundamentals" && (
-                    <FundamentalsView tickers={sleeves[metricsView]?.symbols || []} quotes={quotes} names={names} fundMap={fundMap} C={C} isDesktop={isDesktop} terminal={true} />
+                    <FundamentalsView tickers={sleeves[metricsView]?.symbols || []} quotes={quotes} names={names} fundMap={fundMap} sleeveKey={metricsView} C={C} isDesktop={isDesktop} terminal={true} />
                   )}
 
                   {/* ── WEIGHT COMP ── */}
@@ -8730,7 +8730,7 @@ Instructions:
 
             {/* ── FUNDAMENTALS ── */}
             {metricsSubView === "fundamentals" && (
-              <FundamentalsView tickers={sleeves[metricsView]?.symbols || []} quotes={quotes} names={names} fundMap={fundMap} C={C} isDesktop={isDesktop} terminal={false} />
+              <FundamentalsView tickers={sleeves[metricsView]?.symbols || []} quotes={quotes} names={names} fundMap={fundMap} sleeveKey={metricsView} C={C} isDesktop={isDesktop} terminal={false} />
             )}
 
             {/* ── WEIGHT ALPHA ── */}

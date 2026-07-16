@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/build-fundamentals.py'
+      - 'scripts/build-portfolio-fundamentals.py'
 
 permissions:
   contents: write
@@ -25,11 +26,13 @@ jobs:
         env:
           FINNHUB_KEY: ${{ secrets.FINHUB_API }}
         run: python3 scripts/build-fundamentals.py
+      - name: Build portfolio-blended + benchmark fundamentals
+        run: python3 scripts/build-portfolio-fundamentals.py
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/fundamentals/
+          git add public/fundamentals/ public/portfolio-fundamentals-*.json public/benchmark-fundamentals.json
           git commit -m "Update fundamentals data" || echo "No changes"
           git pull --rebase origin main
           git push
