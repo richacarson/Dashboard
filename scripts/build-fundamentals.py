@@ -85,6 +85,9 @@ _SHARE_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding",
 _REV_TAGS = ["RevenueFromContractWithCustomerExcludingAssessedTax",
              "RevenueFromContractWithCustomerIncludingAssessedTax",
              "Revenues", "SalesRevenueNet"]
+_NI_TAGS = ["NetIncomeLoss", "ProfitLoss"]
+_OPINC_TAGS = ["OperatingIncomeLoss"]
+_GP_TAGS = ["GrossProfit"]
 
 
 def edgar_facts(cik):
@@ -196,6 +199,9 @@ def edgar_quarterly(g, splits, prices, annual):
     ocfq = _disc_quarters(g, _OCF_TAGS, "USD")
     capq = _disc_quarters(g, _CAPEX_TAGS, "USD")
     revq = _disc_quarters(g, _REV_TAGS, "USD")          # absolute $ — no split adjust
+    niq = _disc_quarters(g, _NI_TAGS, "USD")
+    opq = _disc_quarters(g, _OPINC_TAGS, "USD")
+    gpq = _disc_quarters(g, _GP_TAGS, "USD")
     fcfq = {e: ocfq[e][0] - capq[e][0] for e in (set(ocfq) & set(capq))}
     revv = {e: v[0] for e, v in revq.items()}
     # split-adjust by FILING date: a quarter filed after a split is already
@@ -204,6 +210,10 @@ def edgar_quarterly(g, splits, prices, annual):
     ttm_eps = _rolling_ttm(eps_adj)
     ttm_fcf = _rolling_ttm(fcfq)
     ttm_rev = _rolling_ttm(revv)
+    ttm_ni = _rolling_ttm({e: v[0] for e, v in niq.items()})
+    ttm_op = _rolling_ttm({e: v[0] for e, v in opq.items()})
+    ttm_gp = _rolling_ttm({e: v[0] for e, v in gpq.items()})
+    margin = lambda inc, e: round(inc[e] / ttm_rev[e], 4) if (ttm_rev.get(e) and e in inc) else None
     ann_sh = [(a["date"], a["shares"]) for a in annual if a.get("shares")]  # split-adjusted
 
     def shares_at(en):
@@ -225,10 +235,14 @@ def edgar_quarterly(g, splits, prices, annual):
             "eps": round(eps_adj[en], 4),
             "fcf": fcfq.get(en),
             "rev": (rv[0] if rv else None),
+            "sh": sh,
             "px": px,
             "pe": (px / te) if (px and te and te > 0) else None,
             "pfcf": (px / (tf / sh)) if (px and tf and sh and tf > 0) else None,
             "ps": (px / (tr / sh)) if (px and tr and sh and tr > 0) else None,
+            "gm": margin(ttm_gp, en),   # TTM gross / operating / net margin
+            "om": margin(ttm_op, en),
+            "nm": margin(ttm_ni, en),
         })
     return out
 
