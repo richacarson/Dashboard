@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T11:49:28Z",
+  "generated_at": "2026-07-17T12:38:26Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -730,7 +730,7 @@
     },
     "AMD": {
       "sleeve": "Growth",
-      "price": 501.34,
+      "price": 482.58,
       "pct_change": -5.19,
       "prev_close": 528.8,
       "quote_source": "alpaca",
@@ -1330,7 +1330,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.3,
+      "price": 35.77,
       "pct_change": -1.09,
       "prev_close": 36.79,
       "quote_source": "alpaca",
@@ -1349,13 +1349,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 750.87,
+      "price": 744.22,
       "pct_change": -0.52,
       "prev_close": 754.77,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 705.35,
+      "price": 693.29,
       "pct_change": -1.64,
       "prev_close": 717.7,
       "quote_source": "alpaca"
