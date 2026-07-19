@@ -8,8 +8,8 @@
     "firb_cleared_date": "2026-06-19",
     "close_date": "2026-06-25",
     "transaction_value_bn": 8.4,
-    "last_checked": "2026-07-18",
+    "last_checked": "2026-07-19",
     "severity": "green",
-    "note": "Deal completed June 25 at $24.55/share. FIRB granted June 19. No slippage. CWAN delisted from NYSE. Still unremoved from portfolios.json growth sleeve as of 2026-07-18 \u2014 4th consecutive run flagging this action item (23 days unresolved)."
+    "note": "Deal completed 2026-06-25 at $24.55/share; reconfirmed today via BusinessWire/Permira official release. FIRB granted 06-19, no slippage, no terms changes. CWAN delisted from NYSE and has terminated SEC reporting. Still unremoved from portfolios.json growth sleeve as of 2026-07-19 — see roster_integrity issue (24 days unresolved)."
   }
 ]
