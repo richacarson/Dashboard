@@ -335,37 +335,51 @@ export function PortfolioFundamentals({ sleeveKey, sleeveName, C, isDesktop }) {
 const INDEX_SYMS = { SPY: 'S&P 500' }
 
 function IndexFundamentals({ data, symbol, name, livePrice, C, isDesktop }) {
-  const W = isDesktop ? 720 : 372, H = isDesktop ? 330 : 288
-  const PAD = { t: 24, r: isDesktop ? 92 : 72, b: 40, l: 62 }
+  const W = isDesktop ? 720 : 372, H = isDesktop ? 360 : 320
+  const PAD = { t: 24, r: 96, b: 44, l: 66 }
   const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b
   const gx = C.border + '55', PEc = '#7EA6FF'
-  const price = (data.price || []).slice(-224), eps = (data.eps || []).slice(-224) // ~18y
-  if (price.length < 2 || eps.length < 2) return null
-  const dn = (m) => +m.slice(0, 4) + (+m.slice(5, 7) - 1) / 12
-  const dmin = dn(price[0].m), dmax = dn(price[price.length - 1].m)
-  const xD = (m) => PAD.l + ((dn(m) - dmin) / ((dmax - dmin) || 1)) * cw
-  const num = { fontSize: 11, fill: C.t3 }
-  const latestEps = eps[eps.length - 1].v
-  const curPrice = livePrice || price[price.length - 1].c
-  const livePe = latestEps ? curPrice / latestEps : (data.live?.pe)
+  const epsByM = Object.fromEntries((data.eps || []).map((e) => [e.m, e.v]))
+  const pts = (data.price || []).map((p) => ({ m: p.m, c: p.c, e: epsByM[p.m] })).filter((r) => r.e != null && r.e > 0).slice(-204) // ~17y
+  if (pts.length < 8) return null
+  const curPriceRaw = pts[pts.length - 1].c
+  const curEps = pts[pts.length - 1].e
+  const curPrice = livePrice || curPriceRaw
+  const livePe = curEps ? curPrice / curEps : data.live?.pe
   const avgPe = data.live?.avgPe
-  const pxs = price.map((p) => p.c), pxLo = Math.min(...pxs), pxHi = Math.max(...pxs, curPrice || 0)
-  const pxTk = ticks(pxLo, pxHi, 5), pT = Math.min(pxLo, pxTk[0]), pB = Math.max(pxHi, pxTk[pxTk.length - 1])
-  const yPx = (v) => PAD.t + ch - ((v - pT) / ((pB - pT) || 1)) * ch
-  const epsV = eps.map((e) => e.v), epsLo = Math.min(0, ...epsV), epsHi = Math.max(...epsV) * 1.12
-  const epsTk = ticks(epsLo, epsHi, 5), eT = Math.min(epsLo, epsTk[0]), eB = Math.max(epsHi, epsTk[epsTk.length - 1])
-  const yEps = (v) => PAD.t + ch - ((v - eT) / ((eB - eT) || 1)) * ch
-  const peHi = Math.max(avgPe || 0, livePe || 0, 1) * 1.28
-  const peTk = ticks(0, peHi, 4), peTop = Math.max(peHi, peTk[peTk.length - 1])
-  const yPe = (v) => PAD.t + ch - (Math.min(v, peTop) / (peTop || 1)) * ch
-  const pxLineD = price.map((a, i) => `${i ? 'L' : 'M'}${xD(a.m).toFixed(1)},${yPx(a.c).toFixed(1)}`).join(' ')
-  const epsLineD = eps.map((a, i) => `${i ? 'L' : 'M'}${xD(a.m).toFixed(1)},${yEps(a.v).toFixed(1)}`).join(' ')
-  const rightX = xD(price[price.length - 1].m)
-  const $ax = (v) => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)
-  const axTitle = (x, txt, color, anchor) => <text x={x} y={PAD.t - 9} textAnchor={anchor} fontSize={10} fontWeight={700} fill={color} letterSpacing={0.4}>{txt}</text>
-  const lgd = (color, label, dash) => <span><span style={{ color, letterSpacing: dash ? -1 : 0 }}>{dash === 'dash' ? '--' : '—'}</span> {label}</span>
-  const yr = []
-  { const seen = new Set(); price.forEach((p) => { const y = p.m.slice(0, 4); if (!seen.has(y) && (+y % 2 === 0)) { seen.add(y); yr.push({ x: xD(p.m), y }) } }) }
+  const now = { m: pts[pts.length - 1].m, e: curEps, c: curPrice }
+  const emax = Math.max(...pts.map((r) => r.e), curEps) * 1.08
+  const pmax = Math.max(...pts.map((r) => r.c), curPrice) * 1.08
+  const xE = (e) => PAD.l + (e / (emax || 1)) * cw
+  const yP = (p) => PAD.t + ch - (p / (pmax || 1)) * ch
+  const eTk = ticks(0, emax, 5), pTk = ticks(0, pmax, 5)
+  const num = { fontSize: 11, fill: C.t3 }
+  const money0 = (v) => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + v.toFixed(0)
+  const axTitle = (x, y, txt, color, anchor) => <text x={x} y={y} textAnchor={anchor} fontSize={10} fontWeight={700} fill={color} letterSpacing={0.4}>{txt}</text>
+  const lgd = (color, label, dash) => <span><span style={{ color, letterSpacing: dash ? -1 : 0 }}>{dash === 'dash' ? '--' : dash === 'dot' ? '●' : '—'}</span> {label}</span>
+  // ray from origin at a given P/E (slope), clipped to the plot box
+  const ray = (slope) => { const endX = Math.min(emax, pmax / slope); return `M${xE(0).toFixed(1)},${yP(0).toFixed(1)} L${xE(endX).toFixed(1)},${yP(slope * endX).toFixed(1)}` }
+  // trajectory split into opacity bands (old → new)
+  const bands = 4, seg = Math.ceil(pts.length / bands)
+  const pathOf = (arr) => arr.map((r, i) => `${i ? 'L' : 'M'}${xE(r.e).toFixed(1)},${yP(r.c).toFixed(1)}`).join(' ')
+  const yearDots = []
+  { const seen = new Set(); pts.forEach((r, i) => { const y = r.m.slice(0, 4); if ((!seen.has(y) && (+y % 3 === 0)) || i === pts.length - 1) { seen.add(y); yearDots.push({ ...r, y, last: i === pts.length - 1 }) } }) }
+
+  // ---- secondary: time-series price line + eps line + avg/live P/E lines ----
+  const tW = W, tH = isDesktop ? 300 : 268, tPAD = { t: 22, r: 96, b: 38, l: 66 }
+  const tcw = tW - tPAD.l - tPAD.r, tch = tH - tPAD.t - tPAD.b
+  const dn = (m) => +m.slice(0, 4) + (+m.slice(5, 7) - 1) / 12
+  const dmin = dn(pts[0].m), dmax = dn(pts[pts.length - 1].m)
+  const xD = (m) => tPAD.l + ((dn(m) - dmin) / ((dmax - dmin) || 1)) * tcw
+  const epsV = pts.map((r) => r.e), epsHi = Math.max(...epsV) * 1.12
+  const eTk2 = ticks(0, epsHi, 5), yEps = (v) => tPAD.t + tch - (v / (Math.max(epsHi, eTk2[eTk2.length - 1]) || 1)) * tch
+  const pxHiT = Math.max(...pts.map((r) => r.c), curPrice) * 1.08, pTk2 = ticks(0, pxHiT, 5)
+  const yPxT = (v) => tPAD.t + tch - (v / (Math.max(pxHiT, pTk2[pTk2.length - 1]) || 1)) * tch
+  const peTop = Math.max(avgPe || 0, livePe || 0, 1) * 1.28, peTk = ticks(0, peTop, 4)
+  const yPeT = (v) => tPAD.t + tch - (Math.min(v, Math.max(peTop, peTk[peTk.length - 1])) / (Math.max(peTop, peTk[peTk.length - 1]) || 1)) * tch
+  const tpath = (yf, key) => pts.map((r, i) => `${i ? 'L' : 'M'}${xD(r.m).toFixed(1)},${yf(key === 'c' ? r.c : r.e).toFixed(1)}`).join(' ')
+  const tYr = []
+  { const seen = new Set(); pts.forEach((r) => { const y = r.m.slice(0, 4); if (!seen.has(y) && (+y % 3 === 0)) { seen.add(y); tYr.push({ x: xD(r.m), y }) } }) }
 
   return (
     <div>
@@ -376,21 +390,34 @@ function IndexFundamentals({ data, symbol, name, livePrice, C, isDesktop }) {
           <b style={{ color: C.t1 }}>{money(curPrice)}</b>&nbsp; P/E <b style={{ color: C.t1 }}>{fmt1(livePe)}</b> &nbsp; avg <b style={{ color: C.t1 }}>{fmt1(avgPe)}</b>
         </span>
       </div>
-      <Chart title="Price · EPS (TTM) · P/E" W={W} H={H} C={C}
-        legend={<>{lgd(C.accent, 'Price')}{lgd(C.up, 'EPS ttm')}{avgPe != null ? lgd(C.t1, `avg P/E ${fmt1(avgPe)}×`) : null}{livePe != null ? lgd(PEc, `live ${fmt1(livePe)}×`, 'dash') : null}</>}>
-        <defs><linearGradient id="ix-px" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity="0.14" /><stop offset="100%" stopColor={C.accent} stopOpacity="0" /></linearGradient></defs>
-        {epsTk.map((v) => <g key={v}><line x1={PAD.l} y1={yEps(v)} x2={W - PAD.r} y2={yEps(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yEps(v) + 3.5} textAnchor="end" {...num}>${v.toFixed(v < 10 ? 1 : 0)}</text></g>)}
-        {pxTk.map((v) => <text key={v} x={W - PAD.r + 7} y={yPx(v) + 3.5} {...num} fill={C.accent}>${$ax(v)}</text>)}
-        {peTk.map((v) => <text key={v} x={W - 5} y={yPe(v) + 3.5} textAnchor="end" {...num} fill={PEc}>{v.toFixed(0)}×</text>)}
-        {axTitle(PAD.l - 7, 'EPS', C.up, 'end')}{axTitle(W - PAD.r + 7, 'PRICE', C.accent, 'start')}{axTitle(W - 5, 'P/E', PEc, 'end')}
-        {yr.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" {...num}>{l.y}</text>)}
-        <path d={`${pxLineD} L${rightX.toFixed(1)},${PAD.t + ch} L${PAD.l},${PAD.t + ch} Z`} fill="url(#ix-px)" />
-        {avgPe != null && <><line x1={PAD.l} y1={yPe(avgPe)} x2={W - PAD.r} y2={yPe(avgPe)} stroke={C.t1} strokeWidth={1.5} /><text x={PAD.l + 3} y={yPe(avgPe) - 4} fontSize={10} fontWeight={700} fill={C.t1}>avg {fmt1(avgPe)}×</text></>}
-        {livePe != null && <><line x1={PAD.l} y1={yPe(livePe)} x2={W - PAD.r} y2={yPe(livePe)} stroke={PEc} strokeWidth={1.4} strokeDasharray="5,4" /><text x={W - PAD.r - 3} y={yPe(livePe) - 4} textAnchor="end" fontSize={10} fontWeight={700} fill={PEc}>live {fmt1(livePe)}×</text></>}
-        <path d={pxLineD} fill="none" stroke={C.accent} strokeWidth={1.7} />
-        <path d={epsLineD} fill="none" stroke={C.up} strokeWidth={2.2} />
+
+      <Chart title="Price vs EPS — slope from origin = P/E" W={W} H={H} C={C}
+        legend={<>{lgd(C.accent, 'SPX path (older → now)')}{avgPe != null ? lgd(C.t1, `avg P/E ${fmt1(avgPe)}×`, 'dash') : null}{livePe != null ? lgd(PEc, `live ${fmt1(livePe)}×`, 'dash') : null}{lgd(C.accent, 'today', 'dot')}</>}>
+        {pTk.map((v) => <g key={'p' + v}><line x1={PAD.l} y1={yP(v)} x2={W - PAD.r} y2={yP(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yP(v) + 3.5} textAnchor="end" {...num}>{money0(v)}</text></g>)}
+        {eTk.map((v) => <text key={'e' + v} x={xE(v)} y={H - 24} textAnchor="middle" {...num}>${v.toFixed(v < 10 ? 1 : 0)}</text>)}
+        {axTitle(PAD.l - 7, PAD.t - 9, 'PRICE', C.accent, 'end')}
+        <text x={W - PAD.r} y={H - 8} textAnchor="end" fontSize={10} fontWeight={700} fill={C.up} letterSpacing={0.4}>EPS (trailing) →</text>
+        {avgPe != null && <path d={ray(avgPe)} fill="none" stroke={C.t1} strokeWidth={1.4} strokeDasharray="5,4" />}
+        {livePe != null && <path d={ray(livePe)} fill="none" stroke={PEc} strokeWidth={1.4} strokeDasharray="5,4" />}
+        {Array.from({ length: bands }, (_, b) => { const arr = pts.slice(b * seg, Math.min(pts.length, (b + 1) * seg + 1)); return <path key={b} d={pathOf(arr)} fill="none" stroke={C.accent} strokeWidth={2} opacity={0.22 + (b / (bands - 1)) * 0.78} strokeLinejoin="round" strokeLinecap="round" /> })}
+        {yearDots.map((r, i) => <g key={i}><circle cx={xE(r.e)} cy={yP(r.c)} r={r.last ? 5 : 2.6} fill={r.last ? C.accent : C.t3} stroke={r.last ? C.bg : 'none'} strokeWidth={r.last ? 1.5 : 0} />{(i % 2 === 0 || r.last) && <text x={xE(r.e) + (r.last ? 8 : 5)} y={yP(r.c) - 5} fontSize={9.5} fontWeight={r.last ? 800 : 600} fill={r.last ? C.t1 : C.t4}>{r.last ? 'now' : r.y}</text>}</g>)}
+        {avgPe != null && <text x={xE(Math.min(emax, pmax / avgPe)) - 4} y={yP(avgPe * Math.min(emax, pmax / avgPe)) + 12} textAnchor="end" fontSize={9.5} fontWeight={700} fill={C.t1}>avg {fmt1(avgPe)}×</text>}
       </Chart>
-      <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>S&P 500 index (SPY-scaled) · price &amp; P/E from multpl.com, EPS = price ÷ P/E. Live P/E {fmt1(livePe)}× vs {fmt1(avgPe)}× long-run average.</div>
+
+      <div style={{ height: 12 }} />
+      <Chart title="Price · EPS (trailing) · P/E over time" W={tW} H={tH} C={C}
+        legend={<>{lgd(C.accent, 'Price')}{lgd(C.up, 'EPS ttm')}{avgPe != null ? lgd(C.t1, `avg P/E ${fmt1(avgPe)}×`) : null}{livePe != null ? lgd(PEc, `live ${fmt1(livePe)}×`, 'dash') : null}</>}>
+        {eTk2.map((v) => <g key={v}><line x1={tPAD.l} y1={yEps(v)} x2={tW - tPAD.r} y2={yEps(v)} stroke={gx} strokeWidth={0.6} /><text x={tPAD.l - 7} y={yEps(v) + 3.5} textAnchor="end" {...num}>${v.toFixed(v < 10 ? 1 : 0)}</text></g>)}
+        {pTk2.map((v) => <text key={v} x={tW - tPAD.r + 7} y={yPxT(v) + 3.5} {...num} fill={C.accent}>{money0(v)}</text>)}
+        {peTk.map((v) => <text key={v} x={tW - 5} y={yPeT(v) + 3.5} textAnchor="end" {...num} fill={PEc}>{v.toFixed(0)}×</text>)}
+        {axTitle(tPAD.l - 7, tPAD.t - 9, 'EPS', C.up, 'end')}{axTitle(tW - tPAD.r + 7, tPAD.t - 9, 'PRICE', C.accent, 'start')}{axTitle(tW - 5, tPAD.t - 9, 'P/E', PEc, 'end')}
+        {tYr.map((l, i) => <text key={i} x={l.x} y={tH - 12} textAnchor="middle" {...num}>{l.y}</text>)}
+        {avgPe != null && <line x1={tPAD.l} y1={yPeT(avgPe)} x2={tW - tPAD.r} y2={yPeT(avgPe)} stroke={C.t1} strokeWidth={1.4} />}
+        {livePe != null && <line x1={tPAD.l} y1={yPeT(livePe)} x2={tW - tPAD.r} y2={yPeT(livePe)} stroke={PEc} strokeWidth={1.3} strokeDasharray="5,4" />}
+        <path d={tpath(yPxT, 'c')} fill="none" stroke={C.accent} strokeWidth={1.7} />
+        <path d={tpath(yEps, 'e')} fill="none" stroke={C.up} strokeWidth={2.2} />
+      </Chart>
+      <div style={{ fontSize: 11, color: C.t4, marginTop: 8 }}>S&P 500 (SPY-scaled), from multpl.com. <b style={{ color: C.t3 }}>Trailing</b> EPS — index forward-EPS estimates aren't freely available; the phase-plot slope from the origin to any point is that date's P/E, so the gap between “now” and the avg-P/E ray is the re-rating.</div>
     </div>
   )
 }

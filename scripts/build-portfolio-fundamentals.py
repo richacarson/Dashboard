@@ -182,25 +182,26 @@ def build_sleeve(sleeve):
 
 
 def spy_index():
-    """S&P 500 as a clickable 'stock': price + P/E from multpl, with EPS derived
-    as price ÷ P/E so all three are internally consistent. Scaled to SPY terms
-    (~index/10) so the price lines up with the SPY quote users see."""
+    """S&P 500 as a clickable 'stock': price, trailing EPS, and P/E from multpl,
+    scaled to SPY terms (~index/10). Drives both a time-series Price·EPS·P/E panel
+    and a Price-vs-EPS phase plot (slope from origin = P/E)."""
     peser = multpl("s-p-500-pe-ratio")
     ps = multpl("s-p-500-price-to-sales")
-    pe = {r["m"]: r["v"] for r in peser}
     px = {r["m"]: r["v"] / 10.0 for r in multpl("s-p-500-historical-prices")}   # index → SPY-ish
-    months = sorted(set(px) & set(pe))
+    earn = {r["m"]: r["v"] / 10.0 for r in multpl("s-p-500-earnings")}          # real trailing-12m EPS
+    months = sorted(set(px) & set(earn))
     price = [{"m": m, "c": round(px[m], 2)} for m in months]
-    epsser = [{"m": m, "v": round(px[m] / pe[m], 2)} for m in months if pe[m] and pe[m] > 0]
-    pe_vals = [pe[m] for m in months if 3 < pe[m] < 80]  # drop crisis spikes for the average
+    epsser = [{"m": m, "v": round(earn[m], 2)} for m in months if earn[m] > 0]
+    pe_of = {m: px[m] / earn[m] for m in months if earn[m] > 0}                 # price ÷ real EPS
+    pe_vals = [v for v in pe_of.values() if 3 < v < 80]                         # drop crisis spikes
     live_px = price[-1]["c"] if price else None
-    live_pe = pe[months[-1]] if months else None
+    live_eps = epsser[-1]["v"] if epsser else None
     return {
         "pe": peser, "ps": ps,
         "price": price, "eps": epsser,
         "live": {
-            "price": live_px, "pe": round(live_pe, 2) if live_pe else None,
-            "eps": round(live_px / live_pe, 2) if (live_px and live_pe) else None,
+            "price": live_px, "eps": live_eps,
+            "pe": round(live_px / live_eps, 2) if (live_px and live_eps) else None,
             "avgPe": round(sum(pe_vals) / len(pe_vals), 2) if pe_vals else None,
         },
     }
