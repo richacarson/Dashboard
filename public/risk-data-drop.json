@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T11:51:52Z",
+  "generated_at": "2026-07-20T11:50:00Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -360,13 +360,7 @@
           "strongSell": 4
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 0.33,
-        "eps_estimate": 0.3343,
-        "surprise": -0.0043,
-        "surprise_pct": -1.2863
-      }
+      "earnings": null
     },
     "GD": {
       "sleeve": "Dividend",
@@ -654,7 +648,13 @@
           "strongSell": 0
         }
       },
-      "earnings": null
+      "earnings": {
+        "period": "2026-03-31",
+        "eps_actual": 2.78,
+        "eps_estimate": 2.8409,
+        "surprise": -0.0609,
+        "surprise_pct": -2.1437
+      }
     },
     "SYK": {
       "sleeve": "Dividend",
@@ -1363,7 +1363,7 @@
   },
   "recent_reporters": [
     "ABT",
-    "FAST"
+    "STLD"
   ],
   "errors": [],
   "sources": {
