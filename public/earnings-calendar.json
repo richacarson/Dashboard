@@ -1,475 +1,5 @@
 [
   {
-    "symbol": "AA",
-    "date": "2026-07-16",
-    "hour": "amc",
-    "epsEstimate": 2.1173,
-    "epsActual": 2.12,
-    "revenueEstimate": 4057640586,
-    "revenueActual": 3966000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ABT",
-    "date": "2026-07-16",
-    "hour": "bmo",
-    "epsEstimate": 1.2922,
-    "epsActual": 1.31,
-    "revenueEstimate": 12626718050,
-    "revenueActual": 12593000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ASII",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "AUSI",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "AXXA",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BHB",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 0.904,
-    "epsActual": null,
-    "revenueEstimate": 49308705,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BSVN",
-    "date": "2026-07-16",
-    "hour": "bmo",
-    "epsEstimate": 1.0588,
-    "epsActual": 0.87,
-    "revenueEstimate": 24333456,
-    "revenueActual": 22907000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BVN",
-    "date": "2026-07-16",
-    "hour": "amc",
-    "epsEstimate": 1.2777,
-    "epsActual": 1.32,
-    "revenueEstimate": 644380000,
-    "revenueActual": 624560000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BZYR",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CAHO",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CBFC",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CBSH",
-    "date": "2026-07-16",
-    "hour": "bmo",
-    "epsEstimate": 1.0772,
-    "epsActual": 1.1,
-    "revenueEstimate": 499315673,
-    "revenueActual": 498913000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CFG",
-    "date": "2026-07-16",
-    "hour": "bmo",
-    "epsEstimate": 1.2534,
-    "epsActual": 1.3,
-    "revenueEstimate": 2270772253,
-    "revenueActual": 2283000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CHMG",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 1.8003,
-    "epsActual": null,
-    "revenueEstimate": 31129380,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CNS",
-    "date": "2026-07-16",
-    "hour": "amc",
-    "epsEstimate": 0.8636,
-    "epsActual": 0.85,
-    "revenueEstimate": 150944500,
-    "revenueActual": 152730000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CPKF",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": 0.8772,
-    "epsActual": null,
-    "revenueEstimate": 21930000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CTM",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": 16189290,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ENBP",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FFIN",
-    "date": "2026-07-16",
-    "hour": "amc",
-    "epsEstimate": 0.5124,
-    "epsActual": 0.5,
-    "revenueEstimate": 177675330,
-    "revenueActual": 172758000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FMCB",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FNB",
-    "date": "2026-07-16",
-    "hour": "amc",
-    "epsEstimate": 0.4233,
-    "epsActual": 0.42,
-    "revenueEstimate": 472081746,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GE",
-    "date": "2026-07-16",
-    "hour": "bmo",
-    "epsEstimate": 1.9151,
-    "epsActual": 2.02,
-    "revenueEstimate": 12213441516,
-    "revenueActual": 12634000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GTPS",
-    "date": "2026-07-16",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "HOVR",
-    "date": "2026-07-16",
-    "hour": "bmo",
-    "epsEstimate": -0.1734,
-    "epsActual": -0.12634199999999998,
-    "revenueEstimate": null,
-    "revenueActual": 0,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ALV",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": 2.4466,
-    "epsActual": 2.43,
-    "revenueEstimate": 2801836414,
-    "revenueActual": 2803000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ATLO",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 0.6732,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BANF",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 1.8326,
-    "epsActual": null,
-    "revenueEstimate": 182081730,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BCML",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 0.4284,
-    "epsActual": null,
-    "revenueEstimate": 25227996,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BFC",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 2.2624,
-    "epsActual": null,
-    "revenueEstimate": 66710500,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BOTJ",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BVFL",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CCBC",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": 0.47,
-    "revenueEstimate": null,
-    "revenueActual": 5280000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CCFN",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CSAI",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": -0.0918,
-    "epsActual": -0.14,
-    "revenueEstimate": 1397400,
-    "revenueActual": 1315000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CWBC",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 0.3782,
-    "epsActual": null,
-    "revenueEstimate": 54829590,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FITB",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": 0.966,
-    "epsActual": 0.85,
-    "revenueEstimate": 3314932822,
-    "revenueActual": 3279000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "HIFS",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LOAN",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 0.1122,
-    "epsActual": null,
-    "revenueEstimate": 1375980,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "MCBS",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 0.8282,
-    "epsActual": null,
-    "revenueEstimate": 53448000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ORBN",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "OTGA",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PKBK",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RBCAA",
-    "date": "2026-07-17",
-    "hour": "",
-    "epsEstimate": 1.5244,
-    "epsActual": null,
-    "revenueEstimate": 81679000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RF",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": 0.646,
-    "epsActual": 0.64,
-    "revenueEstimate": 1995758900,
-    "revenueActual": 1907000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SPFI",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": 0.9512,
-    "epsActual": 0.96,
-    "revenueEstimate": 64603485,
-    "revenueActual": 64492000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TFC",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": 1.089,
-    "epsActual": 1.23,
-    "revenueEstimate": 5293473357,
-    "revenueActual": 5311000000,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TRV",
-    "date": "2026-07-17",
-    "hour": "bmo",
-    "epsEstimate": 5.4747,
-    "epsActual": 10.04,
-    "revenueEstimate": 11459515004,
-    "revenueActual": 11529000000,
-    "source": "finnhub"
-  },
-  {
     "symbol": "ADMT",
     "date": "2026-07-20",
     "hour": "",
@@ -514,19 +44,9 @@
     "date": "2026-07-20",
     "hour": "bmo",
     "epsEstimate": -0.0609,
-    "epsActual": null,
+    "epsActual": 0.14,
     "revenueEstimate": 1488804013,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ASRV",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 1596700000,
     "source": "finnhub"
   },
   {
@@ -650,26 +170,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CCNE",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 0.8741,
-    "epsActual": null,
-    "revenueEstimate": 80036003,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CHCO",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 2.2709,
-    "epsActual": null,
-    "revenueEstimate": 82257135,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CURR",
     "date": "2026-07-20",
     "hour": "",
@@ -704,9 +204,9 @@
     "date": "2026-07-20",
     "hour": "bmo",
     "epsEstimate": 4.215,
-    "epsActual": null,
+    "epsActual": 4.07,
     "revenueEstimate": 1190541176,
-    "revenueActual": null,
+    "revenueActual": 1194430000,
     "source": "finnhub"
   },
   {
@@ -714,9 +214,9 @@
     "date": "2026-07-20",
     "hour": "bmo",
     "epsEstimate": 0.3852,
-    "epsActual": null,
+    "epsActual": 0.36,
     "revenueEstimate": 99623145,
-    "revenueActual": null,
+    "revenueActual": 93780000,
     "source": "finnhub"
   },
   {
@@ -726,16 +226,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FCBC",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 0.7497,
-    "epsActual": null,
-    "revenueEstimate": 52223490,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -751,46 +241,6 @@
   },
   {
     "symbol": "FMHS",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FRAF",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 1.4688,
-    "epsActual": null,
-    "revenueEstimate": 25194000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FUNC",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 1.071,
-    "epsActual": null,
-    "revenueEstimate": 24021000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FVCB",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 0.3672,
-    "epsActual": null,
-    "revenueEstimate": 18426300,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GCL",
     "date": "2026-07-20",
     "hour": "",
     "epsEstimate": null,
@@ -830,16 +280,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "HIT",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": -0.0236,
-    "epsActual": null,
-    "revenueEstimate": 7622470,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "HSTA",
     "date": "2026-07-20",
     "hour": "",
@@ -856,16 +296,6 @@
     "epsEstimate": 0.7323,
     "epsActual": null,
     "revenueEstimate": 2270076000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ISTR",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 0.7208,
-    "epsActual": null,
-    "revenueEstimate": 37077000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -932,21 +362,11 @@
   {
     "symbol": "MNSB",
     "date": "2026-07-20",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.5406,
-    "epsActual": null,
+    "epsActual": 0.58,
     "revenueEstimate": 18421200,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PEBK",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 19130000,
     "source": "finnhub"
   },
   {
@@ -1020,16 +440,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SCHW",
-    "date": "2026-07-20",
-    "hour": "bmo",
-    "epsEstimate": 1.5808,
-    "epsActual": null,
-    "revenueEstimate": 7028488653,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SFBS",
     "date": "2026-07-20",
     "hour": "amc",
@@ -1080,16 +490,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "THFF",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 1.785,
-    "epsActual": null,
-    "revenueEstimate": 74293740,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "TLNC",
     "date": "2026-07-20",
     "hour": "",
@@ -1106,126 +506,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TSBK",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "UPC",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "VTYB",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WASH",
-    "date": "2026-07-20",
-    "hour": "amc",
-    "epsEstimate": 0.7854,
-    "epsActual": null,
-    "revenueEstimate": 42648923,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WELNF",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WNEB",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": 0.2448,
-    "epsActual": null,
-    "revenueEstimate": 19914816,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WRB",
-    "date": "2026-07-20",
-    "hour": "amc",
-    "epsEstimate": 1.0956,
-    "epsActual": null,
-    "revenueEstimate": 3796488282,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WSBF",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WTF",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WTFC",
-    "date": "2026-07-20",
-    "hour": "amc",
-    "epsEstimate": 3.2088,
-    "epsActual": null,
-    "revenueEstimate": 751466272,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "YDES",
-    "date": "2026-07-20",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ZION",
-    "date": "2026-07-20",
-    "hour": "amc",
-    "epsEstimate": 1.8453,
-    "epsActual": null,
-    "revenueEstimate": 919528276,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1280,6 +560,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "ASRV",
+    "date": "2026-07-21",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "AUB",
     "date": "2026-07-21",
     "hour": "bmo",
@@ -1290,12 +580,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "BANC",
+    "symbol": "BFC",
     "date": "2026-07-21",
     "hour": "",
-    "epsEstimate": 0.4022,
+    "epsEstimate": 2.2624,
     "epsActual": null,
-    "revenueEstimate": 281289816,
+    "revenueEstimate": 66710500,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1356,6 +646,16 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CCNE",
+    "date": "2026-07-21",
+    "hour": "",
+    "epsEstimate": 0.8741,
+    "epsActual": null,
+    "revenueEstimate": 80036003,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1480,16 +780,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "FDBC",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "FFBB",
     "date": "2026-07-21",
     "hour": "",
@@ -1510,32 +800,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "FNLC",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "FOR",
     "date": "2026-07-21",
     "hour": "bmo",
     "epsEstimate": 0.8181,
     "epsActual": null,
     "revenueEstimate": 442110663,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FPI",
-    "date": "2026-07-21",
-    "hour": "amc",
-    "epsEstimate": 0.0152,
-    "epsActual": null,
-    "revenueEstimate": 9390980,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1556,16 +826,6 @@
     "epsEstimate": -0.2652,
     "epsActual": null,
     "revenueEstimate": 3195996,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GCBC",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1680,16 +940,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "IPAR",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.9758,
-    "epsActual": null,
-    "revenueEstimate": 341666003,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "KEY",
     "date": "2026-07-21",
     "hour": "bmo",
@@ -1711,16 +961,6 @@
   },
   {
     "symbol": "KSBI",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LSBK",
     "date": "2026-07-21",
     "hour": "",
     "epsEstimate": null,
@@ -1760,16 +1000,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MPB",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.7979,
-    "epsActual": null,
-    "revenueEstimate": 74012800,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MRSH",
     "date": "2026-07-21",
     "hour": "bmo",
@@ -1796,16 +1026,6 @@
     "epsEstimate": 0.561,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "NBBK",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.4845,
-    "epsActual": null,
-    "revenueEstimate": 74188680,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1880,32 +1100,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "NRIM",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.6222,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "OFG",
     "date": "2026-07-21",
     "hour": "bmo",
     "epsEstimate": 1.1773,
     "epsActual": null,
     "revenueEstimate": 171279436,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "OPBK",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.4554,
-    "epsActual": null,
-    "revenueEstimate": 25653000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1980,16 +1180,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "RMBI",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "RRC",
     "date": "2026-07-21",
     "hour": "amc",
@@ -2010,22 +1200,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "SCHW",
+    "date": "2026-07-21",
+    "hour": "bmo",
+    "epsEstimate": 1.5808,
+    "epsActual": null,
+    "revenueEstimate": 7028488653,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "SOND",
     "date": "2026-07-21",
     "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SYBT",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 1.2475,
-    "epsActual": null,
-    "revenueEstimate": 113864640,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2060,42 +1250,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "TMHC",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 1.1494,
-    "epsActual": null,
-    "revenueEstimate": 1556766503,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TOWN",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.8058,
-    "epsActual": null,
-    "revenueEstimate": 298476735,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "TRST",
     "date": "2026-07-21",
     "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TZOO",
-    "date": "2026-07-21",
-    "hour": "",
-    "epsEstimate": 0.1505,
-    "epsActual": null,
-    "revenueEstimate": 25654785,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2116,16 +1276,6 @@
     "epsEstimate": 0.6562,
     "epsActual": null,
     "revenueEstimate": 141142500,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "VKTX",
-    "date": "2026-07-21",
-    "hour": "amc",
-    "epsEstimate": -1.272,
-    "epsActual": null,
-    "revenueEstimate": 0,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2210,16 +1360,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "AROW",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.5389,
-    "epsActual": null,
-    "revenueEstimate": 46419180,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "AVB",
     "date": "2026-07-22",
     "hour": "amc",
@@ -2290,16 +1430,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "BPRN",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.901,
-    "epsActual": null,
-    "revenueEstimate": 21078810,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "BURCA",
     "date": "2026-07-22",
     "hour": "",
@@ -2326,16 +1456,6 @@
     "epsEstimate": 0.0842,
     "epsActual": null,
     "revenueEstimate": 575102010,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CARE",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.7726,
-    "epsActual": null,
-    "revenueEstimate": 57031260,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2390,16 +1510,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CFFI",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CME",
     "date": "2026-07-22",
     "hour": "bmo",
@@ -2410,32 +1520,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "COKE",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CSX",
     "date": "2026-07-22",
     "hour": "amc",
     "epsEstimate": 0.5224,
     "epsActual": null,
     "revenueEstimate": 3933964079,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CVBF",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.2934,
-    "epsActual": null,
-    "revenueEstimate": 173265870,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2506,16 +1596,6 @@
     "epsEstimate": 0.4394,
     "epsActual": null,
     "revenueEstimate": 390566666,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ENSG",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 1.8794,
-    "epsActual": null,
-    "revenueEstimate": 1470111720,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2600,12 +1680,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "FNWB",
+    "symbol": "FNLC",
     "date": "2026-07-22",
     "hour": "",
-    "epsEstimate": 0.0102,
+    "epsEstimate": null,
     "epsActual": null,
-    "revenueEstimate": 17442000,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2770,16 +1850,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "HTLD",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": -0.0163,
-    "epsActual": null,
-    "revenueEstimate": 196292196,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "HYFT",
     "date": "2026-07-22",
     "hour": "amc",
@@ -2790,22 +1860,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "IBM",
+    "date": "2026-07-22",
+    "hour": "bmo",
+    "epsEstimate": 3.0119,
+    "epsActual": null,
+    "revenueEstimate": 17903431831,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "IMA",
     "date": "2026-07-22",
     "hour": "amc",
     "epsEstimate": -0.904,
     "epsActual": null,
     "revenueEstimate": 0,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "IRDM",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.2832,
-    "epsActual": null,
-    "revenueEstimate": 225067284,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2930,16 +2000,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MGYR",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MMLP",
     "date": "2026-07-22",
     "hour": "amc",
@@ -2980,32 +2040,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MRBK",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.5202,
-    "epsActual": null,
-    "revenueEstimate": 34980900,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "MRTN",
     "date": "2026-07-22",
     "hour": "",
     "epsEstimate": 0.0867,
     "epsActual": null,
     "revenueEstimate": 234753000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "NECB",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.7854,
-    "epsActual": null,
-    "revenueEstimate": 26275200,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -3190,16 +2230,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PCB",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": 0.7053,
-    "epsActual": null,
-    "revenueEstimate": 31411000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "PCLB",
     "date": "2026-07-22",
     "hour": "",
@@ -3226,6 +2256,16 @@
     "epsEstimate": 2.3858,
     "epsActual": null,
     "revenueEstimate": 3968735076,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PKBK",
+    "date": "2026-07-22",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -3300,16 +2340,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "RBKB",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "RELL",
     "date": "2026-07-22",
     "hour": "amc",
@@ -3376,16 +2406,6 @@
     "epsEstimate": 1.8713,
     "epsActual": null,
     "revenueEstimate": 2201979567,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RPT",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": -0.1566,
-    "epsActual": null,
-    "revenueEstimate": 4250413,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -3580,32 +2600,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "UTMD",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "UVSP",
     "date": "2026-07-22",
     "hour": "amc",
     "epsEstimate": 0.8877,
     "epsActual": null,
     "revenueEstimate": 88077000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "VABK",
-    "date": "2026-07-22",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -3740,6 +2740,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "ALSN",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 2.6223,
+    "epsActual": null,
+    "revenueEstimate": 1539371617,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "AMAL",
     "date": "2026-07-23",
     "hour": "bmo",
@@ -3800,12 +2810,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "AROW",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.5389,
+    "epsActual": null,
+    "revenueEstimate": 46419180,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "ASB",
     "date": "2026-07-23",
     "hour": "amc",
     "epsEstimate": 0.7124,
     "epsActual": null,
     "revenueEstimate": 441997644,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ASPN",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": -0.2168,
+    "epsActual": null,
+    "revenueEstimate": 43272276,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -3880,6 +2910,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "BPRN",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.901,
+    "epsActual": null,
+    "revenueEstimate": 21078810,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "BRBS",
     "date": "2026-07-23",
     "hour": "",
@@ -3940,6 +2980,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CARE",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.7726,
+    "epsActual": null,
+    "revenueEstimate": 57031260,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CBBI",
     "date": "2026-07-23",
     "hour": "",
@@ -3970,6 +3020,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CC",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.4317,
+    "epsActual": null,
+    "revenueEstimate": 1703680327,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CIVB",
     "date": "2026-07-23",
     "hour": "bmo",
@@ -3996,6 +3056,16 @@
     "epsEstimate": -0.1995,
     "epsActual": null,
     "revenueEstimate": 5250134418,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CLFD",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.1904,
+    "epsActual": null,
+    "revenueEstimate": 44803500,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4046,16 +3116,6 @@
     "epsEstimate": 0.5656,
     "epsActual": null,
     "revenueEstimate": 213881984,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "COFS",
-    "date": "2026-07-23",
-    "hour": "",
-    "epsEstimate": 0.8973,
-    "epsActual": null,
-    "revenueEstimate": 44319000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4176,6 +3236,16 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ENSG",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 1.8794,
+    "epsActual": null,
+    "revenueEstimate": 1470111720,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4320,6 +3390,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FNWB",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.0102,
+    "epsActual": null,
+    "revenueEstimate": 17442000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "FPH",
     "date": "2026-07-23",
     "hour": "",
@@ -4366,6 +3446,16 @@
     "epsEstimate": 0.3825,
     "epsActual": null,
     "revenueEstimate": 10092900,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FVCB",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.3672,
+    "epsActual": null,
+    "revenueEstimate": 18426300,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4470,6 +3560,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "HWBK",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "HZO",
     "date": "2026-07-23",
     "hour": "bmo",
@@ -4496,6 +3596,16 @@
     "epsEstimate": 0.2892,
     "epsActual": null,
     "revenueEstimate": 95946983,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "INMD",
+    "date": "2026-07-23",
+    "hour": "bmo",
+    "epsEstimate": 0.3393,
+    "epsActual": null,
+    "revenueEstimate": 94892844,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4580,6 +3690,26 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MGYR",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "MITK",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.2815,
+    "epsActual": null,
+    "revenueEstimate": 51839256,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MSBI",
     "date": "2026-07-23",
     "hour": "amc",
@@ -4620,12 +3750,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "NBBK",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.4845,
+    "epsActual": null,
+    "revenueEstimate": 74188680,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "NDAQ",
     "date": "2026-07-23",
     "hour": "bmo",
     "epsEstimate": 0.9998,
     "epsActual": null,
     "revenueEstimate": 1475443576,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "NECB",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.7854,
+    "epsActual": null,
+    "revenueEstimate": 26275200,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4650,6 +3800,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "NRIM",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.6222,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "NSC",
     "date": "2026-07-23",
     "hour": "bmo",
@@ -4660,12 +3820,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "NTCT",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.391,
+    "epsActual": null,
+    "revenueEstimate": 200092380,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "NVCR",
     "date": "2026-07-23",
     "hour": "bmo",
     "epsEstimate": -0.3394,
     "epsActual": null,
     "revenueEstimate": 176171482,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "OPBK",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.4554,
+    "epsActual": null,
+    "revenueEstimate": 25653000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4710,22 +3890,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "PACK",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": -0.0765,
+    "epsActual": null,
+    "revenueEstimate": 102961860,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PCB",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.7053,
+    "epsActual": null,
+    "revenueEstimate": 31411000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "PCG",
     "date": "2026-07-23",
     "hour": "bmo",
     "epsEstimate": 0.3635,
     "epsActual": null,
     "revenueEstimate": 6242335805,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PDLB",
-    "date": "2026-07-23",
-    "hour": "",
-    "epsEstimate": 0.3774,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4800,6 +3990,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "RBKB",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "REXR",
     "date": "2026-07-23",
     "hour": "amc",
@@ -4846,6 +4046,16 @@
     "epsEstimate": 1.6781,
     "epsActual": null,
     "revenueEstimate": 23121604719,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "RVSB",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.0714,
+    "epsActual": null,
+    "revenueEstimate": 15096000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -4950,6 +4160,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "SNBR",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": -0.1938,
+    "epsActual": null,
+    "revenueEstimate": 334350900,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "SRCE",
     "date": "2026-07-23",
     "hour": "",
@@ -5020,6 +4240,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "TFSL",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.0816,
+    "epsActual": null,
+    "revenueEstimate": 88786920,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "THRM",
     "date": "2026-07-23",
     "hour": "bmo",
@@ -5060,6 +4290,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "TOWN",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.8058,
+    "epsActual": null,
+    "revenueEstimate": 298476735,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "TSCO",
     "date": "2026-07-23",
     "hour": "bmo",
@@ -5086,6 +4326,16 @@
     "epsEstimate": 3.2763,
     "epsActual": null,
     "revenueEstimate": 6779916142,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "UPWK",
+    "date": "2026-07-23",
+    "hour": "",
+    "epsEstimate": 0.35,
+    "epsActual": null,
+    "revenueEstimate": 193797623,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5220,6 +4470,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "ACRE",
+    "date": "2026-07-24",
+    "hour": "bmo",
+    "epsEstimate": 0.0561,
+    "epsActual": null,
+    "revenueEstimate": 12994800,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "AXP",
     "date": "2026-07-24",
     "hour": "bmo",
@@ -5250,6 +4510,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CNH",
+    "date": "2026-07-24",
+    "hour": "bmo",
+    "epsEstimate": 0.1054,
+    "epsActual": null,
+    "revenueEstimate": 4420923520,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CRI",
     "date": "2026-07-24",
     "hour": "",
@@ -5260,12 +4530,42 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CVEO",
+    "date": "2026-07-24",
+    "hour": "",
+    "epsEstimate": -0.153,
+    "epsActual": null,
+    "revenueEstimate": 174335340,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "DAN",
+    "date": "2026-07-24",
+    "hour": "bmo",
+    "epsEstimate": 0.7009,
+    "epsActual": null,
+    "revenueEstimate": 1957036600,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "EAF",
     "date": "2026-07-24",
     "hour": "bmo",
     "epsEstimate": -1.6665,
     "epsActual": null,
     "revenueEstimate": 126250000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FHB",
+    "date": "2026-07-24",
+    "hour": "bmo",
+    "epsEstimate": 0.5873,
+    "epsActual": null,
+    "revenueEstimate": 230058698,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5320,6 +4620,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MRBK",
+    "date": "2026-07-24",
+    "hour": "",
+    "epsEstimate": 0.5202,
+    "epsActual": null,
+    "revenueEstimate": 34980900,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "NDLS",
     "date": "2026-07-24",
     "hour": "bmo",
@@ -5344,6 +4654,16 @@
     "date": "2026-07-24",
     "hour": "",
     "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PDLB",
+    "date": "2026-07-24",
+    "hour": "",
+    "epsEstimate": 0.3774,
     "epsActual": null,
     "revenueEstimate": null,
     "revenueActual": null,
@@ -5416,6 +4736,16 @@
     "epsEstimate": 4.2724,
     "epsActual": null,
     "revenueEstimate": 5484238804,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "VABK",
+    "date": "2026-07-24",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5650,32 +4980,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CBNA",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 1.2682,
-    "epsActual": null,
-    "revenueEstimate": 18480023,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CBNK",
     "date": "2026-07-27",
     "hour": "",
     "epsEstimate": 0.8384,
     "epsActual": null,
     "revenueEstimate": 67870116,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CCB",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 1.0176,
-    "epsActual": null,
-    "revenueEstimate": 163928555,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5700,16 +5010,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CECO",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.306,
-    "epsActual": null,
-    "revenueEstimate": 288864000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CHRN",
     "date": "2026-07-27",
     "hour": "",
@@ -5726,26 +5026,6 @@
     "epsEstimate": 1.8781,
     "epsActual": null,
     "revenueEstimate": 2978420400,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "COSO",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.6018,
-    "epsActual": null,
-    "revenueEstimate": 23702250,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CVEO",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": -0.153,
-    "epsActual": null,
-    "revenueEstimate": 174335340,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5780,16 +5060,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DYN",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": -0.7618,
-    "epsActual": null,
-    "revenueEstimate": 0,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "EA",
     "date": "2026-07-27",
     "hour": "",
@@ -5816,16 +5086,6 @@
     "epsEstimate": 0.4356,
     "epsActual": null,
     "revenueEstimate": 880362682,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "EXEL",
-    "date": "2026-07-27",
-    "hour": "amc",
-    "epsEstimate": 0.8074,
-    "epsActual": null,
-    "revenueEstimate": 647518888,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5860,16 +5120,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "FNWD",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.6375,
-    "epsActual": null,
-    "revenueEstimate": 19278000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "FSUN",
     "date": "2026-07-27",
     "hour": "",
@@ -5880,12 +5130,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "FULC",
+    "symbol": "FUNC",
     "date": "2026-07-27",
     "hour": "",
-    "epsEstimate": -0.2244,
+    "epsEstimate": 1.071,
     "epsActual": null,
-    "revenueEstimate": 0,
+    "revenueEstimate": 24021000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -5920,12 +5170,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "GBFH",
+    "symbol": "GCBC",
     "date": "2026-07-27",
     "hour": "",
-    "epsEstimate": 0.493,
+    "epsEstimate": null,
     "epsActual": null,
-    "revenueEstimate": 16330200,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6000,12 +5250,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "HLIT",
+    "symbol": "HIT",
     "date": "2026-07-27",
     "hour": "",
-    "epsEstimate": 0.1719,
+    "epsEstimate": -0.0236,
     "epsActual": null,
-    "revenueEstimate": 123297600,
+    "revenueEstimate": 7622470,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6026,6 +5276,16 @@
     "epsEstimate": 0.4371,
     "epsActual": null,
     "revenueEstimate": 1848495000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "HSTM",
+    "date": "2026-07-27",
+    "hour": "",
+    "epsEstimate": 0.1734,
+    "epsActual": null,
+    "revenueEstimate": 82443132,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6076,6 +5336,16 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ISTR",
+    "date": "2026-07-27",
+    "hour": "",
+    "epsEstimate": 0.7208,
+    "epsActual": null,
+    "revenueEstimate": 37077000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6136,16 +5406,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "MARA",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.3844,
-    "epsActual": null,
-    "revenueEstimate": 206424540,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6250,16 +5510,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "NEWT",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.4852,
-    "epsActual": null,
-    "revenueEstimate": 77507076,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "NTB",
     "date": "2026-07-27",
     "hour": "",
@@ -6310,12 +5560,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PEN",
+    "symbol": "PEBK",
     "date": "2026-07-27",
-    "hour": "amc",
-    "epsEstimate": 1.1987,
+    "hour": "",
+    "epsEstimate": null,
     "epsActual": null,
-    "revenueEstimate": 392899281,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6350,42 +5600,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PJT",
-    "date": "2026-07-27",
-    "hour": "bmo",
-    "epsEstimate": 1.5896,
-    "epsActual": null,
-    "revenueEstimate": 428505630,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "PRK",
     "date": "2026-07-27",
     "hour": "",
     "epsEstimate": 2.8718,
     "epsActual": null,
     "revenueEstimate": 169158840,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PROV",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.2805,
-    "epsActual": null,
-    "revenueEstimate": 10200000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PRPL",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": -0.068,
-    "epsActual": null,
-    "revenueEstimate": 107800403,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6400,42 +5620,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PYPL",
-    "date": "2026-07-27",
-    "hour": "amc",
-    "epsEstimate": 1.3029,
-    "epsActual": null,
-    "revenueEstimate": 8637250339,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RCKY",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.357,
-    "epsActual": null,
-    "revenueEstimate": 112302000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "RFAI",
     "date": "2026-07-27",
     "hour": "",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RMAX",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.4012,
-    "epsActual": null,
-    "revenueEstimate": 74154000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6456,16 +5646,6 @@
     "epsEstimate": 0.2953,
     "epsActual": null,
     "revenueEstimate": 168674003,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RVSB",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.0714,
-    "epsActual": null,
-    "revenueEstimate": 15096000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6510,16 +5690,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SSBI",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SSD",
     "date": "2026-07-27",
     "hour": "",
@@ -6556,26 +5726,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TWO",
-    "date": "2026-07-27",
-    "hour": "amc",
-    "epsEstimate": 0.2845,
-    "epsActual": null,
-    "revenueEstimate": -7167636,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TYGO",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": 0.0034,
-    "epsActual": null,
-    "revenueEstimate": 31440735,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6676,16 +5826,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "XGN",
-    "date": "2026-07-27",
-    "hour": "",
-    "epsEstimate": -0.1919,
-    "epsActual": null,
-    "revenueEstimate": 17995675,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6820,16 +5960,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "AVBC",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.3468,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "AWI",
     "date": "2026-07-28",
     "hour": "",
@@ -6876,6 +6006,16 @@
     "epsEstimate": -0.3172,
     "epsActual": null,
     "revenueEstimate": 24900430353,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "BANC",
+    "date": "2026-07-28",
+    "hour": "",
+    "epsEstimate": 0.4022,
+    "epsActual": null,
+    "revenueEstimate": 281289816,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -6990,6 +6130,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CHCO",
+    "date": "2026-07-28",
+    "hour": "",
+    "epsEstimate": 2.2709,
+    "epsActual": null,
+    "revenueEstimate": 82257135,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CHE",
     "date": "2026-07-28",
     "hour": "",
@@ -7006,16 +6156,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CLBK",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.1581,
-    "epsActual": null,
-    "revenueEstimate": 63852000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7070,26 +6210,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "COMP",
-    "date": "2026-07-28",
-    "hour": "amc",
-    "epsEstimate": 0.1705,
-    "epsActual": null,
-    "revenueEstimate": 4155442770,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CPSH",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": 8364000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CR",
     "date": "2026-07-28",
     "hour": "amc",
@@ -7136,16 +6256,6 @@
     "epsEstimate": 0.1044,
     "epsActual": null,
     "revenueEstimate": 42736887,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CTOS",
-    "date": "2026-07-28",
-    "hour": "amc",
-    "epsEstimate": 0.0122,
-    "epsActual": null,
-    "revenueEstimate": 519975426,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7260,16 +6370,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "EEFT",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 3.0281,
-    "epsActual": null,
-    "revenueEstimate": 1165890222,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "EMO",
     "date": "2026-07-28",
     "hour": "",
@@ -7286,16 +6386,6 @@
     "epsEstimate": 0.4678,
     "epsActual": null,
     "revenueEstimate": 295812648,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "EVTC",
-    "date": "2026-07-28",
-    "hour": "amc",
-    "epsEstimate": 0.9697,
-    "epsActual": null,
-    "revenueEstimate": 267483984,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7330,26 +6420,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "EZPW",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.406,
-    "epsActual": null,
-    "revenueEstimate": 437645892,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "EZRA",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "F",
     "date": "2026-07-28",
     "hour": "amc",
@@ -7366,6 +6436,16 @@
     "epsEstimate": -1.6068,
     "epsActual": null,
     "revenueEstimate": 154294000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FCBC",
+    "date": "2026-07-28",
+    "hour": "",
+    "epsEstimate": 0.7497,
+    "epsActual": null,
+    "revenueEstimate": 52223490,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7420,32 +6500,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FRAF",
+    "date": "2026-07-28",
+    "hour": "",
+    "epsEstimate": 1.4688,
+    "epsActual": null,
+    "revenueEstimate": 25194000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "FSBW",
     "date": "2026-07-28",
     "hour": "",
     "epsEstimate": 1.104,
     "epsActual": null,
     "revenueEstimate": 38765610,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FUSB",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "FXNC",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.6018,
-    "epsActual": null,
-    "revenueEstimate": 23920020,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7476,26 +6546,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "HBB",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "HDSN",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.1811,
-    "epsActual": null,
-    "revenueEstimate": 75813030,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7570,16 +6620,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "HWBK",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "INCY",
     "date": "2026-07-28",
     "hour": "",
@@ -7606,6 +6646,16 @@
     "epsEstimate": 3.0607,
     "epsActual": null,
     "revenueEstimate": 4344389760,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "IRDM",
+    "date": "2026-07-28",
+    "hour": "",
+    "epsEstimate": 0.2832,
+    "epsActual": null,
+    "revenueEstimate": 225067284,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7666,16 +6716,6 @@
     "epsEstimate": 0.9614,
     "epsActual": null,
     "revenueEstimate": 13556846064,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LENZ",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": -1.0918,
-    "epsActual": null,
-    "revenueEstimate": 2449744,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7756,16 +6796,6 @@
     "epsEstimate": 0.6938,
     "epsActual": null,
     "revenueEstimate": 9390430080,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "MDXG",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": -0.0469,
-    "epsActual": null,
-    "revenueEstimate": 64729200,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7860,16 +6890,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "NHTC",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "NOV",
     "date": "2026-07-28",
     "hour": "amc",
@@ -7886,16 +6906,6 @@
     "epsEstimate": 0.1414,
     "epsActual": null,
     "revenueEstimate": 35249000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "NTGR",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.0136,
-    "epsActual": null,
-    "revenueEstimate": 160959060,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -7926,16 +6936,6 @@
     "epsEstimate": 3.5821,
     "epsActual": null,
     "revenueEstimate": 3533240454,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "OBT",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.808,
-    "epsActual": null,
-    "revenueEstimate": 33330000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8010,20 +7010,10 @@
     "source": "finnhub"
   },
   {
-    "symbol": "OSW",
-    "date": "2026-07-28",
-    "hour": "bmo",
-    "epsEstimate": 0.2833,
-    "epsActual": null,
-    "revenueEstimate": 263532563,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PBHC",
+    "symbol": "OXSQ",
     "date": "2026-07-28",
     "hour": "",
-    "epsEstimate": null,
+    "epsEstimate": 0.0612,
     "epsActual": null,
     "revenueEstimate": null,
     "revenueActual": null,
@@ -8066,6 +7056,16 @@
     "epsEstimate": 0.7151,
     "epsActual": null,
     "revenueEstimate": 1962451210,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PJT",
+    "date": "2026-07-28",
+    "hour": "bmo",
+    "epsEstimate": 1.5896,
+    "epsActual": null,
+    "revenueEstimate": 428505630,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8126,6 +7126,16 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PYPL",
+    "date": "2026-07-28",
+    "hour": "amc",
+    "epsEstimate": 1.3029,
+    "epsActual": null,
+    "revenueEstimate": 8637250339,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8300,26 +7310,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SMHI",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": -1.2648,
-    "epsActual": null,
-    "revenueEstimate": 46509960,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SNBR",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": -0.1938,
-    "epsActual": null,
-    "revenueEstimate": 334350900,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SNDL",
     "date": "2026-07-28",
     "hour": "",
@@ -8340,12 +7330,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SPOK",
+    "symbol": "SSBI",
     "date": "2026-07-28",
     "hour": "",
-    "epsEstimate": 0.153,
+    "epsEstimate": null,
     "epsActual": null,
-    "revenueEstimate": 34986000,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8400,12 +7390,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "TFSL",
+    "symbol": "THFF",
     "date": "2026-07-28",
     "hour": "",
-    "epsEstimate": 0.0816,
+    "epsEstimate": 1.785,
     "epsActual": null,
-    "revenueEstimate": 88786920,
+    "revenueEstimate": 74293740,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8416,16 +7406,6 @@
     "epsEstimate": 3.9843,
     "epsActual": null,
     "revenueEstimate": 1668116000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "THRY",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": -0.102,
-    "epsActual": null,
-    "revenueEstimate": 149031180,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8446,16 +7426,6 @@
     "epsEstimate": -0.0068,
     "epsActual": null,
     "revenueEstimate": 249481677,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TMDX",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.4739,
-    "epsActual": null,
-    "revenueEstimate": 187029240,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8500,22 +7470,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "TSBK",
+    "date": "2026-07-28",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "TTAM",
     "date": "2026-07-28",
     "hour": "",
     "epsEstimate": 0.2893,
     "epsActual": null,
     "revenueEstimate": 455103396,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "TTMI",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.9107,
-    "epsActual": null,
-    "revenueEstimate": 981280800,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8580,12 +7550,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "UTHR",
+    "symbol": "UTMD",
     "date": "2026-07-28",
-    "hour": "bmo",
-    "epsEstimate": 6.9783,
+    "hour": "",
+    "epsEstimate": null,
     "epsActual": null,
-    "revenueEstimate": 821971641,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8620,16 +7590,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "VSEC",
-    "date": "2026-07-28",
-    "hour": "",
-    "epsEstimate": 0.9469,
-    "epsActual": null,
-    "revenueEstimate": 433575928,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "WERN",
     "date": "2026-07-28",
     "hour": "",
@@ -8660,7 +7620,7 @@
     "source": "finnhub"
   },
   {
-    "symbol": "WSBK",
+    "symbol": "WSBF",
     "date": "2026-07-28",
     "hour": "",
     "epsEstimate": null,
@@ -8746,16 +7706,6 @@
     "epsEstimate": 0.2074,
     "epsActual": null,
     "revenueEstimate": 45740880,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ADP",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 2.6205,
-    "epsActual": null,
-    "revenueEstimate": 5490955253,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8970,12 +7920,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "AUPH",
+    "symbol": "ATNI",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": 0.2468,
+    "epsEstimate": 0.1734,
     "epsActual": null,
-    "revenueEstimate": 81290430,
+    "revenueEstimate": 186864000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9120,16 +8070,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "BIO",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 1.7652,
-    "epsActual": null,
-    "revenueEstimate": 630228637,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "BIOF",
     "date": "2026-07-29",
     "hour": "",
@@ -9180,26 +8120,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "BOOT",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 1.7354,
-    "epsActual": null,
-    "revenueEstimate": 594657001,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "BSBK",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "BSFO",
     "date": "2026-07-29",
     "hour": "",
@@ -9240,32 +8160,22 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CABO",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 4.284,
-    "epsActual": null,
-    "revenueEstimate": 355932743,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CACC",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 12.0938,
-    "epsActual": null,
-    "revenueEstimate": 599862000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CBRE",
     "date": "2026-07-29",
     "hour": "",
     "epsEstimate": 1.5162,
     "epsActual": null,
     "revenueEstimate": 11406648984,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CCB",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 1.0176,
+    "epsActual": null,
+    "revenueEstimate": 163928555,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9281,6 +8191,16 @@
   },
   {
     "symbol": "CCZ",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CFFI",
     "date": "2026-07-29",
     "hour": "",
     "epsEstimate": null,
@@ -9336,6 +8256,16 @@
     "epsEstimate": -0.101,
     "epsActual": null,
     "revenueEstimate": 44079935,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CLBK",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.1581,
+    "epsActual": null,
+    "revenueEstimate": 63852000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9440,22 +8370,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "COCH",
+    "symbol": "COFS",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": -0.0918,
+    "epsEstimate": 0.8973,
     "epsActual": null,
-    "revenueEstimate": 61200,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CORT",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 0.0051,
-    "epsActual": null,
-    "revenueEstimate": 224388096,
+    "revenueEstimate": 44319000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9466,26 +8386,6 @@
     "epsEstimate": 0.1122,
     "epsActual": null,
     "revenueEstimate": 299478120,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CPS",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 0.5882,
-    "epsActual": null,
-    "revenueEstimate": 717672336,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CRAI",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 2.1896,
-    "epsActual": null,
-    "revenueEstimate": 202881396,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9530,12 +8430,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CSW",
+    "symbol": "CSV",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": 3.4966,
+    "epsEstimate": 0.8221,
     "epsActual": null,
-    "revenueEstimate": 346245745,
+    "revenueEstimate": 109723774,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9560,12 +8460,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CVCO",
+    "symbol": "CVBF",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": 5.8038,
+    "epsEstimate": 0.2934,
     "epsActual": null,
-    "revenueEstimate": 602347403,
+    "revenueEstimate": 173265870,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9640,16 +8540,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DFTX",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": -0.5678,
-    "epsActual": null,
-    "revenueEstimate": 0,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "DMC",
     "date": "2026-07-29",
     "hour": "",
@@ -9660,12 +8550,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DSGR",
+    "symbol": "EEFT",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": 0.4148,
+    "epsEstimate": 3.0281,
     "epsActual": null,
-    "revenueEstimate": 530808000,
+    "revenueEstimate": 1165890222,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9706,16 +8596,6 @@
     "epsEstimate": 0.5737,
     "epsActual": null,
     "revenueEstimate": 205550150,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ENVX",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": -0.1496,
-    "epsActual": null,
-    "revenueEstimate": 8599987,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9800,16 +8680,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "FBLG",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": -0.7344,
-    "epsActual": null,
-    "revenueEstimate": 0,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "FBRT",
     "date": "2026-07-29",
     "hour": "",
@@ -9826,6 +8696,16 @@
     "epsEstimate": 0.3233,
     "epsActual": null,
     "revenueEstimate": 77186664,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FDBC",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9930,6 +8810,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FNWD",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.6375,
+    "epsActual": null,
+    "revenueEstimate": 19278000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "FOLD",
     "date": "2026-07-29",
     "hour": "",
@@ -9946,6 +8836,16 @@
     "epsEstimate": 0.6216,
     "epsActual": null,
     "revenueEstimate": 244798643,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FPI",
+    "date": "2026-07-29",
+    "hour": "amc",
+    "epsEstimate": 0.0152,
+    "epsActual": null,
+    "revenueEstimate": 9390980,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -9990,6 +8890,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FUSB",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "FVRR",
     "date": "2026-07-29",
     "hour": "",
@@ -10000,22 +8910,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FXNC",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.6018,
+    "epsActual": null,
+    "revenueEstimate": 23920020,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GEHC",
     "date": "2026-07-29",
     "hour": "",
     "epsEstimate": 1.0531,
     "epsActual": null,
     "revenueEstimate": 5365886531,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GIGM",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -10150,6 +9060,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "HTLD",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": -0.0163,
+    "epsActual": null,
+    "revenueEstimate": 196292196,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "HUBG",
     "date": "2026-07-29",
     "hour": "amc",
@@ -10236,6 +9156,16 @@
     "epsEstimate": -0.2142,
     "epsActual": null,
     "revenueEstimate": 118989120,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "INVA",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.4447,
+    "epsActual": null,
+    "revenueEstimate": 113204496,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -10390,6 +9320,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "LSBK",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "LUNG",
     "date": "2026-07-29",
     "hour": "amc",
@@ -10466,16 +9406,6 @@
     "epsEstimate": 7.3817,
     "epsActual": null,
     "revenueEstimate": 61376242168,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "METC",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": -0.247,
-    "epsActual": null,
-    "revenueEstimate": 136394542,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -10570,6 +9500,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MPB",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.7979,
+    "epsActual": null,
+    "revenueEstimate": 74012800,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MSFT",
     "date": "2026-07-29",
     "hour": "amc",
@@ -10630,12 +9570,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "NATR",
+    "symbol": "NBIS",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": 0.2754,
+    "epsEstimate": -0.7009,
     "epsActual": null,
-    "revenueEstimate": 126178590,
+    "revenueEstimate": 595299366,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -10666,16 +9606,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "NEXA",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 0.6882,
-    "epsActual": null,
-    "revenueEstimate": 897032370,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -10726,6 +9656,16 @@
     "epsEstimate": 0.3697,
     "epsActual": null,
     "revenueEstimate": 1688396396,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "NTGR",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.0136,
+    "epsActual": null,
+    "revenueEstimate": 160959060,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -10816,16 +9756,6 @@
     "epsEstimate": 0.4358,
     "epsActual": null,
     "revenueEstimate": 1447160394,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "OPK",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": -0.0808,
-    "epsActual": null,
-    "revenueEstimate": 132545663,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11010,16 +9940,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PRDO",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": 0.816,
-    "epsActual": null,
-    "revenueEstimate": 216750000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "PRG",
     "date": "2026-07-29",
     "hour": "",
@@ -11046,16 +9966,6 @@
     "epsEstimate": 2.6428,
     "epsActual": null,
     "revenueEstimate": 1242685062,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "PSKY",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 0.1559,
-    "epsActual": null,
-    "revenueEstimate": 7017059818,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11180,32 +10090,22 @@
     "source": "finnhub"
   },
   {
-    "symbol": "RIOT",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": -0.2387,
-    "epsActual": null,
-    "revenueEstimate": 155351671,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "RKT",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 0.171,
-    "epsActual": null,
-    "revenueEstimate": 2845932459,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "RM",
     "date": "2026-07-29",
     "hour": "amc",
     "epsEstimate": 0.8317,
     "epsActual": null,
     "revenueEstimate": 170664562,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "RMBI",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11266,16 +10166,6 @@
     "epsEstimate": 0.8871,
     "epsActual": null,
     "revenueEstimate": 1091318463,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SCKT",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11360,22 +10250,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "SLAB",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.6995,
+    "epsActual": null,
+    "revenueEstimate": 232664040,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "SLGN",
     "date": "2026-07-29",
     "hour": "",
     "epsEstimate": 0.9813,
     "epsActual": null,
     "revenueEstimate": 1653223568,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "SLSN",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11420,12 +10310,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SRBK",
+    "symbol": "SPOK",
     "date": "2026-07-29",
     "hour": "",
-    "epsEstimate": null,
+    "epsEstimate": 0.153,
     "epsActual": null,
-    "revenueEstimate": null,
+    "revenueEstimate": 34986000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11450,16 +10340,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "SVV",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 0.1432,
-    "epsActual": null,
-    "revenueEstimate": 453459336,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "SW",
     "date": "2026-07-29",
     "hour": "",
@@ -11476,6 +10356,16 @@
     "epsEstimate": 1.222,
     "epsActual": null,
     "revenueEstimate": 4007987444,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "SYBT",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 1.2475,
+    "epsActual": null,
+    "revenueEstimate": 113864640,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11540,12 +10430,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "TMHC",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 1.1494,
+    "epsActual": null,
+    "revenueEstimate": 1556766503,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "TNK",
     "date": "2026-07-29",
     "hour": "",
     "epsEstimate": 5.5365,
     "epsActual": null,
     "revenueEstimate": 297838566,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "TPB",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.4781,
+    "epsActual": null,
+    "revenueEstimate": 129956094,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11576,6 +10486,16 @@
     "epsEstimate": 3.1081,
     "epsActual": null,
     "revenueEstimate": 654546054,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "TZOO",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.1505,
+    "epsActual": null,
+    "revenueEstimate": 25654785,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11630,16 +10550,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "UTZ",
-    "date": "2026-07-29",
-    "hour": "bmo",
-    "epsEstimate": 0.1877,
-    "epsActual": null,
-    "revenueEstimate": 377903175,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "VFC",
     "date": "2026-07-29",
     "hour": "",
@@ -11670,22 +10580,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "VKTX",
+    "date": "2026-07-29",
+    "hour": "amc",
+    "epsEstimate": -1.272,
+    "epsActual": null,
+    "revenueEstimate": 0,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "VMC",
     "date": "2026-07-29",
     "hour": "",
     "epsEstimate": 2.5713,
     "epsActual": null,
     "revenueEstimate": 2143531009,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "VNDA",
-    "date": "2026-07-29",
-    "hour": "",
-    "epsEstimate": -0.5993,
-    "epsActual": null,
-    "revenueEstimate": 63163500,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11706,6 +10616,16 @@
     "epsEstimate": 1.439,
     "epsActual": null,
     "revenueEstimate": 3409748698,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "VSEC",
+    "date": "2026-07-29",
+    "hour": "",
+    "epsEstimate": 0.9469,
+    "epsActual": null,
+    "revenueEstimate": 433575928,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11800,16 +10720,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "WSC",
-    "date": "2026-07-29",
-    "hour": "amc",
-    "epsEstimate": 0.2399,
-    "epsActual": null,
-    "revenueEstimate": 591133133,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "WSO",
     "date": "2026-07-29",
     "hour": "",
@@ -11860,6 +10770,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "AAON",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.5039,
+    "epsActual": null,
+    "revenueEstimate": 497515200,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "AAPL",
     "date": "2026-07-30",
     "hour": "amc",
@@ -11870,12 +10790,52 @@
     "source": "finnhub"
   },
   {
+    "symbol": "ABUS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0306,
+    "epsActual": null,
+    "revenueEstimate": 459000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "ACCS",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.0765,
     "epsActual": null,
     "revenueEstimate": 5622750,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ACIU",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.1136,
+    "epsActual": null,
+    "revenueEstimate": 6837468,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ACIW",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.3009,
+    "epsActual": null,
+    "revenueEstimate": 439201545,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "AD",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.6386,
+    "epsActual": null,
+    "revenueEstimate": 54077832,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -11970,22 +10930,42 @@
     "source": "finnhub"
   },
   {
-    "symbol": "AIRS",
-    "date": "2026-07-30",
-    "hour": "bmo",
-    "epsEstimate": 0.0153,
-    "epsActual": null,
-    "revenueEstimate": 45084000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "AJG",
     "date": "2026-07-30",
     "hour": "amc",
     "epsEstimate": 2.8452,
     "epsActual": null,
     "revenueEstimate": 4049066618,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "AKBA",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0449,
+    "epsActual": null,
+    "revenueEstimate": 49838424,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ALCO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.7497,
+    "epsActual": null,
+    "revenueEstimate": 2805000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ALEC",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.2326,
+    "epsActual": null,
+    "revenueEstimate": 1929330,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12050,12 +11030,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "AMTX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.2591,
+    "epsActual": null,
+    "revenueEstimate": 70887756,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "AMZN",
     "date": "2026-07-30",
     "hour": "amc",
     "epsEstimate": 1.8556,
     "epsActual": null,
     "revenueEstimate": 200308047341,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "AORT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0102,
+    "epsActual": null,
+    "revenueEstimate": 122412627,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12076,6 +11076,26 @@
     "epsEstimate": 0.4394,
     "epsActual": null,
     "revenueEstimate": 2226049827,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ARDX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0525,
+    "epsActual": null,
+    "revenueEstimate": 126638283,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ARVN",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.4559,
+    "epsActual": null,
+    "revenueEstimate": 33192840,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12106,6 +11126,26 @@
     "epsEstimate": 1.3693,
     "epsActual": null,
     "revenueEstimate": 1019396363,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ATRO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.7064,
+    "epsActual": null,
+    "revenueEstimate": 250132050,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "AUPH",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.2468,
+    "epsActual": null,
+    "revenueEstimate": 81290430,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12160,12 +11200,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "BBIO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.6031,
+    "epsActual": null,
+    "revenueEstimate": 222666316,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "BC",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 1.2705,
     "epsActual": null,
     "revenueEstimate": 1568224893,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "BCRX",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 0.125,
+    "epsActual": null,
+    "revenueEstimate": 186255774,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12200,12 +11260,42 @@
     "source": "finnhub"
   },
   {
+    "symbol": "BFS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.1414,
+    "epsActual": null,
+    "revenueEstimate": 79769800,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "BGC",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.3384,
     "epsActual": null,
     "revenueEstimate": 820892650,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "BGS",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.0588,
+    "epsActual": null,
+    "revenueEstimate": 398983663,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "BIO",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 1.7652,
+    "epsActual": null,
+    "revenueEstimate": 630228637,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12290,6 +11380,26 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CABO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 4.284,
+    "epsActual": null,
+    "revenueEstimate": 355932743,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CARS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.2754,
+    "epsActual": null,
+    "revenueEstimate": 184148464,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CCC",
     "date": "2026-07-30",
     "hour": "",
@@ -12316,6 +11426,16 @@
     "epsEstimate": 0.0408,
     "epsActual": null,
     "revenueEstimate": 58464615,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CDXS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.1408,
+    "epsActual": null,
+    "revenueEstimate": 14635133,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12350,6 +11470,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CHRS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.204,
+    "epsActual": null,
+    "revenueEstimate": 14688000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CI",
     "date": "2026-07-30",
     "hour": "bmo",
@@ -12366,16 +11496,6 @@
     "epsEstimate": 0.2881,
     "epsActual": null,
     "revenueEstimate": 511286985,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "CNH",
-    "date": "2026-07-30",
-    "hour": "bmo",
-    "epsEstimate": 0.1054,
-    "epsActual": null,
-    "revenueEstimate": 4420923520,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12430,6 +11550,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "COLL",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 1.7495,
+    "epsActual": null,
+    "revenueEstimate": 205230120,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "COLM",
     "date": "2026-07-30",
     "hour": "",
@@ -12440,12 +11570,42 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CPS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.5882,
+    "epsActual": null,
+    "revenueEstimate": 717672336,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CPSH",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": 8364000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CPT",
     "date": "2026-07-30",
     "hour": "amc",
     "epsEstimate": 0.2092,
     "epsActual": null,
     "revenueEstimate": 397097478,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CRAI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 2.1896,
+    "epsActual": null,
+    "revenueEstimate": 202881396,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12490,12 +11650,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CRSR",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.0677,
+    "epsActual": null,
+    "revenueEstimate": 316669587,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CSTL",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": -0.4148,
     "epsActual": null,
     "revenueEstimate": 87964575,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CTRE",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.3736,
+    "epsActual": null,
+    "revenueEstimate": 128613156,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12530,12 +11710,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "CVCO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 5.8038,
+    "epsActual": null,
+    "revenueEstimate": 602347403,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "CWT",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.7575,
     "epsActual": null,
     "revenueEstimate": 281409563,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CYTK",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -1.678,
+    "epsActual": null,
+    "revenueEstimate": 17700631,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12566,6 +11766,16 @@
     "epsEstimate": 1.3247,
     "epsActual": null,
     "revenueEstimate": 1720213638,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "DBRG",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.1462,
+    "epsActual": null,
+    "revenueEstimate": 108334200,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12610,7 +11820,27 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DJT",
+    "symbol": "DLB",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.6767,
+    "epsActual": null,
+    "revenueEstimate": 315079852,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "DLX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.8215,
+    "epsActual": null,
+    "revenueEstimate": 491163000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "DMLP",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": null,
@@ -12620,12 +11850,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DLB",
+    "symbol": "DOUG",
     "date": "2026-07-30",
     "hour": "",
-    "epsEstimate": 0.6767,
+    "epsEstimate": null,
     "epsActual": null,
-    "revenueEstimate": 315079852,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12646,6 +11876,16 @@
     "epsEstimate": 0.2761,
     "epsActual": null,
     "revenueEstimate": 911166197,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "DSGR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.4148,
+    "epsActual": null,
+    "revenueEstimate": 530808000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12690,12 +11930,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "DYN",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.7618,
+    "epsActual": null,
+    "revenueEstimate": 0,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "ECHO",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 1.736,
     "epsActual": null,
     "revenueEstimate": 3697943700,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ECVT",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 0.1906,
+    "epsActual": null,
+    "revenueEstimate": 242231640,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12850,12 +12110,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FBLG",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.7344,
+    "epsActual": null,
+    "revenueEstimate": 0,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "FCN",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 2.2826,
     "epsActual": null,
     "revenueEstimate": 1007615723,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FDUS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.5139,
+    "epsActual": null,
+    "revenueEstimate": 42669252,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12900,12 +12180,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "FNKO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.2108,
+    "epsActual": null,
+    "revenueEstimate": 204976823,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "FORR",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.2703,
     "epsActual": null,
     "revenueEstimate": 98851260,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "FOUR",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 1.2793,
+    "epsActual": null,
+    "revenueEstimate": 1264735403,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -12960,6 +12260,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "GCL",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GDDY",
     "date": "2026-07-30",
     "hour": "amc",
@@ -12970,12 +12280,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "GDOT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.3774,
+    "epsActual": null,
+    "revenueEstimate": 554019120,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GDYN",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.1088,
     "epsActual": null,
     "revenueEstimate": 108716363,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "GECC",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.357,
+    "epsActual": null,
+    "revenueEstimate": 11577000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13000,6 +12330,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "GHI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0808,
+    "epsActual": null,
+    "revenueEstimate": 24234950,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GLPI",
     "date": "2026-07-30",
     "hour": "amc",
@@ -13020,12 +12360,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "GOLF",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 1.6641,
+    "epsActual": null,
+    "revenueEstimate": 804007717,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GPI",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 10.9511,
     "epsActual": null,
     "revenueEstimate": 5755886414,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "GPRO",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.0204,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13076,6 +12436,26 @@
     "epsEstimate": 0.9198,
     "epsActual": null,
     "revenueEstimate": 1848882600,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "HASI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.7528,
+    "epsActual": null,
+    "revenueEstimate": 113532772,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "HBIO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.2142,
+    "epsActual": null,
+    "revenueEstimate": 21879000,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13170,6 +12550,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "IBP",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 2.5712,
+    "epsActual": null,
+    "revenueEstimate": 750791327,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "ICE",
     "date": "2026-07-30",
     "hour": "bmo",
@@ -13200,12 +12590,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "IESC",
+    "symbol": "IHRT",
     "date": "2026-07-30",
     "hour": "",
-    "epsEstimate": 4.9266,
+    "epsEstimate": -0.2805,
     "epsActual": null,
-    "revenueEstimate": 1101600000,
+    "revenueEstimate": 989555295,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13310,16 +12700,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "JOUT",
-    "date": "2026-07-30",
-    "hour": "",
-    "epsEstimate": 0.6936,
-    "epsActual": null,
-    "revenueEstimate": 189917880,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "JSDA",
     "date": "2026-07-30",
     "hour": "",
@@ -13370,12 +12750,52 @@
     "source": "finnhub"
   },
   {
+    "symbol": "KPTI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -1.3362,
+    "epsActual": null,
+    "revenueEstimate": 33780941,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "KRG",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.0929,
     "epsActual": null,
     "revenueEstimate": 197998986,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "KTB",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 1.0436,
+    "epsActual": null,
+    "revenueEstimate": 611081532,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "KTOS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.1385,
+    "epsActual": null,
+    "revenueEstimate": 418584652,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "KURA",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.8952,
+    "epsActual": null,
+    "revenueEstimate": 21723960,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13400,12 +12820,42 @@
     "source": "finnhub"
   },
   {
+    "symbol": "LAB",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0131,
+    "epsActual": null,
+    "revenueEstimate": 21012545,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "LASR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.1438,
+    "epsActual": null,
+    "revenueEstimate": 80156475,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "LAUR",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.986,
     "epsActual": null,
     "revenueEstimate": 618126803,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "LCUT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.221,
+    "epsActual": null,
+    "revenueEstimate": 138982823,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13470,22 +12920,22 @@
     "source": "finnhub"
   },
   {
+    "symbol": "LNTH",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 1.3201,
+    "epsActual": null,
+    "revenueEstimate": 369277566,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "LOPE",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 1.7068,
     "epsActual": null,
     "revenueEstimate": 267032603,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LPG",
-    "date": "2026-07-30",
-    "hour": "",
-    "epsEstimate": 2.1493,
-    "epsActual": null,
-    "revenueEstimate": 165171531,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13506,6 +12956,16 @@
     "epsEstimate": 0.3997,
     "epsActual": null,
     "revenueEstimate": 854167019,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "LXRX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0512,
+    "epsActual": null,
+    "revenueEstimate": 4077960,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13540,6 +13000,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MCHX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0204,
+    "epsActual": null,
+    "revenueEstimate": 11412780,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MCS",
     "date": "2026-07-30",
     "hour": "",
@@ -13570,12 +13040,52 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MGEE",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.7752,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MHK",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 2.6107,
     "epsActual": null,
     "revenueEstimate": 2815155011,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "MIDD",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 1.9712,
+    "epsActual": null,
+    "revenueEstimate": 698054003,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "MIRM",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": -0.6944,
+    "epsActual": null,
+    "revenueEstimate": 169443981,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "MLAB",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0306,
+    "epsActual": null,
+    "revenueEstimate": 62084003,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13596,6 +13106,16 @@
     "epsEstimate": 0.9802,
     "epsActual": null,
     "revenueEstimate": 413373176,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "MNST",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.5934,
+    "epsActual": null,
+    "revenueEstimate": 2477217002,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13680,6 +13200,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MTSI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 1.3726,
+    "epsActual": null,
+    "revenueEstimate": 342096565,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MTX",
     "date": "2026-07-30",
     "hour": "",
@@ -13706,6 +13236,16 @@
     "epsEstimate": 0.3636,
     "epsActual": null,
     "revenueEstimate": 167660000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "MYGN",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": -0.059,
+    "epsActual": null,
+    "revenueEstimate": 210149916,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13750,12 +13290,42 @@
     "source": "finnhub"
   },
   {
+    "symbol": "NNBR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0102,
+    "epsActual": null,
+    "revenueEstimate": 118728000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "NRSN",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": -0.1632,
     "epsActual": null,
     "revenueEstimate": 0,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "NTLA",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.8152,
+    "epsActual": null,
+    "revenueEstimate": 14182375,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "NTRA",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": -0.4993,
+    "epsActual": null,
+    "revenueEstimate": 675016171,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13776,16 +13346,6 @@
     "epsEstimate": 0.4298,
     "epsActual": null,
     "revenueEstimate": 128823960,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "OCGN",
-    "date": "2026-07-30",
-    "hour": "",
-    "epsEstimate": -0.0554,
-    "epsActual": null,
-    "revenueEstimate": 995662,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13850,6 +13410,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "OPK",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.0808,
+    "epsActual": null,
+    "revenueEstimate": 132545663,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "OWL",
     "date": "2026-07-30",
     "hour": "bmo",
@@ -13900,12 +13470,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "PBYI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0408,
+    "epsActual": null,
+    "revenueEstimate": 54060000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "PFO",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PGNY",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.3417,
+    "epsActual": null,
+    "revenueEstimate": 355655742,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13940,12 +13530,52 @@
     "source": "finnhub"
   },
   {
+    "symbol": "PRDO",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.816,
+    "epsActual": null,
+    "revenueEstimate": 216750000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PRQR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.1207,
+    "epsActual": null,
+    "revenueEstimate": 4670651,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PSKY",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.1559,
+    "epsActual": null,
+    "revenueEstimate": 7017059818,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "PTCT",
     "date": "2026-07-30",
     "hour": "amc",
     "epsEstimate": 0.3872,
     "epsActual": null,
     "revenueEstimate": 300318773,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "PTLO",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 0.0944,
+    "epsActual": null,
+    "revenueEstimate": 203540347,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -13980,6 +13610,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "RARE",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -1.2629,
+    "epsActual": null,
+    "revenueEstimate": 183842821,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "RBLX",
     "date": "2026-07-30",
     "hour": "",
@@ -13996,6 +13636,16 @@
     "epsEstimate": 0.97,
     "epsActual": null,
     "revenueEstimate": 744860263,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "REFR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14020,6 +13670,26 @@
     "source": "finnhub"
   },
   {
+    "symbol": "REZI",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.697,
+    "epsActual": null,
+    "revenueEstimate": 1975740000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "RIOT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.2387,
+    "epsActual": null,
+    "revenueEstimate": 155351671,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "RIVN",
     "date": "2026-07-30",
     "hour": "amc",
@@ -14030,12 +13700,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "RKT",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.171,
+    "epsActual": null,
+    "revenueEstimate": 2845932459,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "RMNI",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.0646,
     "epsActual": null,
     "revenueEstimate": 108915192,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "RPT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.1566,
+    "epsActual": null,
+    "revenueEstimate": 4250413,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14070,6 +13760,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "SANA",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": -0.1517,
+    "epsActual": null,
+    "revenueEstimate": 0,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "SBH",
     "date": "2026-07-30",
     "hour": "bmo",
@@ -14096,6 +13796,16 @@
     "epsEstimate": 0.3241,
     "epsActual": null,
     "revenueEstimate": 647265031,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "SIGA",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14150,6 +13860,26 @@
     "source": "finnhub"
   },
   {
+    "symbol": "SPCE",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.6557,
+    "epsActual": null,
+    "revenueEstimate": 129203,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "SPNT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.6506,
+    "epsActual": null,
+    "revenueEstimate": 714575290,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "SPSC",
     "date": "2026-07-30",
     "hour": "",
@@ -14180,22 +13910,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "SRTS",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": -0.1275,
+    "epsActual": null,
+    "revenueEstimate": 4692765,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "SSYS",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0077,
+    "epsActual": null,
+    "revenueEstimate": 141247560,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "STGW",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": 0.1923,
     "epsActual": null,
     "revenueEstimate": 769667907,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "STNG",
-    "date": "2026-07-30",
-    "hour": "",
-    "epsEstimate": 5.6081,
-    "epsActual": null,
-    "revenueEstimate": 441956361,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14240,6 +13980,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "TARA",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.3322,
+    "epsActual": null,
+    "revenueEstimate": 0,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "TBBK",
     "date": "2026-07-30",
     "hour": "",
@@ -14250,12 +14000,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "TCBS",
+    "symbol": "TDS",
     "date": "2026-07-30",
     "hour": "",
-    "epsEstimate": null,
+    "epsEstimate": 0.0798,
     "epsActual": null,
-    "revenueEstimate": null,
+    "revenueEstimate": 320968910,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14276,6 +14026,26 @@
     "epsEstimate": 1.2812,
     "epsActual": null,
     "revenueEstimate": 564639490,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "THRY",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.102,
+    "epsActual": null,
+    "revenueEstimate": 149031180,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "TMDX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.4739,
+    "epsActual": null,
+    "revenueEstimate": 187029240,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14306,6 +14076,16 @@
     "epsEstimate": 0.0202,
     "epsActual": null,
     "revenueEstimate": 8727410,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "TRMB",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.8171,
+    "epsActual": null,
+    "revenueEstimate": 970947486,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14350,6 +14130,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "TVTX",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.116,
+    "epsActual": null,
+    "revenueEstimate": 163875790,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "TW",
     "date": "2026-07-30",
     "hour": "",
@@ -14380,6 +14170,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "UEIC",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.0306,
+    "epsActual": null,
+    "revenueEstimate": 79694640,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "UNIT",
     "date": "2026-07-30",
     "hour": "",
@@ -14396,6 +14196,16 @@
     "epsEstimate": 1.0688,
     "epsActual": null,
     "revenueEstimate": 1187413620,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "USPH",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.8602,
+    "epsActual": null,
+    "revenueEstimate": 215532997,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14417,6 +14227,36 @@
     "epsActual": null,
     "revenueEstimate": 147444896,
     "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "VEL",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.6565,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "VIR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.3363,
+    "epsActual": null,
+    "revenueEstimate": 218620560,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "VIRT",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 1.8165,
+    "epsActual": null,
+    "revenueEstimate": 664239045,
+    "revenueActual": 1183000000,
     "source": "finnhub"
   },
   {
@@ -14450,12 +14290,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "VYGR",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": -0.4939,
+    "epsActual": null,
+    "revenueEstimate": 4822335,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "VYST",
     "date": "2026-07-30",
     "hour": "",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "WBD",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": -0.1215,
+    "epsActual": null,
+    "revenueEstimate": 9344257278,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14476,6 +14336,26 @@
     "epsEstimate": 4.0058,
     "epsActual": null,
     "revenueEstimate": 6502589272,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "WLFC",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 2.754,
+    "epsActual": null,
+    "revenueEstimate": 178500000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "WSC",
+    "date": "2026-07-30",
+    "hour": "amc",
+    "epsEstimate": 0.2399,
+    "epsActual": null,
+    "revenueEstimate": 591133133,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14550,6 +14430,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "XRAY",
+    "date": "2026-07-30",
+    "hour": "bmo",
+    "epsEstimate": 0.3572,
+    "epsActual": null,
+    "revenueEstimate": 907268141,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "XRX",
     "date": "2026-07-30",
     "hour": "",
@@ -14566,6 +14456,26 @@
     "epsEstimate": -0.0204,
     "epsActual": null,
     "revenueEstimate": 25373010,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "YELP",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.3978,
+    "epsActual": null,
+    "revenueEstimate": 374311327,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "YORW",
+    "date": "2026-07-30",
+    "hour": "",
+    "epsEstimate": 0.4029,
+    "epsActual": null,
+    "revenueEstimate": 22628700,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14590,22 +14500,22 @@
     "source": "finnhub"
   },
   {
-    "symbol": "ZSTK",
-    "date": "2026-07-30",
-    "hour": "",
-    "epsEstimate": -0.1122,
-    "epsActual": null,
-    "revenueEstimate": 7446000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "ABBV",
     "date": "2026-07-31",
     "hour": "bmo",
     "epsEstimate": 3.6684,
     "epsActual": null,
     "revenueEstimate": 17085346473,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "ACH",
+    "date": "2026-07-31",
+    "hour": "bmo",
+    "epsEstimate": -0.0865,
+    "epsActual": null,
+    "revenueEstimate": 633645043,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14636,6 +14546,16 @@
     "epsEstimate": 2.2485,
     "epsActual": null,
     "revenueEstimate": 3289486280,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "AVBC",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": 0.3468,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14740,7 +14660,17 @@
     "source": "finnhub"
   },
   {
-    "symbol": "DOUG",
+    "symbol": "DCH",
+    "date": "2026-07-31",
+    "hour": "bmo",
+    "epsEstimate": 0.154,
+    "epsActual": null,
+    "revenueEstimate": 2840206860,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "DJT",
     "date": "2026-07-31",
     "hour": "",
     "epsEstimate": null,
@@ -14800,6 +14730,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "IESC",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": 4.9266,
+    "epsActual": null,
+    "revenueEstimate": 1101600000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "INTT",
     "date": "2026-07-31",
     "hour": "",
@@ -14810,12 +14750,32 @@
     "source": "finnhub"
   },
   {
+    "symbol": "JOUT",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": 0.6936,
+    "epsActual": null,
+    "revenueEstimate": 189917880,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "KYIV",
     "date": "2026-07-31",
     "hour": "",
     "epsEstimate": 0.357,
     "epsActual": null,
     "revenueEstimate": 332601600,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "KYMR",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": -0.7414,
+    "epsActual": null,
+    "revenueEstimate": 29971894,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14860,6 +14820,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "MMI",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": 0.0303,
+    "epsActual": null,
+    "revenueEstimate": 195940000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "MOG.A",
     "date": "2026-07-31",
     "hour": "",
@@ -14876,6 +14846,16 @@
     "epsEstimate": -2.122,
     "epsActual": null,
     "revenueEstimate": 106077337,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "NATH",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14906,6 +14886,16 @@
     "epsEstimate": 0.1998,
     "epsActual": null,
     "revenueEstimate": 1995905440,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "OCGN",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": -0.0554,
+    "epsActual": null,
+    "revenueEstimate": 995662,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -14946,6 +14936,26 @@
     "epsEstimate": 3.4441,
     "epsActual": null,
     "revenueEstimate": 508149685,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "RPID",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": -0.2482,
+    "epsActual": null,
+    "revenueEstimate": 8032500,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "TCBS",
+    "date": "2026-07-31",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
