@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-20T04:58:11Z",
+  "generated_at": "2026-07-20T13:23:26Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -266,7 +266,7 @@
       "income": {
         "projected_annual_income": 1027.57,
         "yield_on_cost": 1.55,
-        "current_yield": 1.6,
+        "current_yield": 1.59,
         "dividend_growth_yoy": 10.73,
         "received_ytd": 653.07,
         "received_qtr": 117.77,
@@ -279,35 +279,35 @@
           "mkt_value": 3312.08,
           "cost_basis": 714.03,
           "unrealized_gain": 2598.05,
-          "pct_of_sleeve": 3.31
+          "pct_of_sleeve": 3.29
         },
         {
           "ticker": "FTNT",
           "mkt_value": 3966.11,
           "cost_basis": 1840.16,
           "unrealized_gain": 2125.95,
-          "pct_of_sleeve": 3.97
+          "pct_of_sleeve": 3.94
+        },
+        {
+          "ticker": "AMD",
+          "mkt_value": 3824.18,
+          "cost_basis": 1773.54,
+          "unrealized_gain": 2050.64,
+          "pct_of_sleeve": 3.8
         },
         {
           "ticker": "KEYS",
           "mkt_value": 4466.05,
           "cost_basis": 2434.23,
           "unrealized_gain": 2031.82,
-          "pct_of_sleeve": 4.47
-        },
-        {
-          "ticker": "AMD",
-          "mkt_value": 3665.86,
-          "cost_basis": 1773.54,
-          "unrealized_gain": 1892.32,
-          "pct_of_sleeve": 3.67
+          "pct_of_sleeve": 4.44
         },
         {
           "ticker": "TSM",
-          "mkt_value": 4663.96,
+          "mkt_value": 4781.78,
           "cost_basis": 2832.01,
-          "unrealized_gain": 1831.95,
-          "pct_of_sleeve": 4.67
+          "unrealized_gain": 1949.77,
+          "pct_of_sleeve": 4.76
         }
       ],
       "bottom_contributors": [
@@ -316,35 +316,35 @@
           "mkt_value": 6059.12,
           "cost_basis": 7834.36,
           "unrealized_gain": -1775.24,
-          "pct_of_sleeve": 6.06
+          "pct_of_sleeve": 6.03
         },
         {
           "ticker": "FCX",
           "mkt_value": 8459.02,
           "cost_basis": 9569.6,
           "unrealized_gain": -1110.58,
-          "pct_of_sleeve": 8.47
+          "pct_of_sleeve": 8.41
         },
         {
           "ticker": "MARA",
-          "mkt_value": 3423.62,
+          "mkt_value": 3542.0,
           "cost_basis": 4298.51,
-          "unrealized_gain": -874.89,
-          "pct_of_sleeve": 3.43
+          "unrealized_gain": -756.51,
+          "pct_of_sleeve": 3.52
         },
         {
           "ticker": "HOOD",
           "mkt_value": 6205.06,
           "cost_basis": 6689.42,
           "unrealized_gain": -484.36,
-          "pct_of_sleeve": 6.21
+          "pct_of_sleeve": 6.17
         },
         {
           "ticker": "VST",
           "mkt_value": 7712.31,
           "cost_basis": 8053.02,
           "unrealized_gain": -340.71,
-          "pct_of_sleeve": 7.72
+          "pct_of_sleeve": 7.67
         }
       ],
       "contribution_basis": "unrealized gain by current position since purchase"
