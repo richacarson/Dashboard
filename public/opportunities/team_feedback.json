@@ -20,5 +20,13 @@
   {
     "date": "2026-07-25",
     "feedback": "Closed airlines-hormuz-fuel-relief (On Our Radar, 26 days). Brent >$90 for 5 consecutive sessions Jul 20-24 on Iran-US ceasefire unraveling (Qatari LNG tanker strike near Oman early July per Bloomberg/CFR), so invalidation trigger #1 clearly met. Middle East supply-shock chemistry basket (LYB/DOW/WLK/AA/CENX/LNG/EQT) remains active \u2014 same event set is bullish for those and bearish for the airlines carry trade."
+  },
+  {
+    "date": "2026-07-25",
+    "feedback": "Zombie-opp problem recurred on this run: Step-8 defensive recovery re-injected airlines-hormuz-fuel-relief.json from the Dashboard immediately after Step 2 closed it to ledger. Ledger already records the close, so a second commit deleted the resurrected file and a second Dashboard sync removed it there too. Recommend adding the same ledger.json-slug skip filter to Step 8's defensive-recovery block that Step 0 uses (currently only Step 0 checks the zombie list; Step 8 does not)."
+  },
+  {
+    "date": "2026-07-26",
+    "feedback": "Stalking age-out (>45d): removed cdw-ai-infrastructure-reseller-pull-forward (CDW, age 46d) \u2014 no dated catalyst or fresh signal materialized; will re-file if a new cluster print or catalyst event lands"
   }
 ]
