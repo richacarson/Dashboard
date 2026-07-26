@@ -21,10 +21,10 @@
     "headline": "AEM new RED — Q2 gold crash -14% ($4,861→$4,040/oz) matches thesis key_risk #1 (AMBER→RED). MARA/HUT new AMBER on crypto weakness and Q1 EPS miss. STLD new AMBER on Q2 margin squeeze. LRCX/KEYS downgraded AMBER on recovery. CAT + ADI resolved GREEN. MRVL/CRDO/QCOM persisting RED."
   },
   {
-    "date": "2026-07-25",
-    "red": 5,
-    "amber": 5,
-    "green": 42,
-    "headline": "25-day gap since last run (2026-06-30) — first read back is a catch-up, not continuous monitoring. CRDO/MRVL/QCOM/LRCX/AEM persisting RED (LRCX re-escalated from AMBER). CWAN roster issue unresolved for 25 days: deal closed/delisted 6/25, still listed in portfolios.json. New AMBER: HOOD (CEO account hack, credit scrutiny), FCX (guidance trim despite beat). SSNC new GREEN +10.3% on Q2 beat/raise. Hyperscaler capex season live — GOOGL capex raised to $195-205B (7/22); MSFT/META 7/29, AMZN 7/30."
+    "date": "2026-07-24",
+    "red": 4,
+    "amber": 7,
+    "green": 39,
+    "headline": "26-day coverage gap since last run (2026-06-30) — flagged as its own roster-integrity issue. MRVL/QCOM/CRDO persisting RED on compounding valuation compression; MARA escalated AMBER→RED on SEC-filed insider selling and deepening analyst target cuts. AEM downgraded RED→AMBER as gold stabilized (~$4,055/oz). HUT and STLD resolved GREEN. New AMBER: HOOD (multi-factor sentiment), GPC (unconfirmed O'Reilly bid speculation), FCX (second Grasberg guidance cut). CWAN still undelisted in portfolios.json a month after first flagged. Dense earnings cluster 7/28-8/26; Alphabet (not held) raised capex guidance to $195-205B on 7/22 but still sold off."
   }
 ]
