@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T11:50:30Z",
+  "generated_at": "2026-07-26T11:49:06Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -684,13 +684,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 3.69,
-        "eps_estimate": 3.7092,
-        "surprise": -0.0192,
-        "surprise_pct": -0.5176
-      }
+      "earnings": null
     },
     "SYK": {
       "sleeve": "Dividend",
@@ -1424,7 +1418,6 @@
     "NEE",
     "ORI",
     "SSNC",
-    "STLD",
     "SYF",
     "TEL"
   ],
