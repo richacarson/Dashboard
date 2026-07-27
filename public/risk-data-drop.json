@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T11:49:06Z",
+  "generated_at": "2026-07-27T11:49:22Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -378,13 +378,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 4.1,
-        "eps_estimate": 3.7893,
-        "surprise": 0.3107,
-        "surprise_pct": 8.1994
-      }
+      "earnings": null
     },
     "GPC": {
       "sleeve": "Dividend",
@@ -408,13 +402,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 2.15,
-        "eps_estimate": 2.0963,
-        "surprise": 0.0537,
-        "surprise_pct": 2.5617
-      }
+      "earnings": null
     },
     "LRCX": {
       "sleeve": "Dividend",
@@ -462,13 +450,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 7.94,
-        "eps_estimate": 7.2037,
-        "surprise": 0.7363,
-        "surprise_pct": 10.2211
-      }
+      "earnings": null
     },
     "NEE": {
       "sleeve": "Dividend",
@@ -492,13 +474,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 1.15,
-        "eps_estimate": 1.105,
-        "surprise": 0.045,
-        "surprise_pct": 4.0724
-      }
+      "earnings": null
     },
     "NTR": {
       "sleeve": "Dividend",
@@ -546,13 +522,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 0.76,
-        "eps_estimate": 0.7999,
-        "surprise": -0.0399,
-        "surprise_pct": -4.9881
-      }
+      "earnings": null
     },
     "PCAR": {
       "sleeve": "Dividend",
@@ -624,13 +594,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 3.12,
-        "eps_estimate": 2.8535,
-        "surprise": 0.2665,
-        "surprise_pct": 9.3394
-      }
+      "earnings": null
     },
     "SSNC": {
       "sleeve": "Dividend",
@@ -654,13 +618,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 1.76,
-        "eps_estimate": 1.7125,
-        "surprise": 0.0475,
-        "surprise_pct": 2.7737
-      }
+      "earnings": null
     },
     "STLD": {
       "sleeve": "Dividend",
@@ -732,13 +690,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 2.94,
-        "eps_estimate": 2.8714,
-        "surprise": 0.0686,
-        "surprise_pct": 2.3891
-      }
+      "earnings": null
     },
     "VLO": {
       "sleeve": "Dividend",
@@ -1002,13 +954,7 @@
           "strongSell": 1
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 0.74,
-        "eps_estimate": 0.596,
-        "surprise": 0.144,
-        "surprise_pct": 24.1611
-      }
+      "earnings": null
     },
     "FTNT": {
       "sleeve": "Growth",
@@ -1296,13 +1242,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 2.59,
-        "eps_estimate": 2.1322,
-        "surprise": 0.4578,
-        "surprise_pct": 21.4708
-      }
+      "earnings": null
     },
     "TSM": {
       "sleeve": "Growth",
@@ -1409,18 +1349,7 @@
       "quote_source": "alpaca"
     }
   },
-  "recent_reporters": [
-    "DGX",
-    "FCX",
-    "GD",
-    "GPC",
-    "LMT",
-    "NEE",
-    "ORI",
-    "SSNC",
-    "SYF",
-    "TEL"
-  ],
+  "recent_reporters": [],
   "errors": [],
   "sources": {
     "price": "alpaca",
