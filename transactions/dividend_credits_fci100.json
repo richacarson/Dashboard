@@ -438,5 +438,15 @@
     "ticker": "CAT",
     "ex_date": "2026-07-20",
     "dps": 1.63
+  },
+  {
+    "ticker": "COST",
+    "ex_date": "2026-07-24",
+    "dps": 1.47
+  },
+  {
+    "ticker": "NVT",
+    "ex_date": "2026-07-24",
+    "dps": 0.21
   }
 ]
