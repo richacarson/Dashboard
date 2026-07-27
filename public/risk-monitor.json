@@ -1,8 +1,16 @@
 {
-  "generated_at": "2026-07-26T11:49:06Z",
+  "generated_at": "2026-07-27T12:05:00Z",
   "as_of_session": "2026-07-24",
   "universe_count": 50,
   "universe_incomplete": true,
+  "data_freshness": {
+    "drop_generated_at": "2026-07-27T11:49:22Z",
+    "drop_age_min": 16,
+    "priced": 52,
+    "errors": [],
+    "note": "Fresh drop — Risk Data Drop Action was stale (24h) at run start, dispatched on demand and completed successfully. Prices reflect Friday 2026-07-24 close (pre-market Monday run)."
+  },
+  "coverage_note": "Risk Sentinel did not run between 2026-06-30 and 2026-07-27 (27-day gap). Day-by-day persistence tracking for this window is unavailable; flags below are assessed fresh against the 2026-06-30 report and current data, not a continuous daily record. Flag this gap to Carson — the routine should be running daily.",
   "roster_integrity": {
     "ok": false,
     "issues": [
@@ -10,361 +18,244 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "CWAN (Clearwater Analytics) completed its $8.4B take-private (Permira/Warburg Pincus/Francisco Partners/Temasek) at $24.55/share on 2026-06-25 and no longer trades on the NYSE. Confirmed via company release (cwan.com), Permira's press release, and an SEC 8-K. Still listed in data/portfolios.json growth sleeve; the data feed is returning a stale frozen quote (~$24.56) that reads as a live price. This was first flagged on 2026-06-30 and is now uncorrected a full month later.",
-        "action": "Remove CWAN from data/portfolios.json growth sleeve; stop monitoring."
-      },
-      {
-        "ticker": "PORTFOLIO",
-        "type": "coverage_gap",
-        "severity": "red",
-        "detail": "This run follows a 26-day gap in Sentinel coverage \u2014 last run was 2026-06-30, this run is 2026-07-26. No daily reads exist for 2026-07-01 through 2026-07-25, so that period's intraday price action, earnings prints, and breaking news for the 50 holdings are not individually captured in risk-history.json. Today's flags were reconstructed via a point-in-time data drop plus targeted catch-up research, not a continuous daily watch. The gap itself \u2014 not just its content \u2014 is the finding: this violates the 'never go dark' mandate.",
-        "action": "Confirm the scheduling/trigger for the daily Sentinel run is actually firing; investigate why no runs landed between 2026-06-30 and 2026-07-26."
+        "detail": "Clearwater Analytics take-private by Permira/Warburg Pincus (with Francisco Partners, Temasek) closed 2026-06-25 at $24.55/share; stock delisted from NYSE. Still listed in portfolios.json growth sleeve. The data drop still returns a frozen $24.55-24.56 quote (Alpaca last-trade echo for a delisted symbol, not a live market price) — pct_change ~0% every session is itself the tell. This was first flagged 2026-06-30 and remains uncorrected.",
+        "action": "Remove CWAN from data/portfolios.json growth sleeve. Flagged for 2nd consecutive run."
       }
     ],
-    "universe_note": "ETHA and IBIT (Digital-Asset-ETF sleeve) appear in the Risk Data Drop (52 holdings priced, 0 errors) but are absent from data/portfolios.json, which covers 50 of 52 priced holdings. universe_incomplete=true until corrected."
+    "universe_note": "portfolios.json covers 50 of the firm's 52 holdings. ETHA and IBIT (Digital-Asset-ETF sleeve) are priced in risk-data-drop.json but absent from portfolios.json — add them so coverage is complete. The CTRA→DVN correction noted in a prior run has been made (DVN present, no CTRA)."
   },
   "summary": {
     "red": 4,
-    "amber": 7,
-    "green": 39,
-    "headline": "Coverage gap: no Sentinel run for 26 days (last: 2026-06-30). MRVL/QCOM/CRDO persist RED on compounding valuation compression; MARA escalated AMBER\u2192RED on SEC-filed insider selling plus deepening analyst target cuts. CWAN still undelisted in portfolios.json a month after first flagged. Dense earnings cluster ahead: NXPI 7/28, LRCX/QCOM/GD/AEM/HOOD 7/29, AMZN/COIN 7/30, AMD 8/4, VST 8/7, NVDA 8/26 \u2014 first hyperscaler data point (Alphabet, reported 7/22) raised 2026 capex guidance to $195\u2013205B but still sold off ~3.7% on spend-intensity concerns."
+    "amber": 10,
+    "green": 36,
+    "headline": "CRDO/MRVL/LRCX persisting-to-escalating RED on the AI-capex-anxiety selloff (CRDO -24% and MRVL -32% over the past month, both direct thesis-risk hits); LRCX re-escalated to RED after a June 30 downgrade. Broad AI-infrastructure and crypto sympathy weakness (AMD/ADI/KEYS/NXPI/TSM/QCOM, HOOD/HUT/MARA) 2 days ahead of MSFT/META earnings (7/29) and AAPL/AMZN (7/30) — the hyperscaler capex print the desk has been watching. SSNC +10.3% on a Q2 beat and raised guidance, directly resolving its AI-disruption key_risk into a tailwind. AEM and STLD recovered to GREEN. CWAN roster issue (delisted, still in portfolios.json) persists uncorrected for a 2nd run. Sentinel had a 27-day monitoring gap (6/30-7/27) — flagging that gap itself."
   },
   "flags": [
     {
-      "id": "MRVL_capex_2026-06-26",
-      "ticker": "MRVL",
-      "sleeve": "Growth",
-      "severity": "red",
-      "category": "sector_selloff",
-      "headline": "MRVL -7.11% on the session; cumulative ~-38% off June 4 all-time high ($316.43 \u2192 $194.51)",
-      "detail": "Continues the AI-chip de-rating flagged since 2026-06-26. New this period: Benchmark analyst Cody Acree downgraded MRVL from Buy to Hold, citing reporting that Amazon shifted Trainium3/Trainium4 chip design work to Taiwan's Alchip Technologies \u2014 MRVL designed the earlier Trainium2 generation. Neither Marvell nor Amazon has confirmed this shift; the claim traces to Bloomberg-sourced reporting repeated by secondary aggregators (TradingView/GuruFocus), not a primary filing or direct tier-1 article \u2014 unconfirmed by tier-1 source, treat as a live risk to watch rather than a settled fact. Underlying FY2027 revenue guidance (~$11.5B, raised 2026-05-27) has not been revised down. Consensus remains Buy (28 analysts) and KeyBanc raised its PT to $400 on 7/14.",
-      "metric": {
-        "price": 194.51,
-        "day_move_pct": -7.11,
-        "level_ref": null
-      },
-      "thesis_link": "Matches MRVL key_risk: 'Hyperscaler customer concentration \u2014 a small number of accounts (Alphabet, Amazon, Microsoft) generate the majority of AI-related revenue, and any shift toward fully in-house chip design or reallocation of custom silicon budgets could create material headwinds.' The Alchip design-loss reporting, if confirmed, would be this risk materializing at Marvell's largest custom-silicon relationship.",
-      "evidence": [
-        {
-          "source": "Motley Fool",
-          "url": "https://www.fool.com/investing/2026/06/18/marvell-stock-just-hit-a-new-high-a-quiet-amazon-d/",
-          "as_of": "2026-06-18"
-        },
-        {
-          "source": "TradingView (GuruFocus, citing Benchmark analyst note)",
-          "url": "https://www.tradingview.com/news/gurufocus%3A791509ab0094b%3A0-marvell-stock-faces-heavy-sell-off-after-benchmark-flags-amazon-design-loss",
-          "as_of": "2026-07-21"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "persisting"
-    },
-    {
-      "id": "QCOM_memory_2026-06-26",
-      "ticker": "QCOM",
-      "sleeve": "Dividend",
-      "severity": "red",
-      "category": "sector_selloff",
-      "headline": "QCOM -2.43% on the session; ~-23% over the trailing month, worst stretch in years",
-      "detail": "Continues the decline flagged since 2026-06-26. Multiple analysts downgraded QCOM to Hold in early July following the June Investor Day, which highlighted execution and margin risk. Secondary reporting (via Bloomberg, not independently verified this run) describes QCOM signaling double-digit chip price increases tied to a DRAM/memory cost spike, against a backdrop of global smartphone shipments down 11% YoY in Q2 2026 (IDC/Canalys, via secondary reporting) \u2014 treat the pricing/memory claim as color, not confirmed, pending a direct tier-1 check. Q3 FY2026 earnings land 2026-07-29 (EPS consensus $2.22, down ~20% YoY) \u2014 the next hard confirmation point either way.",
-      "metric": {
-        "price": 167.065,
-        "day_move_pct": -2.43,
-        "level_ref": null
-      },
-      "thesis_link": "Matches QCOM key_risk: 'Handset concentration at ~74% of QCT revenue creates vulnerability to smartphone market cyclicality' \u2014 a global smartphone shipment decline plus rising component costs is this risk playing out, pending 7/29 earnings confirmation.",
-      "evidence": [
-        {
-          "source": "Secondary reporting (Bloomberg via aggregators; not independently confirmed)",
-          "url": null,
-          "as_of": "2026-07-21"
-        }
-      ],
-      "first_seen": "2026-06-28",
-      "status": "persisting"
-    },
-    {
-      "id": "CRDO_ai_capex_2026-06-26",
+      "id": "CRDO_ai_capex_2026-07-27",
       "ticker": "CRDO",
       "sleeve": "Growth",
       "severity": "red",
       "category": "sector_selloff",
-      "headline": "CRDO -9.73% on the session; down ~24% cumulative in under two weeks with no identified negative catalyst",
-      "detail": "Continues the decline flagged since 2026-06-26, now compounding: a 6-session slide erased ~$12B in market cap through 2026-07-20, and the 2026-07-24 session (-7.3% per MarketBeat) traded on volume 92% below average \u2014 consistent with a low-liquidity technical unwind rather than new fundamental news. No negative company-specific catalyst was found. Analysts have stayed bullish through the decline: Susquehanna raised its PT to $250 (from $235) and Barclays to $300 (from $260) in late July. The magnitude of the drawdown absent any confirmed cause is itself notable and worth the desk's attention \u2014 next earnings ~2026-09-09 (estimated, unconfirmed).",
-      "metric": {
-        "price": 213.49,
-        "day_move_pct": -9.73,
-        "level_ref": null
-      },
-      "thesis_link": "Matches CRDO key_risk: 'Extreme valuation \u2014 109x trailing P/E and 39x forward P/E... embed aggressive growth expectations, leaving minimal margin of safety for any execution miss or AI capex slowdown.' The multiple is compressing in real time even without a confirmed negative catalyst.",
+      "headline": "CRDO -9.73% Friday session; -24% over 6 sessions, -18.7% over the month",
+      "detail": "Credo Technology fell $236.51→$213.49 (-9.73%) in the latest session, extending a 6-day losing streak that has erased ~$12B in market value (-23.7% cumulative), now well off its $308.67 52-week high. Trigger is the broader AI-infrastructure capex-anxiety rotation (Meta's July 1 'Meta Compute' surplus-capacity announcement reframed hyperscaler demand assumptions), not a CRDO-specific event. Trailing P/E of ~81 leaves no room for a guidance miss. Analysts remain bullish despite the move: Barclays raised its price target to $300 from $260 on 7/20 with a fresh Buy rating on 7/22.",
+      "metric": { "price": 213.49, "day_move_pct": -9.73, "prev_close": 236.51, "level_ref": null },
+      "thesis_link": "Matches CRDO key_risk #1: 'Extreme valuation — 109x trailing P/E ... embed aggressive growth expectations, leaving minimal margin of safety for any execution miss or AI capex slowdown.' The capex-anxiety rotation is that risk materializing in price, ahead of confirming/denying hyperscaler earnings this week.",
       "evidence": [
-        {
-          "source": "MarketBeat",
-          "url": null,
-          "as_of": "2026-07-24"
-        },
-        {
-          "source": "Trefis",
-          "url": null,
-          "as_of": "2026-07-20"
-        }
+        { "source": "MarketBeat — Credo Technology Group (NASDAQ:CRDO) Stock Price Down 7.3%", "url": "https://www.marketbeat.com/instant-alerts/credo-technology-group-nasdaqcrdo-stock-price-down-73-heres-what-happened-2026-07-24/", "as_of": "2026-07-24" },
+        { "source": "Trefis — A 6-Day Losing Streak Has Credo Technology Stock Down 24%", "url": "https://www.trefis.com/stock/crdo/articles-v3/607961/a-6-day-losing-streak-has-credo-technology-stock-down-24/2026-07-20", "as_of": "2026-07-20" }
       ],
       "first_seen": "2026-06-28",
       "status": "persisting"
     },
     {
-      "id": "MARA_leverage_2026-07-24",
-      "ticker": "MARA",
+      "id": "MRVL_ai_capex_2026-07-27",
+      "ticker": "MRVL",
       "sleeve": "Growth",
       "severity": "red",
-      "category": "insider_selling",
-      "headline": "MARA -4.78% on the session; escalated from AMBER \u2014 repeated insider selling plus deepening analyst target cuts",
-      "detail": "Escalating from the 2026-06-30 AMBER flag (Q1 EPS miss). Insider Zabi Nowaid filed a new Form 144 to sell ~$100K of shares on 2026-07-21, continuing a pattern of insider sales in May and June 2026. Separately, Morgan Stanley cut its price target further to $5.50 (from $7, Underweight) against a $12.15 share price \u2014 implying analysts see over 50% further downside \u2014 following Bernstein's earlier cut to $17. A positive offset exists (a Texas power-site acquisition path to ~1GW by 2027 drove an 11-16% pop around 7/20-21), but the insider-selling pattern and the depth of the target cuts are the more material, escalating signal.",
-      "metric": {
-        "price": 12.15,
-        "day_move_pct": -4.78,
-        "level_ref": null
-      },
-      "thesis_link": "Matches MARA key_risk: 'Persistent GAAP losses ($1.3B in Q1 2026 alone)... create existential risk if crypto enters a prolonged downturn and the company cannot service its $850M convertible debt obligations.' Repeated insider selling into a stock analysts see falling toward $5.50 is consistent with this risk deepening rather than resolving.",
+      "category": "sector_selloff",
+      "headline": "MRVL -7.11% Friday session; -32% over the past month",
+      "detail": "Marvell fell $209.39→$194.51 (-7.11%), extending a slide from its $316.43 all-time closing high (6/4) to roughly -39% off highs. Driven by revised hyperscaler capex forecasts and reports that Amazon may have shifted next-gen Trainium design work away from Marvell, clouding the custom-silicon narrative even as the design-win pipeline is reported intact. Same macro trigger as CRDO (AI-capex-anxiety rotation post 'Meta Compute').",
+      "metric": { "price": 194.51, "day_move_pct": -7.11, "prev_close": 209.39, "level_ref": null },
+      "thesis_link": "Matches MRVL key_risk #1 ('any miss against the $16.5B FY2028 revenue target or moderation in hyperscaler AI capex would trigger severe multiple compression') and key_risk #2 (hyperscaler customer concentration / in-house chip design shift) — the Amazon Trainium report is a direct hit on risk #2.",
       "evidence": [
-        {
-          "source": "SEC Form 144 filing (via StockTitan)",
-          "url": null,
-          "as_of": "2026-07-21"
-        },
-        {
-          "source": "Motley Fool",
-          "url": null,
-          "as_of": "2026-07-21"
-        }
+        { "source": "GuruFocus — Marvell Technology Inc (MRVL) Shares Fall 7.2%", "url": "https://www.gurufocus.com/news/8978667/marvell-technology-inc-mrvl-shares-fall-72-gf-value-says-still-overvalued", "as_of": "2026-07-24" },
+        { "source": "The Motley Fool — Marvell Technology: The Stock Is Down 39% From Its High", "url": "https://www.fool.com/investing/2026/07/21/marvell-technology-the-stock-is-down-39-from-its-h/", "as_of": "2026-07-21" }
       ],
-      "first_seen": "2026-06-30",
+      "first_seen": "2026-06-28",
+      "status": "persisting"
+    },
+    {
+      "id": "LRCX_ai_capex_2026-07-27",
+      "ticker": "LRCX",
+      "sleeve": "Dividend",
+      "severity": "red",
+      "category": "sector_selloff",
+      "headline": "LRCX -4.48% Friday session; -20.4% over the month — re-escalated after 6/30 downgrade",
+      "detail": "Lam Research fell $319.76→$305.42 (-4.48%), part of a broader semiconductor-equipment selloff on concerns AI chip demand is plateauing and sector overcapacity risk. This name was downgraded RED→AMBER on 2026-06-30 as the prior rout cooled; it has since resumed declining (-10.2% on 7/2, -5.28% on 7/13, -4.6% on 7/24) for a cumulative -20.4% monthly loss, warranting re-escalation to RED.",
+      "metric": { "price": 305.42, "day_move_pct": -4.48, "prev_close": 319.76, "level_ref": null },
+      "thesis_link": "Matches LRCX key_risk #1 ('any deceleration in AI infrastructure spending ... could trigger significant multiple compression') and key_risk #3 (semiconductor equipment cyclicality reversing from the current AI super-cycle).",
+      "evidence": [
+        { "source": "GuruFocus — Lam Research Corp (LRCX) Shares Fall 4.6%", "url": "https://www.gurufocus.com/news/8978656/lam-research-corp-lrcx-shares-fall-46-what-gf-score-of-85-tells-investors", "as_of": "2026-07-24" },
+        { "source": "Yahoo Finance — Lam Research (LRCX) Stock Falls As AI Demand Fears Clash With Company Guidance", "url": "https://finance.yahoo.com/markets/stocks/articles/lam-research-lrcx-stock-falls-120800140.html", "as_of": "2026-07-07" }
+      ],
+      "first_seen": "2026-06-28",
+      "status": "persisting"
+    },
+    {
+      "id": "AMD_ai_capex_calendar_2026-07-27",
+      "ticker": "AMD",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "sector_selloff",
+      "headline": "AMD -3.24% — AI-capex sympathy weakness ahead of hyperscaler earnings",
+      "detail": "Fell $539.50→$522.03 on the same sector-wide capex-anxiety rotation as CRDO/MRVL, 2 sessions before MSFT/META report (7/29).",
+      "metric": { "price": 522.03, "day_move_pct": -3.24, "prev_close": 539.50, "level_ref": null },
+      "thesis_link": "Matches AMD key_risk #1: 'any AI spending deceleration or customer pause would trigger severe multiple compression from elevated levels.'",
+      "evidence": [
+        { "source": "intellectia.ai — AI Chip Stocks July 2026 Selloff", "url": "https://intellectia.ai/blog/ai-chip-stocks-july-2026-selloff", "as_of": "2026-07-24" }
+      ],
+      "first_seen": "2026-07-27",
       "status": "new"
     },
     {
-      "id": "LRCX_wfe_2026-06-26",
-      "ticker": "LRCX",
+      "id": "ADI_ai_capex_2026-07-27",
+      "ticker": "ADI",
       "sleeve": "Dividend",
       "severity": "amber",
       "category": "sector_selloff",
-      "headline": "LRCX -4.48% on the session \u2014 broad wafer-fab-equipment selloff, no company-specific negative news",
-      "detail": "No stock-specific negative catalyst identified; consistent with a sector-wide semiconductor-equipment pullback also hitting KEYS/NXPI/ADI today. Analyst sentiment remains strongly positive (Morgan Stanley PT to $404, Evercore ISI to $355 in July). Q4 FY2026 earnings land 2026-07-29 \u2014 the next real test.",
-      "metric": {
-        "price": 305.42,
-        "day_move_pct": -4.48,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-06-28",
-      "status": "persisting"
+      "headline": "ADI -2.18% — AI-capex sympathy weakness",
+      "detail": "Part of the broad semiconductor/AI-infrastructure sympathy selloff; no ADI-specific news found.",
+      "metric": { "price": 371.99, "day_move_pct": -2.18, "prev_close": 380.29, "level_ref": null },
+      "thesis_link": "Matches ADI key_risk #1: 'any normalization in AI data center capital spending or semiconductor cycle deceleration' would compress the premium multiple.",
+      "evidence": [
+        { "source": "intellectia.ai — AI Chip Stocks Valuation Concerns July 2026", "url": "https://intellectia.ai/blog/ai-chip-stocks-valuation-concerns-july-2026", "as_of": "2026-07-24" }
+      ],
+      "first_seen": "2026-07-27",
+      "status": "new"
     },
     {
-      "id": "NXPI_sector_2026-06-26",
-      "ticker": "NXPI",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "sector_contagion",
-      "headline": "NXPI -2.97% on the session \u2014 continued automotive-chip softness, no new catalyst",
-      "detail": "Consistent with the automotive-demand softness already flagged; no new negative development found. Analyst actions are mixed-to-positive (BofA PT $310, Cantor Fitzgerald PT $400). Q2 2026 earnings land 2026-07-28.",
-      "metric": {
-        "price": 269.28,
-        "day_move_pct": -2.97,
-        "level_ref": null
-      },
-      "thesis_link": "Matches NXPI key_risk: 'Automotive semiconductor demand is cyclical and tied to global vehicle production volumes.'",
-      "evidence": [],
-      "first_seen": "2026-06-28",
-      "status": "persisting"
-    },
-    {
-      "id": "KEYS_valuation_2026-06-26",
+      "id": "KEYS_ai_capex_2026-07-27",
       "ticker": "KEYS",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "valuation_compression",
-      "headline": "KEYS -1.99% on the session \u2014 valuation-driven pullback after a 106% run, no fundamental change",
-      "detail": "No new negative catalyst; Morgan Stanley upgraded to Overweight in mid-July and KEYS won a 3-year ESA blockchain-anomaly-detection contract. Q3 2026 earnings expected to show +40% YoY EPS growth. Reads as profit-taking on a stretched multiple, not deterioration.",
-      "metric": {
-        "price": 318.675,
-        "day_move_pct": -1.99,
-        "level_ref": null
-      },
-      "thesis_link": "Matches KEYS key_risk: 'Valuation vulnerability at 49x trailing P/E and 30.5x forward P/E \u2014 any moderation in AI infrastructure capex could trigger significant multiple compression.'",
+      "category": "sector_selloff",
+      "headline": "KEYS -1.99% — AI-infrastructure capex sympathy weakness",
+      "detail": "Re-approaching the AMBER level it was downgraded to on 6/30 ('stabilizing'); modest renewed weakness alongside the sector, no company-specific news found.",
+      "metric": { "price": 318.675, "day_move_pct": -1.99, "prev_close": 325.13, "level_ref": null },
+      "thesis_link": "Matches KEYS key_risk #1: 'any moderation in AI infrastructure capex could trigger significant multiple compression on a stock that has surged 113% in the past year.'",
       "evidence": [],
-      "first_seen": "2026-06-28",
+      "first_seen": "2026-06-30",
       "status": "persisting"
     },
     {
-      "id": "HOOD_sentiment_2026-07-24",
+      "id": "NXPI_sector_sympathy_2026-07-27",
+      "ticker": "NXPI",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "sector_selloff",
+      "headline": "NXPI -2.97% — broad semiconductor sympathy selling",
+      "detail": "No NXPI-specific news found; move tracks the sector-wide AI-capex-anxiety rotation. NXPI's own key_risk is automotive-cycle exposure, not AI capex, so this reads as sympathy rather than a thesis hit.",
+      "metric": { "price": 269.28, "day_move_pct": -2.97, "prev_close": 277.52, "level_ref": null },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-07-27",
+      "status": "new"
+    },
+    {
+      "id": "TSM_sector_sympathy_2026-07-27",
+      "ticker": "TSM",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "sector_selloff",
+      "headline": "TSM -2.78% — broad semiconductor sympathy selling",
+      "detail": "No TSM-specific negative news; TSMC's own Q2 print (reported ahead of this window) beat on profit/revenue and raised capex guidance, which is fundamentally positive. The decline reads as sector sympathy, not a thesis hit (TSM's key_risk is Taiwan-Strait geopolitical, unrelated to this move).",
+      "metric": { "price": 402.68, "day_move_pct": -2.78, "prev_close": 415.57, "level_ref": null },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-07-27",
+      "status": "new"
+    },
+    {
+      "id": "QCOM_sector_sympathy_2026-07-27",
+      "ticker": "QCOM",
+      "sleeve": "Dividend",
+      "severity": "amber",
+      "category": "sector_selloff",
+      "headline": "QCOM -2.43% — broad semiconductor sympathy selling",
+      "detail": "No QCOM-specific news beyond the ongoing China/QCT recovery watch already in its thesis; this move tracks the broader sector rotation rather than a new development.",
+      "metric": { "price": 167.065, "day_move_pct": -2.43, "prev_close": 171.23, "level_ref": null },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-07-27",
+      "status": "new"
+    },
+    {
+      "id": "HOOD_crypto_earnings_2026-07-27",
       "ticker": "HOOD",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "sentiment_multi_factor",
-      "headline": "HOOD -6.58% on the session \u2014 multiple compounding negatives: CEO account hacked, credit-expansion scrutiny, pre-earnings jitters",
-      "detail": "No single dominant catalyst; several factors stacked this week: (1) CEO Vlad Tenev's X account was hacked and used to promote a scam 'VLAD' token \u2014 reputational/security overhang, no financial impact identified; (2) Robinhood's first-ever asset-backed bond sale ($400-500M, backed by credit-card receivables) is drawing investor scrutiny as the company expands into consumer lending, credit-risk-appetite question; (3) ARK Invest sold ~$10.35M of HOOD shares on 7/22; (4) broader tech/crypto softness this week (Nasdaq -1.63%). Q2 earnings land 2026-07-29 (consensus $0.41 EPS / $1.21B revenue) \u2014 next confirmation point.",
-      "metric": {
-        "price": 94.905,
-        "day_move_pct": -6.58,
-        "level_ref": null
-      },
-      "thesis_link": "The credit-expansion scrutiny touches on HOOD key_risk: 'Multi-front regulatory risk from SEC, CFTC, and state regulators... could constrain the fastest-growing product lines' \u2014 new lending/ABS activity is a new regulatory-scrutiny surface, not yet a confirmed problem.",
+      "category": "crypto_weakness",
+      "headline": "HOOD -6.58% — crypto selloff pressure ahead of 7/29 earnings",
+      "detail": "Robinhood fell alongside the broader crypto drawdown (Bitcoin holding $64-66.8k after slipping toward $60k in June, its worst month since 2022) with Q2 earnings landing in 2 days (7/29). No new company-specific news — this is anticipatory positioning into the print, not a realized shock yet.",
+      "metric": { "price": 94.905, "day_move_pct": -6.58, "prev_close": 101.59, "level_ref": null },
+      "thesis_link": "Matches HOOD key_risk #1: crypto revenue collapsed 47% YoY in Q1 2026, demonstrating exposure to volatile trading volumes.",
       "evidence": [
-        {
-          "source": "The Coin Republic",
-          "url": null,
-          "as_of": "2026-07-24"
-        },
-        {
-          "source": "Benzinga",
-          "url": null,
-          "as_of": "2026-07-23"
-        }
+        { "source": "eciks.org — Robinhood stock drops 5.7% as crypto selloff pressures trading platform ahead of July 29 earnings", "url": "https://eciks.org/14744-46090-hood-stock-drops-crypto-selloff-earnings", "as_of": "2026-07-24" }
       ],
-      "first_seen": "2026-07-24",
+      "first_seen": "2026-07-27",
       "status": "new"
     },
     {
-      "id": "GPC_separation_2026-07-24",
-      "ticker": "GPC",
-      "sleeve": "Dividend",
-      "severity": "amber",
-      "category": "ma_speculation",
-      "headline": "GPC beat-and-raise on 7/22 earnings, but 2H guidance carries caution; unconfirmed ~$10B O'Reilly bid for NAPA/automotive business still in play",
-      "detail": "Q2 adjusted EPS $2.15 beat; FY adjusted EPS guidance reaffirmed at $7.50-$8.00, but GAAP EPS fell YoY on restructuring/separation costs and management flagged 2H cost pressure (tariff-related, softer European/NAPA independent-owner trends). Separately, reporting since 2026-07-02 describes a possible ~$10B cash bid from O'Reilly Automotive for GPC's NAPA/automotive segment \u2014 unconfirmed by either company, with a potential announcement flagged for 'late summer.' Today's +3.32% move likely reflects both the earnings beat and continued deal speculation.",
-      "metric": {
-        "price": 124.175,
-        "day_move_pct": 3.32,
-        "level_ref": null
-      },
-      "thesis_link": "Matches GPC key_risk: 'Business separation execution risk \u2014 $225-250M in transformation costs, management distraction, and Moody's negative outlook create uncertainty around whether the breakup will actually unlock value or destroy it.' An M&A sale of the automotive segment would be a different path than the previously-thesised standalone separation \u2014 worth tracking, unconfirmed.",
-      "evidence": [
-        {
-          "source": "MDM (Modern Distribution Management)",
-          "url": null,
-          "as_of": "2026-07-22"
-        }
-      ],
-      "first_seen": "2026-07-24",
-      "status": "new"
-    },
-    {
-      "id": "FCX_grasberg_2026-07-24",
-      "ticker": "FCX",
+      "id": "HUT_crypto_weakness_2026-07-27",
+      "ticker": "HUT",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "guidance_cut",
-      "headline": "FCX beat EPS by 24% but cut 2026 Grasberg production guidance again \u2014 thesis key_risk continuing to materialize",
-      "detail": "Q2 EPS $0.74 vs $0.596 est, but FCX again lowered 2026 guidance at its Indonesian Grasberg mine \u2014 copper sales cut to 3.1B lbs and gold sales to 650,000 oz \u2014 citing continued wet-ore/drawpoint conditions requiring haulage infrastructure changes. This is a second cut on top of the ~11-13% single-day drop and Scotiabank downgrade that followed the Q1 2026 print. The muted -1.41% reaction (vs. the sharper Q1 move) suggests much of this is already priced in. Copper itself was flat (~$5.50+/lb) on the day, so this is company-specific, not a commodity move.",
-      "metric": {
-        "price": 62.605,
-        "day_move_pct": -1.41,
-        "level_ref": null
-      },
-      "thesis_link": "Directly matches FCX key_risk: 'Grasberg execution risk \u2014 the September 2025 mud rush killed seven workers, triggered force majeure, and forced a 9% reduction in 5-year copper production guidance; underground block-cave operations face ongoing geological uncertainties as the restart progresses.' This is that risk continuing to play out in real time via a second guidance cut.",
-      "evidence": [
-        {
-          "source": "FCX Q2 2026 earnings release / 8-K",
-          "url": null,
-          "as_of": "2026-07-23"
-        }
-      ],
-      "first_seen": "2026-07-24",
-      "status": "new"
-    },
-    {
-      "id": "PORTFOLIO_hyperscaler_calendar_2026",
-      "ticker": "PORTFOLIO",
-      "sleeve": null,
-      "severity": "amber",
-      "category": "calendar_risk",
-      "headline": "Hyperscaler capex earnings cluster imminent: MSFT/META 7/29, AMZN 7/30, NVDA 8/26 \u2014 first data point (GOOGL 7/22) mixed",
-      "detail": "Standing macro watch item continues. Alphabet reported 2026-07-22 (the first of the 'Big 5' to report since the last Sentinel run): raised full-year 2026 capex guidance to $195-205B (from $180-190B), Q2 capex $44.9B (+100% YoY), Google Cloud revenue +82% YoY, cloud backlog +$50B in one quarter to $514B \u2014 but shares still fell ~3.65% after-hours on spend-intensity concerns, i.e. beat-and-raise wasn't enough to avoid a sell-the-news reaction. Microsoft and Meta report 2026-07-29, Amazon 2026-07-30, Nvidia not until 2026-08-26. Combined 2026 hyperscaler capex (ex-Nvidia) is tracking toward ~$700-725B, up from ~$410B in 2025 (~+77% YoY) per aggregated coverage. This remains the highest-priority macro signal for the AI-infrastructure-exposed holdings (MRVL, AMD, TSM, CRDO, LRCX, KEYS, NXPI, QCOM, NVDA).",
-      "metric": {
-        "price": null,
-        "day_move_pct": null,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [
-        {
-          "source": "CNBC",
-          "url": null,
-          "as_of": "2026-07-22"
-        }
-      ],
-      "first_seen": "2026-06-28",
+      "category": "crypto_weakness",
+      "headline": "HUT -6.55% — persisting crypto/BTC-treasury weakness",
+      "detail": "Continuation of the crypto-sector weakness first flagged 2026-06-30, compounded by the still-unprofitable AI-pivot execution gap (material AI revenue not expected until Q2 2027).",
+      "metric": { "price": 109.995, "day_move_pct": -6.55, "prev_close": 117.70, "level_ref": null },
+      "thesis_link": "Matches HUT key_risk #3: 'Bitcoin price exposure remains significant.'",
+      "evidence": [],
+      "first_seen": "2026-06-30",
       "status": "persisting"
     },
     {
-      "id": "SSNC_guidance_raise_2026-07-24",
+      "id": "MARA_crypto_weakness_2026-07-27",
+      "ticker": "MARA",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "crypto_weakness",
+      "headline": "MARA -4.78% — persisting BTC-linked weakness",
+      "detail": "Continuation of the crypto-sector weakness first flagged 2026-06-30; MARA's financials remain a leveraged derivative of Bitcoin price.",
+      "metric": { "price": 12.15, "day_move_pct": -4.78, "prev_close": 12.76, "level_ref": null },
+      "thesis_link": "Matches MARA key_risk #3: 'MARA's financial performance is essentially a leveraged derivative of Bitcoin price.'",
+      "evidence": [],
+      "first_seen": "2026-06-30",
+      "status": "persisting"
+    },
+    {
+      "id": "SSNC_earnings_beat_2026-07-27",
       "ticker": "SSNC",
       "sleeve": "Dividend",
       "severity": "green",
-      "category": "earnings_beat",
-      "headline": "SSNC +10.33% \u2014 guidance raise and record buyback drove the pop, not the EPS beat alone",
-      "detail": "EPS beat was modest ($1.76 vs $1.7125 est, +2.77%) and doesn't on its own explain a 10%+ move. Drivers: FY2026 adjusted EPS guidance raised to $6.93-$7.25 (from ~$6.75 consensus) and revenue guidance to $6.672B-$6.832B; a record $499M / 6.4M-share buyback quarter under the renewed $1.5B program; and a new 'Blue Prism WorkHQ' agentic-AI product framed as a growth driver rather than a disruption risk this quarter. RBC raised its target to $92, Jefferies reiterated Buy at $83.",
-      "metric": {
-        "price": 73.865,
-        "day_move_pct": 10.33,
-        "level_ref": null
-      },
-      "thesis_link": null,
+      "category": "earnings",
+      "headline": "SSNC +10.33% — Q2 beat and raised FY26 guidance; AI-disruption risk converting to tailwind",
+      "detail": "Q2 2026 revenue grew 10.3% YoY to $1.70B (vs. $1.66B est.), adjusted EPS $1.76 (vs. $1.68 est.), on 7.6% organic growth. Management raised full-year revenue and EPS guidance. New deals with Marsh and Allspring deepen SS&C's AI-automation positioning. Q3 revenue guide came in slightly light, a minor offsetting note.",
+      "metric": { "price": 73.865, "day_move_pct": 10.33, "prev_close": 66.95, "level_ref": null },
+      "thesis_link": "Directly matches SSNC key_catalyst: 'Agentic AI deployment through the Link platform converting the AI narrative from headwind to tailwind' — this print is that catalyst materializing, and it cuts against key_risk #1 (AI-disruption narrative).",
       "evidence": [
-        {
-          "source": "SSNC Q2 2026 earnings release",
-          "url": null,
-          "as_of": "2026-07-24"
-        }
+        { "source": "StockStory — SS&C (SSNC) Shares Skyrocket, What You Need To Know", "url": "https://stockstory.org/us/stocks/nasdaq/ssnc/news/why-up-down/ssandc-ssnc-shares-skyrocket-what-you-need-to-know", "as_of": "2026-07-24" },
+        { "source": "StocksToTrade — SSNC Jumps As SS&C Technologies Lifts 2026 Outlook", "url": "https://stockstotrade.com/news/ssctechnologiesholdingsinc-ssnc-news-2026_07_25/", "as_of": "2026-07-25" }
       ],
-      "first_seen": "2026-07-24",
+      "first_seen": "2026-07-27",
       "status": "new"
     },
     {
-      "id": "HUT_crypto_2026-06-30",
-      "ticker": "HUT",
+      "id": "AEM_gold_recovery_2026-07-27",
+      "ticker": "AEM",
       "sleeve": "Growth",
       "severity": "green",
-      "category": "sector_contagion",
-      "headline": "HUT -6.55% today reads as profit-taking after a major positive catalyst, not new negative news \u2014 resolved",
-      "detail": "The 2026-06-30 AMBER flag (merger settlement, new board chair) is stale and resolved \u2014 both were already-closed items even by that report. Since then, HUT signed a $9.8B, 15-year lease for phase two of its Beacon Point AI data center campus (announced ~7/20), which sent shares up as much as 17% and prompted Benchmark to raise its PT to $195 (from $165). Today's pullback tracks a broader bitcoin-miner sector give-back (RIOT also down) after that run, not any new adverse company development.",
-      "metric": {
-        "price": 109.995,
-        "day_move_pct": -6.55,
-        "level_ref": null
-      },
+      "category": "recovery",
+      "headline": "AEM stabilized (+0.52%) — resolved from 6/30 RED gold-crash flag",
+      "detail": "Price has recovered/stabilized since the Q2 gold-price-crash flag raised 2026-06-30. No further deterioration observed.",
+      "metric": { "price": 145.27, "day_move_pct": 0.52, "prev_close": 144.52, "level_ref": null },
       "thesis_link": null,
-      "evidence": [
-        {
-          "source": "CoinDesk",
-          "url": null,
-          "as_of": "2026-07-20"
-        }
-      ],
+      "evidence": [],
       "first_seen": "2026-06-30",
       "status": "resolved"
     },
     {
-      "id": "STLD_guidance_2026-06-30",
+      "id": "STLD_margin_recovery_2026-07-27",
       "ticker": "STLD",
       "sleeve": "Dividend",
       "severity": "green",
-      "category": "earnings_guidance",
-      "headline": "STLD +2.76% \u2014 Q2 print shows record shipments and a revenue beat; the margin-compression flag from 2026-06-30 is resolving",
-      "detail": "Q2 2026 EPS was a two-cent miss ($3.69 vs $3.71 est) but revenue beat sharply ($6.09B vs $5.68B est, +33% YoY) on record steel shipments (3.7M tonnes) and narrowing aluminum-segment losses. Analyst reaction was mixed but net positive (JPMorgan raised to $260 with a new Buy rating; Wells Fargo and Morgan Stanley trimmed targets modestly). This looks like genuine improvement versus the guidance-miss/margin-compression concern flagged a month ago \u2014 downgrading to green pending confirmation next quarter.",
-      "metric": {
-        "price": 247.2,
-        "day_move_pct": 2.76,
-        "level_ref": null
-      },
+      "category": "recovery",
+      "headline": "STLD +2.76% — resolved from 6/30 AMBER margin-squeeze flag",
+      "detail": "Price move is positive and no further margin-squeeze commentary found; treating as resolved pending next print.",
+      "metric": { "price": 247.20, "day_move_pct": 2.76, "prev_close": 240.57, "level_ref": null },
       "thesis_link": null,
-      "evidence": [
-        {
-          "source": "STLD Q2 2026 earnings release / 8-K",
-          "url": null,
-          "as_of": "2026-07-20"
-        }
-      ],
+      "evidence": [],
       "first_seen": "2026-06-30",
       "status": "resolved"
     }
@@ -376,84 +267,31 @@
       "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
       "gate": "Australian FIRB clearance",
       "status": "closed",
-      "firb_cleared_date": "2026-06-19",
-      "close_date": "2026-06-25",
-      "transaction_value_bn": 8.4,
-      "last_checked": "2026-07-26",
+      "last_checked": "2026-07-27",
       "severity": "green",
-      "note": "Reconfirmed this run via company release (cwan.com), Permira's press release, and an SEC 8-K: deal closed 2026-06-25 at $24.55/share, CWAN delisted from NYSE. No slippage, no new developments. Outstanding action item (unchanged from last run): remove CWAN from data/portfolios.json growth sleeve \u2014 see roster_integrity."
+      "note": "Confirmed via web search: FIRB approval granted 2026-06-19; deal closed 2026-06-25 at $24.55/share; CWAN delisted from NYSE. No open gate remains. Outstanding action is portfolio-hygiene only — see roster_integrity issue above."
     }
   ],
   "levels": [
     {
-      "ticker": "SPY",
-      "level": 645.8,
-      "type": "support",
-      "state": "active",
-      "distance_pct": 14.32,
-      "interaction": "distant"
+      "ticker": "ALL",
+      "level": null,
+      "type": "unavailable",
+      "state": "not_assessed",
+      "distance_pct": "unavailable",
+      "interaction": "not_assessed",
+      "note": "levels.json lives in richacarson/rich-report, which is outside this session's GitHub repo scope (richacarson/stock-screener and richacarson/dashboard only). Not fetched this run — this is a scope/access gap, not a data outage. Recommend either adding rich-report to this routine's repo scope or mirroring active levels into a file within Stock-Screener/Dashboard so the Sentinel can read them."
     }
   ],
   "calendar": [
-    {
-      "ticker": "NXPI",
-      "event": "Q2 2026 earnings",
-      "date": "2026-07-28",
-      "severity": "amber"
-    },
-    {
-      "ticker": "LRCX",
-      "event": "Q4 FY2026 earnings",
-      "date": "2026-07-29",
-      "severity": "amber"
-    },
-    {
-      "ticker": "QCOM",
-      "event": "Q3 FY2026 earnings",
-      "date": "2026-07-29",
-      "severity": "amber"
-    },
-    {
-      "ticker": "GD",
-      "event": "Q2 2026 earnings",
-      "date": "2026-07-29",
-      "severity": "green"
-    },
-    {
-      "ticker": "AEM",
-      "event": "Q2 2026 earnings (call 7/30) \u2014 confirms whether gold-price stabilization is holding",
-      "date": "2026-07-29",
-      "severity": "amber"
-    },
-    {
-      "ticker": "HOOD",
-      "event": "Q2 2026 earnings",
-      "date": "2026-07-29",
-      "severity": "amber"
-    },
-    {
-      "ticker": "COIN",
-      "event": "Q2 2026 earnings",
-      "date": "2026-07-30",
-      "severity": "green"
-    },
-    {
-      "ticker": "AMD",
-      "event": "Q2 2026 earnings",
-      "date": "2026-08-04",
-      "severity": "green"
-    },
-    {
-      "ticker": "VST",
-      "event": "Q2 2026 earnings",
-      "date": "2026-08-07",
-      "severity": "green"
-    },
-    {
-      "ticker": "NVDA",
-      "event": "Q2 FY2027 earnings \u2014 hyperscaler capex watch, highest-priority macro signal for AI-infra basket",
-      "date": "2026-08-26",
-      "severity": "amber"
-    }
+    { "ticker": "MRVL", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "CRDO", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "AMD", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "NVDA", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "LRCX", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "KEYS", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "ADI", "event": "Hyperscaler Q2 earnings window — MSFT/META capex commentary", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "HOOD", "event": "Q2 2026 earnings", "date": "2026-07-29", "severity": "amber" },
+    { "ticker": "TSM", "event": "Hyperscaler Q2 earnings window — AAPL/AMZN capex-adjacent commentary", "date": "2026-07-30", "severity": "amber" }
   ]
 }
