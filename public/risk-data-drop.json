@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T11:53:29Z",
+  "generated_at": "2026-07-28T13:04:08Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -718,7 +718,7 @@
     },
     "AMD": {
       "sleeve": "Growth",
-      "price": 495.19,
+      "price": 473.4,
       "pct_change": -5.2,
       "prev_close": 522.03,
       "quote_source": "alpaca",
@@ -1126,7 +1126,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 189.28,
+      "price": 179.79,
       "pct_change": -2.69,
       "prev_close": 194.51,
       "quote_source": "alpaca",
@@ -1150,7 +1150,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 196.555,
+      "price": 195.39,
       "pct_change": -5.08,
       "prev_close": 207.07,
       "quote_source": "alpaca",
@@ -1246,7 +1246,7 @@
     },
     "TSM": {
       "sleeve": "Growth",
-      "price": 399.26,
+      "price": 383.57,
       "pct_change": -1.18,
       "prev_close": 404.01,
       "quote_source": "alpaca",
@@ -1318,7 +1318,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.75,
+      "price": 35.94,
       "pct_change": 1.16,
       "prev_close": 36.35,
       "quote_source": "alpaca",
@@ -1327,7 +1327,7 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 14.69,
+      "price": 14.27,
       "pct_change": 4.56,
       "prev_close": 14.05,
       "quote_source": "alpaca",
@@ -1337,13 +1337,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 738.85,
+      "price": 739.92,
       "pct_change": -0.01,
       "prev_close": 738.9,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 682.05,
+      "price": 677.32,
       "pct_change": -0.32,
       "prev_close": 684.33,
       "quote_source": "alpaca"
