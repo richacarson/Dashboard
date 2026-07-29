@@ -208,5 +208,12 @@
     "amber": 9,
     "green": 37,
     "headline": "AMD -5.20%, NVDA -5.08% (new), LRCX -4.59% (persisting) on a severe global AI-chip selloff (Bloomberg: worst semi day since April 2025) driven by a Chinese DUV-lithography breakthrough and a new NVDA-specific circular-financing concern ($250B Ohio data-center guarantee report), 1-2 days ahead of MSFT/META/AMZN/GOOGL capex commentary. CRDO/MRVL eased RED->AMBER. DVN -4.20% on weaker crude. Biggest finding: recovered ~26 days (7/1-7/26) of real Sentinel analysis that had been silently failing to sync to the Dashboard since early July; fixed the root-cause bugs in the routine itself."
+  },
+  {
+    "date": "2026-07-29",
+    "red": 5,
+    "amber": 9,
+    "green": 39,
+    "headline": "AMD -8.16%, MRVL -7.88%, CRDO -7.81%, LRCX -7.49% as the AI-chip/China-competition selloff deepened for a 3rd session (CXMT's $480B Shanghai IPO, reports of domestic Chinese lithography mass-production, reported $250B NVDA/OpenAI financing backstop). LRCX and QCOM report earnings after close today, plus GD and HOOD, plus MSFT/META hyperscaler capex prints and the Fed decision -- the biggest single-day catalyst cluster the book has faced this cycle. CWAN roster flag: yesterday's report claimed this was fixed; it was not -- still listed in data/portfolios.json on origin/main a month after the deal closed. Corrected again in this run; needs verification it actually lands this time."
   }
 ]
