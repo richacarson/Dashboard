@@ -215,5 +215,12 @@
     "amber": 9,
     "green": 39,
     "headline": "AMD -8.16%, MRVL -7.88%, CRDO -7.81%, LRCX -7.49% as the AI-chip/China-competition selloff deepened for a 3rd session (CXMT's $480B Shanghai IPO, reports of domestic Chinese lithography mass-production, reported $250B NVDA/OpenAI financing backstop). LRCX and QCOM report earnings after close today, plus GD and HOOD, plus MSFT/META hyperscaler capex prints and the Fed decision -- the biggest single-day catalyst cluster the book has faced this cycle. CWAN roster flag: yesterday's report claimed this was fixed; it was not -- still listed in data/portfolios.json on origin/main a month after the deal closed. Corrected again in this run; needs verification it actually lands this time."
+  },
+  {
+    "date": "2026-07-30",
+    "red": 9,
+    "amber": 13,
+    "green": 30,
+    "headline": "Broad risk-off (SPY -1.52%, QQQ -2.04%) day after Fed held rates 3.50-3.75% with a rare 3-dissent hawkish split. QCOM missed EPS/cut Apple outlook (escalated RED); LRCX and GD both beat+raised guidance but fell anyway on AI-infra sector de-risking (good report, bad tape); HUT -12.80%/MARA -11.63% on AI-datacenter capex-financing concerns, not Bitcoin price. Hyperscaler capex watch itself resolved favorably overnight (MSFT/META) -- today's chip selloff is positioning-driven, not guidance-driven. CAT -6.97% unexplained (silent decliner, no catalyst found). CWAN roster flag: 31st day unresolved, 3 straight false 'fixed' claims -- reported as a pipeline bug this run instead of re-claiming a fix."
   }
 ]
