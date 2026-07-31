@@ -92,8 +92,34 @@ const BENCHMARKS = [
   { sym: "DIA", name: "DIA" },
 ];
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
+// DVY and IUSG aren't carried on the Alpaca IEX feed. They used to come from Finnhub
+// (trade WS + /quote poll), but Finnhub's free tier stopped advancing them intraday —
+// the price froze at the previous close for a whole session. FMP is now their SINGLE
+// source: one writer per symbol, so the value can only step forward (no two-feed
+// flip-flop, which is why the old wsStale race guard is gone too).
 const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
+// Both symbols in ONE batched call. FMP sends `access-control-allow-origin: *`, so it
+// works directly from the browser with no proxy (Yahoo has live data for these but sends
+// no CORS header, and public CORS proxies tested at ~25% success with 15s latency).
+// Returns { SYM: {p, pc} } for whatever came back; {} on failure so callers keep last good.
+async function fmpBenchQuotes(syms, key) {
+  if (!key || !syms.length) return {};
+  try {
+    const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/${syms.join(",")}?apikey=${key}`, { cache: "no-store" });
+    if (!r.ok) return {};
+    const arr = await r.json();
+    if (!Array.isArray(arr)) return {};
+    const out = {};
+    for (const q of arr) {
+      const p = q?.price;
+      if (!q?.symbol || typeof p !== "number" || !isFinite(p) || p <= 0) continue;
+      const pc = q.previousClose;
+      out[q.symbol] = { p, pc: (typeof pc === "number" && pc > 0) ? pc : null };
+    }
+    return out;
+  } catch { return {}; }
+}
 // Right-rail benchmark indices (BTC-USD omitted — not available via the Alpaca stock snapshot feed)
 const RAIL_BENCHMARKS = ["DVY", "IUSG", "SPY"];
 // Short sector codes for the dense terminal watchlist (sector subline)
@@ -1753,19 +1779,15 @@ Instructions:
       if (splitSuspects.length) refetchSplitAdjustedBars(splitSuspects);
       // Non-IEX benchmarks: use Finnhub on first load, then rely on poller + cached refs
       const isFirstFetch = Object.keys(quotesRef.current).length === 0;
-      if (isFirstFetch && FH) {
-        await Promise.all(NON_IEX_BM.map(async (s) => {
-          try {
-            const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(s)}&token=${FH}`);
-            if (r.ok) {
-              const q = await r.json();
-              if (q.c) nq[s] = { p: q.c, t: new Date().toISOString() };
-              if (q.pc) nb[s] = { ...nb[s], pc: q.pc, o: q.o, h: q.h, l: q.l, c: q.c };
-            }
-          } catch {}
-        }));
+      if (isFirstFetch) {
+        // FMP — sole source for DVY/IUSG, same endpoint the poller below uses
+        const yq = await fmpBenchQuotes(NON_IEX_BM, FK);
+        for (const [s, y] of Object.entries(yq)) {
+          nq[s] = { p: y.p, t: new Date().toISOString() };
+          if (y.pc) nb[s] = { ...nb[s], pc: y.pc };
+        }
       }
-      // Fill from cached refs (kept fresh by Finnhub poller)
+      // Fill from cached refs (kept fresh by the benchmark poller)
       for (const s of NON_IEX_BM) {
         if (!nq[s] && quotesRef.current[s]) nq[s] = quotesRef.current[s];
         if (!nb[s]?.pc && barsRef.current[s]?.pc) nb[s] = { ...nb[s], ...barsRef.current[s] };
@@ -2540,37 +2562,12 @@ Instructions:
     } catch {}
   }, [apiKey, apiSecret]);
 
-  // Finnhub WebSocket for real-time non-IEX benchmark streaming (DVY, IWS, IUSG)
-  const connectFinnhubWS = useCallback(() => {
-    if (!FH) return;
-    try {
-      const fhWs = new WebSocket(`wss://ws.finnhub.io?token=${FH}`);
-      fhWsRef.current = fhWs;
-      fhWs.onopen = () => {
-        for (const sym of NON_IEX_BM) {
-          fhWs.send(JSON.stringify({ type: "subscribe", symbol: sym }));
-        }
-      };
-      fhWs.onmessage = (evt) => {
-        try {
-          const msg = JSON.parse(evt.data);
-          if (msg.type === "trade" && msg.data?.length) {
-            const updates = {};
-            for (const t of msg.data) {
-              if (NON_IEX_BM.includes(t.s)) {
-                updates[t.s] = { p: t.p, t: new Date(t.t).toISOString() };
-                quotesRef.current[t.s] = updates[t.s];
-              }
-            }
-            if (Object.keys(updates).length) {
-              Object.assign(bmQuotesRef.current, updates); // state syncs at 1Hz below
-            }
-          }
-        } catch {}
-      };
-      fhWs.onclose = () => { setTimeout(connectFinnhubWS, 5000); };
-    } catch {}
-  }, []);
+  // The Finnhub trade WebSocket that used to stream DVY/IUSG has been removed: its free
+  // tier stopped publishing trades for them (price froze at the prior close), and keeping
+  // it alongside the Yahoo poller would put two writers on one symbol — the exact
+  // back-and-forth flash the old wsStale guard existed to suppress. Yahoo is now the
+  // single source for these two; SPY/QQQ/DIA still stream over the Alpaca IEX WS.
+  const connectFinnhubWS = useCallback(() => {}, []);
 
   // Sync per-trade benchmark quote refs into React state at 1Hz (avoids memo churn per trade)
   useEffect(() => {
@@ -2592,40 +2589,24 @@ Instructions:
     return () => clearInterval(t);
   }, [authed]);
 
-  // Finnhub REST polling for non-IEX benchmarks (fallback, every 2s)
+  // FMP polling for the non-IEX benchmarks (DVY, IUSG) — their ONLY price source.
+  // No WS-vs-poll race guard is needed anymore: nothing else writes these symbols, so
+  // the value can only step forward. A failed fetch leaves the last good price in place.
+  // One batched call covers both symbols; 60s keeps daily usage inside FMP's quota.
   const fhTimerRef = useRef(null);
   const pollFinnhubBenchmarks = useCallback(async () => {
-    if (!FH) return;
-    for (const sym of NON_IEX_BM) {
-      try {
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${FH}`);
-        if (!r.ok) continue;
-        const q = await r.json();
-        if (!q.c) continue;
-        const price = q.c;
-        const pc = q.pc || barsRef.current[sym]?.pc;
-        // ONLY write to refs — the 1Hz sync at line ~2320 is the single source of truth for
-        // bmQuotes state. Previously this poll wrote directly via setBmQuotes which fought the
-        // WebSocket (also writing via the ref + sync path), producing a 5s back-and-forth flash
-        // when /quote returned a price even a few ms older than the latest WS trade.
-        const wsTime = bmQuotesRef.current[sym]?.t ? new Date(bmQuotesRef.current[sym].t).getTime() : 0;
-        const wsStale = !wsTime || (Date.now() - wsTime) > 15_000;
-        if (wsStale) {
-          // WS hasn't published a trade in 15s — safe to overwrite from the poll
-          const quoteVal = { p: price, t: new Date().toISOString() };
-          quotesRef.current[sym] = quoteVal;
-          bmQuotesRef.current[sym] = quoteVal;
-          if (pc) barsRef.current[sym] = { ...barsRef.current[sym], pc };
-        } else if (pc && !barsRef.current[sym]?.pc) {
-          // Backfill previous-close only — never overwrite a fresh WS price
-          barsRef.current[sym] = { ...barsRef.current[sym], pc };
-        }
-      } catch {}
+    const qs = await fmpBenchQuotes(NON_IEX_BM, FK);
+    for (const [sym, y] of Object.entries(qs)) {
+      const quoteVal = { p: y.p, t: new Date().toISOString() };
+      quotesRef.current[sym] = quoteVal;
+      bmQuotesRef.current[sym] = quoteVal;    // 1Hz sync pushes this into bmQuotes state
+      // Take previous-close from the same response so price and % change never mismatch
+      if (y.pc) barsRef.current[sym] = { ...barsRef.current[sym], pc: y.pc };
     }
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 60000);
   }, [pollFinnhubBenchmarks]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
@@ -3148,9 +3129,9 @@ Instructions:
       // News polling now runs in its own market-hours-independent effect above.
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      // Finnhub benchmark polling (DVY, IUSG) — every 5s
+      // Benchmark polling (DVY, IUSG via FMP) — every 60s, one batched call
       pollFinnhubBenchmarks();
-      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 5000);
+      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 60000);
       // Stale stock polling — every 30s
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
