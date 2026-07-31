@@ -2624,7 +2624,9 @@ Instructions:
   // FMP polling for the non-IEX benchmarks (DVY, IUSG) — their ONLY price source.
   // No WS-vs-poll race guard is needed anymore: nothing else writes these symbols, so
   // the value can only step forward. A failed fetch leaves the last good price in place.
-  // One batched call covers both symbols; 60s keeps daily usage inside FMP's quota.
+  // One batched call covers both symbols. 15s is a compromise: these ETFs trade thinly
+  // enough that sub-second streaming buys nothing, but 60s read as stale next to the
+  // WebSocket-fed SPY. Polling only runs while the market is open, bounding daily usage.
   const fhTimerRef = useRef(null);
   const fmpOwnedRef = useRef({});   // symbols FMP has successfully priced — Finnhub never touches these
   const pollFinnhubBenchmarks = useCallback(async () => {
@@ -2652,7 +2654,7 @@ Instructions:
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 60000);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 15000);
   }, [pollFinnhubBenchmarks]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
@@ -3175,9 +3177,9 @@ Instructions:
       // News polling now runs in its own market-hours-independent effect above.
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      // Benchmark polling (DVY, IUSG via FMP) — every 60s, one batched call
+      // Benchmark polling (DVY, IUSG via FMP) — every 15s, one batched call
       pollFinnhubBenchmarks();
-      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 60000);
+      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 15000);
       // Stale stock polling — every 30s
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
