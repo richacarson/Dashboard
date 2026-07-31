@@ -105,20 +105,45 @@ const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 // Returns { SYM: {p, pc} } for whatever came back; {} on failure so callers keep last good.
 async function fmpBenchQuotes(syms, key) {
   if (!key || !syms.length) return {};
-  try {
-    const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/${syms.join(",")}?apikey=${key}`, { cache: "no-store" });
-    if (!r.ok) return {};
-    const arr = await r.json();
-    if (!Array.isArray(arr)) return {};
+  const parse = (arr) => {
     const out = {};
-    for (const q of arr) {
+    for (const q of (Array.isArray(arr) ? arr : [])) {
       const p = q?.price;
       if (!q?.symbol || typeof p !== "number" || !isFinite(p) || p <= 0) continue;
       const pc = q.previousClose;
       out[q.symbol] = { p, pc: (typeof pc === "number" && pc > 0) ? pc : null };
     }
     return out;
-  } catch { return {}; }
+  };
+  // v3 is what the rest of the app uses; /stable is FMP's newer surface. Try both so a
+  // plan that has been migrated off one of them still returns a price.
+  for (const url of [
+    `https://financialmodelingprep.com/api/v3/quote/${syms.join(",")}?apikey=${key}`,
+    `https://financialmodelingprep.com/stable/quote?symbol=${syms.join(",")}&apikey=${key}`,
+  ]) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) continue;
+      const got = parse(await r.json());
+      if (Object.keys(got).length) return got;
+    } catch { /* try next */ }
+  }
+  return {};
+}
+
+// Last-resort price for a benchmark FMP hasn't produced yet. Finnhub may be stale, but a
+// stale number beats a blank field. This never fights FMP: once FMP returns a price for a
+// symbol it becomes the owner (see fmpOwnedRef) and this is not consulted for it again,
+// so there is at most one correction, never a repeating flip-flop.
+async function finnhubBenchQuote(sym, key) {
+  if (!key) return null;
+  try {
+    const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${key}`, { cache: "no-store" });
+    if (!r.ok) return null;
+    const q = await r.json();
+    if (typeof q?.c !== "number" || !isFinite(q.c) || q.c <= 0) return null;
+    return { p: q.c, pc: (typeof q.pc === "number" && q.pc > 0) ? q.pc : null, stale: true };
+  } catch { return null; }
 }
 // Right-rail benchmark indices (BTC-USD omitted — not available via the Alpaca stock snapshot feed)
 const RAIL_BENCHMARKS = ["DVY", "IUSG", "SPY"];
@@ -1780,12 +1805,19 @@ Instructions:
       // Non-IEX benchmarks: use Finnhub on first load, then rely on poller + cached refs
       const isFirstFetch = Object.keys(quotesRef.current).length === 0;
       if (isFirstFetch) {
-        // FMP — sole source for DVY/IUSG, same endpoint the poller below uses
+        // FMP — primary source for DVY/IUSG, same call the poller below uses.
         const yq = await fmpBenchQuotes(NON_IEX_BM, FK);
         for (const [s, y] of Object.entries(yq)) {
           nq[s] = { p: y.p, t: new Date().toISOString() };
           if (y.pc) nb[s] = { ...nb[s], pc: y.pc };
         }
+        // Whatever FMP didn't price, seed from Finnhub so nothing renders blank.
+        await Promise.all(NON_IEX_BM.filter((s) => !yq[s]).map(async (s) => {
+          const f = await finnhubBenchQuote(s, FH);
+          if (!f) return;
+          nq[s] = { p: f.p, t: new Date().toISOString() };
+          if (f.pc) nb[s] = { ...nb[s], pc: f.pc };
+        }));
       }
       // Fill from cached refs (kept fresh by the benchmark poller)
       for (const s of NON_IEX_BM) {
@@ -2594,14 +2626,28 @@ Instructions:
   // the value can only step forward. A failed fetch leaves the last good price in place.
   // One batched call covers both symbols; 60s keeps daily usage inside FMP's quota.
   const fhTimerRef = useRef(null);
+  const fmpOwnedRef = useRef({});   // symbols FMP has successfully priced — Finnhub never touches these
   const pollFinnhubBenchmarks = useCallback(async () => {
-    const qs = await fmpBenchQuotes(NON_IEX_BM, FK);
-    for (const [sym, y] of Object.entries(qs)) {
+    const write = (sym, y) => {
       const quoteVal = { p: y.p, t: new Date().toISOString() };
       quotesRef.current[sym] = quoteVal;
       bmQuotesRef.current[sym] = quoteVal;    // 1Hz sync pushes this into bmQuotes state
       // Take previous-close from the same response so price and % change never mismatch
       if (y.pc) barsRef.current[sym] = { ...barsRef.current[sym], pc: y.pc };
+    };
+    const qs = await fmpBenchQuotes(NON_IEX_BM, FK);
+    for (const [sym, y] of Object.entries(qs)) { fmpOwnedRef.current[sym] = true; write(sym, y); }
+    // Anything FMP has never priced falls back to Finnhub so the field is never blank.
+    const gaps = NON_IEX_BM.filter((s) => !fmpOwnedRef.current[s]);
+    if (gaps.length) {
+      if (!window.__benchSrcWarned) {
+        window.__benchSrcWarned = true;
+        console.warn(`[benchmarks] FMP returned no quote for ${gaps.join(", ")} — falling back to Finnhub (may be delayed). Check the FMP key's plan/quota.`);
+      }
+      for (const sym of gaps) {
+        const f = await finnhubBenchQuote(sym, FH);
+        if (f) write(sym, f);
+      }
     }
   }, []);
   const startFinnhubPolling = useCallback(() => {
