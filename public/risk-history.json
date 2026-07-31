@@ -222,5 +222,12 @@
     "amber": 13,
     "green": 30,
     "headline": "Broad risk-off (SPY -1.52%, QQQ -2.04%) day after Fed held rates 3.50-3.75% with a rare 3-dissent hawkish split. QCOM missed EPS/cut Apple outlook (escalated RED); LRCX and GD both beat+raised guidance but fell anyway on AI-infra sector de-risking (good report, bad tape); HUT -12.80%/MARA -11.63% on AI-datacenter capex-financing concerns, not Bitcoin price. Hyperscaler capex watch itself resolved favorably overnight (MSFT/META) -- today's chip selloff is positioning-driven, not guidance-driven. CAT -6.97% unexplained (silent decliner, no catalyst found). CWAN roster flag: 31st day unresolved, 3 straight false 'fixed' claims -- reported as a pipeline bug this run instead of re-claiming a fix."
+  },
+  {
+    "date": "2026-07-31",
+    "red": 2,
+    "amber": 10,
+    "green": 40,
+    "headline": "Sharp broad relief rally (SPY +1.65%, QQQ +3.33%) on blowout Microsoft and Amazon earnings resolves the AI-chip-complex/crypto-miner RED block from prior sessions (HUT +22.8%, LRCX +18.1%, MARA +17.2%, CRDO +13.6%, AMD +13.0%, MRVL +12.2%, TSM +7.6%), aided by a reported short-covering block trade in AI-infra names. QCOM persists RED, continuing to decline after its EPS miss/Apple-outlook cut -- a direct hit on its own key_risk. CAT's previously-unexplained decline is now identified (Baird downgrade on NY's data-center moratorium) even as it rebounds with the tape. A cluster of Dividend names (ADP, GPC, ABT, ATO, ORI, SYK) sold off against the rally with no tier-1 catalyst found. COIN and HOOD both dipped on crypto-revenue weakness buried inside otherwise-positive prints. CWAN roster flag: 32nd day unresolved, now confirmed a pipeline/process bug (PR #11 open unmerged since 7/28) rather than a data problem -- recommending Carson merge it directly."
   }
 ]
