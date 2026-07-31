@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T11:50:07Z",
+  "generated_at": "2026-07-31T13:08:12Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -526,7 +526,7 @@
     },
     "PCAR": {
       "sleeve": "Dividend",
-      "price": 133.87,
+      "price": 131.01,
       "pct_change": -0.03,
       "prev_close": 133.91,
       "quote_source": "alpaca",
@@ -890,22 +890,7 @@
       "pct_change": 13.58,
       "prev_close": 177.04,
       "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-07-01",
-        "strongBuy": 10,
-        "buy": 16,
-        "hold": 2,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-06-01",
-          "strongBuy": 10,
-          "buy": 15,
-          "hold": 2,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
+      "recommendation": null,
       "earnings": null
     },
     "EIX": {
@@ -1010,22 +995,7 @@
       "pct_change": 0.08,
       "prev_close": 35.81,
       "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-07-01",
-        "strongBuy": 3,
-        "buy": 8,
-        "hold": 5,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-06-01",
-          "strongBuy": 3,
-          "buy": 8,
-          "hold": 5,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
+      "recommendation": null,
       "earnings": null
     },
     "HUT": {
@@ -1082,22 +1052,7 @@
       "pct_change": 5.42,
       "prev_close": 296.59,
       "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-07-01",
-        "strongBuy": 5,
-        "buy": 11,
-        "hold": 4,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-06-01",
-          "strongBuy": 5,
-          "buy": 11,
-          "hold": 4,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
+      "recommendation": null,
       "earnings": null
     },
     "MARA": {
@@ -1126,7 +1081,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 183.26,
+      "price": 193.16,
       "pct_change": 12.16,
       "prev_close": 163.39,
       "quote_source": "alpaca",
@@ -1150,7 +1105,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 196,
+      "price": 196.47,
       "pct_change": 2.6,
       "prev_close": 190.1,
       "quote_source": "alpaca",
@@ -1318,7 +1273,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.66,
+      "price": 36.07,
       "pct_change": 1.93,
       "prev_close": 35.98,
       "quote_source": "alpaca",
@@ -1327,7 +1282,7 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 14.52,
+      "price": 14.21,
       "pct_change": 2.0,
       "prev_close": 14.23,
       "quote_source": "alpaca",
@@ -1337,20 +1292,36 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 742.59,
+      "price": 743.68,
       "pct_change": 1.65,
       "prev_close": 729.57,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 685.92,
+      "price": 689.9,
       "pct_change": 3.33,
       "prev_close": 661.6,
       "quote_source": "alpaca"
     }
   },
   "recent_reporters": [],
-  "errors": [],
+  "errors": [
+    {
+      "ticker": "CRDO",
+      "field": "stock/recommendation",
+      "msg": "HTTP 503"
+    },
+    {
+      "ticker": "HRMY",
+      "field": "stock/recommendation",
+      "msg": "HTTP 503"
+    },
+    {
+      "ticker": "KEYS",
+      "field": "stock/recommendation",
+      "msg": "HTTP 503"
+    }
+  ],
   "sources": {
     "price": "alpaca",
     "recommendation": "finnhub"
