@@ -229,5 +229,12 @@
     "amber": 10,
     "green": 40,
     "headline": "Sharp broad relief rally (SPY +1.65%, QQQ +3.33%) on blowout Microsoft and Amazon earnings resolves the AI-chip-complex/crypto-miner RED block from prior sessions (HUT +22.8%, LRCX +18.1%, MARA +17.2%, CRDO +13.6%, AMD +13.0%, MRVL +12.2%, TSM +7.6%), aided by a reported short-covering block trade in AI-infra names. QCOM persists RED, continuing to decline after its EPS miss/Apple-outlook cut -- a direct hit on its own key_risk. CAT's previously-unexplained decline is now identified (Baird downgrade on NY's data-center moratorium) even as it rebounds with the tape. A cluster of Dividend names (ADP, GPC, ABT, ATO, ORI, SYK) sold off against the rally with no tier-1 catalyst found. COIN and HOOD both dipped on crypto-revenue weakness buried inside otherwise-positive prints. CWAN roster flag: 32nd day unresolved, now confirmed a pipeline/process bug (PR #11 open unmerged since 7/28) rather than a data problem -- recommending Carson merge it directly."
+  },
+  {
+    "date": "2026-08-01",
+    "red": 4,
+    "amber": 6,
+    "green": 42,
+    "headline": "COIN -10.5% (Q2 revenue miss/GAAP loss, 2nd session) and SYK -6.5% (growth-deceleration disappointment despite in-line Q2) both directly hit their own key_risks and escalate to RED; QCOM persists RED for a 4th session. EIX -6.76% is an unexplained silent decliner (no catalyst found, capped AMBER). NXPI, MARA, AEM, SUPV all down 3.5-6.4% on a mix of guidance digestion, bearish sentiment drift, gold pullback, and pre-earnings positioning. CWAN roster-integrity bug persists for a 33rd day -- still a process/merge problem, not a data problem. AMD kicks off the hyperscaler-capex earnings watch on 8/4."
   }
 ]
