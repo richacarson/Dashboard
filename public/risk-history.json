@@ -243,5 +243,12 @@
     "amber": 5,
     "green": 42,
     "headline": "No new trading session since Friday 7/31 close (weekend) -- prices carried forward unchanged. EIX's previously-unexplained -6.76% decline is now identified (Eaton Fire liability still unquantifiable + credit-downgrade warning, despite an EPS beat) and escalates AMBER->RED as a direct hit on its own key_risk. COIN, SYK, QCOM persist RED on Q2 prints. CWAN roster-integrity bug persists for a 34th day with PR #11 and PR #12 both open unmerged. AMD reports 8/4, kicking off the hyperscaler-capex watch."
+  },
+  {
+    "date": "2026-08-03",
+    "red": 5,
+    "amber": 5,
+    "green": 42,
+    "headline": "Pre-market pull before Monday open: individual quotes still Friday close (SPY/QQQ +0.7%/+0.6% premarket on Iran de-escalation). EIX gets a hard Aug-31 CA-legislature credit-downgrade catalyst date; QCOM Apple-modem-loss risk now management-confirmed accelerating. CWAN roster bug persists 35th day, PR #11/#12 both open unmerged. AMD reports 8/4, kicking off hyperscaler-capex watch."
   }
 ]

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-02T11:55:00Z",
-  "as_of_session": "2026-07-31",
+  "generated_at": "2026-08-03T11:53:45Z",
+  "as_of_session": "2026-08-03",
   "universe_count": 50,
   "universe_incomplete": true,
   "roster_integrity": {
@@ -10,27 +10,27 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Taken private (Permira/Warburg Pincus-led, incl. Francisco Partners, Temasek) at $24.55/share; deal closed and delisted from NYSE 2026-06-25. Still listed in data/portfolios.json growth sleeve on origin/main as of this run -- 34th consecutive day unresolved. Alpaca is still returning a pinned/stale $24.56 quote for the delisted ticker, which would mask the delisting if roster hygiene weren't checked separately. Process bug, not a data problem: the fix has been committed on at least 7 prior run branches but none has been merged to main. PR #11 (opened 2026-07-28) and PR #12 (opened 2026-08-01) both remain open and unmerged.",
-        "action": "Removed CWAN from data/portfolios.json growth sleeve again in this run's commit. NOT reporting this as resolved -- the identical fix has failed to persist repeatedly because nothing merges Stock-Screener run-branches to main. Recommend Carson merge PR #11 or PR #12 (https://github.com/richacarson/Stock-Screener/pull/11, /pull/12) directly; a third open PR will not break the cycle on its own."
+        "detail": "Taken private (Permira/Warburg Pincus-led consortium incl. Francisco Partners, Temasek) at $24.55/share; deal closed and delisted from NYSE 2026-06-25. Still listed in data/portfolios.json growth sleeve on origin/main as of this run -- 35th consecutive day unresolved. Alpaca continues to return a pinned/stale ~$24.55-24.56 quote for the delisted ticker, which would mask the delisting if roster hygiene weren't checked separately. Confirmed via web search this run: no new deal developments; a Scott+Scott plaintiff-firm 'investor alert' re: fiduciary-duty claims noted previously is standard post-M&A boilerplate, not a material development. This is a process bug, not a data problem -- the fix has been committed on at least 8 prior Risk Sentinel run branches but none has been merged to main. PR #11 (opened 2026-07-28) and PR #12 (opened 2026-08-01) both remain open, unmerged, and increasingly stale (PR #12 alone now shows 578 commits / 1844 changed files against main, mergeable_state=dirty).",
+        "action": "Removing CWAN from data/portfolios.json growth sleeve again in this run's commit (claude/gifted-einstein-yilcx1). NOT reporting this as resolved. Recommend Carson merge PR #11 or PR #12 directly (https://github.com/richacarson/Stock-Screener/pull/11, https://github.com/richacarson/Stock-Screener/pull/12) rather than waiting for a future run's branch to land on its own -- nothing in the current routine merges Stock-Screener run-branches to main (unlike Dashboard's CLAUDE.md-mandated deploy flow), so the cycle will not break by itself."
       }
     ],
-    "universe_note": "portfolios.json (pre-fix) listed 50 names (25 Dividend + 25 Growth, including delisted CWAN); post-fix 49 (25 Dividend + 24 Growth). The firm's actual 52-name book also includes a Digital-Asset-ETF sleeve (IBIT, ETHA) -- priced in risk-data-drop.json but still entirely absent from portfolios.json. Not fixed unilaterally this run (a scope decision, not a hygiene fix); flagging again for Carson to reconcile in one pass."
+    "universe_note": "portfolios.json lists 50 names (25 Dividend + 25 Growth, including delisted CWAN). The firm's actual 52-name book also includes a Digital-Asset-ETF sleeve (IBIT, ETHA) -- both priced in risk-data-drop.json (52/52 holdings, 0 errors) but entirely absent from portfolios.json and from reports/ (no IBIT.json or ETHA.json exists). Not fixed unilaterally this run -- adding a new sleeve is a scope decision for Carson, not a hygiene fix. Flagging again so it gets reconciled in one pass alongside the CWAN merge."
   },
   "summary": {
     "red": 5,
     "amber": 5,
     "green": 42,
-    "headline": "No new trading session since Friday 7/31 close (Sat/Sun market closed) -- all price-based reads below are unchanged from the 8/1 report and carried forward, not new moves. One genuine change: EIX's previously-unexplained -6.76% decline is now identified (Eaton Fire liability still unquantifiable + credit-downgrade warning in Q2 earnings call, despite an EPS beat/reaffirmed guidance) and escalates AMBER->RED as a direct hit on its own wildfire-liability key_risk. COIN, SYK and QCOM persist RED on their Q2 prints; CWAN roster-integrity bug persists for a 34th day with two open, unmerged fix PRs. AMD kicks off the hyperscaler-capex earnings watch in 2 days (8/4)."
+    "headline": "Pre-market pull (07:53 ET, before today's open): individual-name quotes still reflect Friday 7/31's close -- Monday's cash session hasn't printed yet, though SPY/QQQ show +0.7%/+0.6% pre-market on Iran de-escalation headlines. All 5 RED / 5 AMBER flags carry forward Friday's closing prices, enriched with new detail: EIX gets a hard catalyst date (CA legislature's Aug 31 wildfire-fund deadline, credit-downgrade risk if no action) and QCOM's Apple-modem-loss risk is now management-confirmed accelerating, not just guided. CWAN roster-integrity bug persists a 35th day with PR #11 and #12 both still open and increasingly stale/unmerged -- recommend Carson merge one directly. AMD kicks off the hyperscaler-capex earnings watch tomorrow (8/4) after close."
   },
   "flags": [
     {
-      "id": "COIN_q2_earnings_miss_2026-08-01",
+      "id": "COIN_q2_earnings_miss_2026-08-03",
       "ticker": "COIN",
       "sleeve": "Growth",
       "severity": "red",
       "category": "earnings",
-      "headline": "Coinbase Q2 2026 revenue miss and GAAP loss -- no new session since Friday's -10.5% close",
-      "detail": "Coinbase reported Q2 2026 revenue of $1.22B, below the ~$1.29B consensus, with a GAAP net loss of $359.5M ($1.36/share), as crypto trading volumes fell (revenue down ~19% YoY). Stock closed Friday 7/31 at $146.30 (-10.54%, prev close $163.49), a 52-week low; Mizuho cut its price target to $155 from $200. No new trading session has occurred since (weekend).",
+      "headline": "Coinbase Q2 2026 revenue miss and GAAP loss -- persisting, no new session yet this morning",
+      "detail": "Coinbase reported Q2 2026 revenue of $1.22B (below ~$1.29B consensus) with a GAAP net loss of $359.5M ($1.36/share) as crypto trading volumes fell ~19% YoY. Closed Friday 7/31 at $146.30 (-10.54%), a 52-week low; Mizuho cut PT to $155 from $200. This pre-market pull (07:53 ET) still shows Friday's closing print -- Monday's cash session for individual names has not started trading yet. Technical color found this run: base case is $152-155 support / $175-181 resistance, with a rising-triangle setup; no fresh catalyst since Friday.",
       "metric": {
         "price": 146.3,
         "day_move_pct": -10.54,
@@ -44,7 +44,7 @@
           "as_of": "2026-07-31"
         },
         {
-          "source": "Mizuho price target cut (via TS2/financial press)",
+          "source": "Mizuho price target cut (financial press)",
           "url": "https://ts2.tech/en/coinbase-global-nasdaqcoin-shares-fall-after-reporting-q2-loss-citing-slower-usdc-growth-due-to-declining-rates/",
           "as_of": "2026-08-01"
         }
@@ -53,13 +53,42 @@
       "status": "persisting"
     },
     {
-      "id": "SYK_q2_growth_miss_2026-08-01",
+      "id": "EIX_wildfire_credit_risk_2026-08-03",
+      "ticker": "EIX",
+      "sleeve": "Growth",
+      "severity": "red",
+      "category": "guidance",
+      "headline": "EIX wildfire-liability/credit-downgrade risk gains a hard catalyst date: CA legislature's Aug 31 deadline",
+      "detail": "EIX closed Friday 7/31 at $73.41 (-6.76%), still unchanged as of this pre-market pull. New this run: on the Q2 earnings call (7/30) CEO Pedro Pizarro said that absent wildfire-liability-fund legislative action, 'there is a strong likelihood' California IOUs see credit-rating downgrades within days of the CA legislative session's August 31 close. Barclays cut EIX to Equal Weight (from Overweight), PT to $75 from $78, citing this regulatory uncertainty. Q2 EPS itself beat ($1.54 vs. $1.20 consensus) -- this is a liability/regulatory overhang, not an operating miss.",
+      "metric": {
+        "price": 73.41,
+        "day_move_pct": -6.76,
+        "level_ref": null
+      },
+      "thesis_link": "Direct hit on EIX key_risk: 'Elevated debt-to-equity of 216% amplifies financial risk from future wildfire events, adverse rate case outcomes... a single catastrophic fire in SCE's territory could create material liability.' The credit-downgrade warning is that risk moving from hypothetical to a dated (8/31) legislative catalyst.",
+      "evidence": [
+        {
+          "source": "Utility Dive -- Edison Q2 2026 earnings call recap",
+          "url": "https://www.utilitydive.com/news/california-utilities-credit-downgrades-wildfire-liability-edison/826678/",
+          "as_of": "2026-07-30"
+        },
+        {
+          "source": "Investing.com -- Barclays downgrade",
+          "url": "https://m.investing.com/news/analyst-ratings/barclays-cuts-edison-international-stock-rating-on-policy-uncertainty-93CH-4826957",
+          "as_of": "2026-07-30"
+        }
+      ],
+      "first_seen": "2026-08-02",
+      "status": "persisting"
+    },
+    {
+      "id": "SYK_q2_growth_miss_2026-08-03",
       "ticker": "SYK",
       "sleeve": "Dividend",
       "severity": "red",
       "category": "earnings",
-      "headline": "Stryker -6.5% as Q2 organic growth and guidance underwhelm -- no new session since Friday's close",
-      "detail": "Stryker fell 6.46% Friday 7/31 (prev close $348.03 -> $325.56) despite an in-line/beat headline quarter, on organic growth deceleration relative to premium 22.4x forward-earnings expectations. No new trading session since (weekend).",
+      "headline": "Stryker -6.5% as Q2 organic growth and guidance underwhelm -- persisting, no new session yet",
+      "detail": "Fell 6.46% Friday 7/31 (prev close $348.03 -> $325.56) despite an in-line/beat headline quarter, on organic-growth deceleration relative to premium 22.4x forward-earnings expectations. Pre-market pull still shows Friday's close; no new catalyst found this run.",
       "metric": {
         "price": 325.56,
         "day_move_pct": -6.46,
@@ -77,66 +106,42 @@
       "status": "persisting"
     },
     {
-      "id": "QCOM_apple_china_persist_2026-07-28",
+      "id": "QCOM_apple_modem_persist_2026-08-03",
       "ticker": "QCOM",
       "sleeve": "Dividend",
       "severity": "red",
       "category": "guidance",
-      "headline": "QCOM continues to trade weak post EPS miss/Apple-outlook cut -- 5th session, no new catalyst",
-      "detail": "QCOM closed Friday 7/31 at $147.70 (-2.57%), extending the post-earnings decline that began with the EPS miss and Apple-modem-outlook cut. Closed at $147.61 as of 8/1 per market data aggregators (consistent with the drop). No new trading session since (weekend); no incremental news found.",
+      "headline": "QCOM continues to trade weak post EPS miss/Apple-modem cut -- persisting, 6th session",
+      "detail": "Closed Friday 7/31 at $147.70 (-2.57%), extending the post-earnings decline (~-41% since early June). New detail confirmed this run: Qualcomm now expects Apple-related chip revenue to fall ~50% next quarter, with next-iPhone modem share 'materially lower' than the previously guided ~20%, as Apple accelerates its in-house modem. Q4 guide ($2.05-2.25 adj. EPS vs. $2.38 consensus) came in below Street. Diversification (data center/auto, non-handset growth guided to accelerate from 24% in FY26 to 60%+ in FY27) is the offset story but hasn't stopped the slide.",
       "metric": {
         "price": 147.7,
         "day_move_pct": -2.57,
         "level_ref": null
       },
-      "thesis_link": "Matches QCOM key_risk: 'Apple modem internalization -- if Apple successfully develops in-house baseband modems, Qualcomm could lose its largest QCT customer,' plus 'Chinese customer weakness drove Q2 FY2026 QCT revenue down 4.2% YoY.'",
+      "thesis_link": "Directly matches QCOM key_risk: 'Apple modem internalization -- if Apple successfully develops in-house baseband modems, Qualcomm could lose its largest QCT customer (estimated 20-25% of chip revenue).' Management's own commentary this quarter confirms the risk is now accelerating, not just theoretical.",
       "evidence": [
         {
-          "source": "Simply Wall St (valuation/price recap, corroborating company-reported Q3 FY26 results)",
-          "url": "https://simplywall.st/stocks/us/semiconductors/nasdaq-qcom/qualcomm/news/qualcomm-qcom-stock-looks-cheap-at-first-glance-less-so-up-c",
-          "as_of": "2026-08-01"
-        }
-      ],
-      "first_seen": "2026-07-30",
-      "status": "persisting"
-    },
-    {
-      "id": "EIX_wildfire_credit_risk_2026-07-31",
-      "ticker": "EIX",
-      "sleeve": "Growth",
-      "severity": "red",
-      "category": "guidance",
-      "headline": "EIX's unexplained -6.76% decline now identified: Eaton Fire liability still unquantifiable + credit-downgrade warning -- escalated from AMBER",
-      "detail": "EIX fell 6.76% on 7/31 (prev close $78.73 -> $73.41) despite beating Q2 core EPS ($1.54 vs $0.97 y/y) and reaffirming 2026 core EPS guidance of $5.90-$6.20. Q2 earnings-call/8-K disclosure: SCE has extended $775M+ in Eaton Fire compensation offers and crossed the $1B threshold for CA Wildfire Fund reimbursement, but management still cannot estimate even the low end of the GAAP loss range. Management also warned that a lack of credit-supportive legislation could push the utility into non-investment-grade territory. Barclays separately downgraded EIX (Overweight -> Equal-Weight, PT $78 -> $75). Friday's 8/1 report could not find a tier-1 catalyst for this move; today's research confirms one via the company's own Q2 disclosure.",
-      "metric": {
-        "price": 73.41,
-        "day_move_pct": -6.76,
-        "level_ref": null
-      },
-      "thesis_link": "Matches EIX key_risk: 'Elevated debt-to-equity of 216% amplifies financial risk from future wildfire events... a single catastrophic fire in SCE's territory could create material liability.' The unquantifiable Eaton Fire GAAP liability and credit-downgrade warning are a direct materialization of this risk.",
-      "evidence": [
-        {
-          "source": "Edison International Q2 2026 earnings call transcript / SCE 8-K filing (company disclosure)",
-          "url": "https://www.stocktitan.net/sec-filings/SCE/8-k-southern-california-edison-co-reports-material-event-4c9c037446c1.html",
-          "as_of": "2026-07-31"
+          "source": "Qualcomm FQ3 2026 earnings call / Yahoo Finance recap",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/qcom-stock-drops-nearly-8-224108255.html",
+          "as_of": "2026-07-29"
         },
         {
-          "source": "Investing.com earnings call transcript (beats EPS, shares slip after hours)",
-          "url": "https://www.investing.com/news/transcripts/earnings-call-transcript-edison-international-beats-q2-2026-eps-shares-slip-after-hours-93CH-4826323",
-          "as_of": "2026-08-01"
+          "source": "BigGo Finance -- QCOM Q3 2026 earnings call detail",
+          "url": "https://finance.biggo.com/news/US_QCOM_2026-07-29",
+          "as_of": "2026-07-29"
         }
       ],
-      "first_seen": "2026-07-31",
+      "first_seen": "2026-07-28",
       "status": "persisting"
     },
     {
-      "id": "CWAN_roster_2026-08-02",
+      "id": "CWAN_roster_integrity_2026-08-03",
       "ticker": "CWAN",
       "sleeve": "Growth",
       "severity": "red",
       "category": "roster_integrity",
-      "headline": "CWAN roster-integrity flag unresolved for the 34th consecutive day -- two fix PRs now open and unmerged",
-      "detail": "CWAN (Clearwater Analytics) was taken private at $24.55/share; the deal closed and delisted from NYSE on 2026-06-25 (re-confirmed today; only a boilerplate breach-of-fiduciary-duty plaintiff-firm 'investor alert' found, not material litigation). portfolios.json on origin/main still lists CWAN. Alpaca continues returning a pinned $24.56 quote for the delisted name. This exact fix has been re-committed on at least 7 prior run branches but never merged to main -- PR #11 (open since 2026-07-28) and PR #12 (open since 2026-08-01) both sit unmerged.",
+      "headline": "CWAN roster-integrity flag unresolved for the 35th consecutive day -- PR #11 and PR #12 still open, unmerged",
+      "detail": "See roster_integrity block above for full detail. Summary: CWAN delisted 2026-06-25 (take-private closed) but still listed in data/portfolios.json; fix re-committed on this run's branch but the underlying process gap (no merge step for Stock-Screener PRs) means it will not land without Carson merging PR #11 or #12 directly.",
       "metric": {
         "price": 24.56,
         "day_move_pct": 0.06,
@@ -145,32 +150,27 @@
       "thesis_link": null,
       "evidence": [
         {
-          "source": "Permira press release (deal close)",
-          "url": "https://www.permira.com/news-and-insights/announcements/clearwater-analytics-completes-84-billion-take-private-acquisition-by-permira-and-warburg-pincus",
-          "as_of": "2026-06-25"
-        },
-        {
-          "source": "GitHub PR #11 (open, unmerged)",
+          "source": "GitHub PR #11",
           "url": "https://github.com/richacarson/Stock-Screener/pull/11",
-          "as_of": "2026-08-02"
+          "as_of": "2026-07-28"
         },
         {
-          "source": "GitHub PR #12 (open, unmerged)",
+          "source": "GitHub PR #12",
           "url": "https://github.com/richacarson/Stock-Screener/pull/12",
-          "as_of": "2026-08-02"
+          "as_of": "2026-08-01"
         }
       ],
       "first_seen": "2026-06-30",
       "status": "persisting"
     },
     {
-      "id": "NXPI_guidance_digestion_2026-07-28",
+      "id": "NXPI_guidance_digestion_2026-08-03",
       "ticker": "NXPI",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "guidance",
-      "headline": "NXPI -6.39%, continued digestion of soft Q3 guidance plus broader semis selloff -- no new session",
-      "detail": "No new trading session since Friday's close ($245.07 -> $229.40, -6.39%). Carried forward unchanged from the 8/1 report; no incremental news found.",
+      "category": "price_move",
+      "headline": "NXPI -6.39%, continued digestion of soft Q3 guidance plus broader semis selloff -- persisting, no new session yet",
+      "detail": "Closed Friday 7/31 at $229.40 (-6.39%, prev close $245.07). No new tier-1 catalyst found this run beyond the already-known guidance digestion.",
       "metric": {
         "price": 229.4,
         "day_move_pct": -6.39,
@@ -178,35 +178,35 @@
       },
       "thesis_link": null,
       "evidence": [],
-      "first_seen": "2026-07-28",
+      "first_seen": "2026-07-31",
       "status": "persisting"
     },
     {
-      "id": "SUPV_no_catalyst_2026-08-01",
+      "id": "SUPV_bearish_drift_2026-08-03",
       "ticker": "SUPV",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "price_action",
-      "headline": "SUPV -5.47%, no tier-1 catalyst found; Q2 earnings due 2026-08-06 -- no new session",
-      "detail": "No new trading session since Friday's close ($10.06 -> $9.51, -5.47%). Carried forward unchanged; earnings now 4 days out.",
+      "category": "price_move",
+      "headline": "SUPV -5.47%, no tier-1 catalyst found; Q2 earnings due 2026-08-06 (3 days out)",
+      "detail": "Closed Friday 7/31 at $9.51 (-5.47%). No confirming tier-1 source found for a specific catalyst this run -- flagged as a silent decliner. Earnings in 3 days is the next real data point.",
       "metric": {
         "price": 9.51,
         "day_move_pct": -5.47,
         "level_ref": null
       },
-      "thesis_link": null,
+      "thesis_link": "Consistent with SUPV key_risk: 'Argentine macroeconomic instability... could reverse reform progress and compress bank margins,' though no specific news confirms this as the driver -- unconfirmed by tier-1 source.",
       "evidence": [],
-      "first_seen": "2026-08-01",
+      "first_seen": "2026-07-31",
       "status": "persisting"
     },
     {
-      "id": "MARA_bearish_drift_2026-07-16",
+      "id": "MARA_bearish_drift_2026-08-03",
       "ticker": "MARA",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "price_action",
-      "headline": "MARA -4.28%, continued bearish drift -- no new session",
-      "detail": "No new trading session since Friday's close ($11.805 -> $11.30, -4.28%). Carried forward unchanged from the 8/1 report.",
+      "category": "price_move",
+      "headline": "MARA -4.28%, continued bearish drift -- persisting, no new session yet",
+      "detail": "Closed Friday 7/31 at $11.30 (-4.28%). No new catalyst found; consistent with elevated Bitcoin-miner volatility already on watch.",
       "metric": {
         "price": 11.3,
         "day_move_pct": -4.28,
@@ -214,45 +214,45 @@
       },
       "thesis_link": null,
       "evidence": [],
-      "first_seen": "2026-07-16",
+      "first_seen": "2026-07-31",
       "status": "persisting"
     },
     {
-      "id": "AEM_gold_pullback_2026-08-01",
+      "id": "AEM_gold_pullback_2026-08-03",
       "ticker": "AEM",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "price_action",
-      "headline": "AEM -3.64% giving back post-earnings gain as gold pulls back -- no new session",
-      "detail": "No new trading session since Friday's close ($150.80 -> $145.315, -3.64%). Carried forward unchanged.",
+      "category": "price_move",
+      "headline": "AEM -3.64% giving back post-earnings gain as gold pulls back -- persisting, no new session yet",
+      "detail": "Closed Friday 7/31 at $145.32 (-3.64%). Consistent with broader gold-price pullback from near-record levels; no company-specific new development found.",
       "metric": {
         "price": 145.315,
         "day_move_pct": -3.64,
         "level_ref": null
       },
-      "thesis_link": null,
+      "thesis_link": "Touches AEM key_risk: 'Gold price reversion from current near-record levels... would significantly compress margins' -- a pullback, not (yet) a reversion; capped AMBER.",
       "evidence": [],
-      "first_seen": "2026-08-01",
+      "first_seen": "2026-07-31",
       "status": "persisting"
     },
     {
-      "id": "AMD_capex_watch_2026-08-01",
+      "id": "AMD_capex_watch_2026-08-03",
       "ticker": "AMD",
       "sleeve": "Growth",
       "severity": "amber",
       "category": "calendar",
-      "headline": "AMD reports Q2 earnings 2026-08-04 (2 days out) -- first of the AI-infra capex-watch prints this cycle",
-      "detail": "AMD reports after close 8/4 ($11.2B +/- $300M revenue guide). Hyperscaler capex backdrop remains favorable into the print -- Alphabet raised FY2026 capex guidance to a ~$200B midpoint (from ~$185B) -- but AMD's thesis leans heavily on sustained data-center capex (>50% of revenue), so this remains the desk's top macro-risk signal for the AI-infra sleeve.",
+      "headline": "AMD reports Q2 earnings 2026-08-04 (tomorrow, after close) -- first of the AI-infra hyperscaler-capex watch this cycle",
+      "detail": "AMD guided Q2 revenue to $11.2B +/-$300M (+46% YoY). Watch items: Instinct/MI450 demand and margins, the Anthropic 2GW MI450 commitment ($5B AMD equity stake) and Microsoft/Azure Helios ramp, and whether Alphabet's recent AI-capex-discipline commentary bleeds into AMD's tone. Key risk if margins print below 55% or hyperscaler capex language turns cautious.",
       "metric": {
         "price": 476.03,
         "day_move_pct": -1.87,
         "level_ref": null
       },
-      "thesis_link": null,
+      "thesis_link": "Direct calendar match to AMD key_risk: 'Forward P/E of 59.8x and 270% 52-week appreciation leave zero margin of safety -- any AI spending deceleration or customer pause would trigger severe multiple compression.'",
       "evidence": [
         {
-          "source": "CME Group knowledge hub (AMD earnings date/estimates)",
-          "url": "https://www.cmelitegroup.com/knowledge-hub/amd-earnings-date-estimates-ai-chip-read-through/",
+          "source": "Seeking Alpha -- AMD earnings preview",
+          "url": "https://seekingalpha.com/article/4923243-amd-what-im-watching-into-the-august-4-earnings-print",
           "as_of": "2026-08-01"
         }
       ],
@@ -270,9 +270,9 @@
       "firb_cleared_date": "2026-06-19",
       "close_date": "2026-06-25",
       "transaction_value_bn": 8.4,
-      "last_checked": "2026-08-02",
+      "last_checked": "2026-08-03",
       "severity": "green",
-      "note": "Deal terms: no new developments, re-confirmed 2026-08-02. Found a Scott+Scott 'investor alert' soliciting shareholders re: potential breach-of-fiduciary-duty claims -- this is standard post-M&A plaintiff-firm boilerplate, not a confirmed suit or material development; not escalating. Separate roster-hygiene issue (still listed in data/portfolios.json) persists -- see roster_integrity above; this is a process bug, not a deal-status issue."
+      "note": "Deal terms: no new developments, re-confirmed 2026-08-03 via web search. Separate roster-hygiene issue (still listed in data/portfolios.json) persists -- see roster_integrity in risk-monitor.json; this is a process bug, not a deal-status issue."
     }
   ],
   "levels": [
@@ -288,15 +288,9 @@
   "calendar": [
     {
       "ticker": "AMD",
-      "event": "Q2 earnings -- hyperscaler capex watch begins",
+      "event": "Q2 earnings -- hyperscaler capex watch (1st of cycle)",
       "date": "2026-08-04",
       "severity": "amber"
-    },
-    {
-      "ticker": "DVN",
-      "event": "Q2 earnings",
-      "date": "2026-08-04",
-      "severity": "info"
     },
     {
       "ticker": "SUPV",
@@ -305,15 +299,9 @@
       "severity": "amber"
     },
     {
-      "ticker": "MRVL",
-      "event": "Q2 earnings -- hyperscaler capex watch",
-      "date": "2026-08-20",
-      "severity": "amber"
-    },
-    {
-      "ticker": "NVDA",
-      "event": "Q2 earnings -- hyperscaler capex watch",
-      "date": "2026-08-26",
+      "ticker": "EIX",
+      "event": "CA legislative session close -- wildfire-liability-fund action deadline; credit-downgrade risk if no action",
+      "date": "2026-08-31",
       "severity": "amber"
     }
   ]
