@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T11:49:42Z",
+  "generated_at": "2026-08-04T13:12:37Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -718,7 +718,7 @@
     },
     "AMD": {
       "sleeve": "Growth",
-      "price": 484,
+      "price": 505.38,
       "pct_change": 1.67,
       "prev_close": 476.03,
       "quote_source": "alpaca",
@@ -742,7 +742,7 @@
     },
     "AEM": {
       "sleeve": "Growth",
-      "price": 147.54,
+      "price": 150.15,
       "pct_change": 1.53,
       "prev_close": 145.315,
       "quote_source": "alpaca",
@@ -790,7 +790,7 @@
     },
     "CVX": {
       "sleeve": "Growth",
-      "price": 193.17,
+      "price": 191.66,
       "pct_change": -1.87,
       "prev_close": 196.855,
       "quote_source": "alpaca",
@@ -1126,7 +1126,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 195.63,
+      "price": 209.11,
       "pct_change": 3.27,
       "prev_close": 187.61,
       "quote_source": "alpaca",
@@ -1150,7 +1150,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 206.72,
+      "price": 210.17,
       "pct_change": 2.98,
       "prev_close": 200.74,
       "quote_source": "alpaca",
@@ -1246,7 +1246,7 @@
     },
     "TSM": {
       "sleeve": "Growth",
-      "price": 406.12,
+      "price": 416.85,
       "pct_change": 0.44,
       "prev_close": 404.35,
       "quote_source": "alpaca",
@@ -1318,7 +1318,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.13,
+      "price": 36.19,
       "pct_change": 1.5,
       "prev_close": 35.62,
       "quote_source": "alpaca",
@@ -1327,7 +1327,7 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 14.105,
+      "price": 14.15,
       "pct_change": 0.18,
       "prev_close": 14.08,
       "quote_source": "alpaca",
@@ -1337,13 +1337,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 758.2,
+      "price": 760.3,
       "pct_change": 1.46,
       "prev_close": 746.79,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 700.48,
+      "price": 707.97,
       "pct_change": 1.77,
       "prev_close": 687.89,
       "quote_source": "alpaca"
