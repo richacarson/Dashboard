@@ -131,10 +131,10 @@ async function fmpBenchQuotes(syms, key) {
   return {};
 }
 
-// Last-resort price for a benchmark FMP hasn't produced yet. Finnhub may be stale, but a
-// stale number beats a blank field. This never fights FMP: once FMP returns a price for a
-// symbol it becomes the owner (see fmpOwnedRef) and this is not consulted for it again,
-// so there is at most one correction, never a repeating flip-flop.
+// Fallback price for a benchmark FMP isn't currently serving. Finnhub may be delayed, but
+// a delayed number beats a frozen or blank one. It can't fight FMP tick-to-tick: the caller
+// only reaches here when FMP has produced nothing for that symbol in FMP_STALE_MS, so a
+// source switch needs a sustained multi-minute outage, not a single missed request.
 async function finnhubBenchQuote(sym, key) {
   if (!key) return null;
   try {
@@ -2628,7 +2628,9 @@ Instructions:
   // enough that sub-second streaming buys nothing, but 60s read as stale next to the
   // WebSocket-fed SPY. Polling only runs while the market is open, bounding daily usage.
   const fhTimerRef = useRef(null);
-  const fmpOwnedRef = useRef({});   // symbols FMP has successfully priced — Finnhub never touches these
+  const fmpOkAtRef = useRef({});      // sym -> timestamp of last SUCCESSFUL FMP quote
+  const fmpFailsRef = useRef(0);      // consecutive empty FMP responses -> back off, don't burn quota
+  const FMP_STALE_MS = 3 * 60_000;    // no FMP for this long => let Finnhub keep the number moving
   const pollFinnhubBenchmarks = useCallback(async () => {
     const write = (sym, y) => {
       const quoteVal = { p: y.p, t: new Date().toISOString() };
@@ -2637,14 +2639,22 @@ Instructions:
       // Take previous-close from the same response so price and % change never mismatch
       if (y.pc) barsRef.current[sym] = { ...barsRef.current[sym], pc: y.pc };
     };
-    const qs = await fmpBenchQuotes(NON_IEX_BM, FK);
-    for (const [sym, y] of Object.entries(qs)) { fmpOwnedRef.current[sym] = true; write(sym, y); }
-    // Anything FMP has never priced falls back to Finnhub so the field is never blank.
-    const gaps = NON_IEX_BM.filter((s) => !fmpOwnedRef.current[s]);
+    // While FMP is failing, stop hammering it every tick — the key is shared with the
+    // dividend/earnings/calendar calls, so a dead quota shouldn't be drained further.
+    const attemptFmp = fmpFailsRef.current < 3 || (fmpFailsRef.current % 10 === 0);
+    const qs = attemptFmp ? await fmpBenchQuotes(NON_IEX_BM, FK) : {};
+    const now = Date.now();
+    for (const [sym, y] of Object.entries(qs)) { fmpOkAtRef.current[sym] = now; write(sym, y); }
+    if (attemptFmp) fmpFailsRef.current = Object.keys(qs).length ? 0 : fmpFailsRef.current + 1;
+    // Ownership is TIME-BOUNDED, not permanent. A symbol FMP priced recently is FMP's, so
+    // Finnhub can't fight it tick-to-tick. But if FMP goes quiet for FMP_STALE_MS (quota,
+    // rate limit, outage) Finnhub takes over rather than leaving the price frozen forever —
+    // that permanent-ownership bug is exactly what stalled these quotes.
+    const gaps = NON_IEX_BM.filter((s) => !(fmpOkAtRef.current[s] > now - FMP_STALE_MS));
     if (gaps.length) {
-      if (!window.__benchSrcWarned) {
-        window.__benchSrcWarned = true;
-        console.warn(`[benchmarks] FMP returned no quote for ${gaps.join(", ")} — falling back to Finnhub (may be delayed). Check the FMP key's plan/quota.`);
+      if (now - (window.__benchWarnAt || 0) > 10 * 60_000) {
+        window.__benchWarnAt = now;
+        console.warn(`[benchmarks] no fresh FMP quote for ${gaps.join(", ")} in ${Math.round(FMP_STALE_MS / 60000)}m — using Finnhub (may be delayed). Check the FMP key's plan/quota.`);
       }
       for (const sym of gaps) {
         const f = await finnhubBenchQuote(sym, FH);
@@ -2654,7 +2664,7 @@ Instructions:
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 15000);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 30000);
   }, [pollFinnhubBenchmarks]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
@@ -3177,9 +3187,9 @@ Instructions:
       // News polling now runs in its own market-hours-independent effect above.
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      // Benchmark polling (DVY, IUSG via FMP) — every 15s, one batched call
+      // Benchmark polling (DVY, IUSG via FMP, Finnhub fallback) — every 30s, one batched call
       pollFinnhubBenchmarks();
-      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 15000);
+      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 30000);
       // Stale stock polling — every 30s
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
