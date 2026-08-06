@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-06T11:49:39Z",
+  "generated_at": "2026-08-06T13:04:44Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -862,7 +862,7 @@
     },
     "COIN": {
       "sleeve": "Growth",
-      "price": 149.82,
+      "price": 148.96,
       "pct_change": -0.6,
       "prev_close": 150.72,
       "quote_source": "alpaca",
@@ -1150,7 +1150,7 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 219.86,
+      "price": 221.85,
       "pct_change": 3.4,
       "prev_close": 211.96,
       "quote_source": "alpaca",
@@ -1318,7 +1318,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 36.71,
+      "price": 36.42,
       "pct_change": 0.99,
       "prev_close": 36.37,
       "quote_source": "alpaca",
@@ -1327,7 +1327,7 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 14.46,
+      "price": 14.31,
       "pct_change": 2.19,
       "prev_close": 14.15,
       "quote_source": "alpaca",
@@ -1337,13 +1337,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 770.6,
+      "price": 771,
       "pct_change": -0.17,
       "prev_close": 771.11,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 717.1,
+      "price": 712.15,
       "pct_change": -0.91,
       "prev_close": 723.69,
       "quote_source": "alpaca"
