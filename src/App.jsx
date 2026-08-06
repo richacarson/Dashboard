@@ -200,6 +200,10 @@ const ES = import.meta.env.VITE_ALPACA_SECRET || "";
 const FK = import.meta.env.VITE_FMP_KEY || "";
 // FMP is reachable with a direct key OR through the proxy (which supplies the key itself)
 const FMP_OK = !!(FK || PROXY);
+// Benchmark poll cadence for the non-IEX symbols. This was 30s only to protect a free-tier
+// FMP quota shared with the dividend/earnings/calendar calls. On the paid plan that
+// constraint is gone, so poll faster — one batched call covers both symbols.
+const BENCH_POLL_MS = 10000;
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
 const FRED = import.meta.env.VITE_FRED_KEY || "";
 const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
@@ -2696,7 +2700,7 @@ Instructions:
   }, []);
   const startFinnhubPolling = useCallback(() => {
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 30000);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, BENCH_POLL_MS);
   }, [pollFinnhubBenchmarks]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
@@ -3219,9 +3223,9 @@ Instructions:
       // News polling now runs in its own market-hours-independent effect above.
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      // Benchmark polling (DVY, IUSG via FMP, Finnhub fallback) — every 30s, one batched call
+      // Benchmark polling (DVY, IUSG via FMP, Finnhub fallback) — one batched call
       pollFinnhubBenchmarks();
-      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, 30000);
+      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, BENCH_POLL_MS);
       // Stale stock polling — every 30s
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
