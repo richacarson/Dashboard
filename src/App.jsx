@@ -99,12 +99,26 @@ const BM_SYMS = BENCHMARKS.map(b => b.sym);
 // flip-flop, which is why the old wsStale race guard is gone too).
 const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
+// Optional Cloudflare Worker proxy (see worker/README.md). Vite inlines every VITE_* value
+// into the public bundle, so any key used directly from the browser is readable by anyone
+// who opens the site. When VITE_PROXY_URL is set, keyed calls go through the Worker and the
+// key stays server-side. When it is unset every call falls back to the direct URL, so the
+// app behaves exactly as before and deploying this change alone is a no-op.
+const PROXY = (import.meta.env.VITE_PROXY_URL || "").replace(/\/+$/, "");
+// path is the upstream path, e.g. "/api/v3/quote/DVY,IUSG"
+function fmpUrl(path, params = {}) {
+  const qs = new URLSearchParams(params);
+  if (PROXY) return `${PROXY}/fmp${path}${qs.toString() ? `?${qs}` : ""}`;
+  qs.set("apikey", import.meta.env.VITE_FMP_KEY || "");
+  return `https://financialmodelingprep.com${path}?${qs}`;
+}
+
 // Both symbols in ONE batched call. FMP sends `access-control-allow-origin: *`, so it
 // works directly from the browser with no proxy (Yahoo has live data for these but sends
 // no CORS header, and public CORS proxies tested at ~25% success with 15s latency).
 // Returns { SYM: {p, pc} } for whatever came back; {} on failure so callers keep last good.
 async function fmpBenchQuotes(syms, key) {
-  if (!key || !syms.length) return {};
+  if ((!key && !PROXY) || !syms.length) return {};
   const parse = (arr) => {
     const out = {};
     for (const q of (Array.isArray(arr) ? arr : [])) {
@@ -118,8 +132,8 @@ async function fmpBenchQuotes(syms, key) {
   // v3 is what the rest of the app uses; /stable is FMP's newer surface. Try both so a
   // plan that has been migrated off one of them still returns a price.
   for (const url of [
-    `https://financialmodelingprep.com/api/v3/quote/${syms.join(",")}?apikey=${key}`,
-    `https://financialmodelingprep.com/stable/quote?symbol=${syms.join(",")}&apikey=${key}`,
+    fmpUrl(`/api/v3/quote/${syms.join(",")}`),
+    fmpUrl(`/stable/quote`, { symbol: syms.join(",") }),
   ]) {
     try {
       const r = await fetch(url, { cache: "no-store" });
@@ -184,6 +198,8 @@ const PAPER = "https://paper-api.alpaca.markets";
 const EK = import.meta.env.VITE_ALPACA_KEY || "";
 const ES = import.meta.env.VITE_ALPACA_SECRET || "";
 const FK = import.meta.env.VITE_FMP_KEY || "";
+// FMP is reachable with a direct key OR through the proxy (which supplies the key itself)
+const FMP_OK = !!(FK || PROXY);
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
 const FRED = import.meta.env.VITE_FRED_KEY || "";
 const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
@@ -1037,13 +1053,16 @@ export default function App() {
 
   // Fetch full article content via Claude when requested
   const fetchArticleContent = useCallback(async (article) => {
-    if (!CLAUDE_KEY || !article.url) return;
+    if ((!CLAUDE_KEY && !PROXY) || !article.url) return;
     setArticleLoading(true);
     try {
       const summary = article.summary || "";
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
+      // Through the proxy the Worker attaches x-api-key, so the key never reaches the browser.
+      const r = await fetch(PROXY ? `${PROXY}/anthropic/v1/messages` : "https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": CLAUDE_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: PROXY
+          ? { "Content-Type": "application/json", "anthropic-version": "2023-06-01" }
+          : { "Content-Type": "application/json", "x-api-key": CLAUDE_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 2000,
@@ -2104,7 +2123,7 @@ Instructions:
 
   /* ── Dividend longevity (Yrs Paid / Yrs Grown) — dividend sleeve only ── */
   const fetchDividendHistory = useCallback(async (force = false) => {
-    if (!FK) { console.warn("[dividend] VITE_FMP_KEY missing — Yrs Paid/Grown cannot populate"); return; }
+    if (!FMP_OK) { console.warn("[dividend] no FMP key or proxy — Yrs Paid/Grown cannot populate"); return; }
     const divSyms = sleeves.dividend?.symbols || [];
     if (!divSyms.length) return;
     if (!force) {
@@ -2123,13 +2142,13 @@ Instructions:
       const sym = divSyms[i];
       try {
         // Primary: FMP v3 historical-price-full
-        let url = `https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/${sym}?apikey=${FK}`;
+        let url = fmpUrl(`/api/v3/historical-price-full/stock_dividend/${sym}`);
         let r = await fetch(url);
         let d = r.ok ? await r.json() : null;
         let payments = d?.historical || [];
         // Fallback: FMP stable dividends endpoint (different shape)
         if (!payments.length) {
-          url = `https://financialmodelingprep.com/api/v3/stock_dividend_calendar?symbol=${sym}&apikey=${FK}`;
+          url = fmpUrl(`/api/v3/stock_dividend_calendar`, { symbol: sym });
           r = await fetch(url);
           d = r.ok ? await r.json() : null;
           payments = Array.isArray(d) ? d.filter(p => p.symbol === sym) : [];
@@ -2314,7 +2333,7 @@ Instructions:
       // SECONDARY: FMP economic calendar (if Finnhub failed or returned empty)
       if (events.length === 0 && FK) {
         try {
-          const r = await fetch(`https://financialmodelingprep.com/api/v3/economic_calendar?from=${fmtD(monday)}&to=${fmtD(nextSunday)}&apikey=${FK}`).catch(() => null);
+          const r = await fetch(fmpUrl(`/api/v3/economic_calendar`, { from: fmtD(monday), to: fmtD(nextSunday) })).catch(() => null);
           if (r?.ok) {
             const data = await r.json();
             if (Array.isArray(data)) {
@@ -2395,9 +2414,9 @@ Instructions:
     } catch (e) { console.warn("Static earnings load:", e.message); }
 
     // OVERLAY: FMP earnings (more authoritative for actuals, overwrites static)
-    if (FK) {
+    if (FMP_OK) {
       try {
-        const r = await fetch(`https://financialmodelingprep.com/api/v3/earning_calendar?from=${earnFrom}&to=${earnTo}&apikey=${FK}`);
+        const r = await fetch(fmpUrl(`/api/v3/earning_calendar`, { from: earnFrom, to: earnTo }));
         if (r.ok) {
           const data = await r.json();
           if (Array.isArray(data)) {
@@ -2440,7 +2459,7 @@ Instructions:
               if (ex.revenueActual == null && e.revenueActual != null) ex.revenueActual = e.revenueActual;
               if (ex.revenueEstimate == null && e.revenueEstimate != null) ex.revenueEstimate = e.revenueEstimate;
               if (!ex.hour && e.hour) ex.hour = e.hour;
-            } else if (!FK || coreSyms.includes(e.symbol)) {
+            } else if (!FMP_OK || coreSyms.includes(e.symbol)) {
               // Add if no FMP key, OR if it's a portfolio holding (Finnhub may have it when FMP doesn't)
               earningsMap[key] = {
                 symbol: e.symbol, date: e.date, hour: e.hour || "",
@@ -2468,7 +2487,7 @@ Instructions:
     const uncachedSyms = allEarnSyms.filter(s => !mcapCache[s]);
 
     // Only fetch if cache is stale or we have new symbols — and limit to 1 batch call
-    if (FK && (mcapStale || uncachedSyms.length > 0)) {
+    if (FMP_OK && (mcapStale || uncachedSyms.length > 0)) {
       const symsToFetch = mcapStale ? allEarnSyms : uncachedSyms;
       try {
         // Single batch call — FMP quote supports comma-separated, cap at 100 most important
@@ -2478,7 +2497,7 @@ Instructions:
           const bi = coreSyms.includes(b) ? 0 : 1;
           return ai - bi || a.localeCompare(b);
         }).slice(0, 100);
-        const r = await fetch(`https://financialmodelingprep.com/api/v3/quote/${prioritized.join(",")}?apikey=${FK}`);
+        const r = await fetch(fmpUrl(`/api/v3/quote/${prioritized.join(",")}`));
         if (r.ok) {
           const quotes = await r.json();
           if (Array.isArray(quotes)) {
