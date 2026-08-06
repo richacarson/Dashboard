@@ -2629,7 +2629,8 @@ Instructions:
   // WebSocket-fed SPY. Polling only runs while the market is open, bounding daily usage.
   const fhTimerRef = useRef(null);
   const fmpOkAtRef = useRef({});      // sym -> timestamp of last SUCCESSFUL FMP quote
-  const fmpFailsRef = useRef(0);      // consecutive empty FMP responses -> back off, don't burn quota
+  const fmpFailsRef = useRef(0);      // consecutive empty FMP responses -> length of the backoff
+  const fmpNextTryRef = useRef(0);    // earliest timestamp FMP may be called again (always finite)
   const FMP_STALE_MS = 3 * 60_000;    // no FMP for this long => let Finnhub keep the number moving
   const pollFinnhubBenchmarks = useCallback(async () => {
     const write = (sym, y) => {
@@ -2639,13 +2640,25 @@ Instructions:
       // Take previous-close from the same response so price and % change never mismatch
       if (y.pc) barsRef.current[sym] = { ...barsRef.current[sym], pc: y.pc };
     };
-    // While FMP is failing, stop hammering it every tick — the key is shared with the
-    // dividend/earnings/calendar calls, so a dead quota shouldn't be drained further.
-    const attemptFmp = fmpFailsRef.current < 3 || (fmpFailsRef.current % 10 === 0);
-    const qs = attemptFmp ? await fmpBenchQuotes(NON_IEX_BM, FK) : {};
+    // While FMP is failing, ease off — the key is shared with the dividend/earnings/calendar
+    // calls, so a dead quota shouldn't be drained further. Backoff is a TIMESTAMP, not a
+    // counter+modulo: an earlier version gated retries on a counter that could only advance
+    // when a retry was allowed, so it froze at the threshold and FMP was never called again
+    // for the rest of the session. Time-based backoff always expires, so FMP always recovers.
     const now = Date.now();
+    const attemptFmp = now >= (fmpNextTryRef.current || 0);
+    const qs = attemptFmp ? await fmpBenchQuotes(NON_IEX_BM, FK) : {};
     for (const [sym, y] of Object.entries(qs)) { fmpOkAtRef.current[sym] = now; write(sym, y); }
-    if (attemptFmp) fmpFailsRef.current = Object.keys(qs).length ? 0 : fmpFailsRef.current + 1;
+    if (attemptFmp) {
+      if (Object.keys(qs).length) {
+        fmpFailsRef.current = 0;
+        fmpNextTryRef.current = 0;
+      } else {
+        fmpFailsRef.current += 1;
+        // 30s, 60s, 90s … capped at 5 min. Always finite, so FMP is always retried.
+        fmpNextTryRef.current = now + Math.min(5 * 60_000, 30_000 * fmpFailsRef.current);
+      }
+    }
     // Ownership is TIME-BOUNDED, not permanent. A symbol FMP priced recently is FMP's, so
     // Finnhub can't fight it tick-to-tick. But if FMP goes quiet for FMP_STALE_MS (quota,
     // rate limit, outage) Finnhub takes over rather than leaving the price frozen forever —
