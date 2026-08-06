@@ -2638,6 +2638,19 @@ Instructions:
         }
         return changed ? next : prev;
       });
+      // Previous close has to ride along. The poller writes pc into barsRef, but bmBars
+      // state was only ever assigned inside fetchData — which stops running when the market
+      // closes. Without this the change % for the polled symbols goes stale or blank after
+      // the bell even though a fresh pc is sitting in the ref.
+      setBmBars(prev => {
+        let changed = false;
+        const next = { ...prev };
+        for (const s of NON_IEX_BM) {
+          const pc = barsRef.current[s]?.pc;
+          if (pc > 0 && next[s]?.pc !== pc) { next[s] = { ...next[s], pc }; changed = true; }
+        }
+        return changed ? next : prev;
+      });
     };
     sync();
     const t = setInterval(sync, 1000);
@@ -2698,10 +2711,19 @@ Instructions:
       }
     }
   }, []);
-  const startFinnhubPolling = useCallback(() => {
+  // Benchmark polling gets its own effect so it is NOT gated on the market being open.
+  // It used to live inside the market-hours interval, so polling stopped the instant the
+  // bell rang and DVY/IUSG kept whatever price FMP happened to return at 4:00 — a value
+  // that has not yet settled to the official close. That is why their change % disagreed
+  // with other sources after hours while the Alpaca-fed symbols (whose snapshot carries the
+  // official daily-bar close) were right. Polling on past the close lets the number settle.
+  useEffect(() => {
+    if (!authed) return;
+    const ms = marketStatus.status === "open" ? BENCH_POLL_MS : 60000;
     pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, BENCH_POLL_MS);
-  }, [pollFinnhubBenchmarks]);
+    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, ms);
+    return () => clearInterval(fhTimerRef.current);
+  }, [authed, marketStatus.status, pollFinnhubBenchmarks]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
   const staleTimerRef = useRef(null);
@@ -3223,14 +3245,11 @@ Instructions:
       // News polling now runs in its own market-hours-independent effect above.
       // Calendar refresh every 5 min to pick up actuals
       const calTimer = setInterval(() => { fetchCalendar(); }, 300000);
-      // Benchmark polling (DVY, IUSG via FMP, Finnhub fallback) — one batched call
-      pollFinnhubBenchmarks();
-      fhTimerRef.current = setInterval(pollFinnhubBenchmarks, BENCH_POLL_MS);
       // Stale stock polling — every 30s
       pollStaleStocks();
       staleTimerRef.current = setInterval(pollStaleStocks, 30000);
       return () => {
-        clearInterval(iRef.current); clearInterval(calTimer); clearInterval(fhTimerRef.current); clearInterval(staleTimerRef.current);
+        clearInterval(iRef.current); clearInterval(calTimer); clearInterval(staleTimerRef.current);
         try { wsRef.current?.close(); } catch {}
         try { fhWsRef.current?.close(); } catch {}
       };
