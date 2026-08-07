@@ -42,10 +42,22 @@ QTRS = 80                      # 20 years of quarters (EDGAR builder reached ~73
 YEARS = 20
 
 
+class ApiError(Exception):
+    """A call that failed for a reason unrelated to the symbol having no data."""
+
+
 def api(path, **params):
-    """GET /stable/<path>. Returns [] on any failure so one bad symbol can't
-    abort a run. FMP answers 200 with an {"Error Message": ...} object for
-    restricted or retired endpoints, so a non-list body is treated as empty."""
+    """GET /stable/<path>.
+
+    Returns [] ONLY when FMP genuinely has no rows. Anything else — HTTP error,
+    timeout, or an {"Error Message": ...} envelope (FMP answers 200 with one of
+    those when throttled) — raises ApiError after exhausting retries.
+
+    The distinction matters. An earlier version returned [] for the error
+    envelope too, so a rate-limit response was indistinguishable from "this
+    company files no income statement". A single throttled stretch silently
+    recorded no-fmp-income for ~20 consecutive symbols, NVDA and QCOM among
+    them, and the run still reported success."""
     if FMP_PROXY:
         url = f"{FMP_PROXY}/fmp/stable/{path}?{urllib.parse.urlencode(params)}"
     elif FMP_KEY:
@@ -55,16 +67,83 @@ def api(path, **params):
         return []
     # A default Python UA gets a 403 from Cloudflare in front of the Worker.
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (compatible; DashboardBuilder/1.0)"})
-    for attempt in range(3):
+    last = "unknown"
+    for attempt in range(5):
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 d = json.loads(r.read().decode())
-            return d if isinstance(d, list) else []
-        except Exception:
-            if attempt == 2:
-                return []
-            time.sleep(1.5 * (attempt + 1))
-    return []
+            if isinstance(d, list):
+                return d
+            # Non-list body = FMP's error envelope. Treat every one as retryable:
+            # misreading a throttle as "no data" is the failure mode above, and a
+            # genuinely restricted endpoint just costs a few wasted retries.
+            last = (d or {}).get("Error Message") or (d or {}).get("message") or str(d)[:120]
+        except Exception as e:
+            last = f"{type(e).__name__}: {e}"
+        if attempt < 4:
+            time.sleep(min(30, 2 ** attempt * 2))   # 2s, 4s, 8s, 16s — outlasts a per-minute window
+    raise ApiError(f"{path} {params}: {last}")
+
+
+# ─────────────────────────── currency ───────────────────────────
+# Foreign issuers file in their home currency while the ticker we price is the
+# US listing, quoted in USD. Nothing reconciled the two, so every valuation for
+# those names was nonsense: TSM came out at a P/E of 1.1 (USD 418 price over
+# TWD 435 of earnings) against a true ~30.
+MONEY_FIELDS = ("epsDiluted", "revenue", "grossProfit", "operatingIncome", "netIncome", "freeCashFlow")
+_FX = {}
+
+
+def fx_series(cur):
+    """Monthly {'YYYY-MM': rate} multiplying `cur` into USD. None for USD itself."""
+    if not cur or cur == "USD":
+        return None
+    if cur in _FX:
+        return _FX[cur]
+    by, invert = {}, False
+    try:
+        rows = api("historical-price-eod/light", symbol=f"{cur}USD", **{"from": PRICE_FROM})
+    except ApiError:
+        rows = []
+    if not rows:                                  # some pairs are only quoted the other way round
+        try:
+            rows, invert = api("historical-price-eod/light", symbol=f"USD{cur}", **{"from": PRICE_FROM}), True
+        except ApiError:
+            rows = []
+    for r in sorted(rows, key=lambda x: x.get("date", "")):
+        d, p = r.get("date"), r.get("price")
+        if d and isinstance(p, (int, float)) and p > 0:
+            by[d[:7]] = (1.0 / p) if invert else float(p)
+    _FX[cur] = by
+    return by
+
+
+def fx_at(fx, ym):
+    """Rate for that month, else the last prior month (FX gaps on holidays)."""
+    prior = [m for m in fx if m <= ym]
+    return fx[max(prior)] if prior else None
+
+
+def to_usd(rows, fx):
+    """Restate a statement's money fields in USD at each period's own FX rate.
+
+    Per-period rather than one spot rate: a 20-year EPS history converted at
+    today's rate would misstate every prior year's earnings."""
+    if not fx:
+        return rows
+    out = []
+    for r in rows:
+        d = r.get("date")
+        rate = fx_at(fx, d[:7]) if d else None
+        if not rate:
+            continue        # drop the period rather than mix two currencies in one series
+        r = dict(r)
+        for k in MONEY_FIELDS:
+            v = num(r.get(k))
+            if v is not None:
+                r[k] = v * rate
+        out.append(r)
+    return out
 
 
 def monthly_prices(sym):
@@ -131,9 +210,18 @@ def build(sym):
         inc_q = api("income-statement", symbol=sym, period="quarter", limit=QTRS)
         if not inc_q:
             return sym, {"skip": "no-fmp-income"}
-        cf_q = {r["date"]: r for r in api("cash-flow-statement", symbol=sym, period="quarter", limit=QTRS) if r.get("date")}
-        inc_a = api("income-statement", symbol=sym, period="annual", limit=YEARS)
-        cf_a = {r["date"]: r for r in api("cash-flow-statement", symbol=sym, period="annual", limit=YEARS) if r.get("date")}
+        # Statements come back in the filer's reporting currency; the price series is
+        # the US listing in USD. Restate everything into USD before it is used.
+        reported = inc_q[0].get("reportedCurrency") or "USD"
+        fx = fx_series(reported)
+        if reported != "USD" and not fx:
+            return sym, {"skip": f"no-fx-{reported}"}
+        inc_q = to_usd(inc_q, fx)
+        if not inc_q:
+            return sym, {"skip": f"no-fx-{reported}"}
+        cf_q = {r["date"]: r for r in to_usd(api("cash-flow-statement", symbol=sym, period="quarter", limit=QTRS), fx) if r.get("date")}
+        inc_a = to_usd(api("income-statement", symbol=sym, period="annual", limit=YEARS), fx)
+        cf_a = {r["date"]: r for r in to_usd(api("cash-flow-statement", symbol=sym, period="annual", limit=YEARS), fx) if r.get("date")}
         splits = split_factors(sym)
         prices = monthly_prices(sym)
         if len(prices) < 2:
@@ -236,12 +324,16 @@ def build(sym):
 
         return sym, {
             "ticker": sym,
-            "currency": (inc_q[0].get("reportedCurrency") or "USD"),
+            "currency": "USD",              # everything above is restated into USD
+            "reportedCurrency": reported,   # what the filer actually files in
             "source": "FMP",
             "asof": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "ttm": ttm, "fwd": fwd,
             "annual": annual, "quarterly": quarterly, "price": prices,
         }
+    except ApiError as e:
+        print(f"  {sym}: API {e}")
+        return sym, None
     except Exception as e:
         print(f"  {sym}: {type(e).__name__} {e}")
         return sym, None
@@ -264,7 +356,9 @@ def main():
     syms = only or universe()
     print(f"Building fundamentals (FMP) for {len(syms)} tickers{' [dry run]' if dry else ''}")
     built, skipped, failed = [], [], []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
+    # 3 workers, not 6. Each symbol costs 6+ calls and the previous setting walked
+    # straight into FMP's rate limit partway through the run.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
         for sym, data in ex.map(build, syms):
             if data is None:
                 failed.append(sym)
@@ -287,6 +381,11 @@ def main():
         print("  skipped:", ", ".join(f"{s}({r})" for s, r in skipped[:40]))
     if failed:
         print("  failed:", ", ".join(failed[:40]))
+    # A failed symbol keeps whatever file the last good run wrote, so the dashboard
+    # degrades to stale rather than blank. That also means a broken run looks fine
+    # from the outside — hence failing the job loudly instead.
+    if not dry and failed and len(failed) > max(3, len(syms) // 20):
+        sys.exit(f"ERROR: {len(failed)}/{len(syms)} symbols failed — refusing to call this a good run")
 
 
 if __name__ == "__main__":
