@@ -544,12 +544,17 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const grid = (yfn, tk, fmt) => tk.map((v) => <g key={v}><line x1={PAD.l} y1={yfn(v)} x2={W - PAD.r} y2={yfn(v)} stroke={gx} strokeWidth={0.6} /><text x={PAD.l - 7} y={yfn(v) + 3.5} textAnchor="end" {...num}>{fmt(v)}</text></g>)
   // Faint verticals at each year label, the way fiscal.ai rules its plots. Drawn
   // first so every mark sits on top of them.
-  const vGrid = yrLabels.map((l, i) => <line key={`v${i}`} x1={l.x} y1={PAD.t} x2={l.x} y2={PAD.t + ch} stroke={gx} strokeWidth={0.6} />)
+  // gx is the horizontal-rule tint and is far too faint to read as a vertical at this
+  // height, so verticals get the undiluted border colour.
+  const vGrid = yrLabels.map((l, i) => <line key={`v${i}`} x1={l.x} y1={PAD.t} x2={l.x} y2={PAD.t + ch} stroke={C.border} strokeWidth={0.8} />)
   // Last-value callout: a filled chip pinned to the series' final point. With 80
   // quarters on screen we can't label every point the way their 20-point charts
   // do, so the endpoint — the number you actually came to read — carries the label.
   const pill = (key, x, y, label, color, fg = '#0B0E14') => {
-    const w = label.length * 6.1 + 10, cx = Math.min(x, W - 2) - w / 2, cy = Math.max(PAD.t + 7, Math.min(PAD.t + ch - 7, y))
+    // Keep the chip inside the plot: past W - PAD.r it would sit on top of the
+    // price-axis numbers, which is where the endpoint naturally lands.
+    const w = label.length * 6.1 + 10
+    const cx = Math.min(x, W - PAD.r - 2) - w / 2, cy = Math.max(PAD.t + 7, Math.min(PAD.t + ch - 7, y))
     return (
       <g key={key}>
         <rect x={cx} y={cy - 8} width={w} height={16} rx={4} fill={color} />

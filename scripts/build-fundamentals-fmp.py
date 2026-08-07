@@ -314,13 +314,20 @@ def build(sym):
         est = api("analyst-estimates", symbol=sym, period="quarter", limit=40)
         today = datetime.now(timezone.utc).date().isoformat()
         future = sorted([e for e in est if e.get("date", "") > today], key=lambda e: e["date"])
+        # Estimates are quoted in the same reporting currency as the statements, so they
+        # need the same restatement — otherwise a foreign name gets a USD price over a
+        # local-currency forward EPS. TSM came out at a forward P/E of 0.7 that way.
+        # These are future dates with no FX print yet, so the latest rate applies.
+        est_fx = fx_at(fx, "9999-99") if fx else None
         if future:
             nxt = future[0]
             nq = num(nxt.get("epsAvg"))
+            if nq is not None and est_fx:
+                nq *= est_fx
             fwd = {"nextQ": nq, "nextQDate": nxt.get("date"), "src": "fmp"}
             nxt4 = [num(e.get("epsAvg")) for e in future[:4]]
             if len(nxt4) == 4 and all(v is not None for v in nxt4):
-                fwd["eps"] = sum(nxt4)
+                fwd["eps"] = sum(nxt4) * (est_fx or 1.0)
 
         return sym, {
             "ticker": sym,
