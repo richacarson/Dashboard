@@ -2811,6 +2811,8 @@ Instructions:
   // enough that sub-second streaming buys nothing, but 60s read as stale next to the
   // WebSocket-fed SPY. Polling only runs while the market is open, bounding daily usage.
   const fhTimerRef = useRef(null);
+  const streamOkAtRef = useRef({});   // sym -> timestamp of last FMP WebSocket tick
+  const STREAM_STALE_MS = 90_000;     // no tick this long => the stream isn't carrying this symbol
   const fmpOkAtRef = useRef({});      // sym -> timestamp of last SUCCESSFUL FMP quote
   const fmpFailsRef = useRef(0);      // consecutive empty FMP responses -> length of the backoff
   const fmpNextTryRef = useRef(0);    // earliest timestamp FMP may be called again (always finite)
@@ -2829,8 +2831,14 @@ Instructions:
     // when a retry was allowed, so it froze at the threshold and FMP was never called again
     // for the rest of the session. Time-based backoff always expires, so FMP always recovers.
     const now = Date.now();
+    // Anything the WebSocket is actively carrying needs no poll at all. When the stream
+    // goes quiet — after the close, or if FMP hasn't approved live streaming on this key —
+    // these fall out of the set within STREAM_STALE_MS and polling resumes untouched.
+    const streaming = NON_IEX_BM.filter((s) => streamOkAtRef.current[s] > now - STREAM_STALE_MS);
+    const need = NON_IEX_BM.filter((s) => !streaming.includes(s));
+    if (!need.length) return;
     const attemptFmp = now >= (fmpNextTryRef.current || 0);
-    const qs = attemptFmp ? await fmpBenchQuotes(NON_IEX_BM, FK) : {};
+    const qs = attemptFmp ? await fmpBenchQuotes(need, FK) : {};
     for (const [sym, y] of Object.entries(qs)) { fmpOkAtRef.current[sym] = now; write(sym, y); }
     if (attemptFmp) {
       if (Object.keys(qs).length) {
@@ -2846,7 +2854,7 @@ Instructions:
     // Finnhub can't fight it tick-to-tick. But if FMP goes quiet for FMP_STALE_MS (quota,
     // rate limit, outage) Finnhub takes over rather than leaving the price frozen forever —
     // that permanent-ownership bug is exactly what stalled these quotes.
-    const gaps = NON_IEX_BM.filter((s) => !(fmpOkAtRef.current[s] > now - FMP_STALE_MS));
+    const gaps = need.filter((s) => !(fmpOkAtRef.current[s] > now - FMP_STALE_MS));
     if (gaps.length) {
       if (now - (window.__benchWarnAt || 0) > 10 * 60_000) {
         window.__benchWarnAt = now;
@@ -2871,6 +2879,64 @@ Instructions:
     fhTimerRef.current = setInterval(pollFinnhubBenchmarks, ms);
     return () => clearInterval(fhTimerRef.current);
   }, [authed, marketStatus.status, pollFinnhubBenchmarks]);
+
+  /* ── FMP WebSocket for DVY/IUSG ──
+   * SPY/QQQ/DIA stream over Alpaca's IEX socket; these two don't, which is why they
+   * were on a poller. This gives them the same treatment. It only runs through the
+   * Cloudflare Worker: FMP authenticates with a login frame carrying the API key, and
+   * the Worker sends that frame on our behalf so the key never reaches the browser
+   * (worker/index.js wsProxy). With no VITE_PROXY_URL configured we simply don't
+   * connect and the poller carries on as before.
+   *
+   * Strictly additive. FMP gates live (vs delayed) quotes on a user declaration form,
+   * so the stream may deliver nothing; the poller notices the silence via
+   * streamOkAtRef and keeps doing exactly what it does today. */
+  const bmWsRef = useRef(null);
+  useEffect(() => {
+    if (!authed || !PROXY) return;
+    let closed = false, attempt = 0, retryTimer = null;
+
+    const connect = () => {
+      if (closed) return;
+      let ws;
+      try {
+        ws = new WebSocket(PROXY.replace(/^http/, "ws") + "/ws");
+      } catch { return schedule(); }
+      bmWsRef.current = ws;
+
+      ws.onopen = () => { attempt = 0; ws.send(JSON.stringify({ event: "subscribe", tickers: NON_IEX_BM })); };
+      ws.onmessage = (e) => {
+        let m;
+        try { m = JSON.parse(e.data); } catch { return; }
+        const sym = String(m?.symbol || "").toUpperCase();
+        const p = Number(m?.price);
+        if (!NON_IEX_BM.includes(sym) || !isFinite(p) || p <= 0) return;
+        streamOkAtRef.current[sym] = Date.now();
+        const quoteVal = { p, t: new Date().toISOString() };
+        quotesRef.current[sym] = quoteVal;
+        bmQuotesRef.current[sym] = quoteVal;   // 1Hz sync pushes this into bmQuotes state
+        // Previous close rides along in the same payload, so price and % change can't mismatch.
+        const pc = Number(m?.previousClose);
+        if (isFinite(pc) && pc > 0) barsRef.current[sym] = { ...barsRef.current[sym], pc };
+      };
+      ws.onclose = () => { if (bmWsRef.current === ws) bmWsRef.current = null; schedule(); };
+      ws.onerror = () => { try { ws.close(); } catch {} };
+    };
+    // 2s, 4s, 8s … capped at 60s. The poller is covering the gap the whole time.
+    const schedule = () => {
+      if (closed) return;
+      clearTimeout(retryTimer);
+      retryTimer = setTimeout(connect, Math.min(60_000, 2000 * 2 ** attempt++));
+    };
+
+    connect();
+    return () => {
+      closed = true;
+      clearTimeout(retryTimer);
+      try { bmWsRef.current?.close(1000, "unmount"); } catch {}
+      bmWsRef.current = null;
+    };
+  }, [authed]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
   const staleTimerRef = useRef(null);
