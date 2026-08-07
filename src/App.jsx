@@ -149,6 +149,116 @@ async function fmpBenchQuotes(syms, key) {
   return Object.assign(batched, ...singles);
 }
 
+// ---------------------------------------------------------------------------
+// FMP -> Finnhub shape adapters.
+//
+// The stock-profile UI was written against Finnhub's response shapes. Rather
+// than rewrite every consumer, these translate FMP payloads into the same
+// field names and units so the components are untouched. Two unit traps worth
+// naming: Finnhub reports margins/yields as percentages (46.9) where FMP uses
+// fractions (0.469), and Finnhub's marketCapitalization is in MILLIONS.
+const pctOf = (v) => (typeof v === "number" && isFinite(v)) ? v * 100 : undefined;
+
+function fmpProfileShim(p) {
+  if (!p) return null;
+  return {
+    ...p,
+    name: p.companyName,                       // Finnhub: name
+    weburl: p.website,                         // Finnhub: weburl
+    logo: p.image,                             // Finnhub: logo
+    ipo: p.ipoDate,                            // Finnhub: ipo
+    finnhubIndustry: p.industry,               // Finnhub: finnhubIndustry
+    marketCapitalization: (typeof p.marketCap === "number") ? p.marketCap / 1e6 : undefined,
+    employees: p.fullTimeEmployees,
+  };
+}
+
+// ratios-ttm + key-metrics-ttm + price-target-consensus -> Finnhub `metric`
+function fmpMetricShim(ratios, km, tgt) {
+  const r = ratios || {}, k = km || {}, t = tgt || {};
+  return {
+    grossMarginTTM: pctOf(r.grossProfitMarginTTM),
+    operatingMarginTTM: pctOf(r.operatingProfitMarginTTM),
+    netProfitMarginTTM: pctOf(r.netProfitMarginTTM),
+    roaTTM: pctOf(k.returnOnAssetsTTM),
+    payoutRatioAnnual: pctOf(r.dividendPayoutRatioTTM),
+    dividendYieldIndicatedAnnual: pctOf(r.dividendYieldTTM),
+    dividendYield5Y: pctOf(r.dividendYieldTTM),
+    dividendPerShareAnnual: r.dividendPerShareTTM,
+    epsNormalizedAnnual: r.netIncomePerShareTTM,
+    bookValuePerShareQuarterly: r.bookValuePerShareTTM,
+    currentRatioQuarterly: r.currentRatioTTM,
+    quickRatioQuarterly: r.quickRatioTTM,
+    pbAnnual: r.priceToBookRatioTTM,
+    psAnnual: r.priceToSalesRatioTTM,
+    peTTM: r.priceToEarningsRatioTTM,
+    marketCapitalization: (typeof k.marketCap === "number") ? k.marketCap / 1e6 : undefined,
+    targetHighPrice: t.targetHigh,
+    targetLowPrice: t.targetLow,
+    targetMedianPrice: t.targetMedian,
+  };
+}
+
+// /stable/earnings -> Finnhub stock/earnings ({period, actual, estimate, surprise})
+function fmpEarningsShim(rows) {
+  return (Array.isArray(rows) ? rows : []).map((e) => {
+    const actual = e.epsActual, estimate = e.epsEstimated;
+    const surprise = (typeof actual === "number" && typeof estimate === "number") ? actual - estimate : null;
+    return {
+      period: e.date, actual, estimate, surprise,
+      surprisePercent: (surprise != null && estimate) ? (surprise / Math.abs(estimate)) * 100 : null,
+    };
+  });
+}
+
+// /stable/grades-consensus -> Finnhub stock/recommendation (an array of periods)
+function fmpRecommendationShim(rows, date) {
+  const g = Array.isArray(rows) ? rows[0] : null;
+  if (!g) return [];
+  return [{
+    period: date || new Date().toISOString().slice(0, 10),
+    strongBuy: g.strongBuy, buy: g.buy, hold: g.hold, sell: g.sell, strongSell: g.strongSell,
+  }];
+}
+
+
+// Watchlist/screener fundamentals row, assembled from FMP and keyed exactly as
+// the Finnhub `metric` version was. FMP returns ratios as fractions, so the
+// percentage-shaped fields are scaled here rather than at each render site.
+async function fmpFundamentalsRow(sym, urlFor) {
+  const j = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
+  const [prof, ratios, km, growth, chg] = await Promise.all([
+    j(urlFor(`/stable/profile`, { symbol: sym })),
+    j(urlFor(`/stable/ratios-ttm`, { symbol: sym })),
+    j(urlFor(`/stable/key-metrics-ttm`, { symbol: sym })),
+    j(urlFor(`/stable/financial-growth`, { symbol: sym, limit: 1 })),
+    j(urlFor(`/stable/stock-price-change`, { symbol: sym })),
+  ]);
+  const p = Array.isArray(prof) ? prof[0] : null;
+  const r = (Array.isArray(ratios) ? ratios[0] : null) || {};
+  const k = (Array.isArray(km) ? km[0] : null) || {};
+  const g = (Array.isArray(growth) ? growth[0] : null) || {};
+  const c = (Array.isArray(chg) ? chg[0] : null) || {};
+  if (!p && !Object.keys(r).length) return null;
+  return {
+    companyName: p?.companyName, sector: p?.sector, industry: p?.industry, logo: p?.image,
+    peTTM: r.priceToEarningsRatioTTM ?? null,
+    peFwd: r.forwardPriceToEarningsGrowthRatioTTM ?? null,
+    pegTTM: r.priceToEarningsGrowthRatioTTM ?? null,
+    yieldFwd: pctOf(r.dividendYieldTTM) ?? null,
+    payoutRatio: pctOf(r.dividendPayoutRatioTTM) ?? null,
+    revenueYoY: pctOf(g.revenueGrowth) ?? null,
+    revenue5Y: pctOf(g.fiveYRevenueGrowthPerShare) ?? null,
+    profitMargin: pctOf(r.netProfitMarginTTM) ?? null,
+    roe: pctOf(k.returnOnEquityTTM) ?? null,
+    de: r.debtToEquityRatioTTM ?? null,
+    beta: p?.beta ?? null,
+    wk52h: p?.range ? parseFloat(String(p.range).split("-")[1]) : null,
+    wk52l: p?.range ? parseFloat(String(p.range).split("-")[0]) : null,
+    ytd: c.ytd ?? null,
+  };
+}
+
 // Fallback price for a benchmark FMP isn't currently serving. Finnhub may be delayed, but
 // a delayed number beats a frozen or blank one. It can't fight FMP tick-to-tick: the caller
 // only reaches here when FMP has produced nothing for that symbol in FMP_STALE_MS, so a
@@ -580,18 +690,27 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
             if (descs[symbol]) setProfile(p => ({ ...p, description: descs[symbol] }));
           }
         } catch {}
-        // Finnhub data
-        if (FH) {
-          const [profR, recR, earnR, finR] = await Promise.all([
-            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${symbol}&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${symbol}&limit=8&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${symbol}&metric=all&token=${FH}`),
+        // FMP (shimmed to the Finnhub shapes these components were written for)
+        if (FMP_OK) {
+          const j = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
+          const [prof, recs, earn, ratios, km, tgt] = await Promise.all([
+            j(fmpUrl(`/stable/profile`, { symbol })),
+            j(fmpUrl(`/stable/grades-consensus`, { symbol })),
+            j(fmpUrl(`/stable/earnings`, { symbol, limit: 8 })),
+            j(fmpUrl(`/stable/ratios-ttm`, { symbol })),
+            j(fmpUrl(`/stable/key-metrics-ttm`, { symbol })),
+            j(fmpUrl(`/stable/price-target-consensus`, { symbol })),
           ]);
-          if (profR.ok) { const d = await profR.json(); if (d.name) setProfile(p => ({ ...p, ...d })); }
-          if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) setRecommendation(d); }
-          if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) setEarnings(d); }
-          if (finR.ok) { const d = await finR.json(); if (d.metric) setFinancials(d.metric); }
+          const p0 = Array.isArray(prof) ? prof[0] : null;
+          if (p0?.companyName) setProfile(p => ({ ...p, ...fmpProfileShim(p0) }));
+          const rec = fmpRecommendationShim(recs);
+          if (rec.length) setRecommendation(rec);
+          const es = fmpEarningsShim(earn);
+          if (es.length) setEarnings(es);
+          setFinancials(fmpMetricShim(
+            Array.isArray(ratios) ? ratios[0] : null,
+            Array.isArray(km) ? km[0] : null,
+            Array.isArray(tgt) ? tgt[0] : null));
         }
       } catch {}
       setProfileLoading(false);
@@ -1619,25 +1738,11 @@ Instructions:
         } catch (err) { diag.quote = `error: ${err?.message || err}`; }
       })());
     }
-    if (!fundamentals[sym]?.peTTM && FH) {
+    if (!fundamentals[sym]?.peTTM && FMP_OK) {
       jobs.push((async () => {
         try {
-          const [mR, pR] = await Promise.all([
-            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`),
-          ]);
-          const m = mR.ok ? (await mR.json())?.metric || {} : {};
-          const p = pR.ok ? await pR.json() : {};
-          if (Object.keys(m).length || p?.name) {
-            const f = {
-              companyName: p.name, sector: p.finnhubIndustry, industry: p.finnhubIndustry, logo: p.logo,
-              peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null, peFwd: m.peAnnual ?? null, pegTTM: m.pegTTM ?? null,
-              yieldFwd: m.dividendYieldIndicatedAnnual ?? null, payoutRatio: m.payoutRatioTTM ?? null,
-              revenueYoY: m.revenueGrowthTTMYoy ?? null, revenue5Y: m.revenueGrowth5Y ?? null,
-              profitMargin: m.netProfitMarginTTM ?? null, roe: m.roeTTM ?? null, de: m["totalDebt/totalEquityQuarterly"] ?? null,
-              beta: m.beta ?? null, wk52h: m["52WeekHigh"] ?? null, wk52l: m["52WeekLow"] ?? null,
-              ytd: m.yearToDatePriceReturnDaily ?? null,
-            };
+          const f = await fmpFundamentalsRow(sym, fmpUrl);
+          if (f) {
             setFundamentals(prev => ({ ...prev, [sym]: { ...(prev[sym] || {}), ...f } }));
             diag.fundamentals = "ok";
           } else { diag.fundamentals = "empty-response"; }
@@ -1916,10 +2021,23 @@ Instructions:
       // appear in the article's `related` field — keeps us at 1 API call vs 20+.
       // Cache-bust + no-store so the browser/edge doesn't serve a stale response
       // on each interval poll (the URL would otherwise be identical every time).
-      const r = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FH}&_t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
+      const r = await fetch(fmpUrl(`/stable/news/general-latest`, { limit: 100, _t: Math.floor(Date.now() / 60000) }), { cache: "no-store" });
       if (!r.ok) return;
-      const raw = await r.json();
-      if (!Array.isArray(raw)) return;
+      const rawFmp = await r.json();
+      if (!Array.isArray(rawFmp)) return;
+      // FMP names these differently to Finnhub (title/text/site/publishedDate vs
+      // headline/summary/source/datetime). norm() and the BLOCKED filter below
+      // read the Finnhub names, so translate before either sees the rows —
+      // otherwise every article fails the `a.headline` check and the feed empties.
+      const raw = rawFmp.map((a, i) => ({
+        ...a,
+        headline: a.title,
+        summary: a.text,
+        source: a.site || a.publisher,
+        datetime: a.publishedDate ? Math.floor(new Date(a.publishedDate.replace(" ", "T") + "Z").getTime() / 1000) : undefined,
+        related: a.symbol || "",
+        id: a.url || `${a.publishedDate}-${i}`,
+      }));
       const all = raw
         .filter(a => a && a.headline && !BLOCKED.has(a.source))
         .map(norm)
@@ -2237,10 +2355,10 @@ Instructions:
           if (r.ok) { const d = await r.json(); if (d.HYG?.latestTrade) results.hygPrice = d.HYG.latestTrade.p; }
         } catch {}
       })());
-      if (FH) fetches.push((async () => {
+      if (FMP_OK) fetches.push((async () => {
         try {
-          const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=HYG&metric=all&token=${FH}`);
-          if (r.ok) { const d = await r.json(); if (d.metric) { results.hyg52High = d.metric["52WeekHigh"]; results.hyg52Low = d.metric["52WeekLow"]; } }
+          const r = await fetch(fmpUrl(`/stable/quote`, { symbol: "HYG" }));
+          if (r.ok) { const q = (await r.json())?.[0]; if (q) { results.hyg52High = q.yearHigh; results.hyg52Low = q.yearLow; } }
         } catch {}
       })());
 
@@ -2262,10 +2380,10 @@ Instructions:
     if (!FH) return;
     const fetchSpyPE = async () => {
       try {
-        const r = await fetch(`https://finnhub.io/api/v1/stock/metric?symbol=SPY&metric=all&token=${FH}`);
+        const r = await fetch(fmpUrl(`/stable/ratios-ttm`, { symbol: "SPY" }));
         if (!r.ok) return;
-        const d = await r.json();
-        const pe = d?.metric?.peTTM ?? d?.metric?.peBasicExclExtraTTM;
+        const d = (await r.json())?.[0];
+        const pe = d?.priceToEarningsRatioTTM;
         if (typeof pe === "number" && isFinite(pe) && pe > 0) {
           setMacroData(prev => ({ ...prev, spyPE: pe }));
         }
@@ -3376,18 +3494,25 @@ Instructions:
         const r = await fetch(`${import.meta.env.BASE_URL}company-descriptions.json?v=${Math.floor(Date.now() / 3600000)}`);
         if (r.ok) { const d = await r.json(); if (d[sym]) out.descr = d[sym]; }
       } catch {}
-      if (FH) {
+      if (FMP_OK) {
         try {
-          const [profR, recR, earnR, finR] = await Promise.all([
-            fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/recommendation?symbol=${sym}&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${sym}&limit=8&token=${FH}`),
-            fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
+          const j = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
+          const [prof, recs, earn, ratios, km, tgt] = await Promise.all([
+            j(fmpUrl(`/stable/profile`, { symbol: sym })),
+            j(fmpUrl(`/stable/grades-consensus`, { symbol: sym })),
+            j(fmpUrl(`/stable/earnings`, { symbol: sym, limit: 8 })),
+            j(fmpUrl(`/stable/ratios-ttm`, { symbol: sym })),
+            j(fmpUrl(`/stable/key-metrics-ttm`, { symbol: sym })),
+            j(fmpUrl(`/stable/price-target-consensus`, { symbol: sym })),
           ]);
-          if (profR.ok) { const d = await profR.json(); if (d?.name) out.prof = d; }
-          if (recR.ok) { const d = await recR.json(); if (Array.isArray(d) && d.length) out.rec = d; }
-          if (earnR.ok) { const d = await earnR.json(); if (Array.isArray(d)) out.earn = d; }
-          if (finR.ok) { const d = await finR.json(); if (d?.metric) out.fm = d.metric; }
+          const p0 = Array.isArray(prof) ? prof[0] : null;
+          if (p0?.companyName) out.prof = fmpProfileShim(p0);
+          const rec = fmpRecommendationShim(recs); if (rec.length) out.rec = rec;
+          const es = fmpEarningsShim(earn); if (es.length) out.earn = es;
+          out.fm = fmpMetricShim(
+            Array.isArray(ratios) ? ratios[0] : null,
+            Array.isArray(km) ? km[0] : null,
+            Array.isArray(tgt) ? tgt[0] : null);
         } catch {}
       }
       if (!cancelled) setTProfileData(out);
