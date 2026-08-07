@@ -113,11 +113,11 @@ function fmpUrl(path, params = {}) {
   return `https://financialmodelingprep.com${path}?${qs}`;
 }
 
-// Both symbols in ONE batched call. FMP sends `access-control-allow-origin: *`, so it
+// Every symbol in ONE batched call. FMP sends `access-control-allow-origin: *`, so it
 // works directly from the browser with no proxy (Yahoo has live data for these but sends
 // no CORS header, and public CORS proxies tested at ~25% success with 15s latency).
 // Returns { SYM: {p, pc} } for whatever came back; {} on failure so callers keep last good.
-async function fmpBenchQuotes(syms, key) {
+async function fmpQuotes(syms, key) {
   if ((!key && !PROXY) || !syms.length) return {};
   const parse = (arr) => {
     const out = {};
@@ -255,8 +255,62 @@ async function fmpFundamentalsRow(sym, urlFor) {
     beta: p?.beta ?? null,
     wk52h: p?.range ? parseFloat(String(p.range).split("-")[1]) : null,
     wk52l: p?.range ? parseFloat(String(p.range).split("-")[0]) : null,
+    avgVol: p?.averageVolume ?? null,
+    dps: p?.lastDividend ?? null,
     ytd: c.ytd ?? null,
   };
+}
+
+// Broad sector from a provider's free-text industry string. Both FMP and Finnhub
+// return industries rather than GICS sectors, and both miscategorise a stubborn
+// handful of holdings — hence the explicit overrides.
+const SECTOR_OVERRIDES = {
+  "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
+  "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
+  "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
+  "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
+  "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
+  "CHD": "Consumer Staples", "CL": "Consumer Staples",
+  "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
+  "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials",
+  "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
+  "AEM": "Materials", "NTR": "Materials", "FCX": "Materials", "STLD": "Materials",
+  "CRDO": "Technology", "MRVL": "Technology",
+  "IBIT": "Digital Assets", "ETHA": "Digital Assets",
+};
+function sectorFor(sym, industry) {
+  if (SECTOR_OVERRIDES[sym]) return SECTOR_OVERRIDES[sym];
+  const ind = (industry || "").toLowerCase();
+  if (!ind) return null;
+  if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) return "Technology";
+  if (ind.includes("bank") || ind.includes("financ") || ind.includes("insurance") || ind.includes("capital") || ind.includes("invest")) return "Financials";
+  if (ind.includes("pharma") || ind.includes("biotech") || ind.includes("health") || ind.includes("medical")) return "Healthcare";
+  if (ind.includes("oil") || ind.includes("gas") || ind.includes("energy") || ind.includes("coal") || ind.includes("solar")) return "Energy";
+  if (ind.includes("retail") || ind.includes("consumer") || ind.includes("apparel") || ind.includes("auto") || ind.includes("restaurant") || ind.includes("entertainment") || ind.includes("media")) return "Consumer";
+  if (ind.includes("industr") || ind.includes("aerospace") || ind.includes("defense") || ind.includes("machin") || ind.includes("construct")) return "Industrials";
+  if (ind.includes("real estate") || ind.includes("reit")) return "Real Estate";
+  if (ind.includes("metal") || ind.includes("mining") || ind.includes("steel") || ind.includes("chemical") || ind.includes("material")) return "Materials";
+  if (ind.includes("telecom") || ind.includes("communication")) return "Communication";
+  if (ind.includes("utilit") || ind.includes("electric") || ind.includes("water") || ind.includes("power")) return "Utilities";
+  if (ind.includes("food") || ind.includes("beverage") || ind.includes("household") || ind.includes("tobacco")) return "Consumer";
+  if (ind.includes("crypto") || ind.includes("digital") || ind.includes("blockchain")) return "Digital Assets";
+  if (ind.includes("transport") || ind.includes("logistic") || ind.includes("shipping") || ind.includes("freight")) return "Industrials";
+  if (ind.includes("service") || ind.includes("consult")) return "Industrials";
+  return industry || "Uncategorized";
+}
+
+// Run `fn` over `items` with at most `n` in flight. FMP is fine with the concurrency and
+// it turns a 154-symbol serial crawl into something that finishes in seconds.
+async function mapLimit(items, n, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      try { out[i] = await fn(items[i], i); } catch { out[i] = null; }
+    }
+  }));
+  return out;
 }
 
 // Fallback price for a benchmark FMP isn't currently serving. Finnhub may be delayed, but
@@ -1815,43 +1869,45 @@ Instructions:
     if (!todo.length) return;
     todo.forEach(s => { splitAttemptRef.current[s] = now; });
     console.info("[split-adjust] suspecting splits for", todo.join(", "));
-    // Strategy 1 (fast, reliable): Finnhub /quote returns split-adjusted prev close
-    if (FH) {
-      const updates = {};
-      await Promise.all(todo.map(async (sym) => {
-        try {
-          const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${FH}`);
-          if (!r.ok) { console.warn("[split-adjust] Finnhub HTTP", r.status, "for", sym); return; }
-          const d = await r.json();
-          // pc is the adjusted previous close per Finnhub
-          if (typeof d?.pc === "number" && d.pc > 0) {
-            const cur = barsRef.current[sym] || {};
-            const oldPc = cur.pc;
-            const next = { ...cur, pc: d.pc };
-            barsRef.current[sym] = next;
-            updates[sym] = next;
-            splitFixedRef.current.add(sym);
-            // Derive split ratio from the pc swap: e.g. KLAC went from $750 -> $250 → 3:1.
-            // Round to common denominators (2,3,4,5,10,20) and only record if confidently a split.
-            if (oldPc > 0 && d.pc > 0) {
-              const raw = oldPc / d.pc;
-              const candidates = [2, 3, 4, 5, 10, 20];
-              const ratio = candidates.find(c => Math.abs(raw - c) / c < 0.1);
-              if (ratio) {
-                splitRatiosRef.current[sym] = ratio;
-                setSplitRatios(prev => prev[sym] === ratio ? prev : ({ ...prev, [sym]: ratio }));
-                console.info("[split-adjust] inferred", sym, "split ratio", ratio + ":1");
-              }
-            }
-            console.info("[split-adjust] Finnhub corrected", sym, "pc=", d.pc);
-          } else {
-            console.warn("[split-adjust] Finnhub gave no pc for", sym, d);
-          }
-        } catch (e) { console.warn("[split-adjust] Finnhub error for", sym, e); }
-      }));
-      if (Object.keys(updates).length) {
-        setBars(prev => ({ ...prev, ...updates }));
+    // Apply a split-adjusted previous close and, where the swap is unambiguous, record the
+    // ratio it implies. Shared by both quote sources below.
+    const applyPc = (src, sym, pc) => {
+      const cur = barsRef.current[sym] || {};
+      const oldPc = cur.pc;
+      const next = { ...cur, pc };
+      barsRef.current[sym] = next;
+      splitFixedRef.current.add(sym);
+      // Derive split ratio from the pc swap: e.g. KLAC went from $750 -> $250 → 3:1.
+      // Round to common denominators (2,3,4,5,10,20) and only record if confidently a split.
+      if (oldPc > 0) {
+        const raw = oldPc / pc;
+        const ratio = [2, 3, 4, 5, 10, 20].find(c => Math.abs(raw - c) / c < 0.1);
+        if (ratio) {
+          splitRatiosRef.current[sym] = ratio;
+          setSplitRatios(prev => prev[sym] === ratio ? prev : ({ ...prev, [sym]: ratio }));
+          console.info("[split-adjust] inferred", sym, "split ratio", ratio + ":1");
+        }
       }
+      console.info(`[split-adjust] ${src} corrected`, sym, "pc=", pc);
+      return next;
+    };
+    // Strategy 1 (fast, reliable): FMP quotes carry a split-adjusted previousClose, and one
+    // batched call covers every suspect symbol. Finnhub picks up whatever FMP didn't return.
+    {
+      const updates = {};
+      const qs = await fmpQuotes(todo, FK);
+      for (const [sym, q] of Object.entries(qs)) {
+        if (q.pc > 0) updates[sym] = applyPc("FMP", sym, q.pc);
+      }
+      const missed = todo.filter(s => !splitFixedRef.current.has(s));
+      if (FH && missed.length) {
+        await Promise.all(missed.map(async (sym) => {
+          const f = await finnhubBenchQuote(sym, FH);   // pc is the adjusted previous close
+          if (f?.pc > 0) updates[sym] = applyPc("Finnhub", sym, f.pc);
+          else console.warn("[split-adjust] no pc for", sym);
+        }));
+      }
+      if (Object.keys(updates).length) setBars(prev => ({ ...prev, ...updates }));
     }
     // Strategy 2 (fallback): Alpaca split-adjusted bars for any symbol still unfixed
     if (!apiKey || !apiSecret) return;
@@ -1937,7 +1993,7 @@ Instructions:
       const isFirstFetch = Object.keys(quotesRef.current).length === 0;
       if (isFirstFetch) {
         // FMP — primary source for DVY/IUSG, same call the poller below uses.
-        const yq = await fmpBenchQuotes(NON_IEX_BM, FK);
+        const yq = await fmpQuotes(NON_IEX_BM, FK);
         for (const [s, y] of Object.entries(yq)) {
           nq[s] = { p: y.p, t: new Date().toISOString() };
           if (y.pc) nb[s] = { ...nb[s], pc: y.pc };
@@ -2058,7 +2114,7 @@ Instructions:
     } catch {}
   }, [coreSyms]);
 
-    /* ── Fetch fundamentals via Finnhub (1 call/symbol, 60/min free) ── */
+    /* ── Fetch screener fundamentals (FMP, with Finnhub as fallback) ── */
   const [fmpStatus, setFmpStatus] = useState("");
   const [earningsCalendar, setEarningsCalendar] = useState([]);
   const [econCalendar, setEconCalendar] = useState([]);
@@ -2071,8 +2127,9 @@ Instructions:
   const [rtLoading, setRtLoading] = useState(false);
   const [rtTab, setRtTab] = useState("contacts"); // contacts | tasks | calendar
   const fetchFundamentals = useCallback(async (force = false) => {
-    const key = FH || FK;
-    if (!key) { setFmpStatus("No API key — add FINNHUB_KEY secret"); return; }
+    const useFmp = FMP_OK;
+    const src = useFmp ? "FMP" : "Finnhub";
+    if (!useFmp && !FH) { setFmpStatus("No API key — set PROXY_URL (or FINNHUB_KEY)"); return; }
     if (!force) {
       try {
         const old = JSON.parse(localStorage.getItem("iown_metrics_cache") || "{}");
@@ -2113,135 +2170,107 @@ Instructions:
       } catch (e) { console.warn("Alpaca bars fetch failed:", e.message); }
     }
 
-    for (let i = 0; i < coreSyms.length; i++) {
-      const sym = coreSyms[i];
-      if (i % 5 === 0) setFmpStatus(`Finnhub: ${i + 1}/${coreSyms.length}… (${success} ok)`);
+    // Per-symbol price returns from the Alpaca daily bars fetched above.
+    const qtrReturns = (sym) => {
+      const bars = alpacaBars[sym];
+      if (!bars || bars.length < 2) return {};
+      // Last bar on or before the target date …
+      const findPrice = (targetDate) => {
+        const target = fmtDate(targetDate);
+        let best = null;
+        for (const bar of bars) if (bar.t.slice(0, 10) <= target) best = bar.c;
+        return best;
+      };
+      // … and the first on or after, for start-of-period prices.
+      const findPriceAfter = (targetDate) => {
+        const target = fmtDate(targetDate);
+        for (const bar of bars) if (bar.t.slice(0, 10) >= target) return bar.c;
+        return null;
+      };
+      const pPrevStart = findPriceAfter(prevQtrStartDate); // first trading day on/after Oct 1
+      const pPrevEnd = findPrice(curQtrStart);             // last trading day before Jan 1
+      const pCurStart = findPriceAfter(curQtrStart);       // first trading day on/after Jan 1
+      const pYtdStart = findPriceAfter(ytdStartDate);      // first trading day on/after Jan 1
+      const pNow = bars[bars.length - 1].c;                // latest close
+      return {
+        lastQtr: (pPrevStart && pPrevEnd) ? ((pPrevEnd - pPrevStart) / pPrevStart) * 100 : null,
+        thisQtr: (pCurStart && pNow) ? ((pNow - pCurStart) / pCurStart) * 100 : null,
+        ytd: (pYtdStart && pNow) ? ((pNow - pYtdStart) / pYtdStart) * 100 : null,
+      };
+    };
+
+    // Finnhub's stock/metric, kept as the fallback for when FMP isn't configured.
+    // Returns null on a 429 so the caller can back off and retry the symbol.
+    const finnhubRow = async (sym) => {
+      const [metR, profR] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${FH}`),
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${FH}`).catch(() => null),
+      ]);
+      if (metR.status === 429) return "429";
+      if (!metR.ok) return null;
+      const m = (await metR.json())?.metric || {};
+      const prof = profR?.ok ? await profR.json() : null;
+      return {
+        companyName: prof?.name || null,
+        industry: prof?.finnhubIndustry || null,
+        logo: prof?.logo || null,
+        avgVol: m["3MonthAverageTradingVolume"] ? m["3MonthAverageTradingVolume"] * 1e6 : null,
+        peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null,
+        peFwd: m.peAnnual ?? null,
+        pegTTM: m.pegTTM ?? null,
+        yieldFwd: m.dividendYieldIndicatedAnnual ?? null,
+        dps: m.dividendPerShareAnnual ?? null,
+        payoutRatio: m.payoutRatioTTM ?? m.payoutRatioAnnual ?? null,
+        revenueYoY: m.revenueGrowthQuarterlyYoy ?? m.revenueGrowthTTMYoy ?? null,
+        revenue5Y: m.revenueGrowth5Y ?? null,
+        profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
+        roe: m.roeTTM ?? m.roeAnnual ?? null,
+        de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
+        beta: m.beta ?? null,
+        wk52h: m["52WeekHigh"] ?? null,
+        wk52l: m["52WeekLow"] ?? null,
+        ytd: m["yearToDatePriceReturnDaily"] ?? null,
+      };
+    };
+
+    let done = 0;
+    // 4-wide for FMP: fmpFundamentalsRow makes 5 calls per symbol, so ~150 holdings is
+    // ~750 requests. That's a minute's worth of FMP's rate limit, and this only runs on a
+    // 6h cache miss. Finnhub stays serial — its free tier is 60/min for two calls/symbol.
+    await mapLimit(coreSyms, useFmp ? 4 : 1, async (sym) => {
       try {
-        // Fetch metrics + company profile in parallel
-        const [metR, profR] = await Promise.all([
-          fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${sym}&metric=all&token=${key}`),
-          fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${sym}&token=${key}`).catch(() => null),
-        ]);
-        if (!metR.ok) {
-          if (metR.status === 429) { setFmpStatus(`Rate limited at ${i}. Waiting…`); await new Promise(r => setTimeout(r, 61000)); i--; continue; }
-          continue;
-        }
-        const d = await metR.json();
-        const m = d?.metric || {};
-        // Profile: industry from Finnhub
-        let profileIndustry = null, profileSector = null, profileName = null, profileLogo = null;
-        if (profR?.ok) {
-          const prof = await profR.json();
-          profileIndustry = prof?.finnhubIndustry || null;
-          profileName = prof?.name || null;
-          profileLogo = prof?.logo || null;
-          // Hardcoded sector overrides for holdings that Finnhub miscategorizes
-          const SECTOR_OVERRIDES = {
-            "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
-            "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
-            "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
-            "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
-            "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
-            "CHD": "Consumer Staples", "CL": "Consumer Staples",
-            "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
-            "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials",
-            "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
-            "AEM": "Materials", "NTR": "Materials", "FCX": "Materials", "STLD": "Materials",
-            "CRDO": "Technology", "MRVL": "Technology",
-            "IBIT": "Digital Assets", "ETHA": "Digital Assets",
-          };
-          if (SECTOR_OVERRIDES[sym]) {
-            profileSector = SECTOR_OVERRIDES[sym];
-          } else {
-            // Map Finnhub industries to broader sectors
-            const ind = (profileIndustry || "").toLowerCase();
-            if (ind.includes("tech") || ind.includes("software") || ind.includes("semiconductor") || ind.includes("internet") || ind.includes("electronic")) profileSector = "Technology";
-            else if (ind.includes("bank") || ind.includes("financ") || ind.includes("insurance") || ind.includes("capital") || ind.includes("invest")) profileSector = "Financials";
-            else if (ind.includes("pharma") || ind.includes("biotech") || ind.includes("health") || ind.includes("medical")) profileSector = "Healthcare";
-            else if (ind.includes("oil") || ind.includes("gas") || ind.includes("energy") || ind.includes("coal") || ind.includes("solar")) profileSector = "Energy";
-            else if (ind.includes("retail") || ind.includes("consumer") || ind.includes("apparel") || ind.includes("auto") || ind.includes("restaurant") || ind.includes("entertainment") || ind.includes("media")) profileSector = "Consumer";
-            else if (ind.includes("industr") || ind.includes("aerospace") || ind.includes("defense") || ind.includes("machin") || ind.includes("construct")) profileSector = "Industrials";
-            else if (ind.includes("real estate") || ind.includes("reit")) profileSector = "Real Estate";
-            else if (ind.includes("metal") || ind.includes("mining") || ind.includes("steel") || ind.includes("chemical") || ind.includes("material")) profileSector = "Materials";
-            else if (ind.includes("telecom") || ind.includes("communication")) profileSector = "Communication";
-            else if (ind.includes("utilit") || ind.includes("electric") || ind.includes("water") || ind.includes("power")) profileSector = "Utilities";
-            else if (ind.includes("food") || ind.includes("beverage") || ind.includes("household") || ind.includes("tobacco")) profileSector = "Consumer";
-            else if (ind.includes("crypto") || ind.includes("digital") || ind.includes("blockchain")) profileSector = "Digital Assets";
-            else if (ind.includes("transport") || ind.includes("logistic") || ind.includes("shipping") || ind.includes("freight")) profileSector = "Industrials";
-            else if (ind.includes("service") || ind.includes("consult")) profileSector = "Industrials";
-            else profileSector = profileIndustry || "Uncategorized";
+        let row = useFmp ? await fmpFundamentalsRow(sym, fmpUrl) : null;
+        if (!row && FH) {
+          // Finnhub's free tier is 60 calls/min and this loop makes two per symbol,
+          // so a 429 means waiting out the window rather than dropping the symbol.
+          row = await finnhubRow(sym);
+          if (row === "429") {
+            setFmpStatus(`Rate limited at ${done}. Waiting…`);
+            await new Promise(r => setTimeout(r, 61000));
+            row = await finnhubRow(sym);
+            if (row === "429") row = null;
           }
         }
-
-        // Calculate quarter returns from Alpaca daily bars
-        let lastQtrCalc = null, thisQtrCalc = null, ytdCalc = null;
-        const bars = alpacaBars[sym];
-        if (bars && bars.length > 1) {
-          // bars are sorted chronologically, each has { t: "2025-10-01T...", c: 123.45, ... }
-          const findPrice = (targetDate) => {
-            const target = fmtDate(targetDate);
-            // Find closest bar on or before the target date
-            let best = null;
-            for (const bar of bars) {
-              const barDate = bar.t.slice(0, 10);
-              if (barDate <= target) best = bar.c;
-            }
-            return best;
-          };
-          // Find closest bar on or after for start-of-period prices
-          const findPriceAfter = (targetDate) => {
-            const target = fmtDate(targetDate);
-            for (const bar of bars) {
-              const barDate = bar.t.slice(0, 10);
-              if (barDate >= target) return bar.c;
-            }
-            return null;
-          };
-
-          const pPrevStart = findPriceAfter(prevQtrStartDate); // first trading day on/after Oct 1
-          const pPrevEnd = findPrice(curQtrStart);               // last trading day before Jan 1
-          const pCurStart = findPriceAfter(curQtrStart);         // first trading day on/after Jan 1
-          const pYtdStart = findPriceAfter(ytdStartDate);        // first trading day on/after Jan 1
-          const pNow = bars[bars.length - 1].c;                  // latest close
-
-          if (pPrevStart && pPrevEnd) lastQtrCalc = ((pPrevEnd - pPrevStart) / pPrevStart) * 100;
-          if (pCurStart && pNow) thisQtrCalc = ((pNow - pCurStart) / pCurStart) * 100;
-          if (pYtdStart && pNow) ytdCalc = ((pNow - pYtdStart) / pYtdStart) * 100;
-        }
-
+        if (!row) return;
+        const q = qtrReturns(sym);
         results[sym] = {
-          companyName: profileName,
-          sector: profileSector,
-          industry: profileIndustry,
-          logo: profileLogo,
-          avgVol: m["3MonthAverageTradingVolume"] ? m["3MonthAverageTradingVolume"] * 1e6 : null,
-          peTTM: m.peTTM ?? m.peBasicExclExtraTTM ?? null,
-          peFwd: m.peAnnual ?? null,
-          pegTTM: m.pegTTM ?? null,
-          yieldFwd: m.dividendYieldIndicatedAnnual ?? null,
-          dps: m.dividendPerShareAnnual ?? null,
-          payoutRatio: m.payoutRatioTTM ?? m.payoutRatioAnnual ?? null,
-          revenueYoY: m.revenueGrowthQuarterlyYoy ?? m.revenueGrowthTTMYoy ?? null,
-          revenue5Y: m.revenueGrowth5Y ?? null,
-          profitMargin: m.netProfitMarginTTM ?? m.netProfitMarginAnnual ?? null,
-          roe: m.roeTTM ?? m.roeAnnual ?? null,
-          de: m["totalDebt/totalEquityQuarterly"] ?? m["longTermDebt/equityQuarterly"] ?? null,
-          beta: m.beta ?? null,
-          wk52h: m["52WeekHigh"] ?? null,
-          wk52l: m["52WeekLow"] ?? null,
-          lastQtr: lastQtrCalc,
-          thisQtr: thisQtrCalc ?? (curQtr === 0 ? (m["yearToDatePriceReturnDaily"] ?? null) : null),
-          ytd: ytdCalc ?? m["yearToDatePriceReturnDaily"] ?? null,
+          ...row,
+          // FMP reports a real sector; Finnhub only an industry, hence the text mapper.
+          // Explicit overrides beat both.
+          sector: SECTOR_OVERRIDES[sym] || row.sector || sectorFor(sym, row.industry),
+          lastQtr: q.lastQtr ?? null,
+          // Q1 has no completed quarter of its own yet, so YTD stands in for it.
+          thisQtr: q.thisQtr ?? (curQtr === 0 ? (row.ytd ?? null) : null),
+          ytd: q.ytd ?? row.ytd ?? null,
         };
         if (results[sym].peTTM != null) success++;
-        // Also set company name from Finnhub profile
-        if (profileName) setNames(prev => prev[sym] ? prev : { ...prev, [sym]: profileName });
-        if (i === 0) setFmpStatus(`Fetching… keys ok`);
-      } catch (e) { console.warn("Finnhub", sym, e.message); }
-    }
+        if (row.companyName) setNames(prev => prev[sym] ? prev : { ...prev, [sym]: row.companyName });
+      } catch (e) { console.warn(src, sym, e.message); }
+      if (++done % 5 === 0 || done === coreSyms.length) setFmpStatus(`${src}: ${done}/${coreSyms.length}… (${success} ok)`);
+    });
 
     results._ts = Date.now();
-    setFmpStatus(`Done: ${success}/${coreSyms.length} via Finnhub`);
+    setFmpStatus(`Done: ${success}/${coreSyms.length} via ${src}`);
     setFundamentals(results);
     try { localStorage.setItem("iown_metrics_cache", JSON.stringify(results)); } catch {}
   }, [coreSyms, apiKey, apiSecret, hdrs]);
@@ -2454,15 +2483,43 @@ Instructions:
       const nextSunday = new Date(monday); nextSunday.setDate(nextSunday.getDate() + 13);
       const fmtD = d => d.toISOString().slice(0, 10);
 
-      // PRIMARY: Finnhub economic calendar (CORS-friendly, includes actuals natively)
-      if (FH) {
+      const keepEvents = (src, list) => {
+        if (!list.length) return;
+        events = list;
+        console.log(`Calendar: ${list.length} events from ${src} (${list.filter(e => e.actual).length} with actuals)`);
+        try { localStorage.setItem("iown_econ_calendar", JSON.stringify(events)); } catch {}
+      };
+
+      // PRIMARY: FMP economic calendar
+      if (FMP_OK) {
+        try {
+          const r = await fetch(fmpUrl(`/stable/economic-calendar`, { from: fmtD(monday), to: fmtD(nextSunday) })).catch(() => null);
+          if (r?.ok) {
+            const data = await r.json();
+            if (Array.isArray(data)) {
+              keepEvents("FMP", data
+                .filter(e => e.country === "US" && ["high","medium"].includes((e.impact||"").toLowerCase()))
+                .map(e => ({
+                  title: e.event || "", date: e.date || "", country: "USD",
+                  impact: (e.impact || "").charAt(0).toUpperCase() + (e.impact || "").slice(1).toLowerCase(),
+                  actual: e.actual != null ? String(e.actual) : "",
+                  previous: e.previous != null ? String(e.previous) : "",
+                  forecast: e.estimate != null ? String(e.estimate) : "",
+                })));
+            }
+          }
+        } catch {}
+      }
+
+      // SECONDARY: Finnhub (if FMP failed or returned empty). Same shape, different field names.
+      if (events.length === 0 && FH) {
         try {
           const r = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${fmtD(monday)}&to=${fmtD(nextSunday)}&token=${FH}`).catch(() => null);
           if (r?.ok) {
             const data = await r.json();
             const fhEvents = data?.economicCalendar || data?.result || [];
             if (Array.isArray(fhEvents)) {
-              events = fhEvents
+              keepEvents("Finnhub", fhEvents
                 .filter(e => e.country === "US" && ["high","medium"].includes((e.impact || "").toLowerCase()))
                 .map(e => ({
                   title: e.event || "", date: e.time || e.date || "", country: "USD",
@@ -2471,36 +2528,7 @@ Instructions:
                   previous: e.prev != null ? String(e.prev) : "",
                   forecast: e.estimate != null ? String(e.estimate) : "",
                   unit: e.unit || "",
-                }));
-              if (events.length > 0) {
-                console.log(`Calendar: ${events.length} events from Finnhub (${events.filter(e => e.actual).length} with actuals)`);
-                try { localStorage.setItem("iown_econ_calendar", JSON.stringify(events)); } catch {}
-              }
-            }
-          }
-        } catch {}
-      }
-
-      // SECONDARY: FMP economic calendar (if Finnhub failed or returned empty)
-      if (events.length === 0 && FK) {
-        try {
-          const r = await fetch(fmpUrl(`/stable/economic-calendar`, { from: fmtD(monday), to: fmtD(nextSunday) })).catch(() => null);
-          if (r?.ok) {
-            const data = await r.json();
-            if (Array.isArray(data)) {
-              events = data
-                .filter(e => e.country === "US" && ["high","medium"].includes((e.impact||"").toLowerCase()))
-                .map(e => ({
-                  title: e.event || "", date: e.date || "", country: "USD",
-                  impact: (e.impact || "").charAt(0).toUpperCase() + (e.impact || "").slice(1).toLowerCase(),
-                  actual: e.actual != null ? String(e.actual) : "",
-                  previous: e.previous != null ? String(e.previous) : "",
-                  forecast: e.estimate != null ? String(e.estimate) : "",
-                }));
-              if (events.length > 0) {
-                console.log(`Calendar: ${events.length} events from FMP`);
-                try { localStorage.setItem("iown_econ_calendar", JSON.stringify(events)); } catch {}
-              }
+                })));
             }
           }
         } catch {}
@@ -2591,7 +2619,7 @@ Instructions:
     }
 
     // OVERLAY: Finnhub — fill gaps + add portfolio holdings even when FMP exists
-    const fhKey = FH || FK;
+    const fhKey = FH;   // FK would 401 here — Finnhub doesn't take an FMP key
     if (fhKey) {
       try {
         const r = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${earnFrom}&to=${earnTo}&token=${fhKey}`);
@@ -2696,7 +2724,7 @@ Instructions:
   // Uses Finnhub /stock/earnings per-symbol (returns actuals faster than calendar endpoints).
   const actualsRetryRef = useRef(0);
   useEffect(() => {
-    if (!earningsCalendar.length || !FH) return;
+    if (!earningsCalendar.length || (!FMP_OK && !FH)) return;
     const now = new Date();
     const todayLocal = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
     const hour = now.getHours();
@@ -2715,13 +2743,22 @@ Instructions:
       let updated = false;
       for (const evt of missing) {
         try {
-          const r = await fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${evt.symbol}&limit=1&token=${FH}`);
-          if (!r.ok) continue;
-          const data = await r.json();
-          if (!Array.isArray(data) || !data.length) continue;
-          const latest = data[0];
+          // FMP first; Finnhub only if it produced nothing. fmpEarningsShim maps FMP's
+          // {date, epsActual, epsEstimated} onto Finnhub's {period, actual, surprise}.
+          let latest = null;
+          if (FMP_OK) {
+            const r = await fetch(fmpUrl(`/stable/earnings`, { symbol: evt.symbol, limit: 4 }));
+            if (r.ok) latest = fmpEarningsShim(await r.json()).find(e => e.actual != null) || null;
+          }
+          if (!latest && FH) {
+            const r = await fetch(`https://finnhub.io/api/v1/stock/earnings?symbol=${evt.symbol}&limit=1&token=${FH}`);
+            if (r.ok) {
+              const data = await r.json();
+              latest = (Array.isArray(data) && data.length) ? data[0] : null;
+            }
+          }
           // Match by quarter/year or by proximity to the earnings date
-          if (latest.actual != null) {
+          if (latest?.actual != null) {
             evt.epsActual = latest.actual;
             if (latest.surprise != null) evt.epsSurprise = latest.surprise;
             updated = true;
@@ -2838,7 +2875,7 @@ Instructions:
     const need = NON_IEX_BM.filter((s) => !streaming.includes(s));
     if (!need.length) return;
     const attemptFmp = now >= (fmpNextTryRef.current || 0);
-    const qs = attemptFmp ? await fmpBenchQuotes(need, FK) : {};
+    const qs = attemptFmp ? await fmpQuotes(need, FK) : {};
     for (const [sym, y] of Object.entries(qs)) { fmpOkAtRef.current[sym] = now; write(sym, y); }
     if (attemptFmp) {
       if (Object.keys(qs).length) {
@@ -2941,7 +2978,7 @@ Instructions:
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
   const staleTimerRef = useRef(null);
   const pollStaleStocks = useCallback(async () => {
-    if (!FH || marketStatus.status !== "open") return;
+    if ((!FMP_OK && !FH) || marketStatus.status !== "open") return;
     const now = Date.now();
     const staleThreshold = 5 * 60 * 1000; // 5 minutes
     // Only poll dividend + growth stocks — FCI stocks are high-volume and work fine on IEX
@@ -2953,24 +2990,25 @@ Instructions:
       return (now - tradeTime) > staleThreshold;
     });
     if (!stale.length) return;
-    // Only poll up to 5 at a time to leave room for benchmark polling
+    // Only refresh up to 5 at a time to leave room for benchmark polling. FMP takes the
+    // whole batch in one request; Finnhub, one call per symbol, mops up what's missing.
     const batch = stale.slice(0, 5);
     const batchQ = {}, batchB = {};
-    for (const sym of batch) {
-      try {
-        const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FH}`);
-        if (!r.ok) continue;
-        const q = await r.json();
-        if (!q.c) continue;
-        const quoteVal = { p: q.c, t: new Date().toISOString() };
-        quotesRef.current[sym] = quoteVal;
-        batchQ[sym] = quoteVal;
-        if (q.pc) {
-          const barVal = { ...barsRef.current[sym], pc: q.pc };
-          barsRef.current[sym] = barVal;
-          batchB[sym] = barVal;
-        }
-      } catch {}
+    const write = (sym, p, pc) => {
+      const quoteVal = { p, t: new Date().toISOString() };
+      quotesRef.current[sym] = quoteVal;
+      batchQ[sym] = quoteVal;
+      if (pc > 0) {
+        const barVal = { ...barsRef.current[sym], pc };
+        barsRef.current[sym] = barVal;
+        batchB[sym] = barVal;
+      }
+    };
+    const qs = await fmpQuotes(batch, FK);
+    for (const [sym, q] of Object.entries(qs)) write(sym, q.p, q.pc);
+    for (const sym of batch.filter(s => !qs[s])) {
+      const f = await finnhubBenchQuote(sym, FH);
+      if (f) write(sym, f.p, f.pc);
     }
     if (Object.keys(batchQ).length) setQuotes(prev => ({ ...prev, ...batchQ }));
     if (Object.keys(batchB).length) setBars(prev => ({ ...prev, ...batchB }));
@@ -3336,31 +3374,34 @@ Instructions:
           return result;
         } catch { return {}; }
       };
-      // Fallback: Finnhub candles for any symbols missing from IEX
-      const fetchFhBmBars = async (resolution, from) => {
-        if (!FH) return {};
+      // Fallback: FMP intraday candles for any symbols missing from IEX — DVY and IUSG
+      // aren't on the IEX feed at all, so this is what draws their intraday line.
+      // (Finnhub's stock/candle is a paid endpoint and 403s on the free tier.)
+      const fetchFmpBmBars = async (interval, from) => {
+        if (!FMP_OK) return {};
         const result = {};
-        const fromTs = Math.floor(new Date(from).getTime() / 1000);
-        const toTs = Math.floor(Date.now() / 1000);
-        for (const sym of allBmSyms) {
+        const to = new Date().toISOString().slice(0, 10);
+        await Promise.all(allBmSyms.map(async (sym) => {
           try {
-            const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=${resolution}&from=${fromTs}&to=${toTs}&token=${FH}`;
-            const r = await fetch(url);
-            if (!r.ok) continue;
+            const r = await fetch(fmpUrl(`/stable/historical-chart/${interval}`, { symbol: sym, from: from.slice(0, 10), to }));
+            if (!r.ok) return;
             const d = await r.json();
-            if (d.s === "ok" && d.t && d.c) {
-              result[sym] = d.t.map((t, i) => ({ date: new Date(t * 1000).toISOString(), close: d.c[i] }));
-            }
+            if (!Array.isArray(d) || !d.length) return;
+            // FMP returns newest-first, local exchange time with no zone marker.
+            result[sym] = d
+              .filter(b => b?.date && typeof b.close === "number")
+              .map(b => ({ date: String(b.date).replace(" ", "T"), close: b.close }))
+              .sort((a, b) => a.date.localeCompare(b.date));
           } catch {}
-        }
+        }));
         return result;
       };
 
       const [iex1DRaw, fh1DRaw] = await Promise.all([
         fetchBmBars(allBmSyms, "1Min", d1Start),
-        fetchFhBmBars("1", d1Start),
+        fetchFmpBmBars("1min", d1Start),
       ]);
-      // Merge: prefer IEX data, fall back to Finnhub for missing symbols
+      // Merge: prefer IEX data, fall back to FMP for missing symbols
       const mergeBm = (iex, fh) => {
         const merged = { ...fh };
         for (const [sym, bars] of Object.entries(iex)) {
