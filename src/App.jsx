@@ -105,7 +105,7 @@ const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 // key stays server-side. When it is unset every call falls back to the direct URL, so the
 // app behaves exactly as before and deploying this change alone is a no-op.
 const PROXY = (import.meta.env.VITE_PROXY_URL || "").replace(/\/+$/, "");
-// path is the upstream path, e.g. "/api/v3/quote/DVY,IUSG"
+// path is the upstream path, e.g. "/stable/batch-quote"
 function fmpUrl(path, params = {}) {
   const qs = new URLSearchParams(params);
   if (PROXY) return `${PROXY}/fmp${path}${qs.toString() ? `?${qs}` : ""}`;
@@ -129,20 +129,24 @@ async function fmpBenchQuotes(syms, key) {
     }
     return out;
   };
-  // v3 is what the rest of the app uses; /stable is FMP's newer surface. Try both so a
-  // plan that has been migrated off one of them still returns a price.
-  for (const url of [
-    fmpUrl(`/api/v3/quote/${syms.join(",")}`),
-    fmpUrl(`/stable/quote`, { symbol: syms.join(",") }),
-  ]) {
+  const get = async (url) => {
     try {
       const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) continue;
-      const got = parse(await r.json());
-      if (Object.keys(got).length) return got;
-    } catch { /* try next */ }
-  }
-  return {};
+      if (!r.ok) return {};
+      return parse(await r.json());
+    } catch { return {}; }
+  };
+  // FMP retired /api/v3 for subscriptions started after 2025-08-31 — it answers 200 with
+  // {"Error Message": "Legacy Endpoint ..."} rather than an error status, so a naive ok
+  // check sees success and parses nothing. That is why these quotes silently went empty.
+  const batched = await get(fmpUrl(`/stable/batch-quote`, { symbols: syms.join(",") }));
+  if (syms.every((s) => batched[s])) return batched;
+  // Fill only what the batch missed. /stable/quote is single-symbol — a comma-separated
+  // list returns an empty array — so each gap needs its own request, and the results are
+  // merged rather than returned individually (returning the first would drop the others).
+  const gaps = syms.filter((s) => !batched[s]);
+  const singles = await Promise.all(gaps.map((s) => get(fmpUrl(`/stable/quote`, { symbol: s }))));
+  return Object.assign(batched, ...singles);
 }
 
 // Fallback price for a benchmark FMP isn't currently serving. Finnhub may be delayed, but
@@ -2145,14 +2149,14 @@ Instructions:
     for (let i = 0; i < divSyms.length; i++) {
       const sym = divSyms[i];
       try {
-        // Primary: FMP v3 historical-price-full
-        let url = fmpUrl(`/api/v3/historical-price-full/stock_dividend/${sym}`);
+        // /stable/dividends returns a flat array; the retired v3 endpoint nested it
+        // under .historical, so accept either shape.
+        let url = fmpUrl(`/stable/dividends`, { symbol: sym });
         let r = await fetch(url);
         let d = r.ok ? await r.json() : null;
-        let payments = d?.historical || [];
-        // Fallback: FMP stable dividends endpoint (different shape)
+        let payments = Array.isArray(d) ? d : (d?.historical || []);
         if (!payments.length) {
-          url = fmpUrl(`/api/v3/stock_dividend_calendar`, { symbol: sym });
+          url = fmpUrl(`/stable/dividends-calendar`, { symbol: sym });
           r = await fetch(url);
           d = r.ok ? await r.json() : null;
           payments = Array.isArray(d) ? d.filter(p => p.symbol === sym) : [];
@@ -2337,7 +2341,7 @@ Instructions:
       // SECONDARY: FMP economic calendar (if Finnhub failed or returned empty)
       if (events.length === 0 && FK) {
         try {
-          const r = await fetch(fmpUrl(`/api/v3/economic_calendar`, { from: fmtD(monday), to: fmtD(nextSunday) })).catch(() => null);
+          const r = await fetch(fmpUrl(`/stable/economic-calendar`, { from: fmtD(monday), to: fmtD(nextSunday) })).catch(() => null);
           if (r?.ok) {
             const data = await r.json();
             if (Array.isArray(data)) {
@@ -2420,7 +2424,7 @@ Instructions:
     // OVERLAY: FMP earnings (more authoritative for actuals, overwrites static)
     if (FMP_OK) {
       try {
-        const r = await fetch(fmpUrl(`/api/v3/earning_calendar`, { from: earnFrom, to: earnTo }));
+        const r = await fetch(fmpUrl(`/stable/earnings-calendar`, { from: earnFrom, to: earnTo }));
         if (r.ok) {
           const data = await r.json();
           if (Array.isArray(data)) {
@@ -2501,7 +2505,7 @@ Instructions:
           const bi = coreSyms.includes(b) ? 0 : 1;
           return ai - bi || a.localeCompare(b);
         }).slice(0, 100);
-        const r = await fetch(fmpUrl(`/api/v3/quote/${prioritized.join(",")}`));
+        const r = await fetch(fmpUrl(`/stable/batch-quote`, { symbols: prioritized.join(",") }));
         if (r.ok) {
           const quotes = await r.json();
           if (Array.isArray(quotes)) {
