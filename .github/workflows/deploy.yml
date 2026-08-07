@@ -49,7 +49,9 @@ jobs:
           VITE_PROXY_URL: ${{ secrets.PROXY_URL }}
           VITE_FINNHUB_KEY: ${{ secrets.FINHUB_API }}
           VITE_ANTHROPIC_KEY: ${{ secrets.VITE_ANTHROPIC_KEY }}
-          VITE_FRED_KEY: ${{ secrets.FRED_API_KEY }}
+          # No VITE_FRED_KEY: the browser now reads the yield curve from FMP, with the
+          # keyless fredgraph CSV as fallback. FRED_API_KEY is still used server-side by
+          # update-calendar.yml, where it stays out of the public bundle.
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
