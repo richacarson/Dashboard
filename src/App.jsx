@@ -2850,6 +2850,7 @@ Instructions:
   const fhTimerRef = useRef(null);
   const streamOkAtRef = useRef({});   // sym -> timestamp of last FMP WebSocket tick
   const STREAM_STALE_MS = 90_000;     // no tick this long => the stream isn't carrying this symbol
+  const STREAM_MAX_LAG_MS = 5 * 60_000; // tick older than this => delayed feed, not live
   const fmpOkAtRef = useRef({});      // sym -> timestamp of last SUCCESSFUL FMP quote
   const fmpFailsRef = useRef(0);      // consecutive empty FMP responses -> length of the backoff
   const fmpNextTryRef = useRef(0);    // earliest timestamp FMP may be called again (always finite)
@@ -2948,6 +2949,23 @@ Instructions:
         const sym = String(m?.symbol || "").toUpperCase();
         const p = Number(m?.price);
         if (!NON_IEX_BM.includes(sym) || !isFinite(p) || p <= 0) return;
+        // FMP serves DELAYED quotes on this socket until the user declaration form is
+        // approved, and a delayed tick would still claim the symbol and suppress the
+        // poller — a downgrade from the premium REST quotes, which are real-time. So
+        // only accept ticks that are actually current. The threshold is generous
+        // because DVY and IUSG trade thinly enough to go minutes between prints;
+        // a 15-minute delayed feed is still comfortably outside it.
+        let ts = Number(m?.timestamp);
+        if (isFinite(ts) && ts > 0) {
+          if (ts < 1e12) ts *= 1000;                    // FMP sends seconds; tolerate ms
+          if (Date.now() - ts > STREAM_MAX_LAG_MS) {
+            if (Date.now() - (window.__streamLagWarnAt || 0) > 10 * 60_000) {
+              window.__streamLagWarnAt = Date.now();
+              console.warn(`[stream] ignoring ${sym} tick ${Math.round((Date.now() - ts) / 60000)}m old — FMP is serving delayed quotes (declaration form not approved yet?). Polling continues.`);
+            }
+            return;
+          }
+        }
         streamOkAtRef.current[sym] = Date.now();
         const quoteVal = { p, t: new Date().toISOString() };
         quotesRef.current[sym] = quoteVal;
