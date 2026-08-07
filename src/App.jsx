@@ -319,7 +319,6 @@ const FMP_OK = !!(FK || PROXY);
 // constraint is gone, so poll faster — one batched call covers both symbols.
 const BENCH_POLL_MS = 10000;
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
-const FRED = import.meta.env.VITE_FRED_KEY || "";
 const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
@@ -2394,24 +2393,50 @@ Instructions:
     return () => clearInterval(id);
   }, []);
 
-  /* ── Live 10Y-2Y yield spread from FRED public CSV (no key needed, CORS-friendly) ── */
+  /* ── Live 10Y-2Y yield spread: FMP treasury curve, FRED public CSV as fallback ── */
   useEffect(() => {
+    // FMP publishes the whole constant-maturity curve per day, so the 10Y-2Y spread
+    // is a subtraction rather than its own series.
+    const fromFmp = async () => {
+      if (!FMP_OK) return false;
+      const to = new Date();
+      const from = new Date(to.getTime() - 14 * 864e5);   // 2 weeks covers any holiday gap
+      const r = await fetch(fmpUrl(`/stable/treasury-rates`, { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) }));
+      if (!r.ok) return false;
+      const rows = await r.json();
+      if (!Array.isArray(rows) || !rows.length) return false;
+      // Newest first in FMP's response, but don't rely on it — sort by date.
+      const sorted = [...rows].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        const y10 = Number(sorted[i]?.year10), y2 = Number(sorted[i]?.year2);
+        if (isFinite(y10) && isFinite(y2)) {
+          setMacroData(prev => ({ ...prev, yieldSpread: +(y10 - y2).toFixed(2) }));
+          return true;
+        }
+      }
+      return false;
+    };
+    // T10Y2Y = 10-Year Treasury Minus 2-Year Treasury Constant Maturity. Keyless and
+    // CORS-friendly, so it stays as the backstop if FMP is down or over quota.
+    const fromFred = async () => {
+      const r = await fetch("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y");
+      if (!r.ok) return;
+      const csv = await r.text();
+      // CSV: header row, then DATE,VALUE pairs. Walk from the end for the most recent non-"." value.
+      const rows = csv.trim().split("\n").slice(1);
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const [, val] = rows[i].split(",");
+        const num = parseFloat(val);
+        if (isFinite(num)) {
+          setMacroData(prev => ({ ...prev, yieldSpread: num }));
+          return;
+        }
+      }
+    };
     const fetchYieldSpread = async () => {
       try {
-        // T10Y2Y = 10-Year Treasury Minus 2-Year Treasury Constant Maturity. Published daily by FRED.
-        const r = await fetch("https://fred.stlouisfed.org/graph/fredgraph.csv?id=T10Y2Y");
-        if (!r.ok) return;
-        const csv = await r.text();
-        // CSV: header row, then DATE,VALUE pairs. Walk from the end for the most recent non-"." value.
-        const rows = csv.trim().split("\n").slice(1);
-        for (let i = rows.length - 1; i >= 0; i--) {
-          const [, val] = rows[i].split(",");
-          const num = parseFloat(val);
-          if (isFinite(num)) {
-            setMacroData(prev => ({ ...prev, yieldSpread: num }));
-            return;
-          }
-        }
+        if (await fromFmp().catch(() => false)) return;
+        await fromFred();
       } catch {}
     };
     fetchYieldSpread();
@@ -2958,15 +2983,21 @@ Instructions:
               }
             }
 
-            const polyKey = import.meta.env.VITE_POLYGON_KEY;
-            if (polyKey) {
+            // Fill any gaps Alpaca left with FMP's split-adjusted daily closes.
+            if (FMP_OK) {
               for (const sym of bmSyms) {
                 try {
-                  const url = `https://api.polygon.io/v2/aggs/ticker/${sym}/range/1/week/2024-01-01/${new Date().toISOString().slice(0,10)}?adjusted=true&sort=asc&limit=50000&apiKey=${polyKey}`;
-                  const r = await fetch(url);
+                  const r = await fetch(fmpUrl(`/stable/historical-price-eod/full`, {
+                    symbol: sym, from: startDate.slice(0, 10), to: new Date().toISOString().slice(0, 10),
+                  }));
                   if (r.ok) {
                     const d = await r.json();
-                    if (d.results) d.results.forEach(b => { benchmarks[sym][new Date(b.t).toISOString().slice(0,10)] = b.c; });
+                    const bars = Array.isArray(d) ? d : (d?.historical || []);
+                    bars.forEach(b => {
+                      const c = Number(b.close ?? b.adjClose);
+                      const day = String(b.date || "").slice(0, 10);
+                      if (day && isFinite(c) && benchmarks[sym][day] == null) benchmarks[sym][day] = c;
+                    });
                   }
                 } catch {}
               }

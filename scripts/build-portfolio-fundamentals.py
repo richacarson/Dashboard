@@ -14,7 +14,7 @@ comparison (index ETFs have no EDGAR statements of their own).
 Writes public/portfolio-fundamentals-<sleeve>.json and
 public/benchmark-fundamentals.json.
 """
-import json, re, time, urllib.request
+import json, os, re, time, urllib.parse, urllib.request
 from datetime import datetime, timezone, date
 from pathlib import Path
 
@@ -23,6 +23,48 @@ PUB = REPO / "public"
 FUND = PUB / "fundamentals"
 SLEEVES = ["dividend", "growth", "fci100", "fciValues"]
 UA = {"User-Agent": "Mozilla/5.0"}
+
+FMP_KEY = os.environ.get("FMP_KEY", "")
+FMP_PROXY = os.environ.get("FMP_PROXY", "").rstrip("/")
+
+
+def fmp(path, **params):
+    """GET a /stable FMP endpoint, through the Worker proxy when one is configured."""
+    if FMP_PROXY:
+        url = f"{FMP_PROXY}/fmp/stable/{path}?{urllib.parse.urlencode(params)}"
+    elif FMP_KEY:
+        url = f"https://financialmodelingprep.com/stable/{path}?{urllib.parse.urlencode({**params, 'apikey': FMP_KEY})}"
+    else:
+        return []
+    try:
+        raw = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=45).read()
+        d = json.loads(raw)
+    except Exception as e:
+        print("  fmp fail", path, params, e)
+        return []
+    if isinstance(d, dict):
+        if d.get("Error Message"):
+            print("  fmp error", path, d["Error Message"])
+            return []
+        d = d.get("historical", [])
+    return d if isinstance(d, list) else []
+
+
+def gspc_monthly():
+    """Month-end S&P 500 closes from FMP, scaled to SPY terms (~index/10).
+
+    multpl's price table is a scrape and has bitten us twice (HTML entities, comma
+    thousands separators). FMP is the authoritative source for whatever range it
+    covers; multpl still supplies the deeper pre-FMP history in spy_index().
+    """
+    rows = fmp("historical-price-eod/full", symbol="^GSPC", **{"from": "1990-01-01", "to": date.today().isoformat()})
+    out = {}
+    for r in sorted(rows, key=lambda r: str(r.get("date", ""))):
+        d, c = str(r.get("date", ""))[:10], r.get("close", r.get("adjClose"))
+        if len(d) != 10 or not isinstance(c, (int, float)) or c <= 0:
+            continue
+        out[d[:7]] = c / 10.0   # later dates overwrite → month-end close
+    return out
 
 
 # ─────────────────────────── S&P 500 (multpl) ───────────────────────────
@@ -182,13 +224,44 @@ def build_sleeve(sleeve):
 
 
 def spy_index():
-    """S&P 500 as a clickable 'stock': price, trailing EPS, and P/E from multpl,
-    scaled to SPY terms (~index/10). Drives both a time-series Price·EPS·P/E panel
-    and a Price-vs-EPS phase plot (slope from origin = P/E)."""
+    """S&P 500 as a clickable 'stock': price, trailing EPS, and P/E, scaled to SPY
+    terms (~index/10). Drives the Price·EPS·P/E panel.
+
+    Price history comes from multpl (monthly averages, deep history), with FMP's
+    ^GSPC closes filling the recent tail multpl hasn't published yet — multpl can lag
+    a month or two, which would otherwise stale out the live P/E. EPS and P/S remain
+    multpl-only; FMP has no index-level earnings."""
     peser = multpl("s-p-500-pe-ratio")
     ps = multpl("s-p-500-price-to-sales")
     px = {r["m"]: r["v"] / 10.0 for r in multpl("s-p-500-historical-prices")}   # index → SPY-ish
     earn = {r["m"]: r["v"] / 10.0 for r in multpl("s-p-500-earnings")}          # real trailing-12m EPS
+
+    fmp_px = gspc_monthly()
+    if fmp_px:
+        # Only extend past multpl's coverage; don't restate history on a different
+        # basis (month-end close vs multpl's month average).
+        last_multpl = max(px) if px else ""
+        added = [m for m in sorted(fmp_px) if m > last_multpl]
+        for m in added:
+            px[m] = fmp_px[m]
+        print(f"  ^GSPC (FMP): {len(fmp_px)} months, extended multpl price by {len(added)}")
+
+    # multpl's earnings table lags its price and P/E tables by several months, and the
+    # series below intersects the two — so without this the whole chart truncates to
+    # the last earnings print. Back the missing trailing EPS out of the P/E table
+    # (same denominator multpl uses), falling back to carry-forward.
+    pe_by_m = {r["m"]: r["v"] for r in peser}
+    if earn:
+        last_eps_m = max(earn)
+        for m in sorted(px):
+            if m <= last_eps_m:
+                continue
+            pe = pe_by_m.get(m)
+            earn[m] = px[m] / pe if (pe and pe > 0) else earn[last_eps_m]
+        filled = sum(1 for m in earn if m > last_eps_m)
+        if filled:
+            print(f"  EPS: multpl through {last_eps_m}, {filled} later months implied from P/E")
+
     months = sorted(set(px) & set(earn))
     price = [{"m": m, "c": round(px[m], 2)} for m in months]
     epsser = [{"m": m, "v": round(earn[m], 2)} for m in months if earn[m] > 0]
@@ -212,7 +285,7 @@ def main():
     spy = spy_index()
     bench = {"SPY": spy}
     (PUB / "benchmark-fundamentals.json").write_text(json.dumps({
-        "source": "multpl.com (S&P 500)", "generated": datetime.now(timezone.utc).isoformat(),
+        "source": "multpl.com + FMP ^GSPC (S&P 500)", "generated": datetime.now(timezone.utc).isoformat(),
         "benchmarks": bench,
     }, separators=(",", ":")))
     print(f"  SPY P/E {len(bench['SPY']['pe'])} months, P/S {len(bench['SPY']['ps'])} months")

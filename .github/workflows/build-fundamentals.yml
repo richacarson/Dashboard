@@ -31,6 +31,8 @@ jobs:
           FMP_PROXY: ${{ secrets.PROXY_URL }}
         run: python3 scripts/build-fundamentals-fmp.py
       - name: Build portfolio-blended + benchmark fundamentals
+        env:
+          FMP_PROXY: ${{ secrets.PROXY_URL }}
         run: python3 scripts/build-portfolio-fundamentals.py
       - name: Commit results
         run: |
