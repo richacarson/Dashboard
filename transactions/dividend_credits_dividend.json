@@ -183,5 +183,25 @@
     "ticker": "ABT",
     "ex_date": "2026-07-15",
     "dps": 0.63
+  },
+  {
+    "ticker": "CAT",
+    "ex_date": "2026-07-20",
+    "dps": 1.63
+  },
+  {
+    "ticker": "CL",
+    "ex_date": "2026-07-20",
+    "dps": 0.53
+  },
+  {
+    "ticker": "FAST",
+    "ex_date": "2026-07-28",
+    "dps": 0.26
+  },
+  {
+    "ticker": "VLO",
+    "ex_date": "2026-07-31",
+    "dps": 1.2
   }
 ]

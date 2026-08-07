@@ -433,5 +433,30 @@
     "ticker": "FCX",
     "ex_date": "2026-07-15",
     "dps": 0.15
+  },
+  {
+    "ticker": "CAT",
+    "ex_date": "2026-07-20",
+    "dps": 1.63
+  },
+  {
+    "ticker": "COST",
+    "ex_date": "2026-07-24",
+    "dps": 1.47
+  },
+  {
+    "ticker": "NVT",
+    "ex_date": "2026-07-24",
+    "dps": 0.21
+  },
+  {
+    "ticker": "ASML",
+    "ex_date": "2026-07-28",
+    "dps": 2.151
+  },
+  {
+    "ticker": "NRG",
+    "ex_date": "2026-08-03",
+    "dps": 0.475
   }
 ]

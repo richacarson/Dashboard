@@ -21,14 +21,14 @@
   },
   "key_metrics": {
     "PWR": {
-      "stock_price": 628.53,
+      "stock_price": 742.21,
       "forward_pe": 46.04,
       "overall_score": 75,
       "recommendation": "HOLD",
       "sleeve": "Growth"
     },
     "ETN": {
-      "stock_price": 399.99,
+      "stock_price": 421.77,
       "forward_pe": 31.9,
       "overall_score": 76,
       "recommendation": "HOLD",
@@ -115,5 +115,6 @@
       "accessed": "2026-05-18"
     }
   ],
-  "metrics_note": "ETN: BUY \u2192 HOLD (screener refresh 2026-07-12)"
+  "metrics_note": "ETN: BUY \u2192 HOLD (screener refresh 2026-07-12)",
+  "last_metrics_refresh": "2026-08-02"
 }

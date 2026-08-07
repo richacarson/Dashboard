@@ -21,14 +21,14 @@
   },
   "key_metrics": {
     "VRT": {
-      "stock_price": 289.56,
+      "stock_price": 357.96,
       "forward_pe": 40.44,
       "overall_score": 80,
       "recommendation": "BUY",
       "sleeve": "Growth"
     },
     "APH": {
-      "stock_price": 151.2,
+      "stock_price": 163.96,
       "forward_pe": 28.8,
       "overall_score": 78,
       "recommendation": "HOLD",
@@ -99,5 +99,6 @@
       "accessed": "2026-05-30"
     }
   ],
-  "metrics_note": "2026-06-22: APH screener recommendation downgraded BUY \u2192 HOLD on metric refresh; thesis intact pending Q3 print. | Refreshed key_metrics from latest reports/*.json"
+  "metrics_note": "2026-06-22: APH screener recommendation downgraded BUY \u2192 HOLD on metric refresh; thesis intact pending Q3 print. | Refreshed key_metrics from latest reports/*.json",
+  "last_metrics_refresh": "2026-08-02"
 }

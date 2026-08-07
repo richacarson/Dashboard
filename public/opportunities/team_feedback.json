@@ -6,7 +6,93 @@
   },
   {
     "date": "2026-07-10",
-    "feedback": "Zombie recurrence day-2: same 3 files re-injected again by Step 0 from claude/daily-screening-2026-05-13 and -05-19. Tried branch-delete via API — HTTP 403 (token lacks delete_ref scope). Files deleted locally; NOT re-appending ledger entries (already 8+ per file). PERMANENT FIX still needed: either (a) update Step 0 in OPPORTUNITY_PROMPT.md to skip filenames whose slug is in ledger.json, or (b) someone with elevated scope prunes those two stale origin branches.",
+    "feedback": "Zombie recurrence day-2: same 3 files re-injected again by Step 0 from claude/daily-screening-2026-05-13 and -05-19. Tried branch-delete via API \u2014 HTTP 403 (token lacks delete_ref scope). Files deleted locally; NOT re-appending ledger entries (already 8+ per file). PERMANENT FIX still needed: either (a) update Step 0 in OPPORTUNITY_PROMPT.md to skip filenames whose slug is in ledger.json, or (b) someone with elevated scope prunes those two stale origin branches.",
     "source": "opportunity-finder"
+  },
+  {
+    "date": "2026-07-24",
+    "feedback": "Stalking age-out (>45d): removed tko-sports-rights-renewal \u2014 UFC/WWE rights announcements remain undated (they announce when they announce), and TKO trades at 47x fwd P/E without a firm catalyst window. Insider cluster (4 directors, $5.5M, June) still watched informally; re-file if a rights term sheet leaks or 10-Q discloses negotiation specifics. Promoted on-holding-premium-athletic-cluster to On Our Radar \u2014 Q2 earnings mid-August is a dated trigger."
+  },
+  {
+    "date": "2026-07-25",
+    "feedback": "Stalking age-out (>45d): removed iff-insider-trough-conviction \u2014 IFF held roughly range-bound since June 9 with no fresh catalyst or additional insider activity to promote; specialty chemicals trough thesis is still coherent but lacks a dated trigger, will re-file if a new cluster print appears or Q3 volume commentary firms. Removed psn-defense-it-backlog-conviction \u2014 the $9.3B backlog thesis was largely captured by the lhx-backlog-inflection High Conviction opp filed June 30 covering the same DoD IT trend at higher altitude; PSN itself never converted into a fresh cluster or contract catalyst beyond the June 9 disclosure."
+  },
+  {
+    "date": "2026-07-25",
+    "feedback": "Closed airlines-hormuz-fuel-relief (On Our Radar, 26 days). Brent >$90 for 5 consecutive sessions Jul 20-24 on Iran-US ceasefire unraveling (Qatari LNG tanker strike near Oman early July per Bloomberg/CFR), so invalidation trigger #1 clearly met. Middle East supply-shock chemistry basket (LYB/DOW/WLK/AA/CENX/LNG/EQT) remains active \u2014 same event set is bullish for those and bearish for the airlines carry trade."
+  },
+  {
+    "date": "2026-07-25",
+    "feedback": "Zombie-opp problem recurred on this run: Step-8 defensive recovery re-injected airlines-hormuz-fuel-relief.json from the Dashboard immediately after Step 2 closed it to ledger. Ledger already records the close, so a second commit deleted the resurrected file and a second Dashboard sync removed it there too. Recommend adding the same ledger.json-slug skip filter to Step 8's defensive-recovery block that Step 0 uses (currently only Step 0 checks the zombie list; Step 8 does not)."
+  },
+  {
+    "date": "2026-07-26",
+    "feedback": "Stalking age-out (>45d): removed cdw-ai-infrastructure-reseller-pull-forward (CDW, age 46d) \u2014 no dated catalyst or fresh signal materialized; will re-file if a new cluster print or catalyst event lands"
+  },
+  {
+    "date": "2026-07-27",
+    "feedback": "Stalking age-out (>45d): removed sulfuric-acid-sulfide-copper (age 46d) \u2014 no dated catalyst or fresh signal has materialized. Sulfuric acid tightness thesis remains directionally intact but LSC/FCX/SCCO offer no near-term dated event; will re-file if a new supply-side print (Chinese export data, SXC/FMC guidance) lands.",
+    "source": "opportunity-finder"
+  },
+  {
+    "date": "2026-07-29",
+    "feedback": "Stalking age-out (>45d): removed seagate-hamr-nearline-supercycle (STX, age 46d) \u2014 no new dated catalyst materialized. Next STX 10-Q was expected late July 2026 but has not yet confirmed Mozaic 4 revenue contribution or the nearline mix-shift/HAMR margin expansion needed to promote. Will re-file if the 10-Q (or a hyperscaler multi-year supply disclosure) lands."
+  },
+  {
+    "date": "2026-07-31",
+    "author": "opportunity-finder",
+    "feedback": "Stalking age-out (>45d): removed summit-ivonescimab-pdufa \u2014 Removed at age 46d \u2014 no promotion actions taken; will re-file if FDA formally acknowledges BLA acceptance letter with PDUFA-date confirmation, or if a fresh follow-on cluster print lands. HARMONi-6 data is real and NSCLC PDUFA window (Nov 2026) is dated, but binary-outcome trade construction never firmed to On Our Radar bar."
+  },
+  {
+    "date": "2026-07-31",
+    "author": "opportunity-finder",
+    "feedback": "Stalking age-out (>45d): removed norwegian-cruise-activist-turnaround \u2014 Removed at age 46d \u2014 no promotion. NCLH Q2 earnings did land in late July but the Norwegian Now milestone disclosures did not clearly convert governance changes into an operating catalyst adequate for On Our Radar. Will re-file if a subsequent Elliott engagement update or fresh cluster print lands."
+  },
+  {
+    "date": "2026-07-31",
+    "author": "opportunity-finder",
+    "feedback": "Stalking age-out (>45d): removed amrize-data-center-cement \u2014 Removed at age 46d \u2014 no dated catalyst has materialized. AMRZ Q3 print not yet on the tape; no explicit hyperscaler-tied cement/aggregate order disclosure. Will re-file if AMRZ analyst day quantifies non-residential data-center mix, or if a second cluster within 60 days lands."
+  },
+  {
+    "date": "2026-07-31",
+    "author": "opportunity-finder",
+    "feedback": "Stalking age-out (>45d): removed ecolab-ai-water-cluster-buy \u2014 Removed at age 45d \u2014 no promotion. ECL Q2 print did not exceed the +12-15% EPS guide by enough to trigger promotion; no disclosed hyperscaler multi-GW cooling-water contract; no second cluster within 60 days. Will re-file if ECL discloses a named hyperscaler water-treatment MSA."
+  },
+  {
+    "date": "2026-07-31",
+    "author": "opportunity-finder",
+    "feedback": "Stalking age-out (>45d): removed vital-farms-six-insider-cluster \u2014 Removed at age 45d \u2014 no promotion. VITL Q2 gross-margin expansion / Costco-Walmart shelf-share confirmation did not materialize; HPAI supply-resilience data still absent. Will re-file if a second cluster or a shelf-space announcement lands."
+  },
+  {
+    "date": "2026-08-01",
+    "feedback": "Stalking age-out (>45d): removed qatar-helium-shortage-linde \u2014 Removed at age 45d. Linde Q2 2026 (Jul 31) confirmed helium pricing pass-through IS happening via new long-term contracts, but management explicitly called out helium contribution as MARGIN-DILUTIVE near-term due to dislocation/logistics costs; full normalization not expected until 2027. Thesis premise (asymmetric monetization from shortage) is deferred, not validated. Will re-file if a subsequent quarter shows helium turning accretive on the margin line, or if Linde discloses a segment breakdown quantifying helium price/volume."
+  },
+  {
+    "date": "2026-08-02",
+    "feedback": "Promoted tsm-cowos-q2-earnings-catalyst \u2192 On Our Radar as tsm-cowos-q2-blowout-insider-clusters. Second post-Q2 openinsider cluster (July 28) plus screener BUY score 91 satisfied On Our Radar bar. ADR-vs-common price basis reconciled (ADR $459 / common ~$73)."
+  },
+  {
+    "date": "2026-08-03",
+    "feedback": "Stalking age-out (>45d): removed bwxt-defense-nuclear-buildout \u2014 DUECE pilot plant is NRC pre-application only (won't reach operational stage until ~2035), no second hyperscaler-adjacent contract materialized, and BWXT at $216/41.9x fwd P/E remains rich. Long-cycle defense-nuclear story is real but too slow-moving for opportunity horizon. Will re-file if Project Pele 2027 delivery holds or SMR utility contract lands."
+  },
+  {
+    "date": "2026-08-03",
+    "feedback": "Stalking age-out (>45d): removed drone-warfare-iran-pivot \u2014 AVAV Sep 2026 earnings and FY2027 DoD budget line items (Feb 2027) both outside 45d window; no bilateral Ukraine-US drone agreement signed; no Senate Armed Services committee cluster buys. Thesis premise is intact but confirmation catalysts are all >2 months out."
+  },
+  {
+    "date": "2026-08-03",
+    "feedback": "Stalking age-out (>45d): removed quantum-utility-scale-buildout \u2014 IONQ still government-heavy revenue; no >$10M enterprise contract disclosed; logical-qubit milestone (vs physical qubit counts) not achieved. 70%+ daily IV makes trade construction unworkable at Stalking rigor. Will re-file if a DoD/DOE quantum-specific procurement award to a US-listed firm lands."
+  },
+  {
+    "date": "2026-08-04",
+    "feedback": "Stalking age-out (>45d): removed autodesk-officer-cluster-buy \u2014 Q2 FY26 (fiscal Jul-Aug 2026) delivered 17% revenue growth to $1.76B, $2.62 non-GAAP EPS (beat), and AECO +23% YoY on AI/subscription momentum (FY guide raised to $7.03-7.08B). Cluster-buy thesis confirmed by results, but stock likely rallied post-print and no fresh entry level established. Will re-file as On Our Radar if ADSK gives back gains and offers a defined entry zone with trade construction."
+  },
+  {
+    "date": "2026-08-04",
+    "feedback": "Stalking age-out (>45d): removed fiserv-activist-ceo-reset \u2014 Q2 2026 earnings release scheduled Aug 6, 2026 (2 days from cadence). Activist now confirmed as Jana Partners pushing for non-core divestitures and board refresh. Stock dropped ~7% on the CEO news (June 15) \u2014 the 'falling knight' risk in the original checks_remaining is materializing before Georgakopoulos has printed a quarter. Removing to force a post-Q2 re-evaluation rather than promote on soft evidence 48h before the print. Will re-file if the Q2 call articulates a credible Clover/AI-commerce reacceleration and Jana's activist stake becomes a 13D catalyst."
+  },
+  {
+    "date": "2026-08-05",
+    "feedback": "Stalking age-out (45d): removed qnt-post-ipo-insider-cluster. No catalyst has materialized in the 45 days since the 10-insider $24.6M cluster (June 13-18, 2026); no 8-K identifying the awaited contract, no Q3 pipeline update from Quantinuum, no confirmation that Honeywell/Cambridge Quantum joined the cluster. Same rationale as the 2026-08-03 quantum-utility-scale-buildout removal: quantum names are only stalking-worthy when tied to a US-listed firm winning a specific DoD/DOE procurement award. Will re-file if QNT lands a named enterprise contract >$10M or a quantum-specific federal award is announced."
   }
 ]
