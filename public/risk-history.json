@@ -285,5 +285,12 @@
     "amber": 2,
     "green": 47,
     "headline": "MARA escalates AMBER->RED: Q2 miss (reported 8/6, $611M net loss, $343M BTC mark-to-market) now a 3-session, ~-15% cumulative decline, direct thesis hit. Corrected a mis-logged calendar entry (MARA earnings were 8/6, not 8/12). EIX persists RED, Aug 31 wildfire-reform deadline 23 days out, no legislative movement. CWAN roster-integrity bug hits a 40th consecutive day (PR #11/#12 still unmerged). New AMBER: NTR (Q2 EPS miss, revenue beat) and HUT (BTC mark-to-market drag offset by strong AI-financing news). FTNT resolved to green. Broad tape quiet/firm (SPY +0.59%, QQQ +1.15%, both near records); CRDO (+8.49%) and AEM (+6.48%) led gainers, no negative catalysts."
+  },
+  {
+    "date": "2026-08-09",
+    "red": 3,
+    "amber": 2,
+    "green": 47,
+    "headline": "Weekend run, no new trading session since Friday 8/7 close -- markets closed. On-demand data drop dispatched (prior was ~24h stale); fresh pull confirms 52/52 priced, 0 errors, unchanged from Friday. All Friday flags carry forward unresolved: MARA persists RED (Q2 miss, 3-session ~-15% decline, thesis-confirmed), EIX persists RED (Aug 31 wildfire-reform deadline 22 days out, no legislative movement), CWAN roster-integrity bug hits a 41st consecutive day (PR #11/#12 still unmerged). NTR and HUT persist AMBER -- weekend searches found no new developments for either. No new flags, nothing resolved."
   }
 ]
