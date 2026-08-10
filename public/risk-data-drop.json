@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T11:49:02Z",
+  "generated_at": "2026-08-10T11:50:47Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -834,13 +834,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.16,
-        "eps_estimate": 0.1647,
-        "surprise": -0.0047,
-        "surprise_pct": -2.8537
-      }
+      "earnings": null
     },
     "CNX": {
       "sleeve": "Growth",
@@ -1320,13 +1314,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 2.87,
-        "eps_estimate": 1.3526,
-        "surprise": 1.5174,
-        "surprise_pct": 112.1839
-      }
+      "earnings": null
     },
     "IBIT": {
       "sleeve": "Digital",
@@ -1361,10 +1349,7 @@
       "quote_source": "alpaca"
     }
   },
-  "recent_reporters": [
-    "CWAN",
-    "VST"
-  ],
+  "recent_reporters": [],
   "errors": [],
   "sources": {
     "price": "alpaca",
