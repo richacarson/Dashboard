@@ -458,5 +458,15 @@
     "ticker": "NRG",
     "ex_date": "2026-08-03",
     "dps": 0.475
+  },
+  {
+    "ticker": "ETN",
+    "ex_date": "2026-08-07",
+    "dps": 1.1
+  },
+  {
+    "ticker": "PNFP",
+    "ex_date": "2026-08-07",
+    "dps": 0.5
   }
 ]
