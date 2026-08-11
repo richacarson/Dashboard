@@ -299,5 +299,12 @@
     "amber": 2,
     "green": 47,
     "headline": "Monday pre-market read, no new session yet (last settled close Friday 8/7, SPY +0.59%/QQQ +1.15%). MARA persists RED (Q2 miss 8/6, ~-15% cumulative, thesis-confirmed; Cantor Fitzgerald cut PT to $12), EIX persists RED (Aug 31 wildfire-reform deadline 21 days out, no legislative movement), CWAN roster-integrity bug hits a 42nd consecutive day (PR #11/#12 still unmerged). NTR and HUT persist AMBER, no material new developments (NTR's circulating Jefferies downgrade dates to 7/16, stale; HUT's Clear Street PT raise to $170 reinforces the positive-offset read). No new flags, nothing resolved."
+  },
+  {
+    "date": "2026-08-11",
+    "red": 3,
+    "amber": 9,
+    "green": 40,
+    "headline": "MARA and EIX persist RED (thesis-confirmed, unresolved). New AMBER: broad AI-chip sympathy selloff (NVDA, MRVL, CRDO, QCOM, AMD, NXPI) tracking SK Hynix/Samsung weakness abroad plus reports NVIDIA is in talks to backstop $250B of OpenAI data-center funding (lost #1 market-cap spot to Apple); crypto-adjacent softness (HUT persisting, COIN new) in sympathy with MARA; TOL flagged for 8/18 earnings. NTR resolves to GREEN (rebounding). Energy/refining complex (VLO, DVN, OKE, CVX) continues an unremarkable crack-spread-driven rally. CWAN roster-integrity bug: 43rd consecutive day unresolved (PR #11/#12 still open/dirty)."
   }
 ]
