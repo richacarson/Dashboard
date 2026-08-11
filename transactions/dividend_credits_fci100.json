@@ -468,5 +468,25 @@
     "ticker": "PNFP",
     "ex_date": "2026-08-07",
     "dps": 0.5
+  },
+  {
+    "ticker": "AAPL",
+    "ex_date": "2026-08-10",
+    "dps": 0.27
+  },
+  {
+    "ticker": "AEP",
+    "ex_date": "2026-08-10",
+    "dps": 0.95
+  },
+  {
+    "ticker": "KKR",
+    "ex_date": "2026-08-10",
+    "dps": 0.195
+  },
+  {
+    "ticker": "LNG",
+    "ex_date": "2026-08-10",
+    "dps": 0.555
   }
 ]
