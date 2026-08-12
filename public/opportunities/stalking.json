@@ -1,80 +1,11 @@
 [
   {
-    "id": "meli-officer-cluster-latam-ecom",
-    "title": "MercadoLibre Officer Cluster — LatAm Compounder at Reset Valuation",
-    "added": "2026-06-27",
-    "catalyst": "Two MercadoLibre insiders filed Form 4 purchases totaling ~$1.19M on 2026-06-11. The buys land after a Q1 2026 multiple compression on margin guidance reset, even as Mercado Pago credit book and logistics network continue to scale.",
-    "thesis": "MELI is the dominant e-commerce + fintech platform across Latin America with 73 IOWN screener score (BUY territory). Insider buying near a multi-year-low valuation (forward P/E in the high 20s, well below historical norms) is the kind of signal we want to track. The thesis is platform durability + reinvestment-driven compounding; the test is whether margins inflect back up in 2H26 as credit losses normalize.",
-    "tickers": [
-      "MELI"
-    ],
-    "source": {
-      "title": "OpenInsider cluster buys feed",
-      "url": "http://openinsider.com/latest-cluster-buys"
-    },
-    "what_would_promote": "A second cluster on the next quarterly print (signal of conviction, not coincidence), OR Mercado Pago credit-loss trajectory turning in Q2 2026 results.",
-    "checks_remaining": "Need 1 additional primary source (e.g., Q1 2026 transcript excerpt on credit book) and an articulated trade construction to graduate to On Our Radar."
-  },
-  {
-    "id": "dino-refiner-crack-spread-cluster",
-    "title": "HF Sinclair Officer Cluster — Refiner Trough + Mid-Con Crack Spread",
-    "added": "2026-06-27",
-    "catalyst": "HF Sinclair (DINO) saw a 2-insider cluster purchase totaling ~$1.14M on 2026-06-16, with refiner crack spreads sitting near multi-year lows following the Hormuz-driven crude price spike. Mid-continent refiners with logistical advantage (DINO's Salt Lake / Tulsa system) are at a structural cost-curve advantage when crude differentials widen.",
-    "thesis": "Refiners are mid-cycle to trough on margins, while the Hormuz disruption has widened WTI vs. Brent differentials in favor of inland US refiners. DINO insider buying at this trough is consistent with capacity discipline and renewable-diesel cash generation that consensus has under-modeled. Distinct from our existing energy opps (LNG/shale upstream) — this is refining downstream.",
-    "tickers": [
-      "DINO"
-    ],
-    "source": {
-      "title": "OpenInsider cluster buys feed",
-      "url": "http://openinsider.com/latest-cluster-buys"
-    },
-    "what_would_promote": "Mid-continent crack spreads holding above $20/bbl through Q3 2026, OR a second insider cluster on the next earnings.",
-    "checks_remaining": "Need confirmation of crack-spread direction with current EIA data and a concrete entry zone before On Our Radar."
-  },
-  {
-    "id": "lila-malone-large-cluster-buy",
-    "title": "John Malone Megabuy at Liberty Latin America",
-    "added": "2026-06-28",
-    "catalyst": "John Malone disclosed open-market purchases of ~1.495 million LILA Class A shares on June 22-23, 2026, bringing his stake to ~12.6% Class A and ~29.8% of voting power. The cluster also includes CEO Nair Balan, Director Brendan Paddick, and Director Bracken — five distinct insider buyers in a 1-week window for a combined ~$137M (the largest dollar value openinsider has flagged in 14 days).",
-    "thesis": "Malone is the company's founder and largest holder; he rarely adds to LILA personally — when he does it has historically marked deep-cycle troughs in the Latin American telecom complex. With LILA trading near multi-year lows on FX and Puerto Rico headwinds, a Malone-led cluster of this scale signals he sees current valuation as compelling relative to long-run replacement value of the cable/wireless footprint. Pairs with the screener WATCH rating: the issue is the discount, not the asset.",
-    "tickers": [
-      "LILA"
-    ],
-    "source": {
-      "title": "Liberty Latin America (LILA) Schedule 13D/A — John Malone holds 29.8% voting power",
-      "url": "https://www.stocktitan.net/sec-filings/LILA/schedule-13d-a-liberty-latin-america-ltd-amended-major-shareholder-re-12547a3a3092.html",
-      "date": "2026-06-23"
-    },
-    "what_would_promote": "Identify a specific dated catalyst (debt restructuring, asset sale, take-private rumor, dividend reinstatement). Cross-check Malone's prior cluster-buy outcomes for base-rate. Add a second primary source (the actual 13D/A filing on SEC EDGAR).",
-    "checks_remaining": "No falsifiable dated catalyst within 18 months yet. Only secondary source so far (stocktitan summary of SEC filings) — need direct EDGAR link. No trade construction."
-  },
-  {
-    "id": "pelosi-intc-uber-deep-itm-calls",
-    "title": "Pelosi Discloses Deep-ITM Long-Dated INTC + UBER Calls",
-    "added": "2026-06-28",
-    "catalyst": "Nancy Pelosi disclosed (filed 2026-06-23, txn date 2026-05-29) 200 INTC call options strike $50 expiring 3/19/2027 ($1M-$5M notional) and 200 UBER call options same strike/expiry ($500K-$1M). With INTC near $134 at disclosure, the INTC strike is ~$84 in-the-money — effectively a synthetic long position. Combined disclosed value up to $6M.",
-    "thesis": "Pelosi's individual disclosures have historically front-run tech-policy tailwinds (NVDA, MSFT, GOOGL). Deep-ITM long-dated calls behave like leveraged stock and are explicitly directional. INTC pairs with the existing Trump administration manufacturing push and CHIPS-Act-2 chatter; UBER pairs with the autonomous-vehicle/robotaxi policy thread. Single-member but very high-dollar signal — worth tracking while we look for confirming evidence.",
-    "tickers": [
-      "INTC",
-      "UBER"
-    ],
-    "source": {
-      "title": "Pelosi discloses bullish options bets on Intel and Uber",
-      "url": "https://finance.yahoo.com/markets/options/articles/pelosi-discloses-bullish-options-bets-172532086.html",
-      "date": "2026-06-24"
-    },
-    "what_would_promote": "A second sitting member of Congress disclosing INTC or UBER purchases (would form a 2-member cluster). Or a concrete near-term catalyst: CHIPS-Act-2 markup date, Intel foundry customer announcement, federal AV legislation date. Add the direct House Clerk PDF link (Filing 20034836) as a primary source.",
-    "checks_remaining": "Only 1 member (Pelosi) — fails the ≥2-member congressional cluster bar. Needs a falsifiable dated catalyst tying the trade to a specific event. No trade construction; would also require a screener-level case rather than a coattail-trade case."
-  },
-  {
     "id": "gd-record-backlog-q1-2026",
     "title": "General Dynamics — 2.2x Defense Book-to-Bill on Record Q1 Bookings",
     "added": "2026-06-29",
     "catalyst": "GD Q1 2026 print: $26.6B in orders, consolidated book-to-bill of 2.0x with defense segments at 2.2x and aerospace (Gulfstream) at 1.2x. Backlog hit a new high. Combat Systems and Marine Systems both at multi-year order peaks tied to munitions resupply and Columbia-class submarine production.",
     "thesis": "GD has the most diversified defense order book of the primes (Marine + Combat Systems + IT + Aerospace) and is the cleanest play on the Columbia-class submarine ramp — a multi-decade program whose cadence is just now hitting the maximum-build phase. The Iran peace deal creates a 'peace dividend' narrative headwind that could compress all defense names, but GD's backlog is funded through 2028 across submarine and combat vehicle production, so order-flow is decoupled from near-term geopolitics. The 2-to-1 book-to-bill is the highest in the company's history.",
-    "tickers": [
-      "GD"
-    ],
+    "tickers": ["GD"],
     "source": {
       "title": "General Dynamics Q1 2026 8-K — $26.6B orders, 2-to-1 book-to-bill",
       "url": "https://www.sec.gov/Archives/edgar/data/0000040533/000004053326000010/gd-20260405exhibit991.htm",
@@ -89,9 +20,7 @@
     "added": "2026-07-03",
     "catalyst": "2 insiders bought $561K in Expand Energy (EXE) on trade date 2026-06-30 — the successor company to the Chesapeake + Southwestern merger, now the largest independent U.S. natural gas producer with the deepest Haynesville and Marcellus positions. The buys land as U.S. LNG export capacity ramps into 2027 and Qatari LNG diverts to Asia post-Hormuz normalization.",
     "thesis": "EXE is the pure-play upstream analog to our us-lng-qatari-displacement opp (which fronts LNG/EQT). As the largest independent U.S. nat-gas producer with concentrated Haynesville acreage — the export-adjacent basin — EXE captures marginal barrels heading to Gulf Coast LNG terminals. Insider cluster right at the LNG-ramp inflection is a directional confirming signal from people with operational visibility.",
-    "tickers": [
-      "EXE"
-    ],
+    "tickers": ["EXE"],
     "source": {
       "title": "OpenInsider cluster buys — EXE: 2 insiders, $560,880 on 2026-06-30",
       "url": "http://openinsider.com/latest-cluster-buys",
@@ -106,9 +35,7 @@
     "added": "2026-07-05",
     "catalyst": "Nine DPC Holdings insiders — including the CEO, CFO, COO, and multiple Executive Directors — purchased ~$75.8M in open-market stock during the 30 days ending 2026-06-26 (openinsider cluster data). This is one of the largest dollar-value insider cluster buys in the industrial complex in 2026 and is materially disproportionate to DPC's post-IPO float.",
     "thesis": "Doncasters is a 250-year-old British precision superalloy caster serving the hot section of jet engines and industrial gas turbines — exactly the mix that benefits from the LEAP/GE9X wide-body ramp AND from data-center-driven gas turbine demand (GE Vernova, Siemens Energy, Mitsubishi backlogs). A cluster this large from operating leadership is the market telling us something about backlog inflection that hasn't yet shown up in a WATCH-rated screener score.",
-    "tickers": [
-      "DPC"
-    ],
+    "tickers": ["DPC"],
     "source": {
       "title": "OpenInsider — DPC Holdings cluster buys (aggregate 9 insiders, $75.8M, filings through 2026-06-26)",
       "url": "http://openinsider.com/screener?s=DPC"
@@ -122,9 +49,7 @@
     "added": "2026-07-06",
     "catalyst": "MasterBrand closed its all-stock merger with American Woodmark on May 28, 2026 after the FTC waiting period expired without action (May 22). Four insiders bought ~$696K aggregate over the past 30 days — directly on the heels of the deal closing, giving insiders their first clean post-close signaling window.",
     "thesis": "The combined MBC/AMWD is now the dominant residential cabinet manufacturer in North America with ~$90M targeted run-rate cost synergies by year 3 and accretive EPS by year 2. This is the downstream complement to our active berkshire-homebuilder-revaluation opp (PHM/MTH): cabinets are the largest single interior-finish spend per new home, and a housing recovery flows straight through cabinet demand. MBC trades at $8.57 (17.3x forward PE, 0.4x sales) — a deep-value multiple that reflects housing pessimism. The insider cluster right after the merger close is a strong 'we know what synergies look like' tell.",
-    "tickers": [
-      "MBC"
-    ],
+    "tickers": ["MBC"],
     "source": {
       "title": "FTC clears MasterBrand (MBC) and American Woodmark merger to move toward closing",
       "url": "https://www.stocktitan.net/sec-filings/MBC/8-k-master-brand-inc-reports-material-event-72ca5c98258f.html",
@@ -139,9 +64,7 @@
     "added": "2026-07-08",
     "catalyst": "YPF, Eni, and ADNOC's XRG signed a binding Joint Development Agreement in February 2026 for Argentina LNG (two 6 Mtpa floating LNG facilities). Final investment decision expected mid-2026. Vaca Muerta oil pipeline is 10% built, scaling to 550,000 bpd by 2027.",
     "thesis": "YPF is Argentina's national champion for the largest untapped shale basin outside North America. Milei-era energy deregulation, a binding FID window this quarter, and a 2-insider cluster purchase on 2026-07-02 suggest management sees a catalyst path the market has yet to reprice. YPF trades at 62 HOLD in our screener with growth optionality on FID confirmation plus multi-year LNG cash flow.",
-    "tickers": [
-      "YPF"
-    ],
+    "tickers": ["YPF"],
     "source": {
       "title": "Eni, XRG take Vaca Muerta stakes to advance Argentina LNG project",
       "url": "https://www.worldoil.com/news/2026/6/29/eni-xrg-take-vaca-muerta-stakes-to-advance-argentina-lng-project/",
@@ -156,9 +79,7 @@
     "added": "2026-07-10",
     "catalyst": "Three BRCB insiders reported ~$73.3M in cumulative open-market purchases (filings landing early July 2026, openinsider cluster data). BRCB IPO'd Sep 2025 at $20; shares now trade ~$7.72, a 61% drawdown, with a securities class action filed June 18, 2026 alleging IPO-disclosure omissions about a 'sales transfer phenomenon.'",
     "thesis": "Insider buying at this scale during an active class action is unusual: management is signaling confidence in the unit economics of the 100% company-owned drive-thru coffee model at a moment when the market has abandoned the story. Black Rock has 190 drive-thrus, 23.7% Q1 2026 revenue growth, and a 1,000-store 2035 target — if the class-action overhang resolves without material restatement, the trough valuation looks like a Dutch Bros analog setup. The 3-insider signal is huge on a dollar basis (~$24M average per insider) even if the class-action overhang is real.",
-    "tickers": [
-      "BRCB"
-    ],
+    "tickers": ["BRCB"],
     "source": {
       "title": "OpenInsider — BRCB latest cluster buys (3 insiders, $73M, filings early July 2026)",
       "url": "http://openinsider.com/screener?s=BRCB"
@@ -172,9 +93,7 @@
     "added": "2026-07-10",
     "catalyst": "Four MRP insiders reported open-market purchases in the 30 days ending early July 2026 (~$6.6M aggregate). MRP is the Feb 2025 Lennar spin-off homesite option platform trading at $28.32, a 10.7% dividend yield, 10x forward P/E, and 21% below its 52-week high — the whole spinoff cohort is unloved despite record dividend hikes.",
     "thesis": "Millrose is a levered read on the same US homebuilder revaluation thesis that anchors our active berkshire-homebuilder-revaluation opp (PHM/MTH), but from the land-bank side rather than the builder side. HOPP'R is a genuinely differentiated model: it turns land into an asset-light option platform ($9.2B in options) that homebuilders finance through option premium payments. If the Fed pauses/cuts and homebuilder purchase demand returns, MRP's fee income and dividend coverage inflect. Insiders buying at trough valuation with a 10.7% yield is a classic 'we know the land bank is safer than the multiple suggests' signal.",
-    "tickers": [
-      "MRP"
-    ],
+    "tickers": ["MRP"],
     "source": {
       "title": "OpenInsider — MRP latest cluster buys (4 insiders, $6.6M, filings early July 2026)",
       "url": "http://openinsider.com/screener?s=MRP"
@@ -188,9 +107,7 @@
     "added": "2026-07-13",
     "catalyst": "Energy Fuels (UUUU) plans to bring commercial-scale dysprosium (up to 48 tpa) and terbium (up to 14 tpa) oxide production online at its White Mesa Mill in Utah as soon as Q4 2026, targeting the exact heavy REE categories China restricted in April 2025 and reaffirmed against MP Materials/USA Rare Earth via the 2026-06-22 entity list. Two insiders bought $1.0M in cluster form on 2026-07-08.",
     "thesis": "Existing MP Materials thesis is a light-REE / NdPr magnet story; UUUU is a distinct heavy-REE story addressing the specific elements (Dy, Tb) that give NdFeB magnets their high-temperature performance and that China has singled out for controls. UUUU already produced 30 kg 99.9% Dy oxide at pilot in 2025 and first Tb oxide in Mar 2026 — commercialization risk is manufacturing scaling, not chemistry. Not yet at High Conviction because (a) screener rating is WATCH (score 48), (b) 2026 revenue still dominated by uranium, (c) commercial scale is >5 months out.",
-    "tickers": [
-      "UUUU"
-    ],
+    "tickers": ["UUUU"],
     "source": {
       "title": "Energy Fuels Announces First U.S. Primary Production of Critical 'Heavy' Rare Earth Material in Decades",
       "url": "https://investors.energyfuels.com/2026-03-25-Energy-Fuels-Announces-First-U-S-Primary-Production-of-Critical-Heavy-Rare-Earth-Material-in-Decades",
@@ -205,9 +122,7 @@
     "added": "2026-07-14",
     "catalyst": "On 2026-07-09, GLOO priced a 7M-share secondary at $3.25. Board directors including Pat Gelsinger and Scott Beck, plus Grace & Mercy Foundation, participated for ≥$6M — with Grace & Mercy alone buying 923,076 shares on 2026-07-09. Openinsider records a 4-insider cluster totaling $9.5M filed 2026-07-13.",
     "thesis": "Gloo is the emerging category leader in the faith-tech vertical (140,000+ church relationships, 238% Q1 2026 YoY revenue growth to $41.5M, unchallenged competitive position per Benchmark). A cluster of insider participation in a discounted secondary — including an ex-Intel CEO — signals conviction that the platform is worth accumulating even after a raise. Second-order: a durable faith-tech platform is a defensible SaaS niche that few competitors can penetrate. Highly Paradiem-relevant given the faith-alignment lens.",
-    "tickers": [
-      "GLOO"
-    ],
+    "tickers": ["GLOO"],
     "source": {
       "title": "Insider Buying: Gloo (NASDAQ:GLOO) Major Shareholder Buys 923,076 Shares",
       "url": "https://www.marketbeat.com/instant-alerts/insider-buying-gloo-nasdaqgloo-major-shareholder-buys-923076-shares-2026-07-13/",
@@ -222,9 +137,7 @@
     "added": "2026-07-14",
     "catalyst": "DoD IBAS awarded IperionX $47.1M in 2026 including $12.7M for local titanium production. Virginia HAMR titanium plant transitioned to 24/7 in Q1 2026 (~4.2 metric tons monthly HAMR powder). July 7, 2026: priced $50M ADS offering at $21.98, with management participating (2-insider $4.9M cluster filed 2026-07-13 per openinsider).",
     "thesis": "US titanium supply has been ~90% import-dependent (VSMPO-Russia, China, Japan) for decades. IPX's UL-validated 100%-recycled HAMR process gives DoD a domestic, geopolitically-secure alternative to Russian sponge — strategically similar to the MP Materials rare-earth thesis in a different metal. Insider participation in the $50M raise plus $47M DoD funding = capital fully secured through mid-2027; execution risk shifts from balance-sheet to offtake conversion. Second-order: first commercial offtake contract or DoD long-term supply agreement is the re-rating trigger.",
-    "tickers": [
-      "IPX"
-    ],
+    "tickers": ["IPX"],
     "source": {
       "title": "IperionX Announces Pricing of Public Offering of American Depositary Shares",
       "url": "https://www.globenewswire.com/news-release/2026/07/07/3323767/0/en/IperionX-Announces-Pricing-of-Public-Offering-of-American-Depositary-Shares.html",
@@ -239,9 +152,7 @@
     "added": "2026-07-15",
     "catalyst": "Since the April 30, 2026 IPO at $50, PSUS has drifted to ~$40 (~20% discount to NAV). Ackman's inner circle — CIO Ryan Israel ($25M), President Ben Hakim ($17.5M), CCO Halit Coussin ($10M), Trustee Nicholas Botta ($12.5M) — put ~$65M of personal capital at IPO. In mid-June, Trustee Bruce Herring added another $201K at $40.25, tripling his stake at the discount.",
     "thesis": "PSUS is a permanent-capital vehicle giving public-market access to Ackman's 16% annualized track record with no performance fee, currently priced at a ~20% NAV discount. The catalyst is a two-sided close: (1) NAV discount narrowing as underlying holdings (MSFT, AMZN, META, UBER, BAM, etc.) compound and market recognizes the wrapper; (2) fund-sponsored buybacks or dividend policy shift that historically closes closed-end fund gaps. The Herring add at $40 signals insiders view the current discount as an entry point, not a warning.",
-    "tickers": [
-      "PSUS"
-    ],
+    "tickers": ["PSUS"],
     "source": {
       "title": "Form 4 filings — Herring, Israel, Hakim, Botta, Coussin, Falzone",
       "url": "http://openinsider.com/screener?s=PSUS",
@@ -256,9 +167,7 @@
     "added": "2026-07-17",
     "catalyst": "CEO Ross Bhappu bought 74,000 shares on 2026-07-07 at $13.08 (~$968K) followed by Board Chairman Bruce Hansen adding 4,000 shares 2026-07-08 — a clean two-week cluster with the top two officers averaging up. Company also signed two new long-term uranium supply contracts with US nuclear utilities covering 2027-2032 deliveries, plus a $1.9B definitive agreement to acquire German rare-earth magnet maker Vacuumschmelze (VAC) announced June 2026.",
     "thesis": "UUUU sits at the intersection of TWO active IOWN opportunity theses — nuclear-fuel-cycle-ai-demand and rare-earth-magnet-independence — as the only US-listed integrated producer of BOTH conversion-ready uranium and heavy rare earth oxides. The VAC acquisition converts UUUU from a raw-material miner into a vertically-integrated NdFeB magnet supplier immediately certified for the European auto/EV supply chain. Insider cluster near a psychologically important sub-$15 price with two multi-year utility contracts already in-hand is a rare simultaneous signal of both catalyst and management conviction.",
-    "tickers": [
-      "UUUU"
-    ],
+    "tickers": ["UUUU"],
     "source": {
       "title": "Energy Fuels CEO Bhappu Buys 74,000 Shares. What Does This Mean for UUUU Shareholders?",
       "url": "https://www.fool.com/coverage/filings/2026/07/10/energy-fuels-ceo-bhappu-buys-74-000-shares-what-does-this-mean-for-uuuu-shareholders/",
@@ -273,9 +182,7 @@
     "added": "2026-07-24",
     "catalyst": "FSBC priced a $113.6M underwritten secondary at $44/share on July 22, 2026 (closing ~Jul 24). Concurrent with pricing, 6 directors purchased ~143K aggregate shares open-market at the offering price ($6.3M across 16 individual trades ranging $50K-$4M). Insiders taking equity INTO their own dilution at a fixed price is a classic conviction-signaling pattern for community banks raising growth capital.",
     "thesis": "FSBC is a Sacramento-area community bank compounding at 20% YoY loan growth / 14% deposit growth with NIM at 3.63% (Q2 2026). Raising $113.6M at $44 (~1.3x TBV) to fund continued loan growth. When 6 board members write personal checks into the offering rather than selling into it, that's high-signal support for management's growth-capital narrative. Small-cap community bank not currently in IOWN screener — needs a full screen before graduating to On Our Radar.",
-    "tickers": [
-      "FSBC"
-    ],
+    "tickers": ["FSBC"],
     "source": {
       "title": "Five Star Bancorp Prices $113.6M Common Stock Offering — Globe Newswire, July 23 2026",
       "url": "https://www.globenewswire.com/news-release/2026/07/23/3331834/0/en/Five-Star-Bancorp-Announces-Pricing-of-Common-Stock-Offering.html",
@@ -290,9 +197,7 @@
     "added": "2026-07-25",
     "catalyst": "On July 20, 2026 Columbia Financial completed its second-step MHC-to-C-corp conversion and simultaneous merger with Northfield Bancorp, raising ~$1.7B and beginning trading on NASDAQ July 21. In the same window, 16 insiders (including CEO Thomas Kemly and multiple directors) bought $4.78M of stock at the $10 offering price — an unusually large cluster count coincident with the initial post-conversion trading window.",
     "thesis": "Second-step conversions historically produce a book-value discount at IPO because the newly-issued shares raise cash into the balance sheet without a corresponding revaluation of the going concern. When management/directors buy INTO the offering at the fixed subscription price (rather than after seasoning), the signal is that book value / earning power will re-rate above $10 as (a) the acquired Northfield franchise integrates and (b) the market prices the combined entity at peer-comparable P/TBV multiples. The 16-insider count is the largest cluster in our July scrape and dwarfs typical thrift conversion insider buys (which usually involve 2-4 officers).",
-    "tickers": [
-      "CLBK"
-    ],
+    "tickers": ["CLBK"],
     "source": {
       "title": "Columbia Financial, Inc. Announces Completion of Second Step Conversion and $1.7 Billion Stock Offering and Acquisition of Northfield Bancorp, Inc.",
       "url": "https://www.globenewswire.com/news-release/2026/07/20/3330165/0/en/Columbia-Financial-Inc-Announces-Completion-of-Second-Step-Conversion-and-1-7-Billion-Stock-Offering-and-Acquisition-of-Northfield-Bancorp-Inc.html"
@@ -306,9 +211,7 @@
     "added": "2026-07-28",
     "catalyst": "OpenInsider records six GSHD insiders filing Form-4 purchases on 2026-07-28 covering a cluster with trade date 2026-05-28 at ~$56.66/share, aggregate value ~$9.87M (largest single-day insider filing on GSHD in the past year). The delay between trade date and filing date is unusually long and likely reflects amended/late filings; the underlying purchases predate the June price reset (last screener price $36.88 on 2026-06-22).",
     "thesis": "Goosehead is a high-growth personal-lines insurance broker (5-yr revenue CAGR ~20%, YoY revenue +23%, adjusted EBITDA +57% YoY). Insiders paying up at $56 in May, then the stock retracing to the mid-$30s in June, implies a discount to management's own cost basis. If the June drawdown was mostly multiple compression rather than a business step-down, the current price offers a 30–40% gap to the insider cost basis with a franchise that continues to compound agent-count and premium at 20%+.",
-    "tickers": [
-      "GSHD"
-    ],
+    "tickers": ["GSHD"],
     "source": {
       "title": "OpenInsider — GSHD cluster of 6 insider Form-4 purchases, filed 2026-07-28",
       "url": "http://openinsider.com/screener?s=GSHD"
@@ -322,9 +225,7 @@
     "added": "2026-07-29",
     "catalyst": "Osage University Ventures III ($8.0M / 533,333 shares on 5/11 at $15.00) plus Green Park & Golf Ventures II ($1.7M in two June 29 buys at ~$15/share) plus a handful of other insiders bring the trailing-quarter cluster to 7 insiders / $19.1M in a name that's still tracing out its post-IPO base near $12. Next 10-Q expected mid-August, first-of-its-kind commercial-launch datapoints on the recently-cleared device.",
     "thesis": "Post-IPO clusters from mission-aligned life-science VCs (Osage) plus multiple independent insider buyers into a WATCH-rated (score 55) small-cap medical device are the exact pattern our screener under-weights — the mechanical rubric penalizes negative EPS and dilution, but the same balance sheet weakness is why insiders are stepping up. Medical device commercial-launch inflections can produce asymmetric returns when the first two quarters of revenue meet the pre-IPO deck.",
-    "tickers": [
-      "MOBI"
-    ],
+    "tickers": ["MOBI"],
     "source": {
       "title": "Major Insider Doubles Down on Mobia Medical With Fresh Multi-Million Share Grab",
       "url": "https://www.tipranks.com/news/insider-trading/major-insider-doubles-down-on-mobia-medical-with-fresh-multi-million-share-grab-insider-trading-news",
@@ -339,9 +240,7 @@
     "added": "2026-07-31",
     "catalyst": "OpenInsider aggregated a 6-insider Form 4 cluster at Scribe Therapeutics (SCTX) totaling ~$71.3M in open-market purchases inside a 30-day trade window (per signals.json insider-clusters scrape, 2026-07-30). At $71M this is one of the largest single-name insider clusters logged this cycle and is unusual for a mid-cap CRISPR platform where insider stack sizes are typically much smaller.",
     "thesis": "SCTX is a CRISPR-based gene editing platform company. A $71M multi-insider open-market buy at this scale is a rare, non-token vote of confidence — well beyond a founder/CEO stakeout. If insiders are buying with knowledge of a pending pipeline or partnership catalyst, the risk/reward on validation could be asymmetric. Waiting for the screener to score SCTX (added to screening queue) plus a second confirming primary source (e.g., a Form 4 replication, a disclosed platform partnership, or clinical readout).",
-    "tickers": [
-      "SCTX"
-    ],
+    "tickers": ["SCTX"],
     "source": {
       "title": "OpenInsider Cluster Buys — SCTX 6-insider $71.3M (aggregation of SEC Form 4)",
       "url": "http://openinsider.com/insider-cluster-buys",
@@ -356,33 +255,16 @@
     "added": "2026-08-01",
     "catalyst": "After ACI cut FY26 EPS guidance from $2.22-$2.32 to $1.75-$1.85 on July 21 (stock -22% to $11.02 52-week low) and disclosed the ACI Edge restructuring (11 divisions consolidated to 4 regions, $200M annual run-rate savings), CEO Susan Morris bought $450K (July 28, avg $11.42) and EVP Thomas Moriarty bought $1.96M (July 27, avg $11.51). The $2.4M C-suite cluster in the 48 hours after the crash is a real-money contrarian tell. CFO Sharon McCollam concurrently announced retirement (advisory through Feb 2027) — a governance change that provides both risk and reset optionality.",
     "thesis": "ACI is a $12B-market-cap national grocery chain trading at 6.5x forward EPS on the cut guide. The Q1 miss was driven by lower-income shopper losses to Walmart, Aldi, and Amazon — a defensive rerating rather than a solvency question (dividend affirmed, buyback active, 96M shares repurchased). ACI Edge is a genuine structural change: centralizing merchandising across 4 regions could restore private-label mix and vendor negotiating power. If the restructuring even partially delivers the promised $200M run-rate, the multiple has room to expand from crisis lows on a modestly recovering EPS trajectory into FY27. The insider cluster shape (CEO + EVP, no CFO because the CFO is leaving) is the highest-quality version of this pattern.",
-    "tickers": [
-      "ACI"
-    ],
+    "tickers": ["ACI"],
     "source": {
       "title": "Albertsons CEO Susan Morris buys $449,937 in company stock",
       "url": "https://www.investing.com/news/insider-trading-news/albertsons-ceo-susan-morris-buys-449937-in-company-stock-93CH-4824470",
       "date": "2026-07-28"
     },
     "supporting_sources": [
-      {
-        "title": "EVP Of Albertsons Companies Makes $1.96M Buy",
-        "url": "https://www.benzinga.com/news/26/07/60765419/evp-albertsons-companies-makes-1-96m-buy",
-        "publisher": "Benzinga",
-        "date": "2026-07-27"
-      },
-      {
-        "title": "Albertsons (ACI) Cuts 2026 Outlook As Restructure And CFO Exit Add Pressure",
-        "url": "https://simplywall.st/stocks/us/consumer-retailing/nyse-aci/albertsons-companies/news/albertsons-aci-cuts-2026-outlook-as-restructure-and-cfo-exit/amp",
-        "publisher": "Simply Wall St",
-        "date": "2026-07-24"
-      },
-      {
-        "title": "Why Is Albertsons Stock Sinking Friday? Walmart, Amazon, and Aldi Winning Price-Sensitive Shoppers",
-        "url": "https://www.benzinga.com/markets/earnings/26/07/60665473/albertsons-says-walmart-amazon-and-aldi-are-winning-price-sensitive-shoppers",
-        "publisher": "Benzinga",
-        "date": "2026-07-21"
-      }
+      {"title": "EVP Of Albertsons Companies Makes $1.96M Buy", "url": "https://www.benzinga.com/news/26/07/60765419/evp-albertsons-companies-makes-1-96m-buy", "publisher": "Benzinga", "date": "2026-07-27"},
+      {"title": "Albertsons (ACI) Cuts 2026 Outlook As Restructure And CFO Exit Add Pressure", "url": "https://simplywall.st/stocks/us/consumer-retailing/nyse-aci/albertsons-companies/news/albertsons-aci-cuts-2026-outlook-as-restructure-and-cfo-exit/amp", "publisher": "Simply Wall St", "date": "2026-07-24"},
+      {"title": "Why Is Albertsons Stock Sinking Friday? Walmart, Amazon, and Aldi Winning Price-Sensitive Shoppers", "url": "https://www.benzinga.com/markets/earnings/26/07/60665473/albertsons-says-walmart-amazon-and-aldi-are-winning-price-sensitive-shoppers", "publisher": "Benzinga", "date": "2026-07-21"}
     ],
     "what_would_promote": "Promotion to On Our Radar requires: (1) Q2 FY26 print (~mid-October 2026) showing sequential same-store-sales stabilization or even a smaller decline than Q1 (-2.9%), (2) any early ACI Edge operational milestone (e.g., regionalization Phase 1 complete, or first quarter of centralized merchandising showing margin lift), (3) trade construction bounded by the July $11 lows as stop and a target grounded in a return to pre-crash forward P/E of ~9x.",
     "checks_remaining": "Need (a) a subsequent operating datapoint (Q2 print or ACI Edge milestone) — the cluster buy alone is insufficient without evidence the restructuring is executing, (b) bounded trade construction, (c) confirmation the CFO transition doesn't materially disrupt the ACI Edge rollout timeline (advisory role should help, but successor identification is a watch item).",
@@ -394,33 +276,16 @@
     "added": "2026-08-03",
     "catalyst": "VFC reported Q1 FY2027 (June 27 qtr) ahead of guidance on July 30, 2026 and raised full-year revenue guidance to at least +2% (from +1-2%). Despite the beat and raise, the stock fell 9% on the print (Vans still down 8% concerned the market). On July 31, two insiders purchased a combined $1.0M at ~$16.02 — the second sub-$17 cluster in six weeks and a real-money vote for Bracken Darrell's turnaround.",
     "thesis": "VFC is a $6B apparel holdco trading at multi-year lows with a genuine operational inflection: The North Face grew +4% (vs. Street flat), Timberland +3%, and management expects Vans Wholesale to inflect positive in 2H FY27. The Dickies divestment (Nov 2025) freed up management bandwidth and cleaned the portfolio. The Q1 beat + guide raise + insider buying at the lows is the classic 'transition quarter' setup where the market punishes the residual Vans weakness while missing that the remaining portfolio is already inflecting. Bracken Darrell (ex-Logitech, ran that turnaround) has now had 24+ months to execute; management credibility is at its highest since he arrived.",
-    "tickers": [
-      "VFC"
-    ],
+    "tickers": ["VFC"],
     "source": {
       "title": "VF Corporation Delivered First Quarter Fiscal 2027 Ahead of Guidance",
       "url": "https://www.vfc.com/investors/news-events-presentations/press-releases/detail/1870/vf-corporation-delivered-first-quarter-fiscal-2027-ahead-of",
       "date": "2026-07-30"
     },
     "supporting_sources": [
-      {
-        "title": "VF Corp. (VFC) Q1 2027 Earnings Show Sales Growth, Excluding Dickies",
-        "publisher": "WWD",
-        "url": "https://wwd.com/business-news/financial/vf-corp-q1-sales-rise-excluding-dickies-1239086362/",
-        "date": "2026-07-30"
-      },
-      {
-        "title": "VF Corp raises FY2027 revenue guidance after Q1 beat",
-        "publisher": "Yahoo Finance",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/vf-corp-raises-fy2027-revenue-133814972.html",
-        "date": "2026-07-30"
-      },
-      {
-        "title": "Openinsider cluster buy — VFC, 2 insiders, ~$1.0M at $16.02, trade date 2026-07-31, filed 2026-08-03",
-        "publisher": "OpenInsider (SEC Form 4 aggregator)",
-        "url": "http://openinsider.com/latest-cluster-buys",
-        "date": "2026-08-03"
-      }
+      {"title": "VF Corp. (VFC) Q1 2027 Earnings Show Sales Growth, Excluding Dickies", "publisher": "WWD", "url": "https://wwd.com/business-news/financial/vf-corp-q1-sales-rise-excluding-dickies-1239086362/", "date": "2026-07-30"},
+      {"title": "VF Corp raises FY2027 revenue guidance after Q1 beat", "publisher": "Yahoo Finance", "url": "https://finance.yahoo.com/markets/stocks/articles/vf-corp-raises-fy2027-revenue-133814972.html", "date": "2026-07-30"},
+      {"title": "Openinsider cluster buy — VFC, 2 insiders, ~$1.0M at $16.02, trade date 2026-07-31, filed 2026-08-03", "publisher": "OpenInsider (SEC Form 4 aggregator)", "url": "http://openinsider.com/latest-cluster-buys", "date": "2026-08-03"}
     ],
     "what_would_promote": "Promotion to On Our Radar requires: (a) Q2 FY27 print (~late-October 2026) showing Vans Wholesale narrowing decline or turning positive AND North Face/Timberland momentum sustaining, OR (b) a management update between now and Q2 quantifying holiday order book strength, and (c) trade construction bounded by the July 2026 $15-16 lows as stop with a target grounded in return to pre-crash 15-16x forward EPS.",
     "checks_remaining": "Need (a) a subsequent operating datapoint confirming Vans inflection (guidance timing suggests Q2 earnings late-Oct 2026), (b) bounded trade construction, (c) confirmation the insider buys were opportunistic-purchase Form 4 P codes (not option exercises), which the openinsider aggregation implies but merits a direct SEC EDGAR check on Form 4 filings before promoting."
@@ -431,9 +296,7 @@
     "added": "2026-08-05",
     "catalyst": "Boston Scientific reported Q2 2026 sales of $5.44B (+7.5% reported, +7.0% organic) and adjusted EPS of $0.86 (beat $0.82–$0.84 guide), but cut FY26 revenue growth guidance from 7.0–8.5% to 5.5–6.5% because WATCHMAN LAA-closure sales are slowing on new clinical evidence affecting referral patterns. Stock sold off to ~$47–48, near the 52-week low of $42.20 (~57% below the 52-week high of $109.50). On August 3, 2026, openinsider reported a 4-insider cluster buy totaling $9.84M at $48.66 average — the largest BSX insider cluster in years.",
     "thesis": "The core BSX business (Interventional Cardiology, Endoscopy, Neuromodulation) is still growing 7% organic and adjusted EPS beat — the sell-off is entirely a WATCHMAN story. A $9.8M cluster with four insiders including senior officers, executed within days of the guide cut, argues that management believes (a) the WATCHMAN weakness is transient (referral patterns re-set on new labels), and (b) the current multiple over-discounts a decelerating single product line at the expense of the rest of the platform. If Q3 shows WATCHMAN stabilizing at flat-to-LSD growth (matching the revised outlook) and the rest of the portfolio holds 7%+ organic, forward P/E of ~12.6× on FY27 estimates would re-rate meaningfully from here.",
-    "tickers": [
-      "BSX"
-    ],
+    "tickers": ["BSX"],
     "source": {
       "title": "OpenInsider — BSX 4-Insider Cluster Buy ($9.84M, filed 2026-08-05, trade 2026-08-03)",
       "url": "http://openinsider.com/screener?s=BSX"
@@ -447,9 +310,7 @@
     "added": "2026-08-06",
     "catalyst": "Two Tractor Supply directors purchased shares in early August 2026 following a slight Q2 miss (July 23: $0.81 EPS vs $0.82 consensus; revenue $4.54B vs $4.58B). Director Andre J. Hawaux bought 3,150 shares for $100,264.50 on Aug 3 (expanding his stake 21%); Director Edna Morris added ~1,560 shares on Aug 4. A third officer purchase was reported the same week, bringing the cluster to 3 insiders / ~$652K over 3 days per third-party trackers.",
     "thesis": "TSCO trades at 14x forward earnings on 45.5% ROE, a 17-year dividend growth streak, and 2,435 store dominance of a structurally-underserved rural-lifestyle customer base with no comparable competitor at scale. The stock is down 44% year-over-year on cyclical rural weakness and elevated capex for store openings, and the direct-signal read from independent directors buying during the post-print malaise is that the board views the drawdown as sentiment overshoot, not a moat break. This is a Return-on-Intention setup where infrastructure quality is intact while price has compressed toward the low end of the historical range.",
-    "tickers": [
-      "TSCO"
-    ],
+    "tickers": ["TSCO"],
     "source": {
       "title": "Tractor Supply Director Hawaux Buys 3,150 Shares Amid 44% Decline",
       "url": "https://www.fool.com/coverage/filings/2026/08/05/tractor-supply-director-hawaux-buys-3-150-shares-amid-44-decline/",
@@ -464,9 +325,7 @@
     "added": "2026-08-09",
     "catalyst": "US Commerce Dept banning US-origin tungsten scrap and recycled battery material exports Aug 27, 2026 through Aug 27, 2027 (100% of monthly US sales must go to domestic buyers). Follows China's 2026-2027 15-firm tungsten export licensing cap and precedes a Jan 1, 2027 US ban on Chinese/Russian/Iranian/North Korean tungsten in US defense applications. Almonty relocated HQ to Montana in April 2026 and acquired Montana's Gentung Tungsten Project (restart 2026). Sangdong (Korea) production expected to supply >80% of global non-China tungsten at full capacity. In July 2026, Almonty expanded its Global Tungsten & Powders offtake to $490M contracted annual revenue.",
     "thesis": "Sequential US-side supply restrictions create a two-year window where non-China tungsten capacity is structurally scarce for defense and industrial end-users. Almonty is the primary Nasdaq-listed pure-play with (a) already-signed offtake at contract-level pricing, (b) newly domiciled US corporate HQ that positions it for defense procurement priority, and (c) two ramping assets (Sangdong 2026, Gentung 2027). Tungsten prices +622% since Jan 2025 already validate the supply-side tightness. This is an installer-scarcity-style thesis (like IBP post-TopBuild), but the peer supply shock is regulatory, not M&A. Different mechanism from rare-earth-magnet-independence (MP; NdFeB magnets) and nuclear-fuel-cycle (CCJ/LEU; uranium) — no theme overlap.",
-    "tickers": [
-      "ALM"
-    ],
+    "tickers": ["ALM"],
     "source": {
       "title": "US Bans Export of Tungsten, Battery Waste to Secure Supplies",
       "url": "https://news.bloomberglaw.com/international-trade/us-bans-export-of-tungsten-battery-waste-to-secure-supplies-1",
