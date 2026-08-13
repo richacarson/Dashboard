@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T03:37:21Z",
+  "generated_at": "2026-08-13T12:06:27Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -103,75 +103,75 @@
       "top_contributors": [
         {
           "ticker": "STLD",
-          "mkt_value": 29057.58,
+          "mkt_value": 29006.87,
           "cost_basis": 13761.02,
-          "unrealized_gain": 15296.56,
-          "pct_of_sleeve": 5.18
+          "unrealized_gain": 15245.85,
+          "pct_of_sleeve": 5.16
         },
         {
           "ticker": "LRCX",
-          "mkt_value": 17674.36,
+          "mkt_value": 18514.27,
           "cost_basis": 3955.74,
-          "unrealized_gain": 13718.62,
-          "pct_of_sleeve": 3.15
+          "unrealized_gain": 14558.53,
+          "pct_of_sleeve": 3.3
         },
         {
           "ticker": "CAT",
-          "mkt_value": 16820.77,
+          "mkt_value": 17069.33,
           "cost_basis": 3948.19,
-          "unrealized_gain": 12872.58,
-          "pct_of_sleeve": 3.0
+          "unrealized_gain": 13121.14,
+          "pct_of_sleeve": 3.04
         },
         {
           "ticker": "GD",
-          "mkt_value": 23105.04,
+          "mkt_value": 23239.15,
           "cost_basis": 11279.5,
-          "unrealized_gain": 11825.54,
-          "pct_of_sleeve": 4.12
+          "unrealized_gain": 11959.65,
+          "pct_of_sleeve": 4.14
         },
         {
           "ticker": "ORI",
-          "mkt_value": 19345.72,
+          "mkt_value": 19350.28,
           "cost_basis": 9669.36,
-          "unrealized_gain": 9676.36,
+          "unrealized_gain": 9680.92,
           "pct_of_sleeve": 3.45
         }
       ],
       "bottom_contributors": [
         {
           "ticker": "ADP",
-          "mkt_value": 42486.16,
+          "mkt_value": 42211.92,
           "cost_basis": 44975.98,
-          "unrealized_gain": -2489.82,
-          "pct_of_sleeve": 7.57
-        },
-        {
-          "ticker": "QCOM",
-          "mkt_value": 27476.37,
-          "cost_basis": 28830.09,
-          "unrealized_gain": -1353.72,
-          "pct_of_sleeve": 4.89
+          "unrealized_gain": -2764.06,
+          "pct_of_sleeve": 7.52
         },
         {
           "ticker": "NTR",
-          "mkt_value": 25411.56,
+          "mkt_value": 25371.9,
           "cost_basis": 26675.06,
-          "unrealized_gain": -1263.5,
-          "pct_of_sleeve": 4.53
+          "unrealized_gain": -1303.16,
+          "pct_of_sleeve": 4.52
+        },
+        {
+          "ticker": "QCOM",
+          "mkt_value": 27547.34,
+          "cost_basis": 28830.09,
+          "unrealized_gain": -1282.75,
+          "pct_of_sleeve": 4.9
         },
         {
           "ticker": "ABT",
-          "mkt_value": 21806.92,
+          "mkt_value": 22039.41,
           "cost_basis": 22635.83,
-          "unrealized_gain": -828.91,
-          "pct_of_sleeve": 3.88
+          "unrealized_gain": -596.42,
+          "pct_of_sleeve": 3.92
         },
         {
           "ticker": "GPC",
-          "mkt_value": 27311.55,
+          "mkt_value": 27089.16,
           "cost_basis": 27070.16,
-          "unrealized_gain": 241.39,
-          "pct_of_sleeve": 4.86
+          "unrealized_gain": 19.0,
+          "pct_of_sleeve": 4.82
         }
       ],
       "contribution_basis": "unrealized gain by current position since purchase"
@@ -266,7 +266,7 @@
       "income": {
         "projected_annual_income": 1030.85,
         "yield_on_cost": 1.55,
-        "current_yield": 1.51,
+        "current_yield": 1.49,
         "dividend_growth_yoy": 10.63,
         "received_ytd": 706.65,
         "received_qtr": 171.35,
@@ -276,75 +276,75 @@
       "top_contributors": [
         {
           "ticker": "HUT",
-          "mkt_value": 3217.48,
+          "mkt_value": 3291.06,
           "cost_basis": 714.03,
-          "unrealized_gain": 2503.45,
-          "pct_of_sleeve": 3.05
+          "unrealized_gain": 2577.03,
+          "pct_of_sleeve": 3.09
         },
         {
           "ticker": "KEYS",
-          "mkt_value": 4862.36,
+          "mkt_value": 5010.44,
           "cost_basis": 2434.23,
-          "unrealized_gain": 2428.13,
-          "pct_of_sleeve": 4.62
-        },
-        {
-          "ticker": "FTNT",
-          "mkt_value": 3973.6,
-          "cost_basis": 1840.16,
-          "unrealized_gain": 2133.44,
-          "pct_of_sleeve": 3.77
-        },
-        {
-          "ticker": "TSM",
-          "mkt_value": 4952.29,
-          "cost_basis": 2832.01,
-          "unrealized_gain": 2120.28,
+          "unrealized_gain": 2576.21,
           "pct_of_sleeve": 4.7
         },
         {
-          "ticker": "AMD",
-          "mkt_value": 3523.18,
-          "cost_basis": 1773.54,
-          "unrealized_gain": 1749.64,
-          "pct_of_sleeve": 3.34
+          "ticker": "TSM",
+          "mkt_value": 5035.84,
+          "cost_basis": 2832.01,
+          "unrealized_gain": 2203.83,
+          "pct_of_sleeve": 4.72
+        },
+        {
+          "ticker": "CRDO",
+          "mkt_value": 5314.29,
+          "cost_basis": 3185.33,
+          "unrealized_gain": 2128.96,
+          "pct_of_sleeve": 4.98
+        },
+        {
+          "ticker": "FTNT",
+          "mkt_value": 3945.62,
+          "cost_basis": 1840.16,
+          "unrealized_gain": 2105.46,
+          "pct_of_sleeve": 3.7
         }
       ],
       "bottom_contributors": [
         {
           "ticker": "MARA",
-          "mkt_value": 3095.65,
+          "mkt_value": 3084.46,
           "cost_basis": 4298.51,
-          "unrealized_gain": -1202.86,
-          "pct_of_sleeve": 2.94
-        },
-        {
-          "ticker": "VST",
-          "mkt_value": 7199.58,
-          "cost_basis": 8053.02,
-          "unrealized_gain": -853.44,
-          "pct_of_sleeve": 6.83
+          "unrealized_gain": -1214.05,
+          "pct_of_sleeve": 2.89
         },
         {
           "ticker": "HOOD",
-          "mkt_value": 5860.99,
+          "mkt_value": 5894.53,
           "cost_basis": 6689.42,
-          "unrealized_gain": -828.43,
-          "pct_of_sleeve": 5.56
+          "unrealized_gain": -794.89,
+          "pct_of_sleeve": 5.53
+        },
+        {
+          "ticker": "VST",
+          "mkt_value": 7288.51,
+          "cost_basis": 8053.02,
+          "unrealized_gain": -764.51,
+          "pct_of_sleeve": 6.83
         },
         {
           "ticker": "ATAT",
-          "mkt_value": 3422.4,
+          "mkt_value": 3406.29,
           "cost_basis": 3491.3,
-          "unrealized_gain": -68.9,
-          "pct_of_sleeve": 3.25
+          "unrealized_gain": -85.01,
+          "pct_of_sleeve": 3.19
         },
         {
           "ticker": "NXPI",
-          "mkt_value": 3732.85,
+          "mkt_value": 3688.35,
           "cost_basis": 3660.9,
-          "unrealized_gain": 71.95,
-          "pct_of_sleeve": 3.54
+          "unrealized_gain": 27.45,
+          "pct_of_sleeve": 3.46
         }
       ],
       "contribution_basis": "unrealized gain by current position since purchase"
