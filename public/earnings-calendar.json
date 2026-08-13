@@ -10254,9 +10254,9 @@
     "date": "2026-08-13",
     "hour": "bmo",
     "epsEstimate": 0.3367,
-    "epsActual": null,
+    "epsActual": 0.37,
     "revenueEstimate": 12191205,
-    "revenueActual": null,
+    "revenueActual": 12150000,
     "source": "finnhub"
   },
   {
