@@ -208,5 +208,10 @@
     "ticker": "MATX",
     "ex_date": "2026-08-06",
     "dps": 0.38
+  },
+  {
+    "ticker": "PCAR",
+    "ex_date": "2026-08-12",
+    "dps": 0.35
   }
 ]
