@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T11:51:51Z",
+  "generated_at": "2026-08-16T11:49:44Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -834,13 +834,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-03-31",
-        "eps_actual": 0.16,
-        "eps_estimate": 0.1647,
-        "surprise": -0.0047,
-        "surprise_pct": -2.8537
-      }
+      "earnings": null
     },
     "CNX": {
       "sleeve": "Growth",
@@ -1355,9 +1349,7 @@
       "quote_source": "alpaca"
     }
   },
-  "recent_reporters": [
-    "CWAN"
-  ],
+  "recent_reporters": [],
   "errors": [],
   "sources": {
     "price": "alpaca",
