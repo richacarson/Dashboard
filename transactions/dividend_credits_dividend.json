@@ -213,5 +213,15 @@
     "ticker": "PCAR",
     "ex_date": "2026-08-12",
     "dps": 0.35
+  },
+  {
+    "ticker": "CHD",
+    "ex_date": "2026-08-14",
+    "dps": 0.308
+  },
+  {
+    "ticker": "NWG",
+    "ex_date": "2026-08-14",
+    "dps": 0.322
   }
 ]

@@ -493,5 +493,15 @@
     "ticker": "AWK",
     "ex_date": "2026-08-11",
     "dps": 0.895
+  },
+  {
+    "ticker": "LLY",
+    "ex_date": "2026-08-14",
+    "dps": 1.73
+  },
+  {
+    "ticker": "SCHW",
+    "ex_date": "2026-08-14",
+    "dps": 0.32
   }
 ]
