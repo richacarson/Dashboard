@@ -503,5 +503,15 @@
     "ticker": "SCHW",
     "ex_date": "2026-08-14",
     "dps": 0.32
+  },
+  {
+    "ticker": "KLAC",
+    "ex_date": "2026-08-17",
+    "dps": 0.23
+  },
+  {
+    "ticker": "NVO",
+    "ex_date": "2026-08-17",
+    "dps": 0.579
   }
 ]
