@@ -1084,9 +1084,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": 0.8767,
-    "epsActual": null,
+    "epsActual": 0.50511,
     "revenueEstimate": 1206090840,
-    "revenueActual": null,
+    "revenueActual": 1222366200,
     "source": "finnhub"
   },
   {
@@ -1324,9 +1324,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": -0.0102,
-    "epsActual": null,
+    "epsActual": -0.07,
     "revenueEstimate": 13858740,
-    "revenueActual": null,
+    "revenueActual": 12570000,
     "source": "finnhub"
   },
   {
@@ -1344,9 +1344,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": 1.4743,
-    "epsActual": null,
+    "epsActual": 1.57,
     "revenueEstimate": 642048098,
-    "revenueActual": null,
+    "revenueActual": 644020000,
     "source": "finnhub"
   },
   {
@@ -1354,9 +1354,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": 2.5248,
-    "epsActual": null,
+    "epsActual": 3.07,
     "revenueEstimate": 1772093940,
-    "revenueActual": null,
+    "revenueActual": 1846000000,
     "source": "finnhub"
   },
   {
@@ -1384,9 +1384,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": 0.4983,
-    "epsActual": null,
+    "epsActual": 0.43,
     "revenueEstimate": 506353400,
-    "revenueActual": null,
+    "revenueActual": 475690000,
     "source": "finnhub"
   },
   {
@@ -1414,9 +1414,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": 0.3933,
-    "epsActual": null,
+    "epsActual": 0.37,
     "revenueEstimate": 271856407,
-    "revenueActual": null,
+    "revenueActual": 289780000,
     "source": "finnhub"
   },
   {
@@ -1584,9 +1584,9 @@
     "date": "2026-08-18",
     "hour": "amc",
     "epsEstimate": 2.9446,
-    "epsActual": null,
+    "epsActual": 2.97,
     "revenueEstimate": 2637261500,
-    "revenueActual": null,
+    "revenueActual": 2658780000,
     "source": "finnhub"
   },
   {
@@ -1762,7 +1762,7 @@
   {
     "symbol": "BEEM",
     "date": "2026-08-19",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.2074,
     "epsActual": null,
     "revenueEstimate": 8357196,
@@ -2072,7 +2072,7 @@
   {
     "symbol": "MRT",
     "date": "2026-08-19",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1566,
     "epsActual": null,
     "revenueEstimate": 30072750,
@@ -3122,7 +3122,7 @@
   {
     "symbol": "BOX",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.4022,
     "epsActual": null,
     "revenueEstimate": 322524441,
@@ -3172,7 +3172,7 @@
   {
     "symbol": "ELMD",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.3162,
     "epsActual": null,
     "revenueEstimate": 19719996,
@@ -3192,7 +3192,7 @@
   {
     "symbol": "FSCO",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -3212,7 +3212,7 @@
   {
     "symbol": "HEI",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.5161,
     "epsActual": null,
     "revenueEstimate": 1357879966,
@@ -3292,7 +3292,7 @@
   {
     "symbol": "NCNO",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.2605,
     "epsActual": null,
     "revenueEstimate": 162333397,
@@ -3302,7 +3302,7 @@
   {
     "symbol": "NOAH",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -3332,7 +3332,7 @@
   {
     "symbol": "QFIN",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 5.9976,
     "epsActual": null,
     "revenueEstimate": null,
@@ -3362,7 +3362,7 @@
   {
     "symbol": "SHMD",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -3392,7 +3392,7 @@
   {
     "symbol": "SMTC",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.62,
     "epsActual": null,
     "revenueEstimate": 335216880,
@@ -3402,7 +3402,7 @@
   {
     "symbol": "STRT",
     "date": "2026-08-25",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.3158,
     "epsActual": null,
     "revenueEstimate": 149702850,
