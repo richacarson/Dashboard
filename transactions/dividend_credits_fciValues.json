@@ -478,5 +478,15 @@
     "ticker": "KLAC",
     "ex_date": "2026-08-17",
     "dps": 0.23
+  },
+  {
+    "ticker": "BWXT",
+    "ex_date": "2026-08-18",
+    "dps": 0.27
+  },
+  {
+    "ticker": "CEG",
+    "ex_date": "2026-08-18",
+    "dps": 0.427
   }
 ]
