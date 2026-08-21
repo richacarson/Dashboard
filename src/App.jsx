@@ -18,7 +18,7 @@ const DEFAULT_SLEEVES = {
   dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","SPGI","CEG","NWG"], icon: "💰" },
   growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CNX","CRDO","EIX","FCX","FTNT","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST","NOW","SOFI","YMM"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
-  sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","XLC","XLU"], icon: "📊" },
+  sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","IGV","XLC","XLU"], icon: "📊" },
   fci100: { name: "FCI 100", symbols: ["ADI","AEP","AGI","ALAB","AMAT","AMD","AMGN","AMZN","ANET","APH","ASM","ASML","AU","AVGO","AWK","AZN","BSX","BWXT","CAT","CB","CCJ","CDNS","CEG","CIEN","CLS","COST","CRDO","ECL","EMBJ","ETN","GE","GEV","GILD","GLW","GMAB","GOOG","GOOGL","GRAB","GRMN","HLT","ICE","INOD","IOT","ISRG","JNJ","JPM","KEYS","KKR","KLAC","LIN","LLY","LMND","LNG","LRCX","MDA","META","MOD","MRK","MRVL","MSFT","MSI","MU","NBIS","NBIX","NEE","NFLX","NOW","NRG","NVDA","NVO","NVT","NXT","PLTR","PNFP","PODD","PTC","QCOM","RCL","RDDT","RMBS","RMD","SAP","SCHW","SHOP","SNPS","SPGI","SYK","TEL","TEM","TER","TSM","TTMI","VEEV","VIST","VRT","VRTX","WMT","XYL","YUMC","ZS"], icon: "🏆" },
   fciValues: { name: "FCI Values 100", symbols: ["ADI","AGI","ALAB","AMAT","AMGN","ANET","APH","ASM","ASML","ASND","AU","AVGO","AWK","BSX","BWXT","CAT","CB","CCJ","CDNS","CEG","CIEN","CLBT","CLS","CNI","CP","CRDO","CSCO","CSGP","DE","DECK","DOCN","DOV","EMBJ","ETN","FCX","FFIV","FTNT","GE","GEV","GLW","GMAB","GRAB","GRMN","HD","HWM","ICE","INOD","IOT","ISRG","KEYS","KLAC","LIN","LITE","LLY","LMND","LMT","LNG","LRCX","MDA","MKC","MOD","MRVL","MSI","MU","NBIS","NBIX","NDAQ","NEE","NOW","NRG","NU","NVDA","NVT","NXT","PLTR","PNFP","PODD","PTC","PWR","QCOM","QTWO","RMBS","RMD","SCHW","SHOP","SNPS","SPGI","SYK","TEL","TEM","TER","TSM","TTMI","VEEV","VIST","VRT","XYL","YOU","YUMC","ZS"], icon: "✝️" },
 };
@@ -645,7 +645,7 @@ const StockLogo = React.memo(function StockLogo({ symbol, size = 32, logoUrl }) 
     return () => { cancelled = true; };
   }, [symbol, domain, logoUrl]);
   if (fallback || (!src && !domain)) {
-    const sectorEmojis = { XLY: "🛍️", XLP: "🛒", XLE: "⛽", XLF: "🏦", XLV: "🏥", XLI: "🏗️", XLB: "⛏️", XLRE: "🏠", XLK: "💻", XLC: "📡", XLU: "💡" };
+    const sectorEmojis = { XLY: "🛍️", XLP: "🛒", XLE: "⛽", XLF: "🏦", XLV: "🏥", XLI: "🏗️", XLB: "⛏️", XLRE: "🏠", XLK: "💻", IGV: "🖥️", XLC: "📡", XLU: "💡" };
     if (sectorEmojis[symbol]) {
       return (
         <div style={{ width: size, height: size, borderRadius: size / 2, background: C.accentSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -4440,8 +4440,8 @@ Instructions:
     const tDayChg = (tPortfolioVal && tPortfolioPrev) ? ((tPortfolioVal / tPortfolioPrev) - 1) * 100 : null;
     const tDayChgDollar = (tPortfolioVal && tPortfolioPrev) ? tPortfolioVal - tPortfolioPrev : null;
     const tSpyPrice = (bmQuotes.SPY?.p || quotesRef.current?.SPY?.p);
-    // Live top-performing sector ETF — looked up from the sectors sleeve (XLY/XLP/XLE/.../XLU)
-    const SECTOR_ETF_NAMES = { XLK: "Tech", XLF: "Fin", XLV: "Health", XLE: "Energy", XLI: "Indust", XLY: "Cons Disc", XLP: "Staples", XLB: "Mtrls", XLU: "Utils", XLC: "Comm", XLRE: "Real Est" };
+    // Live top-performing sector ETF — looked up from the sectors sleeve (XLY/XLP/.../IGV/XLU)
+    const SECTOR_ETF_NAMES = { XLK: "Tech", IGV: "Software", XLF: "Fin", XLV: "Health", XLE: "Energy", XLI: "Indust", XLY: "Cons Disc", XLP: "Staples", XLB: "Mtrls", XLU: "Utils", XLC: "Comm", XLRE: "Real Est" };
     const tTopSector = (() => {
       let best = null;
       for (const s of (sleeves.sectors?.symbols || [])) {
