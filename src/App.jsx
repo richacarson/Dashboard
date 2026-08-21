@@ -3699,6 +3699,13 @@ Instructions:
   // Which benchmarks a sleeve is measured against. Derived from the perf-chart toggle
   // defaults rather than a second hand-written map, so the two can't drift apart.
   const sleeveBms = k => Object.entries(SLEEVE_BM_DEFAULTS[k] || {}).filter(([, on]) => on).map(([sym]) => sym);
+  // Best-performing symbol in a list today. Sector lists have no benchmark to spread
+  // against, so this stands in for it — and the home banner's Top Sector card reads
+  // from the same helper rather than repeating the ranking inline.
+  const topMover = syms => (syms || [])
+    .map(sym => ({ sym, c: chg(sym) }))
+    .filter(x => x.c != null)
+    .sort((a, b) => b.c - a.c)[0] || null;
   const sleeveActualDay = (k) => {
     const h = perfDataMap[k]?.holdings;
     if (!h) return null;
@@ -4095,6 +4102,7 @@ Instructions:
       avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
     }
     const isAddingTicker = addTickerFor === k;
+    const subFine = { fontSize: 10.5 };   // a step under the item count beside it
 
     return (
       <div>
@@ -4117,7 +4125,7 @@ Instructions:
             )}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, letterSpacing: -0.1 }}>{sleeve.name}</div>
-              <div style={{ fontSize: 12, color: C.t4, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 12, color: C.t4, marginTop: 2, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", rowGap: 2 }}>
                 <span>{sleeve.symbols.length} items</span>
                 {/* Day spread vs this sleeve's benchmarks — the terminal rail's readout.
                     Measured off avgChg, the figure shown to the right, so the subtraction
@@ -4127,12 +4135,25 @@ Instructions:
                   if (bd == null) return null;
                   const a = avgChg - bd;
                   return (
-                    <span key={b}>
+                    <span key={b} style={subFine}>
                       <span style={{ color: C.t4 }}>vs {b} </span>
                       <span style={{ color: a >= 0 ? C.up : C.dn, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{a >= 0 ? "+" : ""}{a.toFixed(2)}%</span>
                     </span>
                   );
                 })}
+                {/* Sector lists have no benchmark to spread against — the day's leader is
+                    the equivalent read, and it occupies the same slot. */}
+                {k === "sectors" && (() => {
+                  const top = topMover(sleeve.symbols);
+                  if (!top) return null;
+                  return (
+                    <span style={subFine}>
+                      <span style={{ color: C.t4 }}>Top </span>
+                      <span style={{ color: C.t2, fontWeight: 700 }}>{top.sym} </span>
+                      <span style={{ color: top.c >= 0 ? C.up : C.dn, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{top.c >= 0 ? "+" : ""}{top.c.toFixed(2)}%</span>
+                    </span>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -7108,12 +7129,7 @@ Instructions:
                     );
                   })}
                   {(() => {
-                    const sectorSyms = sleeves.sectors?.symbols || [];
-                    const ranked = sectorSyms
-                      .map(s => ({ sym: s, c: chg(s) }))
-                      .filter(x => x.c != null)
-                      .sort((a, b) => b.c - a.c);
-                    const top = ranked[0];
+                    const top = topMover(sleeves.sectors?.symbols);
                     if (!top) return null;
                     return (
                       <div key="top-sector" {...stockContextHandlers(top.sym)} style={{
