@@ -4141,6 +4141,17 @@ Instructions:
                     </span>
                   );
                 })}
+                {/* Digital assets is two names, so both fit — no need to rank them. */}
+                {k === "digital" && sleeve.symbols.map(sym => {
+                  const c = chg(sym);
+                  if (c == null) return null;
+                  return (
+                    <span key={sym} style={subFine}>
+                      <span style={{ color: C.t2, fontWeight: 700 }}>{sym} </span>
+                      <span style={{ color: c >= 0 ? C.up : C.dn, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c >= 0 ? "+" : ""}{c.toFixed(2)}%</span>
+                    </span>
+                  );
+                })}
                 {/* Sector lists have no benchmark to spread against — the day's leader is
                     the equivalent read, and it occupies the same slot. */}
                 {k === "sectors" && (() => {
