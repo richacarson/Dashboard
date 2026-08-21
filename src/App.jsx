@@ -4102,7 +4102,7 @@ Instructions:
       avgChg = changes.length ? changes.reduce((a, b) => a + b, 0) / changes.length : null;
     }
     const isAddingTicker = addTickerFor === k;
-    const subFine = { fontSize: 10.5 };   // a step under the item count beside it
+    const subFine = { fontSize: 9.5 };   // a step under the item count beside it
 
     return (
       <div>
