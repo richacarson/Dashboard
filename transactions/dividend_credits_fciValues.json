@@ -488,5 +488,15 @@
     "ticker": "CEG",
     "ex_date": "2026-08-18",
     "dps": 0.427
+  },
+  {
+    "ticker": "AMAT",
+    "ex_date": "2026-08-20",
+    "dps": 0.53
+  },
+  {
+    "ticker": "RMD",
+    "ex_date": "2026-08-20",
+    "dps": 0.66
   }
 ]
