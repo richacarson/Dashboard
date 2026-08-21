@@ -4147,7 +4147,7 @@ Instructions:
                   if (c == null) return null;
                   return (
                     <span key={sym} style={subFine}>
-                      <span style={{ color: C.t2, fontWeight: 700 }}>{sym} </span>
+                      <span style={{ color: C.t4 }}>{sym} </span>
                       <span style={{ color: c >= 0 ? C.up : C.dn, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{c >= 0 ? "+" : ""}{c.toFixed(2)}%</span>
                     </span>
                   );
@@ -4159,8 +4159,7 @@ Instructions:
                   if (!top) return null;
                   return (
                     <span style={subFine}>
-                      <span style={{ color: C.t4 }}>Top </span>
-                      <span style={{ color: C.t2, fontWeight: 700 }}>{top.sym} </span>
+                      <span style={{ color: C.t4 }}>Top {top.sym} </span>
                       <span style={{ color: top.c >= 0 ? C.up : C.dn, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{top.c >= 0 ? "+" : ""}{top.c.toFixed(2)}%</span>
                     </span>
                   );
