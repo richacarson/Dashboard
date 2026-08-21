@@ -3689,6 +3689,16 @@ Instructions:
     return c;
   };
   const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+  // Same number as bmChg, but reading through the refs first so the spread tracks the
+  // live quote instead of waiting on the 1Hz state sync.
+  const bmDayChg = s => {
+    const q = bmQuotes[s] || quotesRef.current?.[s];
+    const b = bmBars[s] || barsRef.current?.[s];
+    return (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
+  };
+  // Which benchmarks a sleeve is measured against. Derived from the perf-chart toggle
+  // defaults rather than a second hand-written map, so the two can't drift apart.
+  const sleeveBms = k => Object.entries(SLEEVE_BM_DEFAULTS[k] || {}).filter(([, on]) => on).map(([sym]) => sym);
   const sleeveActualDay = (k) => {
     const h = perfDataMap[k]?.holdings;
     if (!h) return null;
@@ -4107,7 +4117,23 @@ Instructions:
             )}
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: C.t1, letterSpacing: -0.1 }}>{sleeve.name}</div>
-              <div style={{ fontSize: 12, color: C.t4, marginTop: 2 }}>{sleeve.symbols.length} items</div>
+              <div style={{ fontSize: 12, color: C.t4, marginTop: 2, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span>{sleeve.symbols.length} items</span>
+                {/* Day spread vs this sleeve's benchmarks — the terminal rail's readout.
+                    Measured off avgChg, the figure shown to the right, so the subtraction
+                    on screen is self-consistent. */}
+                {avgChg != null && sleeveBms(k).map(b => {
+                  const bd = bmDayChg(b);
+                  if (bd == null) return null;
+                  const a = avgChg - bd;
+                  return (
+                    <span key={b}>
+                      <span style={{ color: C.t4 }}>vs {b} </span>
+                      <span style={{ color: a >= 0 ? C.up : C.dn, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{a >= 0 ? "+" : ""}{a.toFixed(2)}%</span>
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </div>
           {/* Right side: avg change + chevron */}
@@ -6732,16 +6758,10 @@ Instructions:
           <div style={{ flex: "0 0 auto", maxHeight: "58%", borderBottom: `1px solid ${C.border}`, padding: "8px 12px", overflowY: "auto" }}>
             <div style={{ ...tEyebrow, marginBottom: 4 }}>Sleeves</div>
             {(() => {
-              const SLEEVE_BMS = { dividend: ["DVY", "SPY"], growth: ["IUSG", "SPY"], fci100: ["SPY"], fciValues: ["SPY"] };
-              const bmDayOf = b => {
-                const q = bmQuotes[b] || quotesRef.current?.[b];
-                const bar = bmBars[b] || barsRef.current?.[b];
-                return (q?.p && bar?.pc) ? ((q.p - bar.pc) / bar.pc) * 100 : null;
-              };
               return tSleeveKeys.filter(k => k !== "sectors" && k !== "digital").map(k => {
                 const sc = sleeveActualDay(k);
-                const bms = SLEEVE_BMS[k] || [];
-                const spreads = bms.map(b => ({ sym: b, alpha: (() => { const bd = bmDayOf(b); return (sc != null && bd != null) ? sc - bd : null; })() }));
+                const bms = sleeveBms(k);
+                const spreads = bms.map(b => ({ sym: b, alpha: (() => { const bd = bmDayChg(b); return (sc != null && bd != null) ? sc - bd : null; })() }));
                 return (
                   <div key={k} style={{ padding: "3px 0", borderBottom: `1px dotted ${C.border}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
