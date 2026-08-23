@@ -383,5 +383,12 @@
     "amber": 3,
     "green": 44,
     "headline": "Weekend pre-market read (Fri 8/21 last settled session). MARA and EIX persist RED (thesis-confirmed): MARA +1.17% calm, BTC-leverage thesis unchanged; EIX -4.0%, fresh Morgan Stanley PT cut to $65, Aug-31 wildfire-reform deadline 9 days out with still no draft legislation. ATAT eases RED->AMBER (+1.53%, price stabilizing but Thursday's RevPAR-decline finding stands as fact). New AMBER: HUT (-8.78%, 4th week of AI-miner-rotation declines, no discrete catalyst), MRVL (-5.59% pre-earnings pullback, print 5 days out 8/27, no negative news). STLD/SYK/SYF/LMT/HRMY resolve to GREEN. Gainers: HOOD +13.7% (Goldman PT raise, crypto/private-markets push), COIN +8.32%, FCX +7.59% (all-time high). KEYS posted a 21.6% EPS beat (flat price, priced in). CWAN roster-integrity bug hits a 54th consecutive day (PR #11/#12 still open/unmerged/dirty). SPY ~18.5% above the one active support (645.80) -- not in play."
+  },
+  {
+    "date": "2026-08-23",
+    "red": 2,
+    "amber": 3,
+    "green": 44,
+    "headline": "Sunday pre-market read; last settled session remains Friday 8/21 close (re-dispatched and reconfirmed identical, no weekend session). MARA and EIX persist RED, unchanged in substance. New EIX context: Newsom pushing a last-minute wildfire-liability package (nothing passed yet, deadline 8 days out). ATAT and MRVL hold AMBER, no new data. HUT holds AMBER but picks up countervailing bullish analyst actions (Clear Street/Morgan Stanley Buy, Piper Sandler PT to $143) and $7.5B non-recourse project financing since Friday's drop -- tempers, does not resolve, the concern. CWAN roster-integrity bug hits a 55th consecutive day (PR #11/#12 still open/unmerged/dirty)."
   }
 ]
