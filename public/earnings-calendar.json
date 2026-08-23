@@ -465,7 +465,7 @@
     "hour": "",
     "epsEstimate": -0.187,
     "epsActual": null,
-    "revenueEstimate": null,
+    "revenueEstimate": 44944596,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2265,7 +2265,7 @@
     "hour": "bmo",
     "epsEstimate": 2.3095,
     "epsActual": 2.46,
-    "revenueEstimate": 26324568724,
+    "revenueEstimate": null,
     "revenueActual": 26539000000,
     "source": "finnhub"
   },
