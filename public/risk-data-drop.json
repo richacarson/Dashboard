@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-23T11:50:15Z",
+  "generated_at": "2026-08-24T11:46:04Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -1110,13 +1110,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-09-30",
-        "eps_actual": 3.07,
-        "eps_estimate": 2.5248,
-        "surprise": 0.5452,
-        "surprise_pct": 21.5938
-      }
+      "earnings": null
     },
     "MARA": {
       "sleeve": "Growth",
@@ -1308,13 +1302,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-09-30",
-        "eps_actual": 2.97,
-        "eps_estimate": 2.9446,
-        "surprise": 0.0254,
-        "surprise_pct": 0.8626
-      }
+      "earnings": null
     },
     "VST": {
       "sleeve": "Growth",
@@ -1375,9 +1363,7 @@
   },
   "recent_reporters": [
     "ADI",
-    "ATAT",
-    "KEYS",
-    "TOL"
+    "ATAT"
   ],
   "errors": [],
   "sources": {
