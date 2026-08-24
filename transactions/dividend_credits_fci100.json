@@ -538,5 +538,30 @@
     "ticker": "RMD",
     "ex_date": "2026-08-20",
     "dps": 0.66
+  },
+  {
+    "ticker": "AMGN",
+    "ex_date": "2026-08-21",
+    "dps": 2.52
+  },
+  {
+    "ticker": "AU",
+    "ex_date": "2026-08-21",
+    "dps": 0.72
+  },
+  {
+    "ticker": "HLT",
+    "ex_date": "2026-08-21",
+    "dps": 0.15
+  },
+  {
+    "ticker": "TEL",
+    "ex_date": "2026-08-21",
+    "dps": 0.78
+  },
+  {
+    "ticker": "WMT",
+    "ex_date": "2026-08-21",
+    "dps": 0.248
   }
 ]
