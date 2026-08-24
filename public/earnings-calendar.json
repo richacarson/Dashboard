@@ -465,7 +465,7 @@
     "hour": "",
     "epsEstimate": -0.187,
     "epsActual": null,
-    "revenueEstimate": 44944596,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2265,7 +2265,7 @@
     "hour": "bmo",
     "epsEstimate": 2.3095,
     "epsActual": 2.46,
-    "revenueEstimate": null,
+    "revenueEstimate": 26324568724,
     "revenueActual": 26539000000,
     "source": "finnhub"
   },
@@ -4386,16 +4386,6 @@
     "epsEstimate": 1.1016,
     "epsActual": null,
     "revenueEstimate": 117300000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GEG",
-    "date": "2026-08-31",
-    "hour": "",
-    "epsEstimate": 0.203,
-    "epsActual": null,
-    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
