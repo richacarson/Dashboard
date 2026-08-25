@@ -494,9 +494,9 @@
     "date": "2026-08-25",
     "hour": "bmo",
     "epsEstimate": 1.4229,
-    "epsActual": null,
+    "epsActual": 1.46,
     "revenueEstimate": 486504504,
-    "revenueActual": null,
+    "revenueActual": 465030000,
     "source": "finnhub"
   },
   {
@@ -594,9 +594,9 @@
     "date": "2026-08-25",
     "hour": "bmo",
     "epsEstimate": -0.1836,
-    "epsActual": null,
+    "epsActual": -0.19,
     "revenueEstimate": 360504210,
-    "revenueActual": null,
+    "revenueActual": 321650000,
     "source": "finnhub"
   },
   {
@@ -1366,16 +1366,6 @@
     "epsEstimate": 0.7752,
     "epsActual": null,
     "revenueEstimate": 269167086,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "MCFT",
-    "date": "2026-08-27",
-    "hour": "",
-    "epsEstimate": 0.6545,
-    "epsActual": null,
-    "revenueEstimate": 103788396,
     "revenueActual": null,
     "source": "finnhub"
   },
