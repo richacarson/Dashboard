@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-24T11:52:00Z",
-  "as_of_session": "2026-08-21",
-  "universe_count": 50,
+  "generated_at": "2026-08-25T12:10:00Z",
+  "as_of_session": "2026-08-24",
+  "universe_count": 49,
   "universe_incomplete": true,
   "roster_integrity": {
     "ok": false,
@@ -10,98 +10,192 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus-led consortium, $24.55/share) closed 2026-06-25 (FIRB cleared 2026-06-19); CWAN delisted and no longer trades -- data drop price ($24.56) is still frozen at deal terms, confirming no live market. Still listed in data/portfolios.json growth sleeve -- 56th consecutive day unresolved. PR #11 (opened 2026-07-28) and PR #12 (opened 2026-08-01), both containing the fix, remain open/unmerged (mergeable_state: dirty, reconfirmed via GitHub API this run) because origin/main has had no merge from the daily-run branch lineage in well over a month, making every new branch's diff against main enormous (1700+ files) and unmergeable without human reconciliation. This run does not add a third duplicate fix commit for the same reason PR #12 gave -- re-committing on yet another branch will not break the cycle.",
-        "action": "Carson (or Ray Marie) needs to either merge PR #12 (https://github.com/richacarson/Stock-Screener/pull/12) or PR #11 (https://github.com/richacarson/Stock-Screener/pull/11) directly, or reconcile origin/main with the actual working branch lineage. This is now a 56-day-old process gap, not a data problem -- monitoring itself has not been impaired (CWAN is correctly excluded from the tradable count every run), but the roster file on main is wrong and will stay wrong until a human merges one of these PRs."
+        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus-led consortium, $24.55/share) closed 2026-06-25 (FIRB cleared 2026-06-19); CWAN delisted and no longer trades. It was still listed in data/portfolios.json's growth sleeve as of the start of this run -- 57th consecutive day this exact issue has been open. Removed CWAN from data/portfolios.json on this run's branch (this is at least the 8th time this fix has been committed on a Risk Sentinel run branch since 2026-06-27; none has ever reached origin/main). Root cause: origin/main has had no merge from the daily-run branch lineage since roughly 2026-06-17, so PR #11 (opened 2026-07-28, 28 days open) and PR #12 (opened 2026-08-01, 24 days open) -- both containing this same fix -- remain open/unmerged with mergeable_state 'dirty' (reconfirmed via GitHub API this run: 1737 and 1844 changed files respectively against main). This run does not open a third duplicate PR for the same reason #12 gave: another branch will not break the cycle.",
+        "action": "Needs a human decision, not another bot-authored fix: either merge PR #11 (https://github.com/richacarson/Stock-Screener/pull/11) or PR #12 (https://github.com/richacarson/Stock-Screener/pull/12) directly, or have Carson/Ray Marie reconcile origin/main with the actual working branch lineage so future runs' diffs stop compounding. Monitoring itself is not impaired -- CWAN is excluded from this run's tradable count and cross-checked via risk-data-drop.json -- but the roster file on main stays wrong until one of these lands."
       }
     ],
-    "universe_note": "ETHA and IBIT (Digital-Asset-ETF sleeve) are tracked in risk-data-drop.json (52 holdings, all priced) but are not listed in data/portfolios.json (50 tickers, 49 genuinely tradable once the stale CWAN entry is excluded). 49 (portfolios.json) + 2 (ETHA/IBIT, tracked ad hoc) = 51 vs. the firm's stated 52 holdings -- one further untracked position may still exist. universe_incomplete=true until portfolios.json is corrected to include the Digital sleeve and the CWAN fix actually lands on main."
+    "universe_note": "ETHA and IBIT (Digital-Asset-ETF sleeve) are tracked in risk-data-drop.json (52 holdings priced, 0 errors) but are not listed in data/portfolios.json. 49 (portfolios.json, now correctly excluding CWAN on this branch) + 2 (ETHA/IBIT, tracked ad hoc in the data-drop script only) = 51 vs. the firm's stated 52 holdings -- one further untracked position may still exist; not fabricating which one. universe_incomplete=true until portfolios.json is corrected to include the Digital sleeve on main."
   },
   "summary": {
     "red": 2,
-    "amber": 3,
-    "green": 44,
-    "headline": "Monday pre-market read; last settled session remains Friday 8/21 close (data drop re-dispatched at 11:46 UTC today and reconfirmed identical to Friday/weekend -- Monday's session has not opened yet, no material change). MARA and EIX persist RED (thesis-confirmed, unresolved): MARA calm (+1.17%), BTC-leverage thesis unchanged, no fresh catalyst. EIX -4.0%, Newsom's last-minute wildfire-liability package still has not passed the legislature and the Aug-31 deadline is now 7 days out -- CEO Pizarro's credit-downgrade warning stands. ATAT, HUT, and MRVL hold AMBER with no new data since Sunday's read (Q2 RevPAR-dilution fact for ATAT stands independent of price; HUT's rotation-driven -8.78% is tempered but not resolved by fresh analyst Buy actions and new project financing; MRVL's pre-earnings pullback is unchanged with the Q2 FY2027 print now 3 days out on 8/27). CWAN roster-integrity bug hits a 56th consecutive day (PR #11/#12 still open/unmerged/dirty, reconfirmed via GitHub API this run -- pure process gap needing a human merge). SPY sits ~18.5% above the one active support level (645.80) -- not in play. Watching for Monday's opening session to refresh all price data on the next run.",
-    "note": "Pre-market run ahead of Monday's open. Risk Data Drop dispatched fresh this run (generated_at 2026-08-24T11:46 UTC, age 2 min at read time) and reconfirmed the priced data set is identical to Friday 8/21's close -- treated as a valid, non-stale read (no new session has occurred yet), not a data gap."
+    "amber": 9,
+    "green": 40,
+    "headline": "MARA and EIX persist RED (thesis-confirmed, unresolved). New AMBER complex: AMD/CRDO/NVDA/TSM extend a 2nd day of AI-infra-capex-anxiety selloff (WSJ report of ~$250B Nvidia-OpenAI compute financing plus record hyperscaler CDS spreads) -- all four explicitly list hyperscaler-capex deceleration as a top key_risk; MRVL (-3.26%, same complex) now sits 2 days from its own Q2 FY2027 print (8/27 after close). HOOD -4.16% / COIN -3.88% with no company-specific catalyst confirmed by any tier-1 source this run -- capped AMBER, flagged unconfirmed. CWAN roster-integrity bug hits a 57th consecutive day (2 stuck PRs, human merge needed -- see roster_integrity)."
   },
   "flags": [
     {
-      "id": "MARA_thesis_2026-08-24",
+      "id": "MARA_thesis_2026-08-25",
       "ticker": "MARA",
       "sleeve": "Growth",
       "severity": "red",
       "category": "structural",
-      "headline": "BTC-leverage/GAAP-loss thesis unchanged; no new catalyst since Friday",
-      "detail": "MARA remains at Friday's close, +1.17% to $11.27 (Monday's session has not opened yet). No MARA-specific news found this run. The underlying structural risk is unchanged regardless of day-to-day price direction: MARA's key_risk is that it is a leveraged derivative of Bitcoin price with persistent GAAP losses and $850M of convertible debt to service. This remains a standing thesis-monitoring flag, not a fresh event.",
-      "metric": { "price": 11.27, "day_move_pct": 1.17, "level_ref": null },
+      "headline": "BTC-leverage/GAAP-loss thesis unchanged; no new catalyst",
+      "detail": "MARA -0.80% to $11.18 (prev close $11.27). No MARA-specific news found this run. The underlying structural risk is unchanged regardless of day-to-day price direction: MARA's key_risk is that it is a leveraged derivative of Bitcoin price with persistent GAAP losses and $850M of convertible debt to service. Standing thesis-monitoring flag, not a fresh event.",
+      "metric": { "price": 11.18, "day_move_pct": -0.80, "level_ref": null },
       "thesis_link": "Matches MARA key_risk: 'Revenue concentration in Bitcoin mining means MARA's financial performance is essentially a leveraged derivative of Bitcoin price -- the company has no proven ability to generate profits independent of crypto market conditions.'",
       "evidence": [
-        { "source": "Data drop (Alpaca quote, Friday 8/21 close, reconfirmed on demand 2026-08-24)", "url": null, "as_of": "2026-08-21" }
+        { "source": "Risk Data Drop (Alpaca quote)", "url": null, "as_of": "2026-08-25" }
       ],
       "first_seen": "2026-08-11",
       "status": "persisting"
     },
     {
-      "id": "EIX_wildfire_2026-08-24",
+      "id": "EIX_wildfire_2026-08-25",
       "ticker": "EIX",
       "sleeve": "Growth",
       "severity": "red",
       "category": "regulatory",
-      "headline": "Aug-31 deadline now 7 days out; Newsom's package still has not passed",
-      "detail": "EIX remains at Friday's close, -4.0% to $71.63 (prev close $74.61); no new session yet. Governor Newsom's last-minute wildfire-liability reform package (limiting attorneys' fees, capping local-government recoupment, curbing some victim damages) is still moving through the legislature per CalMatters reporting, but no bill has passed as of this run. CEO Pizarro's credit-downgrade warning stands, and the deadline is now 7 days out (down from 8 yesterday). The named key_risk -- a missed deadline without reform -- has not yet materialized or been avoided.",
-      "metric": { "price": 71.625, "day_move_pct": -4.0, "level_ref": null },
-      "thesis_link": "Matches EIX key_risk: 'California's complex regulatory and political environment creates uncertainty around cost recovery, rate base returns, and wildfire liability frameworks' and 'Elevated debt-to-equity of 216% amplifies financial risk from future wildfire events, adverse rate case outcomes.'",
+      "headline": "+3.3% on a favorable litigation ruling, but the Aug-31 legislative deadline that drives the credit-downgrade risk remains unresolved with 6 days left",
+      "detail": "EIX +3.32% to $74.00 (prev close $71.625) after a California state judge tentatively declined to hold Southern California Edison liable for a 2025 wildfire without a trial -- a genuine positive data point on litigation exposure. It does not resolve the flag's actual driver: CEO Pedro Pizarro's public warning that a failure to pass credit-supportive wildfire-liability reform by the Aug-31 legislative deadline (6 days out) would likely push SCE's already-lowest-investment-grade S&P rating into junk territory. No reform bill has passed the legislature as of this run.",
+      "metric": { "price": 74.00, "day_move_pct": 3.32, "level_ref": null },
+      "thesis_link": "Matches EIX key_risk: 'Elevated debt-to-equity of 216% amplifies financial risk from future wildfire events, adverse rate case outcomes, or rising interest rates... a single catastrophic fire in SCE's territory could create material liability.'",
       "evidence": [
-        { "source": "CalMatters -- 'Newsom makes last-minute push to help California utilities facing wildfire bills'", "url": "https://calmatters.org/politics/2026/08/newsom-wildfire-utility-liability-package/", "as_of": "2026-08-22" },
-        { "source": "Yahoo Finance -- 'Edison International (EIX) CEO Warns Wildfire Reform Delay Could Trigger Credit Downgrades'", "url": "https://finance.yahoo.com/markets/stocks/articles/edison-international-eix-ceo-warns-210820371.html", "as_of": "2026-08-21" }
+        { "source": "Yahoo Finance / Reuters wire -- 'Edison International (EIX) CEO Warns Wildfire Reform Delay Could Trigger Credit Downgrades'", "url": "https://sg.finance.yahoo.com/news/edison-international-eix-ceo-warns-210820371.html", "as_of": "2026-08-25" },
+        { "source": "Investing.com -- 'Edison stock rises after judge declines wildfire liability ruling'", "url": "https://ca.investing.com/news/stock-market-news/edison-stock-rises-after-judge-declines-wildfire-liability-ruling-93CH-4792842", "as_of": "2026-08-25" }
       ],
       "first_seen": "2026-08-10",
       "status": "persisting"
     },
     {
-      "id": "ATAT_revpar_2026-08-24",
-      "ticker": "ATAT",
+      "id": "MRVL_earnings_pullback_2026-08-25",
+      "ticker": "MRVL",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "earnings_quality",
-      "headline": "No new data since Friday; RevPAR-dilution finding from the Q2 print still stands",
-      "detail": "ATAT remains at Friday's close, +1.53% to $34.76; no new session yet. No new company-specific news found this run. Holding at AMBER: the underlying fact from the Q2 print -- same-hotel RevPAR down 3.0% YoY despite a 41% headline revenue beat driven by aggressive new-hotel growth -- is a fundamental data point, not a price move, and stands independent of the calm weekend. Analyst sentiment remains constructive (recent consensus Buy, $50 PT) but that does not address the RevPAR-dilution concern directly.",
-      "metric": { "price": 34.76, "day_move_pct": 1.53, "level_ref": null },
-      "thesis_link": "Matches ATAT key_risks: 'Brand dilution from aggressive expansion' and 'China macro headwinds ... could pressure RevPAR and franchise unit economics.'",
+      "category": "valuation",
+      "headline": "-3.26% pre-earnings, part of a 2nd day of AI-infra-capex-anxiety selloff; Q2 FY2027 print now 2 days out (8/27 after close)",
+      "detail": "MRVL -3.26% to $229.33 (prev close $237.07), moving with the broader AI-infrastructure complex (AMD, CRDO, NVDA, TSM all down 2-3.5% today) rather than on MRVL-specific news. Marvell reports Q2 FY2027 results after market close on 2026-08-27 (guided revenue $2.7B +/-5%, non-GAAP EPS $0.93 +/-5 cents).",
+      "metric": { "price": 229.33, "day_move_pct": -3.26, "level_ref": null },
+      "thesis_link": "Matches MRVL key_risk: 'Forward P/E of 53.3x and trailing P/E of 83.5x after a ~150% stock price surge embed extraordinary growth expectations -- any miss against the $16.5B FY2028 revenue target or moderation in hyperscaler AI capex would trigger severe multiple compression.'",
       "evidence": [
-        { "source": "Atour Lifestyle Holdings Form 6-K (SEC EDGAR)", "url": "https://www.sec.gov/Archives/edgar/data/0001853717/000110465926098930/tm2623265d1_ex99-1.htm", "as_of": "2026-08-20" }
-      ],
-      "first_seen": "2026-08-21",
-      "status": "persisting"
-    },
-    {
-      "id": "HUT_rotation_2026-08-24",
-      "ticker": "HUT",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "price_action",
-      "headline": "-8.78% Friday move still unresolved; fresh bullish analyst actions temper but don't resolve the concern",
-      "detail": "HUT remains at Friday's close (-8.78% to $80.88); no new session yet. Since Friday's drop, HUT has picked up a Buy reaffirmation from Clear Street, a Buy from Morgan Stanley, and a Piper Sandler price-target raise to $143 (from $127), plus $7.5B in newly secured non-recourse, investment-grade project financing for its AI-infrastructure buildout -- all of which cuts against (not confirms) the funding/execution-gap concern. Holding at AMBER rather than easing to GREEN because the cumulative multi-week decline is still large enough to keep watching against HUT's key_risk, but the balance of evidence remains constructive, not deteriorating.",
-      "metric": { "price": 80.88, "day_move_pct": -8.78, "level_ref": null },
-      "thesis_link": "Echoes but does not confirm HUT key_risk: 'Q1 2026 net loss of $253M on $71M revenue ... material AI revenue not expected until Q2 2027, creating a 12+ month execution gap.' New $7.5B non-recourse project financing and fresh analyst Buy actions argue against the execution-gap concern materializing.",
-      "evidence": [
-        { "source": "Company disclosure -- $7.5B non-recourse, investment-grade AI-campus project financing", "url": null, "as_of": "2026-08-18" },
-        { "source": "Analyst actions -- Clear Street (Buy reaffirmed), Morgan Stanley (Buy), Piper Sandler (PT raised to $143 from $127)", "url": null, "as_of": "2026-08-18" }
+        { "source": "Investing.com / MarketBeat earnings calendar", "url": "https://www.investing.com/equities/marvell-technology-group-ltd-earnings", "as_of": "2026-08-25" }
       ],
       "first_seen": "2026-08-22",
       "status": "persisting"
     },
     {
-      "id": "MRVL_preearnings_2026-08-24",
-      "ticker": "MRVL",
+      "id": "AMD_capex_anxiety_2026-08-25",
+      "ticker": "AMD",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "calendar",
-      "headline": "Unchanged since Friday; Q2 FY2027 print now 3 days out (8/27), no negative news",
-      "detail": "MRVL remains at Friday's close (-5.59% to $237.07); no new session yet. No new negative news found this run -- the $12.2B Google warrant/commercial deal (disclosed 8/19) and constructive analyst commentary (Goldman Sachs lifted its target to $195) continue to be the dominant storyline. Reads as valuation digestion after a large run-up (up ~180% YTD) ahead of a high-expectations print, not a thesis-confirming event. Flagging as the calendar catalyst approaches (now 3 days out) given MRVL's own key_risk that any miss against elevated growth expectations would trigger severe multiple compression.",
-      "metric": { "price": 237.07, "day_move_pct": -5.59, "level_ref": null },
-      "thesis_link": "Matches MRVL key_risk: 'Forward P/E of 53.3x ... after a ~150% stock price surge embed extraordinary growth expectations -- any miss ... or moderation in hyperscaler AI capex would trigger severe multiple compression.'",
+      "category": "sector_macro",
+      "headline": "-3.45%, 2nd day of AI-infra-capex-anxiety selloff on record hyperscaler CDS spreads",
+      "detail": "AMD -3.45% to $456.87. Part of a broad, 2nd-consecutive-day chip-sector selloff (began Monday 8/24) driven by a WSJ report that Nvidia is in talks to provide ~$250B toward an OpenAI data-center project, reviving 'AI spending may be peaking faster than expected' concerns, plus credit-default-swap spreads on Oracle, SpaceX, Alphabet, Amazon, Meta, Broadcom and Nvidia hitting record highs. No AMD-specific negative news found -- sector-wide, matches the same pattern as the 8/19-20 capex-jitters episode.",
+      "metric": { "price": 456.87, "day_move_pct": -3.45, "level_ref": null },
+      "thesis_link": "Matches AMD key_risk: 'Forward P/E of 59.8x and 270% 52-week appreciation leave zero margin of safety -- any AI spending deceleration or customer pause would trigger severe multiple compression from elevated levels.'",
       "evidence": [
-        { "source": "24/7 Wall St. -- 'Marvell's $12.2 Billion Google Deal Changes the Bull Case for MRVL Stock'", "url": "https://247wallst.com/investing/2026/08/21/marvells-12-2-billion-google-deal-changes-the-bull-case-for-mrvl-stock/", "as_of": "2026-08-21" }
+        { "source": "Yahoo Finance -- 'AI Chip Stocks Tumble as Nvidia, AMD Lead Market Selloff Over Spending Fears'", "url": "https://finance.yahoo.com/technology/ai/articles/ai-chip-stocks-tumble-nvidia-195907285.html", "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-25",
+      "status": "new"
+    },
+    {
+      "id": "CRDO_capex_anxiety_2026-08-25",
+      "ticker": "CRDO",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "sector_macro",
+      "headline": "-3.39%, same AI-infra-capex-anxiety complex as AMD/NVDA/TSM/MRVL",
+      "detail": "CRDO -3.39% to $222.72. Same driver as the AMD/NVDA/TSM/MRVL complex this run -- no CRDO-specific news found. CRDO's extreme valuation (109x trailing P/E) leaves it especially exposed to this narrative.",
+      "metric": { "price": 222.72, "day_move_pct": -3.39, "level_ref": null },
+      "thesis_link": "Matches CRDO key_risk: 'Extreme valuation -- 109x trailing P/E and 39x forward P/E... embed aggressive growth expectations, leaving minimal margin of safety for any execution miss or AI capex slowdown.'",
+      "evidence": [
+        { "source": "Yahoo Finance -- 'AI Chip Stocks Tumble as Nvidia, AMD Lead Market Selloff Over Spending Fears'", "url": "https://finance.yahoo.com/technology/ai/articles/ai-chip-stocks-tumble-nvidia-195907285.html", "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-25",
+      "status": "new"
+    },
+    {
+      "id": "NVDA_capex_anxiety_2026-08-25",
+      "ticker": "NVDA",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "sector_macro",
+      "headline": "-2.92%, at the center of the AI-infra-capex-anxiety narrative (its own $250B OpenAI financing report is the catalyst)",
+      "detail": "NVDA -2.92% to $208.47. The catalyst for this run's complex-wide selloff is specifically a WSJ report that Nvidia is in talks to commit ~$250B toward an OpenAI data-center project -- directly on-thesis for NVDA's own AI-capex-sustainability key_risk, not just a bystander in the sector move.",
+      "metric": { "price": 208.47, "day_move_pct": -2.92, "level_ref": null },
+      "thesis_link": "Matches NVDA key_risk: 'AI capex sustainability risk -- NVIDIA's revenue has grown 10x in three years to $253B+ TTM, and any normalization of hyperscaler spending could cause rapid growth deceleration from a very high base.'",
+      "evidence": [
+        { "source": "Yahoo Finance -- 'AI Chip Stocks Tumble as Nvidia, AMD Lead Market Selloff Over Spending Fears'", "url": "https://finance.yahoo.com/technology/ai/articles/ai-chip-stocks-tumble-nvidia-195907285.html", "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-25",
+      "status": "new"
+    },
+    {
+      "id": "TSM_capex_anxiety_2026-08-25",
+      "ticker": "TSM",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "sector_macro",
+      "headline": "-2.07%, same AI-infra-capex-anxiety complex, smallest move of the group",
+      "detail": "TSM -2.07% to $410.22, the smallest decline among the affected complex. Same driver as AMD/CRDO/NVDA/MRVL this run -- no TSM-specific news found.",
+      "metric": { "price": 410.22, "day_move_pct": -2.07, "level_ref": null },
+      "thesis_link": "Matches TSM key_risk: 'AI infrastructure spending cyclicality -- customer capex fatigue among hyperscalers, advances in model efficiency reducing compute requirements, or a macro recession could decelerate the >30% revenue growth that justifies the $2.0T valuation.'",
+      "evidence": [
+        { "source": "Yahoo Finance -- 'AI Chip Stocks Tumble as Nvidia, AMD Lead Market Selloff Over Spending Fears'", "url": "https://finance.yahoo.com/technology/ai/articles/ai-chip-stocks-tumble-nvidia-195907285.html", "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-25",
+      "status": "new"
+    },
+    {
+      "id": "HOOD_riskoff_2026-08-25",
+      "ticker": "HOOD",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "unconfirmed",
+      "headline": "-4.16%, no company-specific catalyst confirmed by any tier-1 source this run",
+      "detail": "HOOD -4.16% to $103.63 (prev close $108.13). No HOOD-specific news found by this run's search; the decline lands on the same day as the AI-infra-capex-anxiety selloff and a modestly risk-off tape (SPY -0.28%, QQQ -0.99% premarket), but nothing ties HOOD's move to that narrative specifically. Reported as unconfirmed rather than assigned a cause -- flagging the size of the move, not a story.",
+      "metric": { "price": 103.63, "day_move_pct": -4.16, "level_ref": null },
+      "thesis_link": "Loosely matches HOOD key_risk: 'Q1 2026 revenue decelerated to 15% YoY while crypto revenue collapsed 47%, demonstrating exposure to volatile trading volumes' -- but no evidence this run that volumes or sentiment specifically drove today's move.",
+      "evidence": [
+        { "source": "Risk Data Drop (Alpaca quote) -- no confirming tier-1 news source found this run", "url": null, "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-25",
+      "status": "new"
+    },
+    {
+      "id": "COIN_riskoff_2026-08-25",
+      "ticker": "COIN",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "unconfirmed",
+      "headline": "-3.88%, no company-specific catalyst confirmed by any tier-1 source this run",
+      "detail": "COIN -3.88% to $179.33 (prev close $186.565). No COIN-specific news found by this run's search. Same unconfirmed treatment as HOOD -- flagging the size of the move, not asserting a cause.",
+      "metric": { "price": 179.33, "day_move_pct": -3.88, "level_ref": null },
+      "thesis_link": "Loosely matches COIN key_risk: 'Revenue concentration in crypto trading volumes makes Coinbase a leveraged bet on crypto market sentiment' -- but no evidence this run that sentiment specifically drove today's move.",
+      "evidence": [
+        { "source": "Risk Data Drop (Alpaca quote) -- no confirming tier-1 news source found this run", "url": null, "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-25",
+      "status": "new"
+    },
+    {
+      "id": "ATAT_thesis_2026-08-25",
+      "ticker": "ATAT",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "structural",
+      "headline": "Flat (-0.06%); no new data since last run, RevPAR-dilution finding stands",
+      "detail": "ATAT -0.06% to $34.74, essentially flat. No new news found this run. The Q2 print's same-hotel RevPAR decline finding (expansion-driven dilution) stands as fact from the prior flag; nothing new to report.",
+      "metric": { "price": 34.74, "day_move_pct": -0.06, "level_ref": null },
+      "thesis_link": "Matches ATAT key_risk: 'Brand dilution from aggressive expansion -- rapidly scaling beyond 2,000 hotels while maintaining upper midscale quality standards creates execution risk.'",
+      "evidence": [
+        { "source": "Risk Data Drop (Alpaca quote)", "url": null, "as_of": "2026-08-25" }
+      ],
+      "first_seen": "2026-08-21",
+      "status": "persisting"
+    },
+    {
+      "id": "HUT_thesis_2026-08-25",
+      "ticker": "HUT",
+      "sleeve": "Growth",
+      "severity": "amber",
+      "category": "structural",
+      "headline": "-1.72%, continuing drift, still unresolved",
+      "detail": "HUT -1.72% to $79.49 (prev close $80.88). No fresh news found this run. Continues the multi-week rotation-driven decline flagged previously; bullish analyst actions and project financing noted in prior runs temper but don't resolve the underlying execution-gap concern.",
+      "metric": { "price": 79.49, "day_move_pct": -1.72, "level_ref": null },
+      "thesis_link": "Matches HUT key_risk: 'Q1 2026 net loss of $253M on $71M revenue with ROE of -18.6% -- the company is currently unprofitable with material AI revenue not expected until Q2 2027, creating a 12+ month execution gap.'",
+      "evidence": [
+        { "source": "Risk Data Drop (Alpaca quote)", "url": null, "as_of": "2026-08-25" }
       ],
       "first_seen": "2026-08-22",
       "status": "persisting"
@@ -114,13 +208,13 @@
       "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
       "gate": "Australian FIRB clearance",
       "status": "closed",
-      "last_checked": "2026-08-24",
+      "last_checked": "2026-08-25",
       "severity": "green",
-      "note": "Deal closed 2026-06-25 (FIRB cleared 2026-06-19); no new developments (reconfirmed this run). Deal has been closed for ~9 weeks. Separate roster-hygiene issue persists (still listed in data/portfolios.json, 56th consecutive day; PR #11 and PR #12 both remain open/unmerged/dirty, reconfirmed via GitHub API this run) -- see roster_integrity; that is a process bug, not a deal-status issue."
+      "note": "Deal closed 2026-06-25 (FIRB cleared 2026-06-19), $8.4B total value. Reconfirmed via web search this run -- no new developments. Deal-status is fully resolved; the only open item is the separate roster-hygiene bug (see roster_integrity in risk-monitor.json)."
     }
   ],
   "levels": [
-    { "ticker": "SPY", "level": 645.8, "type": "support", "state": "active", "distance_pct": 18.5, "interaction": "not_approaching" }
+    { "ticker": "SPY", "level": 645.80, "type": "support", "state": "active", "distance_pct": 18.25, "interaction": "not_approaching" }
   ],
   "calendar": [
     { "ticker": "MRVL", "event": "Q2 FY2027 earnings (after close)", "date": "2026-08-27", "severity": "amber" }
