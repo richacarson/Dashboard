@@ -2260,16 +2260,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CANG",
-    "date": "2026-09-02",
-    "hour": "",
-    "epsEstimate": -0.918,
-    "epsActual": null,
-    "revenueEstimate": 104009400,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CHPT",
     "date": "2026-09-02",
     "hour": "",
@@ -2810,16 +2800,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "KEQU",
-    "date": "2026-09-03",
-    "hour": "",
-    "epsEstimate": null,
-    "epsActual": null,
-    "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "KFY",
     "date": "2026-09-03",
     "hour": "",
@@ -3126,16 +3106,6 @@
     "epsEstimate": 1.1177,
     "epsActual": null,
     "revenueEstimate": 903708239,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "ABM",
-    "date": "2026-09-04",
-    "hour": "",
-    "epsEstimate": 1.0244,
-    "epsActual": null,
-    "revenueEstimate": 2332753711,
     "revenueActual": null,
     "source": "finnhub"
   },
