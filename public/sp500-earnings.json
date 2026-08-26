@@ -1,45 +1,45 @@
 {
- "generated": "2026-08-26T18:51:38.022308+00:00",
+ "generated": "2026-08-26T18:57:34.056624+00:00",
  "source": "FMP \u2014 aggregate TTM net income across S&P 500 constituents",
- "cohort": 498,
+ "cohort": 487,
  "constituents": 503,
- "chgQoQ": 12.55,
+ "chgQoQ": 14.53,
  "series": [
   {
-   "asof": "2024-09-30",
-   "ttmNetIncome": 1906107168070
+   "asof": "2024-08-28",
+   "ttmNetIncome": 1846269204070
   },
   {
-   "asof": "2024-12-31",
-   "ttmNetIncome": 1943233020115
+   "asof": "2024-11-27",
+   "ttmNetIncome": 1873427736115
   },
   {
-   "asof": "2025-03-31",
-   "ttmNetIncome": 2042385522309
+   "asof": "2025-02-26",
+   "ttmNetIncome": 1971121703909
   },
   {
-   "asof": "2025-06-30",
-   "ttmNetIncome": 2094543725609
+   "asof": "2025-05-28",
+   "ttmNetIncome": 2028360974609
   },
   {
-   "asof": "2025-09-30",
-   "ttmNetIncome": 2154092013210
+   "asof": "2025-08-27",
+   "ttmNetIncome": 2079969498210
   },
   {
-   "asof": "2025-12-31",
-   "ttmNetIncome": 2260067642900
+   "asof": "2025-11-26",
+   "ttmNetIncome": 2181639073900
   },
   {
-   "asof": "2026-03-31",
-   "ttmNetIncome": 2337663759999
+   "asof": "2026-02-25",
+   "ttmNetIncome": 2255447712799
   },
   {
-   "asof": "2026-06-30",
-   "ttmNetIncome": 2579300303648
+   "asof": "2026-05-27",
+   "ttmNetIncome": 2468983699649
   },
   {
    "asof": "2026-08-26",
-   "ttmNetIncome": 2902944410848
+   "ttmNetIncome": 2827841951848
   }
  ]
 }
