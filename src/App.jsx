@@ -2131,6 +2131,36 @@ Instructions:
   const [econWeek, setEconWeek] = useState(0);         // economic calendar: weeks from this one
   const [econDay, setEconDay] = useState(null);        // selected day in the strip; null = today
   const [econShowWeek, setEconShowWeek] = useState(false);
+  const [earnDetail, setEarnDetail] = useState(null);   // "SYM|date" of the opened card
+  const [earnTranscriptFull, setEarnTranscriptFull] = useState(null); // key whose transcript is expanded
+  const [earnDetailData, setEarnDetailData] = useState({}); // key -> { loading, transcript, news, err }
+  // Transcript + coverage for one earnings print, fetched only when a card is opened.
+  // Both are best-effort: either can come back empty and the panel says so rather than
+  // failing, since not every company publishes a transcript and coverage is thin for
+  // smaller names.
+  const loadEarnDetail = useCallback(async (evt) => {
+    const key = `${evt.symbol}|${evt.date}`;
+    if (earnDetailData[key] || !FMP_OK) return;
+    setEarnDetailData(p => ({ ...p, [key]: { loading: true } }));
+    const j = async (u) => { try { const r = await fetch(u); return r.ok ? await r.json() : null; } catch { return null; } };
+    const q = String(evt.fiscalPeriod || "").replace(/[^0-9]/g, "");
+    const day = new Date(evt.date + "T12:00:00");
+    const from = new Date(day); from.setDate(from.getDate() - 2);
+    const to = new Date(day); to.setDate(to.getDate() + 4);
+    const [tr, nw] = await Promise.all([
+      (evt.fiscalYear && q)
+        ? j(fmpUrl(`/stable/earning-call-transcript`, { symbol: evt.symbol, year: evt.fiscalYear, quarter: q }))
+        : Promise.resolve(null),
+      j(fmpUrl(`/stable/news/stock`, { symbols: evt.symbol, from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10), limit: 12 })),
+    ]);
+    const row = Array.isArray(tr) ? tr[0] : (tr && typeof tr === "object" ? tr : null);
+    setEarnDetailData(p => ({ ...p, [key]: {
+      loading: false,
+      transcript: row?.content || row?.transcript || null,
+      news: Array.isArray(nw) ? nw : [],
+    } }));
+  }, [earnDetailData]);
+
   const [earnMode, setEarnMode] = useState("today");   // earnings calendar: "today" | "quarter"
   const [earnQuarter, setEarnQuarter] = useState(null); // selected "YYYY-Qn" when in quarter mode
   const [rtContacts, setRtContacts] = useState([]);
@@ -2675,6 +2705,10 @@ Instructions:
                 epsActual: e.epsActual ?? earningsMap[key]?.epsActual ?? null,
                 revenueEstimate: e.revenueEstimated ?? earningsMap[key]?.revenueEstimate ?? null,
                 revenueActual: e.revenueActual ?? earningsMap[key]?.revenueActual ?? null,
+                // Needed to address the transcript endpoint, which is keyed by fiscal
+                // year and quarter rather than by report date.
+                fiscalYear: e.fiscalYear ?? earningsMap[key]?.fiscalYear ?? null,
+                fiscalPeriod: e.fiscalPeriod ?? earningsMap[key]?.fiscalPeriod ?? null,
                 source: "fmp",
               };
             });
@@ -8260,8 +8294,13 @@ Instructions:
                             const nowHour = new Date().getHours();
                             const shouldHaveReported = isPast || (isToday && evt.hour === "bmo" && nowHour >= 10) || (isToday && evt.hour === "amc" && nowHour >= 17);
 
+                            const dKey = `${evt.symbol}|${evt.date}`;
+                            const dOpen = earnDetail === dKey;
+                            const dData = earnDetailData[dKey];
                             return (
-                              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                              <div key={i} style={{ borderBottom: i < events.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                              <div onClick={() => { const next = dOpen ? null : dKey; setEarnDetail(next); if (next) loadEarnDetail(evt); }}
+                                style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 0", cursor: "pointer" }}>
                                 <StockLogo symbol={evt.symbol} size={36} logoUrl={fundamentals[evt.symbol]?.logo} />
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -8285,6 +8324,47 @@ Instructions:
                                     ) : null}
                                   </div>
                                 </div>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.t4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                  style={{ flexShrink: 0, transition: "transform 0.2s", transform: dOpen ? "rotate(180deg)" : "none" }}><polyline points="6 9 12 15 18 9" /></svg>
+                              </div>
+                              {dOpen && (
+                                <div style={{ padding: "0 0 16px 48px", animation: "fadeIn 0.2s ease" }}>
+                                  {!FMP_OK && <div style={{ fontSize: 12, color: C.t4 }}>No data source configured.</div>}
+                                  {dData?.loading && <div style={{ fontSize: 12, color: C.t4 }}>Loading transcript and coverage…</div>}
+                                  {dData && !dData.loading && (
+                                    <>
+                                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+                                        Call transcript{evt.fiscalPeriod && evt.fiscalYear ? ` · ${evt.fiscalPeriod} ${evt.fiscalYear}` : ""}
+                                      </div>
+                                      {dData.transcript ? (
+                                        <div style={{ fontSize: 12.5, color: C.t2, lineHeight: 1.65, maxHeight: earnTranscriptFull === dKey ? "none" : 260, overflow: "hidden", position: "relative", whiteSpace: "pre-wrap" }}>
+                                          {dData.transcript}
+                                          {earnTranscriptFull !== dKey && (
+                                            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 70, background: `linear-gradient(transparent, ${C.card})` }} />
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div style={{ fontSize: 12, color: C.t4 }}>No transcript published for this quarter.</div>
+                                      )}
+                                      {dData.transcript && (
+                                        <button onClick={() => setEarnTranscriptFull(f => f === dKey ? null : dKey)} style={{
+                                          marginTop: 8, padding: "5px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent",
+                                          color: C.t2, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                                        }}>{earnTranscriptFull === dKey ? "Collapse" : "Read full transcript"}</button>
+                                      )}
+                                      <div style={{ fontSize: 10, fontWeight: 700, color: C.t4, textTransform: "uppercase", letterSpacing: 1, margin: "18px 0 6px" }}>Coverage</div>
+                                      {dData.news?.length ? dData.news.map((n, ni) => (
+                                        <a key={ni} href={n.url} target="_blank" rel="noopener noreferrer" style={{ display: "block", padding: "6px 0", borderBottom: ni < dData.news.length - 1 ? `1px solid ${C.border}` : "none", textDecoration: "none" }}>
+                                          <div style={{ fontSize: 12.5, color: C.t1, lineHeight: 1.4 }}>{n.title}</div>
+                                          <div style={{ fontSize: 10.5, color: C.t4, marginTop: 2 }}>
+                                            {n.site || n.publisher}{n.publishedDate ? ` · ${String(n.publishedDate).slice(0, 10)}` : ""}
+                                          </div>
+                                        </a>
+                                      )) : <div style={{ fontSize: 12, color: C.t4 }}>No coverage found around this date.</div>}
+                                    </>
+                                  )}
+                                </div>
+                              )}
                               </div>
                             );
                           })}
