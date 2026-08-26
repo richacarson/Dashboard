@@ -345,6 +345,9 @@ const SECTOR_SHORT = {
   "Digital Assets": "CRYPTO", "Crypto": "CRYPTO",
   "Software": "SOFTW",
 };
+// "2026-08-26" -> "2026-Q3". Shared so the classic picker and the terminal rail
+// can't disagree about where a quarter starts.
+const qOf = (d) => `${d.slice(0, 4)}-Q${Math.ceil(Number(d.slice(5, 7)) / 3)}`;
 const shortSector = (s) => s ? (SECTOR_SHORT[s] || s.split(/[\s/]/)[0].slice(0, 6).toUpperCase()) : "";
 // Carve a dedicated "Software" sector out of the broad "Technology" bucket so the
 // screener can group/filter software names on their own. Driven by the screener
@@ -1349,7 +1352,7 @@ Instructions:
     }
   }, [deskOwner]);
   const [tDrawer, setTDrawer] = useState(null);
-  const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "earn" | "research" | "briefs"
+  const [tRailView, setTRailView] = useState("news"); // terminal right rail: "news" | "opps" | "earn" | "econ" | "research" | "briefs"
   const [tBriefView, setTBriefView] = useState(null); // { title, category, url } when a brief is open
   const [tBriefIndex, setTBriefIndex] = useState([]); // [{ category, title, date, url, subhead }]
   const [tBriefHtml, setTBriefHtml] = useState("");
@@ -6911,11 +6914,12 @@ Instructions:
           </div>
           {/* News / Opps / Research Feed (remaining space) */}
           <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, padding: "0 8px", flexShrink: 0 }}>
+            <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, padding: "0 8px", flexShrink: 0, overflowX: "auto", scrollbarWidth: "none" }}>
               {[
                 { v: "news", l: "NEWS" },
                 { v: "opps", l: "OPPS" },
                 { v: "earn", l: "EARN" },
+                { v: "econ", l: "ECON" },
                 { v: "research", l: "RESEARCH" },
                 { v: "briefs", l: "BRIEFS" },
               ].map(({ v, l }) => (
@@ -6945,17 +6949,33 @@ Instructions:
                 </div>
               )))}
               {tRailView === "earn" && (() => {
-                // Dividend + growth holdings only — the full calendar runs to ~2,000 names
-                // a week and the rail is 300px wide. Sorted by date, recent prints kept so
-                // a just-reported number stays visible for the rest of the week.
-                const from = new Date(Date.now() - 5 * 86400000).toISOString().slice(0, 10);
-                const rows = earningsCalendar
-                  .filter(e => earnSyms.has(e.symbol) && e.date >= from)
-                  .sort((a, b) => a.date.localeCompare(b.date) || a.symbol.localeCompare(b.symbol))
-                  .slice(0, 40);
-                if (!rows.length) return <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>{earningsCalendar.length ? "NO HOLDINGS REPORTING" : "LOADING EARNINGS"}</div>;
+                // Dividend + growth holdings only — the full calendar runs to ~2,000 names a
+                // week and the rail is 300px wide. Same two modes as the classic view, so
+                // switching layouts does not change what you are looking at.
                 const today = new Date().toISOString().slice(0, 10);
-                return rows.map((e, i) => {
+                const held = earningsCalendar.filter(e => earnSyms.has(e.symbol));
+                const quarters = [...new Set(held.map(e => qOf(e.date)))].sort().reverse();
+                const curQ = qOf(today);
+                const activeQ = quarters.includes(earnQuarter) ? earnQuarter : (quarters.includes(curQ) ? curQ : quarters[0]);
+                const rows = (earnMode === "today" ? held.filter(e => e.date === today) : held.filter(e => qOf(e.date) === activeQ))
+                  .sort((a, b) => a.date.localeCompare(b.date) || a.symbol.localeCompare(b.symbol))
+                  .slice(0, 120);
+                const head = (
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderBottom: `1px solid ${C.border}` }}>
+                    {[{ v: "today", l: "TODAY" }, { v: "quarter", l: "QTR" }].map(({ v, l }) => (
+                      <button key={v} onClick={() => setEarnMode(v)} style={{ padding: "2px 7px", borderRadius: 2, border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 9, fontWeight: 700, letterSpacing: 1,
+                        background: earnMode === v ? C.accentSoft : "transparent", color: earnMode === v ? C.accent : C.t4 }}>{l}</button>
+                    ))}
+                    {earnMode === "quarter" && quarters.length > 0 && (
+                      <select value={activeQ} onChange={e => setEarnQuarter(e.target.value)} style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 2, color: C.t2, fontSize: 9, fontWeight: 700, fontFamily: "inherit", padding: "1px 2px", cursor: "pointer", outline: "none" }}>
+                        {quarters.map(q => <option key={q} value={q} style={{ background: C.surface }}>{q.replace("-", " ")}</option>)}
+                      </select>
+                    )}
+                    <span style={{ marginLeft: "auto", fontSize: 9, color: C.t4 }}>{rows.length}</span>
+                  </div>
+                );
+                if (!rows.length) return <>{head}<div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>{earningsCalendar.length ? (earnMode === "today" ? "NONE REPORTING TODAY" : "NONE THIS QUARTER") : "LOADING EARNINGS"}</div></>;
+                return <>{head}{rows.map((e, i) => {
                   const surp = (e.epsActual != null && e.epsEstimate) ? ((e.epsActual - e.epsEstimate) / Math.abs(e.epsEstimate)) * 100 : null;
                   return (
                     <div key={`${e.symbol}-${e.date}-${i}`} onClick={() => { setTerminalActiveSym(e.symbol); setTProfileSym(e.symbol); setTProfileTab("overview"); setTDrawer(null); }}
@@ -6970,7 +6990,47 @@ Instructions:
                       </span>
                     </div>
                   );
-                });
+                })}</>;
+              })()}
+              {tRailView === "econ" && (() => {
+                // One day at a time — the rail is 300px, so the classic five-pill week strip
+                // would not fit. Arrows step a day; the count sits beside the date so an
+                // empty day is visible before you land on it.
+                const today = new Date().toISOString().slice(0, 10);
+                const byDate = {};
+                econCalendar.forEach(e => { const d = (e.date || "").slice(0, 10); if (d) (byDate[d] = byDate[d] || []).push(e); });
+                const day = econDay || today;
+                const step = n => { const x = new Date(day + "T12:00:00"); x.setDate(x.getDate() + n); setEconDay(x.toISOString().slice(0, 10)); };
+                const rows = (byDate[day] || []).slice(0, 40);
+                return (<>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderBottom: `1px solid ${C.border}` }}>
+                    <button onClick={() => step(-1)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontFamily: "inherit", fontSize: 12, padding: "0 4px" }}>‹</button>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: day === today ? C.accent : C.t2 }}>
+                      {new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}
+                    </span>
+                    <button onClick={() => step(1)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontFamily: "inherit", fontSize: 12, padding: "0 4px" }}>›</button>
+                    {day !== today && <button onClick={() => setEconDay(today)} style={{ padding: "1px 6px", borderRadius: 2, border: "none", background: C.accentSoft, color: C.accent, fontSize: 9, fontWeight: 700, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit" }}>TODAY</button>}
+                    <span style={{ marginLeft: "auto", fontSize: 9, color: C.t4 }}>{rows.length}</span>
+                  </div>
+                  {!rows.length && <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>{econCalendar.length ? "NO US EVENTS" : "LOADING CALENDAR"}</div>}
+                  {rows.map((e, i) => (
+                    <div key={`${e.title}-${i}`} style={{ padding: "5px 12px", borderBottom: `1px solid ${C.border}` }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, color: (e.impact || "").toLowerCase() === "high" ? C.dn : C.t4, width: 30, flexShrink: 0 }}>
+                          {(e.impact || "").slice(0, 3).toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: 10, color: C.t1, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</span>
+                      </div>
+                      {(e.actual || e.forecast || e.previous) && (
+                        <div style={{ display: "flex", gap: 10, fontSize: 9, color: C.t4, marginTop: 1, paddingLeft: 36 }}>
+                          {e.actual ? <span>act <span style={{ color: C.t1, fontWeight: 700 }}>{e.actual}</span></span> : null}
+                          {e.forecast ? <span>est {e.forecast}</span> : null}
+                          {e.previous ? <span>prev {e.previous}</span> : null}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>);
               })()}
               {tRailView === "research" && (!researchReports.length ? <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>NO RESEARCH REPORTS YET</div> : researchReports.slice().sort((a, b) => (b.date || "").localeCompare(a.date || "")).slice(0, 30).map(report => (
                 <div key={report.id} onClick={() => { setTDrawer("research"); setResearchView(report.id); setResearchContent(""); fetch(`${import.meta.env.BASE_URL || "/"}research/${report.file}?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.text() : "Failed to load report.").then(setResearchContent).catch(() => setResearchContent("Failed to load report.")); }} style={{ padding: "6px 12px", borderBottom: `1px solid ${C.border}`, cursor: "pointer" }}
@@ -8112,7 +8172,6 @@ Instructions:
               // Two modes: today only (the default), or a whole quarter. Quarters are derived
               // from the dates actually loaded rather than a fixed list, so the dropdown can
               // never offer a period with nothing behind it.
-              const qOf = d => `${d.slice(0, 4)}-Q${Math.ceil(Number(d.slice(5, 7)) / 3)}`;
               const held = earningsCalendar.filter(e => earnSyms.has(e.symbol));
               const quarters = [...new Set(held.map(e => qOf(e.date)))].sort().reverse();
               const curQ = qOf(todayStr);
