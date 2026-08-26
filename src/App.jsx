@@ -2052,7 +2052,7 @@ Instructions:
 
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
-    if (!FH) return;
+    if (!FMP_OK) return;
     // Sources we filter out — press-release wires and noisy aggregators
     const BLOCKED = new Set([
       "Benzinga", "PR Newswire", "PRNewswire", "Business Wire", "BusinessWire",
@@ -2071,7 +2071,7 @@ Instructions:
       image_url: a.image,
     });
     try {
-      // One call: Finnhub /news?category=general returns 100+ market articles.
+      // One call: FMP /stable/news/general-latest returns 100+ market articles.
       // We split into "broad" and "holdings" based on whether any of our coreSyms
       // appear in the article's `related` field — keeps us at 1 API call vs 20+.
       // Cache-bust + no-store so the browser/edge doesn't serve a stale response
@@ -2403,9 +2403,9 @@ Instructions:
     return () => clearInterval(id);
   }, [apiKey, apiSecret]);
 
-  /* ── Live SPY P/E from Finnhub (overrides static macroData.spyPE which can lag) ── */
+  /* ── Live SPY P/E from FMP (overrides static macroData.spyPE which can lag) ── */
   useEffect(() => {
-    if (!FH) return;
+    if (!FMP_OK) return;
     const fetchSpyPE = async () => {
       try {
         const r = await fetch(fmpUrl(`/stable/ratios-ttm`, { symbol: "SPY" }));
