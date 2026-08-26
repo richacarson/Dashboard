@@ -2416,24 +2416,43 @@ Instructions:
     return () => clearInterval(id);
   }, [apiKey, apiSecret]);
 
-  /* ── Live SPY P/E from FMP (overrides static macroData.spyPE which can lag) ── */
+  /* ── Live S&P 500 P/E ──
+   * FMP has no ratios for SPY: it is an ETF and files no statements, so
+   * /stable/ratios-ttm returns nothing for it. The static macro-data.json value is
+   * no better — the cron reads it from Yahoo's quoteSummary, which now needs a
+   * crumb/cookie and has been failing, leaving spyPE pinned at whatever it last
+   * managed. That stale figure carries 13% of the bear-probability model.
+   *
+   * So derive it: trailing S&P EPS from benchmark-fundamentals.json (real index
+   * earnings, rebuilt weekly, slow-moving by nature) over the live SPY price. */
+  const [spyEpsTtm, setSpyEpsTtm] = useState(null);
   useEffect(() => {
-    if (!FMP_OK) return;
-    const fetchSpyPE = async () => {
-      try {
-        const r = await fetch(fmpUrl(`/stable/ratios-ttm`, { symbol: "SPY" }));
-        if (!r.ok) return;
-        const d = (await r.json())?.[0];
-        const pe = d?.priceToEarningsRatioTTM;
-        if (typeof pe === "number" && isFinite(pe) && pe > 0) {
-          setMacroData(prev => ({ ...prev, spyPE: pe }));
-        }
-      } catch {}
-    };
-    fetchSpyPE();
-    const id = setInterval(fetchSpyPE, 6 * 60 * 60 * 1000); // 6h — earnings move it slowly
-    return () => clearInterval(id);
-  }, []);
+    if (!authed) return;
+    fetch(`${import.meta.env.BASE_URL}benchmark-fundamentals.json?v=${Math.floor(Date.now() / 3600000)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const spy = d?.benchmarks?.SPY;
+        const e = spy?.live?.eps;
+        if (!(e > 0)) return;
+        setSpyEpsTtm(e);
+        // The EPS level is right, so publish it — the cron derives its spyEpsTtm from
+        // spyPrice / spyPE, i.e. from the same frozen Yahoo P/E.
+        //
+        // epsChg90d is deliberately left alone. The tail of this series is carry-forward:
+        // multpl's earnings table lags its price and P/E tables, so the last few months
+        // are implied and read flat. A 90-day change computed off that would come out at
+        // 0.0% and score the EPS Trend factor as stalled earnings, which is an artifact of
+        // the backfill rather than anything the market did. One wrong number for another.
+        setMacroData(prev => ({ ...prev, spyEpsTtm: e }));
+      })
+      .catch(() => {});
+  }, [authed]);
+  useEffect(() => {
+    const px = bmQuotes.SPY?.p || quotesRef.current?.SPY?.p;
+    if (!(px > 0) || !(spyEpsTtm > 0)) return;
+    const pe = +(px / spyEpsTtm).toFixed(2);
+    setMacroData(prev => prev.spyPE === pe ? prev : ({ ...prev, spyPE: pe }));
+  }, [bmQuotes.SPY?.p, spyEpsTtm]);
 
   /* ── Live 10Y-2Y yield spread: FMP treasury curve, FRED public CSV as fallback ── */
   useEffect(() => {
