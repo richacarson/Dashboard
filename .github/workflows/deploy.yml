@@ -11,6 +11,12 @@ on:
       - "Update Calendars"
       - "Execute Q2 2026 Rebalance"
       - "Performance Attribution"
+      # Its bot commit cannot trigger deploy on its own: GitHub suppresses workflow
+      # triggers on pushes made with GITHUB_TOKEN. Everything it writes is served from
+      # the Pages build, so without this the data sits on main unshipped until some
+      # unrelated push happens to carry it. That has now silently held back corrected
+      # fundamentals twice.
+      - "Build Fundamentals"
     types: [completed]
     branches: [main]
 
