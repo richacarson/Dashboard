@@ -11,6 +11,7 @@ on:
       - 'scripts/build-fundamentals.py'
       - 'scripts/build-fundamentals-fmp.py'
       - 'scripts/build-portfolio-fundamentals.py'
+      - 'scripts/build-sp500-earnings.py'
 
 permissions:
   contents: write
@@ -30,6 +31,10 @@ jobs:
           # instead if you ever want to bypass the Worker.
           FMP_PROXY: ${{ secrets.PROXY_URL }}
         run: python3 scripts/build-fundamentals-fmp.py
+      - name: Build S&P 500 aggregate earnings
+        env:
+          FMP_PROXY: ${{ secrets.PROXY_URL }}
+        run: python3 scripts/build-sp500-earnings.py
       - name: Build portfolio-blended + benchmark fundamentals
         env:
           FMP_PROXY: ${{ secrets.PROXY_URL }}
@@ -38,7 +43,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/fundamentals/ public/portfolio-fundamentals-*.json public/benchmark-fundamentals.json
+          git add public/fundamentals/ public/portfolio-fundamentals-*.json public/benchmark-fundamentals.json public/sp500-earnings.json
           git commit -m "Update fundamentals data" || echo "No changes"
           git pull --rebase origin main
           git push
