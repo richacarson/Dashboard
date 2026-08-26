@@ -41,7 +41,7 @@ jobs:
           # FMP economic calendar (secondary — also has actuals)
           if [ -n "$FMP_KEY" ]; then
             HTTP_CODE=$(curl -sL -o /tmp/fmp_econ.json -w "%{http_code}" \
-              "https://financialmodelingprep.com/api/v3/economic_calendar?from=${FROM}&to=${TO}&apikey=${FMP_KEY}" 2>/dev/null || echo "000")
+              "https://financialmodelingprep.com/stable/economic-calendar?from=${FROM}&to=${TO}&apikey=${FMP_KEY}" 2>/dev/null || echo "000")
             SIZE=$(wc -c < /tmp/fmp_econ.json 2>/dev/null || echo "0")
             echo "FMP Economic Calendar: HTTP $HTTP_CODE, $SIZE bytes"
           fi
@@ -138,10 +138,10 @@ jobs:
           # FMP earnings
           if [ -n "$FMP_KEY" ]; then
             HTTP_CODE=$(curl -sL -o /tmp/earnings_fmp_raw.json -w "%{http_code}" \
-              "https://financialmodelingprep.com/api/v3/earning_calendar?from=${THIS_MON}&to=${NEXT_FRI}&apikey=${FMP_KEY}" 2>/dev/null || echo "000")
+              "https://financialmodelingprep.com/stable/earnings-calendar?from=${THIS_MON}&to=${NEXT_FRI}&includeReportTimes=true&apikey=${FMP_KEY}" 2>/dev/null || echo "000")
             SIZE=$(wc -c < /tmp/earnings_fmp_raw.json 2>/dev/null || echo "0")
             echo "FMP Earnings: HTTP $HTTP_CODE, $SIZE bytes"
-            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
+            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ] && ! grep -q "Error Message" /tmp/earnings_fmp_raw.json; then
               cp /tmp/earnings_fmp_raw.json /tmp/earnings_fmp.json
             fi
           fi
@@ -152,7 +152,7 @@ jobs:
               "https://finnhub.io/api/v1/calendar/earnings?from=${THIS_MON}&to=${NEXT_FRI}&token=${FINNHUB_KEY}" 2>/dev/null || echo "000")
             SIZE=$(wc -c < /tmp/earnings_finnhub_raw.json 2>/dev/null || echo "0")
             echo "Finnhub Earnings: HTTP $HTTP_CODE, $SIZE bytes"
-            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ]; then
+            if [ "$HTTP_CODE" = "200" ] && [ "$SIZE" -gt 10 ] && ! grep -q "Error Message" /tmp/earnings_finnhub_raw.json; then
               cp /tmp/earnings_finnhub_raw.json /tmp/earnings_finnhub.json
             fi
           fi
@@ -185,9 +185,9 @@ jobs:
                           'symbol': sym, 'date': dt,
                           'hour': 'bmo' if e.get('time') == 'bmo' else ('amc' if e.get('time') == 'amc' else (e.get('time') or '')),
                           'epsEstimate': e.get('epsEstimated'),
-                          'epsActual': e.get('eps'),
+                          'epsActual': e.get('epsActual'),
                           'revenueEstimate': e.get('revenueEstimated'),
-                          'revenueActual': e.get('revenue'),
+                          'revenueActual': e.get('revenueActual'),
                           'source': 'fmp',
                       }
                   print(f"FMP: {len(earnings)} earnings entries")
