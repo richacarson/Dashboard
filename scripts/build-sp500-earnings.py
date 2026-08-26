@@ -118,21 +118,50 @@ def main():
     if len(per_sym) < 300:
         sys.exit(f"ERROR: only {len(per_sym)} companies span the full window — cohort too thin")
 
-    series = [{"asof": d, "ttmNetIncome": round(sum(v[i] for v in per_sym.values()))}
+    def median(xs):
+        xs = sorted(xs)
+        n = len(xs)
+        return None if not n else (xs[n // 2] if n % 2 else (xs[n // 2 - 1] + xs[n // 2]) / 2)
+
+    # Two readings per point, and the factor uses the median rather than the sum.
+    #
+    # The aggregate is dominated by a handful of mega-caps and by one-off items
+    # inside individual filings — Marvell booked a ~$1.9B non-operating gain through
+    # interestIncome in one quarter, and netIncome carries it. The first builds showed
+    # the aggregate stepping +1.5 to +5% across history and then +9.5% and +14.5% at
+    # the tail; a 14.5% move in a *trailing-twelve-month* total implies the incoming
+    # quarter beat the one it replaced by nearly 60%, which is not something a whole
+    # index does. It is a few names.
+    #
+    # The median company's TTM growth is equal-weighted, so no single filing can move
+    # it, and breadth is the better read on an earnings recession anyway: the question
+    # is whether earnings are deteriorating broadly, not whether the top ten are.
+    def growth_at(i):
+        if i == 0:
+            return None
+        g = [v[i] / v[i - 1] - 1 for v in per_sym.values() if v[i - 1] > 0 and v[i] > 0]
+        m = median(g)
+        return None if m is None else round(m * 100, 2)
+
+    series = [{"asof": d,
+               "ttmNetIncome": round(sum(v[i] for v in per_sym.values())),
+               "medianGrowthPct": growth_at(i)}
               for i, d in enumerate(asof)]
-    chg = None
+    chg = series[-1]["medianGrowthPct"]
+    agg = None
     if len(series) >= 2 and series[-2]["ttmNetIncome"]:
-        chg = round((series[-1]["ttmNetIncome"] / series[-2]["ttmNetIncome"] - 1) * 100, 2)
+        agg = round((series[-1]["ttmNetIncome"] / series[-2]["ttmNetIncome"] - 1) * 100, 2)
 
     OUT.write_text(json.dumps({
         "generated": datetime.now(timezone.utc).isoformat(),
-        "source": "FMP — aggregate TTM net income across S&P 500 constituents",
+        "source": "FMP — median constituent TTM net income growth (aggregate published alongside)",
         "cohort": len(per_sym), "constituents": len(syms),
-        "chgQoQ": chg, "series": series,
+        "chgQoQ": chg, "aggChgQoQ": agg, "series": series,
     }, indent=1))
-    print(f"  cohort {len(per_sym)}/{len(syms)} | latest TTM ${series[-1]['ttmNetIncome']/1e9:.0f}B | QoQ {chg}%")
-    for p in series[-4:]:
-        print(f"    {p['asof']}  ${p['ttmNetIncome']/1e9:,.0f}B")
+    print(f"  cohort {len(per_sym)}/{len(syms)} | median QoQ {chg}% | aggregate QoQ {agg}%")
+    for p in series:
+        g = p["medianGrowthPct"]
+        print(f"    {p['asof']}  agg ${p['ttmNetIncome']/1e9:>6,.0f}B   median {'' if g is None else f'{g:+.1f}%'}")
 
 
 if __name__ == "__main__":
