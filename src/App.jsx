@@ -2999,9 +2999,18 @@ Instructions:
     if ((!FMP_OK && !FH) || marketStatus.status !== "open") return;
     const now = Date.now();
     const staleThreshold = 5 * 60 * 1000; // 5 minutes
-    // Only poll dividend + growth stocks — FCI stocks are high-volume and work fine on IEX
-    const divGrowthSyms = [...new Set([...(sleevesRef.current.dividend?.symbols || []), ...(sleevesRef.current.growth?.symbols || [])])];
-    const stale = divGrowthSyms.filter(s => {
+    // Dividend + growth stocks, plus the sector and digital ETFs. FCI names are
+    // high-volume and work fine on IEX, so they stay out of it. The ETF sleeves are
+    // in because they had no fallback at all: they are quoted only from the Alpaca
+    // IEX snapshot, so anything IEX is thin on — IGV lists on CBOE, not Arca like the
+    // XL* SPDRs — sat blank with nothing to fill it in.
+    const pollSyms = [...new Set([
+      ...(sleevesRef.current.dividend?.symbols || []),
+      ...(sleevesRef.current.growth?.symbols || []),
+      ...(sleevesRef.current.sectors?.symbols || []),
+      ...(sleevesRef.current.digital?.symbols || []),
+    ])];
+    const stale = pollSyms.filter(s => {
       const q = quotesRef.current[s];
       if (!q) return true; // no quote at all
       const tradeTime = q.t ? new Date(q.t).getTime() : 0;
