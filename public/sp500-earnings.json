@@ -1,0 +1,45 @@
+{
+ "generated": "2026-08-26T18:51:38.022308+00:00",
+ "source": "FMP \u2014 aggregate TTM net income across S&P 500 constituents",
+ "cohort": 498,
+ "constituents": 503,
+ "chgQoQ": 12.55,
+ "series": [
+  {
+   "asof": "2024-09-30",
+   "ttmNetIncome": 1906107168070
+  },
+  {
+   "asof": "2024-12-31",
+   "ttmNetIncome": 1943233020115
+  },
+  {
+   "asof": "2025-03-31",
+   "ttmNetIncome": 2042385522309
+  },
+  {
+   "asof": "2025-06-30",
+   "ttmNetIncome": 2094543725609
+  },
+  {
+   "asof": "2025-09-30",
+   "ttmNetIncome": 2154092013210
+  },
+  {
+   "asof": "2025-12-31",
+   "ttmNetIncome": 2260067642900
+  },
+  {
+   "asof": "2026-03-31",
+   "ttmNetIncome": 2337663759999
+  },
+  {
+   "asof": "2026-06-30",
+   "ttmNetIncome": 2579300303648
+  },
+  {
+   "asof": "2026-08-26",
+   "ttmNetIncome": 2902944410848
+  }
+ ]
+}
