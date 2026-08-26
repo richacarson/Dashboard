@@ -26,7 +26,7 @@ Two things make the number honest:
 Writes public/sp500-earnings.json.
 """
 import importlib.util, json, sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -41,28 +41,23 @@ _spec.loader.exec_module(_fmp)
 api, ApiError, num = _fmp.api, _fmp.ApiError, _fmp.num
 
 QUARTERS_BACK = 12          # 3 years of statements per company
-POINTS = 9                  # as-of quarter-ends to publish
+POINTS = 9                  # as-of points, one per quarter-length step
 
 
-def quarter_ends(n):
-    """n-1 completed quarter-ends, oldest first, with today as the final point.
+def asof_points(n):
+    """n as-of dates, 91 days apart, ending today.
 
-    The current quarter's end is in the future, so using it as an as-of would both
-    mislabel the newest point and quietly mean "everything filed so far". Today
-    says that plainly, and keeps the last step a true quarter apart."""
+    Not calendar quarter-ends. Companies file weeks after a quarter closes, so a
+    quarter-end as-of catches most of the index *before* that quarter is in, while
+    a date two months later catches it after. Mixing the two makes the last step
+    span more filing progress than the earlier ones and reads as an earnings
+    acceleration that did not happen — the first build showed +2 to +5% steps
+    across history and +10 to +12% for the two nearest today.
+
+    91 days apart puts every point at the same phase of the filing cycle, and makes
+    the newest interval literally the 90-day change the factor claims to show."""
     today = datetime.now(timezone.utc).date()
-    q = (today.month - 1) // 3 - 1        # last completed quarter
-    y = today.year
-    if q < 0:
-        q, y = 3, y - 1
-    out = []
-    for _ in range(n - 1):
-        m = q * 3 + 3
-        out.append(f"{y}-{m:02d}-{ {3: 31, 6: 30, 9: 30, 12: 31}[m] }")
-        q -= 1
-        if q < 0:
-            q, y = 3, y - 1
-    return sorted(out) + [today.isoformat()]
+    return [(today - timedelta(days=91 * k)).isoformat() for k in range(n - 1, -1, -1)]
 
 
 def ttm_as_of(rows, as_of):
@@ -100,7 +95,7 @@ def main():
         sys.exit(f"ERROR: only {len(syms)} constituents returned — refusing to build on a partial index")
     print(f"S&P 500: {len(syms)} constituents")
 
-    asof = quarter_ends(POINTS)
+    asof = asof_points(POINTS)
     stmts, failed = {}, []
     for i, sym in enumerate(syms):
         if i % 50 == 0:
