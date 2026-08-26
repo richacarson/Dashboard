@@ -2576,9 +2576,10 @@ Instructions:
     const localDay = today.getDay();
     const earnMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
     const fmt = d => d.toISOString().slice(0, 10);
-    // Four weeks back, two forward. The view opens on today and pages backwards, so it
-    // needs history behind it — the old Mon-Fri-this-week window had none to show.
-    const earnStart = new Date(earnMonday); earnStart.setDate(earnStart.getDate() - 28);
+    // Forward-looking only: this endpoint returns the whole market (~4k rows per two
+    // weeks), so the range stays tight. Past prints come from the per-holding history
+    // fetch below, which is scoped to the ~50 names the view actually shows.
+    const earnStart = new Date(earnMonday); earnStart.setDate(earnStart.getDate() - 7);
     const earnEnd = new Date(earnMonday); earnEnd.setDate(earnEnd.getDate() + 18);
     const earnFrom = fmt(earnStart);
     const earnTo = fmt(earnEnd);
@@ -2668,6 +2669,48 @@ Instructions:
       } catch (e) { console.warn("Finnhub earnings:", e.message); }
     }
 
+    // HISTORY: per-holding earnings going back years. The range endpoint above covers
+    // the whole market and is kept narrow for that reason, so it can only ever show the
+    // last week or two of prints — not enough to page back through. /stable/earnings is
+    // one small call per symbol and returns ~3 years, and only the held names matter
+    // here, so the cost is ~50 cached calls rather than tens of thousands of rows.
+    if (FMP_OK) {
+      const heldList = [...earnSyms];
+      let hist = {};
+      try { hist = JSON.parse(localStorage.getItem("iown_earn_history") || "{}"); } catch {}
+      const fresh = Date.now() - (hist._ts || 0) < 24 * 3600000;
+      if (!fresh || heldList.some(sym => !hist[sym])) {
+        const rows = await mapLimit(heldList, 4, async (sym) => {
+          const r = await fetch(fmpUrl(`/stable/earnings`, { symbol: sym, limit: 12 }));
+          return r.ok ? [sym, await r.json()] : null;
+        });
+        hist = { _ts: Date.now() };
+        for (const row of rows.filter(Boolean)) if (Array.isArray(row[1])) hist[row[0]] = row[1];
+        try { localStorage.setItem("iown_earn_history", JSON.stringify(hist)); } catch {}
+      }
+      let added = 0;
+      for (const [sym, list] of Object.entries(hist)) {
+        if (sym === "_ts" || !Array.isArray(list)) continue;
+        for (const e of list) {
+          if (!e?.date) continue;
+          const key = `${sym}|${e.date}`;
+          const prev = earningsMap[key];
+          if (!prev) added++;
+          // Never overwrite the range endpoint's row: it alone carries the bmo/amc flag.
+          earningsMap[key] = {
+            symbol: sym, date: e.date,
+            hour: prev?.hour || "",
+            epsEstimate: prev?.epsEstimate ?? e.epsEstimated ?? null,
+            epsActual: prev?.epsActual ?? e.epsActual ?? null,
+            revenueEstimate: prev?.revenueEstimate ?? e.revenueEstimated ?? null,
+            revenueActual: prev?.revenueActual ?? e.revenueActual ?? null,
+            source: prev?.source || "fmp-history",
+          };
+        }
+      }
+      console.log(`Earnings: +${added} historical prints across ${heldList.length} holdings`);
+    }
+
     // Market caps + company names: use localStorage cache to avoid burning FMP calls
     // Only refresh once per day (earnings don't change market cap meaningfully intra-day)
     let mcapCache = {};
@@ -2730,7 +2773,7 @@ Instructions:
 
     setEarningsCalendar(earnings);
     setCalendarLoading(false);
-  }, [coreSyms]);
+  }, [coreSyms, earnSyms]);
 
   // Re-fetch actuals for portfolio holdings that should have reported but are missing results.
   // Uses Finnhub /stock/earnings per-symbol (returns actuals faster than calendar endpoints).
