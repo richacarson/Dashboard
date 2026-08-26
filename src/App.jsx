@@ -2449,10 +2449,16 @@ Instructions:
    * it reads 0.0% and scores the factor as stalled earnings, which is an artifact
    * of the backfill rather than anything the market did.
    *
-   * scripts/build-sp500-earnings.py sums trailing-twelve-month net income across
-   * the index members instead. The factor wants a percentage, not a level, so no
-   * index divisor is needed — and the aggregate is same-store and built as-of each
-   * date, so neither reconstitution nor hindsight leaks into the trend. */
+   * scripts/build-sp500-earnings.py measures constituent earnings directly. The
+   * factor wants a percentage, not a level, so no index divisor is needed — and the
+   * series is same-store and built as-of each date, so neither reconstitution nor
+   * hindsight leaks into the trend.
+   *
+   * chgQoQ is the MEDIAN company's TTM growth, not the aggregate's. The aggregate is
+   * dominated by a few mega-caps and by one-off items inside single filings, and read
+   * +14.5% in a quarter where the historical steps were +1.5 to +5% — that is a
+   * handful of names, not the index. Breadth is also the better read on an earnings
+   * recession. aggChgQoQ is published alongside for reference. */
   useEffect(() => {
     if (!authed) return;
     fetch(`${import.meta.env.BASE_URL}sp500-earnings.json?v=${Math.floor(Date.now() / 3600000)}`)
@@ -10380,7 +10386,7 @@ Instructions:
                 // Derived from existing SPY price / P/E. Tracks 90-day change to flag earnings rolling over.
                 if (md.epsChg90d != null) {
                   const score = interp(md.epsChg90d, [[-8, 90], [-5, 75], [-3, 58], [-1, 42], [0, 30], [2, 18], [4, 10], [6, 5]]);
-                  factors.push({ name: "EPS Trend", value: `${md.epsChg90d >= 0 ? "+" : ""}${md.epsChg90d.toFixed(1)}% (90d)`, detail: `Aggregate S&P 500 trailing earnings, quarter over quarter${md.epsCohort ? ` (${md.epsCohort}-company same-store cohort)` : ""} — falling = earnings recession`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "FMP constituent statements, TTM net income" });
+                  factors.push({ name: "EPS Trend", value: `${md.epsChg90d >= 0 ? "+" : ""}${md.epsChg90d.toFixed(1)}% (90d)`, detail: `Median S&P 500 company\u2019s trailing earnings, quarter over quarter${md.epsCohort ? ` (${md.epsCohort}-company same-store cohort)` : ""} — falling = earnings recession`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "FMP constituent statements, median TTM net income growth" });
                 } else if (md.spyEpsTtm != null) {
                   factors.push({ name: "EPS Trend", value: "Warming up", detail: `SPY trailing EPS: $${md.spyEpsTtm.toFixed(2)} — need ~60 days of history for trend (${md.epsHistLen || 0} so far)`, score: 30, weight: 7, color: "#FBBF24", citation: "Derived from SPY price / P/E" });
                 }
