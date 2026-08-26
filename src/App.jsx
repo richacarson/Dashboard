@@ -2125,7 +2125,11 @@ Instructions:
   const [econCalendar, setEconCalendar] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarView, setCalendarView] = useState("economic");
-  const [earnBackDays, setEarnBackDays] = useState(0); // earnings window: days of history shown before today
+  const [econWeek, setEconWeek] = useState(0);         // economic calendar: weeks from this one
+  const [econDay, setEconDay] = useState(null);        // selected day in the strip; null = today
+  const [econShowWeek, setEconShowWeek] = useState(false);
+  const [earnMode, setEarnMode] = useState("today");   // earnings calendar: "today" | "quarter"
+  const [earnQuarter, setEarnQuarter] = useState(null); // selected "YYYY-Qn" when in quarter mode
   const [rtContacts, setRtContacts] = useState([]);
   const [rtActivities, setRtActivities] = useState([]);
   const [rtCalendar, setRtCalendar] = useState([]);
@@ -2486,6 +2490,9 @@ Instructions:
       const today = new Date();
       const localDay = today.getDay();
       const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
+      // Six weeks back, two forward. US high/medium-impact events run ~30 a week, so the
+      // whole range is a few hundred rows — cheap enough to let the day strip page back.
+      const winFrom = new Date(monday); winFrom.setDate(winFrom.getDate() - 42);
       const nextSunday = new Date(monday); nextSunday.setDate(nextSunday.getDate() + 13);
       const fmtD = d => d.toISOString().slice(0, 10);
 
@@ -2499,7 +2506,7 @@ Instructions:
       // PRIMARY: FMP economic calendar
       if (FMP_OK) {
         try {
-          const r = await fetch(fmpUrl(`/stable/economic-calendar`, { from: fmtD(monday), to: fmtD(nextSunday) })).catch(() => null);
+          const r = await fetch(fmpUrl(`/stable/economic-calendar`, { from: fmtD(winFrom), to: fmtD(nextSunday) })).catch(() => null);
           if (r?.ok) {
             const data = await r.json();
             if (Array.isArray(data)) {
@@ -2520,7 +2527,7 @@ Instructions:
       // SECONDARY: Finnhub (if FMP failed or returned empty). Same shape, different field names.
       if (events.length === 0 && FH) {
         try {
-          const r = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${fmtD(monday)}&to=${fmtD(nextSunday)}&token=${FH}`).catch(() => null);
+          const r = await fetch(`https://finnhub.io/api/v1/calendar/economic?from=${fmtD(winFrom)}&to=${fmtD(nextSunday)}&token=${FH}`).catch(() => null);
           if (r?.ok) {
             const data = await r.json();
             const fhEvents = data?.economicCalendar || data?.result || [];
@@ -7983,17 +7990,66 @@ Instructions:
               const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
               const localDay = today.getDay();
               const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
-              const weekStartStr = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
 
-              const grouped = {};
+              // A week strip rather than a date picker: macro events cluster by day, and the
+              // useful question is "which day this week has something on it". A picker makes
+              // you already know the date; the strip shows the counts and answers it.
+              const dayOf = n => { const x = new Date(monday); x.setDate(x.getDate() + n + econWeek * 7); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`; };
+              const week = Array.from({ length: 5 }, (_, i) => dayOf(i));
+              const byDate = {};
               econCalendar.forEach(e => {
                 const date = (e.date || "").slice(0, 10);
-                if (!date || date < weekStartStr) return;
-                if (!grouped[date]) grouped[date] = [];
-                grouped[date].push(e);
+                if (!date) return;
+                (byDate[date] = byDate[date] || []).push(e);
               });
+              // Default to today; fall back to the first day with events when paged away
+              // from this week, so a week change never lands on a blank pane.
+              const inWeek = week.includes(econDay) ? econDay : (week.includes(todayStr) ? todayStr : (week.find(d => byDate[d]?.length) || week[0]));
+              const shown = econShowWeek ? week : [inWeek];
+              const grouped = Object.fromEntries(shown.filter(d => byDate[d]?.length).map(d => [d, byDate[d]]));
+              const weekLabel = `${new Date(week[0] + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(week[4] + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 
-              return Object.entries(grouped).slice(0, 14).map(([date, events]) => {
+              const strip = (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <button onClick={() => setEconWeek(w => w - 1)} style={{ padding: "4px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.t2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>‹</button>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.t2, minWidth: 120, textAlign: "center" }}>{weekLabel}</span>
+                    <button onClick={() => setEconWeek(w => w + 1)} style={{ padding: "4px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent", color: C.t2, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>›</button>
+                    {econWeek !== 0 && (
+                      <button onClick={() => { setEconWeek(0); setEconDay(todayStr); }} style={{ padding: "4px 12px", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Today</button>
+                    )}
+                    <button onClick={() => setEconShowWeek(v => !v)} style={{ marginLeft: "auto", padding: "4px 12px", borderRadius: 8, border: `1px solid ${econShowWeek ? C.borderActive : C.border}`, background: econShowWeek ? C.accentSoft : "transparent", color: econShowWeek ? C.t1 : C.t4, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Whole week</button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {week.map(d => {
+                      const n = byDate[d]?.length || 0;
+                      const sel = !econShowWeek && d === inWeek;
+                      const isToday = d === todayStr;
+                      return (
+                        <button key={d} onClick={() => { setEconDay(d); setEconShowWeek(false); }} style={{
+                          flex: 1, padding: "8px 0", borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
+                          border: `1px solid ${sel ? C.borderActive : C.border}`,
+                          background: sel ? C.accentSoft : "transparent",
+                          color: n ? (sel ? C.t1 : C.t2) : C.t4,
+                          display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                        }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: isToday ? C.accent : "inherit" }}>
+                            {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}
+                          </span>
+                          <span style={{ fontSize: 15, fontWeight: 800 }}>{Number(d.slice(8, 10))}</span>
+                          <span style={{ fontSize: 9, color: n ? C.t4 : "transparent" }}>{n || 0}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+
+              const days = Object.entries(grouped);
+              return (<>
+                {strip}
+                {days.length === 0 && <div style={{ textAlign: "center", padding: "32px 0", color: C.t4, fontSize: 13 }}>No US events scheduled.</div>}
+                {days.map(([date, events]) => {
                 const isToday = date === todayStr;
                 const daysAway = Math.ceil((new Date(date) - new Date(todayStr)) / 86400000);
                 const isPast = daysAway < 0;
@@ -8038,7 +8094,8 @@ Instructions:
                     })}
                   </div>
                 );
-              });
+              })}
+              </>);
             })()}
 
             {/* ── Earnings Calendar ── */}
@@ -8052,15 +8109,17 @@ Instructions:
 
               const today = new Date();
               const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-              // Window opens on today and pages backwards a week at a time. earnBackDays is
-              // 0 on load, so past prints stay out of the way until they're asked for.
-              const shift = d => { const x = new Date(today.getFullYear(), today.getMonth(), today.getDate() + d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`; };
-              const winStart = shift(-earnBackDays);
-              const winEnd = shift(14);
-              const weekEarnings = earningsCalendar.filter(e => e.date >= winStart && e.date <= winEnd);
-              const iownEarnings = weekEarnings.filter(e => earnSyms.has(e.symbol));
-              const earliest = earningsCalendar.reduce((m, e) => (!m || e.date < m) ? e.date : m, null);
-              const canGoBack = earliest != null && earliest < winStart;
+              // Two modes: today only (the default), or a whole quarter. Quarters are derived
+              // from the dates actually loaded rather than a fixed list, so the dropdown can
+              // never offer a period with nothing behind it.
+              const qOf = d => `${d.slice(0, 4)}-Q${Math.ceil(Number(d.slice(5, 7)) / 3)}`;
+              const held = earningsCalendar.filter(e => earnSyms.has(e.symbol));
+              const quarters = [...new Set(held.map(e => qOf(e.date)))].sort().reverse();
+              const curQ = qOf(todayStr);
+              const activeQ = quarters.includes(earnQuarter) ? earnQuarter : (quarters.includes(curQ) ? curQ : quarters[0]);
+              const iownEarnings = earnMode === "today"
+                ? held.filter(e => e.date === todayStr)
+                : held.filter(e => qOf(e.date) === activeQ);
 
               const fmtMcap = n => !n ? "" : n >= 1e12 ? `$${(n / 1e12).toFixed(1)}T` : n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : "";
               const fmtEps = n => n == null ? null : typeof n === "number" ? `$${n.toFixed(2)}` : `$${n}`;
@@ -8137,21 +8196,31 @@ Instructions:
               return (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                    <button onClick={() => setEarnBackDays(d => d + 7)} disabled={!canGoBack} style={{
-                      padding: "6px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent",
-                      color: canGoBack ? C.t2 : C.t4, fontSize: 12, fontWeight: 700, fontFamily: "inherit",
-                      cursor: canGoBack ? "pointer" : "default", opacity: canGoBack ? 1 : 0.45,
-                    }}>← Earlier</button>
-                    {earnBackDays > 0 && (
-                      <button onClick={() => setEarnBackDays(0)} style={{
-                        padding: "6px 12px", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft,
-                        color: C.t1, fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
-                      }}>Today</button>
+                    <div style={{ display: "inline-flex", border: `1px solid ${C.border}`, borderRadius: 8, overflow: "hidden" }}>
+                      {[{ v: "today", l: "Today" }, { v: "quarter", l: "Quarter" }].map(({ v, l }) => (
+                        <button key={v} onClick={() => setEarnMode(v)} style={{
+                          padding: "6px 14px", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", border: "none",
+                          background: earnMode === v ? C.accentSoft : "transparent", color: earnMode === v ? C.accent : C.t4,
+                        }}>{l}</button>
+                      ))}
+                    </div>
+                    {earnMode === "quarter" && quarters.length > 0 && (
+                      <select value={activeQ} onChange={e => setEarnQuarter(e.target.value)} style={{
+                        padding: "6px 10px", borderRadius: 8, border: `1px solid ${C.border}`, background: C.card,
+                        color: C.t1, fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", outline: "none",
+                      }}>
+                        {quarters.map(q => <option key={q} value={q}>{q.replace("-", " ")}{q === curQ ? " (current)" : ""}</option>)}
+                      </select>
                     )}
                     <span style={{ marginLeft: "auto", fontSize: 11, color: C.t4 }}>
-                      {new Date(winStart + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(winEnd + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · Dividend + Growth
+                      {iownEarnings.length} report{iownEarnings.length === 1 ? "" : "s"} · Dividend + Growth
                     </span>
                   </div>
+                  {iownEarnings.length === 0 && (
+                    <div style={{ textAlign: "center", padding: "32px 0", color: C.t4, fontSize: 13 }}>
+                      {earnMode === "today" ? "No holdings reporting today." : `No holdings reported in ${(activeQ || "").replace("-", " ")}.`}
+                    </div>
+                  )}
                   {renderEarningsSection("Paradiem Holdings", iownEarnings)}
                   {!iownEarnings.length && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No holdings reporting earnings this week.</div>}
                 </>
