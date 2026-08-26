@@ -2375,7 +2375,9 @@ Instructions:
             if (d.baa10y != null) { results.baa10y = d.baa10y; results.baa10yDate = d.baa10yDate; }
             if (d.nfci != null) { results.nfci = d.nfci; results.nfciDate = d.nfciDate; }
             if (d.oilYoY != null) { results.oilYoY = d.oilYoY; results.oilPrice = d.oilPrice; }
-            if (d.spyEpsTtm != null) { results.spyEpsTtm = d.spyEpsTtm; results.epsChg90d = d.epsChg90d; results.epsHistLen = (d.spyEpsTtmHist || []).length; }
+            // epsChg90d and spyEpsTtm deliberately not read from here: both are derived in
+            // the cron from spyPrice / spyPE, and that P/E is the frozen Yahoo one. They
+            // come from benchmark-fundamentals and sp500-earnings instead.
             if (d.updated) results.updated = d.updated;
           }
         } catch {}
@@ -2437,16 +2439,32 @@ Instructions:
         setSpyEpsTtm(e);
         // The EPS level is right, so publish it — the cron derives its spyEpsTtm from
         // spyPrice / spyPE, i.e. from the same frozen Yahoo P/E.
-        //
-        // epsChg90d is deliberately left alone. The tail of this series is carry-forward:
-        // multpl's earnings table lags its price and P/E tables, so the last few months
-        // are implied and read flat. A 90-day change computed off that would come out at
-        // 0.0% and score the EPS Trend factor as stalled earnings, which is an artifact of
-        // the backfill rather than anything the market did. One wrong number for another.
         setMacroData(prev => ({ ...prev, spyEpsTtm: e }));
       })
       .catch(() => {});
   }, [authed]);
+  /* ── EPS Trend: aggregate S&P 500 earnings ──
+   * The multpl-derived EPS series can't carry this. Its tail is carry-forward —
+   * multpl's earnings table lags its price and P/E tables — so a change taken off
+   * it reads 0.0% and scores the factor as stalled earnings, which is an artifact
+   * of the backfill rather than anything the market did.
+   *
+   * scripts/build-sp500-earnings.py sums trailing-twelve-month net income across
+   * the index members instead. The factor wants a percentage, not a level, so no
+   * index divisor is needed — and the aggregate is same-store and built as-of each
+   * date, so neither reconstitution nor hindsight leaks into the trend. */
+  useEffect(() => {
+    if (!authed) return;
+    fetch(`${import.meta.env.BASE_URL}sp500-earnings.json?v=${Math.floor(Date.now() / 3600000)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const ser = d?.series;
+        if (!Array.isArray(ser) || ser.length < 2 || d.chgQoQ == null) return;
+        setMacroData(prev => ({ ...prev, epsChg90d: d.chgQoQ, epsHistLen: ser.length, epsCohort: d.cohort }));
+      })
+      .catch(() => {});
+  }, [authed]);
+
   useEffect(() => {
     const px = bmQuotes.SPY?.p || quotesRef.current?.SPY?.p;
     if (!(px > 0) || !(spyEpsTtm > 0)) return;
@@ -10362,7 +10380,7 @@ Instructions:
                 // Derived from existing SPY price / P/E. Tracks 90-day change to flag earnings rolling over.
                 if (md.epsChg90d != null) {
                   const score = interp(md.epsChg90d, [[-8, 90], [-5, 75], [-3, 58], [-1, 42], [0, 30], [2, 18], [4, 10], [6, 5]]);
-                  factors.push({ name: "EPS Trend", value: `${md.epsChg90d >= 0 ? "+" : ""}${md.epsChg90d.toFixed(1)}% (90d)`, detail: `SPY trailing EPS: $${md.spyEpsTtm?.toFixed(2) || "—"} — falling = earnings recession`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "Derived from SPY price / trailing P/E" });
+                  factors.push({ name: "EPS Trend", value: `${md.epsChg90d >= 0 ? "+" : ""}${md.epsChg90d.toFixed(1)}% (90d)`, detail: `Aggregate S&P 500 trailing earnings, quarter over quarter${md.epsCohort ? ` (${md.epsCohort}-company same-store cohort)` : ""} — falling = earnings recession`, score, weight: 7, color: score > 50 ? C.dn : score > 30 ? "#FBBF24" : C.up, citation: "FMP constituent statements, TTM net income" });
                 } else if (md.spyEpsTtm != null) {
                   factors.push({ name: "EPS Trend", value: "Warming up", detail: `SPY trailing EPS: $${md.spyEpsTtm.toFixed(2)} — need ~60 days of history for trend (${md.epsHistLen || 0} so far)`, score: 30, weight: 7, color: "#FBBF24", citation: "Derived from SPY price / P/E" });
                 }
