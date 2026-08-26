@@ -1720,6 +1720,11 @@ Instructions:
     return [...new Set([...base, ...perfHoldings, ...q1Stocks, ...RAIL_BM_EXTRA])];
   }, [sleeves, perfDataMap]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
+  // Earnings surfaces track the two managed sleeves only. The FCI lists are research
+  // universes rather than positions, and at ~200 names they bury the holdings.
+  const earnSyms = useMemo(
+    () => new Set([...(sleeves.dividend?.symbols || []), ...(sleeves.growth?.symbols || [])]),
+    [sleeves]);
 
   // Persist sleeves changes
   useEffect(() => { saveSleeves(sleeves); }, [sleeves]);
@@ -2120,6 +2125,7 @@ Instructions:
   const [econCalendar, setEconCalendar] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(true);
   const [calendarView, setCalendarView] = useState("economic");
+  const [earnBackDays, setEarnBackDays] = useState(0); // earnings window: days of history shown before today
   const [rtContacts, setRtContacts] = useState([]);
   const [rtActivities, setRtActivities] = useState([]);
   const [rtCalendar, setRtCalendar] = useState([]);
@@ -2569,10 +2575,13 @@ Instructions:
     const today = new Date();
     const localDay = today.getDay();
     const earnMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
-    const earnFriday = new Date(earnMonday); earnFriday.setDate(earnFriday.getDate() + 4);
     const fmt = d => d.toISOString().slice(0, 10);
-    const earnFrom = fmt(earnMonday);
-    const earnTo = fmt(earnFriday);
+    // Four weeks back, two forward. The view opens on today and pages backwards, so it
+    // needs history behind it — the old Mon-Fri-this-week window had none to show.
+    const earnStart = new Date(earnMonday); earnStart.setDate(earnStart.getDate() - 28);
+    const earnEnd = new Date(earnMonday); earnEnd.setDate(earnEnd.getDate() + 18);
+    const earnFrom = fmt(earnStart);
+    const earnTo = fmt(earnEnd);
     const earningsMap = {}; // key: symbol|date → merged earnings object
 
     // PRIMARY: Static JSON from GitHub Actions (same-origin, always available)
@@ -2735,7 +2744,7 @@ Instructions:
     // Find entries missing actuals that should have reported
     const missing = earningsCalendar.filter(e =>
       e.epsActual == null &&
-      coreSyms.includes(e.symbol) &&
+      earnSyms.has(e.symbol) &&
       (e.date < todayLocal || (e.date === todayLocal && e.hour === "bmo" && hour >= 10) || (e.date === todayLocal && e.hour === "amc" && hour >= 17))
     );
     if (!missing.length) { actualsRetryRef.current = 0; return; }
@@ -2771,7 +2780,7 @@ Instructions:
       if (updated) setEarningsCalendar(prev => [...prev]);
     }, 5000); // 5s delay to not block initial render
     return () => clearTimeout(timer);
-  }, [earningsCalendar, coreSyms]);
+  }, [earningsCalendar, earnSyms]);
 
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
@@ -6886,13 +6895,12 @@ Instructions:
                 </div>
               )))}
               {tRailView === "earn" && (() => {
-                // Holdings only — the full calendar runs to hundreds of names a week and
-                // the rail is 300px wide. Sorted by date, today first, recent prints kept
-                // so a just-reported number stays visible for the rest of the week.
-                const held = new Set(coreSyms || []);
+                // Dividend + growth holdings only — the full calendar runs to ~2,000 names
+                // a week and the rail is 300px wide. Sorted by date, recent prints kept so
+                // a just-reported number stays visible for the rest of the week.
                 const from = new Date(Date.now() - 5 * 86400000).toISOString().slice(0, 10);
                 const rows = earningsCalendar
-                  .filter(e => held.has(e.symbol) && e.date >= from)
+                  .filter(e => earnSyms.has(e.symbol) && e.date >= from)
                   .sort((a, b) => a.date.localeCompare(b.date) || a.symbol.localeCompare(b.symbol))
                   .slice(0, 40);
                 if (!rows.length) return <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>{earningsCalendar.length ? "NO HOLDINGS REPORTING" : "LOADING EARNINGS"}</div>;
@@ -8001,14 +8009,15 @@ Instructions:
 
               const today = new Date();
               const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-              const localDay = today.getDay();
-              const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (localDay === 0 ? 6 : localDay - 1));
-              const friday = new Date(monday); friday.setDate(friday.getDate() + 4);
-              const weekStart = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,"0")}-${String(monday.getDate()).padStart(2,"0")}`;
-              const weekEnd = `${friday.getFullYear()}-${String(friday.getMonth()+1).padStart(2,"0")}-${String(friday.getDate()).padStart(2,"0")}`;
-
-              const weekEarnings = earningsCalendar.filter(e => e.date >= weekStart && e.date <= weekEnd);
-              const iownEarnings = weekEarnings.filter(e => coreSyms.includes(e.symbol));
+              // Window opens on today and pages backwards a week at a time. earnBackDays is
+              // 0 on load, so past prints stay out of the way until they're asked for.
+              const shift = d => { const x = new Date(today.getFullYear(), today.getMonth(), today.getDate() + d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`; };
+              const winStart = shift(-earnBackDays);
+              const winEnd = shift(14);
+              const weekEarnings = earningsCalendar.filter(e => e.date >= winStart && e.date <= winEnd);
+              const iownEarnings = weekEarnings.filter(e => earnSyms.has(e.symbol));
+              const earliest = earningsCalendar.reduce((m, e) => (!m || e.date < m) ? e.date : m, null);
+              const canGoBack = earliest != null && earliest < winStart;
 
               const fmtMcap = n => !n ? "" : n >= 1e12 ? `$${(n / 1e12).toFixed(1)}T` : n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : "";
               const fmtEps = n => n == null ? null : typeof n === "number" ? `$${n.toFixed(2)}` : `$${n}`;
@@ -8084,6 +8093,22 @@ Instructions:
 
               return (
                 <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                    <button onClick={() => setEarnBackDays(d => d + 7)} disabled={!canGoBack} style={{
+                      padding: "6px 12px", borderRadius: 8, border: `1px solid ${C.border}`, background: "transparent",
+                      color: canGoBack ? C.t2 : C.t4, fontSize: 12, fontWeight: 700, fontFamily: "inherit",
+                      cursor: canGoBack ? "pointer" : "default", opacity: canGoBack ? 1 : 0.45,
+                    }}>← Earlier</button>
+                    {earnBackDays > 0 && (
+                      <button onClick={() => setEarnBackDays(0)} style={{
+                        padding: "6px 12px", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft,
+                        color: C.t1, fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
+                      }}>Today</button>
+                    )}
+                    <span style={{ marginLeft: "auto", fontSize: 11, color: C.t4 }}>
+                      {new Date(winStart + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(winEnd + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · Dividend + Growth
+                    </span>
+                  </div>
                   {renderEarningsSection("Paradiem Holdings", iownEarnings)}
                   {!iownEarnings.length && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>No holdings reporting earnings this week.</div>}
                 </>
