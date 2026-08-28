@@ -518,5 +518,15 @@
     "ticker": "SPGI",
     "ex_date": "2026-08-26",
     "dps": 0.97
+  },
+  {
+    "ticker": "XYL",
+    "ex_date": "2026-08-27",
+    "dps": 0.43
+  },
+  {
+    "ticker": "YUMC",
+    "ex_date": "2026-08-27",
+    "dps": 0.29
   }
 ]
