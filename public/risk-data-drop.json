@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-27T21:03:50Z",
+  "generated_at": "2026-08-28T11:49:50Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -834,7 +834,13 @@
           "strongSell": 0
         }
       },
-      "earnings": null
+      "earnings": {
+        "period": "2026-03-31",
+        "eps_actual": 0.16,
+        "eps_estimate": 0.1647,
+        "surprise": -0.0047,
+        "surprise_pct": -2.8537
+      }
     },
     "CNX": {
       "sleeve": "Growth",
@@ -1147,11 +1153,11 @@
         }
       },
       "earnings": {
-        "period": "2026-06-30",
-        "eps_actual": 0.8,
-        "eps_estimate": 0.8076,
-        "surprise": -0.0076,
-        "surprise_pct": -0.9411
+        "period": "2027-06-30",
+        "eps_actual": 0.94,
+        "eps_estimate": 0.9428,
+        "surprise": -0.0028,
+        "surprise_pct": -0.297
       }
     },
     "NVDA": {
@@ -1177,7 +1183,7 @@
         }
       },
       "earnings": {
-        "period": "2027-06-30",
+        "period": "2026-09-30",
         "eps_actual": 2.22,
         "eps_estimate": 2.1384,
         "surprise": 0.0816,
@@ -1362,6 +1368,7 @@
     }
   },
   "recent_reporters": [
+    "CWAN",
     "MRVL",
     "NVDA"
   ],
