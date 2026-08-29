@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-28T21:27:25Z",
+  "generated_at": "2026-08-29T11:49:46Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -1153,7 +1153,7 @@
         }
       },
       "earnings": {
-        "period": "2027-06-30",
+        "period": "2026-09-30",
         "eps_actual": 0.94,
         "eps_estimate": 0.9428,
         "surprise": -0.0028,
