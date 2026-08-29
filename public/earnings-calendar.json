@@ -2922,7 +2922,7 @@
   {
     "symbol": "MEI",
     "date": "2026-09-02",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.1414,
     "epsActual": null,
     "revenueEstimate": 240358113,
@@ -3112,7 +3112,7 @@
   {
     "symbol": "AMBR",
     "date": "2026-09-03",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": 14280000,
@@ -3652,7 +3652,7 @@
   {
     "symbol": "WLY",
     "date": "2026-09-03",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.404,
     "epsActual": null,
     "revenueEstimate": 384002000,
@@ -3722,7 +3722,7 @@
   {
     "symbol": "KNOP",
     "date": "2026-09-04",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.155,
     "epsActual": null,
     "revenueEstimate": 93469403,
