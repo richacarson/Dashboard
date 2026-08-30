@@ -1,55 +1,55 @@
 {
- "generated": "2026-08-26T19:04:00.988497+00:00",
+ "generated": "2026-08-30T08:52:34.604355+00:00",
  "source": "FMP \u2014 median constituent TTM net income growth (aggregate published alongside)",
- "cohort": 487,
+ "cohort": 489,
  "constituents": 503,
- "chgQoQ": 3.49,
- "aggChgQoQ": 14.53,
+ "chgQoQ": 3.71,
+ "aggChgQoQ": 15.7,
  "series": [
   {
-   "asof": "2024-08-28",
-   "ttmNetIncome": 1846269204070,
+   "asof": "2024-09-01",
+   "ttmNetIncome": 1888553942070,
    "medianGrowthPct": null
   },
   {
-   "asof": "2024-11-27",
-   "ttmNetIncome": 1873427736115,
+   "asof": "2024-12-01",
+   "ttmNetIncome": 1915814816115,
+   "medianGrowthPct": 1.56
+  },
+  {
+   "asof": "2025-03-02",
+   "ttmNetIncome": 2021413881909,
+   "medianGrowthPct": 2.56
+  },
+  {
+   "asof": "2025-06-01",
+   "ttmNetIncome": 2074429072609,
+   "medianGrowthPct": 1.2
+  },
+  {
+   "asof": "2025-08-31",
+   "ttmNetIncome": 2128016756210,
    "medianGrowthPct": 1.83
   },
   {
-   "asof": "2025-02-26",
-   "ttmNetIncome": 1971121703909,
-   "medianGrowthPct": 1.59
+   "asof": "2025-11-30",
+   "ttmNetIncome": 2229487449900,
+   "medianGrowthPct": 2.86
   },
   {
-   "asof": "2025-05-28",
-   "ttmNetIncome": 2028360974609,
-   "medianGrowthPct": 1.28
+   "asof": "2026-03-01",
+   "ttmNetIncome": 2303116022999,
+   "medianGrowthPct": 1.49
   },
   {
-   "asof": "2025-08-27",
-   "ttmNetIncome": 2079969498210,
-   "medianGrowthPct": 1.75
+   "asof": "2026-05-31",
+   "ttmNetIncome": 2516040155649,
+   "medianGrowthPct": 3.39
   },
   {
-   "asof": "2025-11-26",
-   "ttmNetIncome": 2181639073900,
-   "medianGrowthPct": 3.1
-  },
-  {
-   "asof": "2026-02-25",
-   "ttmNetIncome": 2255447712799,
-   "medianGrowthPct": 0.56
-  },
-  {
-   "asof": "2026-05-27",
-   "ttmNetIncome": 2468983699649,
-   "medianGrowthPct": 3.38
-  },
-  {
-   "asof": "2026-08-26",
-   "ttmNetIncome": 2827841951848,
-   "medianGrowthPct": 3.49
+   "asof": "2026-08-30",
+   "ttmNetIncome": 2911042970849,
+   "medianGrowthPct": 3.71
   }
  ]
 }
