@@ -730,16 +730,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "GASS",
-    "date": "2026-08-26",
-    "hour": "",
-    "epsEstimate": 0.5406,
-    "epsActual": null,
-    "revenueEstimate": 45798000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "GEG",
     "date": "2026-08-26",
     "hour": "amc",
@@ -2870,6 +2860,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "GASS",
+    "date": "2026-09-02",
+    "hour": "",
+    "epsEstimate": 0.5406,
+    "epsActual": null,
+    "revenueEstimate": 45798000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GF",
     "date": "2026-09-02",
     "hour": "",
@@ -3280,6 +3280,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "GROW",
+    "date": "2026-09-03",
+    "hour": "",
+    "epsEstimate": null,
+    "epsActual": null,
+    "revenueEstimate": null,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "GTIJF",
     "date": "2026-09-03",
     "hour": "",
@@ -3306,16 +3316,6 @@
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "HOFT",
-    "date": "2026-09-03",
-    "hour": "",
-    "epsEstimate": -0.0204,
-    "epsActual": null,
-    "revenueEstimate": 65035710,
     "revenueActual": null,
     "source": "finnhub"
   },
