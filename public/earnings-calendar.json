@@ -2124,9 +2124,9 @@
     "date": "2026-08-31",
     "hour": "bmo",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.604782,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 3156357258,
     "source": "finnhub"
   },
   {
@@ -2204,9 +2204,9 @@
     "date": "2026-08-31",
     "hour": "bmo",
     "epsEstimate": 2.3546,
-    "epsActual": null,
+    "epsActual": 3.01,
     "revenueEstimate": 1801506211,
-    "revenueActual": null,
+    "revenueActual": 1880000000,
     "source": "finnhub"
   },
   {
