@@ -91,6 +91,16 @@ const BENCHMARKS = [
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
+// Live macro strip. These were only ever available from macro-data.json, which the cron
+// refreshes a few times a day off Yahoo — fine for the bear model, stale for a banner.
+// ^VIX is an index and comes back from /stable/quote but NOT from /stable/batch-quote,
+// which is exactly the batch-then-fill-singles shape fmpQuotes() already handles.
+const MACRO = [
+  { sym: "^VIX", name: "VIX", fmt: (v) => v.toFixed(2) },
+  { sym: "GCUSD", name: "Gold", fmt: (v) => `$${Math.round(v).toLocaleString()}` },
+  { sym: "CLUSD", name: "WTI Crude", fmt: (v) => `$${v.toFixed(2)}` },
+];
+const MACRO_SYMS = MACRO.map(m => m.sym);
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
 // DVY and IUSG aren't carried on the Alpaca IEX feed. They used to come from Finnhub
 // (trade WS + /quote poll), but Finnhub's free tier stopped advancing them intraday —
@@ -1208,6 +1218,7 @@ export default function App() {
   const [bars, setBars] = useState({});
   const [bmQuotes, setBmQuotes] = useState({});
   const [bmBars, setBmBars] = useState({});
+  const [macroQuotes, setMacroQuotes] = useState({}); // { "^VIX": {p, pc}, GCUSD, CLUSD }
   const [anchorPrices, setAnchorPrices] = useState(loadAnchorPrices);
   const [liveWeights, setLiveWeights] = useState({});
   const [names, setNames] = useState({});
@@ -3077,6 +3088,21 @@ Instructions:
     fhTimerRef.current = setInterval(pollFinnhubBenchmarks, ms);
     return () => clearInterval(fhTimerRef.current);
   }, [authed, marketStatus.status, pollFinnhubBenchmarks]);
+
+  /* ── Live macro strip: VIX, gold, WTI ──
+   * Not gated on market hours: the VIX and commodity futures keep moving after the
+   * equity close, and a banner that freezes at 4pm is what we are replacing. */
+  useEffect(() => {
+    if (!authed || !FMP_OK) return;
+    let cancelled = false;
+    const poll = async () => {
+      const q = await fmpQuotes(MACRO_SYMS, FK);
+      if (!cancelled && Object.keys(q).length) setMacroQuotes(prev => ({ ...prev, ...q }));
+    };
+    poll();
+    const id = setInterval(poll, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [authed]);
 
   /* ── FMP WebSocket for DVY/IUSG ──
    * SPY/QQQ/DIA stream over Alpaca's IEX socket; these two don't, which is why they
@@ -7004,6 +7030,19 @@ Instructions:
               <span style={{ color: C.t3 }}>Bull Age</span><span style={{ color: bullAgeMo > 60 ? C.dn : bullAgeMo > 36 ? C.warn : C.up, textAlign: "right" }}>{bullAgeMo}mo</span>
               <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
               <span style={{ color: C.t3 }}>Top Sector</span><span style={{ textAlign: "right", color: tTopSector ? (tTopSector.c >= 0 ? C.up : C.dn) : C.t4 }}>{tTopSector ? `${SECTOR_ETF_NAMES[tTopSector.sym] || tTopSector.sym} ${pct(tTopSector.c)}` : "—"}</span>
+              {MACRO.map(m => {
+                const q = macroQuotes[m.sym];
+                const c = (q?.p && q.pc > 0) ? ((q.p - q.pc) / q.pc) * 100 : null;
+                return (
+                  <React.Fragment key={m.sym}>
+                    <span style={{ color: C.t3 }}>{m.name}</span>
+                    <span style={{ textAlign: "right", color: q?.p ? C.t1 : C.t4 }}>
+                      {q?.p ? m.fmt(q.p) : "—"}
+                      {c != null && <span style={{ color: c >= 0 ? C.up : C.dn, marginLeft: 4 }}>{pct(c)}</span>}
+                    </span>
+                  </React.Fragment>
+                );
+              })}
             </div>
             ); })()}
           </div>
@@ -7363,7 +7402,7 @@ Instructions:
               <div style={{ margin: isDesktop ? "24px 0 0" : "16px -18px 0", padding: isDesktop ? 0 : "0 18px", overflow: "hidden" }}>
                 <div style={{
                   display: isDesktop ? "grid" : "flex",
-                  gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : undefined,
+                  gridTemplateColumns: isDesktop ? "repeat(auto-fit, minmax(112px, 1fr))" : undefined,
                   gap: isDesktop ? 12 : 0,
                   overflowX: isDesktop ? "visible" : "auto", paddingBottom: isDesktop ? 0 : 6,
                   WebkitOverflowScrolling: "touch", scrollbarWidth: "none",
@@ -7419,6 +7458,29 @@ Instructions:
                       </div>
                     );
                   })()}
+                  {MACRO.map(m => {
+                    const q = macroQuotes[m.sym];
+                    if (!q?.p) return null;
+                    const c = q.pc > 0 ? ((q.p - q.pc) / q.pc) * 100 : null;
+                    return (
+                      <div key={m.sym} style={{
+                        flex: isDesktop ? undefined : "0 0 auto",
+                        padding: isDesktop ? "16px" : "12px 16px",
+                        minWidth: isDesktop ? undefined : 100,
+                        background: isDesktop ? C.card : "transparent",
+                        border: isDesktop ? `1px solid ${C.border}` : "none",
+                        borderRadius: isDesktop ? 14 : 0,
+                      }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>{m.name}</div>
+                        <div style={{ display: "flex", alignItems: isDesktop ? "center" : "baseline", gap: 8, flexWrap: isDesktop ? "wrap" : "nowrap" }}>
+                          <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{m.fmt(q.p)}</span>
+                          {c != null && (
+                            <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: c > 0 ? C.up : c < 0 ? C.dn : C.t3 }}>{pct(c)}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 {!isDesktop && <div style={{ height: 1, background: C.border }} />}
               </div>
@@ -12641,9 +12703,13 @@ Instructions:
                       { label: "3-Year", shortLabel: "3Y", days: 365 * 3, rangeKey: "3Y", ann: true },
                       { label: "5-Year", shortLabel: "5Y", days: 365 * 5, rangeKey: "5Y", ann: true },
                       { label: "10-Year", shortLabel: "10Y", days: 365 * 10, rangeKey: "10Y", ann: true },
+                      { label: "Q1 25", shortLabel: "Q1 25", stew: true, rangeKey: "STEW" },
                       { label: "Inception", shortLabel: "Incep.", all: true, rangeKey: "ALL" },
                     ];
                     const trailingPeriods = allPeriods.filter(p => {
+                      // Q1 25 is the stewardship window — it only means anything for the
+                      // sleeve it describes, same gate the terminal table uses.
+                      if (p.stew) return perfSleeve === "dividend";
                       if (p.oneDay || p.qtd || p.ytd || p.all) return true;
                       return daysAvailable >= p.days * 0.9;
                     });
@@ -12664,6 +12730,8 @@ Instructions:
                       } else if (p.ytd) {
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
                         startPt = [...portfolio].reverse().find(pt => pt.date <= yearEnd);
+                      } else if (p.stew) {
+                        startPt = portfolio.find(pt => pt.date >= STEW_START);
                       } else if (p.all) {
                         startPt = portfolio[0];
                       } else {
@@ -12709,6 +12777,9 @@ Instructions:
                         const yearEnd = `${now.getFullYear() - 1}-12-31`;
                         const found = [...prices].reverse().find(([d]) => d <= yearEnd);
                         startPrice = found ? found[1] : null;
+                      } else if (p.stew) {
+                        const found = prices.find(([d]) => d >= STEW_START);
+                        startPrice = found ? found[1] : null;
                       } else if (p.all) {
                         // Use benchmark price at portfolio start date, not first available
                         const portfolioStart = portfolio[0]?.date || prices[0][0];
@@ -12737,8 +12808,11 @@ Instructions:
                       <div style={{ marginTop: 28 }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 14 }}>Trailing Total Returns</div>
                         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
-                          <div style={{ overflowX: "auto" }}>
-                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
+                          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                            {/* max-content, not 100%: at 100% the columns squeeze until the
+                                figures clip, which is what a phone showed instead of scrolling.
+                                Natural width makes the container actually scroll. */}
+                            <table style={{ width: "100%", minWidth: "max-content", borderCollapse: "collapse", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
                               <thead>
                                 <tr style={{ borderBottom: `1px solid ${C.border}` }}>
                                   <th style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: C.t3, fontSize: 11 }}>Return</th>
