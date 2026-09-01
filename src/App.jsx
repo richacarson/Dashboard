@@ -831,10 +831,24 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
   ];
 
   // Stat row helper
+  // window.innerWidth was read inline at render time, so the layout never responded
+  // to a rotation or a resize. This does.
+  const [narrow, setNarrow] = useState(typeof window !== "undefined" && window.innerWidth < 768);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const on = (e) => setNarrow(e.matches);
+    setNarrow(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+
+  // Label left, value right, and the value is allowed to wrap rather than push itself
+  // off the card. Long values (a full company location, a CEO name) were overflowing
+  // and getting clipped at the card edge with no way to read them.
   const StatRow = ({ label, value, color }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-      <span style={{ fontSize: 13, color: C.t3 }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: color || C.t1, fontVariantNumeric: "tabular-nums" }}>{value}</span>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, padding: "8px 0", borderBottom: `1px solid ${C.border}`, minWidth: 0 }}>
+      <span style={{ fontSize: 13, color: C.t3, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: color || C.t1, fontVariantNumeric: "tabular-nums", textAlign: "right", minWidth: 0, overflowWrap: "anywhere" }}>{value}</span>
     </div>
   );
 
@@ -872,18 +886,22 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
     }}>
       {/* Header */}
       <div style={{ padding: "8px 16px", flexShrink: 0, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: C.t1 }}>{symbol}</span>
                 <span ref={livePriceRef} style={{ fontSize: 17, fontWeight: 700, color: C.t2 }}>{price ? `$${price.toFixed(2)}` : ""}</span>
                 <span ref={livePctRef} style={{ fontSize: 13, fontWeight: 700, color: dayChg >= 0 ? C.up : C.dn }}>{dayChg != null ? pct(dayChg) : ""}</span>
               </div>
-              <div style={{ fontSize: 12, color: C.t4, marginTop: 1 }}>{names?.[symbol] || profile?.name || ""}</div>
+              <div title={names?.[symbol] || profile?.name || ""} style={{
+                fontSize: 12, color: C.t4, marginTop: 1,
+                display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                overflow: "hidden", overflowWrap: "anywhere",
+              }}>{names?.[symbol] || profile?.name || ""}</div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
             {onViewReport && <button onClick={() => onViewReport(symbol)} style={{ background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, padding: "6px 12px", color: C.t1, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Screener Report</button>}
             <button onClick={onClose} style={{
               width: 32, height: 32, borderRadius: 16, background: C.t4 + "15",
@@ -925,7 +943,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
       {/* OVERVIEW + FINANCIALS + NEWS — scrollable */}
       {profileTab !== "chart" && (
       <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "16px", paddingBottom: "calc(env(safe-area-inset-bottom, 20px) + 80px)", WebkitOverflowScrolling: "touch" }}>
-        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth >= 768 ? "1fr 1fr" : "1fr", gap: 12, alignItems: "stretch" }}>
+        <div style={{ display: "grid", gridTemplateColumns: narrow ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1fr)", gap: 12, alignItems: "stretch" }}>
 
           {/* ── OVERVIEW ── */}
           <div id="section-overview" style={{ display: "contents" }}>
@@ -947,20 +965,20 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
                   </div>
                   {/* Full description */}
                   {profile.description && (
-                    <div style={{ fontSize: 13, lineHeight: 1.65, color: C.t3, marginBottom: 14 }}>
+                    <div style={{ fontSize: 13, lineHeight: 1.65, color: C.t3, marginBottom: 14, overflowWrap: "anywhere" }}>
                       {profile.description}
                     </div>
                   )}
                   {/* Company details grid */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: narrow ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1fr)", gap: "0 16px" }}>
                     {(profile.country || profile.city) && <StatRow label="Location" value={[profile.city, profile.state, profile.country].filter(Boolean).join(", ")} />}
                     {(profile.ipo || profile.ipoDate) && <StatRow label="IPO Date" value={profile.ipoDate || profile.ipo} />}
                     {(profile.fullTimeEmployees || profile.employees) && <StatRow label="Employees" value={(profile.fullTimeEmployees || profile.employees)?.toLocaleString?.()} />}
                     {profile.ceo && <StatRow label="CEO" value={profile.ceo} />}
                     {(profile.weburl || profile.website) && (
-                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${C.border}` }}>
-                        <span style={{ fontSize: 13, color: C.t3 }}>Website</span>
-                        <a href={profile.weburl || profile.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: C.accent, textDecoration: "none" }}>{(profile.website || profile.weburl || "").replace(/https?:\/\/(www\.)?/, "")}</a>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, padding: "8px 0", borderBottom: `1px solid ${C.border}`, minWidth: 0 }}>
+                        <span style={{ fontSize: 13, color: C.t3, flexShrink: 0 }}>Website</span>
+                        <a href={profile.weburl || profile.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: C.accent, textDecoration: "none", textAlign: "right", minWidth: 0, overflowWrap: "anywhere" }}>{(profile.website || profile.weburl || "").replace(/https?:\/\/(www\.)?/, "")}</a>
                       </div>
                     )}
                   </div>
@@ -993,7 +1011,7 @@ function StockProfile({ symbol, initTab, onClose, onViewReport, hdrs, names, the
               {profileLoading && <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>Loading profile...</div>}
 
               <div style={{ gridColumn: "1 / -1" }}>
-                <StockFundamentals symbol={symbol} price={quotesRef.current?.[symbol]?.p} name={names?.[symbol]} C={C} isDesktop={window.innerWidth >= 768} />
+                <StockFundamentals symbol={symbol} price={quotesRef.current?.[symbol]?.p} name={names?.[symbol]} C={C} isDesktop={!narrow} />
               </div>
           </div>
 
