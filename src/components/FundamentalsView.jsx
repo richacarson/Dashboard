@@ -452,15 +452,19 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   const pT2 = Math.min(pxLo, pxTk[0]), pB2 = Math.max(pxHi, pxTk[pxTk.length - 1])
   const yPx = (v) => PAD.t + ch - ((v - pT2) / ((pB2 - pT2) || 1)) * ch
   const pxLine = price.map((p, i) => `${i ? 'L' : 'M'}${xAt(i, price.length).toFixed(1)},${yPx(p.c).toFixed(1)}`).join(' ')
-  // far-right multiple axis: avg + live horizontal lines
+  // far-right multiple axis: avg + live horizontal lines.
+  // Both labels sit on the LEFT, side by side. The live label used to be anchored to
+  // the right edge, which is where the endpoint pills land — so on most charts the
+  // pill covered it. Offsetting it past the avg label keeps both readable whatever
+  // the two values are, since they share a row only when the lines nearly coincide.
   const mulAxis = (avg, live) => {
     const hi = (Math.max(avg || 0, live || 0, 1)) * 1.28
     const tk = ticks(0, hi, 4)
     const top = Math.max(hi, tk[tk.length - 1])
     return { tk, y: (v) => PAD.t + ch - (Math.min(v, top) / (top || 1)) * ch }
   }
-  const avgMulLine = (m, avg) => avg != null ? <g><line x1={PAD.l} y1={m.y(avg)} x2={W - PAD.r} y2={m.y(avg)} stroke={C.t1} strokeWidth={1.5} /><text x={PAD.l + 3} y={m.y(avg) - 4} fontSize={10} fontWeight={700} fill={C.t1}>avg {fmt1(avg)}×</text></g> : null
-  const liveMulLine = (m, live) => live != null ? <g><line x1={PAD.l} y1={m.y(live)} x2={W - PAD.r} y2={m.y(live)} stroke={PEc} strokeWidth={1.4} strokeDasharray="5,4" /><text x={W - PAD.r - 3} y={m.y(live) - 4} textAnchor="end" fontSize={10} fontWeight={700} fill={PEc}>live {fmt1(live)}×</text></g> : null
+  const avgMulLine = (m, avg) => avg != null ? <g><line x1={PAD.l} y1={m.y(avg)} x2={W - PAD.r} y2={m.y(avg)} stroke={C.t1} strokeWidth={1.5} /><text x={PAD.l + 3} y={m.y(avg) - 4} fontSize={10} fontWeight={700} fill={C.t1} stroke={C.card} strokeWidth={3} paintOrder="stroke">avg {fmt1(avg)}×</text></g> : null
+  const liveMulLine = (m, live) => live != null ? <g><line x1={PAD.l} y1={m.y(live)} x2={W - PAD.r} y2={m.y(live)} stroke={PEc} strokeWidth={1.4} strokeDasharray="5,4" /><text x={PAD.l + 78} y={m.y(live) - 4} fontSize={10} fontWeight={700} fill={PEc} stroke={C.card} strokeWidth={3} paintOrder="stroke">live {fmt1(live)}×</text></g> : null
   const mulTicks = (m) => m.tk.map((v) => <text key={v} x={W - 5} y={m.y(v) + 3.5} textAnchor="end" {...num} fill={PEc}>{v.toFixed(0)}×</text>)
 
   // ===== Panel 1: EPS + Price + P/E =====
@@ -551,10 +555,13 @@ function FundamentalsDetail({ f, px, name, basis, C, isDesktop }) {
   // quarters on screen we can't label every point the way their 20-point charts
   // do, so the endpoint — the number you actually came to read — carries the label.
   const pill = (key, x, y, label, color, fg = '#0B0E14') => {
-    // Keep the chip inside the plot: past W - PAD.r it would sit on top of the
-    // price-axis numbers, which is where the endpoint naturally lands.
+    // Keep the chip inside the plot. The previous clamp pinned the chip's *centre* to
+    // the plot edge, so half its width still hung over the price-axis numbers — which
+    // is exactly where a series endpoint lands, so it happened on nearly every chart.
+    // Clamp the edges instead.
     const w = label.length * 6.1 + 10
-    const cx = Math.min(x, W - PAD.r - 2) - w / 2, cy = Math.max(PAD.t + 7, Math.min(PAD.t + ch - 7, y))
+    const cx = Math.max(PAD.l + 2, Math.min(x - w / 2, W - PAD.r - w - 2))
+    const cy = Math.max(PAD.t + 7, Math.min(PAD.t + ch - 7, y))
     return (
       <g key={key}>
         <rect x={cx} y={cy - 8} width={w} height={16} rx={4} fill={color} />
