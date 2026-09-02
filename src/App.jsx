@@ -67,6 +67,9 @@ const loadSleeves = () => {
   } catch { return DEFAULT_SLEEVES; }
 };
 const saveSleeves = s => { try { localStorage.setItem("iown_sleeves", JSON.stringify(s)); } catch {} };
+// Today in market terms. Transaction dates are calendar days on the exchange, so a UTC
+// date would roll them forward every evening after 8pm ET and lose the day's trades.
+const etToday = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 const getAllSyms = sleeves => [...new Set(Object.values(sleeves).flatMap(s => s.symbols))];
 const CORE_KEYS = ["dividend", "growth", "digital", "sectors", "fci100", "fciValues"];
 const getCoreSyms = sleeves => [...new Set(CORE_KEYS.flatMap(k => sleeves[k]?.symbols || []))];
@@ -1752,8 +1755,12 @@ Instructions:
     const perfHoldings = Object.values(perfDataMap).flatMap(d => Object.keys(d.holdings || {}));
     // Include Q1 stocks for Q1 vs Q2 comparison (sold stocks still need quotes)
     const q1Stocks = ["A","MATX","GFI","FINV","PDD"];
+    // A name sold today is out of holdings but still owed a prior close: the day change
+    // has to mark it from yesterday's close down to what we sold it for.
+    const soldToday = Object.values(perfDataMap).flatMap(d => (d.transactions || [])
+      .filter(t => t.date === etToday() && t.ticker).map(t => t.ticker));
     // Include right-rail benchmark ETFs not already covered by BM_SYMS so they get live quotes
-    return [...new Set([...base, ...perfHoldings, ...q1Stocks, ...RAIL_BM_EXTRA])];
+    return [...new Set([...base, ...perfHoldings, ...soldToday, ...q1Stocks, ...RAIL_BM_EXTRA])];
   }, [sleeves, perfDataMap]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
   // Earnings surfaces track the two managed sleeves only. The FCI lists are research
@@ -1894,6 +1901,45 @@ Instructions:
   const splitFixedDayRef = useRef(new Date().toDateString()); // corrections expire on a new day
   const [splitRatios, setSplitRatios] = useState({}); // sym -> split ratio (e.g. KLAC 3:1 = 3). State so Holdings/Perf re-render when set.
   const splitRatiosRef = useRef({}); // ref mirror for useEffect / non-render consumers
+
+  // Correction to the "value at yesterday's close" leg of every day-change number, for
+  // trades done today.
+  //
+  // Those numbers all price *today's* holdings at yesterday's close. That is right until
+  // the book changes intraday, and then it is wrong twice over: a name bought this
+  // morning gets marked from a close we never owned it at, so its whole overnight gap is
+  // credited to us, and the name we sold to fund it disappears from the calculation
+  // along with the loss we actually took on it. The EIX -> PGY swap on 9/2 put the growth
+  // sleeve's day change at +0.43% against the +0.22% it earned: $102 of PGY gap that was
+  // never ours, plus $177 of EIX decline that was.
+  //
+  // Rebuilding yesterday's close from today's trades:
+  //     prior = sum(today's holdings x prior close) + cash
+  //           + sum over sales     (shares x prior close - proceeds)
+  //           - sum over purchases (shares x prior close - cost)
+  // which nets to what the book was actually worth last night. Checked against the
+  // published history point for 9/1: $132,766.13 reconstructed vs $132,765.24 recorded.
+  const dayBaseAdj = useMemo(() => {
+    const today = etToday();
+    const out = {};
+    for (const [k, d] of Object.entries(perfDataMap || {})) {
+      let adj = 0;
+      for (const t of d?.transactions || []) {
+        if (t.date !== today || !t.ticker || !(t.shares > 0)) continue;
+        const pc = (bars[t.ticker] || barsRef.current?.[t.ticker])?.pc;
+        // No prior close for the name means no honest correction for it; leaving that
+        // leg out degrades to the old behaviour rather than inventing a mark.
+        if (!(pc > 0)) continue;
+        const gap = t.shares * pc - (t.amount ?? t.shares * t.price);
+        if (t.type === "SALE") adj += gap;
+        else if (t.type === "PURCHASE") adj -= gap;
+      }
+      out[k] = adj;
+    }
+    return out;
+  }, [perfDataMap, bars]);
+  const dayBaseAdjRef = useRef({});
+  useEffect(() => { dayBaseAdjRef.current = dayBaseAdj; }, [dayBaseAdj]);
 
   // Re-fetch split-adjusted previous-day bars for symbols whose pc looks pre-split.
   // Alpaca's snapshots endpoint doesn't take an adjustment parameter, so when a corporate
@@ -3390,7 +3436,7 @@ Instructions:
       if (priced >= total * 0.8) {
         const newVal = Math.round((stocks + cash) * 100) / 100;
         const newStocks = Math.round(stocks * 100) / 100;
-        const newPcVal = Math.round((pcStocks + cash) * 100) / 100;
+        const newPcVal = Math.round((pcStocks + cash + (dayBaseAdjRef.current[perfSleeve] || 0)) * 100) / 100;
         setLiveValue(prev => {
           if (prev && prev.value === newVal && prev.stocks === newStocks && prev.cash === cash && prev.holdings === total && prev.prevClose === newPcVal) return prev;
           return { value: newVal, stocks: newStocks, cash, holdings: total, prevClose: newPcVal };
@@ -3921,6 +3967,7 @@ Instructions:
         prev += sh * (pc > 0 ? pc : q.p);
       }
     }
+    prev += dayBaseAdjRef.current[k] || 0;
     return prev > 0 ? ((cur / prev) - 1) * 100 : null;
   };
 
@@ -4318,6 +4365,7 @@ Instructions:
           prevTotal += sh * (pc > 0 ? pc : q.p);
         }
       }
+      prevTotal += dayBaseAdjRef.current[k] || 0;
       avgChg = prevTotal > 0 ? ((currentTotal / prevTotal) - 1) * 100 : null;
     }
     // Fallback to liveWeights (drifted target weights)
