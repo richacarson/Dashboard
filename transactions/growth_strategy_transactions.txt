@@ -6,6 +6,12 @@ For All Time
 Done
 Add
 Date	Transaction	Shares	Share Price $	Amount $	 
+ 	09-02-26	
+SALEEdison International
+42.8587	54.6600	2,342.66	Edit	 
+ 	09-02-26	
+PURCHASEPagaya Technologies Ltd Ordinary Shares - Class A
+106.9805	21.8980	2,342.66	Edit	 
  	07-09-26	
 PURCHASEAgnico Eagle Mines Ltd
 13.2026	144.89	1,912.93	Edit	 

@@ -39,7 +39,7 @@ SLEEVES = {
                  "FAST", "GD", "GPC", "LRCX", "LMT", "NEE", "NTR", "ORI", "PCAR",
                  "QCOM", "DGX", "SSNC", "STLD", "SYK", "TEL", "VLO"],
     "Growth":   ["AMD", "AEM", "ATAT", "CVX", "CWAN", "CNX", "COIN", "CRDO",
-                 "EIX", "FCX", "FTNT", "SUPV", "HRMY", "HUT", "HOOD", "KEYS",
+                 "PGY", "FCX", "FTNT", "SUPV", "HRMY", "HUT", "HOOD", "KEYS",
                  "MARA", "MRVL", "NVDA", "NXPI", "OKE", "SYF", "TSM", "TOL", "VST"],
     "Digital":  ["IBIT", "ETHA"],
 }

@@ -16,7 +16,7 @@ import { useAuth } from './lib/auth'
 
 const DEFAULT_SLEEVES = {
   dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","SPGI","CEG","NWG"], icon: "💰" },
-  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CNX","CRDO","EIX","FCX","FTNT","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST","NOW","SOFI","YMM"], icon: "🚀" },
+  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CNX","CRDO","FCX","FTNT","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","PGY","SYF","TSM","TOL","VST","NOW","SOFI","YMM"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
   sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","IGV","XLC","XLU"], icon: "📊" },
   fci100: { name: "FCI 100", symbols: ["ADI","AEP","AGI","ALAB","AMAT","AMD","AMGN","AMZN","ANET","APH","ASM","ASML","AU","AVGO","AWK","AZN","BSX","BWXT","CAT","CB","CCJ","CDNS","CEG","CIEN","CLS","COST","CRDO","ECL","EMBJ","ETN","GE","GEV","GILD","GLW","GMAB","GOOG","GOOGL","GRAB","GRMN","HLT","ICE","INOD","IOT","ISRG","JNJ","JPM","KEYS","KKR","KLAC","LIN","LLY","LMND","LNG","LRCX","MDA","META","MOD","MRK","MRVL","MSFT","MSI","MU","NBIS","NBIX","NEE","NFLX","NOW","NRG","NVDA","NVO","NVT","NXT","PLTR","PNFP","PODD","PTC","QCOM","RCL","RDDT","RMBS","RMD","SAP","SCHW","SHOP","SNPS","SPGI","SYK","TEL","TEM","TER","TSM","TTMI","VEEV","VIST","VRT","VRTX","WMT","XYL","YUMC","ZS"], icon: "🏆" },
@@ -24,7 +24,7 @@ const DEFAULT_SLEEVES = {
 };
 const TARGET_WEIGHTS = {
   dividend: { SYK:6.0, SSNC:6.0, ADP:6.0, SPGI:6.0, CEG:6.0, QCOM:5.0, GPC:4.0, STLD:4.0, NTR:4.0, LMT:4.0, TEL:4.0, CHD:4.0, CL:4.0, NWG:4.0, GD:3.5, NEE:3.0, LRCX:3.0, FAST:3.0, PCAR:3.0, ADI:3.0, CAT:3.0, ORI:3.0, ABT:3.0, DGX:3.0, ATO:2.5 },
-  growth: { NOW:8.0, NVDA:6.5, SOFI:6.5, FCX:6.5, VST:6.0, HOOD:5.5, AEM:5.0, MRVL:4.0, TSM:4.0, CRDO:4.0, YMM:4.0, KEYS:3.5, NXPI:3.5, AMD:3.0, FTNT:3.0, HRMY:3.0, TOL:3.0, HUT:3.0, MARA:3.0, CVX:2.5, ATAT:2.5, CNX:2.5, OKE:2.5, EIX:2.5, SYF:2.5 },
+  growth: { NOW:8.0, NVDA:6.5, SOFI:6.5, FCX:6.5, VST:6.0, HOOD:5.5, AEM:5.0, MRVL:4.0, TSM:4.0, CRDO:4.0, YMM:4.0, KEYS:3.5, NXPI:3.5, AMD:3.0, FTNT:3.0, HRMY:3.0, TOL:3.0, HUT:3.0, MARA:3.0, CVX:2.5, ATAT:2.5, CNX:2.5, OKE:2.5, PGY:2.5, SYF:2.5 },
 };
 const REBALANCE_DATE = "2026-07-09";
 const STEW_START = "2025-01-15";   // Carson's first decision — dividend stewardship window
@@ -35,13 +35,17 @@ const REBALANCE_ANCHORS = {
   GPC:124.73, LRCX:333.15, LMT:527.96, NEE:87.44, NTR:66.76, ORI:41.5, PCAR:122.5, QCOM:186.56, SSNC:65.42, STLD:228.76,
   SYK:326.85, TEL:196.24, SPGI:430.79, CEG:244.52, NWG:17.51,
   // Growth sleeve
-  AMD:517.41, AEM:144.89, ATAT:31.84, CVX:175.97, CNX:33.18, CRDO:258.69, EIX:74.78, FCX:57.5, FTNT:156.71, HRMY:38.08,
+  AMD:517.41, AEM:144.89, ATAT:31.84, CVX:175.97, CNX:33.18, CRDO:258.69, FCX:57.5, FTNT:156.71, HRMY:38.08,
   HUT:106.11, HOOD:113.53, KEYS:317.24, MARA:12.02, MRVL:231.71, NVDA:204.12, NXPI:283.81, OKE:91.16, SYF:68.26, TSM:436.98,
   TOL:145.57, VST:154.82, NOW:107.78, SOFI:17.73, YMM:8.58,
+  // Mid-quarter swap 9/2/26: EIX out, PGY in. PGY's anchor is its 9/2 entry, not a
+  // 7/8 close, so its QTD reads from the trade rather than from the start of the quarter.
+  PGY:21.898,
   // Digital sleeve (unchanged)
   IBIT:35.23, ETHA:13.11,
-  // Q2-exited names (kept for reference)
+  // Exited names (kept so historical views can still price them)
   BKH:73.28, DVN:42.02, VLO:281.25, COIN:158.44, CWAN:24.56, SUPV:9.28,
+  EIX:74.78,   // sold 9/2/26 mid-quarter
 };
 const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
 const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
@@ -282,7 +286,7 @@ const SECTOR_OVERRIDES = {
   "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
   "CHD": "Consumer Staples", "CL": "Consumer Staples",
   "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
-  "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials",
+  "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "PGY": "Financials",
   "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
   "AEM": "Materials", "NTR": "Materials", "FCX": "Materials", "STLD": "Materials",
   "CRDO": "Technology", "MRVL": "Technology",
@@ -613,7 +617,7 @@ const LOGO_DOMAINS = {
   GD:"gd.com",GPC:"genpt.com",HRMY:"harmonybiosciences.com",HUT:"hut8.com",
   KEYS:"keysight.com",LMT:"lockheedmartin.com",LRCX:"lamresearch.com",
   MATX:"matson.com",NEE:"nexteraenergy.com",NXPI:"nxp.com",OKE:"oneok.com",
-  ORI:"oldrepublic.com",PCAR:"paccar.com",PDD:"pinduoduo.com",CVX:"chevron.com",
+  ORI:"oldrepublic.com",PCAR:"paccar.com",PDD:"pinduoduo.com",PGY:"pagaya.com",CVX:"chevron.com",
   SSNC:"ssctech.com",SYF:"synchrony.com",SYK:"stryker.com",
   TEL:"te.com",TOL:"tollbrothers.com",TSM:"tsmc.com",
   PFE:"pfizer.com",ABBV:"abbvie.com",UNH:"unitedhealthgroup.com",
@@ -8529,7 +8533,7 @@ Instructions:
                 "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
                 "CHD": "Consumer Staples", "CL": "Consumer Staples",
                 "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
-                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
+                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "PGY": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
                 "AEM": "Materials", "FCX": "Materials", "NTR": "Materials", "STLD": "Materials",
                 "IBIT": "Digital Assets", "ETHA": "Digital Assets",
               };
@@ -8746,7 +8750,7 @@ Instructions:
                 "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
                 "CHD": "Consumer Staples", "CL": "Consumer Staples",
                 "GPC": "Consumer Disc.", "TOL": "Consumer Disc.", "ATAT": "Consumer Disc.",
-                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
+                "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "PGY": "Financials", "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
                 "AEM": "Materials", "FCX": "Materials", "NTR": "Materials", "STLD": "Materials",
                 "IBIT": "Digital Assets", "ETHA": "Digital Assets",
               };
