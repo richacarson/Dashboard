@@ -3924,6 +3924,43 @@ Instructions:
     return prev > 0 ? ((cur / prev) - 1) * 100 : null;
   };
 
+  // Actual sleeve weights, taken from the positions we hold rather than from drifted
+  // targets.
+  //
+  // liveWeights above assumes every name was bought at its TARGET_WEIGHTS share on the
+  // anchor date and has only moved with price since. That is true after a rebalance and
+  // false after a mid-quarter swap: PGY was funded by selling EIX once EIX had already
+  // fallen 23%, so the money that went in is ~1.8% of the sleeve rather than the 2.5% it
+  // is targeted at — and the home card read 2.5% while the Holdings tab read 1.8%.
+  //
+  // Same basis as the Holdings tab (market value over total including cash), so the two
+  // agree by construction instead of by coincidence, and the gap to target shows up as
+  // the underweight it actually is.
+  const actualWeights = useMemo(() => {
+    const out = {};
+    for (const [k, d] of Object.entries(perfDataMap || {})) {
+      const h = d?.holdings;
+      if (!h) continue;
+      const mv = {};
+      let total = d.cash || 0, priced = 0;
+      for (const [sym, rawSh] of Object.entries(h)) {
+        const sh = rawSh * (splitRatiosRef.current[sym] || splitRatios[sym] || 1);
+        const p = (quotes[sym] || quotesRef.current?.[sym])?.p;
+        if (!(p > 0) || !sh) continue;
+        mv[sym] = sh * p;
+        total += mv[sym];
+        priced++;
+      }
+      // A half-priced sleeve understates the denominator and inflates every weight in it,
+      // which is worse than falling back to the drifted target.
+      if (total > 0 && priced >= Object.keys(h).length * 0.8) {
+        out[k] = {};
+        for (const sym in mv) out[k][sym] = Math.round((mv[sym] / total) * 1000) / 10;
+      }
+    }
+    return out;
+  }, [perfDataMap, quotes, splitRatios]);
+
   const toggleSleeve = k => setOpenSleeves(p => ({ ...p, [k]: !p[k] }));
 
   /* ── Terminal layout: O(1) screener composite lookups + sector average P/E ── */
@@ -4230,8 +4267,9 @@ Instructions:
     const shortName = nm;
     const tw = sleeveKey && TARGET_WEIGHTS[sleeveKey] ? TARGET_WEIGHTS[sleeveKey][s] : null;
     const lw = sleeveKey && liveWeights[sleeveKey] ? liveWeights[sleeveKey][s] : null;
-    const displayW = lw != null ? lw : tw;
-    const drift = (tw != null && lw != null) ? lw - tw : null;
+    const aw = sleeveKey && actualWeights[sleeveKey] ? actualWeights[sleeveKey][s] : null;
+    const displayW = aw ?? lw ?? tw;
+    const drift = (tw != null && displayW != null) ? displayW - tw : null;
     const driftColor = drift != null ? (Math.abs(drift) >= 0.5 ? (drift > 0 ? C.up : C.dn) : C.accent) : C.accent;
     return (
       <div key={s} {...stockContextHandlers(s)} className="ticker-row"
@@ -4407,7 +4445,9 @@ Instructions:
               const sorted = [...sleeve.symbols].sort((a, b) => {
                 if (sortMode === "chgDn") return (chg(b) ?? -999) - (chg(a) ?? -999);
                 if (sortMode === "chgUp") return (chg(a) ?? 999) - (chg(b) ?? 999);
-                if (sortMode === "weightDn") { const lw = liveWeights[k] || {}; const tw = TARGET_WEIGHTS[k] || {}; return (lw[b] ?? tw[b] ?? 0) - (lw[a] ?? tw[a] ?? 0); }
+                // Same precedence as the row itself, so the sort can't order by one
+                // number while the badge shows another.
+                if (sortMode === "weightDn") { const aw = actualWeights[k] || {}, lw = liveWeights[k] || {}, tw = TARGET_WEIGHTS[k] || {}; const w = x => aw[x] ?? lw[x] ?? tw[x] ?? 0; return w(b) - w(a); }
                 return a.localeCompare(b);
               });
               return sorted.map((s, i) => (
