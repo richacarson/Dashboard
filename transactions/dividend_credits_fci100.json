@@ -598,5 +598,20 @@
     "ticker": "GLW",
     "ex_date": "2026-08-31",
     "dps": 0.28
+  },
+  {
+    "ticker": "ADI",
+    "ex_date": "2026-09-01",
+    "dps": 1.1
+  },
+  {
+    "ticker": "AEM",
+    "ex_date": "2026-09-01",
+    "dps": 0.45
+  },
+  {
+    "ticker": "MCD",
+    "ex_date": "2026-09-01",
+    "dps": 1.86
   }
 ]

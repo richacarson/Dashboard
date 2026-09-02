@@ -253,5 +253,20 @@
     "ticker": "NEE",
     "ex_date": "2026-08-28",
     "dps": 0.623
+  },
+  {
+    "ticker": "ADI",
+    "ex_date": "2026-09-01",
+    "dps": 1.1
+  },
+  {
+    "ticker": "LMT",
+    "ex_date": "2026-09-01",
+    "dps": 3.45
+  },
+  {
+    "ticker": "SSNC",
+    "ex_date": "2026-09-01",
+    "dps": 0.3
   }
 ]
