@@ -105,6 +105,11 @@ const BENCHMARKS = [
 const MACRO = [
   { sym: "^VIX", name: "VIX", fmt: (v) => v.toFixed(2) },
   { sym: "GCUSD", name: "Gold", fmt: (v) => `$${Math.round(v).toLocaleString()}` },
+  // Sits next to gold deliberately: it is the other hard-asset read, and the digital
+  // sleeve is priced off it. BTCUSD does come back from /stable/batch-quote, so unlike
+  // ^VIX it costs no extra request. Crypto trades through the weekend, which the poller
+  // already allows for — it was never gated on equity hours.
+  { sym: "BTCUSD", name: "Bitcoin", fmt: (v) => `$${Math.round(v).toLocaleString()}` },
   { sym: "CLUSD", name: "WTI Crude", fmt: (v) => `$${v.toFixed(2)}` },
 ];
 const MACRO_SYMS = MACRO.map(m => m.sym);
@@ -1225,7 +1230,7 @@ export default function App() {
   const [bars, setBars] = useState({});
   const [bmQuotes, setBmQuotes] = useState({});
   const [bmBars, setBmBars] = useState({});
-  const [macroQuotes, setMacroQuotes] = useState({}); // { "^VIX": {p, pc}, GCUSD, CLUSD }
+  const [macroQuotes, setMacroQuotes] = useState({}); // { "^VIX": {p, pc}, GCUSD, BTCUSD, CLUSD }
   const [anchorPrices, setAnchorPrices] = useState(loadAnchorPrices);
   const [liveWeights, setLiveWeights] = useState({});
   const [names, setNames] = useState({});
@@ -3139,7 +3144,7 @@ Instructions:
     return () => clearInterval(fhTimerRef.current);
   }, [authed, marketStatus.status, pollFinnhubBenchmarks]);
 
-  /* ── Live macro strip: VIX, gold, WTI ──
+  /* ── Live macro strip: VIX, gold, bitcoin, WTI ──
    * Not gated on market hours: the VIX and commodity futures keep moving after the
    * equity close, and a banner that freezes at 4pm is what we are replacing. */
   useEffect(() => {
