@@ -439,5 +439,12 @@
     "amber": 2,
     "green": 44,
     "headline": "First read since 2026-08-30 (3-session gap: 8/31, 9/1 both skipped). EIX plunged -23% on 8/31 -- biggest single-day drop in 25+ years -- after the CA wildfire-liability bill died without Newsom's cap/subrogation-ban protections; direct hit on EIX's inverse-condemnation key_risk, stabilized +1.15% on 9/1 at $54.55. MRVL persists RED, continuing to slide (pre-market 9/2 down further toward ~$205) on its post-earnings de-rating. MARA persists RED, no fresh catalyst. LRCX and a broad AI-infra/cybersecurity risk-off (Strait of Hormuz tension, oil >$91, yields toward 5%, DeepSeek reportedly building its own AI chip) capped as one PORTFOLIO amber flag -- FTNT, CRDO, AEM, QCOM, FCX, AMD, ADI, CAT all down 2-5% sector-wide, no company-specific news. CWAN roster-integrity bug hits its 68th consecutive day (PRs #11, #12, #14 still open/unmerged); new data_integrity note that CWAN's quote in risk-data-drop.json still looks live nine weeks post-delisting."
+  },
+  {
+    "date": "2026-09-04",
+    "red": 1,
+    "amber": 0,
+    "green": 48,
+    "headline": "First read since 2026-09-02 (9/3 skipped). Biggest development: the Growth sleeve exited EIX entirely on 9/2 (post -23% wildfire crash) into PGY -- data/portfolios.json had drifted from the live book for ~2 sessions, fixed this run. MRVL persists RED, still ~23% below its pre-earnings $272 high despite a small +1.11% bounce to $208.60; October analyst day is the next catalyst. MARA's prior RED resolves to GREEN on a broad, Fed-driven crypto rally (BTC +6.8% on dovish Waller comments) -- MARA +10.6%, COIN +10.22%, HUT +9.21%, HOOD +16.52% (also lifted by a Morgan Stanley upgrade and Robinhood Chain revenue), IBIT +5.83%, ETHA +5.32%, all no company-specific bad news. CWAN roster-integrity bug hits its 70th consecutive day (PRs #11, #12, #14 still open/unmerged)."
   }
 ]
