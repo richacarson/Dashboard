@@ -918,14 +918,31 @@ def main():
     benchmarks_tr = {}
     for sym in benchmark_syms:
         if sym in bm_tr_prices and bm_tr_prices[sym]:
+            # Stop at the last session the adjclose fetch actually returned.
+            #
+            # get_price_on_date carries the previous value forward, which is what we want
+            # for a holiday sitting inside the series and exactly what we do not want at
+            # its end. Yahoo publishes adjclose for the latest session later than it
+            # publishes close, so the two fetches here regularly disagree by a day — and
+            # carrying forward stamps the missing day with the day before's number, giving
+            # a point that looks current and is a session stale.
+            #
+            # On 2026-09-03 that happened to every benchmark in both sleeves. Nothing
+            # downstream could tell: the app derived a live-quote scale factor from the two
+            # tails, read a full day of price move as if it were a dividend adjustment, and
+            # drew every benchmark 0.5-1.3pp low against a returns table that was right.
+            src_last = max(bm_tr_prices[sym])
             pts = []
             for h in history:
+                if h["date"] > src_last:
+                    break
                 d = datetime.strptime(h["date"], "%Y-%m-%d")
                 price = get_price_on_date(bm_tr_prices, sym, d)
                 if price is not None:
                     pts.append({"date": h["date"], "close": round(price, 4)})
             benchmarks_tr[sym] = pts
-            print(f"  {sym} (TR): {len(pts)} data points")
+            short = " (behind price series)" if pts and history and pts[-1]["date"] < history[-1]["date"] else ""
+            print(f"  {sym} (TR): {len(pts)} data points, through {pts[-1]['date'] if pts else 'n/a'}{short}")
     print()
 
     # Current holdings from simulation replay (accurate share counts).

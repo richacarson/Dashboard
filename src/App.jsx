@@ -3306,11 +3306,16 @@ Instructions:
           const bmSyms = Object.keys(jsonBm).length > 0 ? Object.keys(jsonBm) : (sleeve === "growth" ? ["IUSG", "QQQ", "SPY"] : ["DVY", "SPY", "DIA"]);
           const hasPrebaked = bmSyms.some(s => Array.isArray(jsonBm[s]) && jsonBm[s].length > 1);
 
+          // No scale factor between the stored series and a live quote. benchmarks_tr is
+          // Yahoo's adjclose — back-adjusted, so its newest point IS the raw close by
+          // construction and a live raw quote appends to it directly. The old
+          // lastTR/lastRaw factor assumed a forward-compounded index instead, and since
+          // it read each array's own tail it silently absorbed any date skew between the
+          // two fetches. On 3 Sep 2026 the TR fetch lagged the price fetch by a session
+          // and the factor came out at 0.988-0.995, taking 0.5-1.3pp off every benchmark
+          // the chart drew while the returns table — which never applied it — stayed
+          // right. That mismatch is what surfaced the bug.
           let benchmarks = {};
-          // Per-symbol factor to place a live raw-price quote onto the total-return
-          // basis: lastTRclose / lastRawClose. 1 when no TR series (graceful fallback).
-          const bmTrScale = {};
-
           if (hasPrebaked) {
             for (const sym of bmSyms) {
               const trArr = (Array.isArray(jsonBmTr[sym]) && jsonBmTr[sym].length > 1) ? jsonBmTr[sym] : null;
@@ -3318,14 +3323,6 @@ Instructions:
               if (!srcArr) continue;
               benchmarks[sym] = {};
               srcArr.forEach(pt => { if (pt.date >= inception) benchmarks[sym][pt.date] = pt.close; });
-              // Scale factor only meaningful when we switched to TR and have raw too
-              if (trArr && Array.isArray(jsonBm[sym]) && jsonBm[sym].length) {
-                const lastTr = trArr[trArr.length - 1]?.close;
-                const lastRaw = jsonBm[sym][jsonBm[sym].length - 1]?.close;
-                bmTrScale[sym] = (lastTr && lastRaw) ? lastTr / lastRaw : 1;
-              } else {
-                bmTrScale[sym] = 1;   // price-only fallback: live raw quote already matches
-              }
             }
           } else if (apiKey && apiSecret) {
             const startDate = portfolio[0].date;
@@ -3371,7 +3368,7 @@ Instructions:
             }
           }
 
-          newMap[sleeve] = { portfolio, benchmarks, bmTrScale, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {}, bmAnnualReturnsTr: pJson.bm_annual_returns_tr || {} };
+          newMap[sleeve] = { portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {}, bmAnnualReturnsTr: pJson.bm_annual_returns_tr || {} };
         } catch (e) {
           console.warn(`Failed to load ${sleeve} portfolio:`, e);
         }
@@ -4183,7 +4180,7 @@ Instructions:
         dailyBm.push({ o: op, c: cl, h: Math.max(op, cl), l: Math.min(op, cl) });
       }
       const lq = bmQuotes[sym];
-      if (lq?.p && dailyBm.length) { const scale = tSleeveData.bmTrScale?.[sym] ?? 1; const lv = ((lq.p * scale / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
+      if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
       // Aggregate to weekly if portfolio uses weekly
       if (useWeekly) {
         const wkBm = []; let wIdx = 0;
@@ -12427,14 +12424,15 @@ Instructions:
                     bmPoints.push({ date: pt.date, val: ((prices[priceIdx][1] / basePrice) - 1) * 100 });
                   }
                 }
-                // Append live/latest benchmark price, scaled onto the total-return
-                // basis (history is now TR) so the right edge stays continuous.
+                // Append the live benchmark price. The stored series is back-adjusted, so
+                // its newest point is already the raw close and a live raw quote continues
+                // it directly — the same basis the Trailing Total Returns table uses, which
+                // is what keeps the chart's end label and that table's YTD column equal.
                 {
                   const liveQ = bmQuotes[sym];
                   if (liveQ?.p && filtered.length > 0) {
                     const lastPortDate = filtered[filtered.length - 1].date;
-                    const scale = perfData.bmTrScale?.[sym] ?? 1;
-                    bmPoints.push({ date: lastPortDate, val: ((liveQ.p * scale / basePrice) - 1) * 100 });
+                    bmPoints.push({ date: lastPortDate, val: ((liveQ.p / basePrice) - 1) * 100 });
                   }
                 }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
