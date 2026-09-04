@@ -1184,9 +1184,9 @@
     "date": "2026-09-03",
     "hour": "bmo",
     "epsEstimate": 1.7587,
-    "epsActual": null,
+    "epsActual": 2.11,
     "revenueEstimate": 1662569553,
-    "revenueActual": null,
+    "revenueActual": 1671130000,
     "source": "finnhub"
   },
   {
@@ -1274,9 +1274,9 @@
     "date": "2026-09-03",
     "hour": "bmo",
     "epsEstimate": -1.3812,
-    "epsActual": null,
+    "epsActual": -0.83,
     "revenueEstimate": 533684000,
-    "revenueActual": null,
+    "revenueActual": 529860000,
     "source": "finnhub"
   },
   {
@@ -1634,9 +1634,9 @@
     "date": "2026-09-03",
     "hour": "bmo",
     "epsEstimate": 0.7873,
-    "epsActual": null,
+    "epsActual": 0.95,
     "revenueEstimate": 1651718130,
-    "revenueActual": null,
+    "revenueActual": 1610700000,
     "source": "finnhub"
   },
   {
@@ -1702,11 +1702,11 @@
   {
     "symbol": "HURC",
     "date": "2026-09-04",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.35,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 47290000,
     "source": "finnhub"
   },
   {
