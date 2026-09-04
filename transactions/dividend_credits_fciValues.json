@@ -568,5 +568,20 @@
     "ticker": "MCD",
     "ex_date": "2026-09-01",
     "dps": 1.86
+  },
+  {
+    "ticker": "HD",
+    "ex_date": "2026-09-03",
+    "dps": 2.33
+  },
+  {
+    "ticker": "LIN",
+    "ex_date": "2026-09-03",
+    "dps": 1.6
+  },
+  {
+    "ticker": "QCOM",
+    "ex_date": "2026-09-03",
+    "dps": 0.92
   }
 ]

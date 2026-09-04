@@ -268,5 +268,10 @@
     "ticker": "SSNC",
     "ex_date": "2026-09-01",
     "dps": 0.3
+  },
+  {
+    "ticker": "QCOM",
+    "ex_date": "2026-09-03",
+    "dps": 0.92
   }
 ]
