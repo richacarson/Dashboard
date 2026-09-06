@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-30T08:51:19.376439+00:00",
+ "generated": "2026-09-06T07:31:07.087601+00:00",
  "source": "FMP",
  "available": [
   "ABT",
@@ -50,7 +50,6 @@
   "DOCN",
   "DOV",
   "ECL",
-  "EIX",
   "EMBJ",
   "ETN",
   "FAST",
@@ -118,6 +117,7 @@
   "OKE",
   "ORI",
   "PCAR",
+  "PGY",
   "PLTR",
   "PNFP",
   "PODD",
