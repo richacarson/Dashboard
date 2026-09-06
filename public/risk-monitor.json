@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-05T11:58:00Z",
+  "generated_at": "2026-09-06T12:05:00Z",
   "as_of_session": "2026-09-04",
   "universe_count": 49,
   "universe_incomplete": true,
@@ -10,31 +10,31 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus/Francisco Partners/Temasek, $24.55/share) closed 2026-06-25 (FIRB cleared 2026-06-19); CWAN delisted from NYSE and no longer trades (reconfirmed via web search this run -- deal terms unchanged since prior confirmations). This is approximately the 71st consecutive day CWAN has been listed in data/portfolios.json's growth sleeve on main. Root cause unchanged: three separate PRs containing the same one-line fix remain open and unmerged on Stock-Screener -- PR #11 (opened 2026-07-28), PR #12 (opened 2026-08-01), and PR #14 (opened 2026-08-19) -- reconfirmed still open via GitHub API this run. This run's branch re-applies the one-line CWAN removal locally (synced forward from the 2026-09-04 run's branch) so today's monitoring universe is clean, but neither fix will reach main until a human resolves the branch-reconciliation question.",
-        "action": "Needs a human decision: merge one of PR #11 (https://github.com/richacarson/Stock-Screener/pull/11), PR #12 (https://github.com/richacarson/Stock-Screener/pull/12), or PR #14 (https://github.com/richacarson/Stock-Screener/pull/14), or have Carson reconcile origin/main with the actual working branch lineage."
+        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus/Francisco Partners/Temasek, $24.55/share) closed 2026-06-25; CWAN delisted from NYSE and no longer trades. This is approximately the 72nd consecutive day CWAN has been listed in data/portfolios.json's growth sleeve on main. Root cause unchanged: PR #11 (opened 2026-07-28), PR #12 (opened 2026-08-01), and PR #14 (opened 2026-08-19) all remain open and unmerged on Stock-Screener (reconfirmed via GitHub API this run). This run's branch re-applies the one-line CWAN removal locally so today's monitoring universe is clean, but no fix reaches main until a human resolves the branch-reconciliation question.",
+        "action": "Needs a human decision: merge one of PR #11 (https://github.com/richacarson/Stock-Screener/pull/11), PR #12 (https://github.com/richacarson/Stock-Screener/pull/12), or PR #14 (https://github.com/richacarson/Stock-Screener/pull/14), or have Carson reconcile origin/main with the actual working branch lineage. Not re-filing a fourth duplicate PR this run."
       },
       {
         "ticker": "EIX/PGY",
         "type": "stale_holding_fixed_on_branch",
         "severity": "amber",
-        "detail": "The Growth sleeve swapped EIX for PGY (Pagaya Technologies) on 2026-09-02; data/portfolios.json on main still has not been updated (same underlying drift first caught on the 2026-09-04 run). The 2026-09-04 run's branch fix (EIX->PGY) was synced forward onto this run's branch, so local monitoring stays correct, but the fix has not reached main -- it is not part of any of the three open CWAN PRs and has no PR of its own yet.",
-        "action": "Merge a portfolios.json fix (EIX->PGY swap) into main, ideally in the same PR as the CWAN removal since both are one-line roster corrections."
+        "detail": "The Growth sleeve swapped EIX for PGY (Pagaya Technologies) on 2026-09-02; data/portfolios.json on main still has not been updated (same drift first caught 2026-09-04, still open as of this run). Local monitoring uses PGY, matching the live book and the Risk Data Drop's own ticker list (which already carries PGY, not EIX).",
+        "action": "Merge a portfolios.json fix (EIX->PGY swap) into main, ideally bundled with the CWAN removal since both are one-line roster corrections."
       },
       {
         "ticker": "CWAN",
         "type": "data_integrity",
         "severity": "amber",
-        "detail": "risk-data-drop.json (generated 2026-09-05T11:50:10Z) still returns a live-looking Alpaca quote for CWAN ($24.56, +0.06%) more than 10 weeks after delisting -- a stale/cached feed artifact, not a real trading signal. No portfolio impact (CWAN is not held).",
+        "detail": "risk-data-drop.json (generated 2026-09-06T11:50:26Z, re-dispatched this run since the prior drop was ~24h stale over the weekend) still returns a live-looking Alpaca quote for CWAN ($24.56, +0.06%) more than 10 weeks after delisting. No portfolio impact (CWAN is not actually held).",
         "action": "Remove CWAN from the Risk Data Drop workflow's ticker list once the portfolios.json fix lands."
       }
     ],
-    "universe_note": "IBIT and ETHA (Digital-Asset-ETF sleeve) are tracked in risk-data-drop.json (52 holdings priced, 0 errors this run) but are not represented in data/portfolios.json (25 Dividend + 24 Growth = 49 after the CWAN removal and EIX->PGY swap carried forward on this branch). The firm describes 52 holdings; 49 + 2 ETFs = 51, still one short of 52 -- flagging the count discrepancy for Carson rather than guessing at a third digital-asset name. universe_incomplete stays true until the ETF sleeve is added to portfolios.json. Note: no Alpaca/Finnhub API keys are available in this routine's environment, so per-ticker tradability was confirmed via the fresh Risk Data Drop (52/52 priced, 0 errors) rather than direct per-ticker API calls -- consistent with the documented Risk Data Drop architecture."
+    "universe_note": "IBIT and ETHA (Digital-Asset-ETF sleeve) are tracked in risk-data-drop.json (52 holdings priced, 0 errors this run) but are not represented in data/portfolios.json. Corrected real-holdings universe is 25 Dividend + 24 Growth (after CWAN removal and EIX->PGY swap, both applied locally only) = 49. 49 + 2 ETFs = 51, still one short of the firm's stated 52 -- flagging the count discrepancy for Carson rather than guessing at a third digital-asset name. No Alpaca/Finnhub API keys are available in this routine's environment, so per-ticker tradability was confirmed via the fresh Risk Data Drop (52/52 priced, 0 errors) rather than direct per-ticker calls, consistent with the documented architecture."
   },
   "summary": {
     "red": 0,
     "amber": 3,
     "green": 46,
-    "headline": "MRVL's post-earnings de-rating eases -- back-to-back up days (+1.11%, then +6.96%) push it back above the $217 thesis-reference level, downgraded RED->AMBER. A hot August jobs report (+162K vs +55K) lifted September rate-hike odds to ~58% and drove a broad, shallow pullback across the Dividend sleeve and the crypto complex (COIN -4.22%, MARA -2.42%, IBIT/ETHA -2.4-2.5%) -- no new company-specific bad news in either group. AI-infrastructure/semiconductor names bucked the tape (LRCX +5.12%, AMD +4.65%, CRDO +3.76%, TSM +2.79%) on continued strong results and guidance. HUT +6.17% decoupled from the crypto pullback on its AI data-center pivot. CWAN roster-integrity bug persists (~71st consecutive day; PRs #11/#12/#14 still open/unmerged), plus a newer EIX->PGY portfolios.json drift fixed on-branch but not yet merged to main."
+    "headline": "Weekend supplemental check -- no new session since Friday 9/4 close (Risk Data Drop re-dispatched at 11:50 UTC, reconfirmed identical to Friday's settled data; markets closed through Labor Day weekend). MRVL, the crypto-complex pullback, and the hawkish-jobs-report Dividend-sleeve pullback all persist unchanged from Friday, no new company-specific developments found over the weekend for any of them. CWAN roster-integrity bug hits its 72nd consecutive day (PRs #11/#12/#14 still open/unmerged)."
   },
   "flags": [
     {
@@ -43,20 +43,12 @@
       "sleeve": "Growth",
       "severity": "amber",
       "category": "valuation",
-      "headline": "Post-earnings de-rating easing; second straight up day, back above the thesis reference level",
-      "detail": "MRVL closed 9/4 at $223.41 (+6.96%), its best day in weeks, as part of a broader AI-infrastructure/semiconductor rally (LRCX +5.12%, AMD +4.65%, CRDO +3.76%, TSM +2.79%) rather than any new company-specific news -- coverage attributes the move to the market catching up to the already-reported Q2 beat and raised FY2028 guide (~$18B). This is the second consecutive up day (+1.11% on 9/3) after weeks of post-earnings de-rating. Price is now back above the $217 level the screener's own risk framing cited as a sensitivity marker, though still ~17.9% below the pre-earnings $272 high. Downgraded from RED to AMBER given the sustained recovery; not yet resolved to GREEN since the stock remains well below its high and the next dedicated catalyst (an analyst day) isn't until October.",
-      "metric": {
-        "price": 223.405,
-        "day_move_pct": 6.96,
-        "level_ref": 217
-      },
-      "thesis_link": "Matches MRVL key_risk: 'Forward P/E of 50.2x...the ~20% pullback from $272 to $217 after Q2 earnings...shows the market's sensitivity to execution risk.' Price has recovered back above that $217 reference point for the first time since the de-rating began.",
+      "headline": "Post-earnings de-rating easing; holding the recovery through the weekend",
+      "detail": "No new MRVL-specific news over the weekend. Friday 9/4 close of $223.41 (+6.96%) stands as the last settled price -- second straight up day, back above the $217 thesis-reference level cited in the screener's own risk framing. Weekend analyst commentary (RBC on 'buying the AI dip'; Goldman/Morgan Stanley comparing MRVL to Broadcom post-earnings) was comparative/general, not a fresh catalyst. Stays AMBER, not yet GREEN, since the stock remains well below its pre-earnings $272 high and the next dedicated catalyst (analyst day) isn't until October.",
+      "metric": { "price": 223.405, "day_move_pct": 6.96, "level_ref": 217 },
+      "thesis_link": "Matches MRVL key_risk: 'Forward P/E of 50.2x...the ~20% pullback from $272 to $217 after Q2 earnings...shows the market's sensitivity to execution risk.' Price remains above that $217 reference point.",
       "evidence": [
-        {
-          "source": "Stock analysis / market commentary aggregating Q2 results and sector rally",
-          "url": "https://stockanalysis.com/stocks/mrvl/",
-          "as_of": "2026-09-04"
-        }
+        { "source": "CNBC/Benzinga quote pages -- MRVL Friday 9/4 close and weekend analyst commentary", "url": "https://www.cnbc.com/quotes/MRVL", "as_of": "2026-09-06" }
       ],
       "first_seen": "2026-08-19",
       "status": "persisting"
@@ -67,23 +59,15 @@
       "sleeve": "Growth",
       "severity": "amber",
       "category": "sector_pullback",
-      "headline": "Broad crypto-complex pullback: COIN -4.22%, MARA -2.42%, plus IBIT/ETHA -2.4-2.5% (portfolio, informational)",
-      "detail": "COIN (-4.22%), MARA (-2.42%), IBIT (-2.43%) and ETHA (-2.52%) all declined together on 9/4 with no distinct new company-specific catalyst for any of them -- consistent with a broad crypto-market/risk-off day rather than an idiosyncratic development. The hotter-than-expected August jobs report (+162K vs. +55K consensus) pushed implied odds of a September Fed rate move to ~58% and drove a modest broad equity pullback (SPY -0.38%); crypto-sensitive names moved more than the tape. COIN's move sits against its already-known standing risk (Q2 2026 revenue -19% YoY, prolonged crypto downturn); MARA's move sits against its already-known standing risk (leveraged BTC-price derivative, no news specific to MARA). HUT, by contrast, rallied +6.17% on its AI-data-center pivot (see GREEN note below), decoupling from the crypto-beta names.",
-      "metric": {
-        "price": 184.63,
-        "day_move_pct": -4.22,
-        "level_ref": null
-      },
-      "thesis_link": "COIN matches key_risk: 'Prolonged crypto market downturn...Q2 2026 revenue declined 19% YoY.' MARA matches key_risk: 'Revenue concentration in bitcoin mining means financial performance remains a leveraged derivative of BTC price.' Neither risk is newly materializing today -- this reads as normal volatility within an already-flagged risk category, not a new development.",
+      "headline": "Broad crypto-complex pullback holds through the weekend: COIN -4.22%, MARA -2.42%, IBIT/ETHA -2.4-2.5% (portfolio, informational)",
+      "detail": "No new session since Friday; Bitcoin itself traded a stable $78K-80K range over the weekend (no fresh crypto-specific shock), consistent with Friday's read that this was a broad, jobs-report-driven risk-off day rather than an idiosyncratic development for COIN or MARA. Both names' standing key_risks (COIN: prolonged crypto-revenue downturn; MARA: leveraged BTC-price derivative) remain the same known category, not newly materializing.",
+      "metric": { "price": 184.63, "day_move_pct": -4.22, "level_ref": null },
+      "thesis_link": "COIN matches key_risk: 'Prolonged crypto market downturn...Q2 2026 revenue declined 19% YoY.' MARA matches key_risk: 'Revenue concentration in bitcoin mining means financial performance remains a leveraged derivative of BTC price.'",
       "evidence": [
-        {
-          "source": "Bloomberg -- 'Stocks Fall as Jobs Fuel Bets Fed Will Raise Rates: Markets Wrap'",
-          "url": "https://www.bloomberg.com/news/articles/2026-09-03/stock-market-today-dow-s-p-live-updates",
-          "as_of": "2026-09-04"
-        }
+        { "source": "Weekend BTC price range confirmation ($78K-80K band)", "url": "https://robinhood.com/us/en/prediction-markets/crypto/events/btc-price-on-sep-5-2026-at-4pm-edt-sep-05-2026/", "as_of": "2026-09-05" }
       ],
       "first_seen": "2026-09-05",
-      "status": "new"
+      "status": "persisting"
     },
     {
       "id": "rate_hike_odds_broad_pullback_2026-09-04",
@@ -91,81 +75,15 @@
       "sleeve": "Dividend",
       "severity": "amber",
       "category": "macro",
-      "headline": "Hawkish August jobs report lifts September rate-hike odds to ~58%; broad, shallow pullback across Dividend/defensive names",
-      "detail": "August nonfarm payrolls came in at +162K vs. +55K consensus (unemployment steady at 4.1%), a decisively hot print that pushed futures-implied odds of a Fed rate hike at the Sept. 15-16 FOMC meeting to roughly 58% (from ~50% the prior day) -- notably a hike, not a cut, given the current hold at 3.50-3.75%. The Dow fell 0.51%, S&P 500 -0.38%, Nasdaq -0.29% on 9/4. The book's Dividend/defensive sleeve saw a broad, shallow pullback consistent with this: ORI -2.70%, ADP -2.13%, GD -1.75%, SYK -1.61%, STLD -1.57%, NTR -1.52%, DVN -1.49%, CL -1.43%, LMT -1.43%, SSNC -1.16%, NEE -0.77%, ATO -0.88%, DGX -0.88%. No single-name catalyst was found for any of these on top of the macro move (ORI: routine insider sale + ex-dividend, no new operational news; ADP: soft own-brand August payrolls print plus routine CEO 10b5-1 sale, no earnings news; GD: actually received a new $194M Navy contract mod, still traded down with the tape). Flagging as one portfolio-level macro flag rather than 13 separate line items -- this is a rate-sensitivity read on the sleeve, not a set of thesis-specific developments.",
-      "metric": {
-        "price": null,
-        "day_move_pct": null,
-        "level_ref": null
-      },
+      "headline": "Hot August jobs report / elevated September rate-hike odds -- no weekend escalation",
+      "detail": "Friday's hot payrolls print (+162K vs +55K consensus) remains the operative macro fact; no weekend Fed commentary or new data found that moves the ~58% implied hike odds for the Sept 15-16 FOMC meeting. Dividend-sleeve pullback from Friday (ORI, ADP, GD, SYK, STLD, NTR, DVN, CL, etc., roughly -0.9% to -2.7%) stands unchanged over the weekend -- a rate-sensitivity read on the sleeve, not a set of thesis-specific developments.",
+      "metric": { "price": null, "day_move_pct": null, "level_ref": null },
       "thesis_link": null,
       "evidence": [
-        {
-          "source": "Bloomberg -- 'Stocks Fall as Jobs Fuel Bets Fed Will Raise Rates: Markets Wrap'",
-          "url": "https://www.bloomberg.com/news/articles/2026-09-03/stock-market-today-dow-s-p-live-updates",
-          "as_of": "2026-09-04"
-        },
-        {
-          "source": "FedRateCalc -- FOMC Meeting Schedule (Sept 15-16, 2026)",
-          "url": "https://fedratecalc.com/fomc-meeting-schedule/",
-          "as_of": "2026-09-05"
-        }
+        { "source": "Yahoo Finance / TheStreet -- Sept 4 2026 jobs report market reaction", "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-today-sept-4-133716564.html", "as_of": "2026-09-04" }
       ],
       "first_seen": "2026-09-05",
-      "status": "new"
-    },
-    {
-      "id": "HUT_ai_pivot_2026-09-04",
-      "ticker": "HUT",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "thesis_catalyst",
-      "headline": "HUT +6.17%, decoupling from the crypto-complex pullback on its AI data-center pivot",
-      "detail": "Hut 8 rallied +6.17% to $93.50 even as COIN/MARA/IBIT/ETHA all declined on the same session -- continued follow-through on the late-August news of a reported ~$35B Nvidia/Anthropic-linked AI data center deal, plus a Needham reiterated Buy ($138 PT) and a Freedom Capital Markets Buy initiation. This is a positive read against HUT's own key_risk ('material AI data center revenue not expected until Q2 2027...12+ month execution gap') -- the market is pricing in that this deal narrows that gap, though the revenue itself has not yet arrived.",
-      "metric": {
-        "price": 93.5,
-        "day_move_pct": 6.17,
-        "level_ref": null
-      },
-      "thesis_link": "Constructive relative to HUT key_risk: '...material AI data center revenue not expected until Q2 2027, creating a 12+ month execution gap.' Deal news, not yet revenue, but market-perceived as narrowing that gap.",
-      "evidence": [
-        {
-          "source": "TipRanks -- Hut 8 AI infrastructure pivot coverage",
-          "url": "https://www.tipranks.com/news/hut-8-nasdaqhut-soars-amid-trump-victory-and-operational-update",
-          "as_of": "2026-09-04"
-        }
-      ],
-      "first_seen": "2026-09-05",
-      "status": "new"
-    },
-    {
-      "id": "ai_semi_rally_2026-09-04",
-      "ticker": "PORTFOLIO",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "sector_gainer",
-      "headline": "AI-infrastructure/semiconductor cohort rallies against a soft tape: LRCX +5.12%, AMD +4.65%, MRVL +6.96%, CRDO +3.76%, TSM +2.79%",
-      "detail": "Lam Research (+5.12%) rode continued record-results momentum (30% YoY sales growth, September-quarter guide of +52% YoY at the midpoint, raised long-term margin targets, and a 27% dividend increase). AMD (+4.65%) continues to benefit from AI-infrastructure positioning (Helios full-rack platform shipping this month; reported OpenAI/Meta/Anthropic interest) alongside fresh analyst upgrades (BMO initiated Buy $550 PT; Raymond James raised to Strong Buy, $641 PT). CRDO beat Q2 EPS estimates modestly (+1.06% surprise). No negative developments for any of these names -- informational gainer bundle.",
-      "metric": {
-        "price": null,
-        "day_move_pct": null,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [
-        {
-          "source": "Simply Wall St -- Lam Research record results and new AI guidance",
-          "url": "https://simplywall.st/stocks/us/semiconductors/nasdaq-lrcx/lam-research/news/is-lam-research-lrcx-fairly-valued-on-record-results-and-new",
-          "as_of": "2026-09-04"
-        },
-        {
-          "source": "Blockonomi -- AMD analyst coverage and price targets",
-          "url": "https://blockonomi.com/advanced-micro-devices-amd-stock-surges-115-in-2026-analysts-project-another-41-rally-ahead",
-          "as_of": "2026-09-04"
-        }
-      ],
-      "first_seen": "2026-09-05",
-      "status": "new"
+      "status": "persisting"
     }
   ],
   "deal_watch": [
@@ -175,33 +93,16 @@
       "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
       "gate": "Australian FIRB clearance",
       "status": "closed",
-      "last_checked": "2026-09-05",
+      "last_checked": "2026-09-06",
       "severity": "green",
-      "note": "Deal terms unchanged, reconfirmed closed via web search this run. The persisting issue is roster hygiene, not the deal itself -- see roster_integrity."
+      "note": "Deal terms unchanged, closed since 2026-06-25. No update needed this run. The persisting issue is roster hygiene (see roster_integrity), not the deal itself."
     }
   ],
   "levels": [
-    {
-      "ticker": "SPY",
-      "level": 645.8,
-      "type": "support",
-      "state": "active",
-      "distance_pct": 19.26,
-      "interaction": "not_in_play"
-    }
+    { "ticker": "SPY", "level": 645.80, "type": "support", "state": "active", "distance_pct": 19.26, "interaction": "not_in_play" }
   ],
   "calendar": [
-    {
-      "ticker": "MRVL",
-      "event": "Analyst Day (next dedicated catalyst since Q2 earnings)",
-      "date": "2026-10",
-      "severity": "amber"
-    },
-    {
-      "ticker": "SPY",
-      "event": "FOMC meeting -- Sept 15-16, 2026 decision at 2:00pm ET; ~58% implied odds of a rate hike after the hot August jobs report",
-      "date": "2026-09-16",
-      "severity": "amber"
-    }
+    { "ticker": "MRVL", "event": "Analyst Day (next dedicated catalyst since Q2 earnings)", "date": "2026-10", "severity": "amber" },
+    { "ticker": "SPY", "event": "FOMC meeting -- Sept 15-16, 2026 decision at 2:00pm ET; ~58% implied odds of a rate hike after the hot August jobs report", "date": "2026-09-16", "severity": "amber" }
   ]
 }
