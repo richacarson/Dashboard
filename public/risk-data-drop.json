@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T11:50:26Z",
+  "generated_at": "2026-09-07T11:49:45Z",
   "universe_count": 52,
   "universe": [
     "ABT",
@@ -906,13 +906,7 @@
           "strongSell": 0
         }
       },
-      "earnings": {
-        "period": "2026-09-30",
-        "eps_actual": 1.2,
-        "eps_estimate": 1.1874,
-        "surprise": 0.0126,
-        "surprise_pct": 1.0611
-      }
+      "earnings": null
     },
     "PGY": {
       "sleeve": "Growth",
@@ -1355,9 +1349,7 @@
       "quote_source": "alpaca"
     }
   },
-  "recent_reporters": [
-    "CRDO"
-  ],
+  "recent_reporters": [],
   "errors": [],
   "sources": {
     "price": "alpaca",
