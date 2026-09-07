@@ -628,5 +628,20 @@
     "ticker": "QCOM",
     "ex_date": "2026-09-03",
     "dps": 0.92
+  },
+  {
+    "ticker": "GOOG",
+    "ex_date": "2026-09-04",
+    "dps": 0.22
+  },
+  {
+    "ticker": "GOOGL",
+    "ex_date": "2026-09-04",
+    "dps": 0.22
+  },
+  {
+    "ticker": "TER",
+    "ex_date": "2026-09-04",
+    "dps": 0.13
   }
 ]

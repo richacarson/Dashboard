@@ -273,5 +273,15 @@
     "ticker": "QCOM",
     "ex_date": "2026-09-03",
     "dps": 0.92
+  },
+  {
+    "ticker": "GPC",
+    "ex_date": "2026-09-04",
+    "dps": 1.063
+  },
+  {
+    "ticker": "ORI",
+    "ex_date": "2026-09-04",
+    "dps": 0.315
   }
 ]
