@@ -460,5 +460,12 @@
     "amber": 3,
     "green": 46,
     "headline": "Weekend supplemental check -- no new session since Friday 9/4 close (Risk Data Drop re-dispatched at 11:50 UTC, reconfirmed identical to Friday's settled data). MRVL, the crypto-complex pullback, and the hawkish-jobs-report Dividend-sleeve pullback all persist unchanged, no new company-specific developments found over the weekend. CWAN roster-integrity bug hits its 72nd consecutive day (PRs #11/#12/#14 still open/unmerged)."
+  },
+  {
+    "date": "2026-09-07",
+    "red": 1,
+    "amber": 3,
+    "green": 45,
+    "headline": "NEW RED: US-Iran conflict escalated to direct combat over the weekend near the Strait of Hormuz (US disabled/destroyed Iranian tankers, Iran fired ballistic missiles at a US carrier group) -- not yet priced in, markets closed for Labor Day. Directly implicates the energy sleeve (DVN, VLO, OKE, CVX, CNX) oil-price-volatility key_risk. MRVL, the crypto-complex pullback, and the hawkish-jobs-report Dividend-sleeve pullback persist unchanged from Friday 9/4 close, no new company-specific developments. CWAN roster-integrity bug hits its 74th consecutive day (PRs #11/#12/#14 still open/unmerged); reconfirmed a second stale-ticker issue on main (CTRA should read DVN) sharing the same root cause."
   }
 ]

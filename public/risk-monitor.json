@@ -1,8 +1,14 @@
 {
-  "generated_at": "2026-09-06T12:05:00Z",
+  "generated_at": "2026-09-07T12:25:00Z",
   "as_of_session": "2026-09-04",
   "universe_count": 49,
   "universe_incomplete": true,
+  "data_freshness": {
+    "drop_generated_at": "2026-09-06T11:50:26Z",
+    "priced": 52,
+    "errors": 0,
+    "note": "Markets are closed today (2026-09-07, Labor Day) so Friday 2026-09-04's close remains the last settled session regardless of drop freshness. An on-demand Risk Data Drop re-dispatch was triggered this run to check for a same-day refresh; it hung on the 'Fetch per-holding risk data' step for 12+ minutes (typical runs complete in ~80s) and never reached completion within this run's wait window — flagged as an operational anomaly worth a look (possible API rate-limit or hang), though it has no impact on today's read since there is no new session to capture anyway."
+  },
   "roster_integrity": {
     "ok": false,
     "issues": [
@@ -10,45 +16,69 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus/Francisco Partners/Temasek, $24.55/share) closed 2026-06-25; CWAN delisted from NYSE and no longer trades. This is approximately the 72nd consecutive day CWAN has been listed in data/portfolios.json's growth sleeve on main. Root cause unchanged: PR #11 (opened 2026-07-28), PR #12 (opened 2026-08-01), and PR #14 (opened 2026-08-19) all remain open and unmerged on Stock-Screener (reconfirmed via GitHub API this run). This run's branch re-applies the one-line CWAN removal locally so today's monitoring universe is clean, but no fix reaches main until a human resolves the branch-reconciliation question.",
+        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus/Francisco Partners/Temasek, $24.55/share) closed 2026-06-25; CWAN delisted from NYSE and no longer trades. This is the 74th consecutive day CWAN has sat in data/portfolios.json's growth sleeve on origin/main. Root cause unchanged: PR #11 (opened 2026-07-28), PR #12 (opened 2026-08-01), and PR #14 (opened 2026-08-19) all remain open and unmerged on Stock-Screener (reconfirmed via GitHub API this run — all three still 'open', none merged). This run's branch removes CWAN locally so today's monitoring universe is clean, but no fix reaches main until a human resolves the branch-reconciliation question.",
         "action": "Needs a human decision: merge one of PR #11 (https://github.com/richacarson/Stock-Screener/pull/11), PR #12 (https://github.com/richacarson/Stock-Screener/pull/12), or PR #14 (https://github.com/richacarson/Stock-Screener/pull/14), or have Carson reconcile origin/main with the actual working branch lineage. Not re-filing a fourth duplicate PR this run."
+      },
+      {
+        "ticker": "CTRA/DVN",
+        "type": "stale_ticker",
+        "severity": "amber",
+        "detail": "Coterra merged into Devon (DVN) 2026-05-07; the position has traded as DVN for over 4 months. origin/main's data/portfolios.json still lists 'CTRA' in the dividend sleeve (reconfirmed this run via git show origin/main:data/portfolios.json). Same root cause and same unmerged PRs as the CWAN issue — both are one-line roster corrections bundled in PR #11/#12/#14. No pricing impact (the Risk Data Drop's own ticker list already tracks DVN, not CTRA), so this is a naming-hygiene issue, not a data-integrity one.",
+        "action": "Bundle with the CWAN and EIX->PGY fixes in whichever of PR #11/#12/#14 Carson decides to merge."
       },
       {
         "ticker": "EIX/PGY",
         "type": "stale_holding_fixed_on_branch",
         "severity": "amber",
-        "detail": "The Growth sleeve swapped EIX for PGY (Pagaya Technologies) on 2026-09-02; data/portfolios.json on main still has not been updated (same drift first caught 2026-09-04, still open as of this run). Local monitoring uses PGY, matching the live book and the Risk Data Drop's own ticker list (which already carries PGY, not EIX).",
-        "action": "Merge a portfolios.json fix (EIX->PGY swap) into main, ideally bundled with the CWAN removal since both are one-line roster corrections."
+        "detail": "The Growth sleeve exited EIX entirely on 2026-09-02 (after EIX's -23% crash on the failed CA wildfire-liability bill) and rotated into PGY (Pagaya Technologies). data/portfolios.json on main still has not been updated (drift first caught 2026-09-04, still open 5 days later). Local monitoring uses PGY, matching the live book and the Risk Data Drop's own ticker list (which already carries PGY, not EIX).",
+        "action": "Merge a portfolios.json fix (EIX->PGY swap) into main, ideally bundled with the CWAN and CTRA->DVN corrections since all three are one-line roster fixes."
       },
       {
         "ticker": "CWAN",
         "type": "data_integrity",
         "severity": "amber",
-        "detail": "risk-data-drop.json (generated 2026-09-06T11:50:26Z, re-dispatched this run since the prior drop was ~24h stale over the weekend) still returns a live-looking Alpaca quote for CWAN ($24.56, +0.06%) more than 10 weeks after delisting. No portfolio impact (CWAN is not actually held).",
+        "detail": "risk-data-drop.json (generated 2026-09-06T11:50:26Z) still returns a live-looking Alpaca quote for CWAN ($24.56, +0.06%) more than 10 weeks after delisting. No portfolio impact (CWAN is not actually held), but it's a data-hygiene gap worth closing.",
         "action": "Remove CWAN from the Risk Data Drop workflow's ticker list once the portfolios.json fix lands."
       }
     ],
-    "universe_note": "IBIT and ETHA (Digital-Asset-ETF sleeve) are tracked in risk-data-drop.json (52 holdings priced, 0 errors this run) but are not represented in data/portfolios.json. Corrected real-holdings universe is 25 Dividend + 24 Growth (after CWAN removal and EIX->PGY swap, both applied locally only) = 49. 49 + 2 ETFs = 51, still one short of the firm's stated 52 -- flagging the count discrepancy for Carson rather than guessing at a third digital-asset name. No Alpaca/Finnhub API keys are available in this routine's environment, so per-ticker tradability was confirmed via the fresh Risk Data Drop (52/52 priced, 0 errors) rather than direct per-ticker calls, consistent with the documented architecture."
+    "universe_note": "IBIT and ETHA (Digital-Asset-ETF sleeve) are tracked in risk-data-drop.json (52 holdings priced, 0 errors) but are not represented in data/portfolios.json. Corrected real-holdings universe is 25 Dividend + 24 Growth (after CWAN removal and EIX->PGY swap, both applied locally only) = 49. 49 + 2 ETFs = 51, still one short of the firm's stated 52 -- flagging the count discrepancy for Carson rather than guessing at a third digital-asset name."
   },
   "summary": {
-    "red": 0,
+    "red": 1,
     "amber": 3,
-    "green": 46,
-    "headline": "Weekend supplemental check -- no new session since Friday 9/4 close (Risk Data Drop re-dispatched at 11:50 UTC, reconfirmed identical to Friday's settled data; markets closed through Labor Day weekend). MRVL, the crypto-complex pullback, and the hawkish-jobs-report Dividend-sleeve pullback all persist unchanged from Friday, no new company-specific developments found over the weekend for any of them. CWAN roster-integrity bug hits its 72nd consecutive day (PRs #11/#12/#14 still open/unmerged)."
+    "green": 45,
+    "headline": "NEW RED: US-Iran conflict escalated to direct combat over the weekend — US forces disabled/destroyed Iranian tankers and Iran fired ballistic missiles toward a US carrier group near the Strait of Hormuz (tier-1: Al Jazeera, ABC News/CENTCOM); not yet priced in since US markets are closed today for Labor Day, so this is the desk's first look ahead of Tuesday's open. It directly implicates the oil-price-volatility key_risk shared by the energy sleeve (DVN, VLO, OKE, CVX, CNX). MRVL, the crypto-complex pullback, and the hawkish-jobs-report Dividend-sleeve pullback all persist unchanged from Friday's close — no new company-specific developments found. CWAN roster-integrity bug hits its 74th consecutive day (PRs #11/#12/#14 still open/unmerged); a second stale-ticker issue (CTRA should read DVN) shares the same root cause and was reconfirmed still open on main this run."
   },
   "flags": [
+    {
+      "id": "hormuz_conflict_escalation_2026-09-06",
+      "ticker": "PORTFOLIO",
+      "sleeve": "Growth/Dividend",
+      "severity": "red",
+      "category": "geopolitical",
+      "headline": "US-Iran conflict escalates to direct combat near the Strait of Hormuz over the weekend",
+      "detail": "US Central Command says US forces 'permanently disabled' two Iranian oil tankers and 'completely destroyed' another after Iran's Revolutionary Guard Corps fired ballistic missiles toward a US aircraft carrier and destroyer patrolling near the Strait of Hormuz. Iran state media says it separately struck three additional tankers and several US-linked vessels in retaliation. Brent crude is up modestly (+0.6%) on the news as of Monday; the US equity market has not yet had a chance to react since it is closed today for Labor Day. This is a materially sharper escalation than the tanker-vs-tanker exchanges the desk tracked over the summer — it is now direct fire between US and Iranian forces. Directly relevant to the energy sleeve's shared key_risk (oil/gas price volatility) and to broader market risk sentiment heading into Tuesday's open.",
+      "metric": { "price": null, "day_move_pct": null, "level_ref": "Strait of Hormuz" },
+      "thesis_link": "Matches the oil-and-gas-price-volatility key_risk shared by DVN, VLO, OKE, CVX and CNX (e.g. DVN key_risk: 'Oil and gas price volatility remains the dominant swing factor for earnings and free cash flow... could reverse quickly given global supply dynamics'). A supply-side shock at the world's most important oil chokepoint is a live test of that risk in both directions (price tailwind for the energy names, volatility risk for the broader book).",
+      "evidence": [
+        { "source": "Al Jazeera — 'US, Iran engaged in tanker war: Where is the months-long conflict headed?'", "url": "https://www.aljazeera.com/news/2026/9/6/us-iran-engaged-in-tanker-war-where-is-the-months-long-conflict-headed", "as_of": "2026-09-06" },
+        { "source": "ABC News — Iran live updates: US strikes oil tankers, Tehran claims attacks on US-linked vessels (CENTCOM statement)", "url": "https://abcnews.com/International/live-updates/iran-live-updates-centcom-targeted-iranian-forces-posed/?id=136080582", "as_of": "2026-09-06" }
+      ],
+      "first_seen": "2026-09-07",
+      "status": "new"
+    },
     {
       "id": "MRVL_recovery_2026-09-04",
       "ticker": "MRVL",
       "sleeve": "Growth",
       "severity": "amber",
       "category": "valuation",
-      "headline": "Post-earnings de-rating easing; holding the recovery through the weekend",
-      "detail": "No new MRVL-specific news over the weekend. Friday 9/4 close of $223.41 (+6.96%) stands as the last settled price -- second straight up day, back above the $217 thesis-reference level cited in the screener's own risk framing. Weekend analyst commentary (RBC on 'buying the AI dip'; Goldman/Morgan Stanley comparing MRVL to Broadcom post-earnings) was comparative/general, not a fresh catalyst. Stays AMBER, not yet GREEN, since the stock remains well below its pre-earnings $272 high and the next dedicated catalyst (analyst day) isn't until October.",
-      "metric": { "price": 223.405, "day_move_pct": 6.96, "level_ref": 217 },
-      "thesis_link": "Matches MRVL key_risk: 'Forward P/E of 50.2x...the ~20% pullback from $272 to $217 after Q2 earnings...shows the market's sensitivity to execution risk.' Price remains above that $217 reference point.",
+      "headline": "Post-earnings de-rating continues to ease; no new session to confirm further",
+      "detail": "No MRVL-specific news found since Friday. Last settled price is Friday 2026-09-04's close of $223.41 (+6.96%), a second straight up day that put the stock back above the $217 level the screener's own risk framing cites as the post-earnings pullback reference point. A Sept 6 press summary (Benzinga) puts the stock around $222.23, consistent with modest continued digestion rather than a new catalyst; average analyst rating remains Strong Buy with a ~$285 12-month target. Stays AMBER, not GREEN, since MRVL remains well below its pre-earnings $272 high and its next dedicated catalyst (analyst day) is roughly a month out in October.",
+      "metric": { "price": 223.41, "day_move_pct": 6.96, "prev_close": 208.87, "level_ref": 217 },
+      "thesis_link": "Matches MRVL key_risk: 'Forward P/E of 50.2x and trailing P/E of 79.2x... the ~20% pullback from $272 to $217 after Q2 earnings despite a revenue beat shows the market's sensitivity to execution risk.' Price remains above that $217 reference point.",
       "evidence": [
-        { "source": "CNBC/Benzinga quote pages -- MRVL Friday 9/4 close and weekend analyst commentary", "url": "https://www.cnbc.com/quotes/MRVL", "as_of": "2026-09-06" }
+        { "source": "Benzinga — 'What's Going On With Marvell Technology Stock' (Sept 2026 price/analyst summary)", "url": "https://www.benzinga.com/markets/tech/26/09/61545214/whats-going-on-with-marvell-technology-stock-tuesday-4", "as_of": "2026-09-06" }
       ],
       "first_seen": "2026-08-19",
       "status": "persisting"
@@ -59,12 +89,12 @@
       "sleeve": "Growth",
       "severity": "amber",
       "category": "sector_pullback",
-      "headline": "Broad crypto-complex pullback holds through the weekend: COIN -4.22%, MARA -2.42%, IBIT/ETHA -2.4-2.5% (portfolio, informational)",
-      "detail": "No new session since Friday; Bitcoin itself traded a stable $78K-80K range over the weekend (no fresh crypto-specific shock), consistent with Friday's read that this was a broad, jobs-report-driven risk-off day rather than an idiosyncratic development for COIN or MARA. Both names' standing key_risks (COIN: prolonged crypto-revenue downturn; MARA: leveraged BTC-price derivative) remain the same known category, not newly materializing.",
-      "metric": { "price": 184.63, "day_move_pct": -4.22, "level_ref": null },
-      "thesis_link": "COIN matches key_risk: 'Prolonged crypto market downturn...Q2 2026 revenue declined 19% YoY.' MARA matches key_risk: 'Revenue concentration in bitcoin mining means financial performance remains a leveraged derivative of BTC price.'",
+      "headline": "Broad crypto-complex pullback from Friday holds; Bitcoin itself has since firmed modestly",
+      "detail": "Friday's session (last settled): COIN -4.22%, MARA -2.42%, IBIT -2.43%/ETHA -2.52% (portfolio, informational, not in data/portfolios.json). No new trading session since. Bitcoin itself has firmed since Friday's close, trading around $79,900 as of Sept 6 versus the high-$70s/low-$80s band referenced in the prior read — continuing to read as a broad, jobs-report-driven risk-off move rather than an idiosyncratic crypto-specific shock. Both names' standing key_risks (COIN: prolonged crypto-revenue downturn; MARA: leveraged BTC-price derivative) remain the same known category, not newly materializing.",
+      "metric": { "price": 184.63, "day_move_pct": -4.22, "prev_close": 192.76, "level_ref": null },
+      "thesis_link": "COIN matches key_risk: 'Prolonged crypto market downturn... Q2 2026 revenue declined 19% YoY.' MARA matches key_risk: 'Revenue concentration in bitcoin mining means financial performance remains a leveraged derivative of BTC price.'",
       "evidence": [
-        { "source": "Weekend BTC price range confirmation ($78K-80K band)", "url": "https://robinhood.com/us/en/prediction-markets/crypto/events/btc-price-on-sep-5-2026-at-4pm-edt-sep-05-2026/", "as_of": "2026-09-05" }
+        { "source": "CoinDesk — Bitcoin price today", "url": "https://www.coindesk.com/price/bitcoin", "as_of": "2026-09-06" }
       ],
       "first_seen": "2026-09-05",
       "status": "persisting"
@@ -75,12 +105,12 @@
       "sleeve": "Dividend",
       "severity": "amber",
       "category": "macro",
-      "headline": "Hot August jobs report / elevated September rate-hike odds -- no weekend escalation",
-      "detail": "Friday's hot payrolls print (+162K vs +55K consensus) remains the operative macro fact; no weekend Fed commentary or new data found that moves the ~58% implied hike odds for the Sept 15-16 FOMC meeting. Dividend-sleeve pullback from Friday (ORI, ADP, GD, SYK, STLD, NTR, DVN, CL, etc., roughly -0.9% to -2.7%) stands unchanged over the weekend -- a rate-sensitivity read on the sleeve, not a set of thesis-specific developments.",
+      "headline": "Hot August jobs report / elevated September rate-hike odds -- no weekend escalation, CPI print now the next near-term catalyst",
+      "detail": "Friday's hot payrolls print (+162K vs +55K consensus) remains the operative macro fact. Rate-hike-odds estimates continue to vary by source (roughly 50-65% probability of a 25bp hike at the Sept 15-16 FOMC meeting depending on the model), with Fed Governor Waller's Sept 3 hawkish remarks on one side and the softer jobs print on the other. The August CPI print on Sept 11 is now the next scheduled data point that could move this. Dividend-sleeve pullback from Friday (ORI, ADP, GD, SYK, STLD, NTR, DVN, CL, LMT, etc., roughly -0.9% to -2.7%) stands unchanged over the weekend -- a rate-sensitivity read on the sleeve, not a set of thesis-specific developments.",
       "metric": { "price": null, "day_move_pct": null, "level_ref": null },
       "thesis_link": null,
       "evidence": [
-        { "source": "Yahoo Finance / TheStreet -- Sept 4 2026 jobs report market reaction", "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-today-sept-4-133716564.html", "as_of": "2026-09-04" }
+        { "source": "CME FedWatch / rate-probability trackers -- Sept 2026 FOMC odds", "url": "https://rateprobability.com/fed", "as_of": "2026-09-06" }
       ],
       "first_seen": "2026-09-05",
       "status": "persisting"
@@ -93,16 +123,18 @@
       "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
       "gate": "Australian FIRB clearance",
       "status": "closed",
-      "last_checked": "2026-09-06",
+      "last_checked": "2026-09-07",
       "severity": "green",
-      "note": "Deal terms unchanged, closed since 2026-06-25. No update needed this run. The persisting issue is roster hygiene (see roster_integrity), not the deal itself."
+      "note": "Deal terms unchanged, closed since 2026-06-25. No update needed this run (Labor Day, no new session). The persisting issue is roster hygiene (see roster_integrity), not the deal itself."
     }
   ],
   "levels": [
     { "ticker": "SPY", "level": 645.80, "type": "support", "state": "active", "distance_pct": 19.26, "interaction": "not_in_play" }
   ],
   "calendar": [
-    { "ticker": "MRVL", "event": "Analyst Day (next dedicated catalyst since Q2 earnings)", "date": "2026-10", "severity": "amber" },
-    { "ticker": "SPY", "event": "FOMC meeting -- Sept 15-16, 2026 decision at 2:00pm ET; ~58% implied odds of a rate hike after the hot August jobs report", "date": "2026-09-16", "severity": "amber" }
+    { "ticker": "SPY", "event": "August CPI print", "date": "2026-09-11", "severity": "amber" },
+    { "ticker": "SPY", "event": "FOMC meeting -- Sept 15-16, 2026 decision at 2:00pm ET; rate-hike odds elevated (roughly 50-65% by source) after the hot August jobs report", "date": "2026-09-16", "severity": "amber" },
+    { "ticker": "MRVL", "event": "Analyst Day (next dedicated catalyst since Q2 earnings)", "date": "2026-10", "severity": "info" },
+    { "ticker": "NVDA", "event": "Q3 FY2027 earnings -- hyperscaler capex watch for AI-infrastructure holdings (AMD, MRVL, TSM, CRDO, LRCX, NXPI, KEYS)", "date": "2026-11", "severity": "info" }
   ]
 }
