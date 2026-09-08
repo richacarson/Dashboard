@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-07T16:34:45Z",
+  "generated_at": "2026-09-08T06:06:59Z",
   "stewardship_start": "2025-01-15",
   "stewardship_note": "Carson began making investment decisions 2025-01-15. Returns here are HIS stewardship record, not the strategy's full inception (which the Performance tab shows separately).",
   "sleeves": {
@@ -9,7 +9,7 @@
       "data_start": "2011-10-02",
       "current_value": 671535.08,
       "returns": {
-        "week": 0.51,
+        "week": 0.94,
         "mtd": 0.94,
         "qtd": 6.47,
         "ytd": 20.93,
@@ -19,14 +19,14 @@
       "benchmarks": {
         "DVY": {
           "returns": {
-            "week": 1.08,
+            "week": 0.88,
             "mtd": 0.88,
             "qtd": 4.62,
             "ytd": 16.96,
             "since_stewardship": 30.4
           },
           "active_return": {
-            "week": -0.57,
+            "week": 0.06,
             "mtd": 0.06,
             "qtd": 1.85,
             "ytd": 3.97,
@@ -35,14 +35,14 @@
         },
         "SPY": {
           "returns": {
-            "week": 0.41,
+            "week": 1.1,
             "mtd": 1.1,
             "qtd": 3.28,
             "ytd": 13.34,
             "since_stewardship": 32.15
           },
           "active_return": {
-            "week": 0.1,
+            "week": -0.16,
             "mtd": -0.16,
             "qtd": 3.19,
             "ytd": 7.59,
@@ -54,12 +54,12 @@
         "DVY": {
           "max_drawdown": -17.11,
           "current_drawdown": -1.21,
-          "annualized_volatility": 16.18,
-          "annualized_return": 23.47,
+          "annualized_volatility": 16.17,
+          "annualized_return": 23.41,
           "sharpe": 1.18,
-          "sortino": 1.72,
+          "sortino": 1.71,
           "information_ratio": 0.71,
-          "tracking_error": 8.2,
+          "tracking_error": 8.19,
           "beta": 0.98,
           "correlation": 0.86,
           "up_capture": 88.66,
@@ -73,12 +73,12 @@
         "SPY": {
           "max_drawdown": -17.11,
           "current_drawdown": -1.21,
-          "annualized_volatility": 16.18,
-          "annualized_return": 23.47,
+          "annualized_volatility": 16.17,
+          "annualized_return": 23.41,
           "sharpe": 1.18,
-          "sortino": 1.72,
+          "sortino": 1.71,
           "information_ratio": 0.46,
-          "tracking_error": 10.5,
+          "tracking_error": 10.48,
           "beta": 0.75,
           "correlation": 0.81,
           "up_capture": 58.51,
@@ -182,7 +182,7 @@
       "data_start": "2025-07-28",
       "current_value": 137013.27,
       "returns": {
-        "week": 1.27,
+        "week": 3.21,
         "mtd": 3.21,
         "qtd": 3.96,
         "ytd": 22.58,
@@ -192,14 +192,14 @@
       "benchmarks": {
         "IUSG": {
           "returns": {
-            "week": 0.68,
+            "week": 1.7,
             "mtd": 1.7,
             "qtd": 2.45,
             "ytd": 14.4,
             "since_stewardship": 23.63
           },
           "active_return": {
-            "week": 0.59,
+            "week": 1.51,
             "mtd": 1.51,
             "qtd": 1.51,
             "ytd": 8.18,
@@ -208,14 +208,14 @@
         },
         "SPY": {
           "returns": {
-            "week": 0.41,
+            "week": 1.1,
             "mtd": 1.1,
             "qtd": 3.28,
             "ytd": 13.34,
             "since_stewardship": 22.26
           },
           "active_return": {
-            "week": 0.86,
+            "week": 2.11,
             "mtd": 2.11,
             "qtd": 0.68,
             "ytd": 9.24,
