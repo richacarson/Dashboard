@@ -515,7 +515,7 @@
     "hour": "amc",
     "epsEstimate": -0.187,
     "epsActual": null,
-    "revenueEstimate": null,
+    "revenueEstimate": 44944596,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -890,16 +890,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "HYFT",
-    "date": "2026-09-10",
-    "hour": "",
-    "epsEstimate": -0.0782,
-    "epsActual": null,
-    "revenueEstimate": 4614143,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "IBEX",
     "date": "2026-09-10",
     "hour": "amc",
@@ -1210,6 +1200,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "HYFT",
+    "date": "2026-09-14",
+    "hour": "",
+    "epsEstimate": -0.0782,
+    "epsActual": null,
+    "revenueEstimate": 4614143,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "HYSR",
     "date": "2026-09-14",
     "hour": "",
@@ -1402,7 +1402,7 @@
   {
     "symbol": "FPS",
     "date": "2026-09-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.2411,
     "epsActual": null,
     "revenueEstimate": 434239400,
@@ -1472,7 +1472,7 @@
   {
     "symbol": "VRA",
     "date": "2026-09-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0808,
     "epsActual": null,
     "revenueEstimate": 66614550,
