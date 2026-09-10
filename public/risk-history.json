@@ -481,5 +481,12 @@
     "amber": 1,
     "green": 48,
     "headline": "NEW RED: SYK -8.79% to a new 52-week low on CFO disclosure of persisting vascular/ortho manufacturing constraints (Wells Fargo Healthcare Conference) -- a new risk not previously captured in the screener. RED persists: US-Iran/Hormuz conflict escalates further (3 Iranian tankers struck, Iran fired on a US carrier group); energy sleeve up today (DVN +0.7%, VLO +3.46%) as crude gains outweigh risk-off. AMBER: hawkish-jobs-report Dividend/Growth pullback broadens ahead of the Sept 15-16 FOMC (ADP, GPC, ABT, CHD, PCAR, SSNC, TOL, HOOD, COIN, ATAT, SYF, NVDA, NXPI, TEL, IBIT all down 1.6-3.9% on no company-specific news; PGY fell despite raising FY26 guidance). GREEN: AI-infra/crypto complex (AMD, HUT, FCX, MARA, LRCX, TSM) extends its rally. Roster: CTRA->DVN fix quietly landed on main (resolved); CWAN roster-integrity bug hits its 76th consecutive day (PRs #11/#12/#14 still open/unmerged)."
+  },
+  {
+    "date": "2026-09-10",
+    "red": 2,
+    "amber": 2,
+    "green": 47,
+    "headline": "RED persists x2: SYK holding near new 52-week low, no further deterioration; US-Iran/Hormuz conflict continues escalating, energy sleeve mixed. AMBER: pre-CPI/FOMC Dividend+Growth pullback broadens (adds LMT, BKH, NEE, CHD, SSNC, LRCX, FAST, GD) ahead of tomorrow's CPI and the Sept 15-16 FOMC. NEW AMBER: broader crypto market -4.3% pulls HUT/COIN/HOOD down, decoupling from the still-rallying AI-chip leg (AMD, MRVL). CWAN roster-integrity bug hits its 77th consecutive day (PRs #11/#12/#14 still open/unmerged); EIX->PGY drift persists 7th session."
   }
 ]
