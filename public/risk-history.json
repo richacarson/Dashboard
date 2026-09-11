@@ -488,5 +488,12 @@
     "amber": 2,
     "green": 47,
     "headline": "RED persists x2: SYK holding near new 52-week low, no further deterioration; US-Iran/Hormuz conflict continues escalating, energy sleeve mixed. AMBER: pre-CPI/FOMC Dividend+Growth pullback broadens (adds LMT, BKH, NEE, CHD, SSNC, LRCX, FAST, GD) ahead of tomorrow's CPI and the Sept 15-16 FOMC. NEW AMBER: broader crypto market -4.3% pulls HUT/COIN/HOOD down, decoupling from the still-rallying AI-chip leg (AMD, MRVL). CWAN roster-integrity bug hits its 77th consecutive day (PRs #11/#12/#14 still open/unmerged); EIX->PGY drift persists 7th session."
+  },
+  {
+    "date": "2026-09-11",
+    "red": 3,
+    "amber": 2,
+    "green": 46,
+    "headline": "NEW RED: FCX -6.58% on White House copper-tariff stall (Reuters) + copper's reversal from a record high, direct hit to its copper-cyclicality key_risk. SYK persists RED, worsening (-2.0%). Hormuz conflict persists RED, escalates (Iran fired a ballistic missile at a US warship, Brent >$105) though energy-sleeve reaction is muted today. AMBER pre-CPI/FOMC pullback broadens hard into the chip/AI-infra complex (LRCX -5.8%, CRDO -4.4%, MRVL -3.4%, AMD -3.3%, NVDA -2.4%, AEM -3.0%) plus NTR/SYF/TOL/VST/PGY; CPI lands within the hour, FOMC 9/16. Crypto miners (HUT -5.6%, MARA -4.2%) underperform exchanges/ETFs as bitcoin tests ~$77K. AI-chip green thread (since 9/5) resolved -- no longer decoupled from macro. CWAN roster bug hits 78th consecutive day; EIX->PGY drift persists an 8th run."
   }
 ]
