@@ -1761,6 +1761,8 @@ Instructions:
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
+  const wsRetryRef = useRef(0);      // consecutive failed connects, for backoff
+  const wsTimerRef = useRef(null);   // pending reconnect, so we never queue two
   const fhWsRef = useRef(null);
 
   const ALL = useMemo(() => {
@@ -2063,19 +2065,28 @@ Instructions:
     if (showLoading) setLoading(true);
     try {
       const allSyms = [...ALL, ...IEX_BM];
-      // Batched at 50, the same width every other Alpaca call in this file uses (see the
-      // daily-bars fetch in fetchFundamentals). This one asked for all ~175 symbols in a
-      // single query string, and a request that wide comes back partial rather than as an
-      // error — which is indistinguishable, at this point in the code, from the symbols
-      // simply having no data. A failed chunk now costs its own 50 symbols instead of the
-      // whole board, and the count is reported rather than inferred.
-      const CHUNK = 50;
+      // Chunk width is a rate-limit decision, not a URL-length one. This polls every second
+      // while the market is open, so the universe divided by the chunk size IS the requests
+      // per second: at 50 that was four a second, 240 a minute, over Alpaca's 200/min — and
+      // the readout came back "0/176 · HTTP 504" on every chunk. At 100 it is two a second,
+      // 120 a minute, which leaves headroom for the bars and assets calls that share the
+      // same budget. Chunking still earns its place: one bad chunk costs its own symbols
+      // rather than the whole board.
+      const CHUNK = 100;
       const d = {};
       let httpErr = null;
       for (let i = 0; i < allSyms.length; i += CHUNK) {
         const chunk = allSyms.slice(i, i + CHUNK);
         const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${chunk.join(",")}&feed=iex`, { headers: hdrs });
-        if (!r.ok) { httpErr = `HTTP ${r.status}`; console.warn("[snapshots]", r.status, chunk[0], "…", chunk[chunk.length - 1]); continue; }
+        if (!r.ok) {
+          httpErr = `HTTP ${r.status}`;
+          console.warn("[snapshots]", r.status, chunk[0], "…", chunk[chunk.length - 1]);
+          // 429/504 are the rate limiter and the gateway giving up. Hammering the next
+          // chunk in the same tick makes both worse, so give up the rest of this poll and
+          // let the interval bring us back in a second.
+          if (r.status === 429 || r.status >= 500) break;
+          continue;
+        }
         Object.assign(d, await r.json());
       }
       const got = Object.keys(d).length;
@@ -3042,6 +3053,17 @@ Instructions:
   /* ── WebSocket streaming ── */
   const connectWS = useCallback(() => {
     if (!apiKey || !apiSecret) return;
+    // Alpaca allows ONE concurrent data-stream connection per account, and answers a
+    // second one with "406 connection limit exceeded" before closing it. The old handler
+    // reconnected on a flat 5s timer with no guard, so a single 406 became a permanent
+    // loop: connect, get refused, close, wait 5s, repeat — for as long as the tab stayed
+    // open, while the panel cheerfully said "WebSocket connected". A second tab, a phone
+    // left on the dashboard, or a socket the server has not reaped yet is enough to start
+    // it, and the retry storm keeps the slot churning so it cannot recover on its own.
+    if (wsTimerRef.current) { clearTimeout(wsTimerRef.current); wsTimerRef.current = null; }
+    const live = wsRef.current;
+    if (live && (live.readyState === WebSocket.OPEN || live.readyState === WebSocket.CONNECTING)) return;
+    if (live) { try { live.onclose = null; live.close(); } catch {} }
     try {
       const ws = new WebSocket("wss://stream.data.alpaca.markets/v2/iex");
       wsRef.current = ws;
@@ -3059,7 +3081,7 @@ Instructions:
             // nothing. The old handler ignored every T it did not recognise, so the socket
             // reported "connected" while streaming no trades at all.
             if (msg.T === "error") { console.warn("[alpaca-ws]", msg.code, msg.msg); setWsErr(`${msg.code} ${msg.msg}`); }
-            if (msg.T === "subscription") { setWsErr(null); console.info("[alpaca-ws] streaming", (msg.trades || []).length, "symbols"); }
+            if (msg.T === "subscription") { setWsErr(null); wsRetryRef.current = 0; console.info("[alpaca-ws] streaming", (msg.trades || []).length, "symbols"); }
             if (msg.T === "t" && msg.S && msg.p) {
               // Update refs only — React state syncs on next poll cycle (every 1s)
               quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
@@ -3071,9 +3093,27 @@ Instructions:
           }
         } catch {}
       };
-      ws.onclose = () => { setTimeout(connectWS, 5000); };
+      ws.onclose = () => {
+        if (wsRef.current === ws) wsRef.current = null;
+        // Back off rather than hammer. 406 in particular means someone else holds the one
+        // connection we are allowed, and a retry a second from now cannot change that —
+        // it only keeps the slot contended. 5s, 10s, 20s, then 40s from there on.
+        const n = Math.min(++wsRetryRef.current, 4);
+        const delay = 5000 * 2 ** (n - 1);
+        if (wsTimerRef.current) clearTimeout(wsTimerRef.current);
+        wsTimerRef.current = setTimeout(() => { wsTimerRef.current = null; connectWS(); }, delay);
+      };
     } catch {}
   }, [apiKey, apiSecret]);
+
+  // Drop the socket when the tab goes away, so this session stops holding the account's
+  // single connection slot against the next one.
+  useEffect(() => () => {
+    if (wsTimerRef.current) clearTimeout(wsTimerRef.current);
+    const ws = wsRef.current;
+    if (ws) { try { ws.onclose = null; ws.close(); } catch {} }
+    wsRef.current = null;
+  }, []);
 
   // The Finnhub trade WebSocket that used to stream DVY/IUSG has been removed: its free
   // tier stopped publishing trades for them (price froze at the prior close), and keeping
