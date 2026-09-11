@@ -643,5 +643,15 @@
     "ticker": "TER",
     "ex_date": "2026-09-04",
     "dps": 0.13
+  },
+  {
+    "ticker": "AGI",
+    "ex_date": "2026-09-10",
+    "dps": 0.04
+  },
+  {
+    "ticker": "NVDA",
+    "ex_date": "2026-09-10",
+    "dps": 0.25
   }
 ]

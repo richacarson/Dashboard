@@ -598,5 +598,20 @@
     "ticker": "WDC",
     "ex_date": "2026-09-08",
     "dps": 0.15
+  },
+  {
+    "ticker": "AGI",
+    "ex_date": "2026-09-10",
+    "dps": 0.04
+  },
+  {
+    "ticker": "NVDA",
+    "ex_date": "2026-09-10",
+    "dps": 0.25
+  },
+  {
+    "ticker": "YOU",
+    "ex_date": "2026-09-10",
+    "dps": 0.15
   }
 ]
