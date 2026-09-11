@@ -1833,6 +1833,10 @@ Instructions:
     // Include right-rail benchmark ETFs not already covered by BM_SYMS so they get live quotes
     return [...new Set([...base, ...perfHoldings, ...soldToday, ...q1Stocks, ...RAIL_BM_EXTRA])];
   }, [sleeves, perfDataMap]);
+  // Exactly what the quote poll asks for, named once. The readout used to divide by
+  // ALL while the poll fetched ALL plus the five benchmarks, so names came back 178/173 —
+  // a fraction over 1, which reads as a bug in the fetch rather than in the denominator.
+  const quoteSyms = useMemo(() => [...new Set([...ALL, ...BM_SYMS])], [ALL]);
   const coreSyms = useMemo(() => getCoreSyms(sleeves), [sleeves]);
   // Earnings surfaces track the two managed sleeves only. The FCI lists are research
   // universes rather than positions, and at ~200 names they bury the holdings.
@@ -2120,7 +2124,7 @@ Instructions:
       // the rest of the book now comes from the same place, which removes the IEX feed's
       // 2%-of-volume coverage, the one-socket-per-account limit behind the 406, and the
       // dependency on a vendor that was returning 504s across every endpoint.
-      const allSyms = [...new Set([...ALL, ...BM_SYMS])];
+      const allSyms = quoteSyms;
       const d = await fmpSnapshots(allSyms, FK);
       const httpErr = d.__err || null;
       delete d.__err;
@@ -2227,7 +2231,7 @@ Instructions:
         setLastUp(now);
       }
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
-  }, [ALL]);
+  }, [quoteSyms]);
 
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
@@ -6644,7 +6648,7 @@ Instructions:
                 <div style={{ marginTop: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Data Loaded</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                    <div style={{ fontSize: 11, color: C.t3 }}>Company names: <span style={{ color: C.t2 }}>{Object.keys(names).length}/{ALL.length}</span></div>
+                    <div style={{ fontSize: 11, color: C.t3 }}>Company names: <span style={{ color: C.t2 }}>{quoteSyms.filter(x => names[x]).length}/{quoteSyms.length}</span></div>
                     <div style={{ fontSize: 11, color: C.t3 }}>News: <span style={{ color: C.t2 }}>{news.length}</span></div>
                     <div style={{ fontSize: 11, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
                     <div style={{ fontSize: 11, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
@@ -13245,7 +13249,7 @@ Instructions:
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Data Loaded</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div style={{ fontSize: 12, color: C.t3 }}>Company names: <span style={{ color: C.t2 }}>{Object.keys(names).length}/{ALL.length}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>Company names: <span style={{ color: C.t2 }}>{quoteSyms.filter(x => names[x]).length}/{quoteSyms.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>News articles: <span style={{ color: C.t2 }}>{news.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
