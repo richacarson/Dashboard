@@ -2306,6 +2306,24 @@ Instructions:
   const [econWeek, setEconWeek] = useState(0);         // economic calendar: weeks from this one
   const [econDay, setEconDay] = useState(null);        // selected day in the strip; null = today
   const [econShowWeek, setEconShowWeek] = useState(false);
+  // High only by default. A week of US events is typically 7 High against 18 Medium and
+  // 58 Low, and almost all of the Medium and Low is CFTC speculative-positioning rows —
+  // so the unfiltered calendar buries CPI and the FOMC under three dozen lines of
+  // "CFTC Aluminium Speculative net positions". The wider levels stay one tap away.
+  const [econImpact, setEconImpact] = useState("high");   // "high" | "medium"
+  const econShown = useMemo(() => {
+    if (econImpact !== "high") return econCalendar;
+    return econCalendar.filter(e => (e.impact || "").toLowerCase() === "high");
+  }, [econCalendar, econImpact]);
+  // Counts for the level control, so the labels say what each one would show.
+  const econCounts = useMemo(() => {
+    const c = { high: 0, medium: 0, low: 0 };
+    for (const e of econCalendar) {
+      const k = (e.impact || "").toLowerCase();
+      if (k in c) c[k]++; else c.low++;
+    }
+    return { high: c.high, medium: c.high + c.medium + c.low };
+  }, [econCalendar]);
   const [earnDetail, setEarnDetail] = useState(null);   // "SYM|date" of the opened card
   const [earnTranscriptFull, setEarnTranscriptFull] = useState(null); // key whose transcript is expanded
   const [earnDetailData, setEarnDetailData] = useState({}); // key -> { loading, transcript, news, err }
@@ -7376,7 +7394,7 @@ Instructions:
                 // empty day is visible before you land on it.
                 const today = new Date().toISOString().slice(0, 10);
                 const byDate = {};
-                econCalendar.forEach(e => { const d = (e.date || "").slice(0, 10); if (d) (byDate[d] = byDate[d] || []).push(e); });
+                econShown.forEach(e => { const d = (e.date || "").slice(0, 10); if (d) (byDate[d] = byDate[d] || []).push(e); });
                 const day = econDay || today;
                 const step = n => { const x = new Date(day + "T12:00:00"); x.setDate(x.getDate() + n); setEconDay(x.toISOString().slice(0, 10)); };
                 const rows = (byDate[day] || []).slice(0, 40);
@@ -7388,9 +7406,15 @@ Instructions:
                     </span>
                     <button onClick={() => step(1)} style={{ background: "none", border: "none", color: C.t3, cursor: "pointer", fontFamily: "inherit", fontSize: 12, padding: "0 4px" }}>›</button>
                     {day !== today && <button onClick={() => setEconDay(today)} style={{ padding: "1px 6px", borderRadius: 2, border: "none", background: C.accentSoft, color: C.accent, fontSize: 9, fontWeight: 700, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit" }}>TODAY</button>}
-                    <span style={{ marginLeft: "auto", fontSize: 9, color: C.t4 }}>{rows.length}</span>
+                    {/* Cycles High -> +Med -> All. Three pills would not fit a 300px rail. */}
+                    <button onClick={() => setEconImpact(v => v === "high" ? "medium" : "high")} style={{
+                      marginLeft: "auto", padding: "1px 6px", borderRadius: 2, border: `1px solid ${C.border}`,
+                      background: "transparent", color: econImpact === "high" ? C.accent : C.t3,
+                      fontSize: 9, fontWeight: 700, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit",
+                    }}>{econImpact === "high" ? "HIGH" : "ALL"}</button>
+                    <span style={{ marginLeft: 6, fontSize: 9, color: C.t4 }}>{rows.length}</span>
                   </div>
-                  {!rows.length && <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>{econCalendar.length ? "NO US EVENTS" : "LOADING CALENDAR"}</div>}
+                  {!rows.length && <div style={{ ...tEyebrowMuted, padding: "8px 12px" }}>{econCalendar.length ? (econImpact === "high" ? "NO HIGH-IMPACT US EVENTS" : "NO US EVENTS") : "LOADING CALENDAR"}</div>}
                   {rows.map((e, i) => (
                     <div key={`${e.title}-${i}`} style={{ padding: "5px 12px", borderBottom: `1px solid ${C.border}` }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
@@ -8458,7 +8482,8 @@ Instructions:
               const dayOf = n => { const x = new Date(monday); x.setDate(x.getDate() + n + econWeek * 7); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`; };
               const week = Array.from({ length: 5 }, (_, i) => dayOf(i));
               const byDate = {};
-              econCalendar.forEach(e => {
+              // Filtered, so the day-strip counts below match what the pane actually shows.
+              econShown.forEach(e => {
                 const date = (e.date || "").slice(0, 10);
                 if (!date) return;
                 (byDate[date] = byDate[date] || []).push(e);
@@ -8480,6 +8505,26 @@ Instructions:
                       <button onClick={() => { setEconWeek(0); setEconDay(todayStr); }} style={{ padding: "4px 12px", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Today</button>
                     )}
                     <button onClick={() => setEconShowWeek(v => !v)} style={{ marginLeft: "auto", padding: "4px 12px", borderRadius: 8, border: `1px solid ${econShowWeek ? C.borderActive : C.border}`, background: econShowWeek ? C.accentSoft : "transparent", color: econShowWeek ? C.t1 : C.t4, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Whole week</button>
+                  </div>
+                  {/* Counts are for the loaded window, so you can see what the wider level
+                      would add before tapping it. "Show all" is High + Medium: the fetch
+                      drops Low upstream, and Low here is essentially all CFTC
+                      speculative-positioning rows. */}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                    {[
+                      { k: "high", label: "High impact", n: econCounts.high },
+                      { k: "medium", label: "Show all", n: econCounts.medium },
+                    ].map(o => {
+                      const on = econImpact === o.k;
+                      return (
+                        <button key={o.k} onClick={() => setEconImpact(o.k)} style={{
+                          padding: "4px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit",
+                          border: `1px solid ${on ? C.borderActive : C.border}`,
+                          background: on ? C.accentSoft : "transparent",
+                          color: on ? C.t1 : C.t4, fontSize: 12, fontWeight: 700,
+                        }}>{o.label} <span style={{ color: on ? C.t3 : C.t4, fontWeight: 600 }}>{o.n}</span></button>
+                      );
+                    })}
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     {week.map(d => {
