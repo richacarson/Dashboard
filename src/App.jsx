@@ -171,6 +171,55 @@ async function fmpQuotes(syms, key) {
   return Object.assign(batched, ...singles);
 }
 
+// The whole board in one call, in the shape the app already speaks.
+//
+// FMP's batch-quote carries everything Alpaca's snapshot did — last price, previous
+// close, the day's open/high/low/volume — and the company name besides, which is why
+// this replaces /v2/assets too. Measured against the live book: 168 symbols requested,
+// 168 returned, every one of those fields populated, in a single request.
+//
+// It is not a stream. Quotes land roughly 15-60s behind the tape, against the Alpaca
+// socket's sub-second prints — but that socket only ever carried IEX, about 2% of
+// volume, and is capped at one connection per account. For a portfolio board the
+// trade is worth making; see POLL_MIN_MS for what it means for the refresh cadence.
+async function fmpSnapshots(syms, key) {
+  if ((!key && !PROXY) || !syms.length) return {};
+  const num = (x) => (typeof x === "number" && isFinite(x)) ? x : null;
+  const parse = (arr) => {
+    const out = {};
+    for (const q of (Array.isArray(arr) ? arr : [])) {
+      const p = num(q?.price);
+      if (!q?.symbol || !(p > 0)) continue;
+      const pc = num(q.previousClose);
+      out[q.symbol] = {
+        p,
+        t: q.timestamp ? new Date(q.timestamp * 1000).toISOString() : new Date().toISOString(),
+        pc: pc > 0 ? pc : null,
+        o: num(q.open), h: num(q.dayHigh), l: num(q.dayLow), c: p, v: num(q.volume),
+        name: q.name || null,
+      };
+    }
+    return out;
+  };
+  const get = async (url) => {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) return { __err: `HTTP ${r.status}` };
+      return parse(await r.json());
+    } catch (e) { return { __err: e?.message || "network" }; }
+  };
+  // Same batch-then-fill-singles shape as fmpQuotes: ^VIX and friends answer
+  // /stable/quote but are absent from /stable/batch-quote.
+  const batched = await get(fmpUrl(`/stable/batch-quote`, { symbols: syms.join(",") }));
+  const err = batched.__err; delete batched.__err;
+  if (!err && syms.every((s) => batched[s])) return batched;
+  const gaps = syms.filter((s) => !batched[s]);
+  const singles = await Promise.all(gaps.slice(0, 12).map((s) => get(fmpUrl(`/stable/quote`, { symbol: s }))));
+  const merged = Object.assign(batched, ...singles.map(x => { delete x.__err; return x; }));
+  if (err && !Object.keys(merged).length) merged.__err = err;
+  return merged;
+}
+
 // ---------------------------------------------------------------------------
 // FMP -> Finnhub shape adapters.
 //
@@ -397,6 +446,10 @@ const FMP_OK = !!(FK || PROXY);
 // FMP quota shared with the dividend/earnings/calendar calls. On the paid plan that
 // constraint is gone, so poll faster — one batched call covers both symbols.
 const BENCH_POLL_MS = 10000;
+// FMP refreshes a quote every 15-60s, so polling faster than this only burns quota to
+// re-read the same number. The Auto-Refresh setting still chooses the cadence; 1s and
+// 5s simply land here.
+const POLL_MIN_MS = 6000;
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
 // Which source the metrics actually come from, named once so the settings readout cannot
 // disagree with the code path. It used to test FH first and print "Finnhub" whenever a
@@ -1835,23 +1888,23 @@ Instructions:
     if (!/^[A-Z.\-]{1,10}$/.test(sym)) return null;
     const jobs = [];
     const diag = {
-      quote: quotesRef.current[sym]?.p ? "cached" : (apiKey && apiSecret ? "pending" : "no-keys"),
+      quote: quotesRef.current[sym]?.p ? "cached" : (FMP_OK ? "pending" : "no-keys"),
       fundamentals: fundamentals[sym]?.peTTM ? "cached" : (METRICS_OK ? "pending" : "no-metrics-key"),
     };
-    if (!(quotesRef.current[sym]?.p) && apiKey && apiSecret) {
+    // Search backfill goes through the same source as the board. It was the last live
+    // price still coming from Alpaca, so looking up a ticker failed for the same reason
+    // the board did.
+    if (!(quotesRef.current[sym]?.p) && FMP_OK) {
       jobs.push((async () => {
         try {
-          const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${sym}&feed=iex`, { headers: hdrs });
-          if (!r.ok) { diag.quote = `http-${r.status}`; return; }
-          const d = await r.json();
-          const snap = d[sym];
-          if (snap?.latestTrade) {
-            quotesRef.current[sym] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
-            setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
-            diag.quote = "ok";
-          } else { diag.quote = "no-trade-data"; }
-          if (snap?.prevDailyBar && !splitFixedRef.current.has(sym)) { // keep split-corrected pc
-            barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.prevDailyBar.c };
+          const snap = (await fmpSnapshots([sym], FK))[sym];
+          if (!snap) { diag.quote = "no-quote"; return; }
+          quotesRef.current[sym] = { p: snap.p, t: snap.t };
+          setQuotes(prev => ({ ...prev, [sym]: quotesRef.current[sym] }));
+          diag.quote = "ok";
+          if (snap.name) setNames(prev => prev[sym] === snap.name ? prev : { ...prev, [sym]: snap.name });
+          if (snap.pc > 0 && !splitFixedRef.current.has(sym)) { // keep split-corrected pc
+            barsRef.current[sym] = { ...(barsRef.current[sym] || {}), pc: snap.pc };
             setBars(prev => ({ ...prev, [sym]: barsRef.current[sym] }));
           }
         } catch (err) { diag.quote = `error: ${err?.message || err}`; }
@@ -1896,18 +1949,11 @@ Instructions:
 
 
   /* ── Fetch asset names ── */
-  const fetchNames = useCallback(async () => {
-    try {
-      const results = {};
-      for (const s of ALL) {
-        try {
-          const r = await fetch(`${PAPER}/v2/assets/${s}`, { headers: hdrs });
-          if (r.ok) { const d = await r.json(); results[s] = d.name; }
-        } catch {}
-      }
-      setNames(prev => ({ ...prev, ...results }));
-    } catch {}
-  }, [hdrs, ALL]);
+  // Names ride along with the quote batch now. This was a loop of one Alpaca request per
+  // symbol — 173 sequential calls against the same rate budget the price poll was using,
+  // for a value that changes approximately never, and it read 0/173 the moment Alpaca
+  // started returning 504s.
+  const fetchNames = useCallback(async () => {}, []);
 
   /* ── Fetch snapshot data ── */
   const [priceFlash, setPriceFlash] = useState({});
@@ -2063,38 +2109,21 @@ Instructions:
   });
 
   const fetchData = useCallback(async (showLoading = false) => {
-    if (!apiKey || !apiSecret) return;
-    // The interval keeps firing every second whatever happens. Without this the app polls
-    // straight through an Alpaca outage at two requests a second for as long as the tab is
-    // open — which cannot help, and is the same mistake the socket's flat 5s retry made.
+    if (!FMP_OK) return;
+    // The interval keeps firing whatever happens. Without this the app polls straight
+    // through an outage for as long as the tab is open, which cannot help.
     if (!showLoading && Date.now() < restNextAtRef.current) return;
     if (showLoading) setLoading(true);
     try {
-      const allSyms = [...ALL, ...IEX_BM];
-      // Chunk width is a rate-limit decision, not a URL-length one. This polls every second
-      // while the market is open, so the universe divided by the chunk size IS the requests
-      // per second: at 50 that was four a second, 240 a minute, over Alpaca's 200/min — and
-      // the readout came back "0/176 · HTTP 504" on every chunk. At 100 it is two a second,
-      // 120 a minute, which leaves headroom for the bars and assets calls that share the
-      // same budget. Chunking still earns its place: one bad chunk costs its own symbols
-      // rather than the whole board.
-      const CHUNK = 100;
-      const d = {};
-      let httpErr = null;
-      for (let i = 0; i < allSyms.length; i += CHUNK) {
-        const chunk = allSyms.slice(i, i + CHUNK);
-        const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${chunk.join(",")}&feed=iex`, { headers: hdrs });
-        if (!r.ok) {
-          httpErr = `HTTP ${r.status}`;
-          console.warn("[snapshots]", r.status, chunk[0], "…", chunk[chunk.length - 1]);
-          // 429/504 are the rate limiter and the gateway giving up. Hammering the next
-          // chunk in the same tick makes both worse, so give up the rest of this poll and
-          // let the interval bring us back in a second.
-          if (r.status === 429 || r.status >= 500) break;
-          continue;
-        }
-        Object.assign(d, await r.json());
-      }
+      // One FMP call for the whole board, where this used to be two chunked Alpaca
+      // requests a second. FMP already priced DVY, IUSG, the VIX, gold and bitcoin here;
+      // the rest of the book now comes from the same place, which removes the IEX feed's
+      // 2%-of-volume coverage, the one-socket-per-account limit behind the 406, and the
+      // dependency on a vendor that was returning 504s across every endpoint.
+      const allSyms = [...new Set([...ALL, ...BM_SYMS])];
+      const d = await fmpSnapshots(allSyms, FK);
+      const httpErr = d.__err || null;
+      delete d.__err;
       const got = Object.keys(d).length;
       if (got) { restFailRef.current = 0; restNextAtRef.current = 0; }
       else {
@@ -2106,7 +2135,7 @@ Instructions:
         ? ` · retrying in ${Math.ceil((restNextAtRef.current - Date.now()) / 1000)}s`
         : "";
       setFeedStatus(got >= allSyms.length && !httpErr ? null : `${got}/${allSyms.length}${httpErr ? ` · ${httpErr}` : ""}${waiting}`);
-      if (!got) throw new Error(httpErr || "snapshots returned nothing");
+      if (!got) throw new Error(httpErr || "quotes returned nothing");
       const nq = {}, nb = {};
       const splitSuspects = [];
       // New calendar day: Alpaca's prevDailyBar now reflects the post-split close itself,
@@ -2117,48 +2146,37 @@ Instructions:
         splitFixedRef.current.clear();
         splitAttemptRef.current = {};
       }
+      const newNames = {};
       for (const [s, snap] of Object.entries(d)) {
-        if (snap.latestTrade) nq[s] = { p: snap.latestTrade.p, t: snap.latestTrade.t };
-        if (snap.dailyBar) nb[s] = { o: snap.dailyBar.o, h: snap.dailyBar.h, l: snap.dailyBar.l, c: snap.dailyBar.c, v: snap.dailyBar.v, vw: snap.dailyBar.vw };
-        if (snap.prevDailyBar) {
-          if (!nb[s]) nb[s] = {};
+        nq[s] = { p: snap.p, t: snap.t };
+        nb[s] = { o: snap.o, h: snap.h, l: snap.l, c: snap.c, v: snap.v };
+        if (snap.pc > 0) {
           // CRITICAL: don't stomp a split-corrected pc. refetchSplitAdjustedBars runs async
-          // while this loop fires every 1s — without this guard the unadjusted
-          // prevDailyBar.c always wins the race and the correction never sticks.
+          // while this loop fires on every poll — without this guard the unadjusted
+          // previous close always wins the race and the correction never sticks.
           nb[s].pc = (splitFixedRef.current.has(s) && barsRef.current[s]?.pc > 0)
             ? barsRef.current[s].pc
-            : snap.prevDailyBar.c;
+            : snap.pc;
         }
+        // The same call carries the company name, so names arrive with prices instead of
+        // from a separate loop of one request per symbol.
+        if (snap.name) newNames[s] = snap.name;
         // Split detection: pc vs current implying >60% intraday move = unadjusted prev close
-        const todayP = snap.latestTrade?.p ?? snap.dailyBar?.c;
-        if (todayP > 0 && nb[s]?.pc > 0 && Math.abs((todayP - nb[s].pc) / nb[s].pc) > 0.6) {
+        if (snap.p > 0 && nb[s]?.pc > 0 && Math.abs((snap.p - nb[s].pc) / nb[s].pc) > 0.6) {
           splitSuspects.push(s);
         }
       }
+      if (Object.keys(newNames).length) {
+        setNames(prev => {
+          let changed = false;
+          const next = { ...prev };
+          for (const [sym, n] of Object.entries(newNames)) if (next[sym] !== n) { next[sym] = n; changed = true; }
+          return changed ? next : prev;
+        });
+      }
       if (splitSuspects.length) refetchSplitAdjustedBars(splitSuspects);
-      // Non-IEX benchmarks: use Finnhub on first load, then rely on poller + cached refs
-      const isFirstFetch = Object.keys(quotesRef.current).length === 0;
-      if (isFirstFetch) {
-        // FMP — primary source for DVY/IUSG, same call the poller below uses.
-        const yq = await fmpQuotes(NON_IEX_BM, FK);
-        for (const [s, y] of Object.entries(yq)) {
-          nq[s] = { p: y.p, t: new Date().toISOString() };
-          if (y.pc) nb[s] = { ...nb[s], pc: y.pc };
-        }
-        // Whatever FMP didn't price, seed from Finnhub so nothing renders blank.
-        await Promise.all(NON_IEX_BM.filter((s) => !yq[s]).map(async (s) => {
-          const f = await finnhubBenchQuote(s, FH);
-          if (!f) return;
-          nq[s] = { p: f.p, t: new Date().toISOString() };
-          if (f.pc) nb[s] = { ...nb[s], pc: f.pc };
-        }));
-      }
-      // Fill from cached refs (kept fresh by the benchmark poller)
-      for (const s of NON_IEX_BM) {
-        if (!nq[s] && quotesRef.current[s]) nq[s] = quotesRef.current[s];
-        if (!nb[s]?.pc && barsRef.current[s]?.pc) nb[s] = { ...nb[s], ...barsRef.current[s] };
-      }
-      
+      // DVY and IUSG used to need their own FMP call and a Finnhub seed, because Alpaca's
+      // IEX feed does not carry them. They are in the same batch as everything else now.
 
       const prevQ = quotesRef.current;
       const prevB = barsRef.current;
@@ -2209,7 +2227,7 @@ Instructions:
         setLastUp(now);
       }
     } catch (e) { console.error(e); } finally { if (showLoading) setLoading(false); }
-  }, [apiKey, apiSecret, hdrs, ALL]);
+  }, [ALL]);
 
   /* ── Fetch news ── */
   const fetchNews = useCallback(async () => {
@@ -3830,7 +3848,15 @@ Instructions:
     try {
       const r = await fetch(`${PAPER}/v2/account`, { headers: hdrs, signal: ctrl.signal });
       clearTimeout(timeoutId);
-      if (!r.ok) throw new Error(`auth ${r.status}`);
+      // Rejected keys are still a hard stop. Alpaca being down is not: this call was the
+      // last thing on the critical path that needed it, and gating the whole dashboard on
+      // a vendor that no longer supplies any of its data meant an Alpaca outage left the
+      // user on the loading splash with FMP sitting there working.
+      if (r.status === 401 || r.status === 403) throw new Error(`auth ${r.status}`);
+      if (!r.ok) {
+        console.warn("[auth] Alpaca", r.status, "— continuing on FMP");
+        setFeedStatus(`Alpaca HTTP ${r.status} · prices via FMP`);
+      }
       setAuthed(true);
       fetchData(true);
       fetchNames();
@@ -3839,11 +3865,25 @@ Instructions:
       fetchCalendar();
       fetch(`${import.meta.env.BASE_URL || "/"}research/index.json?t=${Math.floor(Date.now() / 60000)}`).then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setResearchReports(d); }).catch(() => {});
       if (!window.ExcelJS) { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"; document.head.appendChild(s); }
-      connectWS();
+      // The Alpaca trade socket is not connected any more. Quotes come from FMP, so its
+      // only remaining effect was the 406: one connection per account, a flat 5s retry,
+      // and a second tab enough to wedge it permanently.
       connectFinnhubWS();
     } catch (e) {
       clearTimeout(timeoutId);
-      setAuthErr(e?.name === "AbortError" ? "Auth timed out (10s) — check connection." : "Auth failed — check API keys.");
+      // Same reasoning for a timeout or a dropped connection: if FMP can price the book,
+      // an unreachable Alpaca is a degraded feed, not a locked door.
+      if (/auth 40[13]/.test(e?.message || "") || !FMP_OK) {
+        setAuthErr(e?.name === "AbortError" ? "Auth timed out (10s) — check connection." : "Auth failed — check API keys.");
+        return;
+      }
+      console.warn("[auth] Alpaca unreachable — continuing on FMP:", e?.message || e);
+      setFeedStatus("Alpaca unreachable · prices via FMP");
+      setAuthed(true);
+      fetchData(true);
+      fetchNews();
+      fetchFundamentals().then(() => fetchDividendHistory()).catch(() => {});
+      fetchCalendar();
     }
   };
 
@@ -3863,8 +3903,11 @@ Instructions:
     if (!authed) return;
     const getInterval = () => {
       if (refresh === 0) return null;
-      if (refresh > 0) return refresh * 1000;
-      return marketStatus.status === "open" ? 1000 : null;
+      // Floored at POLL_MIN_MS. The quotes refresh every 15-60s upstream, so the 1s and 5s
+      // settings were re-reading the same number several times over — and it was two
+      // Alpaca requests per tick that did it. Off still means off.
+      if (refresh > 0) return Math.max(refresh * 1000, POLL_MIN_MS);
+      return marketStatus.status === "open" ? POLL_MIN_MS : null;
     };
     const ms = getInterval();
     if (ms) {
@@ -6579,7 +6622,7 @@ Instructions:
                 </div>
                 <div style={{ marginTop: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>Auto-Refresh</div>
-                  <div style={{ fontSize: 10, color: C.t4, marginBottom: 8 }}>{refresh === null ? "Smart: 1s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
+                  <div style={{ fontSize: 10, color: C.t4, marginBottom: 8 }}>{refresh === null ? "Smart: refreshes while the market is open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 1, l: "1s" }, { v: 5, l: "5s" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }].map(({ v, l }) => (
                       <button key={l} onClick={() => setRefresh(v)} style={{ flex: "1 1 28%", padding: "8px 0", border: `1px solid ${refresh === v ? C.borderActive : C.border}`, background: refresh === v ? C.accentSoft : "transparent", color: refresh === v ? C.t1 : C.t3, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
@@ -6596,7 +6639,7 @@ Instructions:
                     <div style={{ width: 8, height: 8, borderRadius: 4, background: wsRef.current?.readyState === 1 ? C.up : C.dn }} />
                     <span style={{ fontSize: 12, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}{wsErr && <span style={{ color: C.dn }}> · {wsErr}</span>}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: C.t4, marginTop: 6 }}>Data: IEX · Alpaca Markets · News: Benzinga</div>
+                  <div style={{ fontSize: 11, color: C.t4, marginTop: 6 }}>Data: Financial Modeling Prep · News: Benzinga</div>
                 </div>
                 <div style={{ marginTop: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Data Loaded</div>
@@ -13175,7 +13218,7 @@ Instructions:
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Auto-Refresh</div>
-              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: 1s when market open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
+              <div style={{ fontSize: 11, color: C.t4, marginBottom: 10 }}>{refresh === null ? "Smart: refreshes while the market is open, paused when closed" : refresh === 0 ? "Manual refresh only" : `Every ${refresh}s`}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {[{ v: null, l: "Smart" }, { v: 0, l: "Off" }, { v: 1, l: "1s" }, { v: 5, l: "5s" }, { v: 15, l: "15s" }, { v: 30, l: "30s" }].map(({ v, l }) => (
                   <button key={l} onClick={() => setRefresh(v)} style={{
@@ -13197,7 +13240,7 @@ Instructions:
                 <div style={{ width: 8, height: 8, borderRadius: 4, background: wsRef.current?.readyState === 1 ? C.up : C.dn, boxShadow: wsRef.current?.readyState === 1 ? `0 0 8px ${C.upGlow}` : `0 0 8px ${C.dnGlow}` }} />
                 <span style={{ fontSize: 13, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}{wsErr && <span style={{ color: C.dn }}> · {wsErr}</span>}</span>
               </div>
-              <div style={{ fontSize: 12, color: C.t4, marginTop: 8 }}>Data: IEX · Alpaca Markets · News: Benzinga</div>
+              <div style={{ fontSize: 12, color: C.t4, marginTop: 8 }}>Data: Financial Modeling Prep · News: Benzinga</div>
             </div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Data Loaded</div>
