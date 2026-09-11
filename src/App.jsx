@@ -1761,6 +1761,8 @@ Instructions:
   const perfSvgRef = useRef(null);
   const iRef = useRef(null);
   const wsRef = useRef(null);
+  const restFailRef = useRef(0);     // consecutive failed snapshot polls
+  const restNextAtRef = useRef(0);   // skip polls until this timestamp
   const wsRetryRef = useRef(0);      // consecutive failed connects, for backoff
   const wsTimerRef = useRef(null);   // pending reconnect, so we never queue two
   const fhWsRef = useRef(null);
@@ -2062,6 +2064,10 @@ Instructions:
 
   const fetchData = useCallback(async (showLoading = false) => {
     if (!apiKey || !apiSecret) return;
+    // The interval keeps firing every second whatever happens. Without this the app polls
+    // straight through an Alpaca outage at two requests a second for as long as the tab is
+    // open — which cannot help, and is the same mistake the socket's flat 5s retry made.
+    if (!showLoading && Date.now() < restNextAtRef.current) return;
     if (showLoading) setLoading(true);
     try {
       const allSyms = [...ALL, ...IEX_BM];
@@ -2090,7 +2096,16 @@ Instructions:
         Object.assign(d, await r.json());
       }
       const got = Object.keys(d).length;
-      setFeedStatus(got >= allSyms.length && !httpErr ? null : `${got}/${allSyms.length}${httpErr ? ` · ${httpErr}` : ""}`);
+      if (got) { restFailRef.current = 0; restNextAtRef.current = 0; }
+      else {
+        // 2s, 4s, 8s … to a minute. Resets the moment a poll returns anything.
+        const wait = Math.min(1000 * 2 ** Math.min(++restFailRef.current, 6), 60000);
+        restNextAtRef.current = Date.now() + wait;
+      }
+      const waiting = restNextAtRef.current > Date.now()
+        ? ` · retrying in ${Math.ceil((restNextAtRef.current - Date.now()) / 1000)}s`
+        : "";
+      setFeedStatus(got >= allSyms.length && !httpErr ? null : `${got}/${allSyms.length}${httpErr ? ` · ${httpErr}` : ""}${waiting}`);
       if (!got) throw new Error(httpErr || "snapshots returned nothing");
       const nq = {}, nb = {};
       const splitSuspects = [];
