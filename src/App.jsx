@@ -398,6 +398,15 @@ const FMP_OK = !!(FK || PROXY);
 // constraint is gone, so poll faster — one batched call covers both symbols.
 const BENCH_POLL_MS = 10000;
 const FH = import.meta.env.VITE_FINNHUB_KEY || "";
+// Which source the metrics actually come from, named once so the settings readout cannot
+// disagree with the code path. It used to test FH first and print "Finnhub" whenever a
+// Finnhub key happened to be set — exactly backwards: fetchFundamentals starts from
+// useFmp = FMP_OK, so FMP is the primary and Finnhub is only a per-symbol fallback for
+// rows FMP returns empty. The panel has been reporting the wrong vendor since the switch.
+// METRICS_OK rather than a key test: FMP also works through the Worker proxy with no key
+// in the bundle at all, and the old FH-or-FK test would have called that "missing".
+const METRICS_OK = FMP_OK || !!FH;
+const METRICS_SRC = FMP_OK ? (FH ? "FMP · Finnhub fallback" : "FMP") : FH ? "Finnhub" : "missing";
 const CLAUDE_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 const ACCESS_CODE = "ResearchSows";
 
@@ -1823,7 +1832,7 @@ Instructions:
     const jobs = [];
     const diag = {
       quote: quotesRef.current[sym]?.p ? "cached" : (apiKey && apiSecret ? "pending" : "no-keys"),
-      fundamentals: fundamentals[sym]?.peTTM ? "cached" : (FH ? "pending" : "no-finnhub-key"),
+      fundamentals: fundamentals[sym]?.peTTM ? "cached" : (METRICS_OK ? "pending" : "no-metrics-key"),
     };
     if (!(quotesRef.current[sym]?.p) && apiKey && apiSecret) {
       jobs.push((async () => {
@@ -6502,10 +6511,10 @@ Instructions:
                     <div style={{ fontSize: 11, color: C.t3 }}>News: <span style={{ color: C.t2 }}>{news.length}</span></div>
                     <div style={{ fontSize: 11, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
                     <div style={{ fontSize: 11, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
-                    <div style={{ fontSize: 11, color: C.t3 }}>Metrics key: <span style={{ color: (FH || FK) ? C.up : C.dn }}>{FH ? "Finnhub" : FK ? "FMP" : "missing"}</span></div>
+                    <div style={{ fontSize: 11, color: C.t3 }}>Metrics key: <span style={{ color: METRICS_OK ? C.up : C.dn }}>{METRICS_SRC}</span></div>
                   </div>
                   {fmpStatus && <div style={{ fontSize: 10, color: C.t2, marginTop: 6, padding: "5px 7px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
-                  {(FH || FK) && (
+                  {METRICS_OK && (
                     <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); localStorage.removeItem("iown_dividend_history"); localStorage.removeItem("iown_dividend_history_v2"); } catch {} setFundamentals({}); setDividendHistory({}); fetchFundamentals(true).then(() => fetchDividendHistory(true)).catch(() => {}); }} style={{ marginTop: 8, width: "100%", padding: "8px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 8, color: C.t1, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                       {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
                     </button>
@@ -9482,8 +9491,8 @@ Instructions:
             )}
             {Object.keys(fundamentals).length <= 1 && (
               <div style={{ textAlign: "center", padding: "40px 0", color: C.t4, fontSize: 14 }}>
-                {(FH || FK) ? "Loading metrics…" : "Add FINNHUB_KEY secret to enable metrics."}
-                {(FH || FK) && <button onClick={() => fetchFundamentals(true)} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Now</button>}
+                {METRICS_OK ? "Loading metrics…" : "Add the FMP_API secret (or PROXY_URL) to enable metrics."}
+                {METRICS_OK && <button onClick={() => fetchFundamentals(true)} style={{ display: "block", margin: "16px auto 0", padding: "10px 24px", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Fetch Now</button>}
               </div>
             )}
             {/* Seeking Alpha-style scrollable table */}
@@ -13103,11 +13112,11 @@ Instructions:
                 <div style={{ fontSize: 12, color: C.t3 }}>News articles: <span style={{ color: C.t2 }}>{news.length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Live quotes: <span style={{ color: C.t2 }}>{Object.keys(quotes).length}</span></div>
                 <div style={{ fontSize: 12, color: C.t3 }}>Metrics: <span style={{ color: Object.entries(fundamentals).some(([k,v]) => k !== "_ts" && v?.peTTM != null) ? C.up : C.dn }}>{Object.entries(fundamentals).filter(([k,v]) => k !== "_ts" && v?.peTTM != null).length}/{coreSyms.length}</span></div>
-                <div style={{ fontSize: 12, color: C.t3 }}>Metrics key: <span style={{ color: (FH || FK) ? C.up : C.dn }}>{FH ? "Finnhub" : FK ? "FMP" : "missing"}</span></div>
+                <div style={{ fontSize: 12, color: C.t3 }}>Metrics key: <span style={{ color: METRICS_OK ? C.up : C.dn }}>{METRICS_SRC}</span></div>
               </div>
               {fmpStatus && <div style={{ fontSize: 11, color: C.t2, marginTop: 8, padding: "6px 8px", background: C.bg, borderRadius: 6 }}>{fmpStatus}</div>}
-              {!(FH || FK) && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add FINNHUB_KEY secret to GitHub repo, then re-deploy to enable metrics.</div>}
-              {(FH || FK) && (
+              {!METRICS_OK && <div style={{ fontSize: 11, color: C.dn, marginTop: 8 }}>Add the FMP_API secret (or PROXY_URL) to the GitHub repo, then re-deploy to enable metrics.</div>}
+              {METRICS_OK && (
                 <button onClick={() => { try { localStorage.removeItem("iown_metrics_cache"); localStorage.removeItem("iown_fmp_cache"); localStorage.removeItem("iown_dividend_history"); localStorage.removeItem("iown_dividend_history_v2"); } catch {} setFundamentals({}); setDividendHistory({}); fetchFundamentals(true).then(() => fetchDividendHistory(true)).catch(() => {}); }} style={{ marginTop: 10, width: "100%", padding: "10px 0", background: C.accentSoft, border: `1px solid ${C.borderActive}`, borderRadius: 10, color: C.t1, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                   {Object.keys(fundamentals).length <= 1 ? "Fetch Metrics" : "Refresh Metrics (clear cache)"}
                 </button>
