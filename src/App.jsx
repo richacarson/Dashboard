@@ -1907,6 +1907,11 @@ Instructions:
 
   /* ── Fetch snapshot data ── */
   const [priceFlash, setPriceFlash] = useState({});
+  // What the last snapshot poll actually returned, and anything the Alpaca socket
+  // complained about. Both were previously invisible: a short response looked identical
+  // to "those symbols have no data", and ws.onmessage swallowed error frames whole.
+  const [feedStatus, setFeedStatus] = useState(null);
+  const [wsErr, setWsErr] = useState(null);
   const quotesRef = useRef({});
   const barsRef = useRef({});
   const bmQuotesRef = useRef({}); // per-trade WS benchmark quotes — synced to state at 1Hz
@@ -2058,9 +2063,24 @@ Instructions:
     if (showLoading) setLoading(true);
     try {
       const allSyms = [...ALL, ...IEX_BM];
-      const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${allSyms.join(",")}&feed=iex`, { headers: hdrs });
-      if (!r.ok) throw new Error("fail");
-      const d = await r.json();
+      // Batched at 50, the same width every other Alpaca call in this file uses (see the
+      // daily-bars fetch in fetchFundamentals). This one asked for all ~175 symbols in a
+      // single query string, and a request that wide comes back partial rather than as an
+      // error — which is indistinguishable, at this point in the code, from the symbols
+      // simply having no data. A failed chunk now costs its own 50 symbols instead of the
+      // whole board, and the count is reported rather than inferred.
+      const CHUNK = 50;
+      const d = {};
+      let httpErr = null;
+      for (let i = 0; i < allSyms.length; i += CHUNK) {
+        const chunk = allSyms.slice(i, i + CHUNK);
+        const r = await fetch(`${BASE}/v2/stocks/snapshots?symbols=${chunk.join(",")}&feed=iex`, { headers: hdrs });
+        if (!r.ok) { httpErr = `HTTP ${r.status}`; console.warn("[snapshots]", r.status, chunk[0], "…", chunk[chunk.length - 1]); continue; }
+        Object.assign(d, await r.json());
+      }
+      const got = Object.keys(d).length;
+      setFeedStatus(got >= allSyms.length && !httpErr ? null : `${got}/${allSyms.length}${httpErr ? ` · ${httpErr}` : ""}`);
+      if (!got) throw new Error(httpErr || "snapshots returned nothing");
       const nq = {}, nb = {};
       const splitSuspects = [];
       // New calendar day: Alpaca's prevDailyBar now reflects the post-split close itself,
@@ -2140,7 +2160,21 @@ Instructions:
       for (const s of Object.keys(nb)) {
         if (BM_SYMS.includes(s)) bmb[s] = nb[s]; else pb[s] = nb[s];
       }
-      setQuotes(pq); setBars(pb); setBmQuotes(prev => ({ ...prev, ...bmq })); setBmBars(prev => ({ ...prev, ...bmb }));
+      // Merge, don't replace. setQuotes(pq) handed React only what this poll returned, so
+      // one short response blanked every price on screen instead of leaving the last good
+      // one standing — the failure mode is a board of em-dashes, which reads as "no live
+      // prices" rather than "one request came back thin". Carry-over is scoped to the
+      // current roster so a ticker we no longer hold still drops out.
+      const carry = (fresh) => (prev) => {
+        const next = {};
+        for (const sym of allSyms) {
+          if (BM_SYMS.includes(sym)) continue;
+          const v = fresh[sym] || prev[sym];
+          if (v) next[sym] = v;
+        }
+        return next;
+      };
+      setQuotes(carry(pq)); setBars(carry(pb)); setBmQuotes(prev => ({ ...prev, ...bmq })); setBmBars(prev => ({ ...prev, ...bmb }));
 
       // Update timestamp
       const now = new Date();
@@ -3021,6 +3055,11 @@ Instructions:
             if (msg.T === "success" && msg.msg === "authenticated") {
               ws.send(JSON.stringify({ action: "subscribe", trades: [...ALL, ...IEX_BM] }));
             }
+            // Alpaca answers an over-limit subscribe with an error frame and subscribes to
+            // nothing. The old handler ignored every T it did not recognise, so the socket
+            // reported "connected" while streaming no trades at all.
+            if (msg.T === "error") { console.warn("[alpaca-ws]", msg.code, msg.msg); setWsErr(`${msg.code} ${msg.msg}`); }
+            if (msg.T === "subscription") { setWsErr(null); console.info("[alpaca-ws] streaming", (msg.trades || []).length, "symbols"); }
             if (msg.T === "t" && msg.S && msg.p) {
               // Update refs only — React state syncs on next poll cycle (every 1s)
               quotesRef.current[msg.S] = { p: msg.p, t: msg.t };
@@ -6495,12 +6534,12 @@ Instructions:
                 <div style={{ marginTop: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t4, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Connection Status</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 4, background: C.up }} />
-                    <span style={{ fontSize: 12, color: C.t2 }}>{Object.keys(quotes).length} symbols via REST</span>
+                    <div style={{ width: 8, height: 8, borderRadius: 4, background: feedStatus ? C.warn : C.up }} />
+                    <span style={{ fontSize: 12, color: C.t2 }}>{Object.keys(quotes).length} symbols via REST{feedStatus && <span style={{ color: C.warn }}> · last poll {feedStatus}</span>}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 8, height: 8, borderRadius: 4, background: wsRef.current?.readyState === 1 ? C.up : C.dn }} />
-                    <span style={{ fontSize: 12, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}</span>
+                    <span style={{ fontSize: 12, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}{wsErr && <span style={{ color: C.dn }}> · {wsErr}</span>}</span>
                   </div>
                   <div style={{ fontSize: 11, color: C.t4, marginTop: 6 }}>Data: IEX · Alpaca Markets · News: Benzinga</div>
                 </div>
@@ -13096,12 +13135,12 @@ Instructions:
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: "22px 20px", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.t1, marginBottom: 12 }}>Connection Status</div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: C.up, boxShadow: `0 0 8px ${C.upGlow}` }} />
-                <span style={{ fontSize: 13, color: C.t2 }}>{Object.keys(quotes).length} symbols via REST</span>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: feedStatus ? C.warn : C.up, boxShadow: `0 0 8px ${feedStatus ? C.warn : C.upGlow}` }} />
+                <span style={{ fontSize: 13, color: C.t2 }}>{Object.keys(quotes).length} symbols via REST{feedStatus && <span style={{ color: C.warn }}> · last poll {feedStatus}</span>}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 8, height: 8, borderRadius: 4, background: wsRef.current?.readyState === 1 ? C.up : C.dn, boxShadow: wsRef.current?.readyState === 1 ? `0 0 8px ${C.upGlow}` : `0 0 8px ${C.dnGlow}` }} />
-                <span style={{ fontSize: 13, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}</span>
+                <span style={{ fontSize: 13, color: C.t2 }}>WebSocket {wsRef.current?.readyState === 1 ? "connected" : "disconnected"}{wsErr && <span style={{ color: C.dn }}> · {wsErr}</span>}</span>
               </div>
               <div style={{ fontSize: 12, color: C.t4, marginTop: 8 }}>Data: IEX · Alpaca Markets · News: Benzinga</div>
             </div>
