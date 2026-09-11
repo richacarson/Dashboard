@@ -774,9 +774,9 @@
     "date": "2026-09-10",
     "hour": "amc",
     "epsEstimate": 0.0612,
-    "epsActual": null,
+    "epsActual": 0.13,
     "revenueEstimate": 244770420,
-    "revenueActual": null,
+    "revenueActual": 268100000,
     "source": "finnhub"
   },
   {
@@ -1095,7 +1095,7 @@
     "hour": "bmo",
     "epsEstimate": -4.4166,
     "epsActual": null,
-    "revenueEstimate": 85119000,
+    "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1536,16 +1536,6 @@
     "epsEstimate": 1.3147,
     "epsActual": null,
     "revenueEstimate": 8395896609,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LGCY",
-    "date": "2026-09-16",
-    "hour": "",
-    "epsEstimate": 0.1479,
-    "epsActual": null,
-    "revenueEstimate": 20583600,
     "revenueActual": null,
     "source": "finnhub"
   },
