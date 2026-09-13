@@ -1302,7 +1302,7 @@
   {
     "symbol": "RLGT",
     "date": "2026-09-14",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0918,
     "epsActual": null,
     "revenueEstimate": 235926000,
@@ -1392,7 +1392,7 @@
   {
     "symbol": "EPM",
     "date": "2026-09-15",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0168,
     "epsActual": null,
     "revenueEstimate": 23371400,
@@ -1522,7 +1522,7 @@
   {
     "symbol": "ISPR",
     "date": "2026-09-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0153,
     "epsActual": null,
     "revenueEstimate": 21777000,
