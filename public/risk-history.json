@@ -502,5 +502,12 @@
     "amber": 0,
     "green": 48,
     "headline": "Weekend read, no new session: both AMBER pullbacks (pre-CPI/FOMC equity, crypto-complex) RESOLVED on Friday's post-CPI relief rally (core CPI cooled to 2.4% y/y, lowest since March 2021). RED x3 persists, no new deterioration: Hormuz conflict escalates further (US Fifth Fleet's Bahrain base confirmed damaged, though a diplomatic opening emerged via Pezeshkian's conditional reopening offer and Monday's Oman meeting); FCX tariff uncertainty unresolved despite a partial Friday rebound; SYK supply constraint persists with guidance reaffirmed. FOMC 3 trading days out (9/16). CWAN roster-integrity bug hits its 79th consecutive day (PRs #11/#12/#14 still unmerged, main stuck since 2026-06-17); EIX->PGY drift persists a 9th run."
+  },
+  {
+    "date": "2026-09-13",
+    "red": 3,
+    "amber": 1,
+    "green": 47,
+    "headline": "Weekend read (2nd straight day, no new session): RED x3 persists unchanged (Hormuz conflict, FCX copper-tariff stall, SYK vascular supply constraint) -- no new deterioration on any. NEW AMBER: FOMC hike odds jumped to ~65-66% (from a softer-hold lean) after hawkish Fed Chair Warsh remarks, 2 trading days before the Sept 15-16 decision. CWAN roster-integrity bug hits its 80th consecutive day (PRs #11/#12/#14 still open/unmerged); EIX->PGY drift persists a 10th run."
   }
 ]
