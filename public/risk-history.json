@@ -509,5 +509,12 @@
     "amber": 1,
     "green": 47,
     "headline": "Weekend read (2nd straight day, no new session): RED x3 persists unchanged (Hormuz conflict, FCX copper-tariff stall, SYK vascular supply constraint) -- no new deterioration on any. NEW AMBER: FOMC hike odds jumped to ~65-66% (from a softer-hold lean) after hawkish Fed Chair Warsh remarks, 2 trading days before the Sept 15-16 decision. CWAN roster-integrity bug hits its 80th consecutive day (PRs #11/#12/#14 still open/unmerged); EIX->PGY drift persists a 10th run."
+  },
+  {
+    "date": "2026-09-14",
+    "red": 3,
+    "amber": 2,
+    "green": 46,
+    "headline": "NEW RED: broad AI/chip selloff after Anthropic's Amodei (echoed by Altman, Musk, Nadella) called for an industry-wide AI development slowdown on safety grounds -- premarket AMD -4.77%, NVDA -2.13%, QCOM -4.11% (Yahoo Finance/Investing.com), global peers Micron -5%, Intel -5.29%, SK Hynix -6.4% confirm a real cross-market move; our own Data Drop's premarket quotes for these names look anomalous vs tier-1 reporting, flagged as data_integrity. RED persists x2: Hormuz/Gulf conflict escalates further (Saudi Arabia shut its East-West pipeline after a drone attack, Brent >$107, a genuine DVN oil-price key_risk escalation); FCX copper-tariff decision remains unresolved. SYK resolves to GREEN (no new deterioration, price recovered to $275). AMBER: FOMC hike odds surge to ~85-86%, highest of the cycle, one day before the Sept 15-16 decision. CWAN roster-integrity bug hits its 81st consecutive day (PRs #11/#12/#14 still open/unmerged); EIX->PGY drift persists an 11th run."
   }
 ]
