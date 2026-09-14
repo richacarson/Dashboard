@@ -653,5 +653,15 @@
     "ticker": "NVDA",
     "ex_date": "2026-09-10",
     "dps": 0.25
+  },
+  {
+    "ticker": "CB",
+    "ex_date": "2026-09-11",
+    "dps": 1.02
+  },
+  {
+    "ticker": "GRMN",
+    "ex_date": "2026-09-11",
+    "dps": 1.05
   }
 ]

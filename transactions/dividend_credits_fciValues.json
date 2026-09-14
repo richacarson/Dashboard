@@ -613,5 +613,20 @@
     "ticker": "YOU",
     "ex_date": "2026-09-10",
     "dps": 0.15
+  },
+  {
+    "ticker": "CB",
+    "ex_date": "2026-09-11",
+    "dps": 1.02
+  },
+  {
+    "ticker": "GRMN",
+    "ex_date": "2026-09-11",
+    "dps": 1.05
+  },
+  {
+    "ticker": "NDAQ",
+    "ex_date": "2026-09-11",
+    "dps": 0.31
   }
 ]
