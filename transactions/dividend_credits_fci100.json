@@ -668,5 +668,20 @@
     "ticker": "VRT",
     "ex_date": "2026-09-14",
     "dps": 0.063
+  },
+  {
+    "ticker": "ECL",
+    "ex_date": "2026-09-15",
+    "dps": 0.73
+  },
+  {
+    "ticker": "GILD",
+    "ex_date": "2026-09-15",
+    "dps": 0.82
+  },
+  {
+    "ticker": "MRK",
+    "ex_date": "2026-09-15",
+    "dps": 0.85
   }
 ]
