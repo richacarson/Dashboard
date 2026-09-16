@@ -1291,6 +1291,21 @@ export default function App() {
   const [quotes, setQuotes] = useState({});
   const [bars, setBars] = useState({});
   const [bmQuotes, setBmQuotes] = useState({});
+  // Dividends that have gone ex since the stored benchmark series was last built.
+  //
+  // benchmarks_tr is a back-adjusted series: every historical close is scaled down when
+  // a new dividend goes ex, so the base moves and a live raw price divides into it
+  // cleanly. That holds right up until the morning of an ex-date, when the price has
+  // already dropped by the dividend and the stored base has not yet been revised — the
+  // build ran hours earlier. For that one session a live price over a stale base reports
+  // the benchmark one whole dividend light.
+  //
+  // On 15 Sep 2026 DVY went ex $1.32914 on a $162.38 close, 0.8185%. The base was still
+  // the pre-adjustment 138.9675, so DVY's YTD printed +15.61% against a true +16.56%,
+  // and the dividend sleeve's spread printed 336bps against a true ~241bps. The next
+  // morning's build revised the base to 137.8301 — exactly 0.8185% lower — and the
+  // number silently corrected. Every benchmark does this four times a year.
+  const [bmDivs, setBmDivs] = useState({});   // sym -> [{ date, dividend }]
   const [bmBars, setBmBars] = useState({});
   const [macroQuotes, setMacroQuotes] = useState({}); // { "^VIX": {p, pc}, GCUSD, BTCUSD, CLUSD }
   const [anchorPrices, setAnchorPrices] = useState(loadAnchorPrices);
@@ -4103,14 +4118,71 @@ Instructions:
     if (Math.abs(c) > 60) return null;
     return c;
   };
-  const bmChg = s => { const q = bmQuotes[s], b = bmBars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
+  // Restate a benchmark's live price onto the basis its stored series uses, by unwinding
+  // any dividend that went ex after that series was last built. Returns the raw price
+  // unchanged on every other day, which is all but about twenty sessions a year.
+  //
+  // Divide rather than add: back-adjustment scales by (1 - d/priorClose), so dividing the
+  // live price by that factor is the exact inverse. Adding the dividend is within a
+  // rounding error of it, but this way the arithmetic matches what Yahoo actually did.
+  const bmTrPrice = (sym) => {
+    const raw = (bmQuotes[sym] || quotesRef.current?.[sym])?.p;
+    if (!(raw > 0)) return null;
+    const pending = bmDivs[sym];
+    if (!pending?.length) return raw;
+    const prior = (bmBars[sym] || barsRef.current?.[sym])?.pc || raw;
+    let f = 1;
+    for (const d of pending) if (d.dividend > 0 && prior > 0) f *= (1 - d.dividend / prior);
+    return f > 0 ? raw / f : raw;
+  };
+  const bmChg = s => { const p = bmTrPrice(s), b = bmBars[s]; return (p && b?.pc) ? ((p - b.pc) / b.pc) * 100 : null; };
   // Same number as bmChg, but reading through the refs first so the spread tracks the
   // live quote instead of waiting on the 1Hz state sync.
   const bmDayChg = s => {
-    const q = bmQuotes[s] || quotesRef.current?.[s];
+    const p = bmTrPrice(s);
     const b = bmBars[s] || barsRef.current?.[s];
-    return (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null;
+    return (p && b?.pc) ? ((p - b.pc) / b.pc) * 100 : null;
   };
+  // Pending benchmark dividends: anything whose ex-date falls after the stored series'
+  // last point. Keyed off perfDataMap rather than a timer — the set only changes when a
+  // new build lands or a new ex-date passes, and it clears itself once the build catches
+  // up, because the ex-date is then no longer after the last stored point.
+  useEffect(() => {
+    if (!authed || !FMP_OK) return;
+    const lastStored = {};
+    for (const d of Object.values(perfDataMap || {})) {
+      for (const [sym, series] of Object.entries(d?.benchmarks || {})) {
+        const dates = Object.keys(series || {});
+        if (!dates.length) continue;
+        const mx = dates.reduce((a, b) => (a > b ? a : b));
+        if (!lastStored[sym] || mx > lastStored[sym]) lastStored[sym] = mx;
+      }
+    }
+    const syms = Object.keys(lastStored);
+    if (!syms.length) return;
+    let cancelled = false;
+    (async () => {
+      const today = etToday();
+      const out = {};
+      await Promise.all(syms.map(async (sym) => {
+        try {
+          const r = await fetch(fmpUrl(`/stable/dividends`, { symbol: sym }));
+          if (!r.ok) return;
+          const rows = await r.json();
+          const pending = (Array.isArray(rows) ? rows : [])
+            .filter(x => x?.date > lastStored[sym] && x.date <= today && Number(x.dividend) > 0)
+            .map(x => ({ date: x.date, dividend: Number(x.dividend) }));
+          if (pending.length) {
+            out[sym] = pending;
+            console.info("[bm-div]", sym, "ex since", lastStored[sym], pending.map(x => `${x.date} $${x.dividend}`).join(", "));
+          }
+        } catch {}
+      }));
+      if (!cancelled) setBmDivs(out);
+    })();
+    return () => { cancelled = true; };
+  }, [authed, perfDataMap]);
+
   // Which benchmarks a sleeve is measured against. Derived from the perf-chart toggle
   // defaults rather than a second hand-written map, so the two can't drift apart.
   const sleeveBms = k => Object.entries(SLEEVE_BM_DEFAULTS[k] || {}).filter(([, on]) => on).map(([sym]) => sym);
@@ -4352,8 +4424,8 @@ Instructions:
         const op = i === 1 ? 0 : ((prices[prevPi][1] / bp) - 1) * 100;
         dailyBm.push({ o: op, c: cl, h: Math.max(op, cl), l: Math.min(op, cl) });
       }
-      const lq = bmQuotes[sym];
-      if (lq?.p && dailyBm.length) { const lv = ((lq.p / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
+      const lq = bmTrPrice(sym);
+      if (lq > 0 && dailyBm.length) { const lv = ((lq / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
       // Aggregate to weekly if portfolio uses weekly
       if (useWeekly) {
         const wkBm = []; let wIdx = 0;
@@ -4987,7 +5059,7 @@ Instructions:
               onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t3; }}
             >⌕ SEARCH · /</button>
             <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
-            {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; return q?.p ? (
+            {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = bmDayChg(sym); return q?.p ? (
               <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(null); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
                 <span style={{ fontWeight: 700 }}>{sym}</span>{" "}${q.p.toFixed(2)}{" "}
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
@@ -12629,10 +12701,10 @@ Instructions:
                 // it directly — the same basis the Trailing Total Returns table uses, which
                 // is what keeps the chart's end label and that table's YTD column equal.
                 {
-                  const liveQ = bmQuotes[sym];
-                  if (liveQ?.p && filtered.length > 0) {
+                  const liveTr = bmTrPrice(sym);
+                  if (liveTr > 0 && filtered.length > 0) {
                     const lastPortDate = filtered[filtered.length - 1].date;
-                    bmPoints.push({ date: lastPortDate, val: ((liveQ.p / basePrice) - 1) * 100 });
+                    bmPoints.push({ date: lastPortDate, val: ((liveTr / basePrice) - 1) * 100 });
                   }
                 }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
@@ -13046,9 +13118,9 @@ Instructions:
                       const prices = Object.entries(bmPrices).sort((a, b) => a[0].localeCompare(b[0]));
                       if (!prices.length) return null;
                       // Use live/latest benchmark price (bmQuotes has last trade even when closed)
-                      const liveQ = bmQuotes[sym];
-                      const lastPrice = (liveQ?.p > 0) ? liveQ.p : prices[prices.length - 1][1];
-                      const lastDate = (liveQ?.p > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
+                      const liveTr = bmTrPrice(sym);
+                      const lastPrice = (liveTr > 0) ? liveTr : prices[prices.length - 1][1];
+                      const lastDate = (liveTr > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                       if (p.oneDay) {
                         // Use previous close — from bmBars if available, otherwise second-to-last historical price
                         let pc = bmBars[sym]?.pc;
