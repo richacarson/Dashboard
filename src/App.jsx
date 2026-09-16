@@ -3608,63 +3608,25 @@ Instructions:
     return () => clearInterval(t);
   }, [perfData, authed]);
 
-  // Auto-accrue dividends: use fundamentals.dps (annual $/share) to estimate
-  // dividends earned since the last recorded DIVIDEND transaction, then credit cash.
-  // Persists the "accrued through" date per sleeve in localStorage so multiple
-  // users / page reloads don't double-count.
-  const divAccruedRef = useRef({}); // track which sleeves we've already accrued this session
-  useEffect(() => {
-    if (!fundamentals?._ts || !perfDataMap || Object.keys(perfDataMap).length === 0) return;
-    const today = new Date().toISOString().slice(0, 10);
-    for (const [sleeve, data] of Object.entries(perfDataMap)) {
-      const refKey = `${sleeve}_${fundamentals._ts}`;
-      if (divAccruedRef.current[refKey]) continue; // already done this session cycle
-      const holdings = data.holdings;
-      if (!holdings || Object.keys(holdings).length === 0) continue;
-
-      // Determine the start date for accrual: max of last DIVIDEND tx date and
-      // localStorage "accrued through" date (prevents re-accruing on reload)
-      const divTxs = (data.transactions || []).filter(tx => tx.type === "DIVIDEND" || tx.type === "DIVIDEND REINVESTMENT");
-      let lastDivDate = data.start_date || "2011-01-01";
-      for (const tx of divTxs) {
-        if (tx.date > lastDivDate) lastDivDate = tx.date;
-      }
-      const lsKey = `iown_div_accrued_${sleeve}`;
-      const lsDate = localStorage.getItem(lsKey);
-      const accrueFrom = (lsDate && lsDate > lastDivDate) ? lsDate : lastDivDate;
-
-      // Calculate days since accrueFrom (cap at 90 to avoid huge catch-ups)
-      const msPerDay = 86400000;
-      const daysSince = Math.min(90, Math.max(0, Math.floor((new Date(today) - new Date(accrueFrom)) / msPerDay)));
-      if (daysSince < 1) { divAccruedRef.current[refKey] = true; continue; }
-
-      // Sum daily dividend accrual across all holdings
-      let totalAccrued = 0;
-      const breakdown = [];
-      for (const [ticker, shares] of Object.entries(holdings)) {
-        const f = fundamentals[ticker];
-        if (!f?.dps || f.dps <= 0) continue;
-        const dailyDiv = (shares * f.dps) / 365;
-        const accrued = dailyDiv * daysSince;
-        if (accrued > 0.005) {
-          totalAccrued += accrued;
-          breakdown.push({ ticker, amount: Math.round(accrued * 100) / 100 });
-        }
-      }
-
-      if (totalAccrued < 0.01) { divAccruedRef.current[refKey] = true; continue; }
-      totalAccrued = Math.round(totalAccrued * 100) / 100;
-
-      // Create auto-dividend transaction and update perfData
-      const newTx = { date: today, type: "DIVIDEND", amount: totalAccrued, auto: true, days: daysSince, breakdown };
-      const updated = { ...data, transactions: [newTx, ...data.transactions], cash: (data.cash || 0) + totalAccrued };
-      setPerfDataMap(prev => ({ ...prev, [sleeve]: updated }));
-      if (sleeve === perfSleeve) setPerfData(updated);
-      // Persist "accrued through today" so reloads / other users don't re-accrue
-      try { localStorage.setItem(lsKey, today); } catch {}
-      divAccruedRef.current[refKey] = true;
-    }
-  }, [fundamentals, perfDataMap, perfSleeve]);
+  // The browser-side dividend accrual is gone.
+  //
+  // It estimated dividends earned since the last DIVIDEND transaction in the ledger and
+  // credited them to cash. That made sense before scripts/credit-dividends.py existed;
+  // it now books the real thing, per sleeve, on the ex-date, from a committed ledger the
+  // nightly build replays — all four sleeves are current to within a few days. Accruing
+  // on top of that counted the same dividends twice.
+  //
+  // It was worst on the dividend sleeve, which has no DIVIDEND rows at all: its dividends
+  // arrived as brokerage DEPOSITs until March 2026 and as credit-ledger entries since.
+  // With nothing to anchor to, lastDivDate fell back to start_date — 2011 — and the
+  // 90-day cap meant a fresh browser credited about ninety days of dividends on the spot,
+  // roughly $3,100 on a $653k sleeve. That is half a point of year-to-date return and
+  // ~48bps of spread, appearing or not depending on what a given device had in
+  // localStorage, which is why two devices could show different numbers for the same day.
+  //
+  // Booking on the ex-date is also the convention the benchmark uses: benchmarks_tr is
+  // back-adjusted, so DVY books its dividends on the ex-date and accrues nothing between.
+  // Both sides of the spread now count dividends the same way.
 
   // Fetch intraday bars for 1D (1min) portfolio chart
   useEffect(() => {
