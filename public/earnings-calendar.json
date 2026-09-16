@@ -762,7 +762,7 @@
   {
     "symbol": "AZO",
     "date": "2026-09-22",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 54.8009,
     "epsActual": null,
     "revenueEstimate": 6782842405,
@@ -792,7 +792,7 @@
   {
     "symbol": "MLKN",
     "date": "2026-09-22",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3621,
     "epsActual": null,
     "revenueEstimate": 962166000,
@@ -822,7 +822,7 @@
   {
     "symbol": "WOR",
     "date": "2026-09-22",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.7676,
     "epsActual": null,
     "revenueEstimate": 334579872,
