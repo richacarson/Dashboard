@@ -1796,6 +1796,7 @@ Instructions:
   const [showRebalModal, setShowRebalModal] = useState(false); // rebalance modal
   const [txForm, setTxForm] = useState({ type: "PURCHASE", ticker: "", shares: "", price: "", amount: "", date: new Date().toISOString().slice(0, 10) });
   const [showTxHistory, setShowTxHistory] = useState(false); // transaction history panel
+  const [txTypeFilter, setTxTypeFilter] = useState("ALL");   // terminal history: ALL | BUY | SELL | DIV | CASH
   const [expandedHolding, setExpandedHolding] = useState(null); // mobile holdings expand
   const [expandedMetric, setExpandedMetric] = useState(null); // mobile metrics expand
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
@@ -6143,6 +6144,71 @@ Instructions:
                       </tbody>
                     </table>
                   </div>
+                  {/* ── Transaction history — classic has had this; terminal had not ──
+                      Filtered and capped, because the dividend sleeve carries ~3,000 rows
+                      and the drawer would otherwise mount every one of them. DIV is its
+                      own filter: those rows only started being published this week, and
+                      auditing the dividend contribution is the reason to look. */}
+                  {(() => {
+                    const all = hData.transactions || [];
+                    if (!all.length) return null;
+                    const MATCH = {
+                      ALL: () => true,
+                      BUY: t => t.type === "PURCHASE",
+                      SELL: t => t.type === "SALE",
+                      DIV: t => t.type === "DIVIDEND" || t.type === "DIVIDEND REINVESTMENT",
+                      CASH: t => t.type === "DEPOSIT" || t.type === "WITHDRAWAL",
+                    };
+                    const counts = Object.fromEntries(Object.entries(MATCH).map(([k, f]) => [k, all.filter(f).length]));
+                    const rows = [...all].filter(MATCH[txTypeFilter] || MATCH.ALL)
+                      .sort((a, b) => b.date.localeCompare(a.date));
+                    const CAP = 250;
+                    const shown = rows.slice(0, CAP);
+                    const TYPE = { PURCHASE: "BUY", SALE: "SELL", DIVIDEND: "DIV", "DIVIDEND REINVESTMENT": "DRIP", DEPOSIT: "DEP", WITHDRAWAL: "WDR", SPLIT: "SPLIT" };
+                    const col = t => (t === "PURCHASE" || t === "DEPOSIT" || t === "DIVIDEND" || t === "DIVIDEND REINVESTMENT") ? C.up : (t === "SALE" || t === "WITHDRAWAL") ? C.dn : C.t3;
+                    return (
+                      <div style={{ marginTop: 16 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                          <button onClick={() => setShowTxHistory(v => !v)} style={{ ...tTabBtn(showTxHistory), border: `1px solid ${showTxHistory ? C.borderActive : C.border}`, borderRadius: 4 }}>
+                            {showTxHistory ? "Hide" : "Show"} Transactions
+                          </button>
+                          {showTxHistory && Object.keys(MATCH).map(k => (
+                            <button key={k} onClick={() => setTxTypeFilter(k)} style={{ ...tTabBtn(txTypeFilter === k), border: `1px solid ${txTypeFilter === k ? C.borderActive : C.border}`, borderRadius: 4 }}>
+                              {k} <span style={{ color: C.t4 }}>{counts[k]}</span>
+                            </button>
+                          ))}
+                          {showTxHistory && rows.length > CAP && (
+                            <span style={{ ...tEyebrowMuted, marginLeft: "auto" }}>NEWEST {CAP} OF {rows.length}</span>
+                          )}
+                        </div>
+                        {showTxHistory && (
+                          <div style={{ border: `1px solid ${C.border}`, borderRadius: 4, maxHeight: 420, overflow: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
+                              <thead>
+                                <tr style={{ position: "sticky", top: 0, background: C.card, zIndex: 1, borderBottom: `1px solid ${C.border}` }}>
+                                  {[["Date", "left"], ["Type", "left"], ["Sym", "left"], ["Shares", "right"], ["Price", "right"], ["Amount", "right"]].map(([h, a]) => (
+                                    <th key={h} style={tTh(a, false)}>{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {shown.map((t, i) => (
+                                  <tr key={`${t.date}-${t.ticker || "cash"}-${i}`} style={{ borderBottom: `1px solid ${C.border}44` }}>
+                                    <td style={{ ...tTd("left"), color: C.t3 }}>{t.date}</td>
+                                    <td style={{ ...tTd("left"), color: col(t.type), fontWeight: 700 }}>{TYPE[t.type] || t.type}</td>
+                                    <td style={{ ...tTd("left"), color: t.ticker ? C.accent : C.t4, fontWeight: t.ticker ? 700 : 400 }}>{t.ticker || "CASH"}</td>
+                                    <td style={{ ...tTd(), color: C.t3 }}>{t.shares != null ? t.shares.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}</td>
+                                    <td style={{ ...tTd(), color: C.t3 }}>{t.price != null ? `$${t.price.toFixed(t.type === "DIVIDEND" ? 4 : 2)}` : "—"}</td>
+                                    <td style={{ ...tTd(), color: C.t1, fontWeight: 600 }}>${(t.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>);
               })()}
               {tDrawer === "metrics" && (() => {
