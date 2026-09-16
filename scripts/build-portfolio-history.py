@@ -17,7 +17,8 @@ from collections import defaultdict
 import urllib.request
 import urllib.error
 
-_DIV_DEBUG = None  # list capture of dividend credits when DIV_DEBUG env is set
+_DIV_CREDITS = []  # every dividend credit applied during the last build, for the ledger
+_DIV_DEBUG = None  # set when DIV_DEBUG env is on, to print the same rows
 
 
 ## ── Company-name-to-ticker map (for "By Activity" exports) ──────────────────
@@ -646,8 +647,13 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
     holdings = defaultdict(float)
     cash = start_balance
 
-    global _DIV_DEBUG
+    global _DIV_DEBUG, _DIV_CREDITS
     _DIV_DEBUG = [] if os.environ.get("DIV_DEBUG") else None
+    # Always collected. These are real cash credits — they move the balance and the
+    # return — so they belong in the published transaction list, not only in a debug
+    # env var. Without them the dashboard's history simply stops showing dividends
+    # after the last brokerage deposit, while the money keeps arriving.
+    _DIV_CREDITS = []
 
     if not all_events:
         return []
@@ -684,9 +690,11 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
                 if sh > 0:
                     credit = sh * evt["dps"]
                     cash += credit
+                    row = {"date": evt["date"], "ticker": evt["ticker"],
+                           "shares": round(sh, 4), "dps": evt["dps"], "credit": round(credit, 2)}
+                    _DIV_CREDITS.append(row)
                     if _DIV_DEBUG is not None:
-                        _DIV_DEBUG.append({"date": evt["date"], "ticker": evt["ticker"],
-                                           "shares": round(sh, 4), "dps": evt["dps"], "credit": round(credit, 2)})
+                        _DIV_DEBUG.append(row)
             elif evt["kind"] == "stock":
                 if evt["type"] == "PURCHASE":
                     holdings[evt["ticker"]] += evt["shares"]
@@ -1056,6 +1064,13 @@ def main():
         all_tx.append({
             "date": tx["date"], "ticker": tx["ticker"], "type": tx["type"],
             "shares": tx["shares"], "price": tx["price"], "amount": tx["amount"],
+        })
+    # Dividend credits, same shape as a stock row so the dashboard renders them without
+    # a special case: price carries the per-share dividend, amount the cash credited.
+    for dc in _DIV_CREDITS:
+        all_tx.append({
+            "date": dc["date"], "ticker": dc["ticker"], "type": "DIVIDEND",
+            "shares": dc["shares"], "price": dc["dps"], "amount": dc["credit"],
         })
     for ctx in cash_transactions:
         all_tx.append({
