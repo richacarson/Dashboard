@@ -95,6 +95,11 @@ const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "IUSG", name: "IUSG" },
   { sym: "SPY", name: "SPY" },
+  // Sits with the benchmarks rather than the macro tiles: it is where the utilities
+  // proceeds went, so it reads next to SPY. Deliberately not added to SLEEVE_BM_DEFAULTS
+  // or the chart's per-sleeve toggle lists — both are explicit arrays, so this stays a
+  // banner quote and does not offer a chart line there is no stored series for.
+  { sym: "RDVY", name: "RDVY" },
   { sym: "QQQ", name: "QQQ" },
   { sym: "DIA", name: "DIA" },
 ];
@@ -111,9 +116,6 @@ const MACRO = [
   // already allows for — it was never gated on equity hours.
   { sym: "BTCUSD", name: "Bitcoin", fmt: (v) => `$${Math.round(v).toLocaleString()}` },
   { sym: "CLUSD", name: "WTI Crude", fmt: (v) => `$${v.toFixed(2)}` },
-  // The dividend sleeve's other yardstick — where the utilities proceeds went — so it
-  // belongs beside the rest rather than behind the Performance tab's benchmark toggles.
-  { sym: "RDVY", name: "RDVY", fmt: (v) => `$${v.toFixed(2)}` },
   // Treasuries are not quotes. They come from the constant-maturity curve the yield-
   // spread effect already fetches, so all four cost nothing extra — and their move is
   // quoted in basis points, not percent, because that is how a yield move is read.
