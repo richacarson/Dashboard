@@ -750,12 +750,12 @@
     "source": "finnhub"
   },
   {
-    "symbol": "APOG",
+    "symbol": "AYTU",
     "date": "2026-09-22",
-    "hour": "",
-    "epsEstimate": 0.6426,
+    "hour": "amc",
+    "epsEstimate": -0.3315,
     "epsActual": null,
-    "revenueEstimate": 366653616,
+    "revenueEstimate": 12521520,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -862,7 +862,7 @@
   {
     "symbol": "CTAS",
     "date": "2026-09-23",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.375,
     "epsActual": null,
     "revenueEstimate": 3037224828,
@@ -872,7 +872,7 @@
   {
     "symbol": "FUL",
     "date": "2026-09-23",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.4833,
     "epsActual": null,
     "revenueEstimate": 957673627,
@@ -922,7 +922,7 @@
   {
     "symbol": "PAYX",
     "date": "2026-09-23",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.3472,
     "epsActual": null,
     "revenueEstimate": 1659479687,
