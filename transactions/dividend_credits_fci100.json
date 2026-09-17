@@ -683,5 +683,20 @@
     "ticker": "MRK",
     "ex_date": "2026-09-15",
     "dps": 0.85
+  },
+  {
+    "ticker": "ICE",
+    "ex_date": "2026-09-16",
+    "dps": 0.52
+  },
+  {
+    "ticker": "MSI",
+    "ex_date": "2026-09-16",
+    "dps": 1.21
+  },
+  {
+    "ticker": "TSM",
+    "ex_date": "2026-09-16",
+    "dps": 1.107
   }
 ]

@@ -633,5 +633,20 @@
     "ticker": "VRT",
     "ex_date": "2026-09-14",
     "dps": 0.063
+  },
+  {
+    "ticker": "ICE",
+    "ex_date": "2026-09-16",
+    "dps": 0.52
+  },
+  {
+    "ticker": "MSI",
+    "ex_date": "2026-09-16",
+    "dps": 1.21
+  },
+  {
+    "ticker": "TSM",
+    "ex_date": "2026-09-16",
+    "dps": 1.107
   }
 ]
