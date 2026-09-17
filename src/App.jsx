@@ -111,8 +111,18 @@ const MACRO = [
   // already allows for — it was never gated on equity hours.
   { sym: "BTCUSD", name: "Bitcoin", fmt: (v) => `$${Math.round(v).toLocaleString()}` },
   { sym: "CLUSD", name: "WTI Crude", fmt: (v) => `$${v.toFixed(2)}` },
+  // The dividend sleeve's other yardstick — where the utilities proceeds went — so it
+  // belongs beside the rest rather than behind the Performance tab's benchmark toggles.
+  { sym: "RDVY", name: "RDVY", fmt: (v) => `$${v.toFixed(2)}` },
+  // Treasuries are not quotes. They come from the constant-maturity curve the yield-
+  // spread effect already fetches, so all four cost nothing extra — and their move is
+  // quoted in basis points, not percent, because that is how a yield move is read.
+  { rate: "year5", name: "5Y UST", fmt: (v) => `${v.toFixed(2)}%`, bp: true },
+  { rate: "year10", name: "10Y UST", fmt: (v) => `${v.toFixed(2)}%`, bp: true },
+  { rate: "year20", name: "20Y UST", fmt: (v) => `${v.toFixed(2)}%`, bp: true },
+  { rate: "year30", name: "30Y UST", fmt: (v) => `${v.toFixed(2)}%`, bp: true },
 ];
-const MACRO_SYMS = MACRO.map(m => m.sym);
+const MACRO_SYMS = MACRO.filter(m => m.sym).map(m => m.sym);
 const BM_SYMS = BENCHMARKS.map(b => b.sym);
 // DVY and IUSG aren't carried on the Alpaca IEX feed. They used to come from Finnhub
 // (trade WS + /quote poll), but Finnhub's free tier stopped advancing them intraday —
@@ -2734,7 +2744,11 @@ Instructions:
       for (let i = sorted.length - 1; i >= 0; i--) {
         const y10 = Number(sorted[i]?.year10), y2 = Number(sorted[i]?.year2);
         if (isFinite(y10) && isFinite(y2)) {
-          setMacroData(prev => ({ ...prev, yieldSpread: +(y10 - y2).toFixed(2) }));
+          // The same response carries the 5s, 20s and 30s. Keeping the row — and the one
+          // before it — turns the macro strip's treasury tiles into a free read rather
+          // than four more requests.
+          setMacroData(prev => ({ ...prev, yieldSpread: +(y10 - y2).toFixed(2),
+                                  curve: sorted[i], curvePrev: sorted[i - 1] || null }));
           return true;
         }
       }
@@ -4098,6 +4112,20 @@ Instructions:
     for (const d of pending) if (d.dividend > 0 && prior > 0) f *= (1 - d.dividend / prior);
     return f > 0 ? raw / f : raw;
   };
+  // One reader for the macro strip, now that its tiles do not all come from quotes. A
+  // rate tile reads the stored constant-maturity row and reports its move in basis
+  // points, which is how a yield move is read; a quote tile reads the live batch and
+  // reports a percentage.
+  const macroRead = (m) => {
+    if (m.rate) {
+      const v = Number(macroData.curve?.[m.rate]);
+      const p = Number(macroData.curvePrev?.[m.rate]);
+      return { v: isFinite(v) ? v : null, chg: (isFinite(v) && isFinite(p)) ? v - p : null };
+    }
+    const q = macroQuotes[m.sym];
+    return { v: q?.p ?? null, chg: (q?.p && q.pc > 0) ? ((q.p - q.pc) / q.pc) * 100 : null };
+  };
+  const macroChgText = (m, c) => c == null ? null : (m.bp ? `${c >= 0 ? "+" : ""}${Math.round(c * 100)}bp` : pct(c));
   const bmChg = s => { const p = bmTrPrice(s), b = bmBars[s]; return (p && b?.pc) ? ((p - b.pc) / b.pc) * 100 : null; };
   // Same number as bmChg, but reading through the refs first so the spread tracks the
   // live quote instead of waiting on the 1Hz state sync.
@@ -7393,14 +7421,13 @@ Instructions:
               <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
               <span style={{ color: C.t3 }}>Top Sector</span><span style={{ textAlign: "right", color: tTopSector ? (tTopSector.c >= 0 ? C.up : C.dn) : C.t4 }}>{tTopSector ? `${SECTOR_ETF_NAMES[tTopSector.sym] || tTopSector.sym} ${pct(tTopSector.c)}` : "—"}</span>
               {MACRO.map(m => {
-                const q = macroQuotes[m.sym];
-                const c = (q?.p && q.pc > 0) ? ((q.p - q.pc) / q.pc) * 100 : null;
+                const { v, chg: c } = macroRead(m);
                 return (
-                  <React.Fragment key={m.sym}>
+                  <React.Fragment key={m.sym || m.rate}>
                     <span style={{ color: C.t3 }}>{m.name}</span>
-                    <span style={{ textAlign: "right", color: q?.p ? C.t1 : C.t4 }}>
-                      {q?.p ? m.fmt(q.p) : "—"}
-                      {c != null && <span style={{ color: c >= 0 ? C.up : C.dn, marginLeft: 4 }}>{pct(c)}</span>}
+                    <span style={{ textAlign: "right", color: v != null ? C.t1 : C.t4 }}>
+                      {v != null ? m.fmt(v) : "—"}
+                      {c != null && <span style={{ color: c >= 0 ? C.up : C.dn, marginLeft: 4 }}>{macroChgText(m, c)}</span>}
                     </span>
                   </React.Fragment>
                 );
@@ -7827,11 +7854,10 @@ Instructions:
                     );
                   })()}
                   {MACRO.map(m => {
-                    const q = macroQuotes[m.sym];
-                    if (!q?.p) return null;
-                    const c = q.pc > 0 ? ((q.p - q.pc) / q.pc) * 100 : null;
+                    const { v, chg: c } = macroRead(m);
+                    if (v == null) return null;
                     return (
-                      <div key={m.sym} style={{
+                      <div key={m.sym || m.rate} style={{
                         flex: isDesktop ? undefined : "0 0 auto",
                         padding: isDesktop ? "16px" : "12px 16px",
                         minWidth: isDesktop ? undefined : 100,
@@ -7841,9 +7867,9 @@ Instructions:
                       }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>{m.name}</div>
                         <div style={{ display: "flex", alignItems: isDesktop ? "center" : "baseline", gap: 8, flexWrap: isDesktop ? "wrap" : "nowrap" }}>
-                          <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{m.fmt(q.p)}</span>
+                          <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{m.fmt(v)}</span>
                           {c != null && (
-                            <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: c > 0 ? C.up : c < 0 ? C.dn : C.t3 }}>{pct(c)}</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: c > 0 ? C.up : c < 0 ? C.dn : C.t3 }}>{macroChgText(m, c)}</span>
                           )}
                         </div>
                       </div>
