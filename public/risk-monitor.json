@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-17T12:05:00Z",
-  "as_of_session": "2026-09-16",
+  "generated_at": "2026-09-18T11:55:00Z",
+  "as_of_session": "2026-09-17",
   "universe_count": 52,
   "universe_incomplete": true,
   "roster_integrity": {
@@ -10,7 +10,7 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus/Francisco Partners/Temasek, $8.4B, $24.55/share) closed and delisted from NYSE on 2026-06-25 -- 84th consecutive calendar day CWAN has sat in data/portfolios.json's growth sleeve on origin/main. Root cause unchanged: PR #11 (2026-07-28), PR #12 (2026-08-01), and PR #14 (2026-08-19) all remain open and unmerged against a main branch whose HEAD has not moved since 2026-06-17 (commit 0cdac9c6), reconfirmed via GitHub API this run. The Dashboard's live Risk view is not blocked by this -- this routine's own Step 9 sync/deploy populates it directly each run, independent of whether these PRs merge.",
+        "detail": "Clearwater Analytics take-private (Permira/Warburg Pincus/Francisco Partners/Temasek, $8.4B, $24.55/share) closed and delisted from NYSE on 2026-06-25 -- 85th consecutive calendar day CWAN has sat in data/portfolios.json's growth sleeve on origin/main. Root cause unchanged: PR #11 (2026-07-28), PR #12 (2026-08-01), and PR #14 (2026-08-19) all remain open and unmerged against a main branch whose HEAD has not moved since 2026-06-17 (commit 0cdac9c6), reconfirmed via GitHub API this run. The Dashboard's live Risk view is not blocked by this -- this routine's own Step 9 sync/deploy populates it directly each run, independent of whether these PRs merge.",
         "action": "Needs a human decision: merge one of PR #11, #12, or #14, or reconcile origin/main with the actual working branch lineage so a simple portfolios.json fix can land. Not filing a 4th duplicate PR -- three open, unmerged, mutually-superseding PRs already exist."
       },
       {
@@ -24,83 +24,41 @@
         "ticker": "EIX/PGY",
         "type": "stale_holding",
         "severity": "amber",
-        "detail": "The Growth sleeve exited EIX entirely on 2026-09-02 (after EIX's -23% crash on the failed CA wildfire-liability bill) and rotated into PGY (Pagaya Technologies). data/portfolios.json on main still lists EIX, not PGY -- drift first caught 2026-09-04, still open (13th consecutive Sentinel run; no run occurred 2026-09-16, so this is the first observation in two calendar days, not a new gap in awareness). Local monitoring uses PGY, matching the live book and the Risk Data Drop's own ticker list (which carries PGY, not EIX).",
+        "detail": "The Growth sleeve exited EIX entirely on 2026-09-02 (after EIX's -23% crash on the failed CA wildfire-liability bill) and rotated into PGY (Pagaya Technologies). data/portfolios.json on main still lists EIX, not PGY -- drift first caught 2026-09-04, still open (14th consecutive Sentinel run). Local monitoring uses PGY, matching the live book and the Risk Data Drop's own ticker list (which carries PGY, not EIX).",
         "action": "Merge a portfolios.json fix (EIX->PGY swap) into main, ideally bundled with the CWAN removal since both are one-line roster fixes -- same stalled PRs already contain related fixes."
       }
     ],
-    "universe_note": "Corrected real-holdings universe (CWAN removed, EIX->PGY applied locally; CTRA->DVN resolved on main) is 25 Dividend + 24 Growth = 49. 49 + 2 ETFs (IBIT, ETHA -- Digital-Asset-ETF sleeve, tracked in risk-data-drop.json but still not represented in data/portfolios.json) = 51... but today's Risk Data Drop carries exactly 52 priced holdings (all of the above plus CWAN itself, tracked for deal-watch continuity even though delisted), matching the firm's stated headcount for the first time. Still flagging universe_incomplete=true because the source-of-truth file (portfolios.json) itself remains uncorrected on three counts (CWAN, EIX->PGY, missing ETF sleeve), even though this routine's own tracking has full coverage."
+    "universe_note": "Corrected real-holdings universe (CWAN removed, EIX->PGY applied locally; CTRA->DVN resolved on main) is 25 Dividend + 24 Growth = 49. 49 + 2 ETFs (IBIT, ETHA -- Digital-Asset-ETF sleeve, tracked in risk-data-drop.json but still not represented in data/portfolios.json) = 51... but today's Risk Data Drop again carries exactly 52 priced holdings (all of the above plus CWAN itself, tracked for deal-watch continuity even though delisted). Still flagging universe_incomplete=true because the source-of-truth file (portfolios.json) itself remains uncorrected on three counts (CWAN, EIX->PGY, missing ETF sleeve), even though this routine's own tracking has full coverage."
   },
   "summary": {
-    "red": 3,
-    "amber": 3,
-    "green": 46,
-    "headline": "Operational note first: no Risk Sentinel run occurred 2026-09-16 (a Wednesday, not a weekend) -- this run recovers state from the 2026-09-15 baseline and reports the missed session's action for the first time, one day late. Market: NEW RED, DVN -5.63% as Saudi Arabia eased Gulf oil-supply fears (additional crude via Sohar ship-to-ship transfers), pushing crude down and hitting DVN's own listed oil-price-volatility key_risk head-on -- CVX (-2.83%) and OKE (-2.14%) softer in sympathy, not flagged separately. NEW RED x2, COIN (-4.41%, 2nd straight session after -6-10% on 9/16) and HOOD (-5.46%) on a genuine, tier-1-confirmed regulatory setback: the Senate's CLARITY Act cloture vote failed 49-50 on 2026-09-15, killing crypto market-structure legislation for the year; HOOD's own key_risk #2 (multi-front regulatory risk) is a direct match. NEW AMBER: CNX -4.75% with no matching catalyst found -- notably, this contradicts CNX's own key_risk (natgas price weakness), since Henry Hub actually rose to ~$2.90/MMBtu this week; flagging as an unexplained silent decliner, not a thesis match. RESOLVED: the AI/chip selloff (RED on 9/14-9/15) fully reversed -- CRDO +7.59% (Q1 revenue +115% YoY beat), MRVL +3.62% (new $2B Nvidia investment), AMD +1.69% (114% YTD), NVDA +0.84%; FOMC delivered its widely-priced 25bp hike to 3.75-4% with a muted reaction across the rate-sensitive Dividend-sleeve utilities (NEE -0.89%, ATO -0.12%, BKH +0.81%). AMBER (downgraded from RED): FCX copper-tariff decision remains genuinely undecided (White House still split) but FCX itself was flat (-0.17%) -- no fresh deterioration to warrant RED today. Data drop: 52/52 priced, zero errors -- no data-integrity issue this run. CWAN roster-integrity bug hits its 84th consecutive calendar day (PRs #11/#12/#14 still open/unmerged, main unchanged since 6/17); EIX->PGY drift persists a 13th consecutive run."
+    "red": 0,
+    "amber": 2,
+    "green": 50,
+    "headline": "No RED flags today -- a broad, FOMC-relief rally (SPY +1.14%, QQQ +1.73%) lifted AI/chip names further (AMD +6.26%, MRVL +4.76%, CRDO +4.19%, NXPI +4.08%, TSM +2.92%) and crypto-adjacent names (COIN +5.78%, HOOD +5.15%, MARA +5.38%) on a genuine new catalyst: the SEC's 9/17 tokenized-stock 'Innovation Exemption', which RESOLVES both COIN and HOOD's 9/16 CLARITY Act regulatory flags. DVN also stabilizes post its 9/16 -5.63% drop despite oil continuing to soften. NEW AMBER: PGY -4.94%, an unexplained silent decliner moving opposite its own sector's rally. AMBER persists: FCX copper-tariff decision remains undecided (FCX itself rallied with the market). CNX's 9/16 unexplained decline hasn't deepened or reversed -- downgraded to INFO. Roster: CWAN roster-integrity bug hits its 85th consecutive calendar day (PRs #11/#12/#14 still open/unmerged, main unchanged since 6/17); EIX->PGY drift persists a 14th consecutive run."
   },
   "flags": [
     {
-      "id": "DVN_oil_price_decline_2026-09-16",
-      "ticker": "DVN",
-      "sleeve": "Dividend",
-      "severity": "red",
-      "category": "commodity_price",
-      "headline": "DVN -5.63% as Saudi supply easing pressures oil prices",
-      "detail": "DVN closed 2026-09-16 at $48.44 (-5.63% vs $51.33 prior close), confirmed via a live quote (stockanalysis.com) independent of the internal data drop, which matched almost exactly. Driver: crude fell as Saudi Arabia made additional crude available to Asian refiners via ship-to-ship transfers near Oman's Sohar port, easing fears of a supply disruption from the still-offline East-West pipeline (CNBC). This is the same broad Gulf/Hormuz backdrop this routine has tracked for weeks, but today's move is the opposite direction from prior escalation-driven spikes -- a reminder that DVN's key_risk cuts both ways. Energy-sleeve peers CVX (-2.83%) and OKE (-2.14%) moved the same direction on lower magnitude, consistent with a sector-wide reaction rather than a DVN-specific event; not flagged separately.",
-      "metric": { "price": 48.44, "day_move_pct": -5.63, "level_ref": null },
-      "thesis_link": "Matches DVN key_risk #1 verbatim: 'Oil and gas price volatility remains the dominant swing factor for earnings and free cash flow ... that could reverse quickly given global supply dynamics.'",
-      "evidence": [
-        { "source": "CNBC", "url": "https://www.cnbc.com/2026/09/17/oil-prices-today-wti-brent-hormuz-iran-war.html", "as_of": "2026-09-17" },
-        { "source": "stockanalysis.com (DVN quote)", "url": "https://stockanalysis.com/stocks/dvn/", "as_of": "2026-09-16" }
-      ],
-      "first_seen": "2026-09-17",
-      "status": "new"
-    },
-    {
-      "id": "COIN_clarity_act_failure_2026-09-16",
-      "ticker": "COIN",
-      "sleeve": "Growth",
-      "severity": "red",
-      "category": "regulatory",
-      "headline": "COIN -4.41% (2nd straight session) as CLARITY Act market-structure bill dies in the Senate",
-      "detail": "The Senate's cloture vote on the Digital Asset Market Clarity Act failed 49-50 on 2026-09-15, falling short of the 60 needed to advance -- reported as effectively ending crypto market-structure legislative work in the Senate for 2026. COIN fell further on 9/16 (-4.41%, to $164.46) on top of an already-reported ~6-10% decline on 9/15 itself. Notably, BTC-tracking ETFs in the book (IBIT -0.19%, ETHA -0.30%) barely moved, and Coinbase's own reported institutional BTC inflows continued through mid-September -- this reads as a regulatory-overhang repricing of COIN's equity, not a crypto-market downturn.",
-      "metric": { "price": 164.46, "day_move_pct": -4.41, "level_ref": null },
-      "thesis_link": "Does not cleanly match a listed COIN key_risk (COIN's risks are framed around a 'prolonged crypto market downturn,' not federal market-structure regulation) -- flagging plainly as a new, uncatalogued regulatory risk rather than forcing a false thesis match.",
-      "evidence": [
-        { "source": "CNBC", "url": "https://www.cnbc.com/2026/09/15/senate-cloture-vote-on-clarity-act-fails-dealing-regulatory-setback-to-crypto-industry.html", "as_of": "2026-09-15" }
-      ],
-      "first_seen": "2026-09-17",
-      "status": "new"
-    },
-    {
-      "id": "HOOD_clarity_act_failure_2026-09-16",
-      "ticker": "HOOD",
-      "sleeve": "Growth",
-      "severity": "red",
-      "category": "regulatory",
-      "headline": "HOOD -5.46% on the same CLARITY Act failure",
-      "detail": "Same Senate cloture failure as COIN (see COIN_clarity_act_failure_2026-09-16). HOOD closed 2026-09-16 at $104.42 (-5.46% vs $110.45), confirmed via live quote. Premarket 9/17 shows a partial bounce (+1.63% to ~$106.12), suggesting the initial reaction may be overshooting rather than a repricing of fundamentals -- worth one more session to confirm.",
-      "metric": { "price": 104.42, "day_move_pct": -5.46, "level_ref": null },
-      "thesis_link": "Matches HOOD key_risk #2: 'Multi-front regulatory risk from SEC, CFTC, FINRA, and state regulators across prediction markets, crypto, and options trading could constrain the fastest-growing product lines.' A failed federal crypto market-structure framework prolongs exactly this regulatory overhang.",
-      "evidence": [
-        { "source": "CNBC", "url": "https://www.cnbc.com/2026/09/15/senate-cloture-vote-on-clarity-act-fails-dealing-regulatory-setback-to-crypto-industry.html", "as_of": "2026-09-15" },
-        { "source": "stockanalysis.com (HOOD quote)", "url": "https://stockanalysis.com/stocks/hood/", "as_of": "2026-09-16" }
-      ],
-      "first_seen": "2026-09-17",
-      "status": "new"
-    },
-    {
-      "id": "CNX_unexplained_decline_2026-09-16",
-      "ticker": "CNX",
+      "id": "PGY_unexplained_decline_2026-09-17",
+      "ticker": "PGY",
       "sleeve": "Growth",
       "severity": "amber",
       "category": "silent_decliner",
-      "headline": "CNX -4.75% with no matching catalyst found",
-      "detail": "CNX closed 2026-09-16 at $33.71 (-4.75% vs $35.39), confirmed via live quote (stockanalysis.com) -- not a data-drop error. Targeted search found no CNX-specific news (no 8-K, no analyst action, next earnings not until 10/29). This move runs counter to CNX's own listed key_risk, which is framed around natural gas price *weakness* below $2.50/MMBtu -- but Henry Hub spot actually rose to ~$2.90/MMBtu this week on lower production and stronger LNG exports, which should be a tailwind, not a headwind. Flagging as an unexplained silent decliner per this routine's mandate to surface moves the qualitative layer can't explain, rather than guessing at a cause.",
-      "metric": { "price": 33.71, "day_move_pct": -4.75, "level_ref": null },
+      "headline": "PGY -4.94%, moving opposite the broader fintech/crypto-adjacent rally",
+      "detail": "PGY fell to $20.58 (-4.94% vs $21.65 prior close) even as sector peers COIN (+5.78%) and HOOD (+5.15%) rallied hard and the broader market gained (SPY +1.14%). Targeted search found no PGY-specific negative catalyst -- coverage found this run is uniformly positive (a reiterated BUY citing Q2 revenue re-acceleration and profit growth, a new up-to-$700M forward-flow financing agreement with Neuberger Specialty Finance, and a discounted forward P/E of ~5.1x). None of PGY's listed key_risks (credit-cycle deterioration, growth deceleration, litigation overhang) have a matching news event today. Flagging as an unexplained silent decliner per this routine's mandate, not guessing at a cause. Also a reminder this ticker only has an IOWN screener report because this routine tracks it locally -- data/portfolios.json on main still lists EIX, not PGY (see roster_integrity).",
+      "metric": {
+        "price": 20.58,
+        "day_move_pct": -4.94,
+        "level_ref": null
+      },
       "thesis_link": null,
       "evidence": [
-        { "source": "stockanalysis.com (CNX quote)", "url": "https://stockanalysis.com/stocks/cnx/", "as_of": "2026-09-16" }
+        {
+          "source": "Seeking Alpha",
+          "url": "https://seekingalpha.com/article/4947775-pagaya-is-a-buy-despite-the-rising-interest-rate-environment",
+          "as_of": "2026-09-18"
+        }
       ],
-      "first_seen": "2026-09-17",
+      "first_seen": "2026-09-18",
       "status": "new"
     },
     {
@@ -109,47 +67,112 @@
       "sleeve": "Growth",
       "severity": "amber",
       "category": "policy",
-      "headline": "Copper Section 232 tariff decision still undecided; downgraded from RED (no new price deterioration)",
-      "detail": "The White House remains split on whether to impose a refined-copper tariff -- reporting this run confirms no decision has been made, same status as the last several runs. Downgrading from RED to AMBER because FCX itself was essentially flat 2026-09-16 (-0.17%, $69.25 vs $69.36) -- yesterday's stalled-decision story is not producing fresh price action, so it no longer meets the RED bar of 'warrants Carson's attention today.' Still worth tracking: FCX used a Morgan Stanley conference on 9/16 to lay out a copper growth plan independent of the tariff outcome.",
-      "metric": { "price": 69.245, "day_move_pct": -0.17, "level_ref": null },
-      "thesis_link": "Still relevant to FCX key_risk #1 (copper price cyclicality) whenever a decision lands, but not materializing today.",
+      "headline": "Copper Section 232 tariff decision still undecided; FCX moved with the broad rally, not the tariff story",
+      "detail": "No new information found this run -- the White House remains split on a refined-copper tariff, same status as the last several runs (most recent confirming reports still dated 9/10-9/11). FCX itself rose +2.3% today ($70.84 vs $69.245 prior close) as part of a broad, index-wide rally (SPY +1.14%, QQQ +1.73%) rather than any tariff-specific catalyst -- the underlying policy uncertainty this flag tracks has not resolved either direction.",
+      "metric": {
+        "price": 70.84,
+        "day_move_pct": 2.3,
+        "level_ref": null
+      },
+      "thesis_link": "Adjacent to FCX key_risk #1 (copper price cyclicality) -- a tariff decision in either direction would move realized copper economics, but nothing has landed yet.",
       "evidence": [
-        { "source": "Benzinga", "url": "https://www.benzinga.com/trading-ideas/movers/26/09/61722384/freeport-mcmoran-stock-drops-on-copper-tariff-uncertainty", "as_of": "2026-09-11" }
+        {
+          "source": "Benzinga",
+          "url": "https://www.benzinga.com/trading-ideas/movers/26/09/61722384/freeport-mcmoran-stock-drops-on-copper-tariff-uncertainty",
+          "as_of": "2026-09-11"
+        }
       ],
       "first_seen": "2026-08-19",
       "status": "persisting"
     },
     {
-      "id": "ai_chip_selloff_2026-09-14",
-      "ticker": null,
-      "sleeve": null,
+      "id": "COIN_clarity_act_failure_2026-09-16",
+      "ticker": "COIN",
+      "sleeve": "Growth",
       "severity": "green",
       "category": "resolved",
-      "headline": "RESOLVED: AI/chip selloff (Amodei 'pace the frontier' fallout) fully reversed",
-      "detail": "The 2-session AI/chip selloff flagged RED on 2026-09-14 and 09-15 reversed on 9/16: CRDO +7.59% (Q1 revenue $479M, +115% YoY, 7th straight triple-digit growth quarter), MRVL +3.62% (new $2B strategic investment from Nvidia), AMD +1.69% (114% YTD gain, sixth consecutive >30% data-center growth quarter), NVDA +0.84%, KEYS +2.52%. NXPI (-3.16%) and QCOM (-1.57%) lagged but did not deepen the prior selloff. No further action needed.",
-      "metric": { "price": null, "day_move_pct": null, "level_ref": null },
+      "headline": "RESOLVED: COIN +5.78% as SEC's tokenization exemption offsets the CLARITY Act setback",
+      "detail": "On 2026-09-17 the SEC issued a temporary, conditional five-year 'Innovation Exemption' clearing a path for tokenized-stock trading venues -- a genuine new regulatory positive for crypto-market-structure infrastructure players, landing just two days after the CLARITY Act's Senate cloture failure that drove the original RED flag. COIN rallied +5.78% today ($173.96 vs $164.46 prior close). Some of this is broad-market beta (SPY +1.14%, QQQ +1.73%), but the specific, dated regulatory catalyst is real and reverses the negative read from 9/16.",
+      "metric": {
+        "price": 173.96,
+        "day_move_pct": 5.78,
+        "level_ref": null
+      },
       "thesis_link": null,
       "evidence": [
-        { "source": "TradersUnion (CRDO)", "url": "https://tradersunion.com/news/stocks/show/3359511-credo-technology-surges-7-94percent-today/", "as_of": "2026-09-16" }
+        {
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2026/09/17/sec-clears-path-for-tokenized-stocks-bringing-24/7-trading-closer.html",
+          "as_of": "2026-09-17"
+        }
       ],
-      "first_seen": "2026-09-14",
+      "first_seen": "2026-09-17",
       "status": "resolved"
     },
     {
-      "id": "fomc_hike_2026-09-16",
-      "ticker": null,
-      "sleeve": "Dividend",
+      "id": "HOOD_clarity_act_failure_2026-09-16",
+      "ticker": "HOOD",
+      "sleeve": "Growth",
       "severity": "green",
       "category": "resolved",
-      "headline": "RESOLVED: Fed hiked 25bp to 3.75-4%, as priced in; muted reaction in rate-sensitive Dividend utilities",
-      "detail": "FOMC voted 12-0 to raise the federal funds rate 25bp to 3.75-4.00% on 2026-09-16, the first hike since 2023, with a hawkish dot plot (16 of 18 officials expect another hike this year). This was the outcome markets had priced (60-91% odds across trackers per prior runs). Rate-sensitive Dividend-sleeve utility names showed no outsized reaction: NEE -0.89%, ATO -0.12%, BKH +0.81%. Resolves the 9/15 AMBER calendar flag.",
-      "metric": { "price": null, "day_move_pct": null, "level_ref": null },
+      "headline": "RESOLVED: HOOD +5.15% -- SEC tokenization exemption is directly on-thesis for Robinhood",
+      "detail": "Same SEC 'Innovation Exemption' catalyst as COIN (see COIN_clarity_act_failure_2026-09-16), but more directly relevant to HOOD: Robinhood already offers tokenized-stock trading through Robinhood Wallet in 120+ countries, so this is a tailwind for an existing product line rather than a speculative one. HOOD rallied +5.15% today ($109.80 vs $104.42 prior close), reversing the 9/16 CLARITY Act-driven RED flag.",
+      "metric": {
+        "price": 109.8,
+        "day_move_pct": 5.15,
+        "level_ref": null
+      },
+      "thesis_link": "Matches HOOD key_catalyst #3: 'Prediction markets expansion with continued regulatory approvals enabling new contract types' -- the SEC exemption is exactly this kind of approval, applied to tokenization rather than prediction markets.",
+      "evidence": [
+        {
+          "source": "CNBC",
+          "url": "https://www.cnbc.com/2026/09/17/sec-clears-path-for-tokenized-stocks-bringing-24/7-trading-closer.html",
+          "as_of": "2026-09-17"
+        }
+      ],
+      "first_seen": "2026-09-17",
+      "status": "resolved"
+    },
+    {
+      "id": "CNX_unexplained_decline_2026-09-16",
+      "ticker": "CNX",
+      "sleeve": "Growth",
+      "severity": "green",
+      "category": "silent_decliner",
+      "headline": "CNX's 9/16 unexplained -4.75% drop hasn't deepened, but hasn't reversed either -- still no catalyst found",
+      "detail": "CNX moved only -0.56% today ($33.52 vs $33.71), within normal noise range. A fresh targeted search again found no CNX-specific news for 9/17-9/18. Downgrading from AMBER to GREEN/INFO since today's move doesn't meet the 'elevated' bar, but flagging that the 9/16 decline remains unexplained and unrecovered -- worth another look if it resumes falling.",
+      "metric": {
+        "price": 33.52,
+        "day_move_pct": -0.56,
+        "level_ref": null
+      },
+      "thesis_link": null,
+      "evidence": [],
+      "first_seen": "2026-09-17",
+      "status": "persisting"
+    },
+    {
+      "id": "DVN_oil_price_decline_2026-09-16",
+      "ticker": "DVN",
+      "sleeve": "Dividend",
+      "severity": "green",
+      "category": "commodity_price",
+      "headline": "RESOLVED: DVN stabilized after 9/16's -5.63% drop; no further deterioration despite continued oil softness",
+      "detail": "DVN has held roughly flat since the 9/16 RED flag -- today's price is $48.71 (+0.50% vs $48.47 prior close), essentially unchanged from the post-drop level. This is despite Brent and WTI both extending their decline on 9/17 (Brent -2.64% to ~$105.61, WTI -3.28% to ~$102.03 per market data), suggesting DVN's equity has decoupled from the incremental oil move rather than continuing to track it lower. Resolving the 9/16 RED flag -- the key_risk (oil price volatility) remains live by nature, but is not producing fresh deterioration.",
+      "metric": {
+        "price": 48.71,
+        "day_move_pct": 0.5,
+        "level_ref": null
+      },
       "thesis_link": null,
       "evidence": [
-        { "source": "CNBC", "url": "https://www.cnbc.com/2026/09/16/fed-rate-decision-september-2026.html", "as_of": "2026-09-16" },
-        { "source": "Federal Reserve", "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm", "as_of": "2026-09-16" }
+        {
+          "source": "Yahoo Finance / DVN quote",
+          "url": "https://finance.yahoo.com/quote/DVN/",
+          "as_of": "2026-09-18"
+        }
       ],
-      "first_seen": "2026-09-15",
+      "first_seen": "2026-09-17",
       "status": "resolved"
     }
   ],
@@ -163,13 +186,20 @@
       "firb_cleared_date": "2026-06-19",
       "close_date": "2026-06-25",
       "transaction_value_bn": 8.4,
-      "last_checked": "2026-09-17",
+      "last_checked": "2026-09-18",
       "severity": "green",
-      "note": "No change to deal status -- closed and delisted since 2026-06-25, reconfirmed via fresh web search this run. Persisting issue is roster hygiene (CWAN still listed in data/portfolios.json on main, 84th consecutive day post-close) -- see roster_integrity, not this deal-watch entry."
+      "note": "No change to deal status -- closed and delisted since 2026-06-25, reconfirmed via fresh web search this run. Persisting issue is roster hygiene (CWAN still listed in data/portfolios.json on main, 85th consecutive day post-close) -- see roster_integrity, not this deal-watch entry."
     }
   ],
   "levels": [
-    { "ticker": "SPY", "level": 645.80, "type": "support", "state": "active", "distance_pct": 16.77, "interaction": "not_close" }
+    {
+      "ticker": "SPY",
+      "level": 645.8,
+      "type": "support",
+      "state": "active",
+      "distance_pct": 18.07,
+      "interaction": "not_close"
+    }
   ],
   "calendar": []
 }
