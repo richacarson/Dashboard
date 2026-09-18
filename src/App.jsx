@@ -4122,7 +4122,14 @@ Instructions:
     if (m.rate) {
       const v = Number(macroData.curve?.[m.rate]);
       const p = Number(macroData.curvePrev?.[m.rate]);
-      return { v: isFinite(v) ? v : null, chg: (isFinite(v) && isFinite(p)) ? v - p : null };
+      // The as-of matters here in a way it does not for the quotes beside these. The
+      // Treasury publishes the constant-maturity curve around 3:30pm ET, so during a
+      // session the newest row is the previous day's — Friday's, on a Monday morning.
+      // Unlabelled next to a live VIX and a live gold print, a correct close reads as a
+      // wrong quote, which is exactly how these got reported as broken. The values match
+      // FRED to the cent; only their age was invisible.
+      const d = String(macroData.curve?.date || "").slice(5).replace("-", "/");
+      return { v: isFinite(v) ? v : null, chg: (isFinite(v) && isFinite(p)) ? v - p : null, asOf: d || null };
     }
     const q = macroQuotes[m.sym];
     return { v: q?.p ?? null, chg: (q?.p && q.pc > 0) ? ((q.p - q.pc) / q.pc) * 100 : null };
@@ -7423,13 +7430,14 @@ Instructions:
               <span style={{ color: C.t3 }}>SPY vs 200d</span><span style={{ color: md.spy200 && tSpyPrice ? ((tSpyPrice / md.spy200 - 1) * 100 < 0 ? C.dn : C.up) : C.t4, textAlign: "right" }}>{md.spy200 && tSpyPrice ? `${((tSpyPrice / md.spy200 - 1) * 100).toFixed(1)}%` : "—"}</span>
               <span style={{ color: C.t3 }}>Top Sector</span><span style={{ textAlign: "right", color: tTopSector ? (tTopSector.c >= 0 ? C.up : C.dn) : C.t4 }}>{tTopSector ? `${SECTOR_ETF_NAMES[tTopSector.sym] || tTopSector.sym} ${pct(tTopSector.c)}` : "—"}</span>
               {MACRO.map(m => {
-                const { v, chg: c } = macroRead(m);
+                const { v, chg: c, asOf } = macroRead(m);
                 return (
                   <React.Fragment key={m.sym || m.rate}>
                     <span style={{ color: C.t3 }}>{m.name}</span>
                     <span style={{ textAlign: "right", color: v != null ? C.t1 : C.t4 }}>
                       {v != null ? m.fmt(v) : "—"}
                       {c != null && <span style={{ color: c >= 0 ? C.up : C.dn, marginLeft: 4 }}>{macroChgText(m, c)}</span>}
+                      {asOf && <span style={{ color: C.t4, marginLeft: 4 }}>{asOf}</span>}
                     </span>
                   </React.Fragment>
                 );
@@ -7856,7 +7864,7 @@ Instructions:
                     );
                   })()}
                   {MACRO.map(m => {
-                    const { v, chg: c } = macroRead(m);
+                    const { v, chg: c, asOf } = macroRead(m);
                     if (v == null) return null;
                     return (
                       <div key={m.sym || m.rate} style={{
@@ -7867,7 +7875,9 @@ Instructions:
                         border: isDesktop ? `1px solid ${C.border}` : "none",
                         borderRadius: isDesktop ? 14 : 0,
                       }}>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>{m.name}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: 6, whiteSpace: "nowrap" }}>
+                          {m.name}{asOf && <span style={{ color: C.t4, fontWeight: 500 }}> · {asOf}</span>}
+                        </div>
                         <div style={{ display: "flex", alignItems: isDesktop ? "center" : "baseline", gap: 8, flexWrap: isDesktop ? "wrap" : "nowrap" }}>
                           <span style={{ fontSize: isDesktop ? 18 : 14, fontWeight: 700, color: C.t1, fontVariantNumeric: "tabular-nums" }}>{m.fmt(v)}</span>
                           {c != null && (
