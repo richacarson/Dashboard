@@ -259,5 +259,41 @@
   "category": "Sector Rotation",
   "summary": "Comprehensive review of academic and practitioner evidence on sector rotation alpha. Covers business cycle rotation, momentum-based approaches, monetary policy signals, and valuation-driven frameworks.",
   "file": "Research - Sector Rotation Academic Review.md"
+ },
+ {
+  "id": "defense-backlog-weight-review-q4-2026",
+  "title": "Record Backlogs, Falling Stocks: Does the Defense Book Justify More Weight in Q4?",
+  "date": "2026-09-18",
+  "author": "Paradiem Research",
+  "category": "Position Review",
+  "summary": "LMT and GD are both carrying record backlogs \u2014 $230.4B (+19% in six months, book-to-bill above 3x) and $136.5B (+32% year-on-year) \u2014 and both trade below their 200-day. Consensus models 4.1-4.4% revenue growth against backlogs building four times faster, so the market is pricing conversion capacity, not demand, as the constraint. Recommends adding 100bp to LMT, which sits 6% above its own long-run median P/E, and not adding to GD, which sits 20% above its median with a smaller backlog multiple and a cyclical Gulfstream component carrying its book-to-bill.",
+  "file": "Defense-Backlog-Weight-Review-2026-09-18.md"
+ },
+ {
+  "id": "ai-frontier-slowdown-capex-review",
+  "title": "Does Slowing the Frontier Slow the Buildout? Testing the Case for Cutting AI Weight",
+  "date": "2026-09-18",
+  "author": "Paradiem Research",
+  "category": "Thematic / Technology",
+  "summary": "The 12 September calls by Anthropic, OpenAI and xAI to slow frontier development govern model capability, not compute deployment \u2014 and the $720-745B of 2026 data-centre capex is committed by Amazon, Google, Microsoft and Meta, none of whom signed it and none of whom has revised guidance. Training is the minority of demand and shrinking as inference scales; the binding constraints are power, transformers and land. Consensus already prices deceleration: NVDA trades at 10.4x FY2029 EPS with the Street modelling EPS peaking in FY2030. Recommends not cutting AI weight on this news, trimming AMD on valuation, and setting an explicit concentration cap.",
+  "file": "AI-Frontier-Slowdown-Capex-Review-2026-09-18.md"
+ },
+ {
+  "id": "solar-versus-nuclear-supply-chain-review",
+  "title": "Solar or Nuclear? Reviewing the CEG and VST Thesis, and Where a 2x Actually Lives in Solar",
+  "date": "2026-09-18",
+  "author": "Paradiem Research",
+  "category": "Sector Rotation",
+  "summary": "CEG and VST are down 38% and 36% on softer ERCOT forward curves, not on contract failure \u2014 the AWS, Meta and Helix PPAs remain contracted for twenty years, and VST trades at 9.9x 2029E with 16.5% earnings growth. Data centres need firm dispatchable power, which is the structural case for holding both. Solar is cheap for cause: Chinese oversupply above 80% global share and a US policy cliff requiring post-4-July-2026 construction to be in service by end-2027. Screens five solar names on the exit multiple required to double; FSLR needs only 11.5x but a majority of its EPS is the Section 45X credit, making it a policy bet rather than a value stock. Flags ARRY as a value trap despite screening cheapest.",
+  "file": "Solar-Versus-Nuclear-Supply-Chain-Review-2026-09-18.md"
+ },
+ {
+  "id": "q4-2026-rebalance-where-is-the-opportunity",
+  "title": "Where Is the Opportunity Going Into Q4? A Divergence Screen",
+  "date": "2026-09-18",
+  "author": "Paradiem Research",
+  "category": "Quarterly Rebalance Research",
+  "summary": "The market is paying up for narrative and discounting contracted, physical, policy-independent cash flow. CRWD trades at 81x FY2031 EPS for a PEG of 3.6 while VST trades at 8.7x 2030E for a PEG of 0.5 \u2014 the cybersecurity thesis is right and unbuyable. Three divergences are large enough to act on: defense backlogs at records against stocks below trend, independent power contracted while the ERCOT curve softened, and AI infrastructure hardware (CRDO -43%, ALAB -39%, VRT -34%) de-rating into an 80% increase in hyperscaler capex. Identifies Vertiv as the closest available analogue to the optical-interconnect call, and flags that ~34% of the growth sleeve now sits in one factor.",
+  "file": "Q4-2026-Rebalance-Where-Is-The-Opportunity-2026-09-18.md"
  }
 ]
