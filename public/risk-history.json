@@ -530,5 +530,12 @@
     "amber": 3,
     "green": 46,
     "headline": "No run occurred 2026-09-16 (a Wednesday); this run recovers the missed session one day late. NEW RED x3: DVN -5.63% (Saudi eases Gulf oil-supply fears, hitting DVN's own oil-price-volatility key_risk); COIN -4.41% and HOOD -5.46% (2nd session of fallout from the Senate's CLARITY Act cloture failure, 49-50, killing crypto market-structure legislation for the year -- HOOD's regulatory key_risk matches directly). NEW AMBER: CNX -4.75%, unexplained -- runs counter to its own natgas-price key_risk since Henry Hub actually rose this week. RESOLVED: the AI/chip selloff fully reversed (CRDO +7.59% on a Q1 beat, MRVL +3.62% on a new $2B Nvidia investment, AMD +1.69%); FOMC delivered its widely-priced 25bp hike with a muted reaction in rate-sensitive Dividend utilities. FCX copper-tariff story downgraded RED->AMBER (still undecided, but FCX itself flat). Data drop: 52/52 priced, zero errors. CWAN roster-integrity bug hits its 84th consecutive day (PRs #11/#12/#14 still unmerged); EIX->PGY drift persists a 13th consecutive run."
+  },
+  {
+    "date": "2026-09-18",
+    "red": 0,
+    "amber": 2,
+    "green": 50,
+    "headline": "No RED flags today -- a broad, FOMC-relief rally (SPY +1.14%, QQQ +1.73%) lifted AI/chip names further (AMD +6.26%, MRVL +4.76%, CRDO +4.19%, NXPI +4.08%, TSM +2.92%) and crypto-adjacent names (COIN +5.78%, HOOD +5.15%, MARA +5.38%) on a genuine new catalyst: the SEC's 9/17 tokenized-stock 'Innovation Exemption', which RESOLVES both COIN and HOOD's 9/16 CLARITY Act regulatory flags. DVN also stabilizes post its 9/16 -5.63% drop despite oil continuing to soften. NEW AMBER: PGY -4.94%, an unexplained silent decliner moving opposite its own sector's rally. AMBER persists: FCX copper-tariff decision remains undecided (FCX itself rallied with the market). CNX's 9/16 unexplained decline hasn't deepened or reversed -- downgraded to INFO. Roster: CWAN roster-integrity bug hits its 85th consecutive calendar day (PRs #11/#12/#14 still open/unmerged, main unchanged since 6/17); EIX->PGY drift persists a 14th consecutive run."
   }
 ]
