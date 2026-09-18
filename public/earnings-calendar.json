@@ -970,16 +970,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "BSET",
-    "date": "2026-09-24",
-    "hour": "",
-    "epsEstimate": 0.1326,
-    "epsActual": null,
-    "revenueEstimate": 84724943,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "BTOC",
     "date": "2026-09-24",
     "hour": "",
@@ -1012,7 +1002,7 @@
   {
     "symbol": "DRI",
     "date": "2026-09-24",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 2.0738,
     "epsActual": null,
     "revenueEstimate": 3239074454,
@@ -1022,7 +1012,7 @@
   {
     "symbol": "LGCY",
     "date": "2026-09-24",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.1479,
     "epsActual": null,
     "revenueEstimate": 20583600,
@@ -1102,7 +1092,7 @@
   {
     "symbol": "SCHL",
     "date": "2026-09-24",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -3.468,
     "epsActual": null,
     "revenueEstimate": 229182780,
