@@ -1,360 +1,289 @@
 {
-  "generated_at": "2026-09-17",
+  "generated_at": "2026-09-18",
   "insider_clusters": [
     {
-      "ticker": "BRVE",
-      "name": "Braveheart Bio, Inc.",
-      "buyers": 6,
-      "total_value": 89099964,
-      "trade_date": "2026-08-07",
-      "note": "6 insiders, $89,099,964 total; trade date 2026-08-07",
-      "screener_score": 38
-    },
-    {
-      "ticker": "SCTX",
-      "name": "Scribe Therapeutics, Inc.",
-      "buyers": 6,
-      "total_value": 71344746,
-      "trade_date": "2026-07-23",
-      "note": "6 insiders, $71,344,746 total; trade date 2026-07-23",
-      "screener_score": 54
+      "ticker": "GAM",
+      "name": "General American Investors Co Inc",
+      "buyers": 3,
+      "total_value": 284880,
+      "note": "3 insiders / $284,880 filed 2026-09-18"
     },
     {
       "ticker": "LILA",
       "name": "Liberty Latin America Ltd.",
       "buyers": 6,
-      "total_value": 47824567,
-      "trade_date": "2026-08-31",
-      "note": "6 insiders, $47,824,567 total; trade date 2026-08-31",
-      "screener_score": 43
+      "total_value": 48582324,
+      "note": "6 insiders / $48,582,324 filed 2026-09-18 / IOWN 43 WATCH"
     },
     {
-      "ticker": "PNAQ",
-      "name": "Pinnacle Acquisition Corp",
-      "buyers": 6,
-      "total_value": 29800000,
-      "trade_date": "2026-08-10",
-      "note": "6 insiders, $29,800,000 total; trade date 2026-08-10",
-      "screener_score": 20
-    },
-    {
-      "ticker": "BABA",
-      "name": "Alibaba Group Holding Ltd",
+      "ticker": "TH",
+      "name": "Target Hospitality Corp.",
       "buyers": 2,
-      "total_value": 25691200,
-      "trade_date": "2026-08-25",
-      "note": "2 insiders, $25,691,200 total; trade date 2026-08-25",
-      "screener_score": 59
+      "total_value": 375158,
+      "note": "2 insiders / $375,158 filed 2026-09-18"
     },
     {
-      "ticker": "BLSM",
-      "name": "Blossomhill Therapeutics, Inc.",
-      "buyers": 5,
-      "total_value": 25170700,
-      "trade_date": "2026-08-07",
-      "note": "5 insiders, $25,170,700 total; trade date 2026-08-07",
-      "screener_score": 42
-    },
-    {
-      "ticker": "GME",
-      "name": "Gamestop Corp.",
-      "buyers": 3,
-      "total_value": 21605932,
-      "trade_date": "2026-09-08",
-      "note": "3 insiders, $21,605,932 total; trade date 2026-09-08",
-      "screener_score": 47
-    },
-    {
-      "ticker": "UBER",
-      "name": "Uber Technologies, Inc",
+      "ticker": "ALP",
+      "name": "Alpha Compute Corp",
       "buyers": 2,
-      "total_value": 15314016,
-      "trade_date": "2026-09-04",
-      "note": "2 insiders, $15,314,016 total; trade date 2026-09-04",
-      "screener_score": 70
-    },
-    {
-      "ticker": "ACDC",
-      "name": "Profrac Holding Corp.",
-      "buyers": 3,
-      "total_value": 9753790,
-      "trade_date": "2026-08-10",
-      "note": "3 insiders, $9,753,790 total; trade date 2026-08-10",
-      "screener_score": 42
-    },
-    {
-      "ticker": "BSX",
-      "name": "Boston Scientific Corp",
-      "buyers": 4,
-      "total_value": 9486040,
-      "trade_date": "2026-08-25",
-      "note": "4 insiders, $9,486,040 total; trade date 2026-08-25",
-      "screener_score": 73
-    },
-    {
-      "ticker": "GLOO",
-      "name": "Gloo Holdings, Inc.",
-      "buyers": 4,
-      "total_value": 9253103,
-      "trade_date": "2026-07-10",
-      "note": "4 insiders, $9,253,103 total; trade date 2026-07-10",
-      "screener_score": 61
-    },
-    {
-      "ticker": "CDNL",
-      "name": "Cardinal Infrastructure Group Inc.",
-      "buyers": 7,
-      "total_value": 8541274,
-      "trade_date": "2026-08-17",
-      "note": "7 insiders, $8,541,274 total; trade date 2026-08-17",
-      "screener_score": 57
-    },
-    {
-      "ticker": "APTV",
-      "name": "Aptiv Plc",
-      "buyers": 4,
-      "total_value": 8254508,
-      "trade_date": "2026-08-13",
-      "note": "4 insiders, $8,254,508 total; trade date 2026-08-13",
-      "screener_score": 63
-    },
-    {
-      "ticker": "APLM",
-      "name": "Apollomics Inc.",
-      "buyers": 3,
-      "total_value": 8250009,
-      "trade_date": "2026-08-14",
-      "note": "3 insiders, $8,250,009 total; trade date 2026-08-14",
-      "screener_score": 34
-    },
-    {
-      "ticker": "SBLK",
-      "name": "Star Bulk Carriers Corp.",
-      "buyers": 8,
-      "total_value": 6920496,
-      "trade_date": "2026-09-15",
-      "note": "8 insiders, $6,920,496 total; trade date 2026-09-15",
-      "screener_score": 63
+      "total_value": 194439,
+      "note": "2 insiders / $194,439 filed 2026-09-17"
     },
     {
       "ticker": "SKIL",
       "name": "Skillsoft Corp.",
       "buyers": 2,
       "total_value": 161598,
-      "trade_date": "2026-09-15",
-      "note": "2 insiders, $161,598 total; trade 2026-09-15"
+      "note": "2 insiders / $161,598 filed 2026-09-17"
     },
     {
       "ticker": "BWMX",
       "name": "Betterware De Mexico, S.A.P.I. De C.V",
       "buyers": 2,
       "total_value": 986709,
-      "trade_date": "2026-09-16",
-      "note": "2 insiders, $986,709 total; trade 2026-09-16"
+      "note": "2 insiders / $986,709 filed 2026-09-17"
+    },
+    {
+      "ticker": "SBLK",
+      "name": "Star Bulk Carriers Corp.",
+      "buyers": 8,
+      "total_value": 6920496,
+      "note": "8 insiders / $6,920,496 filed 2026-09-17 / IOWN 63 HOLD"
     },
     {
       "ticker": "ADC",
       "name": "Agree Realty Corp",
       "buyers": 2,
       "total_value": 4075321,
-      "trade_date": "2026-09-16",
-      "note": "2 insiders, $4,075,321 total; trade 2026-09-16",
-      "screener_score": 66
+      "note": "2 insiders / $4,075,321 filed 2026-09-17 / IOWN 66 HOLD"
     },
     {
       "ticker": "AAON",
       "name": "Aaon, Inc.",
       "buyers": 2,
       "total_value": 109584,
-      "trade_date": "2026-09-15",
-      "note": "2 insiders, $109,584 total; trade 2026-09-15",
-      "screener_score": 58
+      "note": "2 insiders / $109,584 filed 2026-09-16 / IOWN 58 WATCH"
     },
     {
       "ticker": "CAVA",
       "name": "Cava Group, Inc.",
       "buyers": 2,
       "total_value": 482340,
-      "trade_date": "2026-09-15",
-      "note": "2 insiders, $482,340 total; trade 2026-09-15",
-      "screener_score": 63
+      "note": "2 insiders / $482,340 filed 2026-09-16 / IOWN 63 HOLD"
     },
     {
       "ticker": "MCFT",
       "name": "Mastercraft Boat Holdings, Inc.",
       "buyers": 2,
       "total_value": 123761,
-      "trade_date": "2026-09-15",
-      "note": "2 insiders, $123,761 total; trade 2026-09-15"
+      "note": "2 insiders / $123,761 filed 2026-09-16"
     },
     {
       "ticker": "RWT",
       "name": "Redwood Trust Inc",
       "buyers": 4,
       "total_value": 928278,
-      "trade_date": "2026-09-15",
-      "note": "4 insiders, $928,278 total; trade 2026-09-15",
-      "screener_score": 52
+      "note": "4 insiders / $928,278 filed 2026-09-16 / IOWN 52 WATCH"
     },
     {
       "ticker": "CELH",
       "name": "Celsius Holdings, Inc.",
       "buyers": 3,
       "total_value": 1830043,
-      "trade_date": "2026-09-15",
-      "note": "3 insiders, $1,830,043 total; trade 2026-09-15",
-      "screener_score": 52
+      "note": "3 insiders / $1,830,043 filed 2026-09-16 / IOWN 52 WATCH"
     },
     {
       "ticker": "AVBC",
       "name": "Avidia Bancorp, Inc.",
       "buyers": 5,
       "total_value": 586569,
-      "trade_date": "2026-09-14",
-      "note": "5 insiders, $586,569 total; trade 2026-09-14",
-      "screener_score": 58
+      "note": "5 insiders / $586,569 filed 2026-09-16 / IOWN 58 WATCH"
     },
     {
       "ticker": "NTHI",
       "name": "Neonc Technologies Holdings, Inc.",
       "buyers": 2,
       "total_value": 314795,
-      "trade_date": "2026-09-14",
-      "note": "2 insiders, $314,795 total; trade 2026-09-14"
+      "note": "2 insiders / $314,795 filed 2026-09-15"
     },
     {
       "ticker": "OXM",
       "name": "Oxford Industries Inc",
       "buyers": 2,
       "total_value": 137998,
-      "trade_date": "2026-09-15",
-      "note": "2 insiders, $137,998 total; trade 2026-09-15"
+      "note": "2 insiders / $137,998 filed 2026-09-15"
+    },
+    {
+      "ticker": "GLOO",
+      "name": "Gloo Holdings, Inc.",
+      "buyers": 4,
+      "total_value": 9253103,
+      "note": "4 insiders / $9,253,103 filed 2026-09-14 / IOWN 61 HOLD"
     },
     {
       "ticker": "ANGX",
       "name": "Angel Studios, Inc.",
       "buyers": 3,
       "total_value": 5857056,
-      "trade_date": "2026-09-11",
-      "note": "3 insiders, $5,857,056 total; trade 2026-09-11",
-      "screener_score": 47
+      "note": "3 insiders / $5,857,056 filed 2026-09-14 / IOWN 47 WATCH"
     },
     {
       "ticker": "GRNT",
       "name": "Granite Ridge Resources, Inc.",
       "buyers": 3,
       "total_value": 105800,
-      "trade_date": "2026-09-11",
-      "note": "3 insiders, $105,800 total; trade 2026-09-11",
-      "screener_score": 42
+      "note": "3 insiders / $105,800 filed 2026-09-14 / IOWN 42 WATCH"
     },
     {
       "ticker": "PNFP",
       "name": "Pinnacle Financial Partners, Inc.",
       "buyers": 3,
       "total_value": 1299640,
-      "trade_date": "2026-09-01",
-      "note": "3 insiders, $1,299,640 total; trade 2026-09-01",
-      "screener_score": 70
+      "note": "3 insiders / $1,299,640 filed 2026-09-11 / IOWN 70 HOLD"
     },
     {
       "ticker": "KMT",
       "name": "Kennametal Inc",
       "buyers": 2,
       "total_value": 354750,
-      "trade_date": "2026-09-10",
-      "note": "2 insiders, $354,750 total; trade 2026-09-10",
-      "screener_score": 57
+      "note": "2 insiders / $354,750 filed 2026-09-11 / IOWN 57 WATCH"
     },
     {
       "ticker": "CYBN",
       "name": "Cybin Inc.",
       "buyers": 2,
       "total_value": 4941950,
-      "trade_date": "2026-09-08",
-      "note": "2 insiders, $4,941,950 total; trade 2026-09-08"
+      "note": "2 insiders / $4,941,950 filed 2026-09-11"
     },
     {
       "ticker": "RLMD",
       "name": "Relmada Therapeutics, Inc.",
       "buyers": 2,
       "total_value": 1671990,
-      "trade_date": "2026-09-09",
-      "note": "2 insiders, $1,671,990 total; trade 2026-09-09",
-      "screener_score": 41
+      "note": "2 insiders / $1,671,990 filed 2026-09-11 / IOWN 41 WATCH"
     },
     {
       "ticker": "PRTS",
       "name": "Carparts.Com, Inc.",
       "buyers": 3,
       "total_value": 2000649,
-      "trade_date": "2026-09-10",
-      "note": "3 insiders, $2,000,649 total; trade 2026-09-10"
+      "note": "3 insiders / $2,000,649 filed 2026-09-10"
+    },
+    {
+      "ticker": "GME",
+      "name": "Gamestop Corp.",
+      "buyers": 3,
+      "total_value": 21605932,
+      "note": "3 insiders / $21,605,932 filed 2026-09-10 / IOWN 47 WATCH"
     },
     {
       "ticker": "RWAY",
       "name": "Runway Growth Finance Corp.",
       "buyers": 2,
       "total_value": 101733,
-      "trade_date": "2026-09-09",
-      "note": "2 insiders, $101,733 total; trade 2026-09-09"
+      "note": "2 insiders / $101,733 filed 2026-09-10"
+    },
+    {
+      "ticker": "UBER",
+      "name": "Uber Technologies, Inc",
+      "buyers": 2,
+      "total_value": 15314016,
+      "note": "2 insiders / $15,314,016 filed 2026-09-10 / IOWN 70 HOLD"
     },
     {
       "ticker": "DY",
       "name": "Dycom Industries Inc",
       "buyers": 2,
       "total_value": 453090,
-      "trade_date": "2026-09-09",
-      "note": "2 insiders, $453,090 total; trade 2026-09-09",
-      "screener_score": 62
+      "note": "2 insiders / $453,090 filed 2026-09-09 / IOWN 62 HOLD"
     },
     {
       "ticker": "LUCK",
       "name": "Lucky Strike Entertainment Corp",
       "buyers": 3,
       "total_value": 869701,
-      "trade_date": "2026-09-09",
-      "note": "3 insiders, $869,701 total; trade 2026-09-09",
-      "screener_score": 38
+      "note": "3 insiders / $869,701 filed 2026-09-09 / IOWN 38 SELL"
     },
     {
       "ticker": "ENOV",
       "name": "Enovis Corp",
       "buyers": 2,
       "total_value": 449599,
-      "trade_date": "2026-09-04",
-      "note": "2 insiders, $449,599 total; trade 2026-09-04",
-      "screener_score": 59
+      "note": "2 insiders / $449,599 filed 2026-09-08 / IOWN 59 WATCH"
     },
     {
       "ticker": "INBX",
       "name": "Inhibrx Biosciences, Inc.",
       "buyers": 2,
       "total_value": 2932016,
-      "trade_date": "2026-09-08",
-      "note": "2 insiders, $2,932,016 total; trade 2026-09-08"
+      "note": "2 insiders / $2,932,016 filed 2026-09-08"
     },
     {
       "ticker": "SCOR",
       "name": "Comscore, Inc.",
       "buyers": 3,
       "total_value": 348468,
-      "trade_date": "2026-09-04",
-      "note": "3 insiders, $348,468 total; trade 2026-09-04",
-      "screener_score": 34
+      "note": "3 insiders / $348,468 filed 2026-09-08 / IOWN 34 SELL"
     },
     {
       "ticker": "TISI",
       "name": "Team Inc",
       "buyers": 3,
       "total_value": 610080,
-      "trade_date": "2026-09-03",
-      "note": "3 insiders, $610,080 total; trade 2026-09-03",
-      "screener_score": 37
+      "note": "3 insiders / $610,080 filed 2026-09-08 / IOWN 37 SELL"
+    },
+    {
+      "ticker": "SMID",
+      "name": "Smith Midland Corp",
+      "buyers": 2,
+      "total_value": 108040,
+      "note": "2 insiders / $108,040 filed 2026-09-04"
+    },
+    {
+      "ticker": "AMRZ",
+      "name": "Amrize Ltd",
+      "buyers": 10,
+      "total_value": 2638163,
+      "note": "10 insiders / $2,638,163 filed 2026-09-03 / IOWN 48 WATCH"
+    },
+    {
+      "ticker": "UAMY",
+      "name": "United States Antimony Corp",
+      "buyers": 3,
+      "total_value": 291636,
+      "note": "3 insiders / $291,636 filed 2026-09-02 / IOWN 50 WATCH"
+    },
+    {
+      "ticker": "QNRX",
+      "name": "Quoin Pharmaceuticals, Ltd.",
+      "buyers": 4,
+      "total_value": 279965,
+      "note": "4 insiders / $279,965 filed 2026-09-01"
+    },
+    {
+      "ticker": "CIA",
+      "name": "Citizens, Inc.",
+      "buyers": 2,
+      "total_value": 281425,
+      "note": "2 insiders / $281,425 filed 2026-09-01"
+    },
+    {
+      "ticker": "GO",
+      "name": "Grocery Outlet Holding Corp.",
+      "buyers": 2,
+      "total_value": 403900,
+      "note": "2 insiders / $403,900 filed 2026-08-31 / IOWN 40 WATCH"
+    },
+    {
+      "ticker": "HWKN",
+      "name": "Hawkins Inc",
+      "buyers": 2,
+      "total_value": 261576,
+      "note": "2 insiders / $261,576 filed 2026-08-31"
     }
   ],
   "congressional": {
-    "note": "Congressional sources unavailable on 2026-09-17; HSW/SSW S3 buckets 403, House Clerk 2026FD.zip is a filing index (no transaction data), Capitol Trades 429. Retry next run."
+    "note": "Congressional sources unavailable on 2026-09-16; HSW/SSW S3 buckets 403, House Clerk 2026FD.zip XML lacks trade fields, Capitol Trades 429. Retry next run."
   },
   "institutional": [
     {
