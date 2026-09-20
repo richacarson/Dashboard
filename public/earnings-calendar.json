@@ -1042,7 +1042,7 @@
   {
     "symbol": "MITQ",
     "date": "2026-09-24",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -1132,7 +1132,7 @@
   {
     "symbol": "TBN",
     "date": "2026-09-25",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1654,
     "epsActual": null,
     "revenueEstimate": 1843250,
