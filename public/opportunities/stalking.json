@@ -614,37 +614,37 @@
     "checks_remaining": "Trade construction is not possible today because Mexico full-bank launch happened in July 2026 and the first quarter of deposits-inclusive economics prints in Q3 (mid-Nov). Entry-zone anchor at current price risks paying up before the Mexico ramp actually shows in numbers; stop needs to be anchored to a Brazil ARPAC deceleration or a Mexico execution miss, neither of which is measurable pre-print. Second concern: NU trades at premium-fintech multiples (~35-40x fwd EPS by some estimates) \u2014 a re-rating requires either a beat or a compression in incumbent BR banks (ITUB, BBD), which is macro-timing sensitive. FX-translation risk (BRL, MXN, COP) is another latent factor to size against."
   },
   {
-    "id": "rmbs-hbm4e-memory-interface-ip-royalty-ramp",
-    "title": "Rambus HBM4E Memory Interface IP Royalty Ramp",
-    "added": "2026-09-20",
-    "catalyst": "Rambus reported record Q2 FY26 revenue of $207.4M (+20% YoY) and record product revenue of $99.2M (+22% YoY) in July 2026, with Q3 guidance of $210-216M and Q4 HBM4E controller IP commercialization expected as next-generation AI accelerators (Blackwell Ultra, Rubin) begin qualifying HBM4E designs. Every HBM4E-enabled AI GPU/ASIC that ships pays Rambus per-unit royalties on memory-interface IP.",
-    "thesis": "RMBS is a picks-and-shovels IP-royalty play on the same HBM shortage / bandwidth-bottleneck theme that already drives our dram-hbm-shortage opp (MU, SNDK) \u2014 but through a different mechanism (per-unit royalties on memory-interface IP) that expands margin as volumes ramp without corresponding capex. The forward P/E of 25.1x with PEG 1.04 and 35.5% profit margin puts it in the growth-at-a-reasonable-price zone versus the 30x+ multiples the pure play HBM DRAM makers command. Rambus is IOWN 80 BUY (Growth) with a debt-free $824.9M cash position and 17.8% ROE; the Q3 FY26 print (late October) is the near-term de-risking event.",
+    "id": "bbd-bradesco-six-director-cluster-brazil-bank",
+    "title": "Bradesco (BBD) six-director insider cluster at Brazilian-bank valuation trough",
+    "added": "2026-09-21",
+    "catalyst": "Six insiders (directors + officers of Banco Bradesco S.A.) filed SEC Form 4 purchases with a filing date of 2026-09-21 aggregating $11.27M (openinsider composite value) at ~R$18/share (~$3.50 ADR-equivalent). The cluster follows Bradesco's Q2 2026 print (NII inflection, cost-of-risk normalization) and comes as Brazilian rates begin to ease from a peak Selic of 15%.",
+    "thesis": "Bradesco is mid-turnaround under CEO Marcelo Noronha: the bank has been re-underwriting the retail book, aggressively provisioning for credit deterioration during Brazil's 2023-2025 rate cycle, and re-basing costs. A six-insider cluster \u2014 extremely rare at legacy LatAm banks \u2014 signals internal conviction that Q2 2026 marked the fundamental low. Cross-signal with our NU Holdings stalk gives us two independent angles on the LatAm bank thaw: NU on the digital-neobank expansion side, BBD on the legacy-bank rerating side.",
     "tickers": [
-      "RMBS"
+      "BBD"
     ],
     "source": {
-      "title": "Rambus Q2 FY2026 Financial Results \u2014 Record Revenue $207.4M, Record Product Revenue $99.2M, Q3 Guidance $210-216M",
-      "url": "https://investor.rambus.com/",
-      "date": "2026-07-28"
+      "title": "OpenInsider \u2014 Latest Cluster Buys (BBD row, filing date 2026-09-21, six insiders, $11.27M aggregate)",
+      "url": "http://openinsider.com/latest-cluster-buys",
+      "date": "2026-09-21"
     },
-    "what_would_promote": "Q3 FY26 print (late October 2026) that beats the $210-216M guide with continued 20%+ product-revenue growth AND explicit HBM4E controller design-win disclosure would move this to On Our Radar. Secondary trigger: a first named HBM4E hyperscaler-scale customer announcement (e.g., an NVIDIA Rubin/Blackwell Ultra qualification note) with a specific licensing figure or per-unit royalty rate. A second primary source (10-Q with HBM4E revenue breakout, or an SEC 8-K on a major license) plus bounded trade construction ($80-90 entry, $110-120 target, sub-$70 stop) required.",
-    "checks_remaining": "Only one primary source (Q2 print). Needs an HBM4E-specific design-win disclosure to differentiate from MU/SNDK exposure and avoid the 'same theme via different ticker' de-dup pushback. No trade construction yet. Ledger pattern awareness: Secular Trend win rate 6% (WEAK) \u2014 any HC promotion would require 3 primary sources + differentiation paragraph."
+    "what_would_promote": "Direct SEC EDGAR Form 4 verification of all six Bradesco filers (confirm P codes, insider titles, and open-market vs 10b5-1 timing); Q3 2026 print (~mid-November) confirming NII inflection and cost-of-risk decline continues; a second primary source (e.g., Bradesco IR quarterly presentation) documenting Selic-cut leverage.",
+    "checks_remaining": "Primary SEC Form 4 read (currently openinsider aggregation is the sole source \u2014 meets Stalking bar for 1 credible source but not the 2 primary sources bar for High Conviction). No bounded trade construction yet; would set entry $3.30-3.60, target $5.00-5.50 (Selic-cut fundamental scenario), stop below $3.00 (Brazilian sovereign-risk repricing) once Q3 print confirms trajectory."
   },
   {
-    "id": "cdns-cadence-ai-monetization-8b-backlog",
-    "title": "Cadence.AI Monetization + $8.1B Record Backlog",
-    "added": "2026-09-20",
-    "catalyst": "Cadence reported Q2 2026 revenue of $1.584B (+24% YoY) with record backlog of $8.1B and IP business growing 40%+ YoY (July 2026), raising full-year guidance to $6.26-$6.34B. Cadence.AI platform is commercially rolling out with 5-week chip-design time elimination as the anchor claim, and the Q3 2026 print (late October) is expected to show whether the AI-productivity upsell is being monetized in seat-price expansion.",
-    "thesis": "CDNS is a picks-and-shovels play on every AI chip designed globally \u2014 the EDA duopoly (Cadence + Synopsys) is one of the widest software moats outside of the hyperscalers, and Cadence.AI is a genuine step-function productivity tool that lets Cadence charge more per seat rather than compete on price. The $8.1B backlog (~1.3x annual revenue) gives multi-year visibility that hyperscaler capex cycles cannot easily disrupt. IOWN 82 BUY (Growth) at 34x forward earnings; the 52-week 15.7% decline reflects premium-multiple concern, not fundamental miss. Non-duplicative \u2014 no EDA/design-tool exposure in the active book despite our heavy AI-infrastructure tilt.",
+    "id": "amd-mi325-q3-fy26-ai-gpu-share-catalyst",
+    "title": "AMD (AMD) MI325X ramp + Q3 FY26 print catalyst \u2014 AI-GPU number-two seat",
+    "added": "2026-09-21",
+    "catalyst": "AMD's Instinct MI325X datacenter GPU began customer sampling in Q2 2026 and is targeting broader hyperscaler shipments in Q3-Q4. Q3 FY26 earnings print is expected in late October 2026 \u2014 the first quarter where MI325X can materially move Data Center segment revenue. Today (2026-09-21) is a broad AI-infrastructure rebound day after the 9/14-9/16 'AI-doomsday' rotation, with names like MU +13%, CRDO +25%, MRVL +18% rebounding hard; AMD as the number-two AI GPU vendor participates asymmetrically.",
+    "thesis": "The AI-GPU market is not going to end up single-vendor; hyperscaler capex has already forced 2-3 sourcing paths (NVIDIA GPUs, custom silicon via Broadcom/Marvell, and AMD as the third leg). AMD is the only public pure-play alternative GPU vendor with a shipping product family and a >$5B run-rate Data Center AI business. Even a 10-15% AI-GPU share by 2027 implies $25-40B of Data Center revenue, materially above consensus. IOWN 83 BUY Growth. Non-duplicative: NVDA and BRCM/AVGO already in book on adjacent angles, but AMD is the specific 'number-two GPU vendor' bet.",
     "tickers": [
-      "CDNS"
+      "AMD"
     ],
     "source": {
-      "title": "Cadence Q2 2026 Earnings \u2014 Revenue $1.584B (+24% YoY), Record Backlog $8.1B, Full-Year Guidance Raised to $6.26-$6.34B",
-      "url": "https://www.cadence.com/en_US/home/company/newsroom/press-releases.html",
-      "date": "2026-07-28"
+      "title": "AMD Q2 FY26 Earnings Release and CFO commentary on MI325X ramp cadence",
+      "url": "https://ir.amd.com/news-events/press-releases",
+      "date": "2026-07-29"
     },
-    "what_would_promote": "Q3 2026 print (late October 2026) showing continued 20%+ revenue growth AND backlog above $8.5B AND Cadence.AI segment/attach-rate disclosure would move to On Our Radar. Trade construction anchored to $270-290 entry (near 200-day MA), $350-360 target (return to pre-drawdown range), sub-$250 stop (5-year support). A second primary source \u2014 10-Q with Cadence.AI revenue breakout, or an SEC 8-K on a major hyperscaler custom-silicon license \u2014 required for the promotion.",
-    "checks_remaining": "Only one primary source (Q2 print). No trade construction yet. No independent disclosure of Cadence.AI segment revenue \u2014 currently just management color. Ledger pattern awareness: Secular Trend win rate 6% (WEAK) \u2014 any HC promotion would require 3 primary sources + differentiation paragraph."
+    "what_would_promote": "Q3 FY26 print (late October) with Data Center segment revenue accelerating >30% QoQ and management calling out MI325X units shipped; a second primary source (hyperscaler capex disclosure naming AMD explicitly \u2014 e.g., Meta or Oracle CY26 capex mix); bounded trade construction anchored to post-print action (currently $615 area; would set entry $580-620, target $780-820 on Data Center reacceleration, stop $500 on capex softening).",
+    "checks_remaining": "Bar-to-promote requires (1) Q3 print confirmation, (2) named hyperscaler AI-GPU commitment as a second primary source, (3) trade construction after Q3 (currently no bounded entry/stop given the +25% one-day move today needs to consolidate)."
   }
 ]
