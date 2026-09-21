@@ -632,11 +632,11 @@
   {
     "symbol": "EBF",
     "date": "2026-09-21",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3939,
-    "epsActual": null,
+    "epsActual": 0.37,
     "revenueEstimate": 100848500,
-    "revenueActual": null,
+    "revenueActual": 102010000,
     "source": "finnhub"
   },
   {
