@@ -124,6 +124,10 @@ const BM_SYMS = BENCHMARKS.map(b => b.sym);
 // the price froze at the previous close for a whole session. FMP is now their SINGLE
 // source: one writer per symbol, so the value can only step forward (no two-feed
 // flip-flop, which is why the old wsStale race guard is gone too).
+// The IEX split is history. It existed because Alpaca's feed did not carry DVY or IUSG,
+// so those two needed their own price source. Quotes come from FMP now and the one batch
+// covers every benchmark equally. IEX_BM survives only as the Alpaca socket's subscribe
+// list, and that socket is not connected.
 const NON_IEX_BM = ["IUSG", "DVY"];
 const IEX_BM = BM_SYMS.filter(s => !NON_IEX_BM.includes(s));
 // Optional Cloudflare Worker proxy (see worker/README.md). Vite inlines every VITE_* value
@@ -391,7 +395,7 @@ async function mapLimit(items, n, fn) {
 
 // Fallback price for a benchmark FMP isn't currently serving. Finnhub may be delayed, but
 // a delayed number beats a frozen or blank one. It can't fight FMP tick-to-tick: the caller
-// only reaches here when FMP has produced nothing for that symbol in FMP_STALE_MS, so a
+// only reaches here when FMP has produced nothing for that symbol, so a
 // source switch needs a sustained multi-minute outage, not a single missed request.
 async function finnhubBenchQuote(sym, key) {
   if (!key) return null;
@@ -447,10 +451,6 @@ const ES = import.meta.env.VITE_ALPACA_SECRET || "";
 const FK = import.meta.env.VITE_FMP_KEY || "";
 // FMP is reachable with a direct key OR through the proxy (which supplies the key itself)
 const FMP_OK = !!(FK || PROXY);
-// Benchmark poll cadence for the non-IEX symbols. This was 30s only to protect a free-tier
-// FMP quota shared with the dividend/earnings/calendar calls. On the paid plan that
-// constraint is gone, so poll faster — one batched call covers both symbols.
-const BENCH_POLL_MS = 10000;
 // FMP refreshes a quote every 15-60s, so polling faster than this only burns quota to
 // re-read the same number. The Auto-Refresh setting still chooses the cadence; 1s and
 // 5s simply land here.
@@ -1989,7 +1989,7 @@ Instructions:
   const [wsErr, setWsErr] = useState(null);
   const quotesRef = useRef({});
   const barsRef = useRef({});
-  const bmQuotesRef = useRef({}); // per-trade WS benchmark quotes — synced to state at 1Hz
+  const bmQuotesRef = useRef({}); // written only by the (disconnected) Alpaca socket
   const splitFixedRef = useRef(new Set()); // symbols whose pc has been corrected
   const splitAttemptRef = useRef({}); // symbol -> last attempt timestamp (throttles free-tier retries)
   const splitFixedDayRef = useRef(new Date().toDateString()); // corrections expire on a new day
@@ -3198,115 +3198,25 @@ Instructions:
   // single source for these two; SPY/QQQ/DIA still stream over the Alpaca IEX WS.
   const connectFinnhubWS = useCallback(() => {}, []);
 
-  // Sync per-trade benchmark quote refs into React state at 1Hz (avoids memo churn per trade)
-  useEffect(() => {
-    if (!authed) return;
-    const sync = () => {
-      const ref = bmQuotesRef.current;
-      if (!Object.keys(ref).length) return;
-      setBmQuotes(prev => {
-        let changed = false;
-        const next = { ...prev };
-        for (const [s, q] of Object.entries(ref)) {
-          if (!next[s] || next[s].p !== q.p || next[s].t !== q.t) { next[s] = q; changed = true; }
-        }
-        return changed ? next : prev;
-      });
-      // Previous close has to ride along. The poller writes pc into barsRef, but bmBars
-      // state was only ever assigned inside fetchData — which stops running when the market
-      // closes. Without this the change % for the polled symbols goes stale or blank after
-      // the bell even though a fresh pc is sitting in the ref.
-      setBmBars(prev => {
-        let changed = false;
-        const next = { ...prev };
-        for (const s of NON_IEX_BM) {
-          const pc = barsRef.current[s]?.pc;
-          if (pc > 0 && next[s]?.pc !== pc) { next[s] = { ...next[s], pc }; changed = true; }
-        }
-        return changed ? next : prev;
-      });
-    };
-    sync();
-    const t = setInterval(sync, 1000);
-    return () => clearInterval(t);
-  }, [authed]);
-
-  // FMP polling for the non-IEX benchmarks (DVY, IUSG) — their ONLY price source.
-  // No WS-vs-poll race guard is needed anymore: nothing else writes these symbols, so
-  // the value can only step forward. A failed fetch leaves the last good price in place.
-  // One batched call covers both symbols. 15s is a compromise: these ETFs trade thinly
-  // enough that sub-second streaming buys nothing, but 60s read as stale next to the
-  // WebSocket-fed SPY. Polling only runs while the market is open, bounding daily usage.
-  const fhTimerRef = useRef(null);
-  const streamOkAtRef = useRef({});   // sym -> timestamp of last FMP WebSocket tick
-  const STREAM_STALE_MS = 90_000;     // no tick this long => the stream isn't carrying this symbol
-  const STREAM_MAX_LAG_MS = 5 * 60_000; // tick older than this => delayed feed, not live
-  const fmpOkAtRef = useRef({});      // sym -> timestamp of last SUCCESSFUL FMP quote
-  const fmpFailsRef = useRef(0);      // consecutive empty FMP responses -> length of the backoff
-  const fmpNextTryRef = useRef(0);    // earliest timestamp FMP may be called again (always finite)
-  const FMP_STALE_MS = 3 * 60_000;    // no FMP for this long => let Finnhub keep the number moving
-  const pollFinnhubBenchmarks = useCallback(async () => {
-    const write = (sym, y) => {
-      const quoteVal = { p: y.p, t: new Date().toISOString() };
-      quotesRef.current[sym] = quoteVal;
-      bmQuotesRef.current[sym] = quoteVal;    // 1Hz sync pushes this into bmQuotes state
-      // Take previous-close from the same response so price and % change never mismatch
-      if (y.pc) barsRef.current[sym] = { ...barsRef.current[sym], pc: y.pc };
-    };
-    // While FMP is failing, ease off — the key is shared with the dividend/earnings/calendar
-    // calls, so a dead quota shouldn't be drained further. Backoff is a TIMESTAMP, not a
-    // counter+modulo: an earlier version gated retries on a counter that could only advance
-    // when a retry was allowed, so it froze at the threshold and FMP was never called again
-    // for the rest of the session. Time-based backoff always expires, so FMP always recovers.
-    const now = Date.now();
-    // Anything the WebSocket is actively carrying needs no poll at all. When the stream
-    // goes quiet — after the close, or if FMP hasn't approved live streaming on this key —
-    // these fall out of the set within STREAM_STALE_MS and polling resumes untouched.
-    const streaming = NON_IEX_BM.filter((s) => streamOkAtRef.current[s] > now - STREAM_STALE_MS);
-    const need = NON_IEX_BM.filter((s) => !streaming.includes(s));
-    if (!need.length) return;
-    const attemptFmp = now >= (fmpNextTryRef.current || 0);
-    const qs = attemptFmp ? await fmpQuotes(need, FK) : {};
-    for (const [sym, y] of Object.entries(qs)) { fmpOkAtRef.current[sym] = now; write(sym, y); }
-    if (attemptFmp) {
-      if (Object.keys(qs).length) {
-        fmpFailsRef.current = 0;
-        fmpNextTryRef.current = 0;
-      } else {
-        fmpFailsRef.current += 1;
-        // 30s, 60s, 90s … capped at 5 min. Always finite, so FMP is always retried.
-        fmpNextTryRef.current = now + Math.min(5 * 60_000, 30_000 * fmpFailsRef.current);
-      }
-    }
-    // Ownership is TIME-BOUNDED, not permanent. A symbol FMP priced recently is FMP's, so
-    // Finnhub can't fight it tick-to-tick. But if FMP goes quiet for FMP_STALE_MS (quota,
-    // rate limit, outage) Finnhub takes over rather than leaving the price frozen forever —
-    // that permanent-ownership bug is exactly what stalled these quotes.
-    const gaps = need.filter((s) => !(fmpOkAtRef.current[s] > now - FMP_STALE_MS));
-    if (gaps.length) {
-      if (now - (window.__benchWarnAt || 0) > 10 * 60_000) {
-        window.__benchWarnAt = now;
-        console.warn(`[benchmarks] no fresh FMP quote for ${gaps.join(", ")} in ${Math.round(FMP_STALE_MS / 60000)}m — using Finnhub (may be delayed). Check the FMP key's plan/quota.`);
-      }
-      for (const sym of gaps) {
-        const f = await finnhubBenchQuote(sym, FH);
-        if (f) write(sym, f);
-      }
-    }
-  }, []);
-  // Benchmark polling gets its own effect so it is NOT gated on the market being open.
-  // It used to live inside the market-hours interval, so polling stopped the instant the
-  // bell rang and DVY/IUSG kept whatever price FMP happened to return at 4:00 — a value
-  // that has not yet settled to the official close. That is why their change % disagreed
-  // with other sources after hours while the Alpaca-fed symbols (whose snapshot carries the
-  // official daily-bar close) were right. Polling on past the close lets the number settle.
-  useEffect(() => {
-    if (!authed) return;
-    const ms = marketStatus.status === "open" ? BENCH_POLL_MS : 60000;
-    pollFinnhubBenchmarks();
-    fhTimerRef.current = setInterval(pollFinnhubBenchmarks, ms);
-    return () => clearInterval(fhTimerRef.current);
-  }, [authed, marketStatus.status, pollFinnhubBenchmarks]);
+  // DVY and IUSG are priced by the main snapshot poll like every other symbol.
+  //
+  // Three things used to write them and no longer should. The Alpaca trade socket is not
+  // connected. The FMP benchmark socket answers 402 on this plan, so it never carries a
+  // tick. And a dedicated 15s poller existed because the IEX feed did not cover these two
+  // — which stopped being true when quotes moved to FMP: fetchData now fetches all ~175
+  // symbols, DVY and IUSG among them, in one batch every six seconds.
+  //
+  // Leaving the poller running made it a second writer on those two symbols, and its own
+  // comment asserted the opposite ("nothing else writes these symbols"). That was true
+  // when it was written and my own migration falsified it. Worse, it tracked FMP health
+  // in a ref only its own calls updated, so a rate-limited poll — on a key shared with
+  // the dividend, earnings and calendar jobs — looked like an FMP outage after three
+  // minutes and handed DVY and IUSG to Finnhub. Finnhub stopped advancing these two some
+  // time ago; it returns the prior close. That stale number went into bmQuotesRef, the
+  // 1Hz sync pushed it into state, and it overwrote the good FMP price fetchData had just
+  // written. The benchmark froze while every other symbol on screen kept moving.
+  //
+  // One writer now. The 1Hz ref sync went with it, having no live writer left to sync.
 
   /* ── Live macro strip: VIX, gold, bitcoin, WTI ──
    * Not gated on market hours: the VIX and commodity futures keep moving after the
@@ -3321,81 +3231,6 @@ Instructions:
     poll();
     const id = setInterval(poll, 60_000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [authed]);
-
-  /* ── FMP WebSocket for DVY/IUSG ──
-   * SPY/QQQ/DIA stream over Alpaca's IEX socket; these two don't, which is why they
-   * were on a poller. This gives them the same treatment. It only runs through the
-   * Cloudflare Worker: FMP authenticates with a login frame carrying the API key, and
-   * the Worker sends that frame on our behalf so the key never reaches the browser
-   * (worker/index.js wsProxy). With no VITE_PROXY_URL configured we simply don't
-   * connect and the poller carries on as before.
-   *
-   * Strictly additive. FMP gates live (vs delayed) quotes on a user declaration form,
-   * so the stream may deliver nothing; the poller notices the silence via
-   * streamOkAtRef and keeps doing exactly what it does today. */
-  const bmWsRef = useRef(null);
-  useEffect(() => {
-    if (!authed || !PROXY) return;
-    let closed = false, attempt = 0, retryTimer = null;
-
-    const connect = () => {
-      if (closed) return;
-      let ws;
-      try {
-        ws = new WebSocket(PROXY.replace(/^http/, "ws") + "/ws");
-      } catch { return schedule(); }
-      bmWsRef.current = ws;
-
-      ws.onopen = () => { attempt = 0; ws.send(JSON.stringify({ event: "subscribe", tickers: NON_IEX_BM })); };
-      ws.onmessage = (e) => {
-        let m;
-        try { m = JSON.parse(e.data); } catch { return; }
-        const sym = String(m?.symbol || "").toUpperCase();
-        const p = Number(m?.price);
-        if (!NON_IEX_BM.includes(sym) || !isFinite(p) || p <= 0) return;
-        // FMP serves DELAYED quotes on this socket until the user declaration form is
-        // approved, and a delayed tick would still claim the symbol and suppress the
-        // poller — a downgrade from the premium REST quotes, which are real-time. So
-        // only accept ticks that are actually current. The threshold is generous
-        // because DVY and IUSG trade thinly enough to go minutes between prints;
-        // a 15-minute delayed feed is still comfortably outside it.
-        let ts = Number(m?.timestamp);
-        if (isFinite(ts) && ts > 0) {
-          if (ts < 1e12) ts *= 1000;                    // FMP sends seconds; tolerate ms
-          if (Date.now() - ts > STREAM_MAX_LAG_MS) {
-            if (Date.now() - (window.__streamLagWarnAt || 0) > 10 * 60_000) {
-              window.__streamLagWarnAt = Date.now();
-              console.warn(`[stream] ignoring ${sym} tick ${Math.round((Date.now() - ts) / 60000)}m old — FMP is serving delayed quotes (declaration form not approved yet?). Polling continues.`);
-            }
-            return;
-          }
-        }
-        streamOkAtRef.current[sym] = Date.now();
-        const quoteVal = { p, t: new Date().toISOString() };
-        quotesRef.current[sym] = quoteVal;
-        bmQuotesRef.current[sym] = quoteVal;   // 1Hz sync pushes this into bmQuotes state
-        // Previous close rides along in the same payload, so price and % change can't mismatch.
-        const pc = Number(m?.previousClose);
-        if (isFinite(pc) && pc > 0) barsRef.current[sym] = { ...barsRef.current[sym], pc };
-      };
-      ws.onclose = () => { if (bmWsRef.current === ws) bmWsRef.current = null; schedule(); };
-      ws.onerror = () => { try { ws.close(); } catch {} };
-    };
-    // 2s, 4s, 8s … capped at 60s. The poller is covering the gap the whole time.
-    const schedule = () => {
-      if (closed) return;
-      clearTimeout(retryTimer);
-      retryTimer = setTimeout(connect, Math.min(60_000, 2000 * 2 ** attempt++));
-    };
-
-    connect();
-    return () => {
-      closed = true;
-      clearTimeout(retryTimer);
-      try { bmWsRef.current?.close(1000, "unmount"); } catch {}
-      bmWsRef.current = null;
-    };
   }, [authed]);
 
   // Poll Finnhub for stocks with stale IEX data (no trade in last 5 minutes)
@@ -5035,7 +4870,9 @@ Instructions:
               onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.t3; }}
             >⌕ SEARCH · /</button>
             <span style={{ width: 1, height: 12, background: C.border, flexShrink: 0 }} />
-            {["SPY", "QQQ", "DIA", "DVY", "IUSG"].map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = bmDayChg(sym); return q?.p ? (
+            {/* BM_SYMS, not a second hand-written list — RDVY joined the benchmarks and
+                this strip was the one place that did not notice. */}
+            {BM_SYMS.map(sym => { const q = bmQuotes[sym] || quotesRef.current?.[sym]; const b = bmBars[sym] || barsRef.current?.[sym]; const c = bmDayChg(sym); return q?.p ? (
               <span key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(null); setTDrawer(null); }} style={{ fontSize: 11, color: C.t2, whiteSpace: "nowrap", cursor: "pointer" }} onMouseEnter={e => e.currentTarget.style.color = C.accent} onMouseLeave={e => e.currentTarget.style.color = C.t2}>
                 <span style={{ fontWeight: 700 }}>{sym}</span>{" "}${q.p.toFixed(2)}{" "}
                 <span style={{ color: c != null ? (c >= 0 ? C.up : C.dn) : C.t4 }}>{c != null ? pct(c) : ""}</span>
