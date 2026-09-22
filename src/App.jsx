@@ -323,7 +323,11 @@ async function fmpFundamentalsRow(sym, urlFor) {
   return {
     companyName: p?.companyName, sector: p?.sector, industry: p?.industry, logo: p?.image,
     peTTM: r.priceToEarningsRatioTTM ?? null,
-    peFwd: r.forwardPriceToEarningsGrowthRatioTTM ?? null,
+    // NOT forwardPriceToEarningsGrowthRatioTTM — that is a PEG, and rendering it in a
+    // column labelled FP/E is why ABT read 3.3 against a true 17.9. FMP's ratios endpoint
+    // carries no forward P/E at all, so it is computed from live price over the consensus
+    // forward EPS the nightly build publishes (see peFwdSym).
+    peFwd: null,
     pegTTM: r.priceToEarningsGrowthRatioTTM ?? null,
     yieldFwd: pctOf(r.dividendYieldTTM) ?? null,
     payoutRatio: pctOf(r.dividendPayoutRatioTTM) ?? null,
@@ -436,11 +440,15 @@ const refineSector = (sector, industry) => (industry && /software/i.test(industr
 // Forward valuation helpers for the terminal watchlist. Finnhub provides a
 // forward (annual) P/E but no forward PEG, so PEG is put on a forward basis by
 // holding the trailing growth assumption constant: pegFwd = pegTTM × (peFwd/peTTM).
-const peFwdOf = (f) => (f?.peFwd != null && isFinite(f.peFwd) && f.peFwd > 0) ? f.peFwd : (f?.peTTM ?? null);
-const pegFwdOf = (f) => {
+// px over consensus forward EPS when both are known; trailing P/E otherwise, which is at
+// least the same kind of number rather than a different ratio wearing its label.
+const peFwdCalc = (f, px, eps) => (eps > 0 && px > 0) ? px / eps : (f?.peTTM ?? null);
+// Trailing PEG rescaled onto the forward multiple, so it moves with the forward P/E
+// rather than with a number FMP no longer supplies.
+const pegFwdCalc = (f, peFwd) => {
   if (!f) return null;
-  if (f.pegTTM != null && f.peFwd != null && f.peTTM != null && f.peTTM > 0 && isFinite(f.peFwd) && isFinite(f.peTTM))
-    return f.pegTTM * (f.peFwd / f.peTTM);
+  if (f.pegTTM != null && peFwd != null && f.peTTM > 0 && isFinite(peFwd) && isFinite(f.peTTM))
+    return f.pegTTM * (peFwd / f.peTTM);
   return f.pegTTM ?? null;
 };
 const RAIL_BM_EXTRA = RAIL_BENCHMARKS.filter(s => !BM_SYMS.includes(s));
@@ -4077,12 +4085,33 @@ Instructions:
     return Object.fromEntries(Object.entries(agg).map(([k, v]) => [k, v.sum / v.n]));
   }, [fundamentals]);
   // Forward-basis sector average P/E — mirrors sectorPE but uses forward P/E so
+  // Consensus forward EPS per symbol, published by the nightly fundamentals build.
+  // Absent until that build next runs, in which case the column falls back to trailing.
+  const [fwdEps, setFwdEps] = useState({});
+  useEffect(() => {
+    if (!authed) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${import.meta.env.BASE_URL}fundamentals/index.json?v=${Math.floor(Date.now() / 36e5)}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled && d?.fwdEps) setFwdEps(d.fwdEps);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [authed]);
+  // Forward P/E off the LIVE price, so the column moves with the tape rather than with
+  // whenever the ratios call last ran.
+  const peFwdSym = (sym) => peFwdCalc(fundamentals[sym], (quotesRef.current[sym] || quotes[sym] || bmQuotes[sym])?.p, fwdEps[sym]);
+  const pegFwdSym = (sym) => pegFwdCalc(fundamentals[sym], peFwdSym(sym));
+
   // the watchlist "beats sector" highlight stays on the same basis as the column.
   const sectorPeFwd = useMemo(() => {
     const agg = {};
     for (const [sym, f] of Object.entries(fundamentals)) {
       if (sym === "_ts" || !f || typeof f !== "object") continue;
-      const sec = f.sector, pe = peFwdOf(f);
+      const sec = f.sector, pe = peFwdSym(sym);
       if (!sec || pe == null || !isFinite(pe) || pe <= 0) continue;
       if (!agg[sec]) agg[sec] = { sum: 0, n: 0 };
       agg[sec].sum += pe; agg[sec].n++;
@@ -4814,10 +4843,10 @@ Instructions:
       return ws > 0 ? wsum / ws : (n ? esum / n : null);
     };
     const tQtdOf = s => { const p = (quotesRef.current[s] || quotes[s])?.p; const anc = REBALANCE_ANCHORS[s]; return (anc && p) ? (p / anc - 1) * 100 : (fundamentals[s]?.thisQtr ?? null); };
-    const tAvgPE = tAvg(s => peFwdOf(fundamentals[s]));
+    const tAvgPE = tAvg(s => peFwdSym(s));
     const tAvgComp = tAvg(s => screenerByTicker[s]?.overall_score);
     const tAvgYld = tAvg(s => fundamentals[s]?.yieldFwd);
-    const tAvgPeg = tAvg(s => pegFwdOf(fundamentals[s]));
+    const tAvgPeg = tAvg(s => pegFwdSym(s));
     const tAvgQtd = tAvg(tQtdOf);
     const tIsGrowth = tChartSleeve === "growth";
     const tIsDividend = tChartSleeve === "dividend";
@@ -4955,9 +4984,9 @@ Instructions:
                 price: s => (quotesRef.current[s] || quotes[s])?.p,
                 chg: s => { const q = quotesRef.current[s] || quotes[s]; const b = barsRef.current[s] || bars[s]; return (q && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; },
                 qtd: s => tQtdOf(s),
-                pe: s => peFwdOf(fundamentals[s]),
+                pe: s => peFwdSym(s),
                 wt: s => liveWeights[tChartSleeve]?.[s] ?? TARGET_WEIGHTS[tChartSleeve]?.[s] ?? null,
-                peg: s => pegFwdOf(fundamentals[s]),
+                peg: s => pegFwdSym(s),
               };
               return [...tSleeveSyms].sort((a, b) => {
                 const ka = ext[tWatchSort.col]?.(a);
@@ -4970,7 +4999,7 @@ Instructions:
                 const cmp = tWatchSort.col === "sym" ? ka.localeCompare(kb) : (ka - kb);
                 return tWatchSort.dir === "asc" ? cmp : -cmp;
               });
-            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = chg(sym); const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peF = peFwdOf(f); const pegF = pegFwdOf(f); const peBeat = peF != null && f?.sector && sectorPeFwd[f.sector] && peF < sectorPeFwd[f.sector]; return (
+            })().map(sym => { const q = quotesRef.current[sym] || quotes[sym]; const b = barsRef.current[sym] || bars[sym]; const c = chg(sym); const qtd = tQtdOf(sym); const isActive = sym === terminalActiveSym; const f = fundamentals[sym]; const comp = screenerByTicker[sym]?.overall_score; const peF = peFwdSym(sym); const pegF = pegFwdSym(sym); const peBeat = peF != null && f?.sector && sectorPeFwd[f.sector] && peF < sectorPeFwd[f.sector]; return (
               <div key={sym} onClick={() => { setTerminalActiveSym(sym); setTProfileSym(sym); setTProfileTab("chart"); setTDrawer(null); }}
                 onMouseEnter={e => e.currentTarget.style.background = C.cardHover}
                 onMouseLeave={e => e.currentTarget.style.background = isActive ? C.accentSoft : "transparent"}
