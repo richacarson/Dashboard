@@ -374,15 +374,23 @@ def main():
             else:
                 if not dry:
                     (OUT / f"{sym}.json").write_text(json.dumps(data, separators=(",", ":")))
-                built.append((sym, len(data["annual"])))
+                built.append((sym, len(data["annual"]), (data.get("fwd") or {}).get("eps")))
     if not dry:
         (OUT / "index.json").write_text(json.dumps({
             "generated": datetime.now(timezone.utc).isoformat(), "source": "FMP",
-            "available": sorted(s for s, _ in built),
+            "available": sorted(s for s, *_ in built),
+            # Consensus forward EPS, published here so the browser can compute a real
+            # forward P/E from the live price. It was reading FMP's
+            # forwardPriceToEarningsGrowthRatioTTM instead — a PEG — and rendering it in a
+            # column labelled FP/E, which is why ABT showed 3.3 against a true 17.9.
+            # FMP's ratios endpoint carries no forward P/E at all, so it has to be built
+            # from an estimate, and this run already has one per symbol.
+            "fwdEps": {s: round(e, 4) for s, _, e in built if isinstance(e, (int, float)) and e > 0},
             "excluded": {s: r for s, r in skipped},
         }, indent=1))
-    yrs = sorted(n for _, n in built)
-    print(f"  built {len(built)} (median {yrs[len(yrs)//2] if yrs else 0} annual yrs) | skipped {len(skipped)} | failed {len(failed)}")
+    yrs = sorted(n for _, n, _ in built)
+    n_eps = sum(1 for _, _, e in built if isinstance(e, (int, float)) and e > 0)
+    print(f"  built {len(built)} (median {yrs[len(yrs)//2] if yrs else 0} annual yrs, {n_eps} with fwd EPS) | skipped {len(skipped)} | failed {len(failed)}")
     if skipped:
         print("  skip reasons:", dict(Counter(r for _, r in skipped)))
         print("  skipped:", ", ".join(f"{s}({r})" for s, r in skipped[:40]))
