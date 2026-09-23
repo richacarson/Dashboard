@@ -284,9 +284,9 @@
     "date": "2026-09-23",
     "hour": "bmo",
     "epsEstimate": 0.1502,
-    "epsActual": null,
+    "epsActual": 0.99,
     "revenueEstimate": 853632267,
-    "revenueActual": null,
+    "revenueActual": 849340000,
     "source": "finnhub"
   },
   {
@@ -304,9 +304,9 @@
     "date": "2026-09-23",
     "hour": "bmo",
     "epsEstimate": 1.3817,
-    "epsActual": null,
+    "epsActual": 1.39,
     "revenueEstimate": 3043574328,
-    "revenueActual": null,
+    "revenueActual": 3013980000,
     "source": "finnhub"
   },
   {
@@ -334,9 +334,9 @@
     "date": "2026-09-23",
     "hour": "bmo",
     "epsEstimate": -0.102,
-    "epsActual": null,
+    "epsActual": -0.16552799999999998,
     "revenueEstimate": 151133400,
-    "revenueActual": null,
+    "revenueActual": 158997168,
     "source": "finnhub"
   },
   {
@@ -364,9 +364,9 @@
     "date": "2026-09-23",
     "hour": "bmo",
     "epsEstimate": 1.3465,
-    "epsActual": null,
+    "epsActual": 1.34,
     "revenueEstimate": 1659391284,
-    "revenueActual": null,
+    "revenueActual": 1630500000,
     "source": "finnhub"
   },
   {
@@ -1306,6 +1306,16 @@
     "epsEstimate": 3.2131,
     "epsActual": null,
     "revenueEstimate": 18210424017,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "AEHR",
+    "date": "2026-10-01",
+    "hour": "",
+    "epsEstimate": 0.1122,
+    "epsActual": null,
+    "revenueEstimate": 27607830,
     "revenueActual": null,
     "source": "finnhub"
   },
