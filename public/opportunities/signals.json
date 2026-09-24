@@ -1,369 +1,329 @@
 {
-  "generated_at": "2026-09-23",
+  "generated_at": "2026-09-24",
   "insider_clusters": [
+    {
+      "ticker": "BRVE",
+      "name": "Braveheart Bio, Inc.",
+      "buyers": 6,
+      "total_value": 89099964,
+      "latest_filing": "2026-08-11",
+      "note": "IOWN 38 SELL"
+    },
     {
       "ticker": "GME",
       "name": "Gamestop Corp.",
       "buyers": 4,
       "total_value": 48401613,
-      "span_days": null,
-      "trade_date": "2026-09-08",
-      "note": "n=4 insiders, cluster $48,401,613, trade 2026-09-08, IOWN 47 WATCH"
+      "latest_filing": "2026-09-21",
+      "note": "IOWN 47 WATCH"
+    },
+    {
+      "ticker": "PNAQ",
+      "name": "Pinnacle Acquisition Corp",
+      "buyers": 6,
+      "total_value": 29800000,
+      "latest_filing": "2026-08-12",
+      "note": "IOWN 20 SELL"
     },
     {
       "ticker": "BBD",
       "name": "Bank Bradesco",
       "buyers": 21,
       "total_value": 28952210,
-      "span_days": null,
-      "trade_date": "2026-09-18",
-      "note": "n=21 insiders, cluster $28,952,210, trade 2026-09-18, IOWN 63 HOLD"
+      "latest_filing": "2026-09-22",
+      "note": "IOWN 63 HOLD"
     },
     {
       "ticker": "BABA",
       "name": "Alibaba Group Holding Ltd",
       "buyers": 2,
       "total_value": 25691200,
-      "span_days": null,
-      "trade_date": "2026-08-25",
-      "note": "n=2 insiders, cluster $25,691,200, trade 2026-08-25, IOWN 59 WATCH"
+      "latest_filing": "2026-08-25",
+      "note": "IOWN 59 WATCH"
+    },
+    {
+      "ticker": "BLSM",
+      "name": "Blossomhill Therapeutics, Inc.",
+      "buyers": 5,
+      "total_value": 25170700,
+      "latest_filing": "2026-08-12",
+      "note": "IOWN 42 WATCH"
     },
     {
       "ticker": "LILA",
       "name": "Liberty Latin America Ltd.",
       "buyers": 4,
       "total_value": 18960193,
-      "span_days": null,
-      "trade_date": "2026-08-31",
-      "note": "n=4 insiders, cluster $18,960,193, trade 2026-08-31, IOWN 43 WATCH"
+      "latest_filing": "2026-09-18",
+      "note": "IOWN 43 WATCH"
     },
     {
       "ticker": "UBER",
       "name": "Uber Technologies, Inc",
       "buyers": 2,
       "total_value": 15314016,
-      "span_days": null,
-      "trade_date": "2026-09-04",
-      "note": "n=2 insiders, cluster $15,314,016, trade 2026-09-04, IOWN 70 HOLD"
+      "latest_filing": "2026-09-10",
+      "note": "IOWN 70 HOLD"
     },
     {
       "ticker": "BORR",
       "name": "Borr Drilling Ltd",
       "buyers": 3,
       "total_value": 14106108,
-      "span_days": null,
-      "trade_date": "2026-09-18",
-      "note": "n=3 insiders, cluster $14,106,108, trade 2026-09-18, IOWN 43 WATCH"
+      "latest_filing": "2026-09-21",
+      "note": "IOWN 43 WATCH"
+    },
+    {
+      "ticker": "ACDC",
+      "name": "Profrac Holding Corp.",
+      "buyers": 3,
+      "total_value": 9753790,
+      "latest_filing": "2026-08-26",
+      "note": "IOWN 43 WATCH"
     },
     {
       "ticker": "BSX",
       "name": "Boston Scientific Corp",
       "buyers": 4,
       "total_value": 9486040,
-      "span_days": null,
-      "trade_date": "2026-08-25",
-      "note": "n=4 insiders, cluster $9,486,040, trade 2026-08-25, IOWN 73 HOLD"
+      "latest_filing": "2026-08-26",
+      "note": "IOWN 73 HOLD"
+    },
+    {
+      "ticker": "GLOO",
+      "name": "Gloo Holdings, Inc.",
+      "buyers": 4,
+      "total_value": 9253103,
+      "latest_filing": "2026-09-14",
+      "note": "IOWN 61 HOLD"
+    },
+    {
+      "ticker": "CDNL",
+      "name": "Cardinal Infrastructure Group Inc.",
+      "buyers": 7,
+      "total_value": 8541274,
+      "latest_filing": "2026-08-18",
+      "note": "IOWN 57 WATCH"
+    },
+    {
+      "ticker": "APTV",
+      "name": "Aptiv Plc",
+      "buyers": 4,
+      "total_value": 8254508,
+      "latest_filing": "2026-08-17",
+      "note": "IOWN 63 HOLD"
+    },
+    {
+      "ticker": "APLM",
+      "name": "Apollomics Inc.",
+      "buyers": 3,
+      "total_value": 8250009,
+      "latest_filing": "2026-08-17",
+      "note": "IOWN 34 SELL"
     },
     {
       "ticker": "SBLK",
       "name": "Star Bulk Carriers Corp.",
       "buyers": 8,
       "total_value": 6920496,
-      "span_days": null,
-      "trade_date": "2026-09-15",
-      "note": "n=8 insiders, cluster $6,920,496, trade 2026-09-15, IOWN 63 HOLD"
+      "latest_filing": "2026-09-17",
+      "note": "IOWN 63 HOLD"
     },
     {
       "ticker": "CYBN",
       "name": "Cybin Inc.",
       "buyers": 3,
       "total_value": 6289000,
-      "span_days": null,
-      "trade_date": "2026-09-21",
-      "note": "n=3 insiders, cluster $6,289,000, trade 2026-09-21, not in screener"
+      "latest_filing": "2026-09-21",
+      "note": "NOT IN SCREENER"
     },
     {
       "ticker": "ANGX",
       "name": "Angel Studios, Inc.",
       "buyers": 3,
       "total_value": 5857056,
-      "span_days": null,
-      "trade_date": "2026-09-11",
-      "note": "n=3 insiders, cluster $5,857,056, trade 2026-09-11, IOWN 47 WATCH"
+      "latest_filing": "2026-09-14",
+      "note": "IOWN 47 WATCH"
+    },
+    {
+      "ticker": "DKS",
+      "name": "Dick'S Sporting Goods, Inc.",
+      "buyers": 6,
+      "total_value": 5088794,
+      "latest_filing": "2026-09-24",
+      "note": "IOWN 73 HOLD"
     },
     {
       "ticker": "ADC",
       "name": "Agree Realty Corp",
       "buyers": 3,
       "total_value": 4142871,
-      "span_days": null,
-      "trade_date": "2026-09-21",
-      "note": "n=3 insiders, cluster $4,142,871, trade 2026-09-21, IOWN 62 HOLD"
+      "latest_filing": "2026-09-23",
+      "note": "IOWN 62 HOLD"
+    },
+    {
+      "ticker": "ONON",
+      "name": "On Holding AG",
+      "buyers": 2,
+      "total_value": 3987582,
+      "latest_filing": "2026-08-17",
+      "note": "IOWN 66 HOLD"
+    },
+    {
+      "ticker": "PFE",
+      "name": "Pfizer Inc",
+      "buyers": 3,
+      "total_value": 2960110,
+      "latest_filing": "2026-08-12",
+      "note": "IOWN 60 HOLD"
     },
     {
       "ticker": "INBX",
       "name": "Inhibrx Biosciences, Inc.",
       "buyers": 2,
       "total_value": 2932016,
-      "span_days": null,
-      "trade_date": "2026-09-08",
-      "note": "n=2 insiders, cluster $2,932,016, trade 2026-09-08, not in screener"
+      "latest_filing": "2026-09-08",
+      "note": "NOT IN SCREENER"
+    },
+    {
+      "ticker": "AMRZ",
+      "name": "Amrize Ltd",
+      "buyers": 10,
+      "total_value": 2638163,
+      "latest_filing": "2026-09-03",
+      "note": "IOWN 48 WATCH"
+    },
+    {
+      "ticker": "XRN",
+      "name": "Chiron Real Estate Inc.",
+      "buyers": 4,
+      "total_value": 2559504,
+      "latest_filing": "2026-08-17",
+      "note": "IOWN 52 WATCH"
     },
     {
       "ticker": "PRTS",
       "name": "Carparts.Com, Inc.",
       "buyers": 3,
       "total_value": 2000649,
-      "span_days": null,
-      "trade_date": "2026-09-10",
-      "note": "n=3 insiders, cluster $2,000,649, trade 2026-09-10, not in screener"
+      "latest_filing": "2026-09-10",
+      "note": "NOT IN SCREENER"
     },
     {
       "ticker": "CELH",
       "name": "Celsius Holdings, Inc.",
       "buyers": 3,
       "total_value": 1830043,
-      "span_days": null,
-      "trade_date": "2026-09-15",
-      "note": "n=3 insiders, cluster $1,830,043, trade 2026-09-15, IOWN 52 WATCH"
+      "latest_filing": "2026-09-16",
+      "note": "IOWN 52 WATCH"
+    },
+    {
+      "ticker": "GBFH",
+      "name": "Gbank Financial Holdings Inc.",
+      "buyers": 5,
+      "total_value": 1742873,
+      "latest_filing": "2026-08-07",
+      "note": "IOWN 43 WATCH"
     },
     {
       "ticker": "RLMD",
       "name": "Relmada Therapeutics, Inc.",
       "buyers": 2,
       "total_value": 1671990,
-      "span_days": null,
-      "trade_date": "2026-09-09",
-      "note": "n=2 insiders, cluster $1,671,990, trade 2026-09-09, IOWN 41 WATCH"
+      "latest_filing": "2026-09-11",
+      "note": "IOWN 41 WATCH"
     },
     {
       "ticker": "TTMI",
       "name": "Ttm Technologies Inc",
       "buyers": 2,
       "total_value": 1642200,
-      "span_days": null,
-      "trade_date": "2026-08-25",
-      "note": "n=2 insiders, cluster $1,642,200, trade 2026-08-25, IOWN 57 WATCH"
+      "latest_filing": "2026-08-25",
+      "note": "IOWN 57 WATCH"
+    },
+    {
+      "ticker": "ABCL",
+      "name": "Abcellera Biologics Inc.",
+      "buyers": 3,
+      "total_value": 1545679,
+      "latest_filing": "2026-08-24",
+      "note": "IOWN 54 WATCH"
+    },
+    {
+      "ticker": "ELAN",
+      "name": "Elanco Animal Health Inc",
+      "buyers": 5,
+      "total_value": 1473069,
+      "latest_filing": "2026-08-21",
+      "note": "IOWN 67 HOLD"
+    },
+    {
+      "ticker": "HOG",
+      "name": "Harley-Davidson, Inc.",
+      "buyers": 3,
+      "total_value": 1439491,
+      "latest_filing": "2026-08-13",
+      "note": "IOWN 54 WATCH"
     },
     {
       "ticker": "BCBP",
       "name": "Bcb Bancorp Inc",
       "buyers": 2,
       "total_value": 1317500,
-      "span_days": null,
-      "trade_date": "2026-09-18",
-      "note": "n=2 insiders, cluster $1,317,500, trade 2026-09-18, not in screener"
+      "latest_filing": "2026-09-22",
+      "note": "NOT IN SCREENER"
     },
     {
       "ticker": "RWT",
       "name": "Redwood Trust Inc",
       "buyers": 4,
       "total_value": 1312178,
-      "span_days": null,
-      "trade_date": "2026-09-15",
-      "note": "n=4 insiders, cluster $1,312,178, trade 2026-09-15, IOWN 52 WATCH"
+      "latest_filing": "2026-09-18",
+      "note": "IOWN 52 WATCH"
     },
     {
       "ticker": "PNFP",
       "name": "Pinnacle Financial Partners, Inc.",
       "buyers": 3,
       "total_value": 1299640,
-      "span_days": null,
-      "trade_date": "2026-09-01",
-      "note": "n=3 insiders, cluster $1,299,640, trade 2026-09-01, IOWN 70 HOLD"
+      "latest_filing": "2026-09-11",
+      "note": "IOWN 70 HOLD"
     },
     {
-      "ticker": "PRE",
-      "name": "Prenetics Global Ltd",
-      "buyers": 2,
-      "total_value": 999698,
-      "span_days": null,
-      "trade_date": "2026-08-24",
-      "note": "n=2 insiders, cluster $999,698, trade 2026-08-24, IOWN 48 WATCH"
-    },
-    {
-      "ticker": "BWMX",
-      "name": "Betterware De Mexico, S.A.P.I. De C.V",
-      "buyers": 2,
-      "total_value": 986709,
-      "span_days": null,
-      "trade_date": "2026-09-16",
-      "note": "n=2 insiders, cluster $986,709, trade 2026-09-16, not in screener"
-    },
-    {
-      "ticker": "LUCK",
-      "name": "Lucky Strike Entertainment Corp",
+      "ticker": "REFI",
+      "name": "Chicago Atlantic Real Estate Finance, Inc.",
       "buyers": 3,
-      "total_value": 869701,
-      "span_days": null,
-      "trade_date": "2026-09-09",
-      "note": "n=3 insiders, cluster $869,701, trade 2026-09-09, IOWN 38 SELL"
+      "total_value": 1285710,
+      "latest_filing": "2026-08-28",
+      "note": "IOWN 37 SELL"
     },
     {
-      "ticker": "NSLR",
-      "name": "Neostellar Capital Corp.",
-      "buyers": 2,
-      "total_value": 760984,
-      "span_days": null,
-      "trade_date": "2026-08-26",
-      "note": "n=2 insiders, cluster $760,984, trade 2026-08-26, IOWN 43 WATCH"
-    },
-    {
-      "ticker": "TISI",
-      "name": "Team Inc",
+      "ticker": "TSM",
+      "name": "Taiwan Semiconductor Manufacturing Co Ltd",
       "buyers": 3,
-      "total_value": 610080,
-      "span_days": null,
-      "trade_date": "2026-09-03",
-      "note": "n=3 insiders, cluster $610,080, trade 2026-09-03, IOWN 37 SELL"
+      "total_value": 1136733,
+      "latest_filing": "2026-08-20",
+      "note": "IOWN 92 BUY"
     },
     {
-      "ticker": "AVBC",
-      "name": "Avidia Bancorp, Inc.",
-      "buyers": 5,
-      "total_value": 586569,
-      "span_days": null,
-      "trade_date": "2026-09-14",
-      "note": "n=5 insiders, cluster $586,569, trade 2026-09-14, IOWN 58 WATCH"
-    },
-    {
-      "ticker": "SRTS",
-      "name": "Sensus Healthcare, Inc.",
+      "ticker": "CCB",
+      "name": "Coastal Financial Corp",
       "buyers": 2,
-      "total_value": 563538,
-      "span_days": null,
-      "trade_date": "2026-08-28",
-      "note": "n=2 insiders, cluster $563,538, trade 2026-08-28, not in screener"
+      "total_value": 1102750,
+      "latest_filing": "2026-08-07",
+      "note": "IOWN 47 WATCH"
     },
     {
-      "ticker": "CAVA",
-      "name": "Cava Group, Inc.",
-      "buyers": 2,
-      "total_value": 482340,
-      "span_days": null,
-      "trade_date": "2026-09-15",
-      "note": "n=2 insiders, cluster $482,340, trade 2026-09-15, IOWN 63 HOLD"
-    },
-    {
-      "ticker": "DY",
-      "name": "Dycom Industries Inc",
-      "buyers": 2,
-      "total_value": 453090,
-      "span_days": null,
-      "trade_date": "2026-09-09",
-      "note": "n=2 insiders, cluster $453,090, trade 2026-09-09, IOWN 62 HOLD"
-    },
-    {
-      "ticker": "ENOV",
-      "name": "Enovis Corp",
-      "buyers": 2,
-      "total_value": 449599,
-      "span_days": null,
-      "trade_date": "2026-09-04",
-      "note": "n=2 insiders, cluster $449,599, trade 2026-09-04, IOWN 59 WATCH"
-    },
-    {
-      "ticker": "TH",
-      "name": "Target Hospitality Corp.",
-      "buyers": 2,
-      "total_value": 375158,
-      "span_days": null,
-      "trade_date": "2026-09-18",
-      "note": "n=2 insiders, cluster $375,158, trade 2026-09-18, not in screener"
-    },
-    {
-      "ticker": "KMT",
-      "name": "Kennametal Inc",
-      "buyers": 2,
-      "total_value": 354750,
-      "span_days": null,
-      "trade_date": "2026-09-10",
-      "note": "n=2 insiders, cluster $354,750, trade 2026-09-10, IOWN 57 WATCH"
-    },
-    {
-      "ticker": "SCOR",
-      "name": "Comscore, Inc.",
+      "ticker": "LIEN",
+      "name": "Chicago Atlantic Bdc, Inc.",
       "buyers": 3,
-      "total_value": 348468,
-      "span_days": null,
-      "trade_date": "2026-09-04",
-      "note": "n=3 insiders, cluster $348,468, trade 2026-09-04, IOWN 34 SELL"
-    },
-    {
-      "ticker": "GAM",
-      "name": "General American Investors Co Inc",
-      "buyers": 4,
-      "total_value": 331040,
-      "span_days": null,
-      "trade_date": "2026-09-22",
-      "note": "n=4 insiders, cluster $331,040, trade 2026-09-22, not in screener"
-    },
-    {
-      "ticker": "NTHI",
-      "name": "Neonc Technologies Holdings, Inc.",
-      "buyers": 2,
-      "total_value": 314795,
-      "span_days": null,
-      "trade_date": "2026-09-14",
-      "note": "n=2 insiders, cluster $314,795, trade 2026-09-14, not in screener"
-    },
-    {
-      "ticker": "SKIL",
-      "name": "Skillsoft Corp.",
-      "buyers": 2,
-      "total_value": 312236,
-      "span_days": null,
-      "trade_date": "2026-09-15",
-      "note": "n=2 insiders, cluster $312,236, trade 2026-09-15, not in screener"
-    },
-    {
-      "ticker": "UAMY",
-      "name": "United States Antimony Corp",
-      "buyers": 3,
-      "total_value": 291636,
-      "span_days": null,
-      "trade_date": "2026-09-01",
-      "note": "n=3 insiders, cluster $291,636, trade 2026-09-01, IOWN 50 WATCH"
-    },
-    {
-      "ticker": "CIA",
-      "name": "Citizens, Inc.",
-      "buyers": 2,
-      "total_value": 281425,
-      "span_days": null,
-      "trade_date": "2026-08-31",
-      "note": "n=2 insiders, cluster $281,425, trade 2026-08-31, not in screener"
-    },
-    {
-      "ticker": "QNRX",
-      "name": "Quoin Pharmaceuticals, Ltd.",
-      "buyers": 4,
-      "total_value": 279965,
-      "span_days": null,
-      "trade_date": "2026-08-31",
-      "note": "n=4 insiders, cluster $279,965, trade 2026-08-31, not in screener"
-    },
-    {
-      "ticker": "HWKN",
-      "name": "Hawkins Inc",
-      "buyers": 2,
-      "total_value": 261576,
-      "span_days": null,
-      "trade_date": "2026-08-25",
-      "note": "n=2 insiders, cluster $261,576, trade 2026-08-25, not in screener"
-    },
-    {
-      "ticker": "ALP",
-      "name": "Alpha Compute Corp",
-      "buyers": 2,
-      "total_value": 238486,
-      "span_days": null,
-      "trade_date": "2026-09-22",
-      "note": "n=2 insiders, cluster $238,486, trade 2026-09-22, not in screener"
+      "total_value": 1025607,
+      "latest_filing": "2026-08-19",
+      "note": "IOWN 27 SELL"
     }
   ],
   "congressional": {
-    "note": "congressional sources unavailable on 2026-09-23; retry next run \u2014 House Clerk 2026FD.zip lacks trade fields, Capitol Trades 429, HSW/SSW S3 403"
+    "note": "congressional sources unavailable on 2026-09-24; HSW/SSW S3 403, House Clerk 2026FD.zip XML lacks trade fields, Capitol Trades 429; retry next run"
   },
   "institutional": {
     "note": "Q2 2026 13F snapshot carried forward from 2026-08-19 parse; next quarterly refresh ~mid-November 2026 (Q3 filings due ~Nov 15)."

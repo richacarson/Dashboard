@@ -20,17 +20,17 @@
   },
   "key_metrics": {
     "VRT": {
-      "stock_price": 248.78,
+      "stock_price": 245.3,
       "forward_pe": 34.51,
       "overall_score": 80,
       "recommendation": "BUY",
       "sleeve": "Growth"
     },
     "MOD": {
-      "stock_price": 193.11,
+      "stock_price": 196.95,
       "forward_pe": 25.81,
-      "overall_score": 79,
-      "recommendation": "HOLD",
+      "overall_score": 83,
+      "recommendation": "BUY",
       "sleeve": "Growth"
     }
   },
@@ -106,7 +106,7 @@
       "accessed": "2026-05-29"
     }
   ],
-  "metrics_note": "2026-09-22 (Mon): Prices refreshed via Yahoo chart API. No stops/targets/invalidation triggered.",
+  "metrics_note": "MOD recommendation upgraded HOLD -> BUY on 2026-09-24 refresh (screener report).",
   "last_metrics_refresh": "2026-08-02",
   "last_price_refresh": "2026-09-22"
 }

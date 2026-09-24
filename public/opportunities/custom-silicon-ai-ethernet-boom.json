@@ -21,14 +21,14 @@
   },
   "key_metrics": {
     "AVGO": {
-      "stock_price": 354.99,
+      "stock_price": 350.36,
       "forward_pe": 21.97,
       "overall_score": 81,
       "recommendation": "BUY",
       "sleeve": "Growth"
     },
     "ANET": {
-      "stock_price": 203.47,
+      "stock_price": 205.7,
       "forward_pe": 39.56,
       "overall_score": 83,
       "recommendation": "BUY",
