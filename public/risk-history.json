@@ -579,5 +579,12 @@
     "amber": 2,
     "green": 50,
     "headline": "No RED flags. A genuinely quiet, near-flat session (SPY -0.08%, QQQ -0.01%) with no common macro driver -- cross-sectional dispersion across the book (ABT -2.36%, NXPI -2.27%, GD -2.05%, MARA -3.15%, NEE -1.83%, others in the -1.2% to -1.6% range) reads as ordinary single-name noise, not a risk-off day; no confirming news found for any of them and none breach thesis-relevant thresholds. PGY's 9/24 unexplained -9.87% decline did not continue (flat +0.03% today) -- resolved. SUPV -1.97% and the FCX copper-tariff decision persist at AMBER, both matching disclosed key_risks. Roster: CWAN/CTRA roster-integrity bugs hit their 92nd consecutive calendar day on main; EIX->PGY drift persists (21st calendar day)."
+  },
+  {
+    "date": "2026-09-26",
+    "red": 0,
+    "amber": 2,
+    "green": 50,
+    "headline": "No RED flags. Weekend read (Saturday, non-trading day) -- the Risk Data Drop returned Friday 9/25's frozen session (SPY +0.53%, QQQ +0.45%; no new session data). Good news on roster: the CTRA issue is resolved -- data/portfolios.json on main now correctly lists DVN (the Coterra merger fix has landed independent of the stalled PRs). CWAN (delisted, 93rd consecutive day) and EIX->PGY drift (22nd day) still need a human merge decision -- PRs #11/#12/#14 remain open and unmerged, unchanged since last check. Watch item into Monday's open: Argentina's JPMorgan country-risk gauge broke above 600bps for the first time since April (609bps Friday, a 10th straight rising session) as the Merval fell a 5th consecutive session (-1.57%) -- SUPV's macro key_risk continues to build, held at AMBER pending a company-specific catalyst or support break. FCX's Section 232 refined-copper tariff decision remains undecided, no change since 9/25."
   }
 ]
