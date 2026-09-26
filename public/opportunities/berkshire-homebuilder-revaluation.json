@@ -66,14 +66,14 @@
   },
   "key_metrics": {
     "PHM": {
-      "stock_price": 118.18,
+      "stock_price": 119.85,
       "forward_pe": 12.44,
-      "overall_score": 60,
+      "overall_score": 68,
       "recommendation": "HOLD",
       "sleeve": "Growth"
     },
     "MTH": {
-      "stock_price": 64.51,
+      "stock_price": 64.98,
       "forward_pe": 13.87,
       "overall_score": 56,
       "recommendation": "WATCH",

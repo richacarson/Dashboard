@@ -1,329 +1,484 @@
 {
-  "generated_at": "2026-09-24",
+  "generated_at": "2026-09-26",
   "insider_clusters": [
     {
       "ticker": "BRVE",
       "name": "Braveheart Bio, Inc.",
       "buyers": 6,
       "total_value": 89099964,
-      "latest_filing": "2026-08-11",
-      "note": "IOWN 38 SELL"
+      "filing_date": "2026-08-11",
+      "trade_date": "2026-08-07",
+      "price": 18.0,
+      "iown_score": 38,
+      "recommendation": "SELL",
+      "sleeve": "Growth"
     },
     {
       "ticker": "GME",
       "name": "Gamestop Corp.",
       "buyers": 4,
       "total_value": 48401613,
-      "latest_filing": "2026-09-21",
-      "note": "IOWN 47 WATCH"
+      "filing_date": "2026-09-21",
+      "trade_date": "2026-09-08",
+      "price": 21.67,
+      "iown_score": 47,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "PNAQ",
       "name": "Pinnacle Acquisition Corp",
       "buyers": 6,
       "total_value": 29800000,
-      "latest_filing": "2026-08-12",
-      "note": "IOWN 20 SELL"
+      "filing_date": "2026-08-12",
+      "trade_date": "2026-08-10",
+      "price": 10.0,
+      "iown_score": 20,
+      "recommendation": "SELL",
+      "sleeve": "Growth"
     },
     {
       "ticker": "BBD",
       "name": "Bank Bradesco",
       "buyers": 21,
       "total_value": 28952210,
-      "latest_filing": "2026-09-22",
-      "note": "IOWN 63 HOLD"
+      "filing_date": "2026-09-22",
+      "trade_date": "2026-09-18",
+      "price": 17.99,
+      "iown_score": 63,
+      "recommendation": "HOLD",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "BABA",
       "name": "Alibaba Group Holding Ltd",
       "buyers": 2,
       "total_value": 25691200,
-      "latest_filing": "2026-08-25",
-      "note": "IOWN 59 WATCH"
+      "filing_date": "2026-08-25",
+      "trade_date": "2026-08-25",
+      "price": 14.35,
+      "iown_score": 59,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "BLSM",
       "name": "Blossomhill Therapeutics, Inc.",
       "buyers": 5,
       "total_value": 25170700,
-      "latest_filing": "2026-08-12",
-      "note": "IOWN 42 WATCH"
+      "filing_date": "2026-08-12",
+      "trade_date": "2026-08-07",
+      "price": 16.0,
+      "iown_score": 42,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "LILA",
       "name": "Liberty Latin America Ltd.",
       "buyers": 4,
       "total_value": 18960193,
-      "latest_filing": "2026-09-18",
-      "note": "IOWN 43 WATCH"
+      "filing_date": "2026-09-18",
+      "trade_date": "2026-08-31",
+      "price": 14.32,
+      "iown_score": 43,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "UBER",
       "name": "Uber Technologies, Inc",
       "buyers": 2,
       "total_value": 15314016,
-      "latest_filing": "2026-09-10",
-      "note": "IOWN 70 HOLD"
+      "filing_date": "2026-09-10",
+      "trade_date": "2026-09-04",
+      "price": 72.58,
+      "iown_score": 70,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "BORR",
       "name": "Borr Drilling Ltd",
       "buyers": 3,
       "total_value": 14106108,
-      "latest_filing": "2026-09-21",
-      "note": "IOWN 43 WATCH"
+      "filing_date": "2026-09-21",
+      "trade_date": "2026-09-18",
+      "price": 4.19,
+      "iown_score": 43,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "ACDC",
       "name": "Profrac Holding Corp.",
       "buyers": 3,
       "total_value": 9753790,
-      "latest_filing": "2026-08-26",
-      "note": "IOWN 43 WATCH"
+      "filing_date": "2026-08-26",
+      "trade_date": "2026-08-10",
+      "price": 4.84,
+      "iown_score": 43,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "BSX",
       "name": "Boston Scientific Corp",
       "buyers": 4,
       "total_value": 9486040,
-      "latest_filing": "2026-08-26",
-      "note": "IOWN 73 HOLD"
+      "filing_date": "2026-08-26",
+      "trade_date": "2026-08-25",
+      "price": 48.26,
+      "iown_score": 73,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "GLOO",
       "name": "Gloo Holdings, Inc.",
       "buyers": 4,
       "total_value": 9253103,
-      "latest_filing": "2026-09-14",
-      "note": "IOWN 61 HOLD"
+      "filing_date": "2026-09-14",
+      "trade_date": "2026-07-10",
+      "price": 3.25,
+      "iown_score": 61,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "CDNL",
       "name": "Cardinal Infrastructure Group Inc.",
       "buyers": 7,
       "total_value": 8541274,
-      "latest_filing": "2026-08-18",
-      "note": "IOWN 57 WATCH"
+      "filing_date": "2026-08-18",
+      "trade_date": "2026-08-17",
+      "price": 38.54,
+      "iown_score": 57,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "APTV",
       "name": "Aptiv Plc",
       "buyers": 4,
       "total_value": 8254508,
-      "latest_filing": "2026-08-17",
-      "note": "IOWN 63 HOLD"
+      "filing_date": "2026-08-17",
+      "trade_date": "2026-08-13",
+      "price": 48.01,
+      "iown_score": 63,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "APLM",
       "name": "Apollomics Inc.",
       "buyers": 3,
       "total_value": 8250009,
-      "latest_filing": "2026-08-17",
-      "note": "IOWN 34 SELL"
+      "filing_date": "2026-08-17",
+      "trade_date": "2026-08-14",
+      "price": 14.14,
+      "iown_score": 34,
+      "recommendation": "SELL",
+      "sleeve": "Growth"
     },
     {
       "ticker": "SBLK",
       "name": "Star Bulk Carriers Corp.",
       "buyers": 8,
       "total_value": 6920496,
-      "latest_filing": "2026-09-17",
-      "note": "IOWN 63 HOLD"
+      "filing_date": "2026-09-17",
+      "trade_date": "2026-09-15",
+      "price": 28.27,
+      "iown_score": 63,
+      "recommendation": "HOLD",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "CYBN",
       "name": "Cybin Inc.",
       "buyers": 3,
       "total_value": 6289000,
-      "latest_filing": "2026-09-21",
-      "note": "NOT IN SCREENER"
+      "filing_date": "2026-09-21",
+      "trade_date": "2026-09-21",
+      "price": 12.58,
+      "iown_score": null,
+      "note": "no screener report"
     },
     {
       "ticker": "ANGX",
       "name": "Angel Studios, Inc.",
       "buyers": 3,
       "total_value": 5857056,
-      "latest_filing": "2026-09-14",
-      "note": "IOWN 47 WATCH"
+      "filing_date": "2026-09-14",
+      "trade_date": "2026-09-11",
+      "price": 4.55,
+      "iown_score": 47,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "DKS",
       "name": "Dick'S Sporting Goods, Inc.",
       "buyers": 6,
       "total_value": 5088794,
-      "latest_filing": "2026-09-24",
-      "note": "IOWN 73 HOLD"
+      "filing_date": "2026-09-24",
+      "trade_date": "2026-09-23",
+      "price": 130.05,
+      "iown_score": 61,
+      "recommendation": "HOLD",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "ADC",
       "name": "Agree Realty Corp",
       "buyers": 3,
       "total_value": 4142871,
-      "latest_filing": "2026-09-23",
-      "note": "IOWN 62 HOLD"
+      "filing_date": "2026-09-23",
+      "trade_date": "2026-09-21",
+      "price": 70.82,
+      "iown_score": 62,
+      "recommendation": "HOLD",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "ONON",
       "name": "On Holding AG",
       "buyers": 2,
       "total_value": 3987582,
-      "latest_filing": "2026-08-17",
-      "note": "IOWN 66 HOLD"
+      "filing_date": "2026-08-17",
+      "trade_date": "2026-08-14",
+      "price": 30.67,
+      "iown_score": 66,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "PFE",
       "name": "Pfizer Inc",
       "buyers": 3,
       "total_value": 2960110,
-      "latest_filing": "2026-08-12",
-      "note": "IOWN 60 HOLD"
+      "filing_date": "2026-08-12",
+      "trade_date": "2026-08-12",
+      "price": 25.77,
+      "iown_score": 60,
+      "recommendation": "HOLD",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "INBX",
       "name": "Inhibrx Biosciences, Inc.",
       "buyers": 2,
       "total_value": 2932016,
-      "latest_filing": "2026-09-08",
-      "note": "NOT IN SCREENER"
+      "filing_date": "2026-09-08",
+      "trade_date": "2026-09-08",
+      "price": 106.62,
+      "iown_score": null,
+      "note": "no screener report"
     },
     {
       "ticker": "AMRZ",
       "name": "Amrize Ltd",
       "buyers": 10,
       "total_value": 2638163,
-      "latest_filing": "2026-09-03",
-      "note": "IOWN 48 WATCH"
+      "filing_date": "2026-09-03",
+      "trade_date": "2026-08-11",
+      "price": 44.35,
+      "iown_score": 48,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "XRN",
       "name": "Chiron Real Estate Inc.",
       "buyers": 4,
       "total_value": 2559504,
-      "latest_filing": "2026-08-17",
-      "note": "IOWN 52 WATCH"
+      "filing_date": "2026-08-17",
+      "trade_date": "2026-08-14",
+      "price": 36.06,
+      "iown_score": 52,
+      "recommendation": "WATCH",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "PRTS",
       "name": "Carparts.Com, Inc.",
       "buyers": 3,
       "total_value": 2000649,
-      "latest_filing": "2026-09-10",
-      "note": "NOT IN SCREENER"
+      "filing_date": "2026-09-10",
+      "trade_date": "2026-09-10",
+      "price": 9.1,
+      "iown_score": null,
+      "note": "no screener report"
     },
     {
       "ticker": "CELH",
       "name": "Celsius Holdings, Inc.",
       "buyers": 3,
       "total_value": 1830043,
-      "latest_filing": "2026-09-16",
-      "note": "IOWN 52 WATCH"
+      "filing_date": "2026-09-16",
+      "trade_date": "2026-09-15",
+      "price": 27.73,
+      "iown_score": 52,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "GBFH",
       "name": "Gbank Financial Holdings Inc.",
       "buyers": 5,
       "total_value": 1742873,
-      "latest_filing": "2026-08-07",
-      "note": "IOWN 43 WATCH"
+      "filing_date": "2026-08-07",
+      "trade_date": "2026-08-05",
+      "price": 21.39,
+      "iown_score": 43,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "RLMD",
       "name": "Relmada Therapeutics, Inc.",
       "buyers": 2,
       "total_value": 1671990,
-      "latest_filing": "2026-09-11",
-      "note": "IOWN 41 WATCH"
+      "filing_date": "2026-09-11",
+      "trade_date": "2026-09-09",
+      "price": 4.18,
+      "iown_score": 41,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
+    },
+    {
+      "ticker": "HHH",
+      "name": "Howard Hughes Holdings Inc.",
+      "buyers": 2,
+      "total_value": 1667428,
+      "filing_date": "2026-09-24",
+      "trade_date": "2026-09-23",
+      "price": 64.13,
+      "iown_score": null,
+      "note": "no screener report"
     },
     {
       "ticker": "TTMI",
       "name": "Ttm Technologies Inc",
       "buyers": 2,
       "total_value": 1642200,
-      "latest_filing": "2026-08-25",
-      "note": "IOWN 57 WATCH"
+      "filing_date": "2026-08-25",
+      "trade_date": "2026-08-25",
+      "price": 109.48,
+      "iown_score": 57,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "ABCL",
       "name": "Abcellera Biologics Inc.",
       "buyers": 3,
       "total_value": 1545679,
-      "latest_filing": "2026-08-24",
-      "note": "IOWN 54 WATCH"
+      "filing_date": "2026-08-24",
+      "trade_date": "2026-08-18",
+      "price": 10.5,
+      "iown_score": 54,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     },
     {
       "ticker": "ELAN",
       "name": "Elanco Animal Health Inc",
       "buyers": 5,
       "total_value": 1473069,
-      "latest_filing": "2026-08-21",
-      "note": "IOWN 67 HOLD"
+      "filing_date": "2026-08-21",
+      "trade_date": "2026-08-18",
+      "price": 23.31,
+      "iown_score": 67,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "HOG",
       "name": "Harley-Davidson, Inc.",
       "buyers": 3,
       "total_value": 1439491,
-      "latest_filing": "2026-08-13",
-      "note": "IOWN 54 WATCH"
+      "filing_date": "2026-08-13",
+      "trade_date": "2026-08-11",
+      "price": 25.03,
+      "iown_score": 54,
+      "recommendation": "WATCH",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "BCBP",
       "name": "Bcb Bancorp Inc",
       "buyers": 2,
       "total_value": 1317500,
-      "latest_filing": "2026-09-22",
-      "note": "NOT IN SCREENER"
+      "filing_date": "2026-09-22",
+      "trade_date": "2026-09-18",
+      "price": 7.75,
+      "iown_score": null,
+      "note": "no screener report"
     },
     {
       "ticker": "RWT",
       "name": "Redwood Trust Inc",
       "buyers": 4,
       "total_value": 1312178,
-      "latest_filing": "2026-09-18",
-      "note": "IOWN 52 WATCH"
+      "filing_date": "2026-09-18",
+      "trade_date": "2026-09-15",
+      "price": 3.87,
+      "iown_score": 52,
+      "recommendation": "WATCH",
+      "sleeve": "Dividend"
     },
     {
       "ticker": "PNFP",
       "name": "Pinnacle Financial Partners, Inc.",
       "buyers": 3,
       "total_value": 1299640,
-      "latest_filing": "2026-09-11",
-      "note": "IOWN 70 HOLD"
+      "filing_date": "2026-09-11",
+      "trade_date": "2026-09-01",
+      "price": 99.38,
+      "iown_score": 70,
+      "recommendation": "HOLD",
+      "sleeve": "Growth"
     },
     {
       "ticker": "REFI",
       "name": "Chicago Atlantic Real Estate Finance, Inc.",
       "buyers": 3,
       "total_value": 1285710,
-      "latest_filing": "2026-08-28",
-      "note": "IOWN 37 SELL"
+      "filing_date": "2026-08-28",
+      "trade_date": "2026-08-17",
+      "price": 10.48,
+      "iown_score": 37,
+      "recommendation": "SELL",
+      "sleeve": "Growth"
     },
     {
       "ticker": "TSM",
       "name": "Taiwan Semiconductor Manufacturing Co Ltd",
       "buyers": 3,
       "total_value": 1136733,
-      "latest_filing": "2026-08-20",
-      "note": "IOWN 92 BUY"
+      "filing_date": "2026-08-20",
+      "trade_date": "2026-08-18",
+      "price": 73.93,
+      "iown_score": 92,
+      "recommendation": "BUY",
+      "sleeve": "Growth"
     },
     {
       "ticker": "CCB",
       "name": "Coastal Financial Corp",
       "buyers": 2,
       "total_value": 1102750,
-      "latest_filing": "2026-08-07",
-      "note": "IOWN 47 WATCH"
-    },
-    {
-      "ticker": "LIEN",
-      "name": "Chicago Atlantic Bdc, Inc.",
-      "buyers": 3,
-      "total_value": 1025607,
-      "latest_filing": "2026-08-19",
-      "note": "IOWN 27 SELL"
+      "filing_date": "2026-08-07",
+      "trade_date": "2026-08-06",
+      "price": 44.11,
+      "iown_score": 47,
+      "recommendation": "WATCH",
+      "sleeve": "Growth"
     }
   ],
   "congressional": {
-    "note": "congressional sources unavailable on 2026-09-24; HSW/SSW S3 403, House Clerk 2026FD.zip XML lacks trade fields, Capitol Trades 429; retry next run"
+    "note": "2026FD.zip fetched OK (60889 bytes) but XML index lacks per-trade transaction fields; no usable cluster data. Retry next run."
   },
   "institutional": {
     "note": "Q2 2026 13F snapshot carried forward from 2026-08-19 parse; next quarterly refresh ~mid-November 2026 (Q3 filings due ~Nov 15)."
