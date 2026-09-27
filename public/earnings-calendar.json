@@ -972,7 +972,7 @@
   {
     "symbol": "POCI",
     "date": "2026-09-28",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0612,
     "epsActual": null,
     "revenueEstimate": 7290960,
@@ -1302,7 +1302,7 @@
   {
     "symbol": "ACN",
     "date": "2026-10-01",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 3.2131,
     "epsActual": null,
     "revenueEstimate": 18210424017,
