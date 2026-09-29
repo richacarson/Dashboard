@@ -600,5 +600,12 @@
     "amber": 5,
     "green": 45,
     "headline": "No RED flags. 4th consecutive frozen read of Friday 9/25's close -- this is a pre-market Monday run (11:50 UTC, ~2h before the 13:30 UTC open) so the Data Drop correctly still shows Friday's session; nothing has traded yet today. Carrying forward Friday's 5 AMBER flags unchanged in price terms, with updated diligence: DVN's BP-Eagle-Ford story is now confirmed by Reuters (BP walked away 9/24, deal is off; Devon continues marketing the >$4B Eagle Ford/Powder River package as part of its post-Coterra portfolio review); HUT's decline remains without a negative catalyst two read-days running, with a fresh Buy initiation (Jones, 9/26) reinforcing that read. Pre-market watch for today's open: escalating Iran/Strait of Hormuz tensions are lifting oil and Treasury yields in early trade per wire reports -- a plausible tailwind for the energy-sleeve names (DVN, VLO, OKE, CVX, FCX) and a headwind for rate-sensitive growth names once the session starts; flagged as INFO pending actual price action."
+  },
+  {
+    "date": "2026-09-29",
+    "red": 0,
+    "amber": 8,
+    "green": 44,
+    "headline": "No RED flags. 8 AMBER: new selloffs in CRDO (-8.7%), QCOM (-7.2%) and AEM (-5.3%, gold -4%) driven by a 19-year-high 10-yr yield (~5.27%) and risk-off tape, with no tier-1-confirmed company-specific event; 5 prior AMBERs persist. Roster hygiene (CWAN/EIX still in portfolios.json) remains open. Data drop was stale (17h) and re-run at 11:48 UTC: 52/52 priced, 0 errors."
   }
 ]
