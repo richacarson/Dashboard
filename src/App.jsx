@@ -5248,7 +5248,7 @@ Instructions:
                       </table>
                       {md.updated && <div style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Macro data updated {ago(md.updated)}</div>}
                     </div>);
-                    
+                  })()}
                   {(pbView === "regime" || !["regime", "probability"].includes(pbView)) && (<div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14, marginTop: 16 }}>
                       {tStat("Avg Bear Drawdown", `${avgBearDraw}%`, C.dn)}
@@ -10912,7 +10912,7 @@ Instructions:
                   </div>
                 );
               })()}
-  
+
               {/* ── HISTORICAL BULL/BEAR MARKETS ── */}
               {pbView === "history" && (
                 <div>
