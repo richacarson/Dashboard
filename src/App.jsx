@@ -5250,28 +5250,7 @@ Instructions:
                     </div>);
                   })()}
                   {false && (() => {
-                    const scripts = [
-                      { regime: "Bull Market — Staying Invested", condition: "Market within 10% of peak", active: drawdown > -10, subject: "Portfolio Update: Staying the Course", body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. Our playbook calls for staying fully invested in equities through bull markets.\n\nYour bond ladder remains in place, funding the next several years of expenses and serving as deployment ammunition for when the next bear market arrives.` },
-                      { regime: "Correction — Down 10-20%", condition: "S&P down 10-20% from peak", active: drawdown <= -10 && drawdown > -20, subject: "Market Update: Correction in Progress — The Plan Is Working", body: `The S&P 500 is down approximately ${Math.abs(drawdown).toFixed(0)}% from its recent high. This is normal, and we have a plan for exactly this situation.\n\nAt this level, our playbook says to hold. We haven't hit our first deployment threshold (-25%). Historically, the market has experienced 27 declines of -15% or more since 1929. Every single one eventually recovered.` },
-                      { regime: "Bear Market — Tranche 1", condition: "S&P down 25%+ from peak", active: drawdown <= -25 && drawdown > -40, subject: "DEPLOYING: First Tranche Into the Market", body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak — we've hit our first deployment threshold.\n\nPer our investment playbook, we're deploying 70% of your bond-ladder reserves back into equities at these levels. 87% of historical bear markets have reached this level — it's the single highest expected-value entry point.` },
-                      { regime: "Bear Market — Tranche 2", condition: "S&P down 40%+ from peak", active: drawdown <= -40, subject: "DEPLOYING: Final Tranche — Deep Bear Territory", body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. Only 32% of bear markets reach this depth.\n\nWe're deploying all remaining bond reserves into equities. Stocks purchased at -40% from peak have historically delivered +67% returns by the time the market recovers to its prior high.` },
-                    ];
-                    return (<div>
-                      <div style={{ fontSize: 11, color: C.t3, marginBottom: 12 }}>Pre-written client communications per regime. The active script matches current conditions.</div>
-                      {scripts.map((s, i) => (
-                        <div key={i} style={{ background: C.card, border: `1px solid ${s.active ? C.accentGlow : C.border}`, padding: "12px 14px", marginBottom: 10 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                            <span style={{ ...tEyebrowMuted, color: s.active ? C.accent : C.t4 }}>{s.regime}</span>
-                            {s.active && <span style={tEyebrow}>Active Now</span>}
-                          </div>
-                          <div style={{ fontSize: 10, color: C.t4, marginBottom: 8 }}>{s.condition}</div>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t1, marginBottom: 6 }}>Subject: {s.subject}</div>
-                          <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 8 }}>{s.body}</div>
-                          <button onClick={() => { navigator.clipboard.writeText(`Subject: ${s.subject}\n\n${s.body}`); }} style={{ padding: "4px 12px", borderRadius: 2, border: `1px solid ${C.border}`, background: "transparent", color: C.t3, fontSize: 10, fontWeight: 600, letterSpacing: 1.2, textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" }}>Copy</button>
-                        </div>
-                      ))}
-                    </div>);
-                  })()}
+                    
                   {(pbView === "regime" || !["regime", "probability"].includes(pbView)) && (<div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 14, marginTop: 16 }}>
                       {tStat("Avg Bear Drawdown", `${avgBearDraw}%`, C.dn)}
@@ -10381,7 +10360,7 @@ Instructions:
 
               {/* Sub-nav */}
               <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-                {[{ v: "regime", l: "Live Regime" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "scripts", l: "Scripts" }, { v: "history", l: "History" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
+                {[{ v: "regime", l: "Live Regime" }, { v: "bear", l: "Bear Playbook" }, { v: "simulator", l: "Simulator" }, { v: "probability", l: "Probability" }, { v: "history", l: "History" }, { v: "proof", l: "Why It Works" }].map(({ v, l }) => (
                   <button key={v} onClick={() => setPbView(v)} style={{
                     flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${pbView === v ? C.borderActive : C.border}`,
                     background: pbView === v ? C.accentSoft : "transparent",
@@ -10936,58 +10915,8 @@ Instructions:
                 );
               })()}
 
-              {/* ── CALIBRATION (model backtest) ── */}
-              {pbView === "scripts" && (() => {
-                const bullAgeMo = Math.round((Date.now() - new Date("2022-10-12")) / (30.44 * 86400000));
-                const scripts = [
-                  {
-                    regime: "Bull Market — Staying Invested",
-                    condition: "Market within 10% of peak",
-                    active: drawdown > -10,
-                    subject: "Portfolio Update: Staying the Course",
-                    body: `The S&P 500 is up ${pctFromTrough.toFixed(0)}% from the October 2022 low, and our portfolios are performing well. Our playbook calls for staying fully invested in equities through bull markets — history shows that trying to time the top costs more in missed upside than it saves in protection.\n\nYour bond ladder remains in place, funding the next several years of expenses and serving as deployment ammunition for when the next bear market arrives. Until then, the plan is simple: stay invested, let compounding work, and trust the structure we've built.`,
-                  },
-                  {
-                    regime: "Correction — Down 10-20%",
-                    condition: "S&P down 10-20% from peak",
-                    active: drawdown <= -10 && drawdown > -20,
-                    subject: "Market Update: Correction in Progress — The Plan Is Working",
-                    body: `The S&P 500 is down approximately ${Math.abs(drawdown).toFixed(0)}% from its recent high. I want you to know: this is normal, and we have a plan for exactly this situation.\n\nAt this level, our playbook says to hold. We haven't hit our first deployment threshold (-25%), so we're watching and waiting. The cash cushion we built is doing its job — protecting a portion of your portfolio from the decline.\n\nHistorically, the market has experienced 27 declines of -15% or more since 1929. Every single one eventually recovered. Corrections are uncomfortable but they are the price of admission for long-term equity returns.`,
-                  },
-                  {
-                    regime: "Bear Market — Tranche 1",
-                    condition: "S&P down 25%+ from peak",
-                    active: drawdown <= -25 && drawdown > -40,
-                    subject: "DEPLOYING: First Tranche Into the Market",
-                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak — we've hit our first deployment threshold.\n\nPer our investment playbook, we're deploying 70% of your bond-ladder reserves back into equities at these levels. This is the plan working exactly as designed. We're buying stocks at a significant discount while others are panicking.\n\n87% of historical bear markets have reached this level — it's the single highest expected-value entry point. We're holding back the remaining 30% in case the decline deepens to -40%, but most bears stop here, in which case we've deployed at the optimal moment.\n\nI know this feels uncomfortable. But the data is clear: deploying systematically during bear markets is the highest-value action an investor can take. The bond ladder was built precisely so we'd have ammunition for exactly this moment.`,
-                  },
-                  {
-                    regime: "Bear Market — Tranche 2",
-                    condition: "S&P down 40%+ from peak",
-                    active: drawdown <= -40,
-                    subject: "DEPLOYING: Final Tranche — Deep Bear Territory",
-                    body: `The S&P 500 is now down ${Math.abs(drawdown).toFixed(0)}% from its peak. Only 32% of bear markets reach this depth — we are in historically rare territory.\n\nWe're deploying all remaining bond reserves into equities. Stocks purchased at -40% from peak have historically delivered +67% returns by the time the market recovers to its prior high. The deeper the bear, the larger the upside on the way back.\n\nThis is the moment that separates disciplined investors from everyone else. Every fiber of intuition says to wait, that it could get worse. But waiting for the absolute bottom is a mistake no one in history has reliably timed. Deploying our final tranche now captures the largest expected gain we'll see this cycle.\n\nThe plan has worked across nearly a century of market history. Trust the process.`,
-                  },
-                ];
-
-                return (
-                  <div>
-                    <div style={{ fontSize: 12, color: C.t3, marginBottom: 14 }}>Pre-written client communications for each market regime. The <span style={{ color: C.accent, fontWeight: 700 }}>active</span> script matches current conditions. Click to copy.</div>
-                    {scripts.map((s, i) => (
-                      <div key={i} style={{ ...cardStyle, border: `1px solid ${s.active ? C.accent + "44" : C.border}`, position: "relative" }}>
-                        {s.active && <div style={{ position: "absolute", top: 12, right: 14, fontSize: 9, fontWeight: 700, color: C.accent, padding: "3px 8px", borderRadius: 4, background: C.accent + "20", textTransform: "uppercase" }}>Active Now</div>}
-                        <div style={{ fontSize: 11, fontWeight: 700, color: s.active ? C.accent : C.t4, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>{s.regime}</div>
-                        <div style={{ fontSize: 10, color: C.t4, marginBottom: 10 }}>{s.condition}</div>
-                        <div style={{ background: C.bg, borderRadius: 10, padding: 14, marginBottom: 8 }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginBottom: 8 }}>Subject: {s.subject}</div>
-                          <div style={{ fontSize: 12, color: C.t3, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{s.body}</div>
-                        </div>
-                        <button onClick={() => { navigator.clipboard.writeText(`Subject: ${s.subject}\n\n${s.body}`); }} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${C.borderActive}`, background: C.accentSoft, color: C.t1, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>Copy to Clipboard</button>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+              
+              {
 
               {/* ── HISTORICAL BULL/BEAR MARKETS ── */}
               {pbView === "history" && (
