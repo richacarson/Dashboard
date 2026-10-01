@@ -1622,7 +1622,7 @@
   {
     "symbol": "ANGO",
     "date": "2026-10-08",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1156,
     "epsActual": null,
     "revenueEstimate": 82110000,
@@ -1632,7 +1632,7 @@
   {
     "symbol": "BYRN",
     "date": "2026-10-08",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1658,
     "epsActual": null,
     "revenueEstimate": 16587240,
@@ -1672,7 +1672,7 @@
   {
     "symbol": "HELE",
     "date": "2026-10-08",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.5151,
     "epsActual": null,
     "revenueEstimate": 452080575,
@@ -1712,7 +1712,7 @@
   {
     "symbol": "NG",
     "date": "2026-10-08",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0773,
     "epsActual": null,
     "revenueEstimate": null,
@@ -1722,7 +1722,7 @@
   {
     "symbol": "ODC",
     "date": "2026-10-08",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -1752,7 +1752,7 @@
   {
     "symbol": "TLRY",
     "date": "2026-10-08",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1948,
     "epsActual": null,
     "revenueEstimate": 273922020,
