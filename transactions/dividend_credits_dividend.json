@@ -303,5 +303,15 @@
     "ticker": "NTR",
     "ex_date": "2026-09-29",
     "dps": 0.55
+  },
+  {
+    "ticker": "STLD",
+    "ex_date": "2026-09-30",
+    "dps": 0.53
+  },
+  {
+    "ticker": "SYK",
+    "ex_date": "2026-09-30",
+    "dps": 0.88
   }
 ]
