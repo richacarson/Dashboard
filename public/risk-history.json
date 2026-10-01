@@ -614,5 +614,12 @@
     "amber": 9,
     "green": 43,
     "headline": "No RED flags. 9 AMBER: new STLD -3.6% (unconfirmed by tier-1; aggregators cite softer Q3 guidance); 8 prior AMBERs persist, mostly stabilizing after Monday's yield-driven selloff (CRDO -0.1%, AEM +0.9%, PGY +2.3%; QCOM -1.8%, FCX -1.6%). 10-yr near 5.3%, 30-yr >5.6% remain the macro watch; PCE data due today. Roster hygiene (CTRA/CWAN/EIX on main's portfolios.json) still open. Drop was stale (19h), re-run: 52/52 priced, 0 errors."
+  },
+  {
+    "date": "2026-10-01",
+    "red": 0,
+    "amber": 7,
+    "green": 45,
+    "headline": "No RED flags. 7 AMBER: HUT -7.2% and MARA -5.8% lead a crypto-miner derate (HOOD -3.2%, COIN -1.9%; no tier-1 catalyst); 5 prior AMBERs persist (AEM, PGY, FCX, DVN, SUPV), 3 resolved (STLD, QCOM, CRDO). S&P 500 -0.25% on 9/30 despite soft PCE; Dow -0.9%; yields remain the macro watch. Roster hygiene (CWAN delisted, EIX->PGY) still open. Drop refreshed (was 19h stale): 52/52 priced, 0 errors."
   }
 ]
