@@ -698,5 +698,15 @@
     "ticker": "SYK",
     "ex_date": "2026-09-30",
     "dps": 0.88
+  },
+  {
+    "ticker": "PGR",
+    "ex_date": "2026-10-01",
+    "dps": 0.1
+  },
+  {
+    "ticker": "PWR",
+    "ex_date": "2026-10-01",
+    "dps": 0.11
   }
 ]
