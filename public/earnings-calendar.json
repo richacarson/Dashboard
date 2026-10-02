@@ -1590,6 +1590,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "RELL",
+    "date": "2026-10-07",
+    "hour": "",
+    "epsEstimate": 0.0918,
+    "epsActual": null,
+    "revenueEstimate": 60164700,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "RGP",
     "date": "2026-10-07",
     "hour": "amc",
