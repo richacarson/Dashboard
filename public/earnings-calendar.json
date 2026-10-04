@@ -1592,7 +1592,7 @@
   {
     "symbol": "RELL",
     "date": "2026-10-07",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0918,
     "epsActual": null,
     "revenueEstimate": 60164700,
@@ -1812,7 +1812,7 @@
   {
     "symbol": "HOVR",
     "date": "2026-10-09",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.134,
     "epsActual": null,
     "revenueEstimate": 0,
