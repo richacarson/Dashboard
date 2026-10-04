@@ -1,54 +1,54 @@
 {
- "generated": "2026-09-27T08:52:08.709231+00:00",
+ "generated": "2026-10-04T09:16:12.607534+00:00",
  "source": "FMP \u2014 median constituent TTM net income growth (aggregate published alongside)",
  "cohort": 492,
- "constituents": 503,
+ "constituents": 504,
  "chgQoQ": 3.89,
- "aggChgQoQ": 14.69,
+ "aggChgQoQ": 16.12,
  "series": [
   {
-   "asof": "2024-09-29",
-   "ttmNetIncome": 1881784908007,
+   "asof": "2024-10-06",
+   "ttmNetIncome": 1877253476007,
    "medianGrowthPct": null
   },
   {
-   "asof": "2024-12-29",
-   "ttmNetIncome": 1920636577909,
-   "medianGrowthPct": 1.84
-  },
-  {
-   "asof": "2025-03-30",
-   "ttmNetIncome": 2020002301310,
-   "medianGrowthPct": 2.56
-  },
-  {
-   "asof": "2025-06-29",
-   "ttmNetIncome": 2072800161610,
-   "medianGrowthPct": 1.27
-  },
-  {
-   "asof": "2025-09-28",
-   "ttmNetIncome": 2135216488076,
-   "medianGrowthPct": 1.99
-  },
-  {
-   "asof": "2025-12-28",
-   "ttmNetIncome": 2244490007910,
-   "medianGrowthPct": 2.99
-  },
-  {
-   "asof": "2026-03-29",
-   "ttmNetIncome": 2318053428109,
+   "asof": "2025-01-05",
+   "ttmNetIncome": 1914686729909,
    "medianGrowthPct": 1.76
   },
   {
-   "asof": "2026-06-28",
-   "ttmNetIncome": 2562539281758,
-   "medianGrowthPct": 3.6
+   "asof": "2025-04-06",
+   "ttmNetIncome": 2014243255310,
+   "medianGrowthPct": 2.67
   },
   {
-   "asof": "2026-09-27",
-   "ttmNetIncome": 2938900917758,
+   "asof": "2025-07-06",
+   "ttmNetIncome": 2067201932610,
+   "medianGrowthPct": 1.25
+  },
+  {
+   "asof": "2025-10-05",
+   "ttmNetIncome": 2133136473076,
+   "medianGrowthPct": 2.02
+  },
+  {
+   "asof": "2026-01-04",
+   "ttmNetIncome": 2240566288910,
+   "medianGrowthPct": 2.92
+  },
+  {
+   "asof": "2026-04-05",
+   "ttmNetIncome": 2317077691109,
+   "medianGrowthPct": 2.07
+  },
+  {
+   "asof": "2026-07-05",
+   "ttmNetIncome": 2555650238758,
+   "medianGrowthPct": 3.38
+  },
+  {
+   "asof": "2026-10-04",
+   "ttmNetIncome": 2967643580758,
    "medianGrowthPct": 3.89
   }
  ]
