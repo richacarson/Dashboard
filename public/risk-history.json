@@ -642,5 +642,12 @@
     "amber": 5,
     "green": 47,
     "headline": "No RED flags. 5 AMBER persisting (SUPV, DVN, AEM, FCX, PGY), no new adverse data over the weekend. Drop refreshed (generated 2026-10-04 11:47Z, 52/52 priced, 0 errors) but reflects the unchanged Friday 10/2 close; next session Monday. SPY +0.73%, QQQ +1.01%. Largest decliners COIN -3.3%, ADP -2.4%. DVN: unconfirmed secondary report of activist pressure. Roster hygiene (CWAN delisted, EIX->PGY) still open."
+  },
+  {
+    "date": "2026-10-05",
+    "red": 0,
+    "amber": 5,
+    "green": 47,
+    "headline": "No RED flags. 5 AMBER persisting (SUPV, DVN, AEM, FCX, PGY), no new adverse data. Fresh drop regenerated 2026-10-05 11:48Z (52/52 priced, 0 errors) still reflects the unchanged Friday 10/2 close; Monday session not yet open. SPY +0.73%, QQQ +1.01% (SPY 16% above Carson's active 645.80 support). Largest decliners COIN -3.3%, ADP -2.4% (no company-specific catalyst found). Qualitative web layer not "
   }
 ]
