@@ -1546,7 +1546,7 @@ Instructions:
           if (Array.isArray(arr)) {
             for (const c of arr) {
               if (!c.content) continue;
-              list.push({ category: "Market Commentary", title: c.headline || `Commentary — ${c.date}`, date: c.date, url: `https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentaries/${c.content}`, viewerUrl: `https://richacarson.github.io/IOWN-data/commentaries/${c.content}`, subhead: c.subhead });
+              list.push({ category: "Market Commentary", title: c.headline || `Commentary — ${c.date}`, date: c.date, url: `https://raw.githubusercontent.com/richacarson/IOWN-data/main/commentaries/${c.content}`, viewerUrl: `https://iown-data.pages.dev/commentaries/${c.content}`, subhead: c.subhead });
             }
           }
         }
@@ -6584,7 +6584,7 @@ Instructions:
                 <div style={{ ...tEyebrow, marginBottom: 12 }}>Briefs & Research</div>
                 {[
                   { label: "Morning Brief", url: "https://richacarson.github.io/rich-report/morning-briefs.html", desc: "Daily pre-market analysis" },
-                  { label: "Market Commentary", url: "https://richacarson.github.io/iown-data", desc: "Market outlook & strategy" },
+                  { label: "Market Commentary", url: "https://iown-data.pages.dev", desc: "Market outlook & strategy" },
                   { label: "The Rich Report", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", desc: "Macro insights & thesis" },
                   { label: "Quarterly Changes", url: "https://richacarson.github.io/rich-report/rebalance/q3-2026/client.html", desc: "Portfolio rebalance report" },
                 ].map(l => <a key={l.label} href={l.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: C.card, border: `1px solid ${C.border}`, marginBottom: 8, color: C.t1, textDecoration: "none" }}><div><div style={{ fontSize: 13, fontWeight: 700 }}>{l.label}</div><div style={{ fontSize: 10, color: C.t3 }}>{l.desc}</div></div><span style={{ color: C.accent, fontSize: 12 }}>→</span></a>)}
@@ -10035,7 +10035,7 @@ Instructions:
           const BRIEFS = [
             { id: "morning", title: "Morning Brief", desc: "Daily pre-market analysis", url: "https://richacarson.github.io/rich-report/morning-briefs.html", color: theme !== "light" ? "#F59E0B" : "#D97706",
               icon: (c) => (<svg {...iconProps(c)}><circle cx="12" cy="14" r="4" /><line x1="12" y1="6" x2="12" y2="3" /><line x1="5" y1="14" x2="2" y2="14" /><line x1="22" y1="14" x2="19" y2="14" /><line x1="6.34" y1="8.34" x2="4.22" y2="6.22" /><line x1="17.66" y1="8.34" x2="19.78" y2="6.22" /><line x1="2" y1="20" x2="22" y2="20" /></svg>) },
-            { id: "commentary", title: "Market Commentary", desc: "Market outlook & strategy", url: "https://richacarson.github.io/iown-data", color: theme !== "light" ? "#34D399" : "#16A34A",
+            { id: "commentary", title: "Market Commentary", desc: "Market outlook & strategy", url: "https://iown-data.pages.dev", color: theme !== "light" ? "#34D399" : "#16A34A",
               icon: (c) => (<svg {...iconProps(c)}><line x1="3" y1="20" x2="21" y2="20" /><rect x="5" y="12" width="3" height="6" rx="0.5" /><rect x="10.5" y="8" width="3" height="10" rx="0.5" /><rect x="16" y="4" width="3" height="14" rx="0.5" /></svg>) },
             { id: "report", title: "The Rich Report", desc: "Macro insights & thesis", url: "https://richacarson.github.io/rich-report/The_Rich_Report.html", color: theme !== "light" ? "#6366F1" : "#4F46E5",
               icon: (c) => (<svg {...iconProps(c)}><path d="M4 4h12a2 2 0 0 1 2 2v13a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4z" /><line x1="7" y1="8" x2="15" y2="8" /><line x1="7" y1="12" x2="15" y2="12" /><line x1="7" y1="16" x2="12" y2="16" /></svg>) },
