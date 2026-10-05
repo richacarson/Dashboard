@@ -47,6 +47,26 @@ const REBALANCE_ANCHORS = {
   BKH:73.28, DVN:42.02, VLO:281.25, COIN:158.44, CWAN:24.56, SUPV:9.28,
   EIX:74.78,   // sold 9/2/26 mid-quarter
 };
+// Quarter-start closes (9/30/26) — the basis for every per-name QTD% readout.
+// Deliberately a separate map from REBALANCE_ANCHORS: QTD runs from the first day
+// of the quarter, weight drift runs from the last actual rebalance. In Q3 those
+// were a day apart (quarter opened 7/1, rebalance booked 7/9) so one map could
+// serve both and the conflation went unnoticed. Q4 opened with no rebalance, so
+// they are three months apart — sharing a map would have left QTD reading from
+// July. Names absent here fall back to the rebalance anchor.
+const QTR_START_DATE = "2026-09-30";
+const QTR_START_PRICES = {
+  // Dividend sleeve
+  ABT:98.83, ADI:396.71, ATO:156.44, ADP:258.06, CAT:810.79, CHD:94.22, CL:85.32, DGX:233.07, FAST:49.53, GD:331.83,
+  GPC:125.74, LRCX:328.51, LMT:509.25, NEE:75.74, NTR:70.25, ORI:37.31, PCAR:109.81, QCOM:184.04, SSNC:77.07, STLD:221.61,
+  SYK:275.39, TEL:211.08, SPGI:394.47, CEG:254.02, NWG:18.15,
+  // Growth sleeve
+  AMD:611.76, AEM:183.27, ATAT:32.62, CVX:204.21, CNX:31.17, CRDO:194.79, FCX:70.0, FTNT:178.76, HRMY:39.26,
+  HUT:86.1, HOOD:112.5, KEYS:364.04, MARA:11.33, MRVL:264.21, NVDA:228.38, NXPI:237.53, OKE:85.27, SYF:70.97, TSM:456.19,
+  TOL:134.75, VST:138.35, NOW:134.01, SOFI:15.72, YMM:8.27, PGY:17.32,
+  // Digital sleeve
+  IBIT:47.34, ETHA:20.12,
+};
 const loadAnchorPrices = () => ({ date: REBALANCE_DATE, prices: REBALANCE_ANCHORS });
 const saveAnchorPrices = () => {}; // No-op — anchors are hardcoded
 const loadSleeves = () => {
@@ -4842,7 +4862,7 @@ Instructions:
       }
       return ws > 0 ? wsum / ws : (n ? esum / n : null);
     };
-    const tQtdOf = s => { const p = (quotesRef.current[s] || quotes[s])?.p; const anc = REBALANCE_ANCHORS[s]; return (anc && p) ? (p / anc - 1) * 100 : (fundamentals[s]?.thisQtr ?? null); };
+    const tQtdOf = s => { const p = (quotesRef.current[s] || quotes[s])?.p; const anc = QTR_START_PRICES[s] ?? REBALANCE_ANCHORS[s]; return (anc && p) ? (p / anc - 1) * 100 : (fundamentals[s]?.thisQtr ?? null); };
     const tAvgPE = tAvg(s => peFwdSym(s));
     const tAvgComp = tAvg(s => screenerByTicker[s]?.overall_score);
     const tAvgYld = tAvg(s => fundamentals[s]?.yieldFwd);
@@ -6072,7 +6092,7 @@ Instructions:
                 const mTw = TARGET_WEIGHTS[metricsView] || {};
                 const mWOf = s => liveWeights[metricsView]?.[s] ?? mTw[s] ?? null;
                 const mDayChg = s => { const q = quotesRef.current[s] || quotes[s]; const b = barsRef.current[s] || bars[s]; return (q?.p && b?.pc) ? ((q.p - b.pc) / b.pc) * 100 : null; };
-                const mQtd = s => { const q = (quotesRef.current[s] || quotes[s])?.p; const anc = REBALANCE_ANCHORS[s]; return (anc && q) ? ((q - anc) / anc) * 100 : null; };
+                const mQtd = s => { const q = (quotesRef.current[s] || quotes[s])?.p; const anc = QTR_START_PRICES[s] ?? REBALANCE_ANCHORS[s]; return (anc && q) ? ((q - anc) / anc) * 100 : null; };
                 const mDash = <span style={{ color: C.t4 }}>—</span>;
                 const mFmtV = v => v == null || !isFinite(v) ? null : Number(v).toFixed(1);
                 const mFmtP = v => v == null || !isFinite(v) ? null : `${Number(v).toFixed(1)}%`;
@@ -9231,11 +9251,11 @@ Instructions:
               const syms = sleeves[metricsView]?.symbols || [];
               const sleeveKey = metricsView;
               const tw = TARGET_WEIGHTS[sleeveKey] || {};
-              const ap = REBALANCE_ANCHORS;
+              const ap = QTR_START_PRICES;
               const contributions = syms
                 .map(s => {
                   const q = quotes[s]?.p;
-                  const anc = ap[s];
+                  const anc = ap[s] ?? REBALANCE_ANCHORS[s];
                   const qtd = (anc && q) ? ((q - anc) / anc) * 100 : null;
                   const w = liveWeights[sleeveKey]?.[s] ?? tw[s] ?? (100 / syms.length);
                   return { sym: s, qtd, weight: w, name: names[s] || fundamentals[s]?.companyName || s };
