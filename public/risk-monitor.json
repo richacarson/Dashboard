@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-04T12:00:00Z",
+  "generated_at": "2026-10-05T11:55:00Z",
   "as_of_session": "2026-10-02",
   "universe_count": 52,
   "universe_incomplete": false,
@@ -10,7 +10,7 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Clearwater Analytics take-private closed and delisted 2026-06-25; CWAN still listed in data/portfolios.json growth sleeve. Reconfirmed 2026-10-04: Drop still carries frozen quote $24.56 (+0.06%) -- not real trading. Fix PRs #11/#12/#14 not re-checked this run (status as of 10/01: open, dirty, unmerged).",
+        "detail": "Clearwater Analytics take-private closed and delisted 2026-06-25; CWAN still listed in data/portfolios.json growth sleeve. Reconfirmed 2026-10-05: Drop still carries frozen quote $24.56 (+0.06%) -- not real trading. Fix PRs #11/#12/#14 not re-checked this run (last known 10/01: open, dirty, unmerged).",
         "action": "Needs a human decision: merge PR #11 or #12 (both remove CWAN) or otherwise reconcile main. Not filing a 4th duplicate PR."
       },
       {
@@ -27,7 +27,7 @@
     "red": 0,
     "amber": 5,
     "green": 47,
-    "headline": "No RED flags. 5 AMBER persisting (SUPV, DVN, AEM, FCX, PGY), no new adverse data over the weekend. Drop refreshed (generated 2026-10-04 11:47Z, 52/52 priced, 0 errors) but reflects the unchanged Friday 10/2 close; next session Monday. SPY +0.73%, QQQ +1.01%. Largest decliners COIN -3.3%, ADP -2.4%. DVN: unconfirmed secondary report of activist pressure. Roster hygiene (CWAN delisted, EIX->PGY) still open."
+    "headline": "No RED flags. 5 AMBER persisting (SUPV, DVN, AEM, FCX, PGY), no new adverse data. Fresh drop regenerated 2026-10-05 11:48Z (52/52 priced, 0 errors) still reflects the unchanged Friday 10/2 close; Monday session not yet open. SPY +0.73%, QQQ +1.01% (SPY 16% above Carson's active 645.80 support). Largest decliners COIN -3.3%, ADP -2.4% (no company-specific catalyst found). Qualitative web layer not re-run this pass; prior-run findings carried forward. Roster hygiene (CWAN delisted, EIX->PGY in portfolios.json) still open."
   },
   "flags": [
     {
@@ -238,7 +238,7 @@
       "firb_cleared_date": "2026-06-19",
       "close_date": "2026-06-25",
       "transaction_value_bn": 8.4,
-      "last_checked": "2026-10-03",
+      "last_checked": "2026-10-05",
       "severity": "green",
       "note": "No change -- closed and delisted since 2026-06-25. Roster hygiene is the open item, not this entry."
     }
