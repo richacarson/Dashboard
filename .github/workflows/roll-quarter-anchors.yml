@@ -1,0 +1,63 @@
+name: Roll quarter-start anchors
+
+# The QTD% basis has to move to the previous quarter's last close when a new
+# quarter opens, or the column keeps reporting last quarter's move. Q4 2026
+# opened with the basis still on 7/8 closes because the only re-anchor job in
+# the repo is manual and had not run since April.
+#
+# Cron cannot express "first trading day of the quarter", so this runs across
+# the first several days of each quarter instead. The script resolves the real
+# basis date off SPY's own session history and exits without writing when the
+# file already matches, so the extra runs are no-ops.
+#
+# This does NOT touch REBALANCE_ANCHORS. Weight drift and the "Since Rebalance"
+# panels read that map, it belongs to the last actual rebalance rather than to
+# the calendar, and rolling it without a booked trade would corrupt every
+# weight readout. Re-anchoring after a real rebalance is reanchor-rebalance.yml.
+
+on:
+  schedule:
+    # 12:00 UTC (08:00 ET) on the 1st-5th of Jan/Apr/Jul/Oct — after the
+    # previous session's close is final, before the US open.
+    - cron: '0 12 1-5 1,4,7,10 *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Basis date (YYYY-MM-DD, a completed session). Blank = resolve automatically."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  roll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Roll QTD basis
+        env:
+          # Routed through the Cloudflare Worker, which attaches the FMP key
+          # server-side — same arrangement as build-fundamentals.yml.
+          FMP_PROXY: ${{ secrets.PROXY_URL }}
+          FMP_KEY: ${{ secrets.FMP_API }}
+        run: python3 scripts/roll-quarter-anchors.py ${{ inputs.date }}
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet src/App.jsx; then
+            echo "No change — already on the current quarter's basis."
+            exit 0
+          fi
+          BASIS=$(grep -oP 'const QTR_START_DATE = "\K[^"]+' src/App.jsx)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx
+          git commit -m "Roll QTD basis to $BASIS close"
+          git pull --rebase origin main
+          git push origin main
