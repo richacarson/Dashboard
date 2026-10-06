@@ -649,5 +649,12 @@
     "amber": 5,
     "green": 47,
     "headline": "No RED flags. 5 AMBER persisting (SUPV, DVN, AEM, FCX, PGY), no new adverse data. Fresh drop regenerated 2026-10-05 11:48Z (52/52 priced, 0 errors) still reflects the unchanged Friday 10/2 close; Monday session not yet open. SPY +0.73%, QQQ +1.01% (SPY 16% above Carson's active 645.80 support). Largest decliners COIN -3.3%, ADP -2.4% (no company-specific catalyst found). Qualitative web layer not "
+  },
+  {
+    "date": "2026-10-06",
+    "red": 0,
+    "amber": 5,
+    "green": 47,
+    "headline": "No RED market flags; 5 AMBER persisting (FCX, PGY, AEM, DVN, SUPV), no new tier-1 adverse news. Fresh drop 2026-10-06 11:49Z (52/52 priced, 0 errors). SPY +0.69%, QQQ +0.88%; SPY ~16% above Carson's 645.80 support. Largest decliners CRDO -2.85%, QCOM -2.2%; no held name beyond -3%. AEM: Erste Group cut 2026 EPS estimates Sept 18 (secondary report, unconfirmed by tier-1). Roster hygiene still open: CWAN delisted since 6/25 and EIX->PGY not fixed in portfolios.json; origin/main still lists CTRA."
   }
 ]
