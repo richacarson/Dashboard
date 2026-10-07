@@ -20,10 +20,12 @@ it never sinks the run. A zero-priced drop screams instead of going green.
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 ALPACA_KEY = os.environ.get("ALPACA_API_KEY", "")
 ALPACA_SECRET = os.environ.get("ALPACA_API_SECRET", "")
@@ -33,18 +35,53 @@ FINNHUB_KEY = os.environ.get("FINNHUB_KEY", "")
 OUT_PATH = "public/risk-data-drop.json"
 EARNINGS_CAL = "public/earnings-calendar.json"
 
-# --- Universe (keep in sync with the live book; uses DVN, not CTRA) ---------
-SLEEVES = {
-    "Dividend": ["ABT", "ADI", "ATO", "ADP", "BKH", "CAT", "CHD", "CL", "DVN",
-                 "FAST", "GD", "GPC", "LRCX", "LMT", "NEE", "NTR", "ORI", "PCAR",
-                 "QCOM", "DGX", "SSNC", "STLD", "SYK", "TEL", "VLO"],
-    "Growth":   ["AMD", "AEM", "ATAT", "CVX", "CWAN", "CNX", "COIN", "CRDO",
-                 "PGY", "FCX", "FTNT", "SUPV", "HRMY", "HUT", "HOOD", "KEYS",
-                 "MARA", "MRVL", "NVDA", "NXPI", "OKE", "SYF", "TSM", "TOL", "VST"],
-    "Digital":  ["IBIT", "ETHA"],
-}
+# --- Universe -----------------------------------------------------------------
+# Read from TARGET_WEIGHTS in src/App.jsx, which is the live book. This used to
+# be a hardcoded list with a "keep in sync with the live book" comment on it,
+# and it drifted six names out of date in each sleeve: it was still sweeping
+# BKH, DVN, VLO, CWAN, COIN and SUPV after they were sold, and had never picked
+# up SPGI, CEG, NWG, NOW, SOFI or YMM — NOW and SOFI being the two largest
+# growth positions at 8% and 6.5%.
+#
+# Nothing caught it because both sleeves still counted 25 and the drop is
+# rebuilt every weekday, so it was fresh data about the wrong universe: the one
+# kind of staleness that never looks stale. Deriving it removes the class of
+# bug rather than this instance, which is why this is not simply a corrected
+# list.
+APP_JSX = Path(__file__).resolve().parent.parent / "src" / "App.jsx"
+DIGITAL = ["IBIT", "ETHA"]   # no TARGET_WEIGHTS entry; sized outside the sleeves
+
+
+def load_sleeves():
+    """Parse TARGET_WEIGHTS out of App.jsx.
+
+    Hard-fails rather than falling back to a stale list. A risk sweep that
+    quietly covers the wrong names is worse than one that does not run: the
+    first looks green, the second pages someone."""
+    try:
+        src = APP_JSX.read_text()
+    except OSError as ex:
+        sys.exit(f"FATAL: cannot read {APP_JSX}: {ex}")
+    m = re.search(
+        r"const TARGET_WEIGHTS = \{\s*dividend:\s*\{([^}]*)\},\s*growth:\s*\{([^}]*)\}",
+        src, flags=re.DOTALL)
+    if not m:
+        sys.exit("FATAL: could not parse TARGET_WEIGHTS from src/App.jsx")
+    out = {}
+    for label, body in (("Dividend", m.group(1)), ("Growth", m.group(2))):
+        tickers = re.findall(r"([A-Z][A-Z0-9.\-]*)\s*:", body)
+        if len(tickers) < 5:
+            sys.exit(f"FATAL: only {len(tickers)} tickers parsed for {label} — refusing to run")
+        out[label] = tickers
+    out["Digital"] = list(DIGITAL)
+    return out
+
+
+SLEEVES = load_sleeves()
 SLEEVE_OF = {t: s for s, ts in SLEEVES.items() for t in ts}
 UNIVERSE = [t for ts in SLEEVES.values() for t in ts]
+print(f"Universe from App.jsx: {len(UNIVERSE)} names "
+      f"({', '.join(f'{k} {len(v)}' for k, v in SLEEVES.items())})")
 
 # Index references — priced so the Sentinel's level check (levels.json) can
 # assess index-level supports/resistances (e.g. SPY 645.80). Not holdings;
