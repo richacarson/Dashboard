@@ -580,6 +580,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "PKE",
+    "date": "2026-10-08",
+    "hour": "",
+    "epsEstimate": 0.1616,
+    "epsActual": null,
+    "revenueEstimate": 20212120,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "SODI",
     "date": "2026-10-08",
     "hour": "",
@@ -1706,16 +1716,6 @@
     "epsEstimate": 1.1893,
     "epsActual": null,
     "revenueEstimate": 64362000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WAL",
-    "date": "2026-10-15",
-    "hour": "",
-    "epsEstimate": 2.4604,
-    "epsActual": null,
-    "revenueEstimate": 998163446,
     "revenueActual": null,
     "source": "finnhub"
   },
