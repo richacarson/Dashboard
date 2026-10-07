@@ -8,6 +8,7 @@ on:
     workflows:
       - "Re-anchor rebalance constants"
       - "Roll quarter-start anchors"
+      - "Risk Data Drop"
       - "Build Portfolio History"
       - "Update Calendars"
       - "Execute Q2 2026 Rebalance"
