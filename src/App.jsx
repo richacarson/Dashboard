@@ -1490,6 +1490,9 @@ Instructions:
   const [tChartHover, setTChartHover] = useState(null);
   const [tWatchSort, setTWatchSort] = useState({ col: "chg", dir: "desc" }); // watchlist sort: col in sym|price|chg|qtd|pe|comp|peg
   const [tChartRange, setTChartRange] = useState("3Y");
+  // Terminal chart view window — same contract as perfZoom on the classic chart.
+  const [tZoom, setTZoom] = useState(null);
+  const tPanRef = useRef(null);
   const [tChartSleeve, setTChartSleeve] = useState("dividend");
   // Carson's personal default: open the terminal portfolio chart on the stewardship
   // (STEW) window. Applied once when ownership is known, and only if the range is
@@ -1841,6 +1844,12 @@ Instructions:
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
   const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
+  // Visible index window for wheel-zoom / drag-pan. null = whole range.
+  // Deliberately a *view* window: the series stay normalised against the full
+  // period, so zooming changes what you see without changing what the numbers
+  // mean. The summary stats above the chart keep reporting the selected range.
+  const [perfZoom, setPerfZoom] = useState(null);
+  const perfPanRef = useRef(null);
   const [perfLoading, setPerfLoading] = useState(false);
   const [pbView, setPbView] = useState("regime");
   const [pbSimDrop, setPbSimDrop] = useState(30);
@@ -1861,6 +1870,8 @@ Instructions:
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
   const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
   const perfSvgRef = useRef(null);
+  useEffect(() => { setPerfZoom(null); setPerfHover(null); }, [perfRange, perfSleeve]);
+  useEffect(() => { setTZoom(null); setTChartHover(null); }, [tChartRange, tChartSleeve, terminalActiveSym]);
   const iRef = useRef(null);
   const wsRef = useRef(null);
   const restFailRef = useRef(0);     // consecutive failed snapshot polls
@@ -7140,10 +7151,28 @@ Instructions:
                 const { candles, bmCandles: bmLines, minV, maxV } = tChartData;
                 const chartW = tChartDims.w; const H = tChartDims.h;
                 const usableW = chartW - PAD.left - PAD.right;
-                const { yMin: yMnD, yMax: yMxD, ticks: ticksD } = niceTicks(minV, maxV);
-                const gap = usableW / Math.max(1, candles.length);
+                // Visible window. Indices stay absolute throughout (the benchmark
+                // arrays are aligned to `candles` by position), so only the x
+                // mapping and the y fit change.
+                const lastI = candles.length - 1;
+                const zi0 = tZoom ? Math.max(0, Math.min(tZoom.i0, lastI - 1)) : 0;
+                const zi1 = tZoom ? Math.min(lastI, Math.max(tZoom.i1, zi0 + 1)) : lastI;
+                const nVis = zi1 - zi0 + 1;
+                const visC = candles.slice(zi0, zi1 + 1);
+                // Fit the y axis to what is on screen, as a charting package does.
+                let vMin = minV, vMax = maxV;
+                if (tZoom && visC.length) {
+                  vMin = Math.min(...visC.map(c => c.l));
+                  vMax = Math.max(...visC.map(c => c.h));
+                  Object.values(bmLines).forEach(bc => bc.slice(zi0, zi1 + 1).forEach(c => {
+                    if (c) { vMin = Math.min(vMin, c.l); vMax = Math.max(vMax, c.h); }
+                  }));
+                }
+                const { yMin: yMnD, yMax: yMxD, ticks: ticksD } = niceTicks(vMin, vMax);
+                const gap = usableW / Math.max(1, nVis);
                 const candleW = Math.max(1, Math.min(12, gap * 0.75));
-                const xPos = i => PAD.left + gap * (i + 0.5);
+                const xPos = i => PAD.left + gap * (i - zi0 + 0.5);
+                const xInvT = x => zi0 + Math.round((x - PAD.left) / gap - 0.5);
                 const yPos = v => PAD.top + ((yMxD - v) / (yMxD - yMnD || 1)) * (H - PAD.top - PAD.bottom);
                 const lastVal = candles[candles.length - 1]?.c || 0;
                 const hc = tChartHover != null && tChartHover >= 0 && tChartHover < candles.length ? candles[tChartHover] : null;
@@ -7159,10 +7188,10 @@ Instructions:
                 // Date labels: enforce minimum 70px spacing
                 const dateLabels = []; const minLabelGap = 70;
                 let lastLabelX = -minLabelGap;
-                candles.forEach((c, i) => {
+                for (let i = zi0; i <= zi1; i++) {
                   const px = xPos(i);
                   if (px - lastLabelX >= minLabelGap) { dateLabels.push(i); lastLabelX = px; }
-                });
+                }
                 return (
                   <div ref={attachTChartBox} style={{ flex: 1, position: "relative", overflow: "hidden" }}>
                     {/* OHLC tooltip */}
@@ -7188,27 +7217,75 @@ Instructions:
                         })}
                       </div>
                     )}
-                    <svg width={chartW} height={H} viewBox={`0 0 ${chartW} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }} onMouseMove={e => { const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX; const idx = Math.round((mx - PAD.left) / gap - 0.5); setTChartHover(idx >= 0 && idx < candles.length ? idx : null); }} onMouseLeave={() => setTChartHover(null)}>
+                    <svg width={chartW} height={H} viewBox={`0 0 ${chartW} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }} onMouseMove={e => {
+                      const rect = e.currentTarget.getBoundingClientRect(); const scaleX = chartW / rect.width; const mx = (e.clientX - rect.left) * scaleX;
+                      if (tPanRef.current) {
+                        const shift = Math.round(-((mx - tPanRef.current.x0) / usableW) * nVis);
+                        const { i0, i1 } = tPanRef.current.win;
+                        const lo = Math.max(0, Math.min(i0 + shift, lastI - (i1 - i0)));
+                        setTZoom({ i0: lo, i1: lo + (i1 - i0) });
+                        return;
+                      }
+                      const idx = xInvT(mx); setTChartHover(idx >= zi0 && idx <= zi1 ? idx : null);
+                    }}
+                    onMouseLeave={() => { setTChartHover(null); tPanRef.current = null; }}
+                    onMouseDown={e => { const rect = e.currentTarget.getBoundingClientRect(); tPanRef.current = { x0: (e.clientX - rect.left) * (chartW / rect.width), win: { i0: zi0, i1: zi1 } }; }}
+                    onMouseUp={() => { tPanRef.current = null; }}
+                    onDoubleClick={() => setTZoom(null)}
+                    onWheel={e => {
+                      if (candles.length < 8) return;
+                      e.preventDefault();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const mx = (e.clientX - rect.left) * (chartW / rect.width);
+                      const anchor = Math.max(zi0, Math.min(zi1, xInvT(mx)));
+                      const span = Math.max(5, Math.min(lastI, Math.round((nVis - 1) * (e.deltaY > 0 ? 1.18 : 1 / 1.18))));
+                      const frac = nVis > 1 ? (anchor - zi0) / (nVis - 1) : 0.5;
+                      let i0 = Math.max(0, Math.min(Math.round(anchor - frac * span), lastI - span));
+                      setTZoom(i0 <= 0 && i0 + span >= lastI ? null : { i0, i1: i0 + span });
+                    }}>
                         <rect x={0} y={0} width={chartW} height={H} fill={C.bg} />
                         {ticksD.map(v => { const yp = yPos(v); return <g key={v}><line x1={PAD.left} y1={yp} x2={chartW - PAD.right} y2={yp} stroke={C.border} strokeWidth={0.5} /><text x={chartW - PAD.right + 4} y={yp + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v.toFixed(1)}%</text></g>; })}
                         {yMnD <= 0 && yMxD >= 0 && <line x1={PAD.left} y1={yPos(0)} x2={chartW - PAD.right} y2={yPos(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />}
                         {/* Date labels */}
                         {dateLabels.map(i => <text key={i} x={xPos(i)} y={H - 8} fill={C.t4} fontSize={8} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{fmtDate(candles[i].date)}</text>)}
                         {/* Benchmark candles */}
-                        {Object.entries(bmLines).map(([sym, bc]) => { const col = BM_COLORS[sym]; const bW = Math.max(1, candleW * 0.45); const off = sym === "SPY" ? -candleW * 0.5 : sym === "DIA" ? candleW * 0.5 : 0; return bc.map((c, i) => (
+                        {Object.entries(bmLines).map(([sym, bc]) => { const col = BM_COLORS[sym]; const bW = Math.max(1, candleW * 0.45); const off = sym === "SPY" ? -candleW * 0.5 : sym === "DIA" ? candleW * 0.5 : 0; return bc.map((c, i) => i < zi0 || i > zi1 ? null : (
                           <g key={`${sym}-${i}`} opacity={0.5}><line x1={xPos(i) + off} y1={yPos(c.h)} x2={xPos(i) + off} y2={yPos(c.l)} stroke={col} strokeWidth={0.5} /><rect x={xPos(i) - bW / 2 + off} y={yPos(Math.max(c.o, c.c))} width={bW} height={Math.max(0.5, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={c.c >= c.o ? col : "transparent"} stroke={col} strokeWidth={0.5} /></g>
                         )); })}
                         {/* Portfolio candles */}
-                        {candles.map((c, i) => { const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
+                        {candles.map((c, i) => { if (i < zi0 || i > zi1) return null; const bull = c.c >= c.o; const col = bull ? C.up : C.dn; return (
                           <g key={i}><line x1={xPos(i)} y1={yPos(c.h)} x2={xPos(i)} y2={yPos(c.l)} stroke={col} strokeWidth={1} /><rect x={xPos(i) - candleW / 2} y={yPos(Math.max(c.o, c.c))} width={candleW} height={Math.max(1, yPos(Math.min(c.o, c.c)) - yPos(Math.max(c.o, c.c)))} fill={col} stroke={col} strokeWidth={0.5} rx={0.5} /></g>
                         ); })}
-                        {/* Hover crosshair + ring */}
+                        {/* Last close tagged on the price scale */}
+                        {(() => {
+                          const lc = candles[zi1];
+                          if (!lc) return null;
+                          const y = Math.max(PAD.top + 7, Math.min(H - PAD.bottom - 7, yPos(lc.c)));
+                          const col = lc.c >= 0 ? C.up : C.dn;
+                          return (<g>
+                            <line x1={PAD.left} y1={y} x2={chartW - PAD.right} y2={y} stroke={col} strokeWidth={0.5} strokeDasharray="2,3" opacity={0.5} />
+                            <rect x={chartW - PAD.right + 1} y={y - 7} width={PAD.right - 3} height={14} fill={col} />
+                            <text x={chartW - PAD.right + 1 + (PAD.right - 3) / 2} y={y + 4} textAnchor="middle" fill={C.bg} fontSize={9} fontWeight={700} fontFamily="'IBM Plex Mono', monospace">{lc.c >= 0 ? "+" : ""}{lc.c.toFixed(2)}%</text>
+                          </g>);
+                        })()}
+                        {/* Hover crosshair + ring, with the value and date read out
+                            on the scales themselves rather than only up top. */}
                         {hc && <g>
                           <line x1={xPos(tChartHover)} y1={PAD.top} x2={xPos(tChartHover)} y2={H - PAD.bottom} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />
                           <line x1={PAD.left} y1={yPos(hc.c)} x2={chartW - PAD.right} y2={yPos(hc.c)} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />
                           <rect x={xPos(tChartHover) - candleW / 2 - 2} y={yPos(Math.max(hc.o, hc.c, hc.h)) - 2} width={candleW + 4} height={Math.max(1, yPos(Math.min(hc.o, hc.c, hc.l)) - yPos(Math.max(hc.o, hc.c, hc.h))) + 4} fill="none" stroke={C.accent} strokeWidth={0.75} />
+                          <rect x={chartW - PAD.right + 1} y={yPos(hc.c) - 7} width={PAD.right - 3} height={14} fill={C.accent} />
+                          <text x={chartW - PAD.right + 1 + (PAD.right - 3) / 2} y={yPos(hc.c) + 4} textAnchor="middle" fill={C.bg} fontSize={9} fontWeight={700} fontFamily="'IBM Plex Mono', monospace">{hc.c >= 0 ? "+" : ""}{hc.c.toFixed(2)}%</text>
+                          {(() => {
+                            const w = 64, x = Math.max(PAD.left, Math.min(chartW - PAD.right - w, xPos(tChartHover) - w / 2));
+                            return (<g>
+                              <rect x={x} y={H - PAD.bottom + 2} width={w} height={14} fill={C.accent} />
+                              <text x={x + w / 2} y={H - PAD.bottom + 12} textAnchor="middle" fill={C.bg} fontSize={8.5} fontWeight={700} fontFamily="'IBM Plex Mono', monospace">{fmtDate(hc.date)}</text>
+                            </g>);
+                          })()}
                         </g>}
                     </svg>
+                    {tZoom && <div style={{ position: "absolute", bottom: 4, right: 10, zIndex: 2, fontSize: 8, fontWeight: 700, letterSpacing: 1, color: C.accent, pointerEvents: "none" }}>ZOOMED · DBL-CLICK RESET</div>}
                   </div>
                 );
               })()}
@@ -12559,16 +12636,29 @@ Instructions:
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
               });
 
-              // Chart dimensions
+              // Chart dimensions. The price scale sits on the RIGHT (TradingView
+              // convention), so the padding is weighted that way.
               const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
-              const H = isDesktop ? 380 : 300;
-              const PAD = { top: 30, right: 70, bottom: 50, left: 66 };
+              const H = isDesktop ? 460 : 340;
+              const PAD = { top: 34, right: 78, bottom: 52, left: 18 };
               const cw = W - PAD.left - PAD.right;
               const ch = H - PAD.top - PAD.bottom;
 
-              // Compute Y range across all series
-              let allVals = portNorm.map(p => p.val);
-              Object.values(bmNorm).forEach(pts => pts.forEach(p => allVals.push(p.val)));
+              // Visible slice. perfZoom holds integer indices into portNorm; null
+              // means the whole period. Everything below draws from [vi0, vi1] and
+              // the Y axis fits that window, so zooming in on a flat stretch opens
+              // it up instead of leaving it pinned against the period's extremes.
+              const lastIdx = portNorm.length - 1;
+              const vi0 = perfZoom ? Math.max(0, Math.min(perfZoom.i0, lastIdx - 1)) : 0;
+              const vi1 = perfZoom ? Math.min(lastIdx, Math.max(perfZoom.i1, vi0 + 1)) : lastIdx;
+              const vSpan = Math.max(1, vi1 - vi0);
+              const inView = (i) => i >= vi0 && i <= vi1;
+
+              // Compute Y range across all series *in view*
+              let allVals = portNorm.slice(vi0, vi1 + 1).map(p => p.val);
+              const visDates = new Set(portNorm.slice(vi0, vi1 + 1).map(p => p.date));
+              Object.values(bmNorm).forEach(pts => pts.forEach(p => { if (visDates.has(p.date)) allVals.push(p.val); }));
+              if (!allVals.length) allVals = portNorm.map(p => p.val);
               const rawMin = Math.min(...allVals);
               const rawMax = Math.max(...allVals);
               const rawSpan = rawMax - rawMin || 1;
@@ -12577,17 +12667,21 @@ Instructions:
               const yMax = Math.ceil(rawMax / step) * step;
               const yRange = yMax - yMin || 1;
 
-              const xScale = (i) => PAD.left + (i / (portNorm.length - 1)) * cw;
+              const xScale = (i) => PAD.left + ((i - vi0) / vSpan) * cw;
               const yScale = (v) => PAD.top + ch - ((v - yMin) / yRange) * ch;
+              const xInv = (x) => Math.round(vi0 + ((x - PAD.left) / cw) * vSpan);
 
-              // Build SVG path
-              const buildPath = (points, key = "val") => {
-                if (!points.length) return "";
-                return points.map((p, i) => {
-                  const x = key === "val" ? xScale(i) : xScale(portNorm.findIndex(pp => pp.date === p.date) ?? i);
-                  const y = yScale(p[key] ?? p.val);
-                  return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-                }).join(" ");
+              // Build SVG path over the visible slice only. One point of overscan
+              // each side keeps the line meeting the edge instead of stopping short
+              // of it when zoomed in.
+              const buildPath = (points) => {
+                const a = Math.max(0, vi0 - 1), b = Math.min(points.length - 1, vi1 + 1);
+                if (b <= a) return "";
+                let d = "";
+                for (let i = a; i <= b; i++) {
+                  d += `${i === a ? "M" : "L"}${xScale(i).toFixed(1)},${yScale(points[i].val).toFixed(1)}`;
+                }
+                return d;
               };
 
               // Build benchmark path using portfolio index mapping
@@ -12595,12 +12689,14 @@ Instructions:
                 if (!points.length) return "";
                 const dateToIdx = {};
                 portNorm.forEach((p, i) => { dateToIdx[p.date] = i; });
-                return points.map((p, i) => {
+                let d = "", started = false;
+                points.forEach((p, i) => {
                   const idx = dateToIdx[p.date] ?? i;
-                  const x = xScale(idx);
-                  const y = yScale(p.val);
-                  return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-                }).join(" ");
+                  if (idx < vi0 - 1 || idx > vi1 + 1) return;
+                  d += `${started ? "L" : "M"}${xScale(idx).toFixed(1)},${yScale(p.val).toFixed(1)}`;
+                  started = true;
+                });
+                return d;
               };
 
               const portPath = buildPath(portNorm);
@@ -12612,11 +12708,10 @@ Instructions:
 
               // X axis date labels
               const xLabels = [];
-              const totalPts = portNorm.length;
               const labelCount = isDesktop ? 8 : 5;
               for (let i = 0; i < labelCount; i++) {
-                const idx = Math.round((i / (labelCount - 1)) * (totalPts - 1));
-                if (idx < totalPts) {
+                const idx = Math.round(vi0 + (i / (labelCount - 1)) * vSpan);
+                if (idx >= 0 && idx < portNorm.length) {
                   const dateStr = portNorm[idx].date;
                   const d = new Date(dateStr.length > 10 ? dateStr : dateStr + "T12:00:00");
                   let label;
@@ -12636,10 +12731,37 @@ Instructions:
                 const rect = svg.getBoundingClientRect();
                 const scale = W / rect.width;
                 const mx = (e.clientX - rect.left) * scale;
-                const idx = Math.round(((mx - PAD.left) / cw) * (portNorm.length - 1));
+                if (perfPanRef.current) {
+                  // Dragging: shift the window by whole indices, clamped to the data.
+                  const dx = (mx - perfPanRef.current.x0) / cw * vSpan;
+                  const shift = Math.round(-dx);
+                  const { i0, i1 } = perfPanRef.current.win;
+                  const lo = Math.max(0, Math.min(i0 + shift, lastIdx - vSpan));
+                  setPerfZoom({ i0: lo, i1: lo + (i1 - i0) });
+                  return;
+                }
+                const idx = xInv(mx);
                 if (idx >= 0 && idx < portNorm.length) {
                   setPerfHover({ idx, x: xScale(idx), y: yScale(portNorm[idx].val) });
                 }
+              };
+
+              // Wheel zooms the time axis about the cursor, the way a charting
+              // package does — not the page.
+              const handleWheel = (e) => {
+                const svg = perfSvgRef.current;
+                if (!svg || portNorm.length < 8) return;
+                e.preventDefault();
+                const rect = svg.getBoundingClientRect();
+                const mx = (e.clientX - rect.left) * (W / rect.width);
+                const anchor = Math.max(vi0, Math.min(vi1, xInv(mx)));
+                const factor = e.deltaY > 0 ? 1.18 : 1 / 1.18;
+                const span = Math.max(6, Math.min(lastIdx, Math.round(vSpan * factor)));
+                const frac = vSpan > 0 ? (anchor - vi0) / vSpan : 0.5;
+                let i0 = Math.round(anchor - frac * span);
+                i0 = Math.max(0, Math.min(i0, lastIdx - span));
+                const next = { i0, i1: i0 + span };
+                setPerfZoom(next.i0 <= 0 && next.i1 >= lastIdx ? null : next);
               };
 
               // Summary stats — for 1D use liveValue.prevClose for accurate % (matched stock universe)
@@ -12722,7 +12844,15 @@ Instructions:
                       viewBox={`0 0 ${W} ${H}`}
                       style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
                       onMouseMove={handleMouseMove}
-                      onMouseLeave={() => setPerfHover(null)}
+                      onMouseLeave={() => { setPerfHover(null); perfPanRef.current = null; }}
+                      onWheel={handleWheel}
+                      onMouseDown={(e) => {
+                        const svg = perfSvgRef.current; if (!svg) return;
+                        const rect = svg.getBoundingClientRect();
+                        perfPanRef.current = { x0: (e.clientX - rect.left) * (W / rect.width), win: { i0: vi0, i1: vi1 } };
+                      }}
+                      onMouseUp={() => { perfPanRef.current = null; }}
+                      onDoubleClick={() => setPerfZoom(null)}
                       onTouchMove={(e) => {
                         const touch = e.touches[0];
                         const svg = perfSvgRef.current;
@@ -12735,17 +12865,25 @@ Instructions:
                       }}
                       onTouchEnd={() => setPerfHover(null)}
                     >
-                      {/* Grid lines */}
+                      {/* Grid — faint rules, price scale on the right */}
                       {yTicks.map(v => (
                         <g key={v}>
                           <line x1={PAD.left} y1={yScale(v)} x2={W - PAD.right} y2={yScale(v)}
-                            stroke={C.border} strokeWidth="1" />
-                          <text x={PAD.left - 8} y={yScale(v) + 4} textAnchor="end"
+                            stroke={C.border} strokeWidth="1" opacity="0.45" />
+                          <text x={W - PAD.right + 10} y={yScale(v) + 4} textAnchor="start"
                             fill={C.t4} fontSize="11" fontFamily="inherit" fontWeight="600">
                             {v}%
                           </text>
                         </g>
                       ))}
+                      {/* Vertical rules at each date label */}
+                      {xLabels.map((l, i) => (
+                        <line key={`vx${i}`} x1={l.x} y1={PAD.top} x2={l.x} y2={PAD.top + ch}
+                          stroke={C.border} strokeWidth="1" opacity="0.25" />
+                      ))}
+                      {/* Axis spine */}
+                      <line x1={W - PAD.right} y1={PAD.top} x2={W - PAD.right} y2={PAD.top + ch}
+                        stroke={C.border} strokeWidth="1" opacity="0.7" />
 
                       {/* Zero baseline */}
                       <line x1={PAD.left} y1={yScale(0)} x2={W - PAD.right} y2={yScale(0)}
@@ -12760,111 +12898,138 @@ Instructions:
                       ))}
 
                       {/* Benchmark lines */}
-                      {Object.entries(bmNorm).map(([sym, pts]) => (
-                        <path key={sym} d={buildBmPath(pts)} fill="none"
-                          stroke={bmColors[sym]} strokeWidth="2" strokeLinejoin="round" />
-                      ))}
+                      <g clipPath="url(#perfClipBm)">
+                        <defs><clipPath id="perfClipBm"><rect x={PAD.left} y={PAD.top} width={cw} height={ch} /></clipPath></defs>
+                        {Object.entries(bmNorm).map(([sym, pts]) => (
+                          <path key={sym} d={buildBmPath(pts)} fill="none" opacity="0.85"
+                            stroke={bmColors[sym]} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+                        ))}
+                      </g>
 
-                      {/* Portfolio gradient fill — from line to zero baseline */}
+                      {/* Area fill drops to the pane floor rather than to the zero
+                          line: filling to zero inverts into a wedge above the line
+                          whenever the period is negative. The dashed zero rule still
+                          marks break-even. */}
                       <defs>
                         <linearGradient id="perfGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={C.accent} stopOpacity="0.25" />
-                          <stop offset="100%" stopColor={C.accent} stopOpacity="0.02" />
+                          <stop offset="0%" stopColor={C.accent} stopOpacity="0.34" />
+                          <stop offset="55%" stopColor={C.accent} stopOpacity="0.10" />
+                          <stop offset="100%" stopColor={C.accent} stopOpacity="0" />
                         </linearGradient>
+                        <filter id="perfGlow" x="-20%" y="-40%" width="140%" height="180%">
+                          <feGaussianBlur stdDeviation="3.2" result="b" />
+                          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                        </filter>
+                        <clipPath id="perfClip">
+                          <rect x={PAD.left} y={PAD.top} width={cw} height={ch} />
+                        </clipPath>
                       </defs>
+                      <g clipPath="url(#perfClip)">
+                        {portPath && (() => {
+                          const a = Math.max(0, vi0 - 1), b = Math.min(portNorm.length - 1, vi1 + 1);
+                          const floor = PAD.top + ch;
+                          return <path d={`${portPath} L${xScale(b).toFixed(1)},${floor} L${xScale(a).toFixed(1)},${floor} Z`}
+                            fill="url(#perfGrad)" />;
+                        })()}
+                        <path d={portPath} fill="none" stroke={C.accent} strokeWidth="2.6"
+                          strokeLinejoin="round" strokeLinecap="round" filter="url(#perfGlow)"
+                          opacity="0.55" />
+                        <path key={`${perfSleeve}|${perfRange}`} className="perf-draw" pathLength="1"
+                          d={portPath} fill="none" stroke={C.accent}
+                          strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
+                      </g>
+
+                      {/* Last-value tag pinned to the price scale */}
                       {(() => {
-                        const zeroY = Math.min(Math.max(yScale(0), PAD.top), PAD.top + ch);
-                        return <path d={`${portPath} L${xScale(portNorm.length-1).toFixed(1)},${zeroY.toFixed(1)} L${PAD.left.toFixed(1)},${zeroY.toFixed(1)} Z`}
-                          fill="url(#perfGrad)" />;
+                        const lv = portNorm[Math.min(vi1, lastIdx)];
+                        if (!lv) return null;
+                        const y = Math.max(PAD.top + 9, Math.min(PAD.top + ch - 9, yScale(lv.val)));
+                        const txt = `${lv.val >= 0 ? "+" : ""}${lv.val.toFixed(2)}%`;
+                        return (
+                          <g>
+                            <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke={C.accent}
+                              strokeWidth="1" strokeDasharray="2,3" opacity="0.45" />
+                            <rect x={W - PAD.right + 3} y={y - 9} width={PAD.right - 8} height="18" rx="3" fill={C.accent} />
+                            <text x={W - PAD.right + 3 + (PAD.right - 8) / 2} y={y + 4} textAnchor="middle"
+                              fill={theme !== "light" ? "#0B0E14" : "#fff"} fontSize="10.5" fontWeight="800" fontFamily="inherit">{txt}</text>
+                          </g>
+                        );
                       })()}
 
-                      {/* Portfolio line */}
-                      <path d={portPath} fill="none" stroke={C.accent} strokeWidth="2.5" strokeLinejoin="round" />
-
-                      {/* Hover crosshair + tooltip */}
-                      {perfHover && perfHover.idx >= 0 && perfHover.idx < portNorm.length && (
-                        <g>
-                          <line x1={perfHover.x} y1={PAD.top} x2={perfHover.x} y2={PAD.top + ch}
-                            stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
-                          <circle cx={perfHover.x} cy={perfHover.y} r="4" fill={C.accent} stroke={C.card} strokeWidth="2" />
-                          {/* Benchmark dots */}
-                          {Object.entries(bmNorm).map(([sym, pts]) => {
-                            const pt = pts.find(p => p.date === portNorm[perfHover.idx]?.date);
-                            if (!pt) return null;
-                            return <circle key={sym} cx={perfHover.x} cy={yScale(pt.val)} r="3" fill={bmColors[sym]} stroke={C.card} strokeWidth="1.5" />;
-                          })}
-                        </g>
-                      )}
-
-                      {/* Right-side labels — show % change, de-overlap */}
-                      {(() => {
-                        const labels = [{ val: portNorm[portNorm.length-1].val, color: C.accent, fontSize: 11 }];
-                        Object.entries(bmNorm).forEach(([sym, pts]) => {
-                          labels.push({ val: pts[pts.length-1].val, color: bmColors[sym], fontSize: 10 });
-                        });
-                        // Sort by value descending so highest is on top
-                        labels.sort((a, b) => b.val - a.val);
-                        // De-overlap: ensure at least 12px between labels
-                        const positions = labels.map(l => yScale(l.val) + 4);
-                        for (let i = 1; i < positions.length; i++) {
-                          if (positions[i] - positions[i-1] < 12) positions[i] = positions[i-1] + 12;
-                        }
-                        return labels.map((l, i) => (
-                          <text key={i} x={W - PAD.right + 8} y={positions[i]}
-                            fill={l.color} fontSize={l.fontSize} fontWeight="700" fontFamily="inherit">
-                            {l.val >= 0 ? "+" : ""}{l.val.toFixed(1)}%
-                          </text>
-                        ));
+                      {/* Crosshair — both axes, with the value and date shown as
+                          pills on the scales themselves rather than only in a
+                          floating box. */}
+                      {perfHover && perfHover.idx >= vi0 && perfHover.idx <= vi1 && (() => {
+                        const hp = portNorm[perfHover.idx];
+                        if (!hp) return null;
+                        const hx = xScale(perfHover.idx), hy = yScale(hp.val);
+                        const ds = hp.date;
+                        const dd = new Date(ds.length > 10 ? ds : ds + "T12:00:00");
+                        const dLabel = (isIntraday && perfRange === "1D")
+                          ? dd.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                          : dd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
+                        const pillW = 74;
+                        const px = Math.max(PAD.left, Math.min(W - PAD.right - pillW, hx - pillW / 2));
+                        return (
+                          <g>
+                            <line x1={hx} y1={PAD.top} x2={hx} y2={PAD.top + ch} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.65" />
+                            <line x1={PAD.left} y1={hy} x2={W - PAD.right} y2={hy} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.45" />
+                            {Object.entries(bmNorm).map(([sym, pts]) => {
+                              const pt = pts.find(p => p.date === hp.date);
+                              if (!pt) return null;
+                              return <circle key={sym} cx={hx} cy={yScale(pt.val)} r="3.5" fill={bmColors[sym]} stroke={C.card} strokeWidth="1.5" />;
+                            })}
+                            <circle cx={hx} cy={hy} r="5" fill={C.accent} stroke={C.card} strokeWidth="2" />
+                            {/* value pill on the price scale */}
+                            <rect x={W - PAD.right + 3} y={hy - 9} width={PAD.right - 8} height="18" rx="3" fill={C.t1} />
+                            <text x={W - PAD.right + 3 + (PAD.right - 8) / 2} y={hy + 4} textAnchor="middle"
+                              fill={C.bg} fontSize="10.5" fontWeight="800" fontFamily="inherit">
+                              {hp.val >= 0 ? "+" : ""}{hp.val.toFixed(2)}%
+                            </text>
+                            {/* date pill on the time scale */}
+                            <rect x={px} y={PAD.top + ch + 6} width={pillW} height="18" rx="3" fill={C.t1} />
+                            <text x={px + pillW / 2} y={PAD.top + ch + 19} textAnchor="middle"
+                              fill={C.bg} fontSize="10" fontWeight="700" fontFamily="inherit">{dLabel}</text>
+                          </g>
+                        );
                       })()}
+
                     </svg>
 
-                    {/* Hover tooltip overlay */}
-                    {perfHover && perfHover.idx >= 0 && perfHover.idx < portNorm.length && (
-                      <div style={{
-                        position: "absolute", top: 8, left: PAD.left,
-                        pointerEvents: "none", width: cw, height: 0,
-                      }}>
-                        <div style={{
-                          position: "absolute",
-                          left: Math.min(Math.max(perfHover.x - PAD.left - 80, 0), cw - 180),
-                          top: 0,
-                          background: C.elevated || C.card, border: `1px solid ${C.border}`,
-                          borderRadius: 10, padding: "10px 14px", minWidth: 160,
-                          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-                        }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, marginBottom: 6 }}>
-                            {(() => {
-                              const ds = portNorm[perfHover.idx].date;
-                              const d = new Date(ds.length > 10 ? ds : ds + "T12:00:00");
-                              return isIntraday
-                                ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-                                : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-                            })()}
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                            <span style={{ fontSize: 12, color: C.accent, fontWeight: 700 }}>Dividend</span>
-                            <span style={{ fontSize: 12, color: C.t1, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                              ${portNorm[perfHover.idx].raw.toLocaleString(undefined, {maximumFractionDigits: 0})}
-                              <span style={{ color: portNorm[perfHover.idx].val >= 0 ? C.up : C.dn, marginLeft: 6, fontSize: 11 }}>
-                                {portNorm[perfHover.idx].val >= 0 ? "+" : ""}{portNorm[perfHover.idx].val.toFixed(1)}%
-                              </span>
-                            </span>
-                          </div>
+                    {/* Pinned legend — TradingView style. Shows the latest values
+                        at rest and the crosshair's values while hovering. */}
+                    <div style={{ position: "absolute", top: 10, left: PAD.left + 6, pointerEvents: "none", display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 14, fontVariantNumeric: "tabular-nums" }}>
+                      {(() => {
+                        const hi = (perfHover && perfHover.idx >= vi0 && perfHover.idx <= vi1) ? perfHover.idx : Math.min(vi1, lastIdx);
+                        const hp = portNorm[hi];
+                        if (!hp) return null;
+                        const ds = hp.date;
+                        const dd = new Date(ds.length > 10 ? ds : ds + "T12:00:00");
+                        const dLab = isIntraday
+                          ? dd.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + " " + dd.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                          : dd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                        return (<>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>
+                            {sleeves[perfSleeve]?.name || perfSleeve}
+                            <span style={{ color: hp.val >= 0 ? C.up : C.dn, marginLeft: 8 }}>{hp.val >= 0 ? "+" : ""}{hp.val.toFixed(2)}%</span>
+                            <span style={{ color: C.t4, marginLeft: 8, fontSize: 11, fontWeight: 600 }}>${hp.raw.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          </span>
                           {Object.entries(bmNorm).map(([sym, pts]) => {
-                            const pt = pts.find(p => p.date === portNorm[perfHover.idx]?.date);
+                            const pt = pts.find(x => x.date === hp.date) || pts[pts.length - 1];
                             if (!pt) return null;
+                            const sp = hp.val - pt.val;
                             return (
-                              <div key={sym} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 2 }}>
-                                <span style={{ fontSize: 12, color: bmColors[sym], fontWeight: 600 }}>{sym}</span>
-                                <span style={{ fontSize: 12, color: C.t2, fontVariantNumeric: "tabular-nums" }}>
-                                  {pt.val >= 0 ? "+" : ""}{pt.val.toFixed(1)}%
-                                </span>
-                              </div>
+                              <span key={sym} style={{ fontSize: 11, fontWeight: 700, color: bmColors[sym] }}>
+                                {sym} <span style={{ color: C.t2 }}>{pt.val >= 0 ? "+" : ""}{pt.val.toFixed(2)}%</span>
+                                <span style={{ color: sp >= 0 ? C.up : C.dn, marginLeft: 5 }}>({sp >= 0 ? "+" : ""}{sp.toFixed(2)})</span>
+                              </span>
                             );
                           })}
-                        </div>
-                      </div>
-                    )}
+                          <span style={{ fontSize: 10, fontWeight: 600, color: C.t4 }}>{dLab}</span>
+                          {perfZoom && <span style={{ fontSize: 9, fontWeight: 700, color: C.accent, letterSpacing: 1 }}>ZOOMED · DBL-CLICK TO RESET</span>}
+                        </>);
+                      })()}
+                    </div>
                     </div>
                   </div>
 
@@ -13482,6 +13647,11 @@ function GS({ theme }) {
     <style>{`
       @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
       @keyframes spin { 0% { transform: rotate(0deg) } 100% { transform: rotate(360deg) } }
+      /* Series draw-in. Keyed on range+sleeve so it replays when you switch
+         periods, not on every hover re-render. */
+      @keyframes perfDraw { from { stroke-dashoffset: 1 } to { stroke-dashoffset: 0 } }
+      .perf-draw { stroke-dasharray: 1; stroke-dashoffset: 0; pathLength: 1; animation: perfDraw 1.05s cubic-bezier(0.22, 1, 0.36, 1) both; }
+      @media (prefers-reduced-motion: reduce) { .perf-draw { animation: none } }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
       @keyframes slideUp { from { opacity: 0; transform: translateY(100%) } to { opacity: 1; transform: translateY(0) } }
       @keyframes shake { 0%, 100% { transform: translateX(0) } 20%, 60% { transform: translateX(-6px) } 40%, 80% { transform: translateX(6px) } }
