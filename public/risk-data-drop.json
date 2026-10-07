@@ -1,114 +1,114 @@
 {
-  "generated_at": "2026-10-06T17:14:13Z",
+  "generated_at": "2026-10-07T11:48:06Z",
   "universe_count": 52,
   "universe": [
-    "ABT",
-    "ADI",
-    "ATO",
+    "SYK",
+    "SSNC",
     "ADP",
-    "BKH",
-    "CAT",
+    "SPGI",
+    "CEG",
+    "QCOM",
+    "GPC",
+    "STLD",
+    "NTR",
+    "LMT",
+    "TEL",
     "CHD",
     "CL",
-    "DVN",
-    "FAST",
+    "NWG",
     "GD",
-    "GPC",
-    "LRCX",
-    "LMT",
     "NEE",
-    "NTR",
-    "ORI",
+    "LRCX",
+    "FAST",
     "PCAR",
-    "QCOM",
+    "ADI",
+    "CAT",
+    "ORI",
+    "ABT",
     "DGX",
-    "SSNC",
-    "STLD",
-    "SYK",
-    "TEL",
-    "VLO",
-    "AMD",
-    "AEM",
-    "ATAT",
-    "CVX",
-    "CWAN",
-    "CNX",
-    "COIN",
-    "CRDO",
-    "PGY",
-    "FCX",
-    "FTNT",
-    "SUPV",
-    "HRMY",
-    "HUT",
-    "HOOD",
-    "KEYS",
-    "MARA",
-    "MRVL",
+    "ATO",
+    "NOW",
     "NVDA",
-    "NXPI",
-    "OKE",
-    "SYF",
-    "TSM",
-    "TOL",
+    "SOFI",
+    "FCX",
     "VST",
+    "HOOD",
+    "AEM",
+    "MRVL",
+    "TSM",
+    "CRDO",
+    "YMM",
+    "KEYS",
+    "NXPI",
+    "AMD",
+    "FTNT",
+    "HRMY",
+    "TOL",
+    "HUT",
+    "MARA",
+    "CVX",
+    "ATAT",
+    "CNX",
+    "OKE",
+    "PGY",
+    "SYF",
     "IBIT",
     "ETHA"
   ],
   "sleeves": {
     "Dividend": [
-      "ABT",
-      "ADI",
-      "ATO",
+      "SYK",
+      "SSNC",
       "ADP",
-      "BKH",
-      "CAT",
+      "SPGI",
+      "CEG",
+      "QCOM",
+      "GPC",
+      "STLD",
+      "NTR",
+      "LMT",
+      "TEL",
       "CHD",
       "CL",
-      "DVN",
-      "FAST",
+      "NWG",
       "GD",
-      "GPC",
-      "LRCX",
-      "LMT",
       "NEE",
-      "NTR",
-      "ORI",
+      "LRCX",
+      "FAST",
       "PCAR",
-      "QCOM",
+      "ADI",
+      "CAT",
+      "ORI",
+      "ABT",
       "DGX",
-      "SSNC",
-      "STLD",
-      "SYK",
-      "TEL",
-      "VLO"
+      "ATO"
     ],
     "Growth": [
-      "AMD",
-      "AEM",
-      "ATAT",
-      "CVX",
-      "CWAN",
-      "CNX",
-      "COIN",
-      "CRDO",
-      "PGY",
-      "FCX",
-      "FTNT",
-      "SUPV",
-      "HRMY",
-      "HUT",
-      "HOOD",
-      "KEYS",
-      "MARA",
-      "MRVL",
+      "NOW",
       "NVDA",
-      "NXPI",
-      "OKE",
-      "SYF",
+      "SOFI",
+      "FCX",
+      "VST",
+      "HOOD",
+      "AEM",
+      "MRVL",
       "TSM",
+      "CRDO",
+      "YMM",
+      "KEYS",
+      "NXPI",
+      "AMD",
+      "FTNT",
+      "HRMY",
       "TOL",
-      "VST"
+      "HUT",
+      "MARA",
+      "CVX",
+      "ATAT",
+      "CNX",
+      "OKE",
+      "PGY",
+      "SYF"
     ],
     "Digital": [
       "IBIT",
@@ -116,72 +116,48 @@
     ]
   },
   "holdings": {
-    "ABT": {
+    "SYK": {
       "sleeve": "Dividend",
-      "price": 99.1,
-      "pct_change": -1.03,
-      "prev_close": 100.13,
+      "price": 278.32,
+      "pct_change": -2.46,
+      "prev_close": 285.34,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
         "strongBuy": 12,
-        "buy": 13,
-        "hold": 8,
+        "buy": 15,
+        "hold": 7,
         "sell": 0,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 11,
-          "buy": 13,
-          "hold": 9,
+          "strongBuy": 13,
+          "buy": 15,
+          "hold": 6,
           "sell": 0,
           "strongSell": 0
         }
       },
       "earnings": null
     },
-    "ADI": {
+    "SSNC": {
       "sleeve": "Dividend",
-      "price": 419.7,
-      "pct_change": 0.19,
-      "prev_close": 418.89,
+      "price": 78,
+      "pct_change": -1.4,
+      "prev_close": 79.11,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 13,
-        "buy": 22,
-        "hold": 4,
+        "strongBuy": 5,
+        "buy": 8,
+        "hold": 3,
         "sell": 0,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 12,
-          "buy": 20,
-          "hold": 5,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "ATO": {
-      "sleeve": "Dividend",
-      "price": 158.825,
-      "pct_change": 0.5,
-      "prev_close": 158.03,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 2,
-        "buy": 5,
-        "hold": 11,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 2,
-          "buy": 5,
-          "hold": 12,
+          "strongBuy": 5,
+          "buy": 8,
+          "hold": 3,
           "sell": 0,
           "strongSell": 0
         }
@@ -190,8 +166,8 @@
     },
     "ADP": {
       "sleeve": "Dividend",
-      "price": 262.465,
-      "pct_change": 0.88,
+      "price": 262.32,
+      "pct_change": 0.81,
       "prev_close": 260.215,
       "quote_source": "alpaca",
       "recommendation": {
@@ -212,49 +188,193 @@
       },
       "earnings": null
     },
-    "BKH": {
+    "SPGI": {
       "sleeve": "Dividend",
-      "price": 70.945,
-      "pct_change": 0.7,
-      "prev_close": 70.455,
+      "price": 396.175,
+      "pct_change": 1.37,
+      "prev_close": 390.84,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 4,
-        "hold": 1,
+        "strongBuy": 10,
+        "buy": 19,
+        "hold": 5,
         "sell": 0,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 4,
-          "buy": 4,
-          "hold": 1,
+          "strongBuy": 10,
+          "buy": 20,
+          "hold": 4,
           "sell": 0,
           "strongSell": 0
         }
       },
       "earnings": null
     },
-    "CAT": {
+    "CEG": {
       "sleeve": "Dividend",
-      "price": 866.16,
-      "pct_change": 2.16,
-      "prev_close": 847.835,
+      "price": 300.4,
+      "pct_change": 12.28,
+      "prev_close": 267.545,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 7,
-        "buy": 11,
-        "hold": 15,
+        "strongBuy": 5,
+        "buy": 18,
+        "hold": 5,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 5,
+          "buy": 19,
+          "hold": 5,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "QCOM": {
+      "sleeve": "Dividend",
+      "price": 181.02,
+      "pct_change": 0.13,
+      "prev_close": 180.79,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 5,
+        "buy": 15,
+        "hold": 26,
+        "sell": 3,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 5,
+          "buy": 15,
+          "hold": 26,
+          "sell": 3,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "GPC": {
+      "sleeve": "Dividend",
+      "price": 127.38,
+      "pct_change": 0.8,
+      "prev_close": 126.37,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 3,
+        "buy": 7,
+        "hold": 9,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 3,
+          "buy": 7,
+          "hold": 9,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "STLD": {
+      "sleeve": "Dividend",
+      "price": 238.21,
+      "pct_change": -1.19,
+      "prev_close": 241.09,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 4,
+        "buy": 10,
+        "hold": 7,
         "sell": 1,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 7,
-          "buy": 11,
-          "hold": 15,
+          "strongBuy": 4,
+          "buy": 10,
+          "hold": 7,
           "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "NTR": {
+      "sleeve": "Dividend",
+      "price": 71.22,
+      "pct_change": 1.38,
+      "prev_close": 70.25,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 5,
+        "buy": 13,
+        "hold": 6,
+        "sell": 2,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 5,
+          "buy": 13,
+          "hold": 5,
+          "sell": 2,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "LMT": {
+      "sleeve": "Dividend",
+      "price": 509.925,
+      "pct_change": 0.66,
+      "prev_close": 506.56,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 6,
+        "buy": 7,
+        "hold": 14,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 6,
+          "buy": 7,
+          "hold": 14,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "TEL": {
+      "sleeve": "Dividend",
+      "price": 219.52,
+      "pct_change": 0.27,
+      "prev_close": 218.92,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 7,
+        "buy": 9,
+        "hold": 9,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 7,
+          "buy": 9,
+          "hold": 9,
+          "sell": 0,
           "strongSell": 0
         }
       },
@@ -262,8 +382,8 @@
     },
     "CHD": {
       "sleeve": "Dividend",
-      "price": 96.68,
-      "pct_change": 1.11,
+      "price": 96.55,
+      "pct_change": 0.98,
       "prev_close": 95.615,
       "quote_source": "alpaca",
       "recommendation": {
@@ -286,8 +406,8 @@
     },
     "CL": {
       "sleeve": "Dividend",
-      "price": 87.32,
-      "pct_change": 1.33,
+      "price": 87.27,
+      "pct_change": 1.28,
       "prev_close": 86.17,
       "quote_source": "alpaca",
       "recommendation": {
@@ -308,58 +428,34 @@
       },
       "earnings": null
     },
-    "DVN": {
+    "NWG": {
       "sleeve": "Dividend",
-      "price": 48.055,
-      "pct_change": 0.16,
-      "prev_close": 47.98,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 11,
-        "buy": 18,
-        "hold": 3,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 11,
-          "buy": 17,
-          "hold": 3,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "FAST": {
-      "sleeve": "Dividend",
-      "price": 51.255,
-      "pct_change": 1.07,
-      "prev_close": 50.71,
+      "price": 17.68,
+      "pct_change": 1.03,
+      "prev_close": 17.5,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
         "strongBuy": 7,
-        "buy": 4,
-        "hold": 10,
-        "sell": 3,
-        "strongSell": 2,
+        "buy": 14,
+        "hold": 7,
+        "sell": 0,
+        "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
           "strongBuy": 7,
-          "buy": 4,
-          "hold": 10,
-          "sell": 3,
-          "strongSell": 2
+          "buy": 14,
+          "hold": 7,
+          "sell": 0,
+          "strongSell": 0
         }
       },
       "earnings": null
     },
     "GD": {
       "sleeve": "Dividend",
-      "price": 332.205,
-      "pct_change": 0.18,
+      "price": 331.4,
+      "pct_change": -0.11,
       "prev_close": 331.77,
       "quote_source": "alpaca",
       "recommendation": {
@@ -380,82 +476,10 @@
       },
       "earnings": null
     },
-    "GPC": {
-      "sleeve": "Dividend",
-      "price": 128.01,
-      "pct_change": 1.3,
-      "prev_close": 126.37,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 3,
-        "buy": 7,
-        "hold": 9,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 3,
-          "buy": 7,
-          "hold": 9,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "LRCX": {
-      "sleeve": "Dividend",
-      "price": 332.39,
-      "pct_change": -3.82,
-      "prev_close": 345.6,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 10,
-        "buy": 25,
-        "hold": 6,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 10,
-          "buy": 25,
-          "hold": 6,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "LMT": {
-      "sleeve": "Dividend",
-      "price": 510.33,
-      "pct_change": 0.74,
-      "prev_close": 506.56,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 6,
-        "buy": 7,
-        "hold": 14,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 6,
-          "buy": 7,
-          "hold": 14,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
     "NEE": {
       "sleeve": "Dividend",
-      "price": 77.18,
-      "pct_change": 1.18,
+      "price": 77.89,
+      "pct_change": 2.08,
       "prev_close": 76.3,
       "quote_source": "alpaca",
       "recommendation": {
@@ -476,58 +500,58 @@
       },
       "earnings": null
     },
-    "NTR": {
+    "LRCX": {
       "sleeve": "Dividend",
-      "price": 71.47,
-      "pct_change": 1.67,
-      "prev_close": 70.25,
+      "price": 333.925,
+      "pct_change": -3.38,
+      "prev_close": 345.6,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 13,
+        "strongBuy": 10,
+        "buy": 25,
         "hold": 6,
-        "sell": 2,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 5,
-          "buy": 13,
-          "hold": 5,
-          "sell": 2,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "ORI": {
-      "sleeve": "Dividend",
-      "price": 37.94,
-      "pct_change": 0.34,
-      "prev_close": 37.81,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 2,
-        "buy": 2,
-        "hold": 4,
         "sell": 0,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 2,
-          "buy": 2,
-          "hold": 4,
+          "strongBuy": 10,
+          "buy": 25,
+          "hold": 6,
           "sell": 0,
           "strongSell": 0
         }
       },
       "earnings": null
     },
+    "FAST": {
+      "sleeve": "Dividend",
+      "price": 50.84,
+      "pct_change": 0.26,
+      "prev_close": 50.71,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 7,
+        "buy": 4,
+        "hold": 10,
+        "sell": 3,
+        "strongSell": 2,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 7,
+          "buy": 4,
+          "hold": 10,
+          "sell": 3,
+          "strongSell": 2
+        }
+      },
+      "earnings": null
+    },
     "PCAR": {
       "sleeve": "Dividend",
-      "price": 109.22,
-      "pct_change": -0.16,
+      "price": 109.36,
+      "pct_change": -0.04,
       "prev_close": 109.4,
       "quote_source": "alpaca",
       "recommendation": {
@@ -548,25 +572,97 @@
       },
       "earnings": null
     },
-    "QCOM": {
+    "ADI": {
       "sleeve": "Dividend",
-      "price": 180.83,
-      "pct_change": 0.02,
-      "prev_close": 180.79,
+      "price": 420.57,
+      "pct_change": 0.4,
+      "prev_close": 418.89,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 15,
-        "hold": 26,
-        "sell": 3,
+        "strongBuy": 13,
+        "buy": 22,
+        "hold": 4,
+        "sell": 0,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 5,
-          "buy": 15,
-          "hold": 26,
-          "sell": 3,
+          "strongBuy": 12,
+          "buy": 20,
+          "hold": 5,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "CAT": {
+      "sleeve": "Dividend",
+      "price": 863.77,
+      "pct_change": 1.88,
+      "prev_close": 847.835,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 7,
+        "buy": 11,
+        "hold": 15,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 7,
+          "buy": 11,
+          "hold": 15,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "ORI": {
+      "sleeve": "Dividend",
+      "price": 38.005,
+      "pct_change": 0.52,
+      "prev_close": 37.81,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 2,
+        "buy": 2,
+        "hold": 4,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 2,
+          "buy": 2,
+          "hold": 4,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "ABT": {
+      "sleeve": "Dividend",
+      "price": 98.17,
+      "pct_change": -1.96,
+      "prev_close": 100.13,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 12,
+        "buy": 13,
+        "hold": 8,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 11,
+          "buy": 13,
+          "hold": 9,
+          "sell": 0,
           "strongSell": 0
         }
       },
@@ -574,8 +670,8 @@
     },
     "DGX": {
       "sleeve": "Dividend",
-      "price": 228.76,
-      "pct_change": -1.41,
+      "price": 228.415,
+      "pct_change": -1.56,
       "prev_close": 232.025,
       "quote_source": "alpaca",
       "recommendation": {
@@ -596,553 +692,49 @@
       },
       "earnings": null
     },
-    "SSNC": {
+    "ATO": {
       "sleeve": "Dividend",
-      "price": 79.145,
-      "pct_change": 0.04,
-      "prev_close": 79.11,
+      "price": 159.78,
+      "pct_change": 1.11,
+      "prev_close": 158.03,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 8,
-        "hold": 3,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 5,
-          "buy": 8,
-          "hold": 3,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "STLD": {
-      "sleeve": "Dividend",
-      "price": 239.28,
-      "pct_change": -0.75,
-      "prev_close": 241.09,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 10,
-        "hold": 7,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 4,
-          "buy": 10,
-          "hold": 7,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "SYK": {
-      "sleeve": "Dividend",
-      "price": 280.575,
-      "pct_change": -1.67,
-      "prev_close": 285.34,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 12,
-        "buy": 15,
-        "hold": 7,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 13,
-          "buy": 15,
-          "hold": 6,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "TEL": {
-      "sleeve": "Dividend",
-      "price": 222.29,
-      "pct_change": 1.54,
-      "prev_close": 218.92,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 7,
-        "buy": 9,
-        "hold": 9,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 7,
-          "buy": 9,
-          "hold": 9,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "VLO": {
-      "sleeve": "Dividend",
-      "price": 420.12,
-      "pct_change": 0.18,
-      "prev_close": 419.385,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 10,
+        "strongBuy": 2,
+        "buy": 5,
         "hold": 11,
         "sell": 0,
-        "strongSell": 1,
+        "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 4,
-          "buy": 10,
-          "hold": 10,
-          "sell": 1,
-          "strongSell": 1
+          "strongBuy": 2,
+          "buy": 5,
+          "hold": 12,
+          "sell": 0,
+          "strongSell": 0
         }
       },
       "earnings": null
     },
-    "AMD": {
+    "NOW": {
       "sleeve": "Growth",
-      "price": 653.72,
-      "pct_change": 3.44,
-      "prev_close": 631.96,
+      "price": 138.01,
+      "pct_change": 1.39,
+      "prev_close": 136.12,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 17,
-        "buy": 32,
-        "hold": 10,
-        "sell": 0,
+        "strongBuy": 16,
+        "buy": 34,
+        "hold": 3,
+        "sell": 2,
         "strongSell": 0,
         "prev_period": {
           "period": "2026-08-01",
           "strongBuy": 16,
-          "buy": 32,
-          "hold": 10,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "AEM": {
-      "sleeve": "Growth",
-      "price": 186.19,
-      "pct_change": 1.6,
-      "prev_close": 183.25,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 12,
-        "hold": 4,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 4,
-          "buy": 12,
+          "buy": 33,
           "hold": 4,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "ATAT": {
-      "sleeve": "Growth",
-      "price": 32.17,
-      "pct_change": 0.19,
-      "prev_close": 32.11,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 7,
-        "buy": 19,
-        "hold": 1,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 8,
-          "buy": 17,
-          "hold": 1,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "CVX": {
-      "sleeve": "Growth",
-      "price": 208.44,
-      "pct_change": 0.96,
-      "prev_close": 206.45,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 7,
-        "buy": 18,
-        "hold": 4,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 8,
-          "buy": 18,
-          "hold": 4,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "CWAN": {
-      "sleeve": "Growth",
-      "price": 24.56,
-      "pct_change": 0.06,
-      "prev_close": 24.545,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 3,
-        "buy": 4,
-        "hold": 8,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 3,
-          "buy": 4,
-          "hold": 8,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "CNX": {
-      "sleeve": "Growth",
-      "price": 33.09,
-      "pct_change": 2.64,
-      "prev_close": 32.24,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 1,
-        "buy": 0,
-        "hold": 11,
-        "sell": 6,
-        "strongSell": 1,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 1,
-          "buy": 0,
-          "hold": 11,
-          "sell": 6,
-          "strongSell": 1
-        }
-      },
-      "earnings": null
-    },
-    "COIN": {
-      "sleeve": "Growth",
-      "price": 187.07,
-      "pct_change": -0.6,
-      "prev_close": 188.19,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 11,
-        "buy": 21,
-        "hold": 10,
-        "sell": 1,
-        "strongSell": 2,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 11,
-          "buy": 20,
-          "hold": 10,
-          "sell": 1,
-          "strongSell": 2
-        }
-      },
-      "earnings": null
-    },
-    "CRDO": {
-      "sleeve": "Growth",
-      "price": 219.83,
-      "pct_change": 3.49,
-      "prev_close": 212.415,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 10,
-        "buy": 16,
-        "hold": 2,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 10,
-          "buy": 16,
-          "hold": 2,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "PGY": {
-      "sleeve": "Growth",
-      "price": 18.19,
-      "pct_change": -1.14,
-      "prev_close": 18.4,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 9,
-        "hold": 1,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 5,
-          "buy": 9,
-          "hold": 1,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "FCX": {
-      "sleeve": "Growth",
-      "price": 72.895,
-      "pct_change": 0.36,
-      "prev_close": 72.63,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 19,
-        "hold": 5,
-        "sell": 0,
-        "strongSell": 1,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 5,
-          "buy": 19,
-          "hold": 5,
-          "sell": 0,
-          "strongSell": 1
-        }
-      },
-      "earnings": null
-    },
-    "FTNT": {
-      "sleeve": "Growth",
-      "price": 189.19,
-      "pct_change": 2.7,
-      "prev_close": 184.22,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 11,
-        "hold": 30,
-        "sell": 5,
-        "strongSell": 1,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 6,
-          "buy": 11,
-          "hold": 29,
-          "sell": 5,
-          "strongSell": 1
-        }
-      },
-      "earnings": null
-    },
-    "SUPV": {
-      "sleeve": "Growth",
-      "price": 7.52,
-      "pct_change": 2.04,
-      "prev_close": 7.37,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 4,
-        "hold": 2,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 4,
-          "buy": 4,
-          "hold": 2,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "HRMY": {
-      "sleeve": "Growth",
-      "price": 39.44,
-      "pct_change": -1.18,
-      "prev_close": 39.91,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 8,
-        "hold": 4,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 3,
-          "buy": 8,
-          "hold": 4,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "HUT": {
-      "sleeve": "Growth",
-      "price": 88.9,
-      "pct_change": -0.42,
-      "prev_close": 89.275,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2025-01-01",
-        "strongBuy": 1,
-        "buy": 9,
-        "hold": 1,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2024-12-01",
-          "strongBuy": 1,
-          "buy": 8,
-          "hold": 1,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "HOOD": {
-      "sleeve": "Growth",
-      "price": 112.7,
-      "pct_change": -1.19,
-      "prev_close": 114.13,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 9,
-        "buy": 18,
-        "hold": 6,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 9,
-          "buy": 19,
-          "hold": 5,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "KEYS": {
-      "sleeve": "Growth",
-      "price": 384.49,
-      "pct_change": 0.11,
-      "prev_close": 384.06,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 12,
-        "hold": 2,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 5,
-          "buy": 11,
-          "hold": 3,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "MARA": {
-      "sleeve": "Growth",
-      "price": 10.975,
-      "pct_change": -1.83,
-      "prev_close": 11.18,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 4,
-        "buy": 10,
-        "hold": 7,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 4,
-          "buy": 10,
-          "hold": 7,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "MRVL": {
-      "sleeve": "Growth",
-      "price": 282.05,
-      "pct_change": 4.02,
-      "prev_close": 271.22,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 13,
-        "buy": 30,
-        "hold": 7,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 13,
-          "buy": 29,
-          "hold": 7,
-          "sell": 0,
+          "sell": 2,
           "strongSell": 0
         }
       },
@@ -1150,8 +742,8 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 239.99,
-      "pct_change": 0.41,
+      "price": 239.22,
+      "pct_change": 0.08,
       "prev_close": 238.98,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1172,130 +764,58 @@
       },
       "earnings": null
     },
-    "NXPI": {
+    "SOFI": {
       "sleeve": "Growth",
-      "price": 243.53,
-      "pct_change": 0.63,
-      "prev_close": 242,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 9,
-        "buy": 18,
-        "hold": 8,
-        "sell": 1,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 9,
-          "buy": 19,
-          "hold": 7,
-          "sell": 1,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "OKE": {
-      "sleeve": "Growth",
-      "price": 89.845,
-      "pct_change": 1.38,
-      "prev_close": 88.62,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 5,
-        "buy": 8,
-        "hold": 15,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 6,
-          "buy": 6,
-          "hold": 17,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "SYF": {
-      "sleeve": "Growth",
-      "price": 72.11,
-      "pct_change": 0.36,
-      "prev_close": 71.85,
+      "price": 15.76,
+      "pct_change": -0.91,
+      "prev_close": 15.905,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
         "strongBuy": 6,
-        "buy": 12,
-        "hold": 10,
-        "sell": 0,
-        "strongSell": 0,
+        "buy": 8,
+        "hold": 13,
+        "sell": 3,
+        "strongSell": 1,
         "prev_period": {
           "period": "2026-08-01",
           "strongBuy": 6,
-          "buy": 12,
-          "hold": 10,
-          "sell": 0,
-          "strongSell": 0
+          "buy": 7,
+          "hold": 13,
+          "sell": 3,
+          "strongSell": 1
         }
       },
       "earnings": null
     },
-    "TSM": {
+    "FCX": {
       "sleeve": "Growth",
-      "price": 483,
-      "pct_change": -0.62,
-      "prev_close": 486.01,
+      "price": 72.58,
+      "pct_change": -0.07,
+      "prev_close": 72.63,
       "quote_source": "alpaca",
       "recommendation": {
         "period": "2026-09-01",
-        "strongBuy": 12,
-        "buy": 29,
-        "hold": 2,
-        "sell": 0,
-        "strongSell": 0,
-        "prev_period": {
-          "period": "2026-08-01",
-          "strongBuy": 13,
-          "buy": 28,
-          "hold": 2,
-          "sell": 0,
-          "strongSell": 0
-        }
-      },
-      "earnings": null
-    },
-    "TOL": {
-      "sleeve": "Growth",
-      "price": 138.325,
-      "pct_change": 2.16,
-      "prev_close": 135.4,
-      "quote_source": "alpaca",
-      "recommendation": {
-        "period": "2026-09-01",
-        "strongBuy": 7,
-        "buy": 10,
+        "strongBuy": 5,
+        "buy": 19,
         "hold": 5,
-        "sell": 1,
-        "strongSell": 0,
+        "sell": 0,
+        "strongSell": 1,
         "prev_period": {
           "period": "2026-08-01",
-          "strongBuy": 7,
-          "buy": 10,
+          "strongBuy": 5,
+          "buy": 19,
           "hold": 5,
-          "sell": 1,
-          "strongSell": 0
+          "sell": 0,
+          "strongSell": 1
         }
       },
       "earnings": null
     },
     "VST": {
       "sleeve": "Growth",
-      "price": 161.98,
-      "pct_change": 11.82,
+      "price": 160.475,
+      "pct_change": 10.78,
       "prev_close": 144.86,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1316,10 +836,490 @@
       },
       "earnings": null
     },
+    "HOOD": {
+      "sleeve": "Growth",
+      "price": 112.01,
+      "pct_change": -1.86,
+      "prev_close": 114.13,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 9,
+        "buy": 18,
+        "hold": 6,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 9,
+          "buy": 19,
+          "hold": 5,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "AEM": {
+      "sleeve": "Growth",
+      "price": 185.99,
+      "pct_change": 1.5,
+      "prev_close": 183.25,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 4,
+        "buy": 12,
+        "hold": 4,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 4,
+          "buy": 12,
+          "hold": 4,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "MRVL": {
+      "sleeve": "Growth",
+      "price": 286.5,
+      "pct_change": 5.89,
+      "prev_close": 271.22,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 13,
+        "buy": 30,
+        "hold": 7,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 13,
+          "buy": 29,
+          "hold": 7,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "TSM": {
+      "sleeve": "Growth",
+      "price": 482.41,
+      "pct_change": -0.74,
+      "prev_close": 486.01,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 12,
+        "buy": 29,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 13,
+          "buy": 28,
+          "hold": 2,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "CRDO": {
+      "sleeve": "Growth",
+      "price": 220.75,
+      "pct_change": 3.92,
+      "prev_close": 212.415,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 10,
+        "buy": 16,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 10,
+          "buy": 16,
+          "hold": 2,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "YMM": {
+      "sleeve": "Growth",
+      "price": 8.45,
+      "pct_change": 0.36,
+      "prev_close": 8.42,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 6,
+        "buy": 10,
+        "hold": 4,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 6,
+          "buy": 10,
+          "hold": 4,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "KEYS": {
+      "sleeve": "Growth",
+      "price": 387.8,
+      "pct_change": 0.97,
+      "prev_close": 384.06,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 5,
+        "buy": 12,
+        "hold": 2,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 5,
+          "buy": 11,
+          "hold": 3,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "NXPI": {
+      "sleeve": "Growth",
+      "price": 244.4,
+      "pct_change": 0.99,
+      "prev_close": 242,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 9,
+        "buy": 18,
+        "hold": 8,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 9,
+          "buy": 19,
+          "hold": 7,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "AMD": {
+      "sleeve": "Growth",
+      "price": 649.53,
+      "pct_change": 2.78,
+      "prev_close": 631.96,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 17,
+        "buy": 32,
+        "hold": 10,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 16,
+          "buy": 32,
+          "hold": 10,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "FTNT": {
+      "sleeve": "Growth",
+      "price": 191.29,
+      "pct_change": 3.84,
+      "prev_close": 184.22,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 5,
+        "buy": 11,
+        "hold": 30,
+        "sell": 5,
+        "strongSell": 1,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 6,
+          "buy": 11,
+          "hold": 29,
+          "sell": 5,
+          "strongSell": 1
+        }
+      },
+      "earnings": null
+    },
+    "HRMY": {
+      "sleeve": "Growth",
+      "price": 39.37,
+      "pct_change": -1.35,
+      "prev_close": 39.91,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 4,
+        "buy": 8,
+        "hold": 4,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 3,
+          "buy": 8,
+          "hold": 4,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "TOL": {
+      "sleeve": "Growth",
+      "price": 137.86,
+      "pct_change": 1.82,
+      "prev_close": 135.4,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 7,
+        "buy": 10,
+        "hold": 5,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 7,
+          "buy": 10,
+          "hold": 5,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "HUT": {
+      "sleeve": "Growth",
+      "price": 92.2,
+      "pct_change": 3.28,
+      "prev_close": 89.275,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2025-01-01",
+        "strongBuy": 1,
+        "buy": 9,
+        "hold": 1,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2024-12-01",
+          "strongBuy": 1,
+          "buy": 8,
+          "hold": 1,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "MARA": {
+      "sleeve": "Growth",
+      "price": 10.985,
+      "pct_change": -1.74,
+      "prev_close": 11.18,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 4,
+        "buy": 10,
+        "hold": 7,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 4,
+          "buy": 10,
+          "hold": 7,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "CVX": {
+      "sleeve": "Growth",
+      "price": 207.61,
+      "pct_change": 0.56,
+      "prev_close": 206.45,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 7,
+        "buy": 18,
+        "hold": 4,
+        "sell": 1,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 8,
+          "buy": 18,
+          "hold": 4,
+          "sell": 1,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "ATAT": {
+      "sleeve": "Growth",
+      "price": 32.18,
+      "pct_change": 0.22,
+      "prev_close": 32.11,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 7,
+        "buy": 19,
+        "hold": 1,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 8,
+          "buy": 17,
+          "hold": 1,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "CNX": {
+      "sleeve": "Growth",
+      "price": 33.245,
+      "pct_change": 3.12,
+      "prev_close": 32.24,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 1,
+        "buy": 0,
+        "hold": 11,
+        "sell": 6,
+        "strongSell": 1,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 1,
+          "buy": 0,
+          "hold": 11,
+          "sell": 6,
+          "strongSell": 1
+        }
+      },
+      "earnings": null
+    },
+    "OKE": {
+      "sleeve": "Growth",
+      "price": 89.17,
+      "pct_change": 0.62,
+      "prev_close": 88.62,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 5,
+        "buy": 8,
+        "hold": 15,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 6,
+          "buy": 6,
+          "hold": 17,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "PGY": {
+      "sleeve": "Growth",
+      "price": 18.045,
+      "pct_change": -1.93,
+      "prev_close": 18.4,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 5,
+        "buy": 9,
+        "hold": 1,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 5,
+          "buy": 9,
+          "hold": 1,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
+    "SYF": {
+      "sleeve": "Growth",
+      "price": 72.18,
+      "pct_change": 0.46,
+      "prev_close": 71.85,
+      "quote_source": "alpaca",
+      "recommendation": {
+        "period": "2026-09-01",
+        "strongBuy": 6,
+        "buy": 12,
+        "hold": 10,
+        "sell": 0,
+        "strongSell": 0,
+        "prev_period": {
+          "period": "2026-08-01",
+          "strongBuy": 6,
+          "buy": 12,
+          "hold": 10,
+          "sell": 0,
+          "strongSell": 0
+        }
+      },
+      "earnings": null
+    },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 48.405,
-      "pct_change": -0.3,
+      "price": 48.49,
+      "pct_change": -0.12,
       "prev_close": 48.55,
       "quote_source": "alpaca",
       "recommendation": null,
@@ -1327,8 +1327,8 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 61.01,
-      "pct_change": 198.63,
+      "price": 60.88,
+      "pct_change": 197.99,
       "prev_close": 20.43,
       "quote_source": "alpaca",
       "recommendation": null,
@@ -1337,14 +1337,14 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 779.54,
-      "pct_change": 0.59,
+      "price": 779.26,
+      "pct_change": 0.53,
       "prev_close": 774.97,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 760.17,
-      "pct_change": 0.52,
+      "price": 760.1,
+      "pct_change": 0.47,
       "prev_close": 756.09,
       "quote_source": "alpaca"
     }
