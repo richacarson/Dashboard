@@ -245,9 +245,108 @@ function buildBlendSleeve(div, gro, W) {
     cash: Math.round(((div.cash || 0) * kDiv + (gro.cash || 0) * kGro) * 100) / 100,
     costBasis: {}, transactions: [],
     annualReturns, bmAnnualReturns: {}, bmAnnualReturnsTr: {},
-    isBlend: true, blendFrom: t0, blendWeights: W,
+    isBlend: true, blendFrom: t0, blendWeights: W, kDiv, kGro,
     blendRebalances: [...resets].sort(),
   };
+}
+
+// ── Risk statistics for the combined allocations ────────────────────────────
+// Sortino is computed on daily returns; capture ratios on monthly, which is the
+// convention they are defined in and quoted against. Both take the series with
+// today's live point already appended, so they move intraday.
+
+function dailyReturns(series) {
+  const out = [];
+  for (let i = 1; i < series.length; i++) {
+    const a = series[i - 1].value, b = series[i].value;
+    if (a > 0 && b > 0) out.push(b / a - 1);
+  }
+  return out;
+}
+
+// Monthly compounded returns, keyed YYYY-MM. The first month is partial (the
+// series opens mid-month) and the last is in progress; both are included,
+// because excluding them would throw away the live end of the window.
+function monthlyReturns(series) {
+  const byMonth = new Map();
+  for (const pt of series) {
+    const ym = pt.date.slice(0, 7);
+    if (!byMonth.has(ym)) byMonth.set(ym, { first: pt.value, last: pt.value });
+    else byMonth.get(ym).last = pt.value;
+  }
+  const months = [...byMonth.keys()].sort();
+  const out = [];
+  let prevClose = null;
+  for (const ym of months) {
+    const { first, last } = byMonth.get(ym);
+    const open = prevClose ?? first;
+    if (open > 0 && last > 0) out.push({ ym, ret: last / open - 1 });
+    prevClose = last;
+  }
+  return out;
+}
+
+// Sortino with a zero minimum acceptable return: excess over MAR divided by
+// downside deviation, both annualised. The downside deviation averages squared
+// shortfalls over ALL periods, not just losing ones — the standard definition.
+// Dividing by the count of losing days instead inflates the ratio, sometimes
+// several-fold, which is a common way to see a flattering number.
+function sortinoRatio(rets, periodsPerYear = 252) {
+  if (rets.length < 20) return null;
+  const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
+  let sq = 0;
+  for (const r of rets) if (r < 0) sq += r * r;
+  const dd = Math.sqrt(sq / rets.length);
+  if (!(dd > 0)) return null;
+  return (mean * periodsPerYear) / (dd * Math.sqrt(periodsPerYear));
+}
+
+// Up/down capture, geometric, against a benchmark's monthly returns. Months are
+// split by the sign of the BENCHMARK's return, then each side's geometric mean
+// is compared. Returns percentages: 100 means it matched the index.
+function captureRatios(portMonthly, bmMonthly) {
+  const bm = new Map(bmMonthly.map(m => [m.ym, m.ret]));
+  const side = (want) => {
+    let pProd = 1, bProd = 1, n = 0;
+    for (const m of portMonthly) {
+      const b = bm.get(m.ym);
+      if (b == null) continue;
+      if (want === "up" ? b > 0 : b < 0) { pProd *= 1 + m.ret; bProd *= 1 + b; n++; }
+    }
+    if (n === 0) return { value: null, n: 0 };
+    const pg = Math.pow(pProd, 1 / n) - 1;
+    const bg = Math.pow(bProd, 1 / n) - 1;
+    if (!isFinite(pg) || !isFinite(bg) || bg === 0) return { value: null, n };
+    return { value: (pg / bg) * 100, n };
+  };
+  return { up: side("up"), down: side("down") };
+}
+
+// Worst peak-to-trough fall, in percent (negative). Included because it is the
+// one downside figure here that does not degrade on a short window: it needs no
+// benchmark and no month-sign split, so it says something real where the
+// capture ratios are still noise.
+function maxDrawdown(series) {
+  let peak = -Infinity, worst = 0;
+  for (const p of series) {
+    if (p.value > peak) peak = p.value;
+    if (peak > 0) worst = Math.min(worst, p.value / peak - 1);
+  }
+  return worst * 100;
+}
+
+// A benchmark price map {date: close} reduced to the portfolio's own dates, so
+// the two series line up month for month.
+function benchmarkSeriesOn(dates, priceMap) {
+  if (!priceMap) return [];
+  const out = [];
+  let last = null;
+  for (const d of dates) {
+    const px = priceMap[d];
+    if (px > 0) last = px;
+    if (last != null) out.push({ date: d, value: last });
+  }
+  return out;
 }
 
 const BENCHMARKS = [
@@ -1977,7 +2076,9 @@ Instructions:
   const [newsMode, setNewsMode] = useState("holdings"); // "holdings" | "broad"
   const [broadNews, setBroadNews] = useState([]);
   // Performance tab state
-  const [perfView, setPerfView] = useState("chart"); // "chart" | "holdings"
+  const [perfView, setPerfView] = useState("chart"); // "chart" | "holdings" | "allocations"
+  const [allocHover, setAllocHover] = useState(null);     // crosshair index
+  const [allocHoverKey, setAllocHoverKey] = useState(null); // highlighted allocation
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
@@ -2016,6 +2117,68 @@ Instructions:
   const perfSvgRef = useRef(null);
   useEffect(() => { setPerfZoom(null); setPerfHover(null); }, [perfRange, perfSleeve]);
   useEffect(() => { if (BLEND_KEYS.has(perfSleeve) && perfView === "holdings") setPerfView("chart"); }, [perfSleeve, perfView]);
+
+  // Live value of the dividend and growth books, priced from the same quote
+  // stream the rest of the app uses. Every allocation is a fixed combination of
+  // these two, so this is all the live input the allocations view needs.
+  const srcSleeveLive = useMemo(() => {
+    const out = {};
+    for (const k of ["dividend", "growth"]) {
+      const d = perfDataMap[k];
+      if (!d?.holdings) continue;
+      let val = d.cash || 0, priced = 0, total = 0;
+      for (const [sym, rawSh] of Object.entries(d.holdings)) {
+        total++;
+        const sh = rawSh * (splitRatiosRef.current[sym] || 1);
+        const q = quotes[sym] || quotesRef.current?.[sym];
+        if (q?.p > 0 && sh) { val += sh * q.p; priced++; }
+      }
+      // Partial coverage would understate the book, which would read as a loss.
+      if (total > 0 && priced >= total * 0.8) out[k] = val;
+    }
+    return out;
+  }, [quotes, perfDataMap]);
+
+  // Every allocation's series with today's live point appended, plus the risk
+  // stats. Recomputes as quotes move, so the table is live.
+  const allocationStats = useMemo(() => {
+    const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
+    const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
+    const rows = [];
+    for (const m of BLEND_MIXES) {
+      const d = perfDataMap[m.key];
+      if (!d?.portfolio?.length) continue;
+      const series = d.portfolio.map(p => ({ date: p.date, value: p.value }));
+      const live = (srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0)
+        ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth
+        : null;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if (live > 0) {
+        // Replace rather than append when history already carries today.
+        if (series[series.length - 1].date === todayStr) series[series.length - 1] = { date: todayStr, value: live };
+        else series.push({ date: todayStr, value: live });
+      }
+      const dates = series.map(p => p.date);
+      let bmSeries = benchmarkSeriesOn(dates, spyMap);
+      if (spyLive > 0 && bmSeries.length) {
+        const lastBm = bmSeries[bmSeries.length - 1];
+        if (lastBm.date === series[series.length - 1].date) bmSeries[bmSeries.length - 1] = { ...lastBm, value: spyLive };
+        else bmSeries.push({ date: series[series.length - 1].date, value: spyLive });
+      }
+      const cap = captureRatios(monthlyReturns(series), monthlyReturns(bmSeries));
+      rows.push({
+        ...m,
+        series,
+        ret: series.length > 1 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
+        value: series[series.length - 1]?.value ?? null,
+        sortino: sortinoRatio(dailyReturns(series)),
+        maxDD: maxDrawdown(series),
+        up: cap.up, down: cap.down,
+        isLive: live > 0,
+      });
+    }
+    return rows;
+  }, [perfDataMap, srcSleeveLive, quotes]);
   useEffect(() => { setTZoom(null); setTChartHover(null); }, [tChartRange, tChartSleeve, terminalActiveSym]);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -12419,7 +12582,7 @@ Instructions:
 
             {/* Chart / Holdings toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: isDesktop ? 12 : 6 }}>
-              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].filter(({ v }) => !(v === "holdings" && BLEND_KEYS.has(perfSleeve))).map(({ v, l }) => (
+              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }, { v: "allocations", l: "⚖️ All Allocations" }].filter(({ v }) => !(v === "holdings" && BLEND_KEYS.has(perfSleeve))).map(({ v, l }) => (
                 <button key={v} onClick={() => setPerfView(v)} style={{
                   flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${perfView === v ? C.borderActive : C.border}`,
                   background: perfView === v ? C.accentSoft : "transparent",
@@ -12430,7 +12593,7 @@ Instructions:
             </div>
 
             {/* Portfolio sleeve selector (dropdown) */}
-            {Object.keys(perfDataMap).length > 1 && (
+            {perfView !== "allocations" && Object.keys(perfDataMap).length > 1 && (
               <div style={{ marginBottom: isDesktop ? 16 : 8 }}>
                 <select
                   value={perfSleeve}
@@ -12635,6 +12798,194 @@ Instructions:
                 })()}
               </div>
               ); })()}
+
+            {/* ── ALL ALLOCATIONS ── every mix overlaid, with risk stats ── */}
+            {perfView === "allocations" && (() => {
+              const rows = allocationStats;
+              if (!rows.length) return (
+                <div style={{ padding: 60, textAlign: "center", color: C.t4, fontSize: 13 }}>
+                  {perfLoading ? "Loading allocations…" : "Allocation data unavailable."}
+                </div>
+              );
+
+              // One hue ramp across the mixes so the ordering reads off the chart:
+              // dividend-heavy cool, growth-heavy warm.
+              const colorOf = (i) => `hsl(${Math.round(205 - (i / Math.max(1, rows.length - 1)) * 175)}, 72%, ${theme !== "light" ? 62 : 44}%)`;
+
+              const dates = rows[0].series.map(p => p.date);
+              const norm = rows.map(r => r.series.map(p => (p.value / r.series[0].value - 1) * 100));
+              const spyMap = perfDataMap.dividend?.benchmarks?.SPY;
+              const spyRaw = benchmarkSeriesOn(dates, spyMap);
+              const spyLiveQ = (quotes.SPY || quotesRef.current?.SPY)?.p;
+              if (spyLiveQ > 0 && spyRaw.length) spyRaw[spyRaw.length - 1] = { ...spyRaw[spyRaw.length - 1], value: spyLiveQ };
+              const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
+
+              const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
+              const H = isDesktop ? 440 : 320;
+              const PAD = { top: 30, right: 78, bottom: 46, left: 18 };
+              const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom;
+              const all = norm.flat().concat(spyNorm || []);
+              const lo = Math.min(...all), hi = Math.max(...all);
+              const span = hi - lo || 1;
+              const stp = span <= 5 ? 1 : span <= 20 ? 2 : span <= 50 ? 5 : 10;
+              const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp;
+              const yR = yMax - yMin || 1;
+              const X = i => PAD.left + (i / Math.max(1, dates.length - 1)) * cw;
+              const Y = v => PAD.top + ch - ((v - yMin) / yR) * ch;
+              const ticks = []; for (let v = yMin; v <= yMax; v += stp) ticks.push(Math.round(v * 100) / 100);
+              const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+
+              const hi2 = allocHover != null && allocHover >= 0 && allocHover < dates.length ? allocHover : null;
+              const xLabels = [];
+              const nLab = isDesktop ? 8 : 4;
+              for (let i = 0; i < nLab; i++) {
+                const idx = Math.round((i / (nLab - 1)) * (dates.length - 1));
+                const d = new Date(dates[idx] + "T12:00:00");
+                xLabels.push({ x: X(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+              }
+              // Geometric capture divides by the benchmark's geometric mean on
+              // each side. With few down months, most of them near zero, that
+              // denominator is tiny and the ratio swings wildly — here four of
+              // the five SPY-down months were under 1.1%. Flag it rather than
+              // present the number as settled.
+              const nDown = rows[0]?.down?.n ?? 0, nUp = rows[0]?.up?.n ?? 0;
+              const thinCapture = nDown < 12 || nUp < 12;
+              const fmtPct = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
+              const fmtCap = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
+
+              return (
+                <div style={{ animation: "fadeIn 0.2s ease" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Dividend + Growth — all allocations</div>
+                    <div style={{ fontSize: 11, color: C.t4 }}>
+                      Rebalanced quarterly on the book's own rebalance dates · from {dates[0]}
+                      {rows[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
+                    </div>
+                  </div>
+
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 10, marginBottom: 14 }}>
+                    <div style={{ position: "relative" }}>
+                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
+                        onMouseMove={e => {
+                          const r = e.currentTarget.getBoundingClientRect();
+                          const mx = (e.clientX - r.left) * (W / r.width);
+                          const i = Math.round(((mx - PAD.left) / cw) * (dates.length - 1));
+                          setAllocHover(i >= 0 && i < dates.length ? i : null);
+                        }}
+                        onMouseLeave={() => setAllocHover(null)}>
+                        {ticks.map(v => (
+                          <g key={v}>
+                            <line x1={PAD.left} y1={Y(v)} x2={W - PAD.right} y2={Y(v)} stroke={C.border} strokeWidth="1" opacity="0.4" />
+                            <text x={W - PAD.right + 10} y={Y(v) + 4} fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{v}%</text>
+                          </g>
+                        ))}
+                        {xLabels.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{l.label}</text>)}
+                        {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />}
+                        {spyNorm && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
+                        {norm.map((arr, i) => (
+                          <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)}
+                            strokeWidth={allocHoverKey === rows[i].key ? 3.2 : 2}
+                            opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.25 : 1}
+                            strokeLinejoin="round" strokeLinecap="round" />
+                        ))}
+                        {hi2 != null && (
+                          <g>
+                            <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.65" />
+                            {norm.map((arr, i) => <circle key={rows[i].key} cx={X(hi2)} cy={Y(arr[hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
+                            {(() => {
+                              const w = 78, x = Math.max(PAD.left, Math.min(W - PAD.right - w, X(hi2) - w / 2));
+                              const d = new Date(dates[hi2] + "T12:00:00");
+                              return (<g>
+                                <rect x={x} y={PAD.top + ch + 5} width={w} height="18" rx="3" fill={C.t1} />
+                                <text x={x + w / 2} y={PAD.top + ch + 18} textAnchor="middle" fill={C.bg} fontSize="10" fontWeight="700" fontFamily="inherit">
+                                  {d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" })}
+                                </text>
+                              </g>);
+                            })()}
+                          </g>
+                        )}
+                      </svg>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 12 }}>
+                      {rows.map((r, i) => (
+                        <div key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
+                          style={{ display: "flex", alignItems: "center", gap: 6, cursor: "default" }}>
+                          <div style={{ width: 18, height: 3, borderRadius: 2, background: colorOf(i) }} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t2 }}>{Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? norm[i][hi2] : r.ret) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                            {fmtPct(hi2 != null ? norm[i][hi2] : r.ret)}
+                          </span>
+                        </div>
+                      ))}
+                      {spyNorm && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ width: 18, height: 0, borderTop: `2px dashed ${C.t3}` }} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t3 }}>SPY</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                            {fmtPct(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Risk statistics */}
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12, overflowX: "auto" }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Risk statistics</div>
+                    <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
+                      Sortino on daily returns, zero MAR, annualised. Capture ratios are geometric, monthly, against SPY total return
+                      {rows[0].up.n + rows[0].down.n > 0 && ` — ${rows[0].up.n} up / ${rows[0].down.n} down months`}.
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontVariantNumeric: "tabular-nums" }}>
+                      <thead>
+                        <tr>
+                          {["Allocation", "Value", "Return", "Sortino", "Max DD", "Up capture", "Down capture"].map((h, i) => (
+                            <th key={h} style={{ textAlign: i === 0 ? "left" : "right", padding: "8px 10px", fontSize: 10, fontWeight: 700,
+                              letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r, i) => {
+                          return (
+                            <tr key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
+                              style={{ background: allocHoverKey === r.key ? C.cardHover : "transparent" }}>
+                              <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>
+                                <span style={{ display: "inline-block", width: 14, height: 3, borderRadius: 2, background: colorOf(i), marginRight: 8, verticalAlign: "middle" }} />
+                                <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{Math.round(r.dividend * 100)} / {Math.round(r.growth * 100)}</span>
+                              </td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12, color: C.t2 }}>
+                                ${r.value != null ? Math.round(r.value).toLocaleString() : "—"}
+                              </td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: r.ret >= 0 ? C.up : C.dn }}>{fmtPct(r.ret)}</td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, color: thinCapture ? C.t4 : C.t1 }}>{fmtCap(r.up)}</td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, color: thinCapture ? C.t4 : C.t1 }}>{fmtCap(r.down)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {thinCapture && (
+                      <div style={{ marginTop: 14, padding: "10px 13px", borderRadius: 10, background: C.dn + "14", border: `1px solid ${C.dn}44`, fontSize: 11, color: C.t2, lineHeight: 1.65 }}>
+                        <strong style={{ color: C.dn }}>Capture ratios are not yet reliable.</strong> They rest on {nUp} up and {nDown} down
+                        months, and most of the down months were small — four of the five were under 1.1%. Geometric capture divides by the
+                        index's average move on each side, so a near-zero denominator sends the ratio wherever one month happens to fall.
+                        The down-capture column currently implies more growth means better downside protection, which is an artifact of that,
+                        not a property of the sleeves. Treat Sortino and Max DD as the usable downside figures until there are more down
+                        months to measure against.
+                      </div>
+                    )}
+                    <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
+                      Up capture above 100 means the allocation gained more than SPY in months SPY rose; down capture below 100 means it lost
+                      less in months SPY fell. Max DD is the worst peak-to-trough fall over the window — no benchmark, no month-sign split,
+                      so it stays meaningful on a short history.
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Chart view */}
             {perfView === "chart" && <>
