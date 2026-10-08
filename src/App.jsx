@@ -111,23 +111,57 @@ const freshnessMatch = (dateStr, mode) => {
 };
 const REC_RANK = { BUY: 0, HOLD: 1, WATCH: 2, SELL: 3 };
 const CONV_RANK = { "High Conviction": 0, "On Our Radar": 1 };
-// ── Modeled 65/35 dividend/growth allocation ─────────────────────────────────
-// Buy-and-hold, not a rebalanced benchmark: 65/35 is struck once on the first
-// date both sleeves exist and then left alone, so the mix drifts with the two
-// books exactly as a real untouched allocation would. No synthetic rebalancing
-// is applied at any point.
+// ── Combined 65/35 dividend/growth book ─────────────────────────────────────
+// The two sleeves as one portfolio: what actually happened in each, held
+// together at 65/35 and reset to that mix at every quarterly rebalance — the
+// same cadence the real book is run on. Between rebalances the mix drifts with
+// the two sleeves, exactly as it does in practice; it does not drift
+// indefinitely, and it is not rebalanced daily either.
 //
-// It works by scaling each sleeve by a constant: hold kDiv of the dividend book
-// and kGro of the growth book, chosen so the two start at 65/35 of their
-// combined opening value. Because those constants also scale the share counts,
-// the live quote path and the 1D intraday series — both of which price
-// perfData.holdings directly — produce the blend with no special-casing, and
-// stay consistent with the historical series by construction.
+// The reset dates are read out of the trade record rather than assumed, because
+// the rebalances do not land on calendar quarter boundaries: to date they are
+// 7/29/25, 10/15/25, 1/21-26/26, 4/17/26 and 7/9/26. Detecting them means future
+// rebalances are picked up with no edit here, and a mid-quarter swap such as the
+// 9/2/26 EIX -> PGY trade stays correctly excluded, being two trades rather than
+// a sleeve-wide reshuffle.
 //
-// The window starts at growth's inception. The dividend sleeve reaches back to
-// 2011 but a blend cannot exist before both legs do, so the longer ranges
-// simply do not offer themselves.
+// Between resets the sleeves are held as fixed multiples — kDiv of the dividend
+// book, kGro of the growth book. Those multiples also scale the share counts, so
+// the live quote path and the 1D intraday series, which price perfData.holdings
+// directly, yield kDiv*divLive + kGro*groLive: the same combination the
+// historical series uses, so live and history cannot drift apart.
 const BLEND_W = { dividend: 0.65, growth: 0.35 };
+const BLEND_REBAL_MIN_TRADES = 8;   // a sleeve-wide reshuffle, not a single swap
+const BLEND_REBAL_CLUSTER_DAYS = 14; // the two sleeves may rebalance days apart
+
+// Dates on which the book was rebalanced, inferred from clustered buy/sell
+// activity in either sleeve. Sleeves that rebalance a few days apart (Jan 2026:
+// growth on the 21st, dividend on the 26th) collapse to one date — the later,
+// when the move is complete in both.
+function detectRebalanceDates(sleeves, from) {
+  const counts = {};
+  for (const sl of sleeves) {
+    const perDay = {};
+    for (const t of sl?.transactions || []) {
+      const d = t?.date;
+      if (!d || d < from) continue;
+      if (t.type !== "PURCHASE" && t.type !== "SALE") continue;
+      perDay[d] = (perDay[d] || 0) + 1;
+    }
+    for (const [d, n] of Object.entries(perDay)) {
+      if (n >= BLEND_REBAL_MIN_TRADES) counts[d] = Math.max(counts[d] || 0, n);
+    }
+  }
+  const days = Object.keys(counts).sort();
+  const out = [];
+  for (const d of days) {
+    const prev = out[out.length - 1];
+    const gap = prev ? (new Date(d) - new Date(prev)) / 86400000 : Infinity;
+    if (gap <= BLEND_REBAL_CLUSTER_DAYS) out[out.length - 1] = d;  // keep the later
+    else out.push(d);
+  }
+  return out;
+}
 
 function buildBlendSleeve(div, gro) {
   if (!div?.portfolio?.length || !gro?.portfolio?.length) return null;
@@ -139,14 +173,22 @@ function buildBlendSleeve(div, gro) {
   const d0 = dMap.get(t0)?.value, g0 = common[0].value;
   if (!(d0 > 0) || !(g0 > 0)) return null;
 
-  // Base the modeled book on what the two sleeves were actually worth that day,
-  // so the dollar figures are the right order of magnitude rather than notional.
+  // Size the modeled book on what the sleeves were actually worth that day, so
+  // the dollar figures are the right order of magnitude for the real book.
   const base = d0 + g0;
-  const kDiv = (BLEND_W.dividend * base) / d0;
-  const kGro = (BLEND_W.growth * base) / g0;
+  const resets = new Set(detectRebalanceDates([div, gro], t0).filter(d => d > t0));
+
+  let kDiv = (BLEND_W.dividend * base) / d0;
+  let kGro = (BLEND_W.growth * base) / g0;
 
   const portfolio = common.map(g => {
     const d = dMap.get(g.date);
+    if (resets.has(g.date) && d.value > 0 && g.value > 0) {
+      // Rebalance: price the book, then re-strike the multiples at 65/35.
+      const v = kDiv * d.value + kGro * g.value;
+      kDiv = (BLEND_W.dividend * v) / d.value;
+      kGro = (BLEND_W.growth * v) / g.value;
+    }
     return {
       date: g.date,
       value: Math.round((kDiv * d.value + kGro * g.value) * 100) / 100,
@@ -156,14 +198,13 @@ function buildBlendSleeve(div, gro) {
     };
   });
 
-  // Scaled share counts: the same constants, so live pricing lands on the same
-  // series the history does.
+  // kDiv/kGro now hold their post-final-rebalance values, which is what the
+  // current book is on — so live pricing lands on the same series the history
+  // ends at.
   const holdings = {};
   for (const [t, sh] of Object.entries(div.holdings || {})) holdings[t] = (holdings[t] || 0) + sh * kDiv;
   for (const [t, sh] of Object.entries(gro.holdings || {})) holdings[t] = (holdings[t] || 0) + sh * kGro;
 
-  // Calendar-year returns off the blended series. The first year is partial
-  // (it opens at growth's inception), which is inherent to the window.
   const annualReturns = {};
   const byYear = {};
   for (const pt of portfolio) (byYear[pt.date.slice(0, 4)] ||= []).push(pt);
@@ -176,19 +217,16 @@ function buildBlendSleeve(div, gro) {
     prevClose = close;
   }
 
-  // Benchmark series come from the dividend sleeve, which carries the longer
-  // history; they are market series, identical either way where they overlap.
+  // Benchmarks are market series — take the dividend sleeve's, which reach
+  // further back, and clip to the blend window.
   const benchmarks = {};
-  for (const [sym, series] of Object.entries(div.benchmarks || {})) {
-    const clipped = {};
-    for (const [day, px] of Object.entries(series || {})) if (day >= t0) clipped[day] = px;
-    if (Object.keys(clipped).length) benchmarks[sym] = clipped;
-  }
-  for (const [sym, series] of Object.entries(gro.benchmarks || {})) {
-    if (benchmarks[sym]) continue;
-    const clipped = {};
-    for (const [day, px] of Object.entries(series || {})) if (day >= t0) clipped[day] = px;
-    if (Object.keys(clipped).length) benchmarks[sym] = clipped;
+  for (const src of [div.benchmarks, gro.benchmarks]) {
+    for (const [sym, series] of Object.entries(src || {})) {
+      if (benchmarks[sym]) continue;
+      const clipped = {};
+      for (const [day, px] of Object.entries(series || {})) if (day >= t0) clipped[day] = px;
+      if (Object.keys(clipped).length) benchmarks[sym] = clipped;
+    }
   }
 
   return {
@@ -196,9 +234,9 @@ function buildBlendSleeve(div, gro) {
     startBalance: base,
     cash: Math.round(((div.cash || 0) * kDiv + (gro.cash || 0) * kGro) * 100) / 100,
     costBasis: {}, transactions: [],
-    annualReturns,
-    bmAnnualReturns: {}, bmAnnualReturnsTr: {},
+    annualReturns, bmAnnualReturns: {}, bmAnnualReturnsTr: {},
     isBlend: true, blendFrom: t0, blendWeights: BLEND_W,
+    blendRebalances: [...resets].sort(),
   };
 }
 
