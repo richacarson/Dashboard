@@ -895,7 +895,7 @@ const captureBmFor = (k) => SLEEVE_CAPTURE_BM[k] || "SPY";
 // The managed sleeves are judged against their own mandate, and a broad-market
 // row invites the comparison the capture benchmark exists to replace. SPY stays
 // on the charts; this only affects the statistics table.
-const RISK_HIDE_BM = { dividend: ["SPY"], growth: ["SPY"] };
+const RISK_HIDE_BM = { dividend: ["SPY"], growth: ["SPY"], fci100: ["SPY"], fciValues: ["SPY"] };
 // Combined allocations: SPY only. They mix both sleeves, so a sleeve benchmark
 // would misrepresent them, and QQQ has nothing to do with either mandate.
 for (const m of BLEND_MIXES) {
@@ -2217,7 +2217,7 @@ Instructions:
     const m = BLEND_MIXES.find(x => x.key === k);
     return m ? blendLabel(m).replace(/ \/ /, "/") : (sleeves[k]?.name || k);
   };
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: true, DIA: false }, fciValues: { SPY: true, QQQ: true, DIA: false },
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { QQQ: true, SPY: false, DIA: false }, fciValues: { QQQ: true, SPY: false, DIA: false },
     ...Object.fromEntries(BLEND_MIXES.map(m => [m.key, { SPY: true, DVY: false, IUSG: false }])) };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
@@ -3917,6 +3917,26 @@ Instructions:
           newMap[sleeve] = { portfolio, benchmarks, startBalance: pJson.start_balance || 100000, holdings: pJson.holdings || {}, cash: pJson.cash || 0, costBasis: pJson.cost_basis || {}, transactions: pJson.transactions || [], annualReturns: pJson.annual_returns || {}, bmAnnualReturns: pJson.bm_annual_returns || {}, bmAnnualReturnsTr: pJson.bm_annual_returns_tr || {} };
         } catch (e) {
           console.warn(`Failed to load ${sleeve} portfolio:`, e);
+        }
+      }
+
+      // Backfill benchmark series between sleeves. Each sleeve keeps its own
+      // where it has one; anything it lacks is borrowed and clipped to its own
+      // window so it starts where the portfolio does.
+      const bmPool = {};
+      for (const sl of Object.values(newMap)) {
+        for (const [sym, series] of Object.entries(sl?.benchmarks || {})) {
+          if (!bmPool[sym] || Object.keys(series).length > Object.keys(bmPool[sym]).length) bmPool[sym] = series;
+        }
+      }
+      for (const sl of Object.values(newMap)) {
+        if (!sl?.portfolio?.length) continue;
+        const from = sl.portfolio[0].date;
+        for (const [sym, series] of Object.entries(bmPool)) {
+          if (sl.benchmarks[sym] && Object.keys(sl.benchmarks[sym]).length > 1) continue;
+          const clipped = {};
+          for (const [day, px] of Object.entries(series)) if (day >= from) clipped[day] = px;
+          if (Object.keys(clipped).length > 1) sl.benchmarks[sym] = clipped;
         }
       }
 
