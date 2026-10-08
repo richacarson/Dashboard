@@ -2191,6 +2191,14 @@ Instructions:
   const [perfView, setPerfView] = useState("chart"); // "chart" | "holdings" | "allocations"
   const [allocHover, setAllocHover] = useState(null);     // crosshair index
   const [allocHoverKey, setAllocHoverKey] = useState(null); // highlighted allocation
+  // All-allocations chart: a view window over the series (null = whole period)
+  // and the mixes hidden from it. The window zooms without rebasing — every line
+  // still reads its return since inception — so the gaps between mixes, which
+  // accumulate over time, stay put while the y axis refits to the short window's
+  // much smaller range. That is what separates the lines.
+  const [allocWin, setAllocWin] = useState(null);       // { i0, i1 } | null
+  const [allocHidden, setAllocHidden] = useState({});   // key -> true
+  const allocPanRef = useRef(null);
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
@@ -13250,32 +13258,66 @@ Instructions:
               const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
 
               const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
-              const H = isDesktop ? 440 : 320;
-              const PAD = { top: 30, right: 78, bottom: 46, left: 18 };
+              const H = isDesktop ? 460 : 340;
+              // y labels on the left so the right margin can carry each line's end label
+              const PAD = { top: 22, right: isDesktop ? 104 : 86, bottom: 40, left: isDesktop ? 48 : 40 };
               const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom;
-              const all = norm.flat().concat(spyNorm || []);
-              const lo = Math.min(...all), hi = Math.max(...all);
+
+              // ── view window ──
+              const lastI = dates.length - 1;
+              const w0 = allocWin ? Math.max(0, Math.min(allocWin.i0, lastI - 1)) : 0;
+              const w1 = allocWin ? Math.min(lastI, Math.max(allocWin.i1, w0 + 1)) : lastI;
+              const vSpan = Math.max(1, w1 - w0);
+              const shown = rows.map((r, i) => ({ r, i })).filter(({ r }) => !allocHidden[r.key]);
+
+              const all = shown.flatMap(({ i }) => norm[i].slice(w0, w1 + 1)).concat(spyNorm && !allocHidden.SPY ? spyNorm.slice(w0, w1 + 1) : []);
+              const lo = all.length ? Math.min(...all) : 0, hi = all.length ? Math.max(...all) : 1;
               const span = hi - lo || 1;
-              const stp = span <= 5 ? 1 : span <= 20 ? 2 : span <= 50 ? 5 : 10;
+              const stp = [0.25, 0.5, 1, 2, 5, 10, 20].find(st => span / st <= 8) || 50;
               const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp;
               const yR = yMax - yMin || 1;
-              const X = i => PAD.left + (i / Math.max(1, dates.length - 1)) * cw;
+              const X = i => PAD.left + ((i - w0) / vSpan) * cw;
               const Y = v => PAD.top + ch - ((v - yMin) / yR) * ch;
-              const ticks = []; for (let v = yMin; v <= yMax; v += stp) ticks.push(Math.round(v * 100) / 100);
-              const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+              const ticks = []; for (let v = yMin; v <= yMax + 1e-9; v += stp) ticks.push(Math.round(v * 100) / 100);
+              const path = arr => {
+                const a = Math.max(0, w0 - 1), b = Math.min(arr.length - 1, w1 + 1);
+                let d = "";
+                for (let i = a; i <= b; i++) d += `${i === a ? "M" : "L"}${X(i).toFixed(1)},${Y(arr[i]).toFixed(1)}`;
+                return d;
+              };
 
-              const hi2 = allocHover != null && allocHover >= 0 && allocHover < dates.length ? allocHover : null;
+              const hi2 = allocHover != null && allocHover >= w0 && allocHover <= w1 ? allocHover : null;
               const xLabels = [];
               const nLab = isDesktop ? 8 : 4;
               for (let i = 0; i < nLab; i++) {
-                const idx = Math.round((i / (nLab - 1)) * (dates.length - 1));
+                const idx = Math.round(w0 + (i / (nLab - 1)) * vSpan);
                 const d = new Date(dates[idx] + "T12:00:00");
-                xLabels.push({ x: X(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+                xLabels.push({ x: X(idx), label: vSpan < 70
+                  ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  : d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
               }
               const nDown = rows[0]?.down?.n ?? 0, nUp = rows[0]?.up?.n ?? 0;
               const thinCapture = nDown < 40 || nUp < 40;
               const fmtPct = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
               const fmtCap = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
+              const mixLabel = r => `${Math.round(r.dividend * 100)}/${Math.round(r.growth * 100)}`;
+
+              // End labels: each visible line's value at the right edge of the window
+              // (or at the crosshair), stacked so they never overlap.
+              const at = hi2 != null ? hi2 : w1;
+              const ends = shown.map(({ r, i }) => ({ key: r.key, text: `${mixLabel(r)} ${norm[i][at] >= 0 ? "+" : ""}${norm[i][at].toFixed(1)}%`, y: Y(norm[i][at]), color: colorOf(i) }));
+              if (spyNorm && !allocHidden.SPY) ends.push({ key: "SPY", text: `SPY ${spyNorm[at] >= 0 ? "+" : ""}${spyNorm[at].toFixed(1)}%`, y: Y(spyNorm[at]), color: C.t3 });
+              ends.sort((a, b) => a.y - b.y);
+              const GAP = 13;
+              for (let k = 1; k < ends.length; k++) if (ends[k].y - ends[k - 1].y < GAP) ends[k].y = ends[k - 1].y + GAP;
+              const over = ends.length ? ends[ends.length - 1].y - (PAD.top + ch) : 0;
+              if (over > 0) for (const e of ends) e.y -= over;   // keep the stack inside the plot
+
+              // Presets zoom the view to the last N sessions; the series are not rebased.
+              const presets = [["ALL", null], ["6M", 126], ["3M", 63], ["1M", 21]];
+              const activePreset = !allocWin ? "ALL" : (presets.find(([, n]) => n && allocWin.i1 === lastI && lastI - allocWin.i0 === Math.min(n, lastI)) || [null])[0];
+              const setPreset = n => { setAllocHover(null); setAllocWin(n ? { i0: Math.max(0, lastI - n), i1: lastI } : null); };
+              const svgX = e => { const r = e.currentTarget.getBoundingClientRect(); return (e.clientX - r.left) * (W / r.width); };
 
               return (
                 <div style={{ animation: "fadeIn 0.2s ease" }}>
@@ -13288,34 +13330,71 @@ Instructions:
                   </div>
 
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 10, marginBottom: 14 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      {presets.map(([l, n]) => (
+                        <button key={l} onClick={() => setPreset(n)} style={{
+                          padding: "5px 11px", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                          border: `1px solid ${activePreset === l ? C.borderActive : C.border}`,
+                          background: activePreset === l ? C.accentSoft : "transparent", color: activePreset === l ? C.t1 : C.t3,
+                        }}>{l}</button>
+                      ))}
+                      {allocWin && !activePreset && <span style={{ fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: 0.8 }}>ZOOMED · DBL-CLICK TO RESET</span>}
+                    </div>
                     <div style={{ position: "relative" }}>
-                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
+                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair", touchAction: "pan-y" }}
                         onMouseMove={e => {
-                          const r = e.currentTarget.getBoundingClientRect();
-                          const mx = (e.clientX - r.left) * (W / r.width);
-                          const i = Math.round(((mx - PAD.left) / cw) * (dates.length - 1));
-                          setAllocHover(i >= 0 && i < dates.length ? i : null);
+                          const mx = svgX(e);
+                          if (allocPanRef.current) {
+                            const shift = Math.round(-((mx - allocPanRef.current.x0) / cw) * vSpan);
+                            const { i0, i1 } = allocPanRef.current.win;
+                            const len = i1 - i0;
+                            const lo2 = Math.max(0, Math.min(i0 + shift, lastI - len));
+                            setAllocWin({ i0: lo2, i1: lo2 + len });
+                            return;
+                          }
+                          const i = Math.round(w0 + ((mx - PAD.left) / cw) * vSpan);
+                          setAllocHover(i >= w0 && i <= w1 ? i : null);
                         }}
-                        onMouseLeave={() => setAllocHover(null)}>
+                        onMouseDown={e => { allocPanRef.current = { x0: svgX(e), win: { i0: w0, i1: w1 } }; }}
+                        onMouseUp={() => { allocPanRef.current = null; }}
+                        onMouseLeave={() => { setAllocHover(null); allocPanRef.current = null; }}
+                        onDoubleClick={() => setAllocWin(null)}
+                        onWheel={e => {
+                          if (dates.length < 10) return;
+                          e.preventDefault();
+                          const anchor = Math.max(w0, Math.min(w1, Math.round(w0 + ((svgX(e) - PAD.left) / cw) * vSpan)));
+                          const len = Math.max(8, Math.min(lastI, Math.round(vSpan * (e.deltaY > 0 ? 1.2 : 1 / 1.2))));
+                          const frac = (anchor - w0) / vSpan;
+                          const lo2 = Math.max(0, Math.min(Math.round(anchor - frac * len), lastI - len));
+                          setAllocWin(lo2 <= 0 && lo2 + len >= lastI ? null : { i0: lo2, i1: lo2 + len });
+                        }}>
+                        <defs><clipPath id="allocClip"><rect x={PAD.left} y={PAD.top - 2} width={cw} height={ch + 4} /></clipPath></defs>
                         {ticks.map(v => (
                           <g key={v}>
                             <line x1={PAD.left} y1={Y(v)} x2={W - PAD.right} y2={Y(v)} stroke={C.border} strokeWidth="1" opacity="0.4" />
-                            <text x={W - PAD.right + 10} y={Y(v) + 4} fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{v}%</text>
+                            <text x={PAD.left - 8} y={Y(v) + 4} textAnchor="end" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{v}%</text>
                           </g>
                         ))}
                         {xLabels.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{l.label}</text>)}
-                        {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />}
-                        {spyNorm && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
-                        {norm.map((arr, i) => (
-                          <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)}
-                            strokeWidth={allocHoverKey === rows[i].key ? 3.2 : 2}
-                            opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.25 : 1}
-                            strokeLinejoin="round" strokeLinecap="round" />
+                        <g clipPath="url(#allocClip)">
+                          {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />}
+                          {spyNorm && !allocHidden.SPY && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
+                          {shown.map(({ r, i }) => (
+                            <path key={r.key} d={path(norm[i])} fill="none" stroke={colorOf(i)}
+                              strokeWidth={allocHoverKey === r.key ? 3.2 : 2}
+                              opacity={allocHoverKey && allocHoverKey !== r.key ? 0.2 : 1}
+                              strokeLinejoin="round" strokeLinecap="round" />
+                          ))}
+                        </g>
+                        {/* end labels in the right margin, each tied to its line */}
+                        {ends.map(e => (
+                          <text key={e.key} x={W - PAD.right + 8} y={e.y + 4} fill={e.color} fontSize="11" fontWeight="700" fontFamily="inherit"
+                            opacity={allocHoverKey && allocHoverKey !== e.key ? 0.3 : 1}>{e.text}</text>
                         ))}
                         {hi2 != null && (
                           <g>
                             <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.65" />
-                            {norm.map((arr, i) => <circle key={rows[i].key} cx={X(hi2)} cy={Y(arr[hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
+                            {shown.map(({ r, i }) => <circle key={r.key} cx={X(hi2)} cy={Y(norm[i][hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
                             {(() => {
                               const w = 78, x = Math.max(PAD.left, Math.min(W - PAD.right - w, X(hi2) - w / 2));
                               const d = new Date(dates[hi2] + "T12:00:00");
@@ -13331,20 +13410,26 @@ Instructions:
                       </svg>
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 12 }}>
-                      {rows.map((r, i) => (
-                        <div key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
-                          style={{ display: "flex", alignItems: "center", gap: 6, cursor: "default" }}>
-                          <div style={{ width: 18, height: 3, borderRadius: 2, background: colorOf(i) }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t2 }}>{Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)}</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? norm[i][hi2] : r.ret) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
-                            {fmtPct(hi2 != null ? norm[i][hi2] : r.ret)}
-                          </span>
-                        </div>
-                      ))}
+                      {rows.map((r, i) => {
+                        const off = !!allocHidden[r.key];
+                        return (
+                          <div key={r.key} onMouseEnter={() => !off && setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
+                            onClick={() => { setAllocHoverKey(null); setAllocHidden(h => ({ ...h, [r.key]: !h[r.key] })); }}
+                            title={off ? "Show" : "Hide"}
+                            style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: off ? 0.35 : 1 }}>
+                            <div style={{ width: 18, height: 3, borderRadius: 2, background: colorOf(i) }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, color: C.t2, textDecoration: off ? "line-through" : "none" }}>{mixLabel(r)}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? norm[i][hi2] : r.ret) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                              {fmtPct(hi2 != null ? norm[i][hi2] : r.ret)}
+                            </span>
+                          </div>
+                        );
+                      })}
                       {spyNorm && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div onClick={() => setAllocHidden(h => ({ ...h, SPY: !h.SPY }))} title={allocHidden.SPY ? "Show" : "Hide"}
+                          style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: allocHidden.SPY ? 0.35 : 1 }}>
                           <div style={{ width: 18, height: 0, borderTop: `2px dashed ${C.t3}` }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t3 }}>SPY</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, textDecoration: allocHidden.SPY ? "line-through" : "none" }}>SPY</span>
                           <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
                             {fmtPct(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}
                           </span>
