@@ -7864,7 +7864,8 @@ Instructions:
                     </svg>
                   )}
                   <div style={{ padding: "4px 10px 8px", fontSize: 9, color: C.t4, letterSpacing: 0.8 }}>
-                    RISK STATS → PERFORMANCE PANEL
+                    {isSpread ? `EACH LINE = ITS RETURN MINUS ${mixL(rows[refIdx])}'S, IN PP · ` : isFrontier ? "DASHED PATH RUNS ALL-DIVIDEND → ALL-GROWTH · " : ""}
+                    RISK STATISTICS FOR EACH MIX ARE IN THE PERFORMANCE PANEL
                   </div>
                 </div>
               );
@@ -13447,7 +13448,7 @@ Instructions:
                         </g>
                       ))}
                       <text x={(FP.left + W - FP.right) / 2} y={FH - 8} textAnchor="middle" fill={C.t3} fontSize="11" fontWeight="700" fontFamily="inherit">
-                        Downside risk →
+                        Downside risk → (annualised downside deviation)
                       </text>
                       <text x={14} y={(FP.top + FH - FP.bottom) / 2} textAnchor="middle" fill={C.t3} fontSize="11" fontWeight="700" fontFamily="inherit"
                         transform={`rotate(-90 14 ${(FP.top + FH - FP.bottom) / 2})`}>Return →</text>
@@ -13468,11 +13469,39 @@ Instructions:
                         <text key={`l${q.key}`} x={fx(q.dd) + 11} y={fy(q.ret) + 4} fill={C.t2} fontSize="11" fontWeight="700" fontFamily="inherit"
                           opacity={allocHoverKey && allocHoverKey !== q.key ? 0.3 : 1}>{q.label}</text>
                       ))}
+                      {hov && (() => {
+                        const bw = 170, bh = 58;
+                        const bx = Math.max(FP.left, Math.min(W - FP.right - bw, fx(hov.dd) - bw / 2));
+                        const by = fy(hov.ret) - bh - 14 < FP.top ? fy(hov.ret) + 14 : fy(hov.ret) - bh - 14;
+                        return (
+                          <g pointerEvents="none">
+                            <rect x={bx} y={by} width={bw} height={bh} rx="8" fill={C.t1} opacity="0.94" />
+                            <text x={bx + 10} y={by + 18} fill={C.bg} fontSize="12" fontWeight="800" fontFamily="inherit">{hov.label}</text>
+                            <text x={bx + 10} y={by + 34} fill={C.bg} fontSize="11" fontWeight="600" fontFamily="inherit">Return {fmtPct(hov.ret)}</text>
+                            <text x={bx + 10} y={by + 49} fill={C.bg} fontSize="11" fontWeight="600" fontFamily="inherit">
+                              Risk {hov.dd.toFixed(2)}% · Sortino {hov.sortino == null ? "—" : hov.sortino.toFixed(2)}
+                            </text>
+                          </g>
+                        );
+                      })()}
                     </svg>
-                    <div style={{ marginTop: 8, minHeight: 18, fontSize: 12, fontWeight: 600, color: hov ? C.t1 : C.t4, fontVariantNumeric: "tabular-nums" }}>
-                      {hov
-                        ? <>{hov.label} · return {fmtPct(hov.ret)} · risk {hov.dd.toFixed(2)}% · Sortino {hov.sortino == null ? "—" : hov.sortino.toFixed(2)}</>
-                        : "Tap a point. Left to right: more growth; up: more return."}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 10 }}>
+                      {pts.map(q => (
+                        <div key={q.key} onMouseEnter={() => setAllocHoverKey(q.key)} onMouseLeave={() => setAllocHoverKey(null)}
+                          onClick={() => setAllocHoverKey(allocHoverKey === q.key ? null : q.key)}
+                          style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: allocHoverKey && allocHoverKey !== q.key ? 0.45 : 1 }}>
+                          <div style={{ width: 10, height: 10, borderRadius: q.kind === "bm" ? 2 : 5, background: q.kind === "mix" ? colorFor(q) : "transparent",
+                            border: q.kind === "mix" ? "none" : `2px solid ${colorFor(q)}` }} />
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t2 }}>{q.label}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: q.ret >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{fmtPct(q.ret)}</span>
+                          <span style={{ fontSize: 10, color: C.t4, fontVariantNumeric: "tabular-nums" }}>risk {q.dd.toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 10, color: C.t4, marginTop: 10, lineHeight: 1.6 }}>
+                      Up is more return, right is more downside risk — annualised downside deviation, the measure Sortino divides by.
+                      The dashed path runs from all-dividend to all-growth, so its slope is what each step of growth bought and what it
+                      cost. Max drawdown is not used here: across the mixes it spans less than a point and would stack them on one spot.
                     </div>
                   </div>
                 );
@@ -13481,24 +13510,27 @@ Instructions:
               return (
                 <div style={{ animation: "fadeIn 0.2s ease" }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>All allocations</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Dividend + Growth — all allocations</div>
                     <div style={{ fontSize: 11, color: C.t4 }}>
-                      since {dates[0]}{rows[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
+                      Rebalanced quarterly on the book's own rebalance dates · from {dates[0]}
+                      {rows[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
                     </div>
                   </div>
 
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 10, marginBottom: 14 }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                      {[["return", "Return"], ["spread", "Spread"], ["frontier", "Risk / Return"]].map(([k, l]) => (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: isSpread ? 8 : 12 }}>
+                      {[["return", "Return"], ["spread", "Spread"], ["frontier", "Risk vs Return"]].map(([k, l]) => (
                         <button key={k} onClick={() => { setAllocMode(k); setAllocHover(null); setAllocHoverKey(null); }} style={chip(allocMode === k)}>{l}</button>
                       ))}
-                      {isSpread && (
-                        <select value={allocRef} onChange={e => setAllocRef(e.target.value)}
-                          style={{ ...chip(false), padding: "6px 8px", color: C.t2, appearance: "auto" }}>
-                          {rows.map(r => <option key={r.key} value={r.key}>vs {mixLabel(r)}</option>)}
-                        </select>
-                      )}
                     </div>
+                    {isSpread && (
+                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                        <span style={{ fontSize: 11, color: C.t4, fontWeight: 600 }}>relative to</span>
+                        {rows.map(r => (
+                          <button key={r.key} onClick={() => setAllocRef(r.key)} style={{ ...chip(allocRef === r.key), padding: "4px 9px", fontSize: 11 }}>{mixLabel(r)}</button>
+                        ))}
+                      </div>
+                    )}
 
                     {isFrontier ? renderFrontier() : (<>
                     <div style={{ position: "relative" }}>
@@ -13569,6 +13601,12 @@ Instructions:
                         </div>
                       )}
                     </div>
+                    {isSpread && (
+                      <div style={{ fontSize: 10, color: C.t4, marginTop: 10, lineHeight: 1.6 }}>
+                        Each line is that allocation's return minus {refLabel}'s, in percentage points. Above zero, it was ahead of {refLabel} at that
+                        date; below, behind. Lines fanning apart are periods when growth and dividend diverged; converging, when they moved together.
+                      </div>
+                    )}
                     </>)}
                   </div>
 
@@ -13576,7 +13614,8 @@ Instructions:
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Risk statistics</div>
                     <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
-                      vs SPY total return · daily{nUp + nDown > 0 && ` · ${nUp} up / ${nDown} down days`}
+                      Sortino on daily returns, zero MAR, annualised. Capture ratios are geometric and sampled daily against SPY total
+                      return{nUp + nDown > 0 && ` — ${nUp} up / ${nDown} down days`}.
                     </div>
                     <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
                     <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontVariantNumeric: "tabular-nums" }}>
@@ -13619,8 +13658,12 @@ Instructions:
                         lean on. Read Sortino and Max DD first.
                       </div>
                     )}
-                    <div style={{ fontSize: 10, color: C.t4, marginTop: 10 }}>
-                      Up above 100 and down below 100 is the desirable pair. Window starts after the spring-2025 drawdown.
+                    <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
+                      Up capture above 100 means the allocation gained more than SPY on days SPY rose; down capture below 100 means it lost
+                      less on days SPY fell. Capture is sampled daily rather than monthly, the usual convention: this window holds only five
+                      SPY-down months, four of them under 1.1%, and dividing by a near-zero average move made the monthly figure arbitrary —
+                      it showed downside improving as growth rose, which Sortino and Max DD both contradict. Max DD is the worst peak-to-trough
+                      fall over the window.
                     </div>
                   </div>
                 </div>
