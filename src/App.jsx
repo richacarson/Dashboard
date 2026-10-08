@@ -2200,7 +2200,9 @@ Instructions:
   // still reads its return since inception — so the gaps between mixes, which
   // accumulate over time, stay put while the y axis refits to the short window's
   // much smaller range. That is what separates the lines.
-  const [allocWin, setAllocWin] = useState(null);       // { i0, i1 } | null
+  const [allocWin, setAllocWin] = useState(null);       // custom zoom from wheel/drag: { i0, i1 } | null
+  // Named view, resolved to a window once the dates are known. Opens on YTD.
+  const [allocPreset, setAllocPreset] = useState("YTD"); // "ALL" | "YTD" | "6M" | "3M" | "1M"
   const [allocHidden, setAllocHidden] = useState({});   // key -> true
   const allocPanRef = useRef(null);
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
@@ -13270,8 +13272,19 @@ Instructions:
 
               // ── view window ──
               const lastI = dates.length - 1;
-              const w0 = allocWin ? Math.max(0, Math.min(allocWin.i0, lastI - 1)) : 0;
-              const w1 = allocWin ? Math.min(lastI, Math.max(allocWin.i1, w0 + 1)) : lastI;
+              // YTD starts on the last close of the prior year — the same base the
+              // YTD returns elsewhere use — so the view opens on the year's first move.
+              const ytdStart = (() => {
+                const yearEnd = `${new Date().getFullYear() - 1}-12-31`;
+                let k = -1;
+                for (let j = 0; j <= lastI; j++) { if (dates[j] <= yearEnd) k = j; else break; }
+                return Math.max(0, k);
+              })();
+              const presetI0 = { ALL: 0, YTD: ytdStart, "6M": lastI - 126, "3M": lastI - 63, "1M": lastI - 21 };
+              const presetWin = allocPreset && allocPreset !== "ALL" ? { i0: Math.max(0, presetI0[allocPreset] ?? 0), i1: lastI } : null;
+              const win = allocWin || presetWin;
+              const w0 = win ? Math.max(0, Math.min(win.i0, lastI - 1)) : 0;
+              const w1 = win ? Math.min(lastI, Math.max(win.i1, w0 + 1)) : lastI;
               const vSpan = Math.max(1, w1 - w0);
               const shown = rows.map((r, i) => ({ r, i })).filter(({ r }) => ALLOC_CHART_KEYS.has(r.key) && !allocHidden[r.key]);
 
@@ -13319,9 +13332,9 @@ Instructions:
               if (over > 0) for (const e of ends) e.y -= over;   // keep the stack inside the plot
 
               // Presets zoom the view to the last N sessions; the series are not rebased.
-              const presets = [["ALL", null], ["6M", 126], ["3M", 63], ["1M", 21]];
-              const activePreset = !allocWin ? "ALL" : (presets.find(([, n]) => n && allocWin.i1 === lastI && lastI - allocWin.i0 === Math.min(n, lastI)) || [null])[0];
-              const setPreset = n => { setAllocHover(null); setAllocWin(n ? { i0: Math.max(0, lastI - n), i1: lastI } : null); };
+              const presets = [["ALL"], ["YTD"], ["6M"], ["3M"], ["1M"]];
+              const activePreset = allocWin ? null : allocPreset;
+              const setPreset = l => { setAllocHover(null); setAllocWin(null); setAllocPreset(l); };
               const svgX = e => { const r = e.currentTarget.getBoundingClientRect(); return (e.clientX - r.left) * (W / r.width); };
 
               return (
@@ -13336,8 +13349,8 @@ Instructions:
 
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 10, marginBottom: 14 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                      {presets.map(([l, n]) => (
-                        <button key={l} onClick={() => setPreset(n)} style={{
+                      {presets.map(([l]) => (
+                        <button key={l} onClick={() => setPreset(l)} style={{
                           padding: "5px 11px", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                           border: `1px solid ${activePreset === l ? C.borderActive : C.border}`,
                           background: activePreset === l ? C.accentSoft : "transparent", color: activePreset === l ? C.t1 : C.t3,
@@ -13363,7 +13376,7 @@ Instructions:
                         onMouseDown={e => { allocPanRef.current = { x0: svgX(e), win: { i0: w0, i1: w1 } }; }}
                         onMouseUp={() => { allocPanRef.current = null; }}
                         onMouseLeave={() => { setAllocHover(null); allocPanRef.current = null; }}
-                        onDoubleClick={() => setAllocWin(null)}
+                        onDoubleClick={() => { setAllocWin(null); setAllocPreset("YTD"); }}
                         onWheel={e => {
                           if (dates.length < 10) return;
                           e.preventDefault();
@@ -13371,7 +13384,8 @@ Instructions:
                           const len = Math.max(8, Math.min(lastI, Math.round(vSpan * (e.deltaY > 0 ? 1.2 : 1 / 1.2))));
                           const frac = (anchor - w0) / vSpan;
                           const lo2 = Math.max(0, Math.min(Math.round(anchor - frac * len), lastI - len));
-                          setAllocWin(lo2 <= 0 && lo2 + len >= lastI ? null : { i0: lo2, i1: lo2 + len });
+                          if (lo2 <= 0 && lo2 + len >= lastI) { setAllocWin(null); setAllocPreset("ALL"); }
+                          else setAllocWin({ i0: lo2, i1: lo2 + len });
                         }}>
                         <defs><clipPath id="allocClip"><rect x={PAD.left} y={PAD.top - 2} width={cw} height={ch + 4} /></clipPath></defs>
                         {ticks.map(v => (
