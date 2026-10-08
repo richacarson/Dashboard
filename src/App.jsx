@@ -2194,7 +2194,9 @@ Instructions:
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
-  const defaultRangeFor = (k) => k === "dividend" ? "STEW" : "ALL";
+  // Classic dividend opens on YTD. Q1 25 (STEW) stays one click away; the
+  // terminal still opens dividend on STEW, which is set separately.
+  const defaultRangeFor = (k) => k === "dividend" ? "YTD" : "ALL";
   const [perfRange, setPerfRange] = useState(() => defaultRangeFor("dividend")); // matches perfSleeve's initial value
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   // Visible index window for wheel-zoom / drag-pan. null = whole range.
