@@ -111,6 +111,97 @@ const freshnessMatch = (dateStr, mode) => {
 };
 const REC_RANK = { BUY: 0, HOLD: 1, WATCH: 2, SELL: 3 };
 const CONV_RANK = { "High Conviction": 0, "On Our Radar": 1 };
+// ── Modeled 65/35 dividend/growth allocation ─────────────────────────────────
+// Buy-and-hold, not a rebalanced benchmark: 65/35 is struck once on the first
+// date both sleeves exist and then left alone, so the mix drifts with the two
+// books exactly as a real untouched allocation would. No synthetic rebalancing
+// is applied at any point.
+//
+// It works by scaling each sleeve by a constant: hold kDiv of the dividend book
+// and kGro of the growth book, chosen so the two start at 65/35 of their
+// combined opening value. Because those constants also scale the share counts,
+// the live quote path and the 1D intraday series — both of which price
+// perfData.holdings directly — produce the blend with no special-casing, and
+// stay consistent with the historical series by construction.
+//
+// The window starts at growth's inception. The dividend sleeve reaches back to
+// 2011 but a blend cannot exist before both legs do, so the longer ranges
+// simply do not offer themselves.
+const BLEND_W = { dividend: 0.65, growth: 0.35 };
+
+function buildBlendSleeve(div, gro) {
+  if (!div?.portfolio?.length || !gro?.portfolio?.length) return null;
+  const dMap = new Map(div.portfolio.map(p => [p.date, p]));
+  const common = gro.portfolio.filter(p => dMap.has(p.date));
+  if (common.length < 2) return null;
+
+  const t0 = common[0].date;
+  const d0 = dMap.get(t0)?.value, g0 = common[0].value;
+  if (!(d0 > 0) || !(g0 > 0)) return null;
+
+  // Base the modeled book on what the two sleeves were actually worth that day,
+  // so the dollar figures are the right order of magnitude rather than notional.
+  const base = d0 + g0;
+  const kDiv = (BLEND_W.dividend * base) / d0;
+  const kGro = (BLEND_W.growth * base) / g0;
+
+  const portfolio = common.map(g => {
+    const d = dMap.get(g.date);
+    return {
+      date: g.date,
+      value: Math.round((kDiv * d.value + kGro * g.value) * 100) / 100,
+      stocks: Math.round((kDiv * (d.stocks ?? 0) + kGro * (g.stocks ?? 0)) * 100) / 100,
+      cash: Math.round((kDiv * (d.cash ?? 0) + kGro * (g.cash ?? 0)) * 100) / 100,
+      num_holdings: (d.num_holdings ?? 0) + (g.num_holdings ?? 0),
+    };
+  });
+
+  // Scaled share counts: the same constants, so live pricing lands on the same
+  // series the history does.
+  const holdings = {};
+  for (const [t, sh] of Object.entries(div.holdings || {})) holdings[t] = (holdings[t] || 0) + sh * kDiv;
+  for (const [t, sh] of Object.entries(gro.holdings || {})) holdings[t] = (holdings[t] || 0) + sh * kGro;
+
+  // Calendar-year returns off the blended series. The first year is partial
+  // (it opens at growth's inception), which is inherent to the window.
+  const annualReturns = {};
+  const byYear = {};
+  for (const pt of portfolio) (byYear[pt.date.slice(0, 4)] ||= []).push(pt);
+  let prevClose = null;
+  for (const y of Object.keys(byYear).sort()) {
+    const pts = byYear[y];
+    const open = prevClose ?? pts[0].value;
+    const close = pts[pts.length - 1].value;
+    if (open > 0) annualReturns[y] = Math.round(((close / open) - 1) * 10000) / 100;
+    prevClose = close;
+  }
+
+  // Benchmark series come from the dividend sleeve, which carries the longer
+  // history; they are market series, identical either way where they overlap.
+  const benchmarks = {};
+  for (const [sym, series] of Object.entries(div.benchmarks || {})) {
+    const clipped = {};
+    for (const [day, px] of Object.entries(series || {})) if (day >= t0) clipped[day] = px;
+    if (Object.keys(clipped).length) benchmarks[sym] = clipped;
+  }
+  for (const [sym, series] of Object.entries(gro.benchmarks || {})) {
+    if (benchmarks[sym]) continue;
+    const clipped = {};
+    for (const [day, px] of Object.entries(series || {})) if (day >= t0) clipped[day] = px;
+    if (Object.keys(clipped).length) benchmarks[sym] = clipped;
+  }
+
+  return {
+    portfolio, benchmarks, holdings,
+    startBalance: base,
+    cash: Math.round(((div.cash || 0) * kDiv + (gro.cash || 0) * kGro) * 100) / 100,
+    costBasis: {}, transactions: [],
+    annualReturns,
+    bmAnnualReturns: {}, bmAnnualReturnsTr: {},
+    isBlend: true, blendFrom: t0, blendWeights: BLEND_W,
+  };
+}
+
 const BENCHMARKS = [
   { sym: "DVY", name: "DVY" },
   { sym: "IUSG", name: "IUSG" },
@@ -1864,13 +1955,15 @@ Instructions:
       .then(setBacktest)
       .catch(() => {});
   }, []);
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false } };
+  const perfSleeveLabel = (k) => k === "blend65" ? "65/35 Dividend + Growth" : (sleeves[k]?.name || k);
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false }, blend65: { SPY: true, DVY: false, IUSG: false } };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
   const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
   const perfSvgRef = useRef(null);
   useEffect(() => { setPerfZoom(null); setPerfHover(null); }, [perfRange, perfSleeve]);
+  useEffect(() => { if (perfSleeve === "blend65" && perfView === "holdings") setPerfView("chart"); }, [perfSleeve, perfView]);
   useEffect(() => { setTZoom(null); setTChartHover(null); }, [tChartRange, tChartSleeve, terminalActiveSym]);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -3416,6 +3509,9 @@ Instructions:
           console.warn(`Failed to load ${sleeve} portfolio:`, e);
         }
       }
+
+      const blend = buildBlendSleeve(newMap.dividend, newMap.growth);
+      if (blend) newMap.blend65 = blend;
 
       setPerfDataMap(newMap);
       // Set perfData to the active sleeve
@@ -12269,7 +12365,7 @@ Instructions:
 
             {/* Chart / Holdings toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: isDesktop ? 12 : 6 }}>
-              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].map(({ v, l }) => (
+              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].filter(({ v }) => !(v === "holdings" && perfSleeve === "blend65")).map(({ v, l }) => (
                 <button key={v} onClick={() => setPerfView(v)} style={{
                   flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${perfView === v ? C.borderActive : C.border}`,
                   background: perfView === v ? C.accentSoft : "transparent",
@@ -12294,7 +12390,7 @@ Instructions:
                     backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
                   }}
                 >
-                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" }, { k: "fci100", l: "🏆 FCI 100" }, { k: "fciValues", l: "✝️ FCI Values 100" }].filter(s => perfDataMap[s.k]).map(s => (
+                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" }, { k: "blend65", l: "⚖️ 65 / 35 Dividend + Growth" }, { k: "fci100", l: "🏆 FCI 100" }, { k: "fciValues", l: "✝️ FCI Values 100" }].filter(s => perfDataMap[s.k]).map(s => (
                     <option key={s.k} value={s.k}>{s.l}</option>
                   ))}
                 </select>
@@ -13010,7 +13106,7 @@ Instructions:
                           : dd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
                         return (<>
                           <span style={{ fontSize: 13, fontWeight: 800, color: C.t1 }}>
-                            {sleeves[perfSleeve]?.name || perfSleeve}
+                            {perfSleeveLabel(perfSleeve)}
                             <span style={{ color: hp.val >= 0 ? C.up : C.dn, marginLeft: 8 }}>{hp.val >= 0 ? "+" : ""}{hp.val.toFixed(2)}%</span>
                             <span style={{ color: C.t4, marginLeft: 8, fontSize: 11, fontWeight: 600 }}>${hp.raw.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                           </span>
@@ -13037,7 +13133,7 @@ Instructions:
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 20, height: 3, borderRadius: 2, background: C.accent }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>Paradiem {perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{perfSleeve === "blend65" ? "Modeled 65/35 Dividend + Growth" : `Paradiem ${perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy`}</span>
                     </div>
                     {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
