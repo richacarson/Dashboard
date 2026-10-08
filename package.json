@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "node scripts/check-render-order.mjs && vite build",
+    "preview": "vite preview",
+    "check:render-order": "node scripts/check-render-order.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
