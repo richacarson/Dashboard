@@ -350,6 +350,35 @@ function maxDrawdown(series) {
   return worst * 100;
 }
 
+// Last observation of each calendar week. The dividend book was recorded
+// weekly and forward-filled before May 2020, so at weekly frequency that era
+// is real data rather than repeated prices — it is only daily sampling that
+// turns it into ~65% zero-change days.
+function toWeekly(series) {
+  const out = [];
+  let key = null;
+  for (const pt of series) {
+    const d = new Date(pt.date + "T12:00:00Z");
+    // ISO-ish week key: Thursday of the week the date falls in.
+    const t = new Date(d);
+    t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+    const k = t.toISOString().slice(0, 10);
+    if (k !== key) { out.push(pt); key = k; } else out[out.length - 1] = pt;
+  }
+  return out;
+}
+
+// Last observation of each calendar month.
+function toMonthly(series) {
+  const out = [];
+  let key = null;
+  for (const pt of series) {
+    const m = pt.date.slice(0, 7);
+    if (m !== key) { out.push(pt); key = m; } else out[out.length - 1] = pt;
+  }
+  return out;
+}
+
 // Daily statistics are only meaningful where the series actually moves daily.
 // The dividend history is ~70% zero-change days before 2020 — it was recorded
 // weekly or sparser back then and forward-filled — which drags every daily
@@ -382,11 +411,11 @@ function denseStart(series, maxZeroFrac = 0.05) {
 // Every risk figure for one series against one benchmark. Shared by the sleeve
 // row, the benchmark rows and each period, so nothing can be measured two
 // different ways and still sit in the same table.
-function computeRisk(series, bmSeries) {
+function computeRisk(series, bmSeries, periodsPerYear = 252) {
   if (!series || series.length < 20) return null;
   const cap = captureRatios(series, bmSeries || []);
   return {
-    sortino: sortinoRatio(dailyReturns(series)),
+    sortino: sortinoRatio(dailyReturns(series), periodsPerYear),
     maxDD: maxDrawdown(series),
     ret: series[0].value > 0 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
     up: cap.up, down: cap.down,
@@ -867,6 +896,12 @@ const captureBmFor = (k) => SLEEVE_CAPTURE_BM[k] || "SPY";
 // row invites the comparison the capture benchmark exists to replace. SPY stays
 // on the charts; this only affects the statistics table.
 const RISK_HIDE_BM = { dividend: ["SPY"], growth: ["SPY"] };
+// Combined allocations: SPY only. They mix both sleeves, so a sleeve benchmark
+// would misrepresent them, and QQQ has nothing to do with either mandate.
+for (const m of BLEND_MIXES) {
+  SLEEVE_CAPTURE_BM[m.key] = "SPY";
+  RISK_HIDE_BM[m.key] = ["QQQ", "DVY", "IUSG", "DIA"];
+}
 
 const BM_COLORS = { SPY: "#8FA3D9", QQQ: "#B08BD0", DIA: "#C98B6B", DVY: "#D9A441", IUSG: "#7FAE9B" };
 
@@ -2419,13 +2454,23 @@ Instructions:
     const syms = [...new Set([...Object.keys(perfBmToggles).filter(k => perfBmToggles[k]), capSym])]
       .filter(sym => bmMaps[sym] && (sym === capSym || !hidden.has(sym)));
 
-    const periods = [{ key: "dense", label: trimmed > 0 ? `Since ${denseFrom}` : "Full history", from: denseFrom, trimmed }];
-    if (perfSleeve === "dividend" && full.some(p => p.date >= STEW_START)) {
-      periods.push({ key: "stew", label: "Since stewardship", from: STEW_START, trimmed: 0, note: "15 Jan 2025" });
-    }
+    // The dividend book predates daily recording, so its history is measured
+    // weekly — the frequency it was actually kept at — rather than thrown away.
+    // Both of its periods use weekly so the before/after comparison is like for
+    // like; annualising a daily Sortino against a weekly one would not be.
+    const hasStew = perfSleeve === "dividend" && full.some(p => p.date >= STEW_START);
+    const periods = hasStew
+      ? [
+          { key: "pre", label: "Inception to stewardship", from: full[0].date, to: STEW_START, freq: "monthly", trimmed: 0 },
+          { key: "stew", label: "Since stewardship", from: STEW_START, freq: "daily", trimmed: 0, note: "15 Jan 2025" },
+        ]
+      : [{ key: "dense", label: trimmed > 0 ? `Since ${denseFrom}` : "Full history", from: denseFrom, freq: "daily", trimmed }];
 
     const built = periods.map(per => {
-      const ser = full.filter(p => p.date >= per.from);
+      let ser = full.filter(p => p.date >= per.from && (!per.to || p.date < per.to));
+      if (per.freq === "weekly") ser = toWeekly(ser);
+      else if (per.freq === "monthly") ser = toMonthly(ser);
+      const ppy = per.freq === "weekly" ? 52 : per.freq === "monthly" ? 12 : 252;
       if (ser.length < 20) return null;
       const dates = ser.map(p => p.date);
 
@@ -2437,17 +2482,18 @@ Instructions:
         }
         return arr;
       };
+      // Benchmarks resample on the same dates, so both sides of every ratio are
+      // at one frequency.
       const capSeries = bmSeriesFor(capSym);
 
       const rows = [];
-      const own = computeRisk(ser, capSeries);
+      const own = computeRisk(ser, capSeries, ppy);
       if (own) rows.push({ name: perfSleeveLabel(perfSleeve), color: C.accent, isSelf: true, ...own });
       for (const sym of syms) {
-        const bs = bmSeriesFor(sym);
-        const r = computeRisk(bs, capSeries);
+        const r = computeRisk(bmSeriesFor(sym), capSeries, ppy);
         if (r) rows.push({ name: sym, color: BM_COLORS[sym] || C.t3, isCaptureBm: sym === capSym, ...r });
       }
-      return rows.length ? { ...per, from: ser[0].date, rows } : null;
+      return rows.length ? { ...per, from: ser[0].date, to: ser[ser.length - 1].date, n: ser.length, rows } : null;
     }).filter(Boolean);
 
     return built.length ? { periods: built, isLive: live > 0, capSym } : null;
@@ -13692,13 +13738,15 @@ Instructions:
                       </div>
 
                       {sleeveRisk.periods.map((per, pi) => {
-                        const thin = per.rows.some(r => (r.up?.n ?? 0) < 40 || (r.down?.n ?? 0) < 40);
+                        const minObs = per.freq === "monthly" ? 24 : per.freq === "weekly" ? 20 : 40;
+                        const thin = per.rows.some(r => (r.up?.n ?? 0) < minObs || (r.down?.n ?? 0) < minObs);
                         return (
                           <div key={per.key} style={{ marginTop: pi ? 20 : 0 }}>
                             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
                               <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: C.accent }}>{per.label}</span>
                               <span style={{ fontSize: 10, color: C.t4 }}>
-                                from {per.from}{per.note ? ` · ${per.note}` : ""}
+                                {per.from} → {per.to}{per.note ? ` · ${per.note}` : ""}
+                                {" · "}{per.n} {per.freq} observations
                                 {per.trimmed > 0 && ` · ${per.trimmed.toLocaleString()} earlier points excluded, not daily`}
                               </span>
                             </div>
@@ -13745,6 +13793,12 @@ Instructions:
                         sampled daily rather than monthly — this history is too short for monthly capture to mean anything. Capture is measured
                         against {sleeveRisk.capSym}, the sleeve's own benchmark, so {sleeveRisk.capSym} sits at 100/100 by construction and any
                         other row is read relative to it. Above 100 up and below 100 down is the desirable pair.
+                        {sleeveRisk.periods.length > 1 && new Set(sleeveRisk.periods.map(p => p.freq)).size > 1 && (
+                          <span> Periods are sampled at different frequencies, shown above each table: this book was recorded monthly
+                          before daily pricing began, so measuring the early years monthly keeps them rather than discarding them.
+                          Sortino and capture both depend on sampling frequency, so read each period on its own rather than comparing
+                          the two directly.</span>
+                        )}
                       </div>
                     </div>
                   )}
