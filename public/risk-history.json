@@ -663,5 +663,12 @@
     "amber": 5,
     "green": 47,
     "headline": "No RED market flags; 5 AMBER (ETHA bad-quote, LRCX -3.4% unexplained, AEM, PGY, FCX persisting). Fresh drop 2026-10-07 11:48Z, 52/52 priced, 0 errors, session 2026-10-06. CEG +12.3% / VST +10.8% on Constellation-Google power deals. SPY +0.53%, ~20.7% above Carson's 645.80 support. CWAN closed 6/25. Roster: data/portfolios.json is stale vs the live book (lists BKH, COIN, CWAN, DVN, EIX, SUPV, VLO; live has CEG, NOW, NWG, PGY, SOFI, SPGI, YMM)."
+  },
+  {
+    "date": "2026-10-08",
+    "red": 0,
+    "amber": 6,
+    "green": 46,
+    "headline": "No RED market flags; 6 AMBER (CAT -5.8% unexplained, crypto complex weak: MARA -5.7%/HUT/ETHA/IBIT, NXPI -3.8%, plus AEM, PGY, FCX persisting). Fresh drop 2026-10-08 11:48Z, 52/52 priced, 0 errors. SPY/QQQ -0.25%; SPY ~20.4% above Carson's 645.80 support. No tier-1 catalyst found for CAT. CWAN closed 6/25. Roster: CWAN still in portfolios.json (red) and file is stale vs live book (amber)."
   }
 ]
