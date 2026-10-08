@@ -379,6 +379,20 @@ function denseStart(series, maxZeroFrac = 0.05) {
   return 0;  // nothing qualified — measure the whole series and let n speak
 }
 
+// Every risk figure for one series against one benchmark. Shared by the sleeve
+// row, the benchmark rows and each period, so nothing can be measured two
+// different ways and still sit in the same table.
+function computeRisk(series, bmSeries) {
+  if (!series || series.length < 20) return null;
+  const cap = captureRatios(series, bmSeries || []);
+  return {
+    sortino: sortinoRatio(dailyReturns(series)),
+    maxDD: maxDrawdown(series),
+    ret: series[0].value > 0 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
+    up: cap.up, down: cap.down,
+  };
+}
+
 // A benchmark price map {date: close} reduced to the portfolio's own dates, so
 // the two series line up month for month.
 function benchmarkSeriesOn(dates, priceMap) {
@@ -2349,44 +2363,75 @@ Instructions:
 
   // Every allocation's series with today's live point appended, plus the risk
   // stats. Recomputes as quotes move, so the table is live.
-  // Risk statistics for the sleeve currently on screen. Mirrors the allocations
-  // table so the two never disagree, and takes the live value from the same
-  // place the chart does so it moves intraday.
+  // Risk statistics for the sleeve on screen: the sleeve itself plus every
+  // benchmark it is being charted against, over one or more periods. Dividend
+  // gets a second period from the start of Carson's stewardship.
   const sleeveRisk = useMemo(() => {
     const d = perfDataMap[perfSleeve];
     if (!d?.portfolio?.length) return null;
-    const series = d.portfolio.map(p => ({ date: p.date, value: p.value }));
+
+    const full = d.portfolio.map(p => ({ date: p.date, value: p.value }));
     const todayStr = new Date().toISOString().slice(0, 10);
     const live = BLEND_KEYS.has(perfSleeve)
       ? ((srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0) ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth : null)
       : (liveValue?.value > 0 ? liveValue.value : null);
     if (live > 0) {
-      if (series[series.length - 1].date === todayStr) series[series.length - 1] = { date: todayStr, value: live };
-      else series.push({ date: todayStr, value: live });
+      if (full[full.length - 1].date === todayStr) full[full.length - 1] = { date: todayStr, value: live };
+      else full.push({ date: todayStr, value: live });
     }
-    // Trim to the daily-dense region before measuring anything.
-    const i0 = denseStart(series);
-    const dense = series.slice(i0);
-    const trimmed = i0 > 0 ? series.length - dense.length : 0;
-    const spyMap = d.benchmarks?.SPY || perfDataMap.dividend?.benchmarks?.SPY;
-    const dates = dense.map(p => p.date);
-    const bm = benchmarkSeriesOn(dates, spyMap);
-    const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
-    if (spyLive > 0 && bm.length) {
-      if (bm[bm.length - 1].date === dense[dense.length - 1].date) bm[bm.length - 1] = { ...bm[bm.length - 1], value: spyLive };
-      else bm.push({ date: dense[dense.length - 1].date, value: spyLive });
+
+    // Daily measures need daily data; the dividend series is forward-filled
+    // weekly before 2020 and would otherwise read as artificially placid.
+    const denseIdx = denseStart(full);
+    const denseFrom = full[denseIdx].date;
+    const trimmed = denseIdx;
+
+    const bmMaps = { ...(perfDataMap.dividend?.benchmarks || {}), ...(d.benchmarks || {}) };
+    const spyMap = bmMaps.SPY;
+    const liveOf = (sym) => (quotes[sym] || quotesRef.current?.[sym])?.p;
+
+    // Benchmarks shown are the ones toggled onto the chart, plus SPY, which
+    // capture is always measured against and which anchors the table at 100/100.
+    const syms = [...new Set([...Object.keys(perfBmToggles).filter(k => perfBmToggles[k]), "SPY"])]
+      .filter(sym => bmMaps[sym]);
+
+    const periods = [{ key: "dense", label: trimmed > 0 ? `Since ${denseFrom}` : "Full history", from: denseFrom, trimmed }];
+    if (perfSleeve === "dividend" && full.some(p => p.date >= STEW_START)) {
+      periods.push({ key: "stew", label: "Since stewardship", from: STEW_START, trimmed: 0, note: "15 Jan 2025" });
     }
-    const cap = captureRatios(dense, bm);
-    return {
-      sortino: sortinoRatio(dailyReturns(dense)),
-      maxDD: maxDrawdown(dense),
-      up: cap.up, down: cap.down,
-      from: dense[0].date, trimmed,
-      isLive: live > 0,
-      bmSortino: sortinoRatio(dailyReturns(bm)),
-      bmMaxDD: bm.length > 1 ? maxDrawdown(bm) : null,
-    };
-  }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes]);
+
+    const built = periods.map(per => {
+      const ser = full.filter(p => p.date >= per.from);
+      if (ser.length < 20) return null;
+      const dates = ser.map(p => p.date);
+
+      const bmSeriesFor = (sym) => {
+        const arr = benchmarkSeriesOn(dates, bmMaps[sym]);
+        const lq = liveOf(sym);
+        if (lq > 0 && arr.length && arr[arr.length - 1].date === dates[dates.length - 1]) {
+          arr[arr.length - 1] = { ...arr[arr.length - 1], value: lq };
+        }
+        return arr;
+      };
+      const spy = benchmarkSeriesOn(dates, spyMap);
+      const spyLive = liveOf("SPY");
+      if (spyLive > 0 && spy.length && spy[spy.length - 1].date === dates[dates.length - 1]) {
+        spy[spy.length - 1] = { ...spy[spy.length - 1], value: spyLive };
+      }
+
+      const rows = [];
+      const own = computeRisk(ser, spy);
+      if (own) rows.push({ name: perfSleeveLabel(perfSleeve), color: C.accent, isSelf: true, ...own });
+      for (const sym of syms) {
+        const bs = bmSeriesFor(sym);
+        const r = computeRisk(bs, spy);
+        if (r) rows.push({ name: sym, color: BM_COLORS[sym] || C.t3, ...r });
+      }
+      return rows.length ? { ...per, from: ser[0].date, rows } : null;
+    }).filter(Boolean);
+
+    return built.length ? { periods: built, isLive: live > 0 } : null;
+  }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, perfBmToggles, C.accent, C.t3]);
 
   const allocationStats = useMemo(() => {
     const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
@@ -13613,50 +13658,75 @@ Instructions:
                     </div>
                   </div>
 
-                  {/* Risk statistics for this sleeve — same definitions as the
-                      All Allocations table, so the two cannot disagree. */}
-                  {sleeveRisk && (() => {
-                    const r = sleeveRisk;
-                    const thin = (r.up.n ?? 0) < 40 || (r.down.n ?? 0) < 40;
-                    const cells = [
-                      { l: "Sortino", v: r.sortino == null ? "—" : r.sortino.toFixed(2),
-                        sub: r.bmSortino == null ? null : `SPY ${r.bmSortino.toFixed(2)}`, c: C.t1 },
-                      { l: "Max drawdown", v: r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`,
-                        sub: r.bmMaxDD == null ? null : `SPY ${r.bmMaxDD.toFixed(1)}%`, c: C.dn },
-                      { l: "Up capture", v: r.up.value == null ? "—" : `${r.up.value.toFixed(0)}%`,
-                        sub: `${r.up.n} up days`, c: thin ? C.t3 : C.t1 },
-                      { l: "Down capture", v: r.down.value == null ? "—" : `${r.down.value.toFixed(0)}%`,
-                        sub: `${r.down.n} down days`, c: thin ? C.t3 : C.t1 },
-                    ];
-                    return (
-                      <div style={{ marginTop: 16, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 14 }}>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Risk statistics</div>
-                          <div style={{ fontSize: 11, color: C.t4 }}>
-                            vs SPY total return · since {r.from}
-                            {r.trimmed > 0 && <span title="Earlier history was recorded weekly or sparser, which distorts daily statistics">
-                              {" "}· earlier {r.trimmed.toLocaleString()} points excluded, not daily</span>}
-                            {r.isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
-                          </div>
-                        </div>
-                        <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10 }}>
-                          {cells.map(c => (
-                            <div key={c.l} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
-                              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.t4, marginBottom: 6 }}>{c.l}</div>
-                              <div style={{ fontSize: 21, fontWeight: 800, color: c.c, fontVariantNumeric: "tabular-nums" }}>{c.v}</div>
-                              {c.sub && <div style={{ fontSize: 10, color: C.t4, marginTop: 3 }}>{c.sub}</div>}
-                            </div>
-                          ))}
-                        </div>
-                        <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
-                          Sortino on daily returns, zero MAR, annualised, with downside deviation averaged over all periods. Capture is
-                          geometric and sampled daily rather than monthly — this history is too short for monthly capture to mean anything.
-                          Above 100 up and below 100 down is the desirable pair.
-                          {thin && <span style={{ color: C.dn, fontWeight: 600 }}> Sample is still thin; read Sortino and max drawdown first.</span>}
+                  {/* Risk statistics — the sleeve and every benchmark it is
+                      charted against, measured identically. Dividend also gets
+                      a stewardship period. */}
+                  {sleeveRisk && (
+                    <div style={{ marginTop: 16, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                        <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Risk statistics</div>
+                        <div style={{ fontSize: 11, color: C.t4 }}>
+                          capture vs SPY total return
+                          {sleeveRisk.isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
                         </div>
                       </div>
-                    );
-                  })()}
+
+                      {sleeveRisk.periods.map((per, pi) => {
+                        const thin = per.rows.some(r => (r.up?.n ?? 0) < 40 || (r.down?.n ?? 0) < 40);
+                        return (
+                          <div key={per.key} style={{ marginTop: pi ? 20 : 0 }}>
+                            <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                              <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: C.accent }}>{per.label}</span>
+                              <span style={{ fontSize: 10, color: C.t4 }}>
+                                from {per.from}{per.note ? ` · ${per.note}` : ""}
+                                {per.trimmed > 0 && ` · ${per.trimmed.toLocaleString()} earlier points excluded, not daily`}
+                              </span>
+                            </div>
+                            <div style={{ overflowX: "auto" }}>
+                              <table style={{ width: "100%", borderCollapse: "collapse", fontVariantNumeric: "tabular-nums" }}>
+                                <thead>
+                                  <tr>
+                                    {["", "Return", "Sortino", "Max DD", "Up capture", "Down capture"].map((h, i) => (
+                                      <th key={h || i} style={{ textAlign: i === 0 ? "left" : "right", padding: "6px 10px", fontSize: 9.5, fontWeight: 700,
+                                        letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {per.rows.map(r => (
+                                    <tr key={r.name} style={{ background: r.isSelf ? C.accentSoft : "transparent" }}>
+                                      <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>
+                                        <span style={{ display: "inline-block", width: 14, height: 3, borderRadius: 2, background: r.color, marginRight: 8, verticalAlign: "middle" }} />
+                                        <span style={{ fontSize: 12.5, fontWeight: r.isSelf ? 800 : 600, color: r.isSelf ? C.t1 : C.t2 }}>{r.name}</span>
+                                      </td>
+                                      <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: r.ret == null ? C.t4 : r.ret >= 0 ? C.up : C.dn }}>
+                                        {r.ret == null ? "—" : `${r.ret >= 0 ? "+" : ""}${r.ret.toFixed(2)}%`}
+                                      </td>
+                                      <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
+                                      <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
+                                      <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, color: thin ? C.t3 : C.t1 }}>{r.up?.value == null ? "—" : `${r.up.value.toFixed(0)}%`}</td>
+                                      <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, color: thin ? C.t3 : C.t1 }}>{r.down?.value == null ? "—" : `${r.down.value.toFixed(0)}%`}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {thin && (
+                              <div style={{ fontSize: 10, color: C.dn, marginTop: 6, fontWeight: 600 }}>
+                                Thin sample over this period — read Sortino and max drawdown first.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      <div style={{ fontSize: 10, color: C.t4, marginTop: 14, lineHeight: 1.6 }}>
+                        Sortino on daily returns, zero MAR, annualised, downside deviation averaged over all periods. Capture is geometric and
+                        sampled daily rather than monthly — this history is too short for monthly capture to mean anything. SPY sits at 100/100
+                        by construction, which is the table's own check. Above 100 up and below 100 down is the desirable pair.
+                      </div>
+                    </div>
+                  )}
 
                   {/* Legend */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
