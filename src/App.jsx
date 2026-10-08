@@ -2392,6 +2392,24 @@ Instructions:
   const [splitRatios, setSplitRatios] = useState({}); // sym -> split ratio (e.g. KLAC 3:1 = 3). State so Holdings/Perf re-render when set.
   const splitRatiosRef = useRef({}); // ref mirror for useEffect / non-render consumers
 
+  // Restate a benchmark's live price onto the basis its stored series uses, by unwinding
+  // any dividend that went ex after that series was last built. Returns the raw price
+  // unchanged on every other day, which is all but about twenty sessions a year.
+  //
+  // Divide rather than add: back-adjustment scales by (1 - d/priorClose), so dividing the
+  // live price by that factor is the exact inverse. Adding the dividend is within a
+  // rounding error of it, but this way the arithmetic matches what Yahoo actually did.
+  const bmTrPrice = (sym) => {
+    const raw = (bmQuotes[sym] || quotesRef.current?.[sym])?.p;
+    if (!(raw > 0)) return null;
+    const pending = bmDivs[sym];
+    if (!pending?.length) return raw;
+    const prior = (bmBars[sym] || barsRef.current?.[sym])?.pc || raw;
+    let f = 1;
+    for (const d of pending) if (d.dividend > 0 && prior > 0) f *= (1 - d.dividend / prior);
+    return f > 0 ? raw / f : raw;
+  };
+
   // Live value of the dividend and growth books, priced from the same quote
   // stream the rest of the app uses. Every allocation is a fixed combination of
   // these two, so this is all the live input the allocations view needs.
@@ -2441,7 +2459,9 @@ Instructions:
     const bmMaps = {};
     for (const sl of Object.values(perfDataMap)) Object.assign(bmMaps, sl?.benchmarks || {});
     Object.assign(bmMaps, d.benchmarks || {});   // the sleeve's own series wins
-    const liveOf = (sym) => (quotes[sym] || quotesRef.current?.[sym])?.p;
+    // Same live basis the chart uses, so the table and the chart cannot disagree
+    // on a benchmark's return over the same window.
+    const liveOf = (sym) => bmTrPrice(sym);
 
     // Capture runs against the sleeve's own yardstick, falling back to SPY only
     // if that series is missing.
@@ -2475,12 +2495,20 @@ Instructions:
       if (ser.length < 20) return null;
       const dates = ser.map(p => p.date);
 
+      // A live quote belongs only on a period that runs to today. benchmarkSeriesOn
+      // returns one point per date, so testing "last point is the last date" was
+      // always true — and stamped today's price onto the final day of every closed
+      // period. On the pre-stewardship table that put DVY's live price on
+      // 14 Jan 2025 and reported +402.74% where the true figure is +299.82%,
+      // inverting the comparison: the sleeve outperformed DVY by 71 points and the
+      // table showed it trailing. The sleeve row was untouched, because its own
+      // live point is filtered out of a closed period — which is why only the
+      // benchmark looked wrong.
+      const runsToToday = live > 0 && dates[dates.length - 1] === todayStr;
       const bmSeriesFor = (sym) => {
         const arr = benchmarkSeriesOn(dates, bmMaps[sym]);
-        const lq = liveOf(sym);
-        if (lq > 0 && arr.length && arr[arr.length - 1].date === dates[dates.length - 1]) {
-          arr[arr.length - 1] = { ...arr[arr.length - 1], value: lq };
-        }
+        const lq = runsToToday ? liveOf(sym) : null;
+        if (lq > 0 && arr.length) arr[arr.length - 1] = { ...arr[arr.length - 1], value: lq };
         return arr;
       };
       // Benchmarks resample on the same dates, so both sides of every ratio are
@@ -2498,11 +2526,11 @@ Instructions:
     }).filter(Boolean);
 
     return built.length ? { periods: built, isLive: live > 0, capSym } : null;
-  }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, perfBmToggles, C.accent, C.t3]);
+  }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, bmQuotes, bmDivs, bmBars, perfBmToggles, C.accent, C.t3]);
 
   const allocationStats = useMemo(() => {
     const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
-    const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
+    const spyLive = bmTrPrice("SPY");
     const rows = [];
     for (const m of BLEND_MIXES) {
       const d = perfDataMap[m.key];
@@ -2519,7 +2547,9 @@ Instructions:
       }
       const dates = series.map(p => p.date);
       let bmSeries = benchmarkSeriesOn(dates, spyMap);
-      if (spyLive > 0 && bmSeries.length) {
+      // Only when this series actually ends on today's live point; otherwise the
+      // live price would be stamped onto a historical close.
+      if (live > 0 && spyLive > 0 && bmSeries.length) {
         const lastBm = bmSeries[bmSeries.length - 1];
         if (lastBm.date === series[series.length - 1].date) bmSeries[bmSeries.length - 1] = { ...lastBm, value: spyLive };
         else bmSeries.push({ date: series[series.length - 1].date, value: spyLive });
@@ -2537,7 +2567,7 @@ Instructions:
       });
     }
     return rows;
-  }, [perfDataMap, srcSleeveLive, quotes]);
+  }, [perfDataMap, srcSleeveLive, quotes, bmQuotes, bmDivs, bmBars]);
 
   // Correction to the "value at yesterday's close" leg of every day-change number, for
   // trades done today.
@@ -4488,23 +4518,6 @@ Instructions:
     const c = ((q.p - b.pc) / b.pc) * 100;
     if (Math.abs(c) > 60) return null;
     return c;
-  };
-  // Restate a benchmark's live price onto the basis its stored series uses, by unwinding
-  // any dividend that went ex after that series was last built. Returns the raw price
-  // unchanged on every other day, which is all but about twenty sessions a year.
-  //
-  // Divide rather than add: back-adjustment scales by (1 - d/priorClose), so dividing the
-  // live price by that factor is the exact inverse. Adding the dividend is within a
-  // rounding error of it, but this way the arithmetic matches what Yahoo actually did.
-  const bmTrPrice = (sym) => {
-    const raw = (bmQuotes[sym] || quotesRef.current?.[sym])?.p;
-    if (!(raw > 0)) return null;
-    const pending = bmDivs[sym];
-    if (!pending?.length) return raw;
-    const prior = (bmBars[sym] || barsRef.current?.[sym])?.pc || raw;
-    let f = 1;
-    for (const d of pending) if (d.dividend > 0 && prior > 0) f *= (1 - d.dividend / prior);
-    return f > 0 ? raw / f : raw;
   };
   // Every macro tile is a live quote again. The treasury tiles that needed a second
   // source are gone: the constant-maturity curve only publishes after the close, so they
@@ -13032,7 +13045,7 @@ Instructions:
               const norm = rows.map(r => r.series.map(p => (p.value / r.series[0].value - 1) * 100));
               const spyMap = perfDataMap.dividend?.benchmarks?.SPY;
               const spyRaw = benchmarkSeriesOn(dates, spyMap);
-              const spyLiveQ = (quotes.SPY || quotesRef.current?.SPY)?.p;
+              const spyLiveQ = rows[0].isLive ? bmTrPrice("SPY") : null;
               if (spyLiveQ > 0 && spyRaw.length) spyRaw[spyRaw.length - 1] = { ...spyRaw[spyRaw.length - 1], value: spyLiveQ };
               const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
 
@@ -13141,18 +13154,20 @@ Instructions:
                   </div>
 
                   {/* Risk statistics */}
-                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12, overflowX: "auto" }}>
+                  <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Risk statistics</div>
                     <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
                       Sortino on daily returns, zero MAR, annualised. Capture ratios are geometric and sampled daily against SPY total
                       return{nUp + nDown > 0 && ` — ${nUp} up / ${nDown} down days`}.
                     </div>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontVariantNumeric: "tabular-nums" }}>
+                    <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                    <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontVariantNumeric: "tabular-nums" }}>
                       <thead>
                         <tr>
-                          {["Allocation", "Value", "Return", "Sortino", "Max DD", "Up capture", "Down capture"].map((h, i) => (
-                            <th key={h} style={{ textAlign: i === 0 ? "left" : "right", padding: "8px 10px", fontSize: 10, fontWeight: 700,
-                              letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                          {["Allocation", "Value", "Return", "Sortino", "Max DD", isDesktop ? "Up capture" : "Up", isDesktop ? "Down capture" : "Down"].map((h, i) => (
+                            <th key={h} style={{ textAlign: i === 0 ? "left" : "right", padding: isDesktop ? "8px 10px" : "8px 7px", fontSize: 10, fontWeight: 700,
+                              letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap",
+                              ...(i === 0 ? { position: "sticky", left: 0, zIndex: 2, background: C.card } : {}) }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -13161,7 +13176,8 @@ Instructions:
                           return (
                             <tr key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
                               style={{ background: allocHoverKey === r.key ? C.cardHover : "transparent" }}>
-                              <td style={{ padding: "9px 10px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>
+                              <td style={{ padding: isDesktop ? "9px 10px" : "9px 7px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap",
+                                position: "sticky", left: 0, zIndex: 1, background: allocHoverKey === r.key ? C.cardHover : C.card }}>
                                 <span style={{ display: "inline-block", width: 14, height: 3, borderRadius: 2, background: colorOf(i), marginRight: 8, verticalAlign: "middle" }} />
                                 <span style={{ fontSize: 13, fontWeight: 700, color: C.t1 }}>{Math.round(r.dividend * 100)} / {Math.round(r.growth * 100)}</span>
                               </td>
@@ -13178,6 +13194,7 @@ Instructions:
                         })}
                       </tbody>
                     </table>
+                    </div>
                     {thinCapture && (
                       <div style={{ marginTop: 14, padding: "10px 13px", borderRadius: 10, background: C.dn + "14", border: `1px solid ${C.dn}44`, fontSize: 11, color: C.t2, lineHeight: 1.65 }}>
                         <strong style={{ color: C.dn }}>Thin sample.</strong> Capture rests on {nUp} up and {nDown} down days — too few to
@@ -13339,10 +13356,16 @@ Instructions:
                 // it directly — the same basis the Trailing Total Returns table uses, which
                 // is what keeps the chart's end label and that table's YTD column equal.
                 {
-                  const liveTr = bmTrPrice(sym);
+                  // Only alongside a live portfolio point: without one the series
+                  // ends on yesterday's close and a live benchmark would be paired
+                  // against it.
+                  const liveTr = liveValue ? bmTrPrice(sym) : null;
                   if (liveTr > 0 && filtered.length > 0) {
                     const lastPortDate = filtered[filtered.length - 1].date;
-                    bmPoints.push({ date: lastPortDate, val: ((liveTr / basePrice) - 1) * 100 });
+                    const livePt = { date: lastPortDate, val: ((liveTr / basePrice) - 1) * 100 };
+                    // Replace, never duplicate: one point per date.
+                    if (bmPoints.length && bmPoints[bmPoints.length - 1].date === lastPortDate) bmPoints[bmPoints.length - 1] = livePt;
+                    else bmPoints.push(livePt);
                   }
                 }
                 if (bmPoints.length > 1) bmNorm[sym] = bmPoints;
@@ -13771,20 +13794,23 @@ Instructions:
                                 {per.trimmed > 0 && ` · ${per.trimmed.toLocaleString()} earlier points excluded, not daily`}
                               </span>
                             </div>
-                            <div style={{ overflowX: "auto" }}>
-                              <table style={{ width: "100%", borderCollapse: "collapse", fontVariantNumeric: "tabular-nums" }}>
+                            <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontVariantNumeric: "tabular-nums" }}>
                                 <thead>
                                   <tr>
-                                    {["", "Return", "Sortino", "Max DD", "Up capture", "Down capture"].map((h, i) => (
-                                      <th key={h || i} style={{ textAlign: i === 0 ? "left" : "right", padding: "6px 10px", fontSize: 9.5, fontWeight: 700,
-                                        letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
+                                    {["", "Return", "Sortino", "Max DD", isDesktop ? "Up capture" : "Up", isDesktop ? "Down capture" : "Down"].map((h, i) => (
+                                      <th key={h || i} style={{ textAlign: i === 0 ? "left" : "right", padding: isDesktop ? "6px 10px" : "6px 7px", fontSize: 9.5, fontWeight: 700,
+                                        letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap",
+                                        ...(i === 0 ? { position: "sticky", left: 0, zIndex: 2, background: C.card } : {}) }}>{h}</th>
                                     ))}
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {per.rows.map(r => (
                                     <tr key={r.name} style={{ background: r.isSelf ? C.accentSoft : "transparent" }}>
-                                      <td style={{ padding: "8px 10px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>
+                                      <td style={{ padding: isDesktop ? "8px 10px" : "8px 7px", borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap",
+                                        position: "sticky", left: 0, zIndex: 1, background: C.card,
+                                        boxShadow: r.isSelf ? `inset 0 0 0 9999px ${C.accentSoft}` : "none" }}>
                                         <span style={{ display: "inline-block", width: 14, height: 3, borderRadius: 2, background: r.color, marginRight: 8, verticalAlign: "middle" }} />
                                         <span style={{ fontSize: 12.5, fontWeight: r.isSelf ? 800 : 600, color: r.isSelf ? C.t1 : C.t2 }}>{r.name}</span>
                                       </td>
@@ -13810,16 +13836,20 @@ Instructions:
                       })}
 
                       <div style={{ fontSize: 10, color: C.t4, marginTop: 14, lineHeight: 1.6 }}>
-                        Sortino on daily returns, zero MAR, annualised, downside deviation averaged over all periods. Capture is geometric and
-                        sampled daily rather than monthly — this history is too short for monthly capture to mean anything. Capture is measured
-                        against {sleeveRisk.capSym}, the sleeve's own benchmark, so {sleeveRisk.capSym} sits at 100/100 by construction and any
-                        other row is read relative to it. Above 100 up and below 100 down is the desirable pair.
-                        {sleeveRisk.periods.length > 1 && new Set(sleeveRisk.periods.map(p => p.freq)).size > 1 && (
-                          <span> Periods are sampled at different frequencies, shown above each table: this book was recorded monthly
-                          before daily pricing began, so measuring the early years monthly keeps them rather than discarding them.
-                          Sortino and capture both depend on sampling frequency, so read each period on its own rather than comparing
-                          the two directly.</span>
-                        )}
+                        {(() => {
+                          const freqs = [...new Set(sleeveRisk.periods.map(p => p.freq))];
+                          const allDaily = freqs.length === 1 && freqs[0] === "daily";
+                          const cap = sleeveRisk.capSym;
+                          return (<>
+                            Sortino uses a zero minimum acceptable return, annualised at each table's own sampling frequency, with downside
+                            deviation averaged over every period rather than only losing ones. Capture is geometric, against {cap} total
+                            return — the sleeve's own benchmark — so {cap} reads 100/100 by construction and the other row is read
+                            relative to it. Above 100 up and below 100 down is the desirable pair.
+                            {allDaily
+                              ? " Capture is sampled daily rather than the usual monthly: this history is too short for monthly capture to mean anything."
+                              : " This book was priced monthly before daily pricing began, so the early years are measured monthly rather than discarded, and the stewardship period daily. Both statistics depend on sampling frequency, so read each table on its own rather than comparing the two directly."}
+                          </>);
+                        })()}
                       </div>
                     </div>
                   )}
