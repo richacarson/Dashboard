@@ -1836,7 +1836,10 @@ Instructions:
   const [tProfileData, setTProfileData] = useState({}); // { sym, fm, rec, earn, prof, descr, loading }
   const [tChartHover, setTChartHover] = useState(null);
   const [tWatchSort, setTWatchSort] = useState({ col: "chg", dir: "desc" }); // watchlist sort: col in sym|price|chg|qtd|pe|comp|peg
-  const [tChartRange, setTChartRange] = useState("3Y");
+  // Terminal opens on dividend, so it opens on the stewardship window, matching
+  // the classic chart.
+  const [tChartRange, setTChartRange] = useState("STEW");
+  const [tAllocAll, setTAllocAll] = useState(false);   // terminal: all allocations overlaid
   // Terminal chart view window — same contract as perfZoom on the classic chart.
   const [tZoom, setTZoom] = useState(null);
   const tPanRef = useRef(null);
@@ -4837,7 +4840,11 @@ Instructions:
         const op = i === 1 ? 0 : ((prices[prevPi][1] / bp) - 1) * 100;
         dailyBm.push({ o: op, c: cl, h: Math.max(op, cl), l: Math.min(op, cl) });
       }
-      const lq = bmTrPrice(sym);
+      // Live benchmark only when the portfolio's last candle is live too — the
+      // same pairing rule as the classic chart. Otherwise a live benchmark sat
+      // beside yesterday's portfolio close.
+      const portIsLive = tChartSleeve === perfSleeve && liveValue?.value;
+      const lq = portIsLive ? bmTrPrice(sym) : null;
       if (lq > 0 && dailyBm.length) { const lv = ((lq / bp) - 1) * 100; const last = dailyBm[dailyBm.length - 1]; last.c = lv; last.h = Math.max(last.o, lv); last.l = Math.min(last.o, lv); }
       // Aggregate to weekly if portfolio uses weekly
       if (useWeekly) {
@@ -4855,7 +4862,7 @@ Instructions:
     });
     const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV - minV || 1;
     return { status: "daily", candles, bmCandles, minV, maxV, range };
-  }, [layoutMode, terminalActiveSym, tChartSleeve, tChartRange, perfDataMap, perfData, perfBmToggles, intradayPortfolio, intradayBenchmarks, bmQuotes, bmBars, liveValue, perfSleeve]);
+  }, [layoutMode, terminalActiveSym, tChartSleeve, tChartRange, perfDataMap, perfData, perfBmToggles, intradayPortfolio, intradayBenchmarks, bmQuotes, bmBars, bmDivs, liveValue, perfSleeve]);
 
   /* ── Terminal layout: keyboard navigation ── */
   useEffect(() => {
@@ -6334,7 +6341,8 @@ Instructions:
                   { l: "STEW", fn: k => sleeveReturn(k, "STEW") },
                   { l: "INCEP", fn: k => sleeveReturn(k, "INCEP") },
                 ];
-                const sleeveNames = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
+                const sleeveNames = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values",
+                  ...Object.fromEntries(BLEND_MIXES.map(m => [m.key, `${Math.round(m.dividend * 100)}/${Math.round(m.growth * 100)} Div + Growth`])) };
                 const fmtVal = v => v != null ? `$${v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? (v / 1e3).toFixed(0) + "K" : v.toFixed(0)}` : "—";
                 const fmtR = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
                 const cR = v => v == null ? C.t4 : v >= 0 ? C.up : C.dn;
@@ -6345,7 +6353,9 @@ Instructions:
                   if (!bm) return null;
                   const prices = Object.entries(bm).sort((a, b) => a[0].localeCompare(b[0]));
                   if (!prices.length) return null;
-                  const liveQ = (bmQuotes[bmSym] || quotesRef.current?.[bmSym])?.p;
+                  // Same live basis as the charts and risk tables, so a benchmark's
+                  // return reads the same wherever it appears.
+                  const liveQ = bmTrPrice(bmSym);
                   const lastPrice = (liveQ > 0) ? liveQ : prices[prices.length - 1][1];
                   const lastDate = (liveQ > 0) ? new Date() : new Date(prices[prices.length - 1][0] + "T12:00:00");
                   let startPrice, startDate;
@@ -6386,8 +6396,11 @@ Instructions:
                 const SECTIONS = [
                   { sleeve: "dividend", bms: ["DVY", "SPY"] },
                   { sleeve: "growth", bms: ["IUSG", "SPY"] },
-                  { sleeve: "fci100", bms: ["SPY"] },
-                  { sleeve: "fciValues", bms: ["SPY"] },
+                  // Own benchmark first, SPY as the broad reference — same pattern as
+                  // dividend (DVY) and growth (IUSG). QQQ is the FCI yardstick.
+                  { sleeve: "fci100", bms: ["QQQ", "SPY"] },
+                  { sleeve: "fciValues", bms: ["QQQ", "SPY"] },
+                  ...BLEND_MIXES.filter(m => perfDataMap[m.key]).map(m => ({ sleeve: m.key, bms: ["SPY"], mix: true })),
                 ];
                 const renderSection = ({ sleeve, bms }) => {
                   // Hide trailing-period columns whose lookback window pre-dates the sleeve's inception
@@ -6428,7 +6441,13 @@ Instructions:
                   );
                 };
                 return (<div>
-                  {SECTIONS.map(renderSection)}
+                  {SECTIONS.filter(x => !x.mix).map(renderSection)}
+                  {SECTIONS.some(x => x.mix) && (
+                    <div style={{ ...tEyebrowMuted, margin: "6px 0 10px", paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+                      Combined dividend + growth allocations · rebalanced on the book's quarterly dates · vs SPY
+                    </div>
+                  )}
+                  {SECTIONS.filter(x => x.mix).map(renderSection)}
                   <div style={{ ...tEyebrow, paddingBottom: 6, borderBottom: `1px solid ${C.accent}33`, marginBottom: 8 }}>Top Movers Today</div>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -7580,14 +7599,168 @@ Instructions:
           })() : (() => {
             const isPortfolio = tIsPortfolio;
             const tBmToggles = perfBmToggles;
+
+            // ── Terminal presentation of the shared risk statistics. The numbers come
+            //    from sleeveRisk / allocationStats, the same memos the classic view
+            //    reads, so the two layouts cannot disagree; only the styling differs.
+            const fPct = (v, d = 2) => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(d)}%`;
+            const fCap = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
+            const tRiskStrip = () => {
+              const R = sleeveRisk;
+              if (!R) return null;
+              return (
+                <div style={{ flexShrink: 0, borderTop: `1px solid ${C.border}`, background: C.surface, padding: "6px 10px 8px", maxHeight: 250, overflowY: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 2 }}>
+                    <span style={tEyebrow}>Risk</span>
+                    <span style={{ fontSize: 9, color: C.t4, letterSpacing: 1 }}>CAPTURE VS {R.capSym} TOTAL RETURN</span>
+                    {R.isLive && <span style={{ fontSize: 9, color: C.up, fontWeight: 700, letterSpacing: 1 }}>LIVE</span>}
+                  </div>
+                  {R.periods.map((per, pi) => {
+                    const minObs = per.freq === "monthly" ? 24 : per.freq === "weekly" ? 20 : 40;
+                    const thin = per.rows.some(r => (r.up?.n ?? 0) < minObs || (r.down?.n ?? 0) < minObs);
+                    return (
+                      <div key={per.key} style={{ marginTop: pi ? 6 : 2 }}>
+                        <div style={{ fontSize: 9, color: C.t4, letterSpacing: 0.8, marginBottom: 1 }}>
+                          <span style={{ color: C.accent, fontWeight: 700 }}>{per.label.toUpperCase()}</span>
+                          {"  "}{per.from} → {per.to} · {per.n} {per.freq}
+                          {per.trimmed > 0 && ` · ${per.trimmed} earlier pts excluded`}
+                          {thin && <span style={{ color: C.dn }}> · thin sample</span>}
+                        </div>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
+                          <thead><tr>
+                            {["", "Return", "Sortino", "Max DD", "Up", "Down"].map((h, i) => <th key={h || i} style={tTh(i ? "right" : "left", false)}>{h}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {per.rows.map(r => (
+                              <tr key={r.name} style={{ background: r.isSelf ? C.accentSoft : "transparent", borderTop: `1px solid ${C.border}` }}>
+                                <td style={{ ...tTd("left"), fontWeight: r.isSelf ? 700 : 500, color: r.isSelf ? C.t1 : C.t2 }}>
+                                  <span style={{ display: "inline-block", width: 10, height: 2, background: r.color, marginRight: 6, verticalAlign: "middle" }} />{r.name}
+                                </td>
+                                <td style={{ ...tTd(), fontWeight: 600, color: r.ret == null ? C.t4 : r.ret >= 0 ? C.up : C.dn }}>{fPct(r.ret)}</td>
+                                <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
+                                <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
+                                <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCap(r.up)}</td>
+                                <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCap(r.down)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                  {R.periods.length > 1 && new Set(R.periods.map(p => p.freq)).size > 1 && (
+                    <div style={{ fontSize: 9, color: C.t4, marginTop: 4 }}>Periods sampled at different frequencies — read each on its own, not against each other.</div>
+                  )}
+                </div>
+              );
+            };
+
+            const tAllocView = () => {
+              const rows = allocationStats;
+              if (!rows.length) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", ...tEyebrowMuted }}>{perfLoading ? "LOADING ALLOCATIONS" : "ALLOCATIONS UNAVAILABLE"}</div>;
+              const colorOf = (i) => `hsl(${Math.round(205 - (i / Math.max(1, rows.length - 1)) * 175)}, 72%, ${theme !== "light" ? 62 : 44}%)`;
+              const dates = rows[0].series.map(p => p.date);
+              const norm = rows.map(r => r.series.map(p => (p.value / r.series[0].value - 1) * 100));
+              const spyRaw = benchmarkSeriesOn(dates, perfDataMap.dividend?.benchmarks?.SPY);
+              // Same rule as everywhere else: a live price only on a series that ends live.
+              const spyLiveQ = rows[0].isLive ? bmTrPrice("SPY") : null;
+              if (spyLiveQ > 0 && spyRaw.length) spyRaw[spyRaw.length - 1] = { ...spyRaw[spyRaw.length - 1], value: spyLiveQ };
+              const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
+              const W = 1000, H = 330, PAD = { top: 14, right: 58, bottom: 24, left: 8 };
+              const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom;
+              const all = norm.flat().concat(spyNorm || []);
+              const lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
+              const stp = span <= 5 ? 1 : span <= 20 ? 2 : span <= 50 ? 5 : 10;
+              const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp, yR = yMax - yMin || 1;
+              const X = i => PAD.left + (i / Math.max(1, dates.length - 1)) * cw;
+              const Y = v => PAD.top + ch - ((v - yMin) / yR) * ch;
+              const ticks = []; for (let v = yMin; v <= yMax; v += stp) ticks.push(Math.round(v * 100) / 100);
+              const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+              const hi2 = allocHover != null && allocHover >= 0 && allocHover < dates.length ? allocHover : null;
+              const lab = []; for (let i = 0; i < 6; i++) { const idx = Math.round((i / 5) * (dates.length - 1)); lab.push({ x: X(idx), t: dates[idx].slice(2, 7) }); }
+              return (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: C.bg }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "6px 10px", fontSize: 11, fontWeight: 600 }}>
+                    <span style={{ color: C.t1, fontWeight: 700 }}>DIV + GROWTH · ALL MIXES</span>
+                    {rows.map((r, i) => (
+                      <span key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)} style={{ color: colorOf(i), cursor: "default" }}>
+                        {Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)} <span style={{ color: C.t2 }}>{fPct(hi2 != null ? norm[i][hi2] : r.ret)}</span>
+                      </span>
+                    ))}
+                    {spyNorm && <span style={{ color: C.t3 }}>SPY <span style={{ color: C.t2 }}>{fPct(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}</span></span>}
+                    {hi2 != null && <span style={{ color: C.t4 }}>{dates[hi2]}</span>}
+                    {rows[0].isLive && <span style={{ color: C.up, fontSize: 9, letterSpacing: 1 }}>LIVE</span>}
+                  </div>
+                  <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair", flexShrink: 0 }}
+                    onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width); const i = Math.round(((mx - PAD.left) / cw) * (dates.length - 1)); setAllocHover(i >= 0 && i < dates.length ? i : null); }}
+                    onMouseLeave={() => setAllocHover(null)}>
+                    {ticks.map(v => <g key={v}><line x1={PAD.left} y1={Y(v)} x2={W - PAD.right} y2={Y(v)} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={Y(v) + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v}%</text></g>)}
+                    {lab.map((l, i) => <text key={i} x={l.x} y={H - 6} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{l.t}</text>)}
+                    {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />}
+                    {spyNorm && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth={1.1} strokeDasharray="5,4" />}
+                    {norm.map((arr, i) => <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)} strokeWidth={allocHoverKey === rows[i].key ? 2.6 : 1.5} opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1} />)}
+                    {hi2 != null && <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />}
+                  </svg>
+                  <div style={{ flex: 1, overflow: "auto", borderTop: `1px solid ${C.border}`, padding: "4px 10px 8px" }}>
+                    <div style={{ fontSize: 9, color: C.t4, letterSpacing: 0.8, marginBottom: 2 }}>
+                      <span style={{ color: C.accent, fontWeight: 700 }}>RISK</span>  CAPTURE VS SPY TOTAL RETURN · DAILY · {rows[0].up.n} UP / {rows[0].down.n} DOWN DAYS · FROM {dates[0]}
+                    </div>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
+                      <thead><tr>{["Mix", "Value", "Return", "Sortino", "Max DD", "Up", "Down"].map((h, i) => <th key={h} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
+                      <tbody>
+                        {rows.map((r, i) => (
+                          <tr key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
+                            style={{ borderTop: `1px solid ${C.border}`, background: allocHoverKey === r.key ? C.cardHover : "transparent" }}>
+                            <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}><span style={{ display: "inline-block", width: 10, height: 2, background: colorOf(i), marginRight: 6, verticalAlign: "middle" }} />{Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)}</td>
+                            <td style={{ ...tTd(), color: C.t2 }}>{r.value != null ? `$${Math.round(r.value).toLocaleString()}` : "—"}</td>
+                            <td style={{ ...tTd(), fontWeight: 600, color: r.ret >= 0 ? C.up : C.dn }}>{fPct(r.ret)}</td>
+                            <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
+                            <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
+                            <td style={{ ...tTd(), color: C.t1 }}>{fCap(r.up)}</td>
+                            <td style={{ ...tTd(), color: C.t1 }}>{fCap(r.down)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div style={{ fontSize: 9, color: C.t4, marginTop: 4 }}>
+                      Starts at growth's inception, after the spring-2025 drawdown — so these Sortinos run higher than the dividend stewardship figure, which includes it.
+                    </div>
+                  </div>
+                </div>
+              );
+            };
             return (<>
               <div style={{ padding: "4px 10px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, flexWrap: "wrap" }}>
                 {["dividend", "growth", "fci100", "fciValues"].map(k => {
                   const names = { dividend: "Dividend", growth: "Growth", fci100: "FCI 100", fciValues: "FCI Values" };
-                  const active = isPortfolio && tChartSleeve === k;
-                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(k); setPerfSleeve(k); setTChartHover(null); if (k !== "dividend" && tChartRange === "STEW") setTChartRange("3Y"); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
+                  const active = isPortfolio && !tAllocAll && tChartSleeve === k;
+                  return <button key={k} onClick={() => { setTerminalActiveSym("__portfolio__"); setTAllocAll(false); setTChartSleeve(k); setPerfSleeve(k); setTChartHover(null); if (k === "dividend") setTChartRange("STEW"); else if (tChartRange === "STEW") setTChartRange("3Y"); }} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 2, border: `1px solid ${active ? C.accentGlow : C.border}`, background: active ? C.accentSoft : "transparent", color: active ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>{names[k]}</button>;
                 })}
-                {isPortfolio && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "STEW", "ALL"].filter(r => {
+                {(() => {
+                  const isMix = BLEND_KEYS.has(tChartSleeve);
+                  const val = tAllocAll ? "__all__" : isMix ? tChartSleeve : "";
+                  const on = isPortfolio && (tAllocAll || isMix);
+                  return (
+                    <select value={val} title="Combined dividend + growth allocations, rebalanced on the book's own quarterly dates"
+                      onChange={e => {
+                        const v = e.target.value;
+                        if (!v) return;
+                        setTerminalActiveSym("__portfolio__"); setTChartHover(null);
+                        if (v === "__all__") { setTAllocAll(true); return; }
+                        setTAllocAll(false); setTChartSleeve(v); setPerfSleeve(v);
+                        // A mix only exists from growth's inception, so the longer
+                        // ranges are not available; open on its whole history.
+                        setTChartRange("ALL");
+                      }}
+                      style={{ fontSize: 10, fontWeight: 700, padding: "2px 4px", borderRadius: 2, border: `1px solid ${on ? C.accentGlow : C.border}`,
+                        background: on ? C.accentSoft : C.surface, color: on ? C.accent : C.t3, cursor: "pointer", fontFamily: "inherit" }}>
+                      <option value="">ALLOC ▾</option>
+                      {BLEND_MIXES.map(m => <option key={m.key} value={m.key}>{Math.round(m.dividend * 100)}/{Math.round(m.growth * 100)}</option>)}
+                      <option value="__all__">ALL MIXES</option>
+                    </select>
+                  );
+                })()}
+                {isPortfolio && !tAllocAll && ["1D", "QTD", "YTD", "1Y", "3Y", "5Y", "STEW", "ALL"].filter(r => {
                   const tPort = (perfDataMap[tChartSleeve] || perfData || {}).portfolio || [];
                   // Carson stewardship — dividend sleeve only, once data reaches the start
                   if (r === "STEW") return tChartSleeve === "dividend" && tPort.some(p => p.date >= STEW_START);
@@ -7598,8 +7771,8 @@ Instructions:
                 }).map(r => (
                   <button key={r} onClick={() => { setTChartRange(r); setTChartHover(null); }} title={r === "STEW" ? "Carson stewardship — since Jan 15 2025" : undefined} style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${tChartRange === r ? C.accent + "66" : C.border}`, background: tChartRange === r ? C.accentSoft : "transparent", color: tChartRange === r ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{r}</button>
                 ))}
-                {isPortfolio && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
-                {isPortfolio && ({ dividend: ["SPY", "DVY", "DIA"], growth: ["SPY", "IUSG", "QQQ"], fci100: ["SPY", "QQQ", "DIA"], fciValues: ["SPY", "QQQ", "DIA"] }[tChartSleeve] || ["SPY", "DVY", "DIA"]).map(bm => {
+                {isPortfolio && !tAllocAll && <span style={{ width: 1, height: 14, background: C.border, margin: "0 2px" }} />}
+                {isPortfolio && !tAllocAll && (BLEND_KEYS.has(tChartSleeve) ? ["SPY"] : ({ dividend: ["SPY", "DVY", "DIA"], growth: ["SPY", "IUSG", "QQQ"], fci100: ["SPY", "QQQ", "DIA"], fciValues: ["SPY", "QQQ", "DIA"] }[tChartSleeve] || ["SPY", "DVY", "DIA"])).map(bm => {
                   return <button key={bm} onClick={() => setPerfBmToggles(p => ({ ...p, [bm]: !p[bm] }))} style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 2, border: `1px solid ${tBmToggles[bm] ? BM_COLORS[bm] + "66" : C.border}`, background: tBmToggles[bm] ? BM_COLORS[bm] + "20" : "transparent", color: tBmToggles[bm] ? BM_COLORS[bm] : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{bm}</button>;
                 })}
                 {!isPortfolio && <>
@@ -7608,7 +7781,7 @@ Instructions:
                   {(() => { const q = quotesRef.current[terminalActiveSym] || quotes[terminalActiveSym]; const b = barsRef.current[terminalActiveSym] || bars[terminalActiveSym]; const c = (q && b?.pc) ? ((q.p - b.pc) / b.pc * 100) : null; return q?.p ? <><span style={{ fontSize: 12, fontWeight: 700, color: C.t1, marginLeft: "auto" }}>${q.p.toFixed(2)}</span><span style={{ fontSize: 11, fontWeight: 600, color: c == null ? C.t4 : c >= 0 ? C.up : C.dn }}>{pct(c)}</span></> : null; })()}
                 </>}
               </div>
-              {!isPortfolio ? (
+              {isPortfolio && tAllocAll ? tAllocView() : !isPortfolio ? (
                 <div style={{ flex: 1, display: "flex", background: C.bg }}>
                   <div style={{ flex: 1, minHeight: 0, background: C.bg }}>
                     <TradingViewChart symbol={terminalActiveSym} theme={theme} bg={tvBg} toolbarBg={tvTbBg} />
@@ -7620,7 +7793,9 @@ Instructions:
                 if (tChartData.status === "insufficient") return emptyMsg("INSUFFICIENT DATA FOR RANGE");
                 if (tChartData.status === "no-intraday") return emptyMsg("INTRADAY DATA UNAVAILABLE");
                 const PAD = { top: 40, right: 60, bottom: 40, left: 10 };
-                const sleeveTitle = ({ dividend: "DIVIDEND", growth: "GROWTH", fci100: "FCI 100", fciValues: "FCI VALUES" })[tChartSleeve] || "PORTFOLIO";
+                const mix = BLEND_MIXES.find(m => m.key === tChartSleeve);
+                const sleeveTitle = mix ? `${Math.round(mix.dividend * 100)}/${Math.round(mix.growth * 100)} DIV+GROWTH`
+                  : ({ dividend: "DIVIDEND", growth: "GROWTH", fci100: "FCI 100", fciValues: "FCI VALUES" })[tChartSleeve] || "PORTFOLIO";
                 const niceTicks = (lo, hi) => {
                   const rawSpan = (hi - lo) || 1;
                   const step = rawSpan <= 2 ? 0.5 : rawSpan <= 5 ? 1 : rawSpan <= 10 ? 2 : rawSpan <= 50 ? 5 : rawSpan <= 100 ? 10 : rawSpan <= 200 ? 20 : rawSpan <= 500 ? 50 : 100;
@@ -7831,6 +8006,7 @@ Instructions:
                   </div>
                 );
               })()}
+              {isPortfolio && !tAllocAll && tRiskStrip()}
             </>);
           })()}
         </div>
