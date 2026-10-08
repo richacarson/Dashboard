@@ -862,6 +862,12 @@ const TERMINAL = {
 const SLEEVE_CAPTURE_BM = { dividend: "DVY", growth: "IUSG", fci100: "QQQ", fciValues: "QQQ" };
 const captureBmFor = (k) => SLEEVE_CAPTURE_BM[k] || "SPY";
 
+// Benchmarks to leave out of the risk table even when they are on the chart.
+// The managed sleeves are judged against their own mandate, and a broad-market
+// row invites the comparison the capture benchmark exists to replace. SPY stays
+// on the charts; this only affects the statistics table.
+const RISK_HIDE_BM = { dividend: ["SPY"], growth: ["SPY"] };
+
 const BM_COLORS = { SPY: "#8FA3D9", QQQ: "#B08BD0", DIA: "#C98B6B", DVY: "#D9A441", IUSG: "#7FAE9B" };
 
 /* ── Playbook historical data (shared by classic tab + terminal drawer) ── */
@@ -2409,8 +2415,9 @@ Instructions:
     // Rows: whatever is toggled onto the chart, plus the capture benchmark —
     // which must be present, since it is the row that reads 100/100 and so
     // shows the table is measuring what it claims.
+    const hidden = new Set(RISK_HIDE_BM[perfSleeve] || []);
     const syms = [...new Set([...Object.keys(perfBmToggles).filter(k => perfBmToggles[k]), capSym])]
-      .filter(sym => bmMaps[sym]);
+      .filter(sym => bmMaps[sym] && (sym === capSym || !hidden.has(sym)));
 
     const periods = [{ key: "dense", label: trimmed > 0 ? `Since ${denseFrom}` : "Full history", from: denseFrom, trimmed }];
     if (perfSleeve === "dividend" && full.some(p => p.date >= STEW_START)) {
