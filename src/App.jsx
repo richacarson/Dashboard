@@ -2118,67 +2118,6 @@ Instructions:
   useEffect(() => { setPerfZoom(null); setPerfHover(null); }, [perfRange, perfSleeve]);
   useEffect(() => { if (BLEND_KEYS.has(perfSleeve) && perfView === "holdings") setPerfView("chart"); }, [perfSleeve, perfView]);
 
-  // Live value of the dividend and growth books, priced from the same quote
-  // stream the rest of the app uses. Every allocation is a fixed combination of
-  // these two, so this is all the live input the allocations view needs.
-  const srcSleeveLive = useMemo(() => {
-    const out = {};
-    for (const k of ["dividend", "growth"]) {
-      const d = perfDataMap[k];
-      if (!d?.holdings) continue;
-      let val = d.cash || 0, priced = 0, total = 0;
-      for (const [sym, rawSh] of Object.entries(d.holdings)) {
-        total++;
-        const sh = rawSh * (splitRatiosRef.current[sym] || 1);
-        const q = quotes[sym] || quotesRef.current?.[sym];
-        if (q?.p > 0 && sh) { val += sh * q.p; priced++; }
-      }
-      // Partial coverage would understate the book, which would read as a loss.
-      if (total > 0 && priced >= total * 0.8) out[k] = val;
-    }
-    return out;
-  }, [quotes, perfDataMap]);
-
-  // Every allocation's series with today's live point appended, plus the risk
-  // stats. Recomputes as quotes move, so the table is live.
-  const allocationStats = useMemo(() => {
-    const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
-    const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
-    const rows = [];
-    for (const m of BLEND_MIXES) {
-      const d = perfDataMap[m.key];
-      if (!d?.portfolio?.length) continue;
-      const series = d.portfolio.map(p => ({ date: p.date, value: p.value }));
-      const live = (srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0)
-        ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth
-        : null;
-      const todayStr = new Date().toISOString().slice(0, 10);
-      if (live > 0) {
-        // Replace rather than append when history already carries today.
-        if (series[series.length - 1].date === todayStr) series[series.length - 1] = { date: todayStr, value: live };
-        else series.push({ date: todayStr, value: live });
-      }
-      const dates = series.map(p => p.date);
-      let bmSeries = benchmarkSeriesOn(dates, spyMap);
-      if (spyLive > 0 && bmSeries.length) {
-        const lastBm = bmSeries[bmSeries.length - 1];
-        if (lastBm.date === series[series.length - 1].date) bmSeries[bmSeries.length - 1] = { ...lastBm, value: spyLive };
-        else bmSeries.push({ date: series[series.length - 1].date, value: spyLive });
-      }
-      const cap = captureRatios(monthlyReturns(series), monthlyReturns(bmSeries));
-      rows.push({
-        ...m,
-        series,
-        ret: series.length > 1 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
-        value: series[series.length - 1]?.value ?? null,
-        sortino: sortinoRatio(dailyReturns(series)),
-        maxDD: maxDrawdown(series),
-        up: cap.up, down: cap.down,
-        isLive: live > 0,
-      });
-    }
-    return rows;
-  }, [perfDataMap, srcSleeveLive, quotes]);
   useEffect(() => { setTZoom(null); setTChartHover(null); }, [tChartRange, tChartSleeve, terminalActiveSym]);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -2342,6 +2281,68 @@ Instructions:
   const splitFixedDayRef = useRef(new Date().toDateString()); // corrections expire on a new day
   const [splitRatios, setSplitRatios] = useState({}); // sym -> split ratio (e.g. KLAC 3:1 = 3). State so Holdings/Perf re-render when set.
   const splitRatiosRef = useRef({}); // ref mirror for useEffect / non-render consumers
+
+  // Live value of the dividend and growth books, priced from the same quote
+  // stream the rest of the app uses. Every allocation is a fixed combination of
+  // these two, so this is all the live input the allocations view needs.
+  const srcSleeveLive = useMemo(() => {
+    const out = {};
+    for (const k of ["dividend", "growth"]) {
+      const d = perfDataMap[k];
+      if (!d?.holdings) continue;
+      let val = d.cash || 0, priced = 0, total = 0;
+      for (const [sym, rawSh] of Object.entries(d.holdings)) {
+        total++;
+        const sh = rawSh * (splitRatiosRef.current[sym] || 1);
+        const q = quotes[sym] || quotesRef.current?.[sym];
+        if (q?.p > 0 && sh) { val += sh * q.p; priced++; }
+      }
+      // Partial coverage would understate the book, which would read as a loss.
+      if (total > 0 && priced >= total * 0.8) out[k] = val;
+    }
+    return out;
+  }, [quotes, perfDataMap]);
+
+  // Every allocation's series with today's live point appended, plus the risk
+  // stats. Recomputes as quotes move, so the table is live.
+  const allocationStats = useMemo(() => {
+    const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
+    const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
+    const rows = [];
+    for (const m of BLEND_MIXES) {
+      const d = perfDataMap[m.key];
+      if (!d?.portfolio?.length) continue;
+      const series = d.portfolio.map(p => ({ date: p.date, value: p.value }));
+      const live = (srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0)
+        ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth
+        : null;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      if (live > 0) {
+        // Replace rather than append when history already carries today.
+        if (series[series.length - 1].date === todayStr) series[series.length - 1] = { date: todayStr, value: live };
+        else series.push({ date: todayStr, value: live });
+      }
+      const dates = series.map(p => p.date);
+      let bmSeries = benchmarkSeriesOn(dates, spyMap);
+      if (spyLive > 0 && bmSeries.length) {
+        const lastBm = bmSeries[bmSeries.length - 1];
+        if (lastBm.date === series[series.length - 1].date) bmSeries[bmSeries.length - 1] = { ...lastBm, value: spyLive };
+        else bmSeries.push({ date: series[series.length - 1].date, value: spyLive });
+      }
+      const cap = captureRatios(monthlyReturns(series), monthlyReturns(bmSeries));
+      rows.push({
+        ...m,
+        series,
+        ret: series.length > 1 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
+        value: series[series.length - 1]?.value ?? null,
+        sortino: sortinoRatio(dailyReturns(series)),
+        maxDD: maxDrawdown(series),
+        up: cap.up, down: cap.down,
+        isLive: live > 0,
+      });
+    }
+    return rows;
+  }, [perfDataMap, srcSleeveLive, quotes]);
 
   // Correction to the "value at yesterday's close" leg of every day-change number, for
   // trades done today.
