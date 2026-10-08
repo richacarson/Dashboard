@@ -2191,7 +2191,8 @@ Instructions:
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
-  const [perfRange, setPerfRange] = useState("YTD"); // "1D" | "YTD" | "QTD" | "1Y" | "3Y" | "5Y" | "10Y" | "ALL"
+  const defaultRangeFor = (k) => k === "dividend" ? "STEW" : "ALL";
+  const [perfRange, setPerfRange] = useState(() => defaultRangeFor("dividend")); // matches perfSleeve's initial value
   const [perfHover, setPerfHover] = useState(null); // { idx, x, y } for tooltip
   // Visible index window for wheel-zoom / drag-pan. null = whole range.
   // Deliberately a *view* window: the series stay normalised against the full
@@ -12812,7 +12813,7 @@ Instructions:
               <div style={{ marginBottom: isDesktop ? 16 : 8 }}>
                 <select
                   value={perfSleeve}
-                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange("ALL"); }}
+                  onChange={e => { setPerfSleeve(e.target.value); setHoldingsSleeve(e.target.value); setPerfRange(defaultRangeFor(e.target.value)); }}
                   style={{
                     padding: "10px 36px 10px 14px", borderRadius: 10, border: `1px solid ${C.borderActive}`,
                     background: C.card, color: C.t1, fontSize: 14, fontWeight: 700,
