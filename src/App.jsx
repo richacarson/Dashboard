@@ -853,10 +853,13 @@ const TERMINAL = {
 };
 /* ── Benchmark overlay colors (muted, brand-adjacent) ── */
 // The index each sleeve's capture is measured against — its own yardstick,
-// not a common one. The combined allocations stay on SPY: they mix both
-// sleeves, so neither sleeve's benchmark fits and the broad market is the
-// neutral choice.
-const SLEEVE_CAPTURE_BM = { dividend: "DVY", growth: "IUSG", fci100: "SPY", fciValues: "SPY" };
+// not a common one. The FCI lists are mega-cap tech and semis, so QQQ is the
+// comparator that says something about selection rather than about factor
+// tilt. Only the combined allocations use SPY: they mix both sleeves, so
+// neither sleeve's benchmark fits and the broad market is the neutral choice.
+// FCI's own history files carry SPY alone, but the dividend sleeve's benchmark
+// set is merged in, so QQQ resolves for them too.
+const SLEEVE_CAPTURE_BM = { dividend: "DVY", growth: "IUSG", fci100: "QQQ", fciValues: "QQQ" };
 const captureBmFor = (k) => SLEEVE_CAPTURE_BM[k] || "SPY";
 
 const BM_COLORS = { SPY: "#8FA3D9", QQQ: "#B08BD0", DIA: "#C98B6B", DVY: "#D9A441", IUSG: "#7FAE9B" };
@@ -2173,7 +2176,7 @@ Instructions:
     const m = BLEND_MIXES.find(x => x.key === k);
     return m ? blendLabel(m).replace(/ \/ /, "/") : (sleeves[k]?.name || k);
   };
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false },
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: true, DIA: false }, fciValues: { SPY: true, QQQ: true, DIA: false },
     ...Object.fromEntries(BLEND_MIXES.map(m => [m.key, { SPY: true, DVY: false, IUSG: false }])) };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
@@ -2393,7 +2396,9 @@ Instructions:
     const denseFrom = full[denseIdx].date;
     const trimmed = denseIdx;
 
-    const bmMaps = { ...(perfDataMap.dividend?.benchmarks || {}), ...(d.benchmarks || {}) };
+    const bmMaps = {};
+    for (const sl of Object.values(perfDataMap)) Object.assign(bmMaps, sl?.benchmarks || {});
+    Object.assign(bmMaps, d.benchmarks || {});   // the sleeve's own series wins
     const liveOf = (sym) => (quotes[sym] || quotesRef.current?.[sym])?.p;
 
     // Capture runs against the sleeve's own yardstick, falling back to SPY only
