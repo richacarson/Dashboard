@@ -1322,7 +1322,7 @@
   {
     "symbol": "BNY",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 2.2764,
     "epsActual": null,
     "revenueEstimate": 5595213331,
@@ -1332,7 +1332,7 @@
   {
     "symbol": "BSVN",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.0676,
     "epsActual": null,
     "revenueEstimate": 24212760,
@@ -1422,7 +1422,7 @@
   {
     "symbol": "FHN",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.5293,
     "epsActual": null,
     "revenueEstimate": 900264510,
@@ -1502,7 +1502,7 @@
   {
     "symbol": "INDB",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.8785,
     "epsActual": null,
     "revenueEstimate": 266308403,
@@ -1582,7 +1582,7 @@
   {
     "symbol": "PLD",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.8181,
     "epsActual": null,
     "revenueEstimate": 2307687723,
@@ -1642,7 +1642,7 @@
   {
     "symbol": "SFNC",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.5451,
     "epsActual": null,
     "revenueEstimate": 258537533,
@@ -1692,7 +1692,7 @@
   {
     "symbol": "USB",
     "date": "2026-10-15",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.3347,
     "epsActual": null,
     "revenueEstimate": 8076127559,
