@@ -10,6 +10,19 @@ have not seen succeed: check the exit code and read the output rather than
 filtering it through `grep`, which has twice hidden a real failure (a missing
 `node_modules` surfacing as `vite: not found`).
 
+`npm run build` runs two crash gates before vite, because esbuild compiles
+both of these without complaint and each took the whole app down:
+
+- `eslint src` (no-undef only) — a name that does not exist. Caught `kLabel`,
+  produced by a substring rename that also rewrote `perfSleeveLabel`.
+- `scripts/check-render-order.mjs` — a name that exists but is read by a
+  useMemo before its declaration (the `Cannot access 'zt'` crash).
+
+Do not remove or bypass either. Neither covers logic errors, and the app sits
+behind Supabase auth plus an access code, so UI changes still ship unrendered —
+say so plainly when reporting them. When renaming, rename whole identifiers
+(word-boundary), never substrings.
+
 Steps:
 
 1. Build with `npm run build`
