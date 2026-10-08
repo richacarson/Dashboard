@@ -2191,12 +2191,14 @@ Instructions:
   const [perfView, setPerfView] = useState("chart"); // "chart" | "holdings" | "allocations"
   const [allocHover, setAllocHover] = useState(null);     // crosshair index
   const [allocHoverKey, setAllocHoverKey] = useState(null); // highlighted allocation
-  // All-allocations view mode. The seven mixes end within ~4pp of each other on
-  // a chart spanning ~40pp, so on the plain return view they fill a tenth of its
-  // height and read as one band. "spread" subtracts a reference mix so only the
-  // differences remain; "frontier" plots each mix as one risk/return point.
-  const [allocMode, setAllocMode] = useState("return");   // "return" | "spread" | "frontier"
-  const [allocRef, setAllocRef] = useState("blend65");
+  // All-allocations chart: a view window over the series (null = whole period)
+  // and the mixes hidden from it. The window zooms without rebasing — every line
+  // still reads its return since inception — so the gaps between mixes, which
+  // accumulate over time, stay put while the y axis refits to the short window's
+  // much smaller range. That is what separates the lines.
+  const [allocWin, setAllocWin] = useState(null);       // { i0, i1 } | null
+  const [allocHidden, setAllocHidden] = useState({});   // key -> true
+  const allocPanRef = useRef(null);
   const [perfSleeve, setPerfSleeve] = useState("dividend"); // "dividend" | "growth" | "digital"
   const [perfDataMap, setPerfDataMap] = useState({}); // { dividend: {...}, growth: {...} }
   const [perfData, setPerfData] = useState(null); // { portfolio: [...], benchmarks: { SPY: [...], ... }, holdings: {}, cash: 0 }
@@ -2560,19 +2562,6 @@ Instructions:
     return out;
   }, [tDrawer, perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, bmQuotes, bmDivs, bmBars, C.accent, C.t3]);
 
-  // Risk/return points for the frontier view: each mix, the two pure sleeves
-  // and SPY, over the allocation window, live. Downside deviation is the x axis
-  // rather than max drawdown: drawdown spans only -7.6% to -8.4% across the
-  // mixes, too tight to separate them, while downside deviation runs ~8% to ~11%
-  // and is the same risk measure Sortino divides by.
-  const annDownsideDev = (series) => {
-    const r = dailyReturns(series);
-    if (r.length < 20) return null;
-    let sq = 0;
-    for (const v of r) if (v < 0) sq += v * v;
-    return Math.sqrt(sq / r.length) * Math.sqrt(252) * 100;
-  };
-
   const allocationStats = useMemo(() => {
     const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
     const spyLive = bmTrPrice("SPY");
@@ -2613,39 +2602,6 @@ Instructions:
     }
     return rows;
   }, [perfDataMap, srcSleeveLive, quotes, bmQuotes, bmDivs, bmBars]);
-
-  const allocFrontier = useMemo(() => {
-    const rows = allocationStats;
-    if (!rows.length) return null;
-    const dates = rows[0].series.map(p => p.date);
-    const t0 = dates[0], tEnd = dates[dates.length - 1];
-    const live = rows[0].isLive;
-    const point = (series, extra) => {
-      if (!series || series.length < 20) return null;
-      return { ...extra, ret: (series[series.length - 1].value / series[0].value - 1) * 100,
-        dd: annDownsideDev(series), sortino: sortinoRatio(dailyReturns(series)) };
-    };
-    // A pure sleeve over the same window, carrying the same live point.
-    const sleeveSeries = (k) => {
-      const d = perfDataMap[k];
-      if (!d?.portfolio?.length) return null;
-      const ser = d.portfolio.filter(p => p.date >= t0).map(p => ({ date: p.date, value: p.value }));
-      const lv = srcSleeveLive[k];
-      if (live && lv > 0 && ser.length) {
-        if (ser[ser.length - 1].date === tEnd) ser[ser.length - 1] = { date: tEnd, value: lv };
-        else ser.push({ date: tEnd, value: lv });
-      }
-      return ser;
-    };
-    const spy = benchmarkSeriesOn(dates, perfDataMap.dividend?.benchmarks?.SPY);
-    const spyLive = live ? bmTrPrice("SPY") : null;
-    if (spyLive > 0 && spy.length) spy[spy.length - 1] = { ...spy[spy.length - 1], value: spyLive };
-    const mixes = rows.map((r, i) => point(r.series, { key: r.key, label: `${Math.round(r.dividend * 100)}/${Math.round(r.growth * 100)}`, kind: "mix", idx: i })).filter(Boolean);
-    const div = point(sleeveSeries("dividend"), { key: "pureDiv", label: "100% Dividend", kind: "pure" });
-    const gro = point(sleeveSeries("growth"), { key: "pureGro", label: "100% Growth", kind: "pure" });
-    const spyPt = point(spy, { key: "spy", label: "SPY", kind: "bm" });
-    return { mixes, div, gro, spy: spyPt, from: t0 };
-  }, [allocationStats, perfDataMap, srcSleeveLive, bmQuotes, bmDivs, bmBars]);
 
   // Correction to the "value at yesterday's close" leg of every day-change number, for
   // trades done today.
@@ -7759,112 +7715,49 @@ Instructions:
               if (!rows.length) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", ...tEyebrowMuted }}>{perfLoading ? "LOADING ALLOCATIONS" : "ALLOCATIONS UNAVAILABLE"}</div>;
               const colorOf = (i) => `hsl(${Math.round(205 - (i / Math.max(1, rows.length - 1)) * 175)}, 72%, ${theme !== "light" ? 62 : 44}%)`;
               const dates = rows[0].series.map(p => p.date);
-              const norm0 = rows.map(r => r.series.map(p => (p.value / r.series[0].value - 1) * 100));
-              // Same three views as classic, sharing allocFrontier and the same spread rule.
-              const isSpread = allocMode === "spread", isFrontier = allocMode === "frontier";
-              const refIdx = Math.max(0, rows.findIndex(r => r.key === allocRef));
-              const mixL = r => `${Math.round(r.dividend * 100)}/${Math.round(r.growth * 100)}`;
-              const norm = isSpread ? norm0.map(arr => arr.map((v, i) => v - norm0[refIdx][i])) : norm0;
-              const u = isSpread ? "pp" : "%";
-              const fV = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}${u}`;
+              const norm = rows.map(r => r.series.map(p => (p.value / r.series[0].value - 1) * 100));
               const spyRaw = benchmarkSeriesOn(dates, perfDataMap.dividend?.benchmarks?.SPY);
               // Same rule as everywhere else: a live price only on a series that ends live.
               const spyLiveQ = rows[0].isLive ? bmTrPrice("SPY") : null;
               if (spyLiveQ > 0 && spyRaw.length) spyRaw[spyRaw.length - 1] = { ...spyRaw[spyRaw.length - 1], value: spyLiveQ };
-              const spyNorm = !isSpread && spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
+              const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
               const W = 1000, H = 330, PAD = { top: 14, right: 58, bottom: 24, left: 8 };
               const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom;
               const all = norm.flat().concat(spyNorm || []);
               const lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
-              const stp = [0.25, 0.5, 1, 2, 5, 10, 20].find(st => span / st <= 8) || 50;
+              const stp = span <= 5 ? 1 : span <= 20 ? 2 : span <= 50 ? 5 : 10;
               const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp, yR = yMax - yMin || 1;
               const X = i => PAD.left + (i / Math.max(1, dates.length - 1)) * cw;
               const Y = v => PAD.top + ch - ((v - yMin) / yR) * ch;
-              const ticks = []; for (let v = yMin; v <= yMax + 1e-9; v += stp) ticks.push(Math.round(v * 100) / 100);
+              const ticks = []; for (let v = yMin; v <= yMax; v += stp) ticks.push(Math.round(v * 100) / 100);
               const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
               const hi2 = allocHover != null && allocHover >= 0 && allocHover < dates.length ? allocHover : null;
               const lab = []; for (let i = 0; i < 6; i++) { const idx = Math.round((i / 5) * (dates.length - 1)); lab.push({ x: X(idx), t: dates[idx].slice(2, 7) }); }
-              const modeBtn = (k, l) => (
-                <button key={k} onClick={() => { setAllocMode(k); setAllocHover(null); setAllocHoverKey(null); }}
-                  style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 2, border: `1px solid ${allocMode === k ? C.accent + "66" : C.border}`,
-                    background: allocMode === k ? C.accentSoft : "transparent", color: allocMode === k ? C.accent : C.t4, cursor: "pointer", fontFamily: "inherit" }}>{l}</button>
-              );
-
-              const frontier = () => {
-                const F = allocFrontier;
-                if (!F) return <div style={{ flex: 1, ...tEyebrowMuted, padding: 20 }}>UNAVAILABLE</div>;
-                const pts = [F.div, ...F.mixes, F.gro, F.spy].filter(q => q && q.dd != null && q.ret != null);
-                const FH = 330, FP = { top: 14, right: 16, bottom: 30, left: 44 };
-                const xs = pts.map(q => q.dd), ys = pts.map(q => q.ret);
-                const xPad = (Math.max(...xs) - Math.min(...xs)) * 0.1 || 1, yPad = (Math.max(...ys) - Math.min(...ys)) * 0.12 || 1;
-                const x0 = Math.min(...xs) - xPad, x1 = Math.max(...xs) + xPad, y0 = Math.min(...ys) - yPad, y1 = Math.max(...ys) + yPad;
-                const fx = v => FP.left + ((v - x0) / (x1 - x0)) * (W - FP.left - FP.right);
-                const fy = v => FP.top + (1 - (v - y0) / (y1 - y0)) * (FH - FP.top - FP.bottom);
-                const nice = sp => [0.5, 1, 2, 5, 10].find(st => sp / st <= 7) || 20;
-                const xst = nice(x1 - x0), yst = nice(y1 - y0), xT = [], yT = [];
-                for (let v = Math.ceil(x0 / xst) * xst; v <= x1; v += xst) xT.push(Math.round(v * 100) / 100);
-                for (let v = Math.ceil(y0 / yst) * yst; v <= y1; v += yst) yT.push(Math.round(v * 100) / 100);
-                const chain = [F.div, ...F.mixes, F.gro].filter(q => q && q.dd != null);
-                const col = q => q.kind === "mix" ? colorOf(q.idx) : q.kind === "pure" ? C.t1 : C.t3;
-                const hov = pts.find(q => q.key === allocHoverKey);
-                return (
-                  <svg viewBox={`0 0 ${W} ${FH}`} style={{ width: "100%", height: "auto", display: "block", flexShrink: 0 }} onMouseLeave={() => setAllocHoverKey(null)}>
-                    {yT.map(v => <g key={`y${v}`}><line x1={FP.left} y1={fy(v)} x2={W - FP.right} y2={fy(v)} stroke={C.border} strokeWidth={0.5} /><text x={FP.left - 5} y={fy(v) + 3} textAnchor="end" fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v}%</text></g>)}
-                    {xT.map(v => <text key={`x${v}`} x={fx(v)} y={FH - 14} textAnchor="middle" fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v}%</text>)}
-                    <text x={(FP.left + W - FP.right) / 2} y={FH - 2} textAnchor="middle" fill={C.t3} fontSize={9} fontFamily="'IBM Plex Mono', monospace">DOWNSIDE RISK (ANN. DOWNSIDE DEV) →     ↑ RETURN</text>
-                    <path d={chain.map((q, i) => `${i ? "L" : "M"}${fx(q.dd).toFixed(1)},${fy(q.ret).toFixed(1)}`).join("")} fill="none" stroke={C.t4} strokeWidth={1} strokeDasharray="4,4" />
-                    {pts.map(q => {
-                      const on = allocHoverKey === q.key, dim = allocHoverKey && !on;
-                      const hd = { onMouseEnter: () => setAllocHoverKey(q.key), style: { cursor: "pointer" } };
-                      return q.kind === "bm"
-                        ? <rect key={q.key} x={fx(q.dd) - 5} y={fy(q.ret) - 5} width={10} height={10} fill={C.bg} stroke={col(q)} strokeWidth={1.5} opacity={dim ? 0.3 : 1} {...hd} />
-                        : <circle key={q.key} cx={fx(q.dd)} cy={fy(q.ret)} r={on ? 7 : 5} fill={q.kind === "pure" ? C.bg : col(q)} stroke={q.kind === "pure" ? col(q) : "none"} strokeWidth={1.5} opacity={dim ? 0.3 : 1} {...hd} />;
-                    })}
-                    {[F.div, F.gro, F.spy, F.mixes[0], F.mixes[F.mixes.length - 1]].filter(Boolean).map(q => (
-                      <text key={`l${q.key}`} x={fx(q.dd) + 8} y={fy(q.ret) + 3} fill={C.t2} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{q.label}</text>
-                    ))}
-                    {hov && <text x={W - FP.right} y={FP.top + 10} textAnchor="end" fill={C.t1} fontSize={10} fontWeight={700} fontFamily="'IBM Plex Mono', monospace">
-                      {hov.label}  RET {fV(hov.ret).replace("pp", "%")}  RISK {hov.dd.toFixed(2)}%  SORTINO {hov.sortino == null ? "—" : hov.sortino.toFixed(2)}
-                    </text>}
-                  </svg>
-                );
-              };
-
               return (
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: C.bg }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "6px 10px", fontSize: 11, fontWeight: 600 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "6px 10px", fontSize: 11, fontWeight: 600 }}>
                     <span style={{ color: C.t1, fontWeight: 700 }}>DIV + GROWTH · ALL MIXES</span>
-                    <span style={{ display: "flex", gap: 4 }}>{modeBtn("return", "RETURN")}{modeBtn("spread", "SPREAD")}{modeBtn("frontier", "RISK·RETURN")}</span>
-                    {isSpread && (
-                      <select value={allocRef} onChange={e => setAllocRef(e.target.value)}
-                        style={{ fontSize: 10, fontWeight: 700, padding: "1px 4px", borderRadius: 2, border: `1px solid ${C.border}`, background: C.surface, color: C.t2, fontFamily: "inherit" }}>
-                        {rows.map(r => <option key={r.key} value={r.key}>vs {mixL(r)}</option>)}
-                      </select>
-                    )}
-                    {!isFrontier && rows.map((r, i) => (
+                    {rows.map((r, i) => (
                       <span key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)} style={{ color: colorOf(i), cursor: "default" }}>
-                        {mixL(r)} <span style={{ color: C.t2 }}>{fV(hi2 != null ? norm[i][hi2] : norm[i][norm[i].length - 1])}</span>
+                        {Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)} <span style={{ color: C.t2 }}>{fPct(hi2 != null ? norm[i][hi2] : r.ret)}</span>
                       </span>
                     ))}
-                    {!isFrontier && spyNorm && <span style={{ color: C.t3 }}>SPY <span style={{ color: C.t2 }}>{fV(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}</span></span>}
-                    {!isFrontier && hi2 != null && <span style={{ color: C.t4 }}>{dates[hi2]}</span>}
+                    {spyNorm && <span style={{ color: C.t3 }}>SPY <span style={{ color: C.t2 }}>{fPct(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}</span></span>}
+                    {hi2 != null && <span style={{ color: C.t4 }}>{dates[hi2]}</span>}
                     {rows[0].isLive && <span style={{ color: C.up, fontSize: 9, letterSpacing: 1 }}>LIVE</span>}
                   </div>
-                  {isFrontier ? frontier() : (
-                    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair", flexShrink: 0 }}
-                      onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width); const i = Math.round(((mx - PAD.left) / cw) * (dates.length - 1)); setAllocHover(i >= 0 && i < dates.length ? i : null); }}
-                      onMouseLeave={() => setAllocHover(null)}>
-                      {ticks.map(v => <g key={v}><line x1={PAD.left} y1={Y(v)} x2={W - PAD.right} y2={Y(v)} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={Y(v) + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v}{u}</text></g>)}
-                      {lab.map((l, i) => <text key={i} x={l.x} y={H - 6} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{l.t}</text>)}
-                      {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={isSpread ? C.t3 : C.t4} strokeWidth={isSpread ? 1 : 0.5} strokeDasharray="4,4" />}
-                      {isSpread && yMin <= 0 && yMax >= 0 && <text x={PAD.left + 4} y={Y(0) - 4} fill={C.t3} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{mixL(rows[refIdx])} = 0</text>}
-                      {spyNorm && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth={1.1} strokeDasharray="5,4" />}
-                      {norm.map((arr, i) => <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)} strokeWidth={allocHoverKey === rows[i].key ? 2.6 : 1.5} opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1} />)}
-                      {hi2 != null && <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />}
-                    </svg>
-                  )}
+                  <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair", flexShrink: 0 }}
+                    onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width); const i = Math.round(((mx - PAD.left) / cw) * (dates.length - 1)); setAllocHover(i >= 0 && i < dates.length ? i : null); }}
+                    onMouseLeave={() => setAllocHover(null)}>
+                    {ticks.map(v => <g key={v}><line x1={PAD.left} y1={Y(v)} x2={W - PAD.right} y2={Y(v)} stroke={C.border} strokeWidth={0.5} /><text x={W - PAD.right + 4} y={Y(v) + 3} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace">{v >= 0 ? "+" : ""}{v}%</text></g>)}
+                    {lab.map((l, i) => <text key={i} x={l.x} y={H - 6} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{l.t}</text>)}
+                    {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />}
+                    {spyNorm && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth={1.1} strokeDasharray="5,4" />}
+                    {norm.map((arr, i) => <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)} strokeWidth={allocHoverKey === rows[i].key ? 2.6 : 1.5} opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1} />)}
+                    {hi2 != null && <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />}
+                  </svg>
                   <div style={{ padding: "4px 10px 8px", fontSize: 9, color: C.t4, letterSpacing: 0.8 }}>
-                    RISK STATS → PERFORMANCE PANEL
+                    RISK STATISTICS FOR EACH MIX ARE IN THE PERFORMANCE PANEL
                   </div>
                 </div>
               );
@@ -13364,174 +13257,144 @@ Instructions:
               if (spyLiveQ > 0 && spyRaw.length) spyRaw[spyRaw.length - 1] = { ...spyRaw[spyRaw.length - 1], value: spyLiveQ };
               const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
 
-              const isSpread = allocMode === "spread";
-              const isFrontier = allocMode === "frontier";
-              const refIdx = Math.max(0, rows.findIndex(r => r.key === allocRef));
-              const mixLabel = r => `${Math.round(r.dividend * 100)}/${Math.round(r.growth * 100)}`;
-              const refLabel = mixLabel(rows[refIdx]);
-              // Spread: subtract the reference mix point by point. The mixes share
-              // nearly all of their movement, so this strips the common trend and
-              // leaves only what the allocation choice changed — the lines then fill
-              // the chart instead of a tenth of it.
-              const lines = isSpread ? norm.map(arr => arr.map((v, i) => v - norm[refIdx][i])) : norm;
-              const spyLine = isSpread ? null : spyNorm;
-              const unit = isSpread ? "pp" : "%";
-              const fmtV = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}${unit}`;
-
               const W = isDesktop ? 1200 : Math.min(window.innerWidth - 36, 900);
-              const H = isDesktop ? 440 : 320;
-              const PAD = { top: 30, right: 78, bottom: 46, left: 18 };
+              const H = isDesktop ? 460 : 340;
+              // y labels on the left so the right margin can carry each line's end label
+              const PAD = { top: 22, right: isDesktop ? 104 : 86, bottom: 40, left: isDesktop ? 48 : 40 };
               const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom;
-              const all = lines.flat().concat(spyLine || []);
-              const lo = Math.min(...all), hi = Math.max(...all);
+
+              // ── view window ──
+              const lastI = dates.length - 1;
+              const w0 = allocWin ? Math.max(0, Math.min(allocWin.i0, lastI - 1)) : 0;
+              const w1 = allocWin ? Math.min(lastI, Math.max(allocWin.i1, w0 + 1)) : lastI;
+              const vSpan = Math.max(1, w1 - w0);
+              const shown = rows.map((r, i) => ({ r, i })).filter(({ r }) => !allocHidden[r.key]);
+
+              const all = shown.flatMap(({ i }) => norm[i].slice(w0, w1 + 1)).concat(spyNorm && !allocHidden.SPY ? spyNorm.slice(w0, w1 + 1) : []);
+              const lo = all.length ? Math.min(...all) : 0, hi = all.length ? Math.max(...all) : 1;
               const span = hi - lo || 1;
-              // 5-8 gridlines whatever the span: spread runs a few pp, return ~40.
               const stp = [0.25, 0.5, 1, 2, 5, 10, 20].find(st => span / st <= 8) || 50;
               const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp;
               const yR = yMax - yMin || 1;
-              const X = i => PAD.left + (i / Math.max(1, dates.length - 1)) * cw;
+              const X = i => PAD.left + ((i - w0) / vSpan) * cw;
               const Y = v => PAD.top + ch - ((v - yMin) / yR) * ch;
               const ticks = []; for (let v = yMin; v <= yMax + 1e-9; v += stp) ticks.push(Math.round(v * 100) / 100);
-              const path = arr => arr.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+              const path = arr => {
+                const a = Math.max(0, w0 - 1), b = Math.min(arr.length - 1, w1 + 1);
+                let d = "";
+                for (let i = a; i <= b; i++) d += `${i === a ? "M" : "L"}${X(i).toFixed(1)},${Y(arr[i]).toFixed(1)}`;
+                return d;
+              };
 
-              const hi2 = allocHover != null && allocHover >= 0 && allocHover < dates.length ? allocHover : null;
+              const hi2 = allocHover != null && allocHover >= w0 && allocHover <= w1 ? allocHover : null;
               const xLabels = [];
               const nLab = isDesktop ? 8 : 4;
               for (let i = 0; i < nLab; i++) {
-                const idx = Math.round((i / (nLab - 1)) * (dates.length - 1));
+                const idx = Math.round(w0 + (i / (nLab - 1)) * vSpan);
                 const d = new Date(dates[idx] + "T12:00:00");
-                xLabels.push({ x: X(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
+                xLabels.push({ x: X(idx), label: vSpan < 70
+                  ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  : d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
               }
               const nDown = rows[0]?.down?.n ?? 0, nUp = rows[0]?.up?.n ?? 0;
               const thinCapture = nDown < 40 || nUp < 40;
               const fmtPct = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
               const fmtCap = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
-              const chip = (on) => ({ padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
-                border: `1px solid ${on ? C.borderActive : C.border}`, background: on ? C.accentSoft : "transparent", color: on ? C.t1 : C.t3 });
+              const mixLabel = r => `${Math.round(r.dividend * 100)}/${Math.round(r.growth * 100)}`;
 
-              // ── Risk vs return: one point per mix, the pure sleeves and SPY ──
-              const renderFrontier = () => {
-                const F = allocFrontier;
-                if (!F) return <div style={{ padding: 40, textAlign: "center", color: C.t4, fontSize: 12 }}>Unavailable.</div>;
-                const pts = [F.div, ...F.mixes, F.gro, F.spy].filter(q => q && q.dd != null && q.ret != null);
-                const FH = isDesktop ? 440 : 340;
-                const FP = { top: 22, right: 22, bottom: 48, left: 54 };
-                const xs = pts.map(q => q.dd), ys = pts.map(q => q.ret);
-                const xPad = (Math.max(...xs) - Math.min(...xs)) * 0.1 || 1, yPad = (Math.max(...ys) - Math.min(...ys)) * 0.12 || 1;
-                const x0 = Math.min(...xs) - xPad, x1 = Math.max(...xs) + xPad, y0 = Math.min(...ys) - yPad, y1 = Math.max(...ys) + yPad;
-                const fx = v => FP.left + ((v - x0) / (x1 - x0)) * (W - FP.left - FP.right);
-                const fy = v => FP.top + (1 - (v - y0) / (y1 - y0)) * (FH - FP.top - FP.bottom);
-                const nice = sp => [0.5, 1, 2, 5, 10].find(st => sp / st <= 7) || 20;
-                const xst = nice(x1 - x0), yst = nice(y1 - y0);
-                const xT = [], yT = [];
-                for (let v = Math.ceil(x0 / xst) * xst; v <= x1; v += xst) xT.push(Math.round(v * 100) / 100);
-                for (let v = Math.ceil(y0 / yst) * yst; v <= y1; v += yst) yT.push(Math.round(v * 100) / 100);
-                const chain = [F.div, ...F.mixes, F.gro].filter(q => q && q.dd != null);
-                const hov = pts.find(q => q.key === allocHoverKey);
-                const colorFor = q => q.kind === "mix" ? colorOf(q.idx) : q.kind === "pure" ? C.t1 : C.t3;
-                const labelled = [F.div, F.gro, F.spy, F.mixes[0], F.mixes[F.mixes.length - 1]].filter(Boolean);
-                return (
-                  <div>
-                    <svg width={W} height={FH} viewBox={`0 0 ${W} ${FH}`} style={{ width: "100%", height: "auto", display: "block" }}
-                      onMouseLeave={() => setAllocHoverKey(null)}>
-                      {yT.map(v => (
-                        <g key={`y${v}`}>
-                          <line x1={FP.left} y1={fy(v)} x2={W - FP.right} y2={fy(v)} stroke={C.border} strokeWidth="1" opacity="0.4" />
-                          <text x={FP.left - 8} y={fy(v) + 4} textAnchor="end" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{v}%</text>
-                        </g>
-                      ))}
-                      {xT.map(v => (
-                        <g key={`x${v}`}>
-                          <line x1={fx(v)} y1={FP.top} x2={fx(v)} y2={FH - FP.bottom} stroke={C.border} strokeWidth="1" opacity="0.25" />
-                          <text x={fx(v)} y={FH - FP.bottom + 16} textAnchor="middle" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{v}%</text>
-                        </g>
-                      ))}
-                      <text x={(FP.left + W - FP.right) / 2} y={FH - 8} textAnchor="middle" fill={C.t3} fontSize="11" fontWeight="700" fontFamily="inherit">
-                        Downside risk →
-                      </text>
-                      <text x={14} y={(FP.top + FH - FP.bottom) / 2} textAnchor="middle" fill={C.t3} fontSize="11" fontWeight="700" fontFamily="inherit"
-                        transform={`rotate(-90 14 ${(FP.top + FH - FP.bottom) / 2})`}>Return →</text>
-                      {/* The path from all-dividend to all-growth: what each step of growth buys and costs */}
-                      <path d={chain.map((q, i) => `${i ? "L" : "M"}${fx(q.dd).toFixed(1)},${fy(q.ret).toFixed(1)}`).join("")}
-                        fill="none" stroke={C.t4} strokeWidth="1.5" strokeDasharray="4,4" opacity="0.7" />
-                      {pts.map(q => {
-                        const on = allocHoverKey === q.key, dim = allocHoverKey && !on;
-                        const cx = fx(q.dd), cy = fy(q.ret), col = colorFor(q);
-                        const handlers = { onMouseEnter: () => setAllocHoverKey(q.key), onClick: () => setAllocHoverKey(on ? null : q.key), style: { cursor: "pointer" } };
-                        return q.kind === "bm"
-                          ? <rect key={q.key} x={cx - 6} y={cy - 6} width="12" height="12" fill={C.card} stroke={col} strokeWidth="2" opacity={dim ? 0.3 : 1} {...handlers} />
-                          : <circle key={q.key} cx={cx} cy={cy} r={on ? 9 : q.kind === "pure" ? 7 : 6.5}
-                              fill={q.kind === "pure" ? C.card : col} stroke={q.kind === "pure" ? col : C.card} strokeWidth={q.kind === "pure" ? 2.5 : 1.5}
-                              opacity={dim ? 0.3 : 1} {...handlers} />;
-                      })}
-                      {labelled.map(q => (
-                        <text key={`l${q.key}`} x={fx(q.dd) + 11} y={fy(q.ret) + 4} fill={C.t2} fontSize="11" fontWeight="700" fontFamily="inherit"
-                          opacity={allocHoverKey && allocHoverKey !== q.key ? 0.3 : 1}>{q.label}</text>
-                      ))}
-                    </svg>
-                    <div style={{ marginTop: 8, minHeight: 18, fontSize: 12, fontWeight: 600, color: hov ? C.t1 : C.t4, fontVariantNumeric: "tabular-nums" }}>
-                      {hov
-                        ? <>{hov.label} · return {fmtPct(hov.ret)} · risk {hov.dd.toFixed(2)}% · Sortino {hov.sortino == null ? "—" : hov.sortino.toFixed(2)}</>
-                        : "Tap a point. Left to right: more growth; up: more return."}
-                    </div>
-                  </div>
-                );
-              };
+              // End labels: each visible line's value at the right edge of the window
+              // (or at the crosshair), stacked so they never overlap.
+              const at = hi2 != null ? hi2 : w1;
+              const ends = shown.map(({ r, i }) => ({ key: r.key, text: `${mixLabel(r)} ${norm[i][at] >= 0 ? "+" : ""}${norm[i][at].toFixed(1)}%`, y: Y(norm[i][at]), color: colorOf(i) }));
+              if (spyNorm && !allocHidden.SPY) ends.push({ key: "SPY", text: `SPY ${spyNorm[at] >= 0 ? "+" : ""}${spyNorm[at].toFixed(1)}%`, y: Y(spyNorm[at]), color: C.t3 });
+              ends.sort((a, b) => a.y - b.y);
+              const GAP = 13;
+              for (let k = 1; k < ends.length; k++) if (ends[k].y - ends[k - 1].y < GAP) ends[k].y = ends[k - 1].y + GAP;
+              const over = ends.length ? ends[ends.length - 1].y - (PAD.top + ch) : 0;
+              if (over > 0) for (const e of ends) e.y -= over;   // keep the stack inside the plot
+
+              // Presets zoom the view to the last N sessions; the series are not rebased.
+              const presets = [["ALL", null], ["6M", 126], ["3M", 63], ["1M", 21]];
+              const activePreset = !allocWin ? "ALL" : (presets.find(([, n]) => n && allocWin.i1 === lastI && lastI - allocWin.i0 === Math.min(n, lastI)) || [null])[0];
+              const setPreset = n => { setAllocHover(null); setAllocWin(n ? { i0: Math.max(0, lastI - n), i1: lastI } : null); };
+              const svgX = e => { const r = e.currentTarget.getBoundingClientRect(); return (e.clientX - r.left) * (W / r.width); };
 
               return (
                 <div style={{ animation: "fadeIn 0.2s ease" }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>All allocations</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Dividend + Growth — all allocations</div>
                     <div style={{ fontSize: 11, color: C.t4 }}>
-                      since {dates[0]}{rows[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
+                      Rebalanced quarterly on the book's own rebalance dates · from {dates[0]}
+                      {rows[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
                     </div>
                   </div>
 
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 10, marginBottom: 14 }}>
-                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                      {[["return", "Return"], ["spread", "Spread"], ["frontier", "Risk / Return"]].map(([k, l]) => (
-                        <button key={k} onClick={() => { setAllocMode(k); setAllocHover(null); setAllocHoverKey(null); }} style={chip(allocMode === k)}>{l}</button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                      {presets.map(([l, n]) => (
+                        <button key={l} onClick={() => setPreset(n)} style={{
+                          padding: "5px 11px", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                          border: `1px solid ${activePreset === l ? C.borderActive : C.border}`,
+                          background: activePreset === l ? C.accentSoft : "transparent", color: activePreset === l ? C.t1 : C.t3,
+                        }}>{l}</button>
                       ))}
-                      {isSpread && (
-                        <select value={allocRef} onChange={e => setAllocRef(e.target.value)}
-                          style={{ ...chip(false), padding: "6px 8px", color: C.t2, appearance: "auto" }}>
-                          {rows.map(r => <option key={r.key} value={r.key}>vs {mixLabel(r)}</option>)}
-                        </select>
-                      )}
+                      {allocWin && !activePreset && <span style={{ fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: 0.8 }}>ZOOMED · DBL-CLICK TO RESET</span>}
                     </div>
-
-                    {isFrontier ? renderFrontier() : (<>
                     <div style={{ position: "relative" }}>
-                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair" }}
+                      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", cursor: "crosshair", touchAction: "pan-y" }}
                         onMouseMove={e => {
-                          const r = e.currentTarget.getBoundingClientRect();
-                          const mx = (e.clientX - r.left) * (W / r.width);
-                          const i = Math.round(((mx - PAD.left) / cw) * (dates.length - 1));
-                          setAllocHover(i >= 0 && i < dates.length ? i : null);
+                          const mx = svgX(e);
+                          if (allocPanRef.current) {
+                            const shift = Math.round(-((mx - allocPanRef.current.x0) / cw) * vSpan);
+                            const { i0, i1 } = allocPanRef.current.win;
+                            const len = i1 - i0;
+                            const lo2 = Math.max(0, Math.min(i0 + shift, lastI - len));
+                            setAllocWin({ i0: lo2, i1: lo2 + len });
+                            return;
+                          }
+                          const i = Math.round(w0 + ((mx - PAD.left) / cw) * vSpan);
+                          setAllocHover(i >= w0 && i <= w1 ? i : null);
                         }}
-                        onMouseLeave={() => setAllocHover(null)}>
+                        onMouseDown={e => { allocPanRef.current = { x0: svgX(e), win: { i0: w0, i1: w1 } }; }}
+                        onMouseUp={() => { allocPanRef.current = null; }}
+                        onMouseLeave={() => { setAllocHover(null); allocPanRef.current = null; }}
+                        onDoubleClick={() => setAllocWin(null)}
+                        onWheel={e => {
+                          if (dates.length < 10) return;
+                          e.preventDefault();
+                          const anchor = Math.max(w0, Math.min(w1, Math.round(w0 + ((svgX(e) - PAD.left) / cw) * vSpan)));
+                          const len = Math.max(8, Math.min(lastI, Math.round(vSpan * (e.deltaY > 0 ? 1.2 : 1 / 1.2))));
+                          const frac = (anchor - w0) / vSpan;
+                          const lo2 = Math.max(0, Math.min(Math.round(anchor - frac * len), lastI - len));
+                          setAllocWin(lo2 <= 0 && lo2 + len >= lastI ? null : { i0: lo2, i1: lo2 + len });
+                        }}>
+                        <defs><clipPath id="allocClip"><rect x={PAD.left} y={PAD.top - 2} width={cw} height={ch + 4} /></clipPath></defs>
                         {ticks.map(v => (
                           <g key={v}>
                             <line x1={PAD.left} y1={Y(v)} x2={W - PAD.right} y2={Y(v)} stroke={C.border} strokeWidth="1" opacity="0.4" />
-                            <text x={W - PAD.right + 10} y={Y(v) + 4} fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{isSpread && v > 0 ? "+" : ""}{v}{unit}</text>
+                            <text x={PAD.left - 8} y={Y(v) + 4} textAnchor="end" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{v}%</text>
                           </g>
                         ))}
                         {xLabels.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{l.label}</text>)}
-                        {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={isSpread ? C.t3 : C.t4} strokeWidth={isSpread ? 1.5 : 1} strokeDasharray="4,4" opacity={isSpread ? 0.8 : 0.5} />}
-                        {isSpread && yMin <= 0 && yMax >= 0 && (
-                          <text x={PAD.left + 6} y={Y(0) - 6} fill={C.t3} fontSize="11" fontWeight="700" fontFamily="inherit">{refLabel} = 0</text>
-                        )}
-                        {spyLine && <path d={path(spyLine)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
-                        {lines.map((arr, i) => (
-                          <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)}
-                            strokeWidth={allocHoverKey === rows[i].key ? 3.2 : (isSpread ? 2.2 : 2)}
-                            opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1}
-                            strokeLinejoin="round" strokeLinecap="round" />
+                        <g clipPath="url(#allocClip)">
+                          {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />}
+                          {spyNorm && !allocHidden.SPY && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
+                          {shown.map(({ r, i }) => (
+                            <path key={r.key} d={path(norm[i])} fill="none" stroke={colorOf(i)}
+                              strokeWidth={allocHoverKey === r.key ? 3.2 : 2}
+                              opacity={allocHoverKey && allocHoverKey !== r.key ? 0.2 : 1}
+                              strokeLinejoin="round" strokeLinecap="round" />
+                          ))}
+                        </g>
+                        {/* end labels in the right margin, each tied to its line */}
+                        {ends.map(e => (
+                          <text key={e.key} x={W - PAD.right + 8} y={e.y + 4} fill={e.color} fontSize="11" fontWeight="700" fontFamily="inherit"
+                            opacity={allocHoverKey && allocHoverKey !== e.key ? 0.3 : 1}>{e.text}</text>
                         ))}
                         {hi2 != null && (
                           <g>
                             <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.65" />
-                            {lines.map((arr, i) => <circle key={rows[i].key} cx={X(hi2)} cy={Y(arr[hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
+                            {shown.map(({ r, i }) => <circle key={r.key} cx={X(hi2)} cy={Y(norm[i][hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
                             {(() => {
                               const w = 78, x = Math.max(PAD.left, Math.min(W - PAD.right - w, X(hi2) - w / 2));
                               const d = new Date(dates[hi2] + "T12:00:00");
@@ -13548,35 +13411,39 @@ Instructions:
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 12 }}>
                       {rows.map((r, i) => {
-                        const v = hi2 != null ? lines[i][hi2] : lines[i][lines[i].length - 1];
+                        const off = !!allocHidden[r.key];
                         return (
-                          <div key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
-                            onClick={() => setAllocHoverKey(allocHoverKey === r.key ? null : r.key)}
-                            style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                          <div key={r.key} onMouseEnter={() => !off && setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
+                            onClick={() => { setAllocHoverKey(null); setAllocHidden(h => ({ ...h, [r.key]: !h[r.key] })); }}
+                            title={off ? "Show" : "Hide"}
+                            style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: off ? 0.35 : 1 }}>
                             <div style={{ width: 18, height: 3, borderRadius: 2, background: colorOf(i) }} />
-                            <span style={{ fontSize: 11, fontWeight: 700, color: C.t2 }}>{mixLabel(r)}</span>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: v >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>{fmtV(v)}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: C.t2, textDecoration: off ? "line-through" : "none" }}>{mixLabel(r)}</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? norm[i][hi2] : r.ret) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                              {fmtPct(hi2 != null ? norm[i][hi2] : r.ret)}
+                            </span>
                           </div>
                         );
                       })}
-                      {spyLine && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      {spyNorm && (
+                        <div onClick={() => setAllocHidden(h => ({ ...h, SPY: !h.SPY }))} title={allocHidden.SPY ? "Show" : "Hide"}
+                          style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: allocHidden.SPY ? 0.35 : 1 }}>
                           <div style={{ width: 18, height: 0, borderTop: `2px dashed ${C.t3}` }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t3 }}>SPY</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? spyLine[hi2] : spyLine[spyLine.length - 1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
-                            {fmtPct(hi2 != null ? spyLine[hi2] : spyLine[spyLine.length - 1])}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, textDecoration: allocHidden.SPY ? "line-through" : "none" }}>SPY</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                            {fmtPct(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}
                           </span>
                         </div>
                       )}
                     </div>
-                    </>)}
                   </div>
 
                   {/* Risk statistics */}
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Risk statistics</div>
                     <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
-                      vs SPY total return · daily{nUp + nDown > 0 && ` · ${nUp} up / ${nDown} down days`}
+                      Sortino on daily returns, zero MAR, annualised. Capture ratios are geometric and sampled daily against SPY total
+                      return{nUp + nDown > 0 && ` — ${nUp} up / ${nDown} down days`}.
                     </div>
                     <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
                     <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontVariantNumeric: "tabular-nums" }}>
@@ -13619,8 +13486,12 @@ Instructions:
                         lean on. Read Sortino and Max DD first.
                       </div>
                     )}
-                    <div style={{ fontSize: 10, color: C.t4, marginTop: 10 }}>
-                      Up above 100 and down below 100 is the desirable pair. Window starts after the spring-2025 drawdown.
+                    <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
+                      Up capture above 100 means the allocation gained more than SPY on days SPY rose; down capture below 100 means it lost
+                      less on days SPY fell. Capture is sampled daily rather than monthly, the usual convention: this window holds only five
+                      SPY-down months, four of them under 1.1%, and dividing by a near-zero average move made the monthly figure arbitrary —
+                      it showed downside improving as growth rose, which Sortino and Max DD both contradict. Max DD is the worst peak-to-trough
+                      fall over the window.
                     </div>
                   </div>
                 </div>
