@@ -140,6 +140,10 @@ const BLEND_MIXES = [
   { key: "blend50", dividend: 0.50, growth: 0.50 },
 ];
 const BLEND_KEYS = new Set(BLEND_MIXES.map(m => m.key));
+// The all-allocations chart draws only the two ends and the middle; seven
+// near-identical lines could not be told apart. Every mix is still its own
+// chart in the sleeve dropdown, and all seven stay in the risk tables.
+const ALLOC_CHART_KEYS = new Set(["blend90", "blend65", "blend50"]);
 const blendLabel = (m) => `${Math.round(m.dividend * 100)} / ${Math.round(m.growth * 100)} Dividend + Growth`;
 const BLEND_REBAL_MIN_TRADES = 8;   // a sleeve-wide reshuffle, not a single swap
 const BLEND_REBAL_CLUSTER_DAYS = 14; // the two sleeves may rebalance days apart
@@ -7723,7 +7727,8 @@ Instructions:
               const spyNorm = spyRaw.length > 1 ? spyRaw.map(p => (p.value / spyRaw[0].value - 1) * 100) : null;
               const W = 1000, H = 330, PAD = { top: 14, right: 58, bottom: 24, left: 8 };
               const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom;
-              const all = norm.flat().concat(spyNorm || []);
+              const onChart = rows.map((r, i) => i).filter(i => ALLOC_CHART_KEYS.has(rows[i].key));
+              const all = onChart.flatMap(i => norm[i]).concat(spyNorm || []);
               const lo = Math.min(...all), hi = Math.max(...all), span = hi - lo || 1;
               const stp = span <= 5 ? 1 : span <= 20 ? 2 : span <= 50 ? 5 : 10;
               const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp, yR = yMax - yMin || 1;
@@ -7737,7 +7742,7 @@ Instructions:
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: C.bg }}>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 12, padding: "6px 10px", fontSize: 11, fontWeight: 600 }}>
                     <span style={{ color: C.t1, fontWeight: 700 }}>DIV + GROWTH · ALL MIXES</span>
-                    {rows.map((r, i) => (
+                    {rows.map((r, i) => ({ r, i })).filter(({ r }) => ALLOC_CHART_KEYS.has(r.key)).map(({ r, i }) => (
                       <span key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)} style={{ color: colorOf(i), cursor: "default" }}>
                         {Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)} <span style={{ color: C.t2 }}>{fPct(hi2 != null ? norm[i][hi2] : r.ret)}</span>
                       </span>
@@ -7753,7 +7758,7 @@ Instructions:
                     {lab.map((l, i) => <text key={i} x={l.x} y={H - 6} fill={C.t4} fontSize={9} fontFamily="'IBM Plex Mono', monospace" textAnchor="middle">{l.t}</text>)}
                     {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth={0.5} strokeDasharray="4,4" />}
                     {spyNorm && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth={1.1} strokeDasharray="5,4" />}
-                    {norm.map((arr, i) => <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)} strokeWidth={allocHoverKey === rows[i].key ? 2.6 : 1.5} opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1} />)}
+                    {onChart.map(i => <path key={rows[i].key} d={path(norm[i])} fill="none" stroke={colorOf(i)} strokeWidth={allocHoverKey === rows[i].key ? 2.6 : 1.5} opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1} />)}
                     {hi2 != null && <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />}
                   </svg>
                   <div style={{ padding: "4px 10px 8px", fontSize: 9, color: C.t4, letterSpacing: 0.8 }}>
@@ -13268,7 +13273,7 @@ Instructions:
               const w0 = allocWin ? Math.max(0, Math.min(allocWin.i0, lastI - 1)) : 0;
               const w1 = allocWin ? Math.min(lastI, Math.max(allocWin.i1, w0 + 1)) : lastI;
               const vSpan = Math.max(1, w1 - w0);
-              const shown = rows.map((r, i) => ({ r, i })).filter(({ r }) => !allocHidden[r.key]);
+              const shown = rows.map((r, i) => ({ r, i })).filter(({ r }) => ALLOC_CHART_KEYS.has(r.key) && !allocHidden[r.key]);
 
               const all = shown.flatMap(({ i }) => norm[i].slice(w0, w1 + 1)).concat(spyNorm && !allocHidden.SPY ? spyNorm.slice(w0, w1 + 1) : []);
               const lo = all.length ? Math.min(...all) : 0, hi = all.length ? Math.max(...all) : 1;
@@ -13410,7 +13415,7 @@ Instructions:
                       </svg>
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 12 }}>
-                      {rows.map((r, i) => {
+                      {rows.map((r, i) => ({ r, i })).filter(({ r }) => ALLOC_CHART_KEYS.has(r.key)).map(({ r, i }) => {
                         const off = !!allocHidden[r.key];
                         return (
                           <div key={r.key} onMouseEnter={() => !off && setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
