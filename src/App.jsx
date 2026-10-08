@@ -2418,7 +2418,7 @@ Instructions:
   // these two, so this is all the live input the allocations view needs.
   const srcSleeveLive = useMemo(() => {
     const out = {};
-    for (const k of ["dividend", "growth"]) {
+    for (const k of ["dividend", "growth", "fci100", "fciValues"]) {
       const d = perfDataMap[k];
       if (!d?.holdings) continue;
       let val = d.cash || 0, priced = 0, total = 0;
@@ -2439,15 +2439,16 @@ Instructions:
   // Risk statistics for the sleeve on screen: the sleeve itself plus every
   // benchmark it is being charted against, over one or more periods. Dividend
   // gets a second period from the start of Carson's stewardship.
-  const sleeveRisk = useMemo(() => {
-    const d = perfDataMap[perfSleeve];
+  // Risk statistics for any sleeve. One function serves the classic chart (the
+  // selected sleeve, with whatever benchmarks are toggled on) and the terminal
+  // Performance panel (every sleeve, own benchmark only), so the two cannot
+  // compute a figure differently.
+  const buildSleeveRisk = (k, live, toggles) => {
+    const d = perfDataMap[k];
     if (!d?.portfolio?.length) return null;
 
     const full = d.portfolio.map(p => ({ date: p.date, value: p.value }));
     const todayStr = new Date().toISOString().slice(0, 10);
-    const live = BLEND_KEYS.has(perfSleeve)
-      ? ((srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0) ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth : null)
-      : (liveValue?.value > 0 ? liveValue.value : null);
     if (live > 0) {
       if (full[full.length - 1].date === todayStr) full[full.length - 1] = { date: todayStr, value: live };
       else full.push({ date: todayStr, value: live });
@@ -2468,21 +2469,21 @@ Instructions:
 
     // Capture runs against the sleeve's own yardstick, falling back to SPY only
     // if that series is missing.
-    const capSym = bmMaps[captureBmFor(perfSleeve)] ? captureBmFor(perfSleeve) : "SPY";
+    const capSym = bmMaps[captureBmFor(k)] ? captureBmFor(k) : "SPY";
     const capMap = bmMaps[capSym];
 
     // Rows: whatever is toggled onto the chart, plus the capture benchmark —
     // which must be present, since it is the row that reads 100/100 and so
     // shows the table is measuring what it claims.
-    const hidden = new Set(RISK_HIDE_BM[perfSleeve] || []);
-    const syms = [...new Set([...Object.keys(perfBmToggles).filter(k => perfBmToggles[k]), capSym])]
+    const hidden = new Set(RISK_HIDE_BM[k] || []);
+    const syms = [...new Set([...Object.keys(toggles).filter(k => toggles[k]), capSym])]
       .filter(sym => bmMaps[sym] && (sym === capSym || !hidden.has(sym)));
 
     // The dividend book predates daily recording, so its history is measured
     // weekly — the frequency it was actually kept at — rather than thrown away.
     // Both of its periods use weekly so the before/after comparison is like for
     // like; annualising a daily Sortino against a weekly one would not be.
-    const hasStew = perfSleeve === "dividend" && full.some(p => p.date >= STEW_START);
+    const hasStew = k === "dividend" && full.some(p => p.date >= STEW_START);
     const periods = hasStew
       ? [
           { key: "pre", label: "Inception to stewardship", from: full[0].date, to: STEW_START, freq: "monthly", trimmed: 0 },
@@ -2520,7 +2521,7 @@ Instructions:
 
       const rows = [];
       const own = computeRisk(ser, capSeries, ppy);
-      if (own) rows.push({ name: perfSleeveLabel(perfSleeve), color: C.accent, isSelf: true, ...own });
+      if (own) rows.push({ name: kLabel(k), color: C.accent, isSelf: true, ...own });
       for (const sym of syms) {
         const r = computeRisk(bmSeriesFor(sym), capSeries, ppy);
         if (r) rows.push({ name: sym, color: BM_COLORS[sym] || C.t3, isCaptureBm: sym === capSym, ...r });
@@ -2529,7 +2530,27 @@ Instructions:
     }).filter(Boolean);
 
     return built.length ? { periods: built, isLive: live > 0, capSym } : null;
+  };
+
+  const sleeveRisk = useMemo(() => {
+    const d = perfDataMap[perfSleeve];
+    const live = BLEND_KEYS.has(perfSleeve)
+      ? ((d && srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0) ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth : null)
+      : (liveValue?.value > 0 ? liveValue.value : null);
+    return buildSleeveRisk(perfSleeve, live, perfBmToggles);
   }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, bmQuotes, bmDivs, bmBars, perfBmToggles, C.accent, C.t3]);
+
+  // Every base sleeve at once, for the terminal Performance panel. Only built
+  // while that panel is open, since it re-runs on each quote tick.
+  const drawerRisk = useMemo(() => {
+    if (tDrawer !== "performance") return null;
+    const out = {};
+    for (const k of ["dividend", "growth", "fci100", "fciValues"]) {
+      const live = (k === perfSleeve && liveValue?.value > 0) ? liveValue.value : (srcSleeveLive[k] ?? null);
+      out[k] = buildSleeveRisk(k, live, {});   // no toggles: the sleeve and its own benchmark
+    }
+    return out;
+  }, [tDrawer, perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, bmQuotes, bmDivs, bmBars, C.accent, C.t3]);
 
   const allocationStats = useMemo(() => {
     const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
@@ -6402,7 +6423,54 @@ Instructions:
                   { sleeve: "fciValues", bms: ["QQQ", "SPY"] },
                   ...BLEND_MIXES.filter(m => perfDataMap[m.key]).map(m => ({ sleeve: m.key, bms: ["SPY"], mix: true })),
                 ];
-                const renderSection = ({ sleeve, bms }) => {
+                // Risk statistics, shown here rather than on the home screen. Same
+                // numbers as classic: buildSleeveRisk / allocationStats.
+                const fPctR = (v, d = 2) => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(d)}%`;
+                const fCapR = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
+                const renderRiskBlock = (R) => {
+                  if (!R) return null;
+                  return (
+                    <div style={{ marginTop: 8, padding: "6px 8px", background: C.surface, border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 9, color: C.t4, letterSpacing: 1, marginBottom: 2 }}>
+                        <span style={{ color: C.accent, fontWeight: 700 }}>RISK</span>  CAPTURE VS {R.capSym} TOTAL RETURN
+                        {R.isLive && <span style={{ color: C.up, fontWeight: 700 }}>  LIVE</span>}
+                      </div>
+                      {R.periods.map((per, pi) => {
+                        const minObs = per.freq === "monthly" ? 24 : per.freq === "weekly" ? 20 : 40;
+                        const thin = per.rows.some(r => (r.up?.n ?? 0) < minObs || (r.down?.n ?? 0) < minObs);
+                        return (
+                          <div key={per.key} style={{ marginTop: pi ? 6 : 0 }}>
+                            <div style={{ fontSize: 9, color: C.t4, letterSpacing: 0.6 }}>
+                              <span style={{ color: C.t2, fontWeight: 700 }}>{per.label.toUpperCase()}</span>
+                              {"  "}{per.from} → {per.to} · {per.n} {per.freq}
+                              {per.trimmed > 0 && ` · ${per.trimmed} earlier pts excluded`}
+                              {thin && <span style={{ color: C.dn }}> · thin sample</span>}
+                            </div>
+                            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
+                              <thead><tr>{["", "Return", "Sortino", "Max DD", "Up", "Down"].map((h, i) => <th key={h || i} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
+                              <tbody>
+                                {per.rows.map(r => (
+                                  <tr key={r.name} style={{ borderTop: `1px solid ${C.border}`, background: r.isSelf ? C.accentSoft : "transparent" }}>
+                                    <td style={{ ...tTd("left"), fontWeight: r.isSelf ? 700 : 500, color: r.isSelf ? C.t1 : C.t3 }}>{r.isSelf ? "Sleeve" : r.name}</td>
+                                    <td style={{ ...tTd(), fontWeight: 600, color: r.ret == null ? C.t4 : r.ret >= 0 ? C.up : C.dn }}>{fPctR(r.ret)}</td>
+                                    <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
+                                    <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
+                                    <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCapR(r.up)}</td>
+                                    <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCapR(r.down)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      })}
+                      {R.periods.length > 1 && new Set(R.periods.map(p => p.freq)).size > 1 && (
+                        <div style={{ fontSize: 9, color: C.t4, marginTop: 4 }}>Periods sampled at different frequencies — read each on its own, not against each other.</div>
+                      )}
+                    </div>
+                  );
+                };
+                const renderSection = ({ sleeve, bms, mix }) => {
                   // Hide trailing-period columns whose lookback window pre-dates the sleeve's inception
                   const pStart = perfDataMap[sleeve]?.portfolio?.[0]?.date;
                   const daysAvailable = pStart ? (Date.now() - new Date(pStart + "T12:00:00").getTime()) / 86400000 : 0;
@@ -6429,7 +6497,7 @@ Instructions:
                         </tr></thead>
                         <tbody>
                           {allRows.map((row, i) => (
-                            <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, cursor: row.isPortfolio ? "pointer" : "default" }} onClick={row.isPortfolio ? () => { setTerminalActiveSym("__portfolio__"); setTChartSleeve(row.sleeve); setPerfSleeve(row.sleeve); setTDrawer(null); } : undefined} onMouseEnter={row.isPortfolio ? e => e.currentTarget.style.background = C.cardHover : undefined} onMouseLeave={row.isPortfolio ? e => e.currentTarget.style.background = "transparent" : undefined}>
+                            <tr key={i} style={{ borderBottom: `1px solid ${C.border}`, cursor: row.isPortfolio ? "pointer" : "default" }} onClick={row.isPortfolio ? () => { setTerminalActiveSym("__portfolio__"); setTAllocAll(false); setTChartSleeve(row.sleeve); setPerfSleeve(row.sleeve); setTChartRange(BLEND_KEYS.has(row.sleeve) ? "ALL" : row.sleeve === "dividend" ? "STEW" : tChartRange === "STEW" ? "3Y" : tChartRange); setTDrawer(null); } : undefined} onMouseEnter={row.isPortfolio ? e => e.currentTarget.style.background = C.cardHover : undefined} onMouseLeave={row.isPortfolio ? e => e.currentTarget.style.background = "transparent" : undefined}>
                               <td style={{ ...tTd("left"), fontWeight: row.isPortfolio ? 700 : 600, color: row.isPortfolio ? C.t1 : C.t3 }}>{row.label}</td>
                               <td style={{ ...tTd(), color: row.isPortfolio ? C.t2 : C.t4 }}>{row.isPortfolio ? fmtVal(row.nav) : "—"}</td>
                               {row.returns.map((v, j) => <td key={j} style={{ ...tTd(), fontWeight: row.isPortfolio ? 600 : 500, color: cR(v) }}>{fmtR(v)}</td>)}
@@ -6437,6 +6505,7 @@ Instructions:
                           ))}
                         </tbody>
                       </table>
+                      {!mix && renderRiskBlock(drawerRisk?.[sleeve])}
                     </div>
                   );
                 };
@@ -6448,6 +6517,32 @@ Instructions:
                     </div>
                   )}
                   {SECTIONS.filter(x => x.mix).map(renderSection)}
+                  {allocationStats.length > 0 && (
+                    <div style={{ marginTop: 4, padding: "6px 8px", background: C.surface, border: `1px solid ${C.border}` }}>
+                      <div style={{ fontSize: 9, color: C.t4, letterSpacing: 1, marginBottom: 2 }}>
+                        <span style={{ color: C.accent, fontWeight: 700 }}>ALLOCATION RISK</span>  CAPTURE VS SPY TOTAL RETURN · DAILY · {allocationStats[0].up.n} UP / {allocationStats[0].down.n} DOWN DAYS · FROM {allocationStats[0].series[0].date}
+                        {allocationStats[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}>  LIVE</span>}
+                      </div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
+                        <thead><tr>{["Mix", "Return", "Sortino", "Max DD", "Up", "Down"].map((h, i) => <th key={h} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {allocationStats.map(r => (
+                            <tr key={r.key} style={{ borderTop: `1px solid ${C.border}` }}>
+                              <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}>{Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)}</td>
+                              <td style={{ ...tTd(), fontWeight: 600, color: r.ret >= 0 ? C.up : C.dn }}>{fPctR(r.ret)}</td>
+                              <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
+                              <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
+                              <td style={{ ...tTd(), color: C.t1 }}>{fCapR(r.up)}</td>
+                              <td style={{ ...tTd(), color: C.t1 }}>{fCapR(r.down)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div style={{ fontSize: 9, color: C.t4, marginTop: 4 }}>
+                        Starts at growth's inception, after the spring-2025 drawdown — so these Sortinos run higher than the dividend stewardship figure, which includes it.
+                      </div>
+                    </div>
+                  )}
                   <div style={{ ...tEyebrow, paddingBottom: 6, borderBottom: `1px solid ${C.accent}33`, marginBottom: 8 }}>Top Movers Today</div>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
                     <thead><tr style={{ borderBottom: `1px solid ${C.border}` }}>
@@ -7605,56 +7700,6 @@ Instructions:
             //    reads, so the two layouts cannot disagree; only the styling differs.
             const fPct = (v, d = 2) => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(d)}%`;
             const fCap = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
-            const tRiskStrip = () => {
-              const R = sleeveRisk;
-              if (!R) return null;
-              return (
-                <div style={{ flexShrink: 0, borderTop: `1px solid ${C.border}`, background: C.surface, padding: "6px 10px 8px", maxHeight: 250, overflowY: "auto" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 2 }}>
-                    <span style={tEyebrow}>Risk</span>
-                    <span style={{ fontSize: 9, color: C.t4, letterSpacing: 1 }}>CAPTURE VS {R.capSym} TOTAL RETURN</span>
-                    {R.isLive && <span style={{ fontSize: 9, color: C.up, fontWeight: 700, letterSpacing: 1 }}>LIVE</span>}
-                  </div>
-                  {R.periods.map((per, pi) => {
-                    const minObs = per.freq === "monthly" ? 24 : per.freq === "weekly" ? 20 : 40;
-                    const thin = per.rows.some(r => (r.up?.n ?? 0) < minObs || (r.down?.n ?? 0) < minObs);
-                    return (
-                      <div key={per.key} style={{ marginTop: pi ? 6 : 2 }}>
-                        <div style={{ fontSize: 9, color: C.t4, letterSpacing: 0.8, marginBottom: 1 }}>
-                          <span style={{ color: C.accent, fontWeight: 700 }}>{per.label.toUpperCase()}</span>
-                          {"  "}{per.from} → {per.to} · {per.n} {per.freq}
-                          {per.trimmed > 0 && ` · ${per.trimmed} earlier pts excluded`}
-                          {thin && <span style={{ color: C.dn }}> · thin sample</span>}
-                        </div>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
-                          <thead><tr>
-                            {["", "Return", "Sortino", "Max DD", "Up", "Down"].map((h, i) => <th key={h || i} style={tTh(i ? "right" : "left", false)}>{h}</th>)}
-                          </tr></thead>
-                          <tbody>
-                            {per.rows.map(r => (
-                              <tr key={r.name} style={{ background: r.isSelf ? C.accentSoft : "transparent", borderTop: `1px solid ${C.border}` }}>
-                                <td style={{ ...tTd("left"), fontWeight: r.isSelf ? 700 : 500, color: r.isSelf ? C.t1 : C.t2 }}>
-                                  <span style={{ display: "inline-block", width: 10, height: 2, background: r.color, marginRight: 6, verticalAlign: "middle" }} />{r.name}
-                                </td>
-                                <td style={{ ...tTd(), fontWeight: 600, color: r.ret == null ? C.t4 : r.ret >= 0 ? C.up : C.dn }}>{fPct(r.ret)}</td>
-                                <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
-                                <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
-                                <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCap(r.up)}</td>
-                                <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCap(r.down)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    );
-                  })}
-                  {R.periods.length > 1 && new Set(R.periods.map(p => p.freq)).size > 1 && (
-                    <div style={{ fontSize: 9, color: C.t4, marginTop: 4 }}>Periods sampled at different frequencies — read each on its own, not against each other.</div>
-                  )}
-                </div>
-              );
-            };
-
             const tAllocView = () => {
               const rows = allocationStats;
               if (!rows.length) return <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", ...tEyebrowMuted }}>{perfLoading ? "LOADING ALLOCATIONS" : "ALLOCATIONS UNAVAILABLE"}</div>;
@@ -7701,30 +7746,8 @@ Instructions:
                     {norm.map((arr, i) => <path key={rows[i].key} d={path(arr)} fill="none" stroke={colorOf(i)} strokeWidth={allocHoverKey === rows[i].key ? 2.6 : 1.5} opacity={allocHoverKey && allocHoverKey !== rows[i].key ? 0.2 : 1} />)}
                     {hi2 != null && <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.accent} strokeWidth={0.5} strokeDasharray="3,3" />}
                   </svg>
-                  <div style={{ flex: 1, overflow: "auto", borderTop: `1px solid ${C.border}`, padding: "4px 10px 8px" }}>
-                    <div style={{ fontSize: 9, color: C.t4, letterSpacing: 0.8, marginBottom: 2 }}>
-                      <span style={{ color: C.accent, fontWeight: 700 }}>RISK</span>  CAPTURE VS SPY TOTAL RETURN · DAILY · {rows[0].up.n} UP / {rows[0].down.n} DOWN DAYS · FROM {dates[0]}
-                    </div>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
-                      <thead><tr>{["Mix", "Value", "Return", "Sortino", "Max DD", "Up", "Down"].map((h, i) => <th key={h} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {rows.map((r, i) => (
-                          <tr key={r.key} onMouseEnter={() => setAllocHoverKey(r.key)} onMouseLeave={() => setAllocHoverKey(null)}
-                            style={{ borderTop: `1px solid ${C.border}`, background: allocHoverKey === r.key ? C.cardHover : "transparent" }}>
-                            <td style={{ ...tTd("left"), fontWeight: 700, color: C.t1 }}><span style={{ display: "inline-block", width: 10, height: 2, background: colorOf(i), marginRight: 6, verticalAlign: "middle" }} />{Math.round(r.dividend * 100)}/{Math.round(r.growth * 100)}</td>
-                            <td style={{ ...tTd(), color: C.t2 }}>{r.value != null ? `$${Math.round(r.value).toLocaleString()}` : "—"}</td>
-                            <td style={{ ...tTd(), fontWeight: 600, color: r.ret >= 0 ? C.up : C.dn }}>{fPct(r.ret)}</td>
-                            <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
-                            <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
-                            <td style={{ ...tTd(), color: C.t1 }}>{fCap(r.up)}</td>
-                            <td style={{ ...tTd(), color: C.t1 }}>{fCap(r.down)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div style={{ fontSize: 9, color: C.t4, marginTop: 4 }}>
-                      Starts at growth's inception, after the spring-2025 drawdown — so these Sortinos run higher than the dividend stewardship figure, which includes it.
-                    </div>
+                  <div style={{ padding: "4px 10px 8px", fontSize: 9, color: C.t4, letterSpacing: 0.8 }}>
+                    RISK STATISTICS FOR EACH MIX ARE IN THE PERFORMANCE PANEL
                   </div>
                 </div>
               );
@@ -8006,7 +8029,6 @@ Instructions:
                   </div>
                 );
               })()}
-              {isPortfolio && !tAllocAll && tRiskStrip()}
             </>);
           })()}
         </div>
