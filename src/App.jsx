@@ -852,6 +852,13 @@ const TERMINAL = {
   isTerminal: true,
 };
 /* ── Benchmark overlay colors (muted, brand-adjacent) ── */
+// The index each sleeve's capture is measured against — its own yardstick,
+// not a common one. The combined allocations stay on SPY: they mix both
+// sleeves, so neither sleeve's benchmark fits and the broad market is the
+// neutral choice.
+const SLEEVE_CAPTURE_BM = { dividend: "DVY", growth: "IUSG", fci100: "SPY", fciValues: "SPY" };
+const captureBmFor = (k) => SLEEVE_CAPTURE_BM[k] || "SPY";
+
 const BM_COLORS = { SPY: "#8FA3D9", QQQ: "#B08BD0", DIA: "#C98B6B", DVY: "#D9A441", IUSG: "#7FAE9B" };
 
 /* ── Playbook historical data (shared by classic tab + terminal drawer) ── */
@@ -2387,12 +2394,17 @@ Instructions:
     const trimmed = denseIdx;
 
     const bmMaps = { ...(perfDataMap.dividend?.benchmarks || {}), ...(d.benchmarks || {}) };
-    const spyMap = bmMaps.SPY;
     const liveOf = (sym) => (quotes[sym] || quotesRef.current?.[sym])?.p;
 
-    // Benchmarks shown are the ones toggled onto the chart, plus SPY, which
-    // capture is always measured against and which anchors the table at 100/100.
-    const syms = [...new Set([...Object.keys(perfBmToggles).filter(k => perfBmToggles[k]), "SPY"])]
+    // Capture runs against the sleeve's own yardstick, falling back to SPY only
+    // if that series is missing.
+    const capSym = bmMaps[captureBmFor(perfSleeve)] ? captureBmFor(perfSleeve) : "SPY";
+    const capMap = bmMaps[capSym];
+
+    // Rows: whatever is toggled onto the chart, plus the capture benchmark —
+    // which must be present, since it is the row that reads 100/100 and so
+    // shows the table is measuring what it claims.
+    const syms = [...new Set([...Object.keys(perfBmToggles).filter(k => perfBmToggles[k]), capSym])]
       .filter(sym => bmMaps[sym]);
 
     const periods = [{ key: "dense", label: trimmed > 0 ? `Since ${denseFrom}` : "Full history", from: denseFrom, trimmed }];
@@ -2413,24 +2425,20 @@ Instructions:
         }
         return arr;
       };
-      const spy = benchmarkSeriesOn(dates, spyMap);
-      const spyLive = liveOf("SPY");
-      if (spyLive > 0 && spy.length && spy[spy.length - 1].date === dates[dates.length - 1]) {
-        spy[spy.length - 1] = { ...spy[spy.length - 1], value: spyLive };
-      }
+      const capSeries = bmSeriesFor(capSym);
 
       const rows = [];
-      const own = computeRisk(ser, spy);
+      const own = computeRisk(ser, capSeries);
       if (own) rows.push({ name: perfSleeveLabel(perfSleeve), color: C.accent, isSelf: true, ...own });
       for (const sym of syms) {
         const bs = bmSeriesFor(sym);
-        const r = computeRisk(bs, spy);
-        if (r) rows.push({ name: sym, color: BM_COLORS[sym] || C.t3, ...r });
+        const r = computeRisk(bs, capSeries);
+        if (r) rows.push({ name: sym, color: BM_COLORS[sym] || C.t3, isCaptureBm: sym === capSym, ...r });
       }
       return rows.length ? { ...per, from: ser[0].date, rows } : null;
     }).filter(Boolean);
 
-    return built.length ? { periods: built, isLive: live > 0 } : null;
+    return built.length ? { periods: built, isLive: live > 0, capSym } : null;
   }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes, perfBmToggles, C.accent, C.t3]);
 
   const allocationStats = useMemo(() => {
@@ -13666,7 +13674,7 @@ Instructions:
                       <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Risk statistics</div>
                         <div style={{ fontSize: 11, color: C.t4 }}>
-                          capture vs SPY total return
+                          capture vs {sleeveRisk.capSym} total return
                           {sleeveRisk.isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
                         </div>
                       </div>
@@ -13722,8 +13730,9 @@ Instructions:
 
                       <div style={{ fontSize: 10, color: C.t4, marginTop: 14, lineHeight: 1.6 }}>
                         Sortino on daily returns, zero MAR, annualised, downside deviation averaged over all periods. Capture is geometric and
-                        sampled daily rather than monthly — this history is too short for monthly capture to mean anything. SPY sits at 100/100
-                        by construction, which is the table's own check. Above 100 up and below 100 down is the desirable pair.
+                        sampled daily rather than monthly — this history is too short for monthly capture to mean anything. Capture is measured
+                        against {sleeveRisk.capSym}, the sleeve's own benchmark, so {sleeveRisk.capSym} sits at 100/100 by construction and any
+                        other row is read relative to it. Above 100 up and below 100 down is the desirable pair.
                       </div>
                     </div>
                   )}
