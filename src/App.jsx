@@ -130,7 +130,14 @@ const CONV_RANK = { "High Conviction": 0, "On Our Radar": 1 };
 // the live quote path and the 1D intraday series, which price perfData.holdings
 // directly, yield kDiv*divLive + kGro*groLive: the same combination the
 // historical series uses, so live and history cannot drift apart.
-const BLEND_W = { dividend: 0.65, growth: 0.35 };
+const BLEND_MIXES = [
+  { key: "blend80", dividend: 0.80, growth: 0.20 },
+  { key: "blend70", dividend: 0.70, growth: 0.30 },
+  { key: "blend65", dividend: 0.65, growth: 0.35 },
+  { key: "blend60", dividend: 0.60, growth: 0.40 },
+];
+const BLEND_KEYS = new Set(BLEND_MIXES.map(m => m.key));
+const blendLabel = (m) => `${Math.round(m.dividend * 100)} / ${Math.round(m.growth * 100)} Dividend + Growth`;
 const BLEND_REBAL_MIN_TRADES = 8;   // a sleeve-wide reshuffle, not a single swap
 const BLEND_REBAL_CLUSTER_DAYS = 14; // the two sleeves may rebalance days apart
 
@@ -163,7 +170,7 @@ function detectRebalanceDates(sleeves, from) {
   return out;
 }
 
-function buildBlendSleeve(div, gro) {
+function buildBlendSleeve(div, gro, W) {
   if (!div?.portfolio?.length || !gro?.portfolio?.length) return null;
   const dMap = new Map(div.portfolio.map(p => [p.date, p]));
   const common = gro.portfolio.filter(p => dMap.has(p.date));
@@ -178,16 +185,16 @@ function buildBlendSleeve(div, gro) {
   const base = d0 + g0;
   const resets = new Set(detectRebalanceDates([div, gro], t0).filter(d => d > t0));
 
-  let kDiv = (BLEND_W.dividend * base) / d0;
-  let kGro = (BLEND_W.growth * base) / g0;
+  let kDiv = (W.dividend * base) / d0;
+  let kGro = (W.growth * base) / g0;
 
   const portfolio = common.map(g => {
     const d = dMap.get(g.date);
     if (resets.has(g.date) && d.value > 0 && g.value > 0) {
       // Rebalance: price the book, then re-strike the multiples at 65/35.
       const v = kDiv * d.value + kGro * g.value;
-      kDiv = (BLEND_W.dividend * v) / d.value;
-      kGro = (BLEND_W.growth * v) / g.value;
+      kDiv = (W.dividend * v) / d.value;
+      kGro = (W.growth * v) / g.value;
     }
     return {
       date: g.date,
@@ -235,7 +242,7 @@ function buildBlendSleeve(div, gro) {
     cash: Math.round(((div.cash || 0) * kDiv + (gro.cash || 0) * kGro) * 100) / 100,
     costBasis: {}, transactions: [],
     annualReturns, bmAnnualReturns: {}, bmAnnualReturnsTr: {},
-    isBlend: true, blendFrom: t0, blendWeights: BLEND_W,
+    isBlend: true, blendFrom: t0, blendWeights: W,
     blendRebalances: [...resets].sort(),
   };
 }
@@ -1993,15 +2000,19 @@ Instructions:
       .then(setBacktest)
       .catch(() => {});
   }, []);
-  const perfSleeveLabel = (k) => k === "blend65" ? "65/35 Dividend + Growth" : (sleeves[k]?.name || k);
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false }, blend65: { SPY: true, DVY: false, IUSG: false } };
+  const perfSleeveLabel = (k) => {
+    const m = BLEND_MIXES.find(x => x.key === k);
+    return m ? blendLabel(m).replace(/ \/ /, "/") : (sleeves[k]?.name || k);
+  };
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { SPY: true, QQQ: false, DIA: false }, fciValues: { SPY: true, QQQ: false, DIA: false },
+    ...Object.fromEntries(BLEND_MIXES.map(m => [m.key, { SPY: true, DVY: false, IUSG: false }])) };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
   const [intradayPortfolio, setIntradayPortfolio] = useState({}); // { "1D": [{date, value}] }
   const [intradayBenchmarks, setIntradayBenchmarks] = useState({}); // { "1D": { SPY: [{date, close}], ... }, "1W": ..., "1M": ... }
   const perfSvgRef = useRef(null);
   useEffect(() => { setPerfZoom(null); setPerfHover(null); }, [perfRange, perfSleeve]);
-  useEffect(() => { if (perfSleeve === "blend65" && perfView === "holdings") setPerfView("chart"); }, [perfSleeve, perfView]);
+  useEffect(() => { if (BLEND_KEYS.has(perfSleeve) && perfView === "holdings") setPerfView("chart"); }, [perfSleeve, perfView]);
   useEffect(() => { setTZoom(null); setTChartHover(null); }, [tChartRange, tChartSleeve, terminalActiveSym]);
   const iRef = useRef(null);
   const wsRef = useRef(null);
@@ -3548,8 +3559,10 @@ Instructions:
         }
       }
 
-      const blend = buildBlendSleeve(newMap.dividend, newMap.growth);
-      if (blend) newMap.blend65 = blend;
+      for (const m of BLEND_MIXES) {
+        const blend = buildBlendSleeve(newMap.dividend, newMap.growth, m);
+        if (blend) newMap[m.key] = blend;
+      }
 
       setPerfDataMap(newMap);
       // Set perfData to the active sleeve
@@ -12403,7 +12416,7 @@ Instructions:
 
             {/* Chart / Holdings toggle */}
             <div style={{ display: "flex", gap: 6, marginBottom: isDesktop ? 12 : 6 }}>
-              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].filter(({ v }) => !(v === "holdings" && perfSleeve === "blend65")).map(({ v, l }) => (
+              {[{ v: "chart", l: "📈 Chart" }, { v: "holdings", l: "💼 Holdings" }].filter(({ v }) => !(v === "holdings" && BLEND_KEYS.has(perfSleeve))).map(({ v, l }) => (
                 <button key={v} onClick={() => setPerfView(v)} style={{
                   flex: "0 0 auto", padding: "9px 16px", borderRadius: 10, border: `1px solid ${perfView === v ? C.borderActive : C.border}`,
                   background: perfView === v ? C.accentSoft : "transparent",
@@ -12428,7 +12441,9 @@ Instructions:
                     backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
                   }}
                 >
-                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" }, { k: "blend65", l: "⚖️ 65 / 35 Dividend + Growth" }, { k: "fci100", l: "🏆 FCI 100" }, { k: "fciValues", l: "✝️ FCI Values 100" }].filter(s => perfDataMap[s.k]).map(s => (
+                  {[{ k: "dividend", l: "💰 Dividend Strategy" }, { k: "growth", l: "🚀 Growth Strategy" },
+                    ...BLEND_MIXES.map(m => ({ k: m.key, l: `⚖️ ${blendLabel(m)}` })),
+                    { k: "fci100", l: "🏆 FCI 100" }, { k: "fciValues", l: "✝️ FCI Values 100" }].filter(s => perfDataMap[s.k]).map(s => (
                     <option key={s.k} value={s.k}>{s.l}</option>
                   ))}
                 </select>
@@ -13171,7 +13186,7 @@ Instructions:
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 20, height: 3, borderRadius: 2, background: C.accent }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{perfSleeve === "blend65" ? "Modeled 65/35 Dividend + Growth" : `Paradiem ${perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy`}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: C.t2 }}>{BLEND_KEYS.has(perfSleeve) ? `Combined ${perfSleeveLabel(perfSleeve)}` : `Paradiem ${perfSleeve === "growth" ? "Growth" : "Dividend"} Strategy`}</span>
                     </div>
                     {Object.entries(bmColors).filter(([sym]) => sym in perfBmToggles).map(([sym, color]) => perfBmToggles[sym] && (
                       <div key={sym} style={{ display: "flex", alignItems: "center", gap: 8 }}>
