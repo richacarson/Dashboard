@@ -2521,7 +2521,7 @@ Instructions:
 
       const rows = [];
       const own = computeRisk(ser, capSeries, ppy);
-      if (own) rows.push({ name: kLabel(k), color: C.accent, isSelf: true, ...own });
+      if (own) rows.push({ name: perfSleeveLabel(k), color: C.accent, isSelf: true, ...own });
       for (const sym of syms) {
         const r = computeRisk(bmSeriesFor(sym), capSeries, ppy);
         if (r) rows.push({ name: sym, color: BM_COLORS[sym] || C.t3, isCaptureBm: sym === capSym, ...r });
