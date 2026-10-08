@@ -301,23 +301,38 @@ function sortinoRatio(rets, periodsPerYear = 252) {
   return (mean * periodsPerYear) / (dd * Math.sqrt(periodsPerYear));
 }
 
-// Up/down capture, geometric, against a benchmark's monthly returns. Months are
-// split by the sign of the BENCHMARK's return, then each side's geometric mean
-// is compared. Returns percentages: 100 means it matched the index.
-function captureRatios(portMonthly, bmMonthly) {
-  const bm = new Map(bmMonthly.map(m => [m.ym, m.ret]));
+// Up/down capture, geometric, sampled DAILY against the benchmark. Days are
+// split by the sign of the benchmark's return and each side's geometric mean
+// compared. 100 means it moved with the index; above 100 on the up side and
+// below 100 on the down side is the desirable combination.
+//
+// Monthly is the convention these are usually quoted in, and this deliberately
+// departs from it. On a window this short monthly left 5 down observations,
+// four of them under 1.1%. Geometric capture divides by the index's average
+// move on each side, so a near-zero denominator made the figure arbitrary: it
+// showed up-capture identical across every allocation and downside IMPROVING
+// as growth rose, contradicting both Sortino and max drawdown on the same data.
+// Daily gives ~144 down observations and restores the expected ordering.
+// Revisit monthly once there are a few years of history.
+function captureRatios(portSeries, bmSeries) {
+  const bmAt = new Map(bmSeries.map(p => [p.date, p.value]));
+  const pairs = [];
+  for (let i = 1; i < portSeries.length; i++) {
+    const d0 = portSeries[i - 1], d1 = portSeries[i];
+    const b0 = bmAt.get(d0.date), b1 = bmAt.get(d1.date);
+    if (!(d0.value > 0 && d1.value > 0 && b0 > 0 && b1 > 0)) continue;
+    pairs.push([d1.value / d0.value - 1, b1 / b0 - 1]);
+  }
   const side = (want) => {
-    let pProd = 1, bProd = 1, n = 0;
-    for (const m of portMonthly) {
-      const b = bm.get(m.ym);
-      if (b == null) continue;
-      if (want === "up" ? b > 0 : b < 0) { pProd *= 1 + m.ret; bProd *= 1 + b; n++; }
+    let pProd = 1, bProd = 1, k = 0;
+    for (const [pRet, b] of pairs) {
+      if (want === "up" ? b > 0 : b < 0) { pProd *= 1 + pRet; bProd *= 1 + b; k++; }
     }
-    if (n === 0) return { value: null, n: 0 };
-    const pg = Math.pow(pProd, 1 / n) - 1;
-    const bg = Math.pow(bProd, 1 / n) - 1;
-    if (!isFinite(pg) || !isFinite(bg) || bg === 0) return { value: null, n };
-    return { value: (pg / bg) * 100, n };
+    if (k < 10) return { value: null, n: k };
+    const pg = Math.pow(pProd, 1 / k) - 1;
+    const bg = Math.pow(bProd, 1 / k) - 1;
+    if (!isFinite(pg) || !isFinite(bg) || bg === 0) return { value: null, n: k };
+    return { value: (pg / bg) * 100, n: k };
   };
   return { up: side("up"), down: side("down") };
 }
@@ -333,6 +348,35 @@ function maxDrawdown(series) {
     if (peak > 0) worst = Math.min(worst, p.value / peak - 1);
   }
   return worst * 100;
+}
+
+// Daily statistics are only meaningful where the series actually moves daily.
+// The dividend history is ~70% zero-change days before 2020 — it was recorded
+// weekly or sparser back then and forward-filled — which drags every daily
+// measure toward zero. Computed over the full history that put its up-capture
+// at 40%, which is not a property of the book, only of the sampling.
+//
+// Returns the first index from which the remainder is genuinely daily, so the
+// statistics run on the dense part and the card reports that start date.
+function denseStart(series, maxZeroFrac = 0.05) {
+  const n = series.length;
+  if (n < 30) return 0;
+  const flat = new Array(n).fill(0);
+  for (let i = 1; i < n; i++) flat[i] = Math.abs(series[i].value / series[i - 1].value - 1) < 1e-9 ? 1 : 0;
+  // Prefix sums so each candidate window is O(1).
+  const cum = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) cum[i + 1] = cum[i] + flat[i];
+  // Probe window, capped by what the series can actually offer: a fixed 120 is
+  // longer than the FCI sleeves' entire history, so every candidate failed the
+  // bounds check and the fallback threw away all but the last 30 points.
+  const WIN = Math.min(120, Math.max(20, Math.floor((n - 1) / 2)));
+  // First point from which the NEXT WIN sessions are genuinely daily. Judging by
+  // the whole remainder instead lets a sparse head through, because the dense
+  // tail swamps it in the average.
+  for (let i = 1; i + WIN <= n; i++) {
+    if ((cum[i + WIN] - cum[i]) / WIN <= maxZeroFrac) return i - 1;
+  }
+  return 0;  // nothing qualified — measure the whole series and let n speak
 }
 
 // A benchmark price map {date: close} reduced to the portfolio's own dates, so
@@ -2305,6 +2349,45 @@ Instructions:
 
   // Every allocation's series with today's live point appended, plus the risk
   // stats. Recomputes as quotes move, so the table is live.
+  // Risk statistics for the sleeve currently on screen. Mirrors the allocations
+  // table so the two never disagree, and takes the live value from the same
+  // place the chart does so it moves intraday.
+  const sleeveRisk = useMemo(() => {
+    const d = perfDataMap[perfSleeve];
+    if (!d?.portfolio?.length) return null;
+    const series = d.portfolio.map(p => ({ date: p.date, value: p.value }));
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const live = BLEND_KEYS.has(perfSleeve)
+      ? ((srcSleeveLive.dividend > 0 && srcSleeveLive.growth > 0) ? d.kDiv * srcSleeveLive.dividend + d.kGro * srcSleeveLive.growth : null)
+      : (liveValue?.value > 0 ? liveValue.value : null);
+    if (live > 0) {
+      if (series[series.length - 1].date === todayStr) series[series.length - 1] = { date: todayStr, value: live };
+      else series.push({ date: todayStr, value: live });
+    }
+    // Trim to the daily-dense region before measuring anything.
+    const i0 = denseStart(series);
+    const dense = series.slice(i0);
+    const trimmed = i0 > 0 ? series.length - dense.length : 0;
+    const spyMap = d.benchmarks?.SPY || perfDataMap.dividend?.benchmarks?.SPY;
+    const dates = dense.map(p => p.date);
+    const bm = benchmarkSeriesOn(dates, spyMap);
+    const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
+    if (spyLive > 0 && bm.length) {
+      if (bm[bm.length - 1].date === dense[dense.length - 1].date) bm[bm.length - 1] = { ...bm[bm.length - 1], value: spyLive };
+      else bm.push({ date: dense[dense.length - 1].date, value: spyLive });
+    }
+    const cap = captureRatios(dense, bm);
+    return {
+      sortino: sortinoRatio(dailyReturns(dense)),
+      maxDD: maxDrawdown(dense),
+      up: cap.up, down: cap.down,
+      from: dense[0].date, trimmed,
+      isLive: live > 0,
+      bmSortino: sortinoRatio(dailyReturns(bm)),
+      bmMaxDD: bm.length > 1 ? maxDrawdown(bm) : null,
+    };
+  }, [perfDataMap, perfSleeve, liveValue, srcSleeveLive, quotes]);
+
   const allocationStats = useMemo(() => {
     const spyMap = perfDataMap.dividend?.benchmarks?.SPY || perfDataMap.growth?.benchmarks?.SPY;
     const spyLive = (quotes.SPY || quotesRef.current?.SPY)?.p;
@@ -2329,7 +2412,7 @@ Instructions:
         if (lastBm.date === series[series.length - 1].date) bmSeries[bmSeries.length - 1] = { ...lastBm, value: spyLive };
         else bmSeries.push({ date: series[series.length - 1].date, value: spyLive });
       }
-      const cap = captureRatios(monthlyReturns(series), monthlyReturns(bmSeries));
+      const cap = captureRatios(series, bmSeries);
       rows.push({
         ...m,
         series,
@@ -12844,13 +12927,8 @@ Instructions:
                 const d = new Date(dates[idx] + "T12:00:00");
                 xLabels.push({ x: X(idx), label: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }) });
               }
-              // Geometric capture divides by the benchmark's geometric mean on
-              // each side. With few down months, most of them near zero, that
-              // denominator is tiny and the ratio swings wildly — here four of
-              // the five SPY-down months were under 1.1%. Flag it rather than
-              // present the number as settled.
               const nDown = rows[0]?.down?.n ?? 0, nUp = rows[0]?.up?.n ?? 0;
-              const thinCapture = nDown < 12 || nUp < 12;
+              const thinCapture = nDown < 40 || nUp < 40;
               const fmtPct = v => v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
               const fmtCap = c => c?.value == null ? "—" : `${c.value.toFixed(0)}%`;
 
@@ -12934,8 +13012,8 @@ Instructions:
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 12, overflowX: "auto" }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: C.t1, marginBottom: 4 }}>Risk statistics</div>
                     <div style={{ fontSize: 11, color: C.t4, marginBottom: 14 }}>
-                      Sortino on daily returns, zero MAR, annualised. Capture ratios are geometric, monthly, against SPY total return
-                      {rows[0].up.n + rows[0].down.n > 0 && ` — ${rows[0].up.n} up / ${rows[0].down.n} down months`}.
+                      Sortino on daily returns, zero MAR, annualised. Capture ratios are geometric and sampled daily against SPY total
+                      return{nUp + nDown > 0 && ` — ${nUp} up / ${nDown} down days`}.
                     </div>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontVariantNumeric: "tabular-nums" }}>
                       <thead>
@@ -12970,18 +13048,16 @@ Instructions:
                     </table>
                     {thinCapture && (
                       <div style={{ marginTop: 14, padding: "10px 13px", borderRadius: 10, background: C.dn + "14", border: `1px solid ${C.dn}44`, fontSize: 11, color: C.t2, lineHeight: 1.65 }}>
-                        <strong style={{ color: C.dn }}>Capture ratios are not yet reliable.</strong> They rest on {nUp} up and {nDown} down
-                        months, and most of the down months were small — four of the five were under 1.1%. Geometric capture divides by the
-                        index's average move on each side, so a near-zero denominator sends the ratio wherever one month happens to fall.
-                        The down-capture column currently implies more growth means better downside protection, which is an artifact of that,
-                        not a property of the sleeves. Treat Sortino and Max DD as the usable downside figures until there are more down
-                        months to measure against.
+                        <strong style={{ color: C.dn }}>Thin sample.</strong> Capture rests on {nUp} up and {nDown} down days — too few to
+                        lean on. Read Sortino and Max DD first.
                       </div>
                     )}
                     <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
-                      Up capture above 100 means the allocation gained more than SPY in months SPY rose; down capture below 100 means it lost
-                      less in months SPY fell. Max DD is the worst peak-to-trough fall over the window — no benchmark, no month-sign split,
-                      so it stays meaningful on a short history.
+                      Up capture above 100 means the allocation gained more than SPY on days SPY rose; down capture below 100 means it lost
+                      less on days SPY fell. Capture is sampled daily rather than monthly, the usual convention: this window holds only five
+                      SPY-down months, four of them under 1.1%, and dividing by a near-zero average move made the monthly figure arbitrary —
+                      it showed downside improving as growth rose, which Sortino and Max DD both contradict. Max DD is the worst peak-to-trough
+                      fall over the window.
                     </div>
                   </div>
                 </div>
@@ -13536,6 +13612,51 @@ Instructions:
                     </div>
                     </div>
                   </div>
+
+                  {/* Risk statistics for this sleeve — same definitions as the
+                      All Allocations table, so the two cannot disagree. */}
+                  {sleeveRisk && (() => {
+                    const r = sleeveRisk;
+                    const thin = (r.up.n ?? 0) < 40 || (r.down.n ?? 0) < 40;
+                    const cells = [
+                      { l: "Sortino", v: r.sortino == null ? "—" : r.sortino.toFixed(2),
+                        sub: r.bmSortino == null ? null : `SPY ${r.bmSortino.toFixed(2)}`, c: C.t1 },
+                      { l: "Max drawdown", v: r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`,
+                        sub: r.bmMaxDD == null ? null : `SPY ${r.bmMaxDD.toFixed(1)}%`, c: C.dn },
+                      { l: "Up capture", v: r.up.value == null ? "—" : `${r.up.value.toFixed(0)}%`,
+                        sub: `${r.up.n} up days`, c: thin ? C.t3 : C.t1 },
+                      { l: "Down capture", v: r.down.value == null ? "—" : `${r.down.value.toFixed(0)}%`,
+                        sub: `${r.down.n} down days`, c: thin ? C.t3 : C.t1 },
+                    ];
+                    return (
+                      <div style={{ marginTop: 16, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 20 : 14 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: C.t1 }}>Risk statistics</div>
+                          <div style={{ fontSize: 11, color: C.t4 }}>
+                            vs SPY total return · since {r.from}
+                            {r.trimmed > 0 && <span title="Earlier history was recorded weekly or sparser, which distorts daily statistics">
+                              {" "}· earlier {r.trimmed.toLocaleString()} points excluded, not daily</span>}
+                            {r.isLive && <span style={{ color: C.up, fontWeight: 700 }}> · LIVE</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(4, 1fr)" : "repeat(2, 1fr)", gap: 10 }}>
+                          {cells.map(c => (
+                            <div key={c.l} style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px" }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: C.t4, marginBottom: 6 }}>{c.l}</div>
+                              <div style={{ fontSize: 21, fontWeight: 800, color: c.c, fontVariantNumeric: "tabular-nums" }}>{c.v}</div>
+                              {c.sub && <div style={{ fontSize: 10, color: C.t4, marginTop: 3 }}>{c.sub}</div>}
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ fontSize: 10, color: C.t4, marginTop: 12, lineHeight: 1.6 }}>
+                          Sortino on daily returns, zero MAR, annualised, with downside deviation averaged over all periods. Capture is
+                          geometric and sampled daily rather than monthly — this history is too short for monthly capture to mean anything.
+                          Above 100 up and below 100 down is the desirable pair.
+                          {thin && <span style={{ color: C.dn, fontWeight: 600 }}> Sample is still thin; read Sortino and max drawdown first.</span>}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Legend */}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16, padding: "0 4px" }}>
