@@ -131,10 +131,13 @@ const CONV_RANK = { "High Conviction": 0, "On Our Radar": 1 };
 // directly, yield kDiv*divLive + kGro*groLive: the same combination the
 // historical series uses, so live and history cannot drift apart.
 const BLEND_MIXES = [
+  { key: "blend90", dividend: 0.90, growth: 0.10 },
   { key: "blend80", dividend: 0.80, growth: 0.20 },
   { key: "blend70", dividend: 0.70, growth: 0.30 },
   { key: "blend65", dividend: 0.65, growth: 0.35 },
   { key: "blend60", dividend: 0.60, growth: 0.40 },
+  { key: "blend55", dividend: 0.55, growth: 0.45 },
+  { key: "blend50", dividend: 0.50, growth: 0.50 },
 ];
 const BLEND_KEYS = new Set(BLEND_MIXES.map(m => m.key));
 const blendLabel = (m) => `${Math.round(m.dividend * 100)} / ${Math.round(m.growth * 100)} Dividend + Growth`;
