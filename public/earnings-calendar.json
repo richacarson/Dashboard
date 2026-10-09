@@ -1782,7 +1782,7 @@
   {
     "symbol": "CFG",
     "date": "2026-10-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.4016,
     "epsActual": null,
     "revenueEstimate": 2359457970,
@@ -1842,7 +1842,7 @@
   {
     "symbol": "MTB",
     "date": "2026-10-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 5.0006,
     "epsActual": null,
     "revenueEstimate": 2556245491,
@@ -1882,7 +1882,7 @@
   {
     "symbol": "RF",
     "date": "2026-10-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.6808,
     "epsActual": null,
     "revenueEstimate": 2046846838,
@@ -1892,7 +1892,7 @@
   {
     "symbol": "TFC",
     "date": "2026-10-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.1263,
     "epsActual": null,
     "revenueEstimate": 5417099751,
