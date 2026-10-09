@@ -13881,7 +13881,9 @@ Instructions:
 
                   {/* Chart */}
                   <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: isDesktop ? 24 : 12, overflow: "hidden" }}>
-                    <div style={{ position: "relative" }}>
+                    {/* Column so the legend can sit above the plot on a phone (order -1)
+                        instead of overlaying it. */}
+                    <div style={{ position: "relative", display: "flex", flexDirection: "column" }}>
                     <svg
                       ref={perfSvgRef}
                       width={W} height={H}
@@ -14042,7 +14044,11 @@ Instructions:
 
                     {/* Pinned legend — TradingView style. Shows the latest values
                         at rest and the crosshair's values while hovering. */}
-                    <div style={{ position: "absolute", top: 10, left: PAD.left + 6, pointerEvents: "none", display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 14, fontVariantNumeric: "tabular-nums" }}>
+                    <div style={isDesktop
+                      ? { position: "absolute", top: 8, left: PAD.left + 2, pointerEvents: "none", display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 14,
+                          fontVariantNumeric: "tabular-nums", background: C.card + "E6", padding: "4px 8px", borderRadius: 8 }
+                      : { order: -1, pointerEvents: "none", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px 12px",
+                          fontVariantNumeric: "tabular-nums", marginBottom: 8 }}>
                       {(() => {
                         const hi = (perfHover && perfHover.idx >= vi0 && perfHover.idx <= vi1) ? perfHover.idx : Math.min(vi1, lastIdx);
                         const hp = portNorm[hi];
@@ -14065,7 +14071,8 @@ Instructions:
                             return (
                               <span key={sym} style={{ fontSize: 11, fontWeight: 700, color: bmColors[sym] }}>
                                 {sym} <span style={{ color: C.t2 }}>{pt.val >= 0 ? "+" : ""}{pt.val.toFixed(2)}%</span>
-                                <span style={{ color: sp >= 0 ? C.up : C.dn, marginLeft: 5 }}>({sp >= 0 ? "+" : ""}{sp.toFixed(2)})</span>
+                                <span style={{ color: sp >= 0 ? C.up : C.dn, background: sp >= 0 ? C.upSoft : C.dnSoft, marginLeft: 6,
+                                  padding: "1px 6px", borderRadius: 5, fontWeight: 800 }}>{sp >= 0 ? "+" : ""}{sp.toFixed(2)}</span>
                               </span>
                             );
                           })}
