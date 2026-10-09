@@ -612,11 +612,11 @@
   {
     "symbol": "CCEL",
     "date": "2026-10-09",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0306,
-    "epsActual": null,
+    "epsActual": 0.16,
     "revenueEstimate": 7602060,
-    "revenueActual": null,
+    "revenueActual": 7820000,
     "source": "finnhub"
   },
   {
