@@ -2235,7 +2235,7 @@ Instructions:
     const m = BLEND_MIXES.find(x => x.key === k);
     return m ? blendLabel(m).replace(/ \/ /, "/") : (sleeves[k]?.name || k);
   };
-  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { QQQ: true, SPY: false, DIA: false }, fciValues: { QQQ: true, SPY: false, DIA: false },
+  const SLEEVE_BM_DEFAULTS = { dividend: { DVY: true, SPY: true, DIA: false }, growth: { IUSG: true, SPY: true, QQQ: false }, fci100: { QQQ: true, SPY: true, DIA: false }, fciValues: { QQQ: true, SPY: true, DIA: false },
     ...Object.fromEntries(BLEND_MIXES.map(m => [m.key, { SPY: true, DVY: false, IUSG: false }])) };
   const [perfBmToggles, setPerfBmToggles] = useState(SLEEVE_BM_DEFAULTS.dividend);
   const [liveValue, setLiveValue] = useState(null); // { value, stocks, cash } — live portfolio total from WebSocket
