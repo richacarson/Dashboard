@@ -2196,10 +2196,8 @@ Instructions:
   const [allocHover, setAllocHover] = useState(null);     // crosshair index
   const [allocHoverKey, setAllocHoverKey] = useState(null); // highlighted allocation
   // All-allocations chart: a view window over the series (null = whole period)
-  // and the mixes hidden from it. The window zooms without rebasing — every line
-  // still reads its return since inception — so the gaps between mixes, which
-  // accumulate over time, stay put while the y axis refits to the short window's
-  // much smaller range. That is what separates the lines.
+  // and the mixes hidden from it. Each line is rebased to the window's first
+  // point, so the figures shown are returns over the period being viewed.
   const [allocWin, setAllocWin] = useState(null);       // custom zoom from wheel/drag: { i0, i1 } | null
   // Named view, resolved to a window once the dates are known. Opens on YTD.
   const [allocPreset, setAllocPreset] = useState("YTD"); // "ALL" | "YTD" | "6M" | "3M" | "1M"
@@ -13285,10 +13283,17 @@ Instructions:
               const win = allocWin || presetWin;
               const w0 = win ? Math.max(0, Math.min(win.i0, lastI - 1)) : 0;
               const w1 = win ? Math.min(lastI, Math.max(win.i1, w0 + 1)) : lastI;
+              // Returns over the period being viewed: each series is rebased to the
+              // window's first point, so a YTD view reads YTD returns and 3M reads
+              // three-month returns — the convention the main chart already follows.
+              // On ALL the window starts at inception, so nothing changes there.
+              const rebase = a => a ? a.map(v => ((1 + v / 100) / (1 + a[w0] / 100) - 1) * 100) : a;
+              const vNorm = norm.map(rebase);
+              const vSpy = rebase(spyNorm);
               const vSpan = Math.max(1, w1 - w0);
               const shown = rows.map((r, i) => ({ r, i })).filter(({ r }) => ALLOC_CHART_KEYS.has(r.key) && !allocHidden[r.key]);
 
-              const all = shown.flatMap(({ i }) => norm[i].slice(w0, w1 + 1)).concat(spyNorm && !allocHidden.SPY ? spyNorm.slice(w0, w1 + 1) : []);
+              const all = shown.flatMap(({ i }) => vNorm[i].slice(w0, w1 + 1)).concat(vSpy && !allocHidden.SPY ? vSpy.slice(w0, w1 + 1) : []);
               const lo = all.length ? Math.min(...all) : 0, hi = all.length ? Math.max(...all) : 1;
               const span = hi - lo || 1;
               const stp = [0.25, 0.5, 1, 2, 5, 10, 20].find(st => span / st <= 8) || 50;
@@ -13323,8 +13328,8 @@ Instructions:
               // End labels: each visible line's value at the right edge of the window
               // (or at the crosshair), stacked so they never overlap.
               const at = hi2 != null ? hi2 : w1;
-              const ends = shown.map(({ r, i }) => ({ key: r.key, text: `${mixLabel(r)} ${norm[i][at] >= 0 ? "+" : ""}${norm[i][at].toFixed(1)}%`, y: Y(norm[i][at]), color: colorOf(i) }));
-              if (spyNorm && !allocHidden.SPY) ends.push({ key: "SPY", text: `SPY ${spyNorm[at] >= 0 ? "+" : ""}${spyNorm[at].toFixed(1)}%`, y: Y(spyNorm[at]), color: C.t3 });
+              const ends = shown.map(({ r, i }) => ({ key: r.key, text: `${mixLabel(r)} ${vNorm[i][at] >= 0 ? "+" : ""}${vNorm[i][at].toFixed(1)}%`, y: Y(vNorm[i][at]), color: colorOf(i) }));
+              if (vSpy && !allocHidden.SPY) ends.push({ key: "SPY", text: `SPY ${vSpy[at] >= 0 ? "+" : ""}${vSpy[at].toFixed(1)}%`, y: Y(vSpy[at]), color: C.t3 });
               ends.sort((a, b) => a.y - b.y);
               const GAP = 13;
               for (let k = 1; k < ends.length; k++) if (ends[k].y - ends[k - 1].y < GAP) ends[k].y = ends[k - 1].y + GAP;
@@ -13397,9 +13402,9 @@ Instructions:
                         {xLabels.map((l, i) => <text key={i} x={l.x} y={H - 12} textAnchor="middle" fill={C.t4} fontSize="11" fontWeight="600" fontFamily="inherit">{l.label}</text>)}
                         <g clipPath="url(#allocClip)">
                           {yMin <= 0 && yMax >= 0 && <line x1={PAD.left} y1={Y(0)} x2={W - PAD.right} y2={Y(0)} stroke={C.t4} strokeWidth="1" strokeDasharray="4,4" opacity="0.5" />}
-                          {spyNorm && !allocHidden.SPY && <path d={path(spyNorm)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
+                          {vSpy && !allocHidden.SPY && <path d={path(vSpy)} fill="none" stroke={C.t3} strokeWidth="1.4" strokeDasharray="5,4" opacity="0.75" />}
                           {shown.map(({ r, i }) => (
-                            <path key={r.key} d={path(norm[i])} fill="none" stroke={colorOf(i)}
+                            <path key={r.key} d={path(vNorm[i])} fill="none" stroke={colorOf(i)}
                               strokeWidth={allocHoverKey === r.key ? 3.2 : 2}
                               opacity={allocHoverKey && allocHoverKey !== r.key ? 0.2 : 1}
                               strokeLinejoin="round" strokeLinecap="round" />
@@ -13413,7 +13418,7 @@ Instructions:
                         {hi2 != null && (
                           <g>
                             <line x1={X(hi2)} y1={PAD.top} x2={X(hi2)} y2={PAD.top + ch} stroke={C.t3} strokeWidth="1" strokeDasharray="3,3" opacity="0.65" />
-                            {shown.map(({ r, i }) => <circle key={r.key} cx={X(hi2)} cy={Y(norm[i][hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
+                            {shown.map(({ r, i }) => <circle key={r.key} cx={X(hi2)} cy={Y(vNorm[i][hi2])} r="3.5" fill={colorOf(i)} stroke={C.card} strokeWidth="1.5" />)}
                             {(() => {
                               const w = 78, x = Math.max(PAD.left, Math.min(W - PAD.right - w, X(hi2) - w / 2));
                               const d = new Date(dates[hi2] + "T12:00:00");
@@ -13438,19 +13443,19 @@ Instructions:
                             style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: off ? 0.35 : 1 }}>
                             <div style={{ width: 18, height: 3, borderRadius: 2, background: colorOf(i) }} />
                             <span style={{ fontSize: 11, fontWeight: 700, color: C.t2, textDecoration: off ? "line-through" : "none" }}>{mixLabel(r)}</span>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? norm[i][hi2] : r.ret) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
-                              {fmtPct(hi2 != null ? norm[i][hi2] : r.ret)}
+                            <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? vNorm[i][hi2] : vNorm[i][w1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                              {fmtPct(hi2 != null ? vNorm[i][hi2] : vNorm[i][w1])}
                             </span>
                           </div>
                         );
                       })}
-                      {spyNorm && (
+                      {vSpy && (
                         <div onClick={() => setAllocHidden(h => ({ ...h, SPY: !h.SPY }))} title={allocHidden.SPY ? "Show" : "Hide"}
                           style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", opacity: allocHidden.SPY ? 0.35 : 1 }}>
                           <div style={{ width: 18, height: 0, borderTop: `2px dashed ${C.t3}` }} />
                           <span style={{ fontSize: 11, fontWeight: 700, color: C.t3, textDecoration: allocHidden.SPY ? "line-through" : "none" }}>SPY</span>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
-                            {fmtPct(hi2 != null ? spyNorm[hi2] : spyNorm[spyNorm.length - 1])}
+                          <span style={{ fontSize: 11, fontWeight: 700, color: (hi2 != null ? vSpy[hi2] : vSpy[w1]) >= 0 ? C.up : C.dn, fontVariantNumeric: "tabular-nums" }}>
+                            {fmtPct(hi2 != null ? vSpy[hi2] : vSpy[w1])}
                           </span>
                         </div>
                       )}
