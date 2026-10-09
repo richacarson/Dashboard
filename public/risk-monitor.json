@@ -1,8 +1,14 @@
 {
-  "generated_at": "2026-10-08T11:55:00Z",
-  "as_of_session": "2026-10-07",
+  "generated_at": "2026-10-09T12:10:00Z",
+  "as_of_session": "2026-10-08",
   "universe_count": 52,
   "universe_incomplete": false,
+  "data_drop": {
+    "generated_at": "2026-10-09T11:48:35Z",
+    "priced": 52,
+    "errors": 0,
+    "note": "Prior drop was ~18h stale; Risk Data Drop dispatched and completed before this read."
+  },
   "roster_integrity": {
     "ok": false,
     "issues": [
@@ -10,196 +16,163 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Take-private closed and delisted 2026-06-25; still in data/portfolios.json growth sleeve. Not in the live book/drop. Flagged every run until fixed.",
+        "detail": "Take-private closed 2026-06-25 and delisted. Still listed in data/portfolios.json (growth).",
         "action": "Remove CWAN from data/portfolios.json"
       },
       {
-        "ticker": "PORTFOLIOS",
-        "type": "roster_drift",
+        "ticker": "BKH,COIN,DVN,EIX,SUPV,VLO",
+        "type": "not_in_live_book",
         "severity": "amber",
-        "detail": "data/portfolios.json lists BKH, COIN, CWAN, DVN, EIX, SUPV, VLO which are not in the live book; live book has CEG, NOW, NWG, PGY, SOFI, SPGI, YMM which are missing from it. Reports exist for all seven new names. Monitoring this run follows the drop universe (live book).",
-        "action": "Sync data/portfolios.json to the live book (App.jsx) and add the Digital sleeve (IBIT, ETHA)"
+        "detail": "In data/portfolios.json but absent from the live 52-name universe in the data drop.",
+        "action": "Reconcile portfolios.json with live book"
+      },
+      {
+        "ticker": "CEG,ETHA,IBIT,NOW,NWG,PGY,SOFI,SPGI,YMM",
+        "type": "missing_from_file",
+        "severity": "amber",
+        "detail": "In live book (data drop) but not in data/portfolios.json (ETHA/IBIT are the Digital sleeve).",
+        "action": "Add to data/portfolios.json"
       }
-    ],
-    "universe_note": "Drop covers 52 names incl. Digital sleeve (IBIT, ETHA), 52/52 priced via Alpaca. data/portfolios.json lists only 50 equities and is out of sync with the live book."
+    ]
   },
   "summary": {
     "red": 0,
-    "amber": 6,
-    "green": 46,
-    "headline": "No RED market flags; 6 AMBER (CAT -5.8% unexplained, crypto complex weak: MARA -5.7%/HUT/ETHA/IBIT, NXPI -3.8%, plus AEM, PGY, FCX persisting). Fresh drop 2026-10-08 11:48Z, 52/52 priced, 0 errors. SPY/QQQ -0.25%; SPY ~20.4% above Carson's 645.80 support. No tier-1 catalyst found for CAT. CWAN closed 6/25. Roster: CWAN still in portfolios.json (red) and file is stale vs live book (amber)."
+    "amber": 4,
+    "green": 48,
+    "headline": "No RED flags confirmed. HUT -10.8% (no tier-1 catalyst found; crypto-wide weakness), VST -6.4%/CEG -4.9% power names, AI-semis and crypto lower. SPY 16.6% above Carson's 645.80 support. CWAN closed 6/25; roster file still stale (CWAN listed)."
   },
   "flags": [
     {
-      "id": "CAT_move_2026-10-08",
-      "ticker": "CAT",
-      "sleeve": "Dividend",
-      "severity": "amber",
-      "category": "price move",
-      "headline": "CAT -5.78%: largest decliner in the book; no tier-1 catalyst found",
-      "detail": "Sweep-detected drop; analyst consensus unchanged (7 SB/11 B/15 H/1 S vs prior month). Web search surfaced no confirmed same-day catalyst (only old or low-quality mirror results) - unconfirmed by tier-1 source, so capped at AMBER. Move is consistent in kind with the report's cycle-normalization key risk but that link is not established.",
-      "metric": {
-        "price": 813.84,
-        "day_move_pct": -5.78,
-        "level_ref": null
-      },
-      "thesis_link": "Possibly related to CAT key_risk: 'Construction equipment cycle risk - ... demand normalization within 12-18 months' (not confirmed as the cause).",
-      "evidence": [],
-      "first_seen": "2026-10-08",
-      "status": "new"
-    },
-    {
-      "id": "MARA_HUT_ETHA_crypto_2026-10-08",
-      "ticker": "MARA",
+      "id": "HUT_move_2026-10-09",
+      "ticker": "HUT",
       "sleeve": "Growth",
       "severity": "amber",
-      "category": "price move",
-      "headline": "Crypto-linked names weak: MARA -5.69%, HUT -3.15%, ETHA -4.57%, IBIT -2.67%",
-      "detail": "Move is broad across the crypto complex (miners and both Digital-sleeve ETFs), pointing to a crypto-price move rather than company-specific news. No tier-1 source found for the trigger. MARA/HUT carry listed bitcoin-price-exposure and leverage key risks.",
+      "category": "price_move",
+      "headline": "HUT -10.82% to $79.64: largest decliner in the book",
+      "detail": "Steepest single-name drop in the 52. Crypto-linked peers also weak (MARA -4.44%, ETHA -4.13%, IBIT -2.00%). Unconfirmed by tier-1 source: web search found no Reuters/Bloomberg/WSJ/company-release catalyst, so capped at AMBER. Would otherwise warrant RED given magnitude.",
       "metric": {
-        "price": 10.36,
-        "day_move_pct": -5.69,
+        "price": 79.64,
+        "day_move_pct": -10.82,
         "level_ref": null
       },
-      "thesis_link": "Matches MARA key_risk: 'Revenue concentration in bitcoin mining ... leveraged derivative of BTC price'; HUT key_risk: 'Bitcoin price exposure remains significant'.",
-      "evidence": [],
-      "first_seen": "2026-10-08",
-      "status": "new"
-    },
-    {
-      "id": "NXPI_move_2026-10-08",
-      "ticker": "NXPI",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "price move",
-      "headline": "NXPI -3.76% with one fewer Buy rating month-over-month",
-      "detail": "Elevated move; consensus shifted 19->18 Buy, 7->8 Hold. No catalyst found via search; no tier-1 confirmation.",
-      "metric": {
-        "price": 235.215,
-        "day_move_pct": -3.76,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-10-08",
-      "status": "new"
-    },
-    {
-      "id": "AEM_gold_slide_2026-09-29",
-      "ticker": "AEM",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "commodity",
-      "headline": "AEM -3.01%: gold-yield pressure flag persists after the 9/29 slide",
-      "detail": "AEM -3.01% (price $180.39); no new adverse data found this run. Prior context: partial recovery continues but the 9/29 -5.3% drop is not fully recovered; 10-yr yield backdrop unchanged. No new adverse data.",
-      "metric": {
-        "price": 180.39,
-        "day_move_pct": -3.01,
-        "level_ref": null
-      },
-      "thesis_link": "Matches AEM key_risk: 'Gold price reversion from current near-record levels would significantly compress margins.'",
+      "thesis_link": "Matches HUT key_risk: 'Bitcoin price exposure remains significant...' and project-financing execution risk.",
       "evidence": [
         {
-          "source": "Saxo Bank Market Quick Take",
-          "url": "https://www.home.saxo/content/articles/macro/market-quick-take---gold-slides-4-and-the-ten-year-tops-525---29-september-2026-29092026",
-          "as_of": "2026-09-29"
+          "source": "Risk Data Drop (Alpaca quotes)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-09"
         }
       ],
-      "first_seen": "2026-09-29",
-      "status": "persisting"
+      "first_seen": "2026-10-09",
+      "status": "new"
     },
     {
-      "id": "FCX_copper_tariff_2026-09-13",
-      "ticker": "FCX",
-      "sleeve": "Growth",
+      "id": "VST_CEG_power_2026-10-09",
+      "ticker": "VST/CEG",
+      "sleeve": "Dividend,Growth",
       "severity": "amber",
-      "category": "policy",
-      "headline": "FCX -0.98%: Section 232 refined-copper tariff decision still pending",
-      "detail": "FCX -0.98% (price $71.87); no new adverse data found this run. Prior context: tariff decision undecided per last tier-1 source (CRS, 2026-09-23). No change.",
+      "category": "price_move",
+      "headline": "Independent power names sell off: VST -6.35%, CEG -4.85%",
+      "detail": "Both fell sharply alongside AI-chip weakness (QQQ -1.35%). Unconfirmed by tier-1 source: web search found no Reuters/Bloomberg/WSJ/company-release catalyst, so capped at AMBER.",
       "metric": {
-        "price": 71.87,
-        "day_move_pct": -0.98,
+        "price": 156.09,
+        "day_move_pct": -6.35,
+        "level_ref": null
+      },
+      "thesis_link": "Matches VST key_risk: 'AI data center power demand thesis could reverse if hyperscaler capex... decelerates'. CEG policy/regulatory risk also listed.",
+      "evidence": [
+        {
+          "source": "Risk Data Drop (Alpaca quotes)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-09"
+        }
+      ],
+      "first_seen": "2026-10-09",
+      "status": "new"
+    },
+    {
+      "id": "AIchips_2026-10-09",
+      "ticker": "AMD/CRDO/MRVL/TSM/NVDA/LRCX",
+      "sleeve": "Dividend,Growth",
+      "severity": "amber",
+      "category": "sector_move",
+      "headline": "AI-semis broadly lower: AMD -3.88%, CRDO -3.68%, MRVL -3.51%, TSM -2.98%, NVDA -2.88%, LRCX -2.64%",
+      "detail": "Moves are roughly in line with QQQ -1.35% beta; no single-name catalyst identified. Watch-item ahead of hyperscaler capex commentary.",
+      "metric": {
+        "price": 620.83,
+        "day_move_pct": -3.88,
+        "level_ref": null
+      },
+      "thesis_link": "Standing watch: hyperscaler capex tone for AI-infrastructure names.",
+      "evidence": [
+        {
+          "source": "Risk Data Drop (Alpaca quotes)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-09"
+        }
+      ],
+      "first_seen": "2026-10-09",
+      "status": "new"
+    },
+    {
+      "id": "crypto_2026-10-09",
+      "ticker": "MARA/ETHA/IBIT",
+      "sleeve": "Digital,Growth",
+      "severity": "amber",
+      "category": "price_move",
+      "headline": "Crypto complex weak: MARA -4.44%, ETHA -4.13%, IBIT -2.00% (see HUT)",
+      "detail": "Digital sleeve and miners lower together; consistent with a crypto-wide move rather than company-specific news.",
+      "metric": {
+        "price": 9.9,
+        "day_move_pct": -4.44,
         "level_ref": null
       },
       "thesis_link": null,
       "evidence": [
         {
-          "source": "Congressional Research Service (congress.gov)",
-          "url": "https://www.congress.gov/crs-product/IN12614",
-          "as_of": "2026-09-23"
+          "source": "Risk Data Drop (Alpaca quotes)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-09"
         }
       ],
-      "first_seen": "2026-09-13",
-      "status": "persisting"
-    },
-    {
-      "id": "PGY_rate_credit_repricing_2026-09-27",
-      "ticker": "PGY",
-      "sleeve": "Growth",
-      "severity": "amber",
-      "category": "price move",
-      "headline": "PGY +0.47%: rate/credit derate flag persists",
-      "detail": "PGY +0.47% (price $18.13); no new adverse data found this run. Prior context: no new adverse data. Flag persists pending sustained stabilization.",
-      "metric": {
-        "price": 18.13,
-        "day_move_pct": 0.47,
-        "level_ref": null
-      },
-      "thesis_link": "Matches PGY key_risk: 'Credit cycle deterioration -- rising consumer delinquencies would disproportionately impair Pagaya's portfolio of borrowers rejected by traditional credit models.'",
-      "evidence": [],
-      "first_seen": "2026-09-27",
-      "status": "persisting"
-    },
-    {
-      "id": "VST_gainer_2026-10-08",
-      "ticker": "VST",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "gainer",
-      "headline": "VST +3.86%, top gainer; CNX +1.94%",
-      "detail": "Notable gainers. SPY/QQQ -0.25%.",
-      "metric": {
-        "price": 166.67,
-        "day_move_pct": 3.86,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-10-08",
+      "first_seen": "2026-10-09",
       "status": "new"
     },
     {
-      "id": "LRCX_ETHA_resolved_2026-10-08",
-      "ticker": "LRCX",
-      "sleeve": "Dividend",
+      "id": "HOOD_move_2026-10-09",
+      "ticker": "HOOD",
+      "sleeve": "Growth",
       "severity": "green",
-      "category": "resolved",
-      "headline": "Resolved: LRCX decline eased (-1.37%); ETHA quote now credible (-4.57%)",
-      "detail": "Prior-day LRCX -3.4% unexplained flag and ETHA bad-quote flag cleared: ETHA price $58.10 is consistent with the crypto complex move, though the earlier $20-range reference remains unreconciled.",
+      "category": "price_move",
+      "headline": "HOOD -2.28%; CVX +3.11%, PCAR +2.62%, OKE +2.56% lead gainers",
+      "detail": "Informational. 24 of 52 holdings up, 28 down; SPY -0.42%, QQQ -1.35%.",
       "metric": {
-        "price": 329.36,
-        "day_move_pct": -1.37,
+        "price": 107.29,
+        "day_move_pct": -2.28,
         "level_ref": null
       },
       "thesis_link": null,
-      "evidence": [],
-      "first_seen": "2026-10-07",
-      "status": "resolved"
+      "evidence": [
+        {
+          "source": "Risk Data Drop (Alpaca quotes)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-09"
+        }
+      ],
+      "first_seen": "2026-10-09",
+      "status": "new"
     }
   ],
   "deal_watch": [
     {
       "ticker": "CWAN",
       "type": "merger_arb",
-      "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
-      "gate": "Australian FIRB clearance",
+      "terms": "$24.55 take-private",
+      "gate": "FIRB",
       "status": "closed",
-      "firb_cleared_date": "2026-06-19",
-      "close_date": "2026-06-25",
-      "transaction_value_bn": 8.4,
-      "last_checked": "2026-10-08",
+      "last_checked": "2026-10-09",
       "severity": "green",
-      "note": "Closed 2026-06-25 and delisted; reconfirmed 2026-10-06. Roster hygiene is the open item."
+      "note": "Closed 2026-06-25; roster hygiene open."
     }
   ],
   "levels": [
@@ -208,22 +181,9 @@
       "level": 645.8,
       "type": "support",
       "state": "active",
-      "distance_pct": 20.4,
-      "interaction": "not_approaching"
+      "distance_pct": 16.6,
+      "interaction": "none"
     }
   ],
-  "calendar": [
-    {
-      "ticker": "FAST",
-      "event": "Earnings (per Finnhub calendar)",
-      "date": "2026-10-14",
-      "severity": "amber"
-    },
-    {
-      "ticker": "ALL",
-      "event": "Hyperscaler capex prints expected late Oct; not exhaustively verified for held-name dates.",
-      "date": null,
-      "severity": "green"
-    }
-  ]
+  "calendar": []
 }
