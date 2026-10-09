@@ -670,5 +670,12 @@
     "amber": 6,
     "green": 46,
     "headline": "No RED market flags; 6 AMBER (CAT -5.8% unexplained, crypto complex weak: MARA -5.7%/HUT/ETHA/IBIT, NXPI -3.8%, plus AEM, PGY, FCX persisting). Fresh drop 2026-10-08 11:48Z, 52/52 priced, 0 errors. SPY/QQQ -0.25%; SPY ~20.4% above Carson's 645.80 support. No tier-1 catalyst found for CAT. CWAN closed 6/25. Roster: CWAN still in portfolios.json (red) and file is stale vs live book (amber)."
+  },
+  {
+    "date": "2026-10-09",
+    "red": 0,
+    "amber": 4,
+    "green": 48,
+    "headline": "No RED flags confirmed. HUT -10.8% (no tier-1 catalyst found; crypto-wide weakness), VST -6.4%/CEG -4.9% power names, AI-semis and crypto lower. SPY 16.6% above Carson's 645.80 support. CWAN closed 6/25; roster file still stale (CWAN listed)."
   }
 ]
