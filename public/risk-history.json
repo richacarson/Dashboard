@@ -677,5 +677,12 @@
     "amber": 4,
     "green": 48,
     "headline": "No RED flags confirmed. HUT -10.8% (no tier-1 catalyst found; crypto-wide weakness), VST -6.4%/CEG -4.9% power names, AI-semis and crypto lower. SPY 16.6% above Carson's 645.80 support. CWAN closed 6/25; roster file still stale (CWAN listed)."
+  },
+  {
+    "date": "2026-10-10",
+    "red": 0,
+    "amber": 0,
+    "green": 5,
+    "headline": "Quiet. No RED or AMBER flags. Prior-day decliners HUT, VST/CEG and the AI-semis recovered; NTR -3.4% is the largest decline, with no catalyst found. SPY 20.6% above Carson's 645.80 support. Roster file still stale (CWAN listed; 9 live names missing)."
   }
 ]
