@@ -304,5 +304,14 @@
   "category": "Position Review",
   "summary": "NTR fell 3.9% on the President's post that the US is 'working on a massive Deal' to buy Belarusian potash. The $1.45B of value lost prices a permanent $11/tonne decline in realised potash price at 9x EV/EBITDA - against incremental supply Nutrien's own CEO puts at ~1 million tonnes, or 1.4% of global shipments, arriving slowly and at a cost disadvantage. Three facts undercut the headline: US sanctions on Belaruskali were already eased in March 2026, Belarus already exports over 12Mt (above pre-sanction levels, mostly to China), and NOLA at $335-345/t is already below the $395.50 global benchmark. Potash is 35% of H1 EBITDA; every $1/t is $14.5M. ICL barely moved and CF fell 1.9% with no potash at all, so the tape is pricing a North American trade-flow event rather than a supply shock. Holds at 4.0%; flags the USMCA tariff exemption and the falling consensus earnings line as the real risks.",
   "file": "NTR-Belarus-Potash-Impact-2026-09-21.md"
- }
+ },
+    {
+        "id": "ic-proposal-q4-2026-rebalance",
+        "title": "Q4 2026 Proposed Rebalance \u2014 Investment Committee Proposal",
+        "date": "2026-10-09",
+        "author": "Paradiem Investment Committee",
+        "category": "Quarterly Rebalance Research",
+        "summary": "Investment Committee proposal for the Q4 2026 rebalance. Dividend exits PCAR, NEE and CHD for YOU, AVGO and WM; growth exits MARA and TOL for VRT and GNRC; IBIT and ETHA restricted across the board; Model A cash reserve cut from 6% to 4%. EIX and PGY were already executed this quarter. Rates are the common thread in the sells \u2014 the 10-year at 5.24% is the highest since 2007 and the Fed has moved to hiking \u2014 while the buys carry accelerating demand or pricing power (Broadcom AI revenue guidance stepping toward $230B, a $15.0B Vertiv backlog, an Amazon supply deal for Generac). Dividend buys average a screener score of 75.3 against 65.0 for the sells, with consensus EPS growth of 26.1% against 9.0%. Includes the sector technical scoring matrix, full before/after sector and per-stock weights, and tax impact: the five exits net +$719,930, and the full rebalance adds +$5.98M of gains on $319.4M AUM.",
+        "file": "IC-Proposal-Q4-2026-Rebalance-2026-10-09.md"
+    }
 ]
