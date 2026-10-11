@@ -1560,16 +1560,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "MYFW",
-    "date": "2026-10-15",
-    "hour": "",
-    "epsEstimate": 0.6151,
-    "epsActual": null,
-    "revenueEstimate": 29927820,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "OVLY",
     "date": "2026-10-15",
     "hour": "",
@@ -1596,16 +1586,6 @@
     "epsEstimate": 4.9782,
     "epsActual": null,
     "revenueEstimate": 6677570560,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "POOL",
-    "date": "2026-10-15",
-    "hour": "",
-    "epsEstimate": 3.4267,
-    "epsActual": null,
-    "revenueEstimate": 1504909764,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -1736,16 +1716,6 @@
     "epsEstimate": 0.2276,
     "epsActual": null,
     "revenueEstimate": 1067601310,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "WSO",
-    "date": "2026-10-15",
-    "hour": "",
-    "epsEstimate": 4.1753,
-    "epsActual": null,
-    "revenueEstimate": 2224744907,
     "revenueActual": null,
     "source": "finnhub"
   },
