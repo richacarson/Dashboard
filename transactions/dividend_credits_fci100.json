@@ -758,5 +758,20 @@
     "ticker": "INTU",
     "ex_date": "2026-10-08",
     "dps": 1.38
+  },
+  {
+    "ticker": "MA",
+    "ex_date": "2026-10-09",
+    "dps": 0.87
+  },
+  {
+    "ticker": "MRVL",
+    "ex_date": "2026-10-09",
+    "dps": 0.06
+  },
+  {
+    "ticker": "ORCL",
+    "ex_date": "2026-10-09",
+    "dps": 0.5
   }
 ]
