@@ -15,37 +15,37 @@ import { useAuth } from './lib/auth'
    ═══════════════════════════════════════════════════════════════════ */
 
 const DEFAULT_SLEEVES = {
-  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ATO","ADP","CAT","CHD","CL","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","SPGI","CEG","NWG"], icon: "💰" },
-  growth: { name: "Growth Strategy", symbols: ["AMD","AEM","ATAT","CVX","CNX","CRDO","FCX","FTNT","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","PGY","SYF","TSM","TOL","VST","NOW","SOFI","YMM"], icon: "🚀" },
+  dividend: { name: "Dividend Strategy", symbols: ["ABT","ADI","ADP","ATO","AVGO","CAT","CEG","CL","DGX","FAST","GD","GPC","LMT","LRCX","NTR","NWG","ORI","QCOM","SPGI","SSNC","STLD","SYK","TEL","WM","YOU"], icon: "💰" },
+  growth: { name: "Growth Strategy", symbols: ["AEM","AMD","ATAT","CNX","CRDO","CVX","FCX","FTNT","GNRC","HOOD","HRMY","HUT","KEYS","MRVL","NOW","NVDA","NXPI","OKE","PGY","SOFI","SYF","TSM","VRT","VST","YMM"], icon: "🚀" },
   digital: { name: "Digital Assets", symbols: ["IBIT","ETHA"], icon: "₿" },
   sectors: { name: "Sectors", symbols: ["XLY","XLP","XLE","XLF","XLV","XLI","XLB","XLRE","XLK","IGV","XLC","XLU"], icon: "📊" },
   fci100: { name: "FCI 100", symbols: ["ADI","AEP","AGI","ALAB","AMAT","AMD","AMGN","AMZN","ANET","APH","ASM","ASML","AU","AVGO","AWK","AZN","BSX","BWXT","CAT","CB","CCJ","CDNS","CEG","CIEN","CLS","COST","CRDO","ECL","EMBJ","ETN","GE","GEV","GILD","GLW","GMAB","GOOG","GOOGL","GRAB","GRMN","HLT","ICE","INOD","IOT","ISRG","JNJ","JPM","KEYS","KKR","KLAC","LIN","LLY","LMND","LNG","LRCX","MDA","META","MOD","MRK","MRVL","MSFT","MSI","MU","NBIS","NBIX","NEE","NFLX","NOW","NRG","NVDA","NVO","NVT","NXT","PLTR","PNFP","PODD","PTC","QCOM","RCL","RDDT","RMBS","RMD","SAP","SCHW","SHOP","SNPS","SPGI","SYK","TEL","TEM","TER","TSM","TTMI","VEEV","VIST","VRT","VRTX","WMT","XYL","YUMC","ZS"], icon: "🏆" },
   fciValues: { name: "FCI Values 100", symbols: ["ADI","AGI","ALAB","AMAT","AMGN","ANET","APH","ASM","ASML","ASND","AU","AVGO","AWK","BSX","BWXT","CAT","CB","CCJ","CDNS","CEG","CIEN","CLBT","CLS","CNI","CP","CRDO","CSCO","CSGP","DE","DECK","DOCN","DOV","EMBJ","ETN","FCX","FFIV","FTNT","GE","GEV","GLW","GMAB","GRAB","GRMN","HD","HWM","ICE","INOD","IOT","ISRG","KEYS","KLAC","LIN","LITE","LLY","LMND","LMT","LNG","LRCX","MDA","MKC","MOD","MRVL","MSI","MU","NBIS","NBIX","NDAQ","NEE","NOW","NRG","NU","NVDA","NVT","NXT","PLTR","PNFP","PODD","PTC","PWR","QCOM","QTWO","RMBS","RMD","SCHW","SHOP","SNPS","SPGI","SYK","TEL","TEM","TER","TSM","TTMI","VEEV","VIST","VRT","XYL","YOU","YUMC","ZS"], icon: "✝️" },
 };
 const TARGET_WEIGHTS = {
-  dividend: { SYK:6.0, SSNC:6.0, ADP:6.0, SPGI:6.0, CEG:6.0, QCOM:5.0, GPC:4.0, STLD:4.0, NTR:4.0, LMT:4.0, TEL:4.0, CHD:4.0, CL:4.0, NWG:4.0, GD:3.5, NEE:3.0, LRCX:3.0, FAST:3.0, PCAR:3.0, ADI:3.0, CAT:3.0, ORI:3.0, ABT:3.0, DGX:3.0, ATO:2.5 },
-  growth: { NOW:8.0, NVDA:6.5, SOFI:6.5, FCX:6.5, VST:6.0, HOOD:5.5, AEM:5.0, MRVL:4.0, TSM:4.0, CRDO:4.0, YMM:4.0, KEYS:3.5, NXPI:3.5, AMD:3.0, FTNT:3.0, HRMY:3.0, TOL:3.0, HUT:3.0, MARA:3.0, CVX:2.5, ATAT:2.5, CNX:2.5, OKE:2.5, PGY:2.5, SYF:2.5 },
+  dividend: { AVGO:7.25, SSNC:6.0, ADP:6.0, SPGI:6.0, CEG:6.0, TEL:6.0, WM:5.75, SYK:5.5, QCOM:5.0, LMT:4.0, CL:4.0, GD:4.0, ORI:4.0, ABT:4.0, NWG:3.5, LRCX:3.5, ADI:3.5, CAT:3.5, YOU:3.5, GPC:1.5, STLD:1.5, NTR:1.5, FAST:1.5, DGX:1.5, ATO:1.5 },
+  growth: { NOW:8.0, NVDA:6.5, FCX:6.5, VST:6.5, HOOD:5.5, AEM:5.0, CRDO:4.25, SOFI:4.0, MRVL:4.0, TSM:4.0, KEYS:4.0, NXPI:4.0, HRMY:4.0, ATAT:4.0, GNRC:4.0, VRT:4.0, YMM:3.0, AMD:3.0, FTNT:2.25, HUT:2.25, CVX:2.25, CNX:2.25, OKE:2.25, PGY:2.25, SYF:2.25 },
 };
-const REBALANCE_DATE = "2026-07-09";
+const REBALANCE_DATE = "2026-10-13";
 const STEW_START = "2025-01-15";   // Carson's first decision — dividend stewardship window
 const REBALANCE_ANCHORS = {
-  // Q3 2026 rebalance — 7/8/26 close prices (sizing basis; rebalance booked 7/9).
+  // Q4 2026 rebalance, executed mid-day 10/13/26. Names in the order screenshots
+  // carry their actual fill; the rest carry their 12:00 ET price, which is what the
+  // book was sized at (scripts/q4_2026_rebalance).
   // Dividend sleeve
-  ABT:95.18, ADI:385.4, ATO:177.09, ADP:241.37, CAT:948.08, CHD:96.17, CL:93.04, DGX:208.21, FAST:46.51, GD:374.31,
-  GPC:124.73, LRCX:333.15, LMT:527.96, NEE:87.44, NTR:66.76, ORI:41.5, PCAR:122.5, QCOM:186.56, SSNC:65.42, STLD:228.76,
-  SYK:326.85, TEL:196.24, SPGI:430.79, CEG:244.52, NWG:17.51,
+  AVGO:357.8284, SSNC:81.5762, ADP:275.84, SPGI:412.965, CEG:294.6, TEL:215.89, WM:212.4195, SYK:282.08, QCOM:176.7979, LMT:503.36,
+  CL:89.71, GD:329.74, ORI:38.2691, ABT:102.9, NWG:17.66, LRCX:297.18, ADI:407.5866, CAT:770.4999, YOU:43.6675, GPC:130.0433,
+  STLD:240.1034, NTR:69.242, FAST:51.2938, DGX:232.2351, ATO:163.8001,
   // Growth sleeve
-  AMD:517.41, AEM:144.89, ATAT:31.84, CVX:175.97, CNX:33.18, CRDO:258.69, FCX:57.5, FTNT:156.71, HRMY:38.08,
-  HUT:106.11, HOOD:113.53, KEYS:317.24, MARA:12.02, MRVL:231.71, NVDA:204.12, NXPI:283.81, OKE:91.16, SYF:68.26, TSM:436.98,
-  TOL:145.57, VST:154.82, NOW:107.78, SOFI:17.73, YMM:8.58,
-  // Mid-quarter swap 9/2/26: EIX out, PGY in. PGY's anchor is its 9/2 entry, not a
-  // 7/8 close, so its QTD reads from the trade rather than from the start of the quarter.
-  PGY:21.898,
+  NOW:139.1101, NVDA:225.89, FCX:72.22, VST:160.56, HOOD:111.285, AEM:186.56, CRDO:197.19, SOFI:15.195, MRVL:263.87, TSM:442.63,
+  KEYS:365.135, NXPI:226.425, HRMY:37.02, ATAT:32.6395, GNRC:212.8396, VRT:237.2899, YMM:8.7206, AMD:590.9346, FTNT:191.4601, HUT:82.978,
+  CVX:217.945, CNX:34.87, OKE:92.58, PGY:17.555, SYF:73.56,
   // Digital sleeve (unchanged)
   IBIT:35.23, ETHA:13.11,
   // Exited names (kept so historical views can still price them)
-  BKH:73.28, DVN:42.02, VLO:281.25, COIN:158.44, CWAN:24.56, SUPV:9.28,
+  PCAR:107.4717, NEE:78.3116, CHD:99.8599, MARA:9.1806, TOL:133.24,   // sold 10/13/26
   EIX:74.78,   // sold 9/2/26 mid-quarter
+  BKH:73.28, DVN:42.02, VLO:281.25, COIN:158.44, CWAN:24.56, SUPV:9.28,
 };
 // Quarter-start closes (9/30/26) — the basis for every per-name QTD% readout.
 // Deliberately a separate map from REBALANCE_ANCHORS: QTD runs from the first day
@@ -64,6 +64,8 @@ const QTR_START_PRICES = {
   AMD:611.76, AEM:183.27, ATAT:32.62, CVX:204.21, CNX:31.17, CRDO:194.79, FCX:70.0, FTNT:178.76, HRMY:39.26,
   HUT:86.1, HOOD:112.5, KEYS:364.04, MARA:11.33, MRVL:264.21, NVDA:228.38, NXPI:237.53, OKE:85.27, SYF:70.97, TSM:456.19,
   TOL:134.75, VST:138.35, NOW:134.01, SOFI:15.72, YMM:8.27, PGY:17.32,
+  // Added in the 10/13/26 rebalance: no 9/30 position, so QTD reads from the fill.
+  AVGO:357.8284, WM:212.4195, YOU:43.6675, VRT:237.2899, GNRC:212.8396,
   // Digital sleeve
   IBIT:47.34, ETHA:20.12,
 };
@@ -700,7 +702,7 @@ async function fmpFundamentalsRow(sym, urlFor) {
 const SECTOR_OVERRIDES = {
   "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
   "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology",
-  "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
+  "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials", "WM": "Industrials", "VRT": "Industrials", "GNRC": "Industrials",
   "ADP": "Technology", "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
   "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
   "CHD": "Consumer Staples", "CL": "Consumer Staples",
@@ -708,7 +710,7 @@ const SECTOR_OVERRIDES = {
   "ORI": "Financials", "SYF": "Financials", "SUPV": "Financials", "PGY": "Financials",
   "COIN": "Financials", "HOOD": "Financials", "HUT": "Financials", "MARA": "Financials",
   "AEM": "Materials", "NTR": "Materials", "FCX": "Materials", "STLD": "Materials",
-  "CRDO": "Technology", "MRVL": "Technology",
+  "CRDO": "Technology", "MRVL": "Technology", "AVGO": "Technology", "YOU": "Technology",
   "IBIT": "Digital Assets", "ETHA": "Digital Assets",
 };
 function sectorFor(sym, industry) {
@@ -1063,6 +1065,7 @@ const LOGO_DOMAINS = {
   BKH:"blackhillscorp.com",AEM:"agnicoeagle.com",GFI:"goldfields.com",
   SUPV:"gruposupervielle.com",MARA:"maraholdings.com",ATAT:"atourlifestyle.com",
   NTR:"nutrien.com",DVN:"devonenergy.com",FCX:"fcx.com",CRDO:"credosemi.com",VST:"vistracorp.com",MRVL:"marvell.com",
+  WM:"wm.com",YOU:"clearme.com",VRT:"vertiv.com",GNRC:"generac.com",
   DVY:"ishares.com",IUSG:"ishares.com",IWS:"ishares.com",SPY:"ssga.com",DIA:"ssga.com",
   IBIT:"ishares.com",ETHA:"ishares.com",
   A:"agilent.com",ADI:"analog.com",ATO:"atmosenergy.com",CHD:"churchdwight.com",
@@ -9618,8 +9621,8 @@ Instructions:
               const syms = sleeves[metricsView]?.symbols || [];
               const SO = {
                 "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
-                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology",
-                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
+                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology", "AVGO": "Technology", "YOU": "Technology",
+                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials", "WM": "Industrials", "VRT": "Industrials", "GNRC": "Industrials",
                 "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
                 "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
                 "CHD": "Consumer Staples", "CL": "Consumer Staples",
@@ -9835,8 +9838,8 @@ Instructions:
               const syms = sleeves[metricsView]?.symbols || [];
               const SM = {
                 "ABT": "Healthcare", "DGX": "Healthcare", "SYK": "Healthcare", "HRMY": "Healthcare",
-                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology",
-                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials",
+                "ADI": "Technology", "QCOM": "Technology", "TEL": "Technology", "LRCX": "Technology", "KEYS": "Technology", "NXPI": "Technology", "TSM": "Technology", "AMD": "Technology", "NVDA": "Technology", "FTNT": "Technology", "SSNC": "Technology", "CWAN": "Technology", "ADP": "Technology", "CRDO": "Technology", "MRVL": "Technology", "AVGO": "Technology", "YOU": "Technology",
+                "CAT": "Industrials", "GD": "Industrials", "LMT": "Industrials", "FAST": "Industrials", "PCAR": "Industrials", "WM": "Industrials", "VRT": "Industrials", "GNRC": "Industrials",
                 "ATO": "Utilities", "BKH": "Utilities", "NEE": "Utilities", "EIX": "Utilities", "VST": "Utilities",
                 "OKE": "Energy", "VLO": "Energy", "CVX": "Energy", "CNX": "Energy", "DVN": "Energy",
                 "CHD": "Consumer Staples", "CL": "Consumer Staples",
@@ -10186,7 +10189,7 @@ Instructions:
                   "Utilities": ["DUK", "SO", "D"], "Materials": ["APD", "ECL", "NEM"],
                   "Communication": ["META", "GOOG", "DIS"],
                 };
-                const SO = { "ABT":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","CRDO":"Technology","MRVL":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","PCAR":"Industrials","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","VST":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","DVN":"Energy","CHD":"Consumer Staples","CL":"Consumer Staples","GPC":"Consumer Disc.","TOL":"Consumer Disc.","ATAT":"Consumer Disc.","ORI":"Financials","SYF":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","HUT":"Financials","MARA":"Financials","AEM":"Materials","FCX":"Materials","NTR":"Materials","STLD":"Materials","IBIT":"Digital Assets","ETHA":"Digital Assets" };
+                const SO = { "ABT":"Healthcare","DGX":"Healthcare","SYK":"Healthcare","HRMY":"Healthcare","ADI":"Technology","QCOM":"Technology","TEL":"Technology","LRCX":"Technology","KEYS":"Technology","NXPI":"Technology","TSM":"Technology","AMD":"Technology","NVDA":"Technology","FTNT":"Technology","SSNC":"Technology","CWAN":"Technology","ADP":"Technology","CRDO":"Technology","MRVL":"Technology","CAT":"Industrials","GD":"Industrials","LMT":"Industrials","FAST":"Industrials","PCAR":"Industrials","WM":"Industrials","VRT":"Industrials","GNRC":"Industrials","AVGO":"Technology","YOU":"Technology","ATO":"Utilities","BKH":"Utilities","NEE":"Utilities","EIX":"Utilities","VST":"Utilities","OKE":"Energy","VLO":"Energy","CVX":"Energy","CNX":"Energy","DVN":"Energy","CHD":"Consumer Staples","CL":"Consumer Staples","GPC":"Consumer Disc.","TOL":"Consumer Disc.","ATAT":"Consumer Disc.","ORI":"Financials","SYF":"Financials","SUPV":"Financials","COIN":"Financials","HOOD":"Financials","HUT":"Financials","MARA":"Financials","AEM":"Materials","FCX":"Materials","NTR":"Materials","STLD":"Materials","IBIT":"Digital Assets","ETHA":"Digital Assets" };
                 const sec = SO[peerSymbol] || d.sector;
                 const benchPeers = (sectorBenchmarks[sec] || []).filter(s => s !== peerSymbol && fundamentals[s]);
                 peers = [...new Set([...peers, ...benchPeers])].slice(0, 5);
