@@ -166,8 +166,9 @@ jobs:
 
           # Portfolio holdings — always include from Finnhub even when FMP has data
           PORTFOLIO = {
-              "ABT","ADI","ATO","ADP","BKH","CAT","CHD","CL","DVN","FAST","GD","GPC","LRCX","LMT","NEE","NTR","ORI","PCAR","QCOM","DGX","SSNC","STLD","SYK","TEL","VLO",
-              "AMD","AEM","ATAT","CVX","CWAN","CNX","COIN","CRDO","EIX","FCX","FTNT","SUPV","HRMY","HUT","HOOD","KEYS","MARA","MRVL","NVDA","NXPI","OKE","SYF","TSM","TOL","VST",
+              # Current book (Q4 2026 rebalance, 10/13/26)
+              "ABT","ADI","ADP","ATO","AVGO","CAT","CEG","CL","DGX","FAST","GD","GPC","LMT","LRCX","NTR","NWG","ORI","QCOM","SPGI","SSNC","STLD","SYK","TEL","WM","YOU",
+              "AEM","AMD","ATAT","CNX","CRDO","CVX","FCX","FTNT","GNRC","HOOD","HRMY","HUT","KEYS","MRVL","NOW","NVDA","NXPI","OKE","PGY","SOFI","SYF","TSM","VRT","VST","YMM",
               "IBIT","ETHA",
           }
 

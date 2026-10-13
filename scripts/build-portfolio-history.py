@@ -92,6 +92,7 @@ NAME_TO_TICKER = {
     "Taiwan Semiconductor Manufacturing Co Ltd ADR": "TSM",
     "Toll Brothers Inc": "TOL",
     "Vistra Corp": "VST",
+    "Generac Holdings Inc": "GNRC",
     # FCI 100 / FCI Values names
     "ASML Holding NV": "ASML", "Adobe Inc": "ADBE", "Alamos Gold Inc": "AGI",
     "Alphabet Inc Class A": "GOOGL", "Alphabet Inc Class C": "GOOG", "Amazon.com Inc": "AMZN",

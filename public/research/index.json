@@ -313,5 +313,14 @@
         "category": "Quarterly Rebalance Research",
         "summary": "Investment Committee proposal for the Q4 2026 rebalance. Dividend exits PCAR, NEE and CHD for YOU, AVGO and WM; growth exits MARA and TOL for VRT and GNRC; IBIT and ETHA restricted across the board; Model A cash reserve cut from 6% to 4%. EIX and PGY were already executed this quarter. Rates are the common thread in the sells \u2014 the 10-year at 5.24% is the highest since 2007 and the Fed has moved to hiking \u2014 while the buys carry accelerating demand or pricing power (Broadcom AI revenue guidance stepping toward $230B, a $15.0B Vertiv backlog, an Amazon supply deal for Generac). Dividend buys average a screener score of 75.3 against 65.0 for the sells, with consensus EPS growth of 26.1% against 9.0%. Includes the sector technical scoring matrix, full before/after sector and per-stock weights, and tax impact: the five exits net +$719,930, and the full rebalance adds +$5.98M of gains on $319.4M AUM.",
         "file": "IC-Proposal-Q4-2026-Rebalance-2026-10-09.md"
+    },
+    {
+        "id": "q4-2026-rebalance-execution",
+        "title": "Q4 2026 Rebalance \u2014 Execution Report",
+        "date": "2026-10-13",
+        "author": "Carson Rich",
+        "category": "Quarterly Rebalance Research",
+        "summary": "Execution report for the Q4 2026 rebalance, traded mid-day 10/13/26. Dividend exits PCAR, NEE and CHD and adds AVGO, WM and YOU; growth exits MARA and TOL and adds VRT and GNRC. The 33 traded names are booked at their actual fills and every other name is brought to target at its 12:00 ET price, with a 1% cash reserve in each sleeve.",
+        "file": "Q4 2026 Rebalance Execution Report.md"
     }
 ]
