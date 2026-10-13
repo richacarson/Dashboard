@@ -29,17 +29,18 @@ const TARGET_WEIGHTS = {
 const REBALANCE_DATE = "2026-10-13";
 const STEW_START = "2025-01-15";   // Carson's first decision — dividend stewardship window
 const REBALANCE_ANCHORS = {
-  // Q4 2026 rebalance, executed mid-day 10/13/26. Names in the order screenshots
-  // carry their actual fill; the rest carry their 12:00 ET price, which is what the
-  // book was sized at (scripts/q4_2026_rebalance).
+  // Q4 2026 rebalance, executed 10/13/26 around 2:35 PM ET. Names in the order
+  // screenshots carry their actual fill; the rest carry the midpoint of their 14:35 ET
+  // 5-minute bar, the bar 31 of the 33 fills fall in. That is what the book was sized
+  // at (scripts/q4_2026_rebalance).
   // Dividend sleeve
-  AVGO:357.8284, SSNC:81.5762, ADP:275.84, SPGI:412.965, CEG:294.6, TEL:215.89, WM:212.4195, SYK:282.08, QCOM:176.7979, LMT:503.36,
-  CL:89.71, GD:329.74, ORI:38.2691, ABT:102.9, NWG:17.66, LRCX:297.18, ADI:407.5866, CAT:770.4999, YOU:43.6675, GPC:130.0433,
+  AVGO:357.8284, SSNC:81.4075, ADP:275.8931, SPGI:412.355, CEG:297.9599, TEL:215.89, WM:212.4195, SYK:283.92, QCOM:177.6743, LMT:505.66,
+  CL:89.975, GD:332.93, ORI:38.2691, ABT:102.9, NWG:17.6599, LRCX:297.18, ADI:413.96, CAT:770.4999, YOU:43.6675, GPC:130.0433,
   STLD:240.1034, NTR:69.242, FAST:51.2938, DGX:232.2351, ATO:163.8001,
   // Growth sleeve
-  NOW:139.1101, NVDA:225.89, FCX:72.22, VST:160.56, HOOD:111.285, AEM:186.56, CRDO:197.19, SOFI:15.195, MRVL:263.87, TSM:442.63,
-  KEYS:365.135, NXPI:226.425, HRMY:37.02, ATAT:32.6395, GNRC:212.8396, VRT:237.2899, YMM:8.7206, AMD:590.9346, FTNT:191.4601, HUT:82.978,
-  CVX:217.945, CNX:34.87, OKE:92.58, PGY:17.555, SYF:73.56,
+  NOW:139.1101, NVDA:227.315, FCX:72.22, VST:162.5025, HOOD:110.9834, AEM:186.56, CRDO:197.19, SOFI:15.195, MRVL:266.6272, TSM:443.2925,
+  KEYS:367.34, NXPI:226.425, HRMY:37.02, ATAT:32.6395, GNRC:212.8396, VRT:237.2899, YMM:8.7206, AMD:597.3886, FTNT:191.4601, HUT:84.28,
+  CVX:217.945, CNX:35.325, OKE:92.865, PGY:17.555, SYF:73.4125,
   // Digital sleeve (unchanged)
   IBIT:35.23, ETHA:13.11,
   // Exited names (kept so historical views can still price them)
