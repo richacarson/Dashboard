@@ -698,5 +698,12 @@
     "amber": 0,
     "green": 2,
     "headline": "Quiet. No RED or AMBER flags; 52/52 priced, 0 data-drop errors. NTR -3.4% remains the largest decliner with no tier-1 catalyst found. SPY ~20.6% above Carson's 645.80 support. Roster file portfolios.json still stale (CWAN listed; 9 live names missing)."
+  },
+  {
+    "date": "2026-10-13",
+    "red": 1,
+    "amber": 3,
+    "green": 48,
+    "headline": "AI-semiconductor weakness: CRDO -7.2% (no tier-1 catalyst; ties to its valuation key-risk), HRMY -5.1% unexplained, MRVL -3.4%. SPY ~17% above Carson's 645.80 support. RED is roster hygiene only: CWAN delisted, portfolios.json stale."
   }
 ]
