@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12T20:19:28Z",
+  "generated_at": "2026-10-13T11:48:30Z",
   "universe_count": 52,
   "universe": [
     "SYK",
@@ -886,7 +886,7 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 265.85,
+      "price": 265.15,
       "pct_change": -3.44,
       "prev_close": 275.31,
       "quote_source": "alpaca",
@@ -1318,7 +1318,7 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 46.95,
+      "price": 47,
       "pct_change": 0.62,
       "prev_close": 46.56,
       "quote_source": "alpaca",
@@ -1337,13 +1337,13 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 778.1,
+      "price": 777.96,
       "pct_change": -0.06,
       "prev_close": 778.51,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 745.64,
+      "price": 745.81,
       "pct_change": -0.7,
       "prev_close": 751.26,
       "quote_source": "alpaca"
