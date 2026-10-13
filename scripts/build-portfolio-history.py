@@ -283,6 +283,33 @@ def _parse_by_activity(lines):
     return transactions, cash_transactions, current_holdings, split_schedule
 
 
+def _same_day_order(tx):
+    """Date order, purchases before sales within a day (see ORDER in the replay)."""
+    return (tx["date"], 0 if tx["type"] == "PURCHASE" else 1)
+
+
+def replay_holdings(transactions):
+    """Share counts from the ledger, replayed exactly as build_portfolio_history does.
+
+    A sale floors the position at zero. Morningstar sells DRIP shares the ledger
+    never booked as purchases (DRIP goes to cash here), so a full exit can sell
+    more than the ledger holds: ADP's 1/25/22 exit sold 221.1661 against 220.
+    Without the floor that 1.1661-share deficit carried into the 2026 re-entry.
+    SPLIT rows are ignored: shares and prices are already split-adjusted.
+    """
+    held = defaultdict(float)
+    for tx in sorted(transactions, key=_same_day_order):
+        t = tx["ticker"]
+        if tx["type"] == "PURCHASE":
+            held[t] += tx["shares"]
+        elif tx["type"] == "SALE":
+            held[t] -= tx["shares"]
+            if held[t] <= 0.0001:
+                held[t] = 0
+        # DIVIDEND REINVESTMENT goes to cash, not shares
+    return held
+
+
 def parse_transactions(filepath):
     """Parse the Morningstar transaction text file (auto-detects format)."""
     with open(filepath) as f:
@@ -640,9 +667,13 @@ def build_portfolio_history(transactions, cash_transactions, prices, start_balan
         if ex_date and ex_date >= DIVIDEND_CUTOVER:
             all_events.append({"date": ex_date, "kind": "dividend", "type": "DIVIDEND",
                                "ticker": dc["ticker"], "dps": dc["dps"]})
-    # Sort by date, then deposits/income/sales before withdrawals/purchases
-    # so cash inflows are processed before outflows on the same day
-    ORDER = {"DEPOSIT": 0, "DIVIDEND": 1, "SALE": 2, "DIVIDEND REINVESTMENT": 3, "PURCHASE": 4, "WITHDRAWAL": 5, "SPLIT": 6}
+    # Sort by date, then by type. Dividends come first so an ex-date credit sees the
+    # shares held going into that day. Purchases precede sales because a position is
+    # floored at zero on a sale: a same-day buy-and-exit booked sale-first (LNCOQ,
+    # 7/8/13) would otherwise floor, re-add the buy, and leave phantom shares valued
+    # at their last trade price from then on. Cash is only sampled at the end of the
+    # day, so the order within a day never changes a reported balance.
+    ORDER = {"DEPOSIT": 0, "DIVIDEND": 1, "PURCHASE": 2, "SALE": 3, "DIVIDEND REINVESTMENT": 4, "WITHDRAWAL": 5, "SPLIT": 6}
     all_events.sort(key=lambda x: (x["date"], ORDER.get(x.get("type", ""), 5)))
 
     holdings = defaultdict(float)
@@ -964,14 +995,7 @@ def main():
     # `holdings` while fully-closed positions (e.g., A) lingered. Always
     # replay the transactions to get the true current share counts —
     # this matches the logic in `build_portfolio_history` and `_parse_by_activity`.
-    sim_holdings = defaultdict(float)
-    for tx in sorted(transactions, key=lambda x: x["date"]):
-        t = tx["ticker"]
-        if tx["type"] == "PURCHASE":
-            sim_holdings[t] += tx["shares"]
-        elif tx["type"] == "SALE":
-            sim_holdings[t] -= tx["shares"]
-        # DIVIDEND REINVESTMENT goes to cash, not shares (matches build_portfolio_history)
+    sim_holdings = replay_holdings(transactions)
     holdings_map = {}
     for ticker, shares in sim_holdings.items():
         if shares > 0.0001:
@@ -1034,7 +1058,7 @@ def main():
     cost_basis = {}
     cb_holdings = defaultdict(float)  # ticker -> shares held
     cb_cost = defaultdict(float)      # ticker -> total cost
-    for tx in sorted(transactions, key=lambda x: x["date"]):
+    for tx in sorted(transactions, key=_same_day_order):
         t = tx["ticker"]
         if tx["type"] == "PURCHASE":
             cb_holdings[t] += tx["shares"]
@@ -1047,10 +1071,11 @@ def main():
                 if cb_holdings[t] <= 0.0001:
                     cb_holdings[t] = 0
                     cb_cost[t] = 0
-        elif tx["type"] == "SPLIT":
-            if cb_holdings[t] > 0:
-                cb_holdings[t] *= tx.get("ratio", 1)
-                # Total cost stays the same — avg cost per share decreases
+        # SPLIT rows are deliberately ignored. Morningstar already reports every
+        # share count and price split-adjusted (AVGO's 2019 buy reads 290 sh @ $25.55),
+        # which is why the holdings replay skips them too. Multiplying here counted
+        # each split twice: the old AVGO lot sold down to 1,170 phantom shares, and
+        # the 10/13/26 re-entry averaged into their cost.
     for ticker in holdings_map:
         if cb_holdings[ticker] > 0:
             cost_basis[ticker] = {

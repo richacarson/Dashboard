@@ -1,7 +1,7 @@
 # Q4 2026 Rebalance — Execution Report
 
 **Mode:** EXECUTED
-**Booked:** 2026-10-13 21:59 UTC
+**Booked:** 2026-10-13 22:14 UTC
 **Trade Date:** 10-13-26, mid-day (settles 10-14-26)
 **IC Proposal:** [IC Proposal — Q4 2026 Rebalance](./IC-Proposal-Q4-2026-Rebalance-2026-10-09.md)
 
@@ -11,45 +11,45 @@
 
 ## Dividend Sleeve
 
-- Stock value at execution prices: **$641,002.62**
+- Stock value at execution prices: **$641,324.27**
 - Cash before rebalance: **$9,581.86**
-- **Total sleeve value: $650,584.48**
+- **Total sleeve value: $650,906.13**
 
 | Ticker | Action | Type | Shares | Price | Price source | Amount |
 |---|---|---|---|---|---|---|
-| ABT | ADD | PURCHASE | 51.6653 | $102.9000 | fill | $5,316.36 |
-| ADI | ADD | PURCHASE | 6.2348 | $407.5866 | 12:00 ET | $2,541.22 |
-| CAT | ADD | PURCHASE | 9.3088 | $770.4999 | fill | $7,172.43 |
-| CL | ADD | PURCHASE | 16.1481 | $89.7100 | 12:00 ET | $1,448.65 |
-| GD | ADD | PURCHASE | 19.1835 | $329.7400 | 12:00 ET | $6,325.57 |
-| LMT | ADD | PURCHASE | 3.4191 | $503.3600 | 12:00 ET | $1,721.04 |
-| LRCX | ADD | PURCHASE | 19.0859 | $297.1800 | fill | $5,671.95 |
-| ORI | ADD | PURCHASE | 217.4805 | $38.2691 | fill | $8,322.78 |
-| QCOM | ADD | PURCHASE | 13.1905 | $176.7979 | 12:00 ET | $2,332.05 |
-| SPGI | ADD | PURCHASE | 5.7736 | $412.9650 | 12:00 ET | $2,384.29 |
-| SYK | ADD | PURCHASE | 9.8549 | $282.0800 | 12:00 ET | $2,779.87 |
-| TEL | ADD | PURCHASE | 50.5009 | $215.8900 | fill | $10,902.64 |
+| ABT | ADD | PURCHASE | 51.7891 | $102.9000 | fill | $5,329.10 |
+| ADI | ADD | PURCHASE | 6.2621 | $407.5866 | 12:00 ET | $2,552.35 |
+| CAT | ADD | PURCHASE | 9.3233 | $770.4999 | fill | $7,183.60 |
+| CL | ADD | PURCHASE | 16.2901 | $89.7100 | 12:00 ET | $1,461.38 |
+| GD | ADD | PURCHASE | 19.2221 | $329.7400 | 12:00 ET | $6,338.30 |
+| LMT | ADD | PURCHASE | 3.4445 | $503.3600 | 12:00 ET | $1,733.82 |
+| LRCX | ADD | PURCHASE | 19.1235 | $297.1800 | fill | $5,683.12 |
+| ORI | ADD | PURCHASE | 217.8134 | $38.2691 | fill | $8,335.52 |
+| QCOM | ADD | PURCHASE | 13.2806 | $176.7979 | 12:00 ET | $2,347.98 |
+| SPGI | ADD | PURCHASE | 5.8198 | $412.9650 | 12:00 ET | $2,403.37 |
+| SYK | ADD | PURCHASE | 9.9170 | $282.0800 | 12:00 ET | $2,797.39 |
+| TEL | ADD | PURCHASE | 50.5894 | $215.8900 | fill | $10,921.75 |
 | CHD | EXIT | SALE | 262.2131 | $99.8599 | fill | $26,184.57 |
 | NEE | EXIT | SALE | 216.2943 | $78.3116 | fill | $16,938.35 |
 | PCAR | EXIT | SALE | 154.3900 | $107.4717 | fill | $16,592.56 |
-| AVGO | NEW | PURCHASE | 130.4975 | $357.8284 | fill | $46,695.71 |
-| WM | NEW | PURCHASE | 174.3461 | $212.4195 | fill | $37,034.51 |
-| YOU | NEW | PURCHASE | 516.2364 | $43.6675 | fill | $22,542.75 |
-| ADP | TRIM | SALE | 16.6136 | $275.8400 | 12:00 ET | $4,582.70 |
-| ATO | TRIM | SALE | 30.0165 | $163.8001 | fill | $4,916.71 |
-| CEG | TRIM | SALE | 23.5162 | $294.6000 | 12:00 ET | $6,927.87 |
-| DGX | TRIM | SALE | 49.2342 | $232.2351 | fill | $11,433.91 |
-| FAST | TRIM | SALE | 218.2891 | $51.2938 | fill | $11,196.88 |
-| GPC | TRIM | SALE | 127.8810 | $130.0433 | fill | $16,630.07 |
-| NTR | TRIM | SALE | 238.1990 | $69.2420 | fill | $16,493.38 |
-| NWG | TRIM | SALE | 163.6640 | $17.6600 | 12:00 ET | $2,890.31 |
-| SSNC | TRIM | SALE | 104.4702 | $81.5762 | 12:00 ET | $8,522.28 |
-| STLD | TRIM | SALE | 69.9960 | $240.1034 | fill | $16,806.28 |
+| AVGO | NEW | PURCHASE | 130.5620 | $357.8284 | fill | $46,718.79 |
+| WM | NEW | PURCHASE | 174.4323 | $212.4195 | fill | $37,052.82 |
+| YOU | NEW | PURCHASE | 516.4916 | $43.6675 | fill | $22,553.90 |
+| ADP | TRIM | SALE | 17.7104 | $275.8400 | 12:00 ET | $4,885.24 |
+| ATO | TRIM | SALE | 29.9873 | $163.8001 | fill | $4,911.92 |
+| CEG | TRIM | SALE | 23.4513 | $294.6000 | 12:00 ET | $6,908.75 |
+| DGX | TRIM | SALE | 49.2137 | $232.2351 | fill | $11,429.15 |
+| FAST | TRIM | SALE | 218.1959 | $51.2938 | fill | $11,192.10 |
+| GPC | TRIM | SALE | 127.8442 | $130.0433 | fill | $16,625.28 |
+| NTR | TRIM | SALE | 238.1300 | $69.2420 | fill | $16,488.60 |
+| NWG | TRIM | SALE | 163.0329 | $17.6600 | 12:00 ET | $2,879.16 |
+| SSNC | TRIM | SALE | 104.2360 | $81.5762 | 12:00 ET | $8,503.18 |
+| STLD | TRIM | SALE | 69.9761 | $240.1034 | fill | $16,801.50 |
 
-- Sale proceeds: **$160,115.87**
-- Purchase outlay: **$163,191.82**
-- Cash deployment (withdrawal): **$3,076.02**
-- Cash after rebalance: **$6,505.84** (1.00% of sleeve)
+- Sale proceeds: **$160,340.36**
+- Purchase outlay: **$163,413.19**
+- Cash deployment (withdrawal): **$3,072.80**
+- Cash after rebalance: **$6,509.06** (1.00% of sleeve)
 
 ---
 
