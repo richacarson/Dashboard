@@ -75,6 +75,11 @@
     "dps": 0.955
   },
   {
+    "ticker": "VRT",
+    "ex_date": "2026-06-15",
+    "dps": 0.063
+  },
+  {
     "ticker": "VST",
     "ex_date": "2026-06-22",
     "dps": 0.229
@@ -138,6 +143,11 @@
     "ticker": "GFI",
     "ex_date": "2026-09-11",
     "dps": 1.014
+  },
+  {
+    "ticker": "VRT",
+    "ex_date": "2026-09-14",
+    "dps": 0.063
   },
   {
     "ticker": "NXPI",

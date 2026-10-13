@@ -5,6 +5,11 @@
     "dps": 0.621
   },
   {
+    "ticker": "AVGO",
+    "ex_date": "2026-03-23",
+    "dps": 0.65
+  },
+  {
     "ticker": "A",
     "ex_date": "2026-03-31",
     "dps": 0.255
@@ -135,6 +140,16 @@
     "dps": 0.315
   },
   {
+    "ticker": "WM",
+    "ex_date": "2026-06-05",
+    "dps": 0.945
+  },
+  {
+    "ticker": "YOU",
+    "ex_date": "2026-06-10",
+    "dps": 0.15
+  },
+  {
     "ticker": "ADP",
     "ex_date": "2026-06-12",
     "dps": 1.7
@@ -148,6 +163,11 @@
     "ticker": "LRCX",
     "ex_date": "2026-06-17",
     "dps": 0.26
+  },
+  {
+    "ticker": "AVGO",
+    "ex_date": "2026-06-22",
+    "dps": 0.65
   },
   {
     "ticker": "A",
@@ -285,14 +305,29 @@
     "dps": 0.315
   },
   {
+    "ticker": "YOU",
+    "ex_date": "2026-09-10",
+    "dps": 0.15
+  },
+  {
     "ticker": "ADP",
     "ex_date": "2026-09-11",
     "dps": 1.7
   },
   {
+    "ticker": "WM",
+    "ex_date": "2026-09-11",
+    "dps": 0.945
+  },
+  {
     "ticker": "DVN",
     "ex_date": "2026-09-15",
     "dps": 0.32
+  },
+  {
+    "ticker": "AVGO",
+    "ex_date": "2026-09-21",
+    "dps": 0.65
   },
   {
     "ticker": "LRCX",
