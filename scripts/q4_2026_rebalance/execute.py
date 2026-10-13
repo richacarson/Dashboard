@@ -13,7 +13,7 @@ Pricing:
 
 Sizing (same as Q3): total = Σ shares × price + real cash; each position is
 set to total × 99% × weight, leaving 1% cash. Holdings come from the
-portfolio-history JSON; cash from MORNINGSTAR_CASH.
+builder's ledger replay; cash from MORNINGSTAR_CASH.
 
 Usage:  python3 -m scripts.q4_2026_rebalance.execute [--dry-run]
 """
@@ -56,8 +56,15 @@ def company_name_for(ticker):
 
 
 def compute(sleeve, targets):
-    pre = analyze_sleeve(DIVIDEND_FILE if sleeve == "dividend" else GROWTH_FILE, sleeve)
-    shares = pre["shares"]
+    tx_file = DIVIDEND_FILE if sleeve == "dividend" else GROWTH_FILE
+    pre = analyze_sleeve(tx_file, sleeve)
+    # Share counts from the builder's own replay of the pre-rebalance ledger, not
+    # the published JSON: the JSON's holdings replay lacked the zero floor and
+    # carried ADP 1.1661 shares short (see replay_holdings).
+    txs, _, _, _ = _bph.parse_transactions(str(tx_file))
+    held = _bph.replay_holdings([t for t in txs if t["date"] < REBALANCE_DATE_ISO])
+    shares = {t: s for t, s in held.items() if s > 0.0001}
+    pre["shares"] = shares
     cash = MORNINGSTAR_CASH[sleeve]
 
     prices, sources = {}, {}
