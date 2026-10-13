@@ -63,15 +63,17 @@ FILLS = {
     },
 }
 
-# Names not in the screenshots are modelled at the 12:00 ET price on 10/13
-# (open of FMP's 12:00 30-minute bar).
-NOON_PRICES = {
-    "SSNC": 81.5762, "ADP": 275.84, "SPGI": 412.965, "CEG": 294.60, "SYK": 282.08,
-    "QCOM": 176.7979, "LMT": 503.36, "CL": 89.71, "GD": 329.74, "NWG": 17.66,
-    "ADI": 407.5866,
-    "NVDA": 225.89, "VST": 160.56, "HOOD": 111.285, "MRVL": 263.87, "TSM": 442.63,
-    "KEYS": 365.135, "AMD": 590.9346, "HUT": 82.978, "CNX": 34.87, "OKE": 92.58,
-    "SYF": 73.56,
+# Names not in the screenshots are brought to target at the price when the
+# screenshot orders actually executed. Matching each fill to 5-minute bars puts
+# 31 of the 33 inside the 14:35-14:40 ET bar (CHD filled by 14:30, YOU and NOW
+# in the 14:40 bar), so each untraded name uses the midpoint of the open and
+# close of its 14:35 bar. (First booked at 12:00 ET prices, which ran up to
+# 1.6% stale against the fills after a mid-day rally.)
+EXEC_PRICES = {
+    "SSNC": 81.4075, "ADP": 275.8931, "SPGI": 412.355, "CEG": 297.9599, "SYK": 283.92, "QCOM": 177.6743,
+    "LMT": 505.66, "CL": 89.975, "GD": 332.93, "NWG": 17.6599, "ADI": 413.96, "NVDA": 227.315,
+    "VST": 162.5025, "HOOD": 110.9834, "MRVL": 266.6272, "TSM": 443.2925, "KEYS": 367.34, "AMD": 597.3886,
+    "HUT": 84.28, "CNX": 35.325, "OKE": 92.865, "SYF": 73.4125,
 }
 
 NEW_COMPANY_NAMES = {
@@ -90,7 +92,7 @@ def _verify():
     for sleeve, targets in (("dividend", DIVIDEND_TARGETS), ("growth", GROWTH_TARGETS)):
         exits = DIVIDEND_EXITS if sleeve == "dividend" else GROWTH_EXITS
         for t in list(targets) + exits:
-            assert t in FILLS[sleeve] or t in NOON_PRICES, f"no price for {t}"
+            assert t in FILLS[sleeve] or t in EXEC_PRICES, f"no price for {t}"
 
 
 _verify()

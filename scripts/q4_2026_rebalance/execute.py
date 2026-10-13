@@ -8,8 +8,8 @@ Books the Q4 2026 rebalance (IC Proposal 2026-10-09), executed mid-day
 
 Pricing:
   - The 33 names in Carson's order screenshots book at their actual fill price.
-  - Every other name is brought to its exact target at the 12:00 ET price on
-    10/13 (same "model the rest to target" approach as Q3).
+  - Every other name is brought to its exact target at the 2:35 PM ET price on
+    10/13, when the screenshot orders executed (same "model the rest to target" approach as Q3).
 
 Sizing (same as Q3): total = Σ shares × price + real cash; each position is
 set to total × 99% × weight, leaving 1% cash. Holdings come from the
@@ -26,7 +26,7 @@ from datetime import datetime
 from scripts.q3_2026_rebalance.execute import analyze_sleeve, _bph, REPO
 from scripts.q4_2026_rebalance.ic_targets import (
     REBALANCE_DATE_ISO, DIVIDEND_TARGETS, GROWTH_TARGETS, CASH_TARGET,
-    MORNINGSTAR_CASH, FILLS, NOON_PRICES, NEW_COMPANY_NAMES,
+    MORNINGSTAR_CASH, FILLS, EXEC_PRICES, NEW_COMPANY_NAMES,
 )
 
 DIVIDEND_FILE = REPO / "transactions" / "dividend_strategy_transactions.txt"
@@ -44,7 +44,7 @@ def num(n, decimals):
 def price_for(sleeve, t):
     if t in FILLS[sleeve]:
         return FILLS[sleeve][t][1], "fill"
-    return NOON_PRICES[t], "12:00 ET"
+    return EXEC_PRICES[t], "2:35 PM ET"
 
 
 def company_name_for(ticker):
@@ -200,8 +200,8 @@ def write_report(div, grw, dry_run):
         "**IC Proposal:** [IC Proposal — Q4 2026 Rebalance](./IC-Proposal-Q4-2026-Rebalance-2026-10-09.md)",
         "",
         "**Pricing.** Names in the 10/13 order screenshots are booked at their actual fill "
-        "price. Every other name is brought to its exact target at its 12:00 ET price on "
-        "10/13. Each position is sized to 99% × target weight of the sleeve's value at "
+        "price. Every other name is brought to its exact target at its 2:35 PM ET price on "
+        "10/13, the 5-minute bar in which 31 of the 33 fills executed. Each position is sized to 99% × target weight of the sleeve's value at "
         "those prices, leaving a 1% cash reserve.",
         "",
         "---",

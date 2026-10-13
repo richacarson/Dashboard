@@ -8,85 +8,85 @@ Add
 Date	Transaction	Shares	Share Price $	Amount $	 
  	10-13-26	
 SALEAgnico Eagle Mines Ltd
-8.3933	186.5600	1,565.85	Edit	 
+8.2930	186.5600	1,547.14	Edit	 
  	10-13-26	
 SALEAdvanced Micro Devices Inc
-0.6429	590.9346	379.91	Edit	 
+0.6975	597.3886	416.68	Edit	 
  	10-13-26	
 PURCHASEAtour Lifestyle Holdings Ltd ADR
-63.2548	32.6395	2,064.61	Edit	 
+63.7136	32.6395	2,079.58	Edit	 
  	10-13-26	
 SALECNX Resources Corp
-10.2900	34.8700	358.81	Edit	 
+11.1631	35.3250	394.34	Edit	 
  	10-13-26	
 PURCHASECredo Technology Group Holding Ltd
-9.0044	197.1900	1,775.58	Edit	 
+9.0851	197.1900	1,791.49	Edit	 
  	10-13-26	
 SALEChevron Corp
-4.4051	217.9450	960.07	Edit	 
+4.3664	217.9450	951.64	Edit	 
  	10-13-26	
 SALEFreeport-McMoRan Inc
-24.5406	72.2200	1,772.32	Edit	 
+24.2036	72.2200	1,747.98	Edit	 
  	10-13-26	
 SALEFortinet Inc
-8.8238	191.4601	1,689.41	Edit	 
+8.7798	191.4601	1,680.98	Edit	 
  	10-13-26	
 PURCHASEGenerac Holdings Inc
-25.1366	212.8396	5,350.06	Edit	 
+25.2069	212.8396	5,365.03	Edit	 
  	10-13-26	
 PURCHASERobinhood Markets Inc Class A
-3.9970	111.2850	444.81	Edit	 
+4.3622	110.9834	484.13	Edit	 
  	10-13-26	
 PURCHASEHarmony Biosciences Holdings Inc Ordinary Shares
-43.5210	37.0200	1,611.15	Edit	 
+43.9255	37.0200	1,626.12	Edit	 
  	10-13-26	
-PURCHASEHut 8 Corp
-0.0224	82.9780	1.86	Edit	 
+SALEHut 8 Corp
+0.4379	84.2800	36.91	Edit	 
  	10-13-26	
 PURCHASEKeysight Technologies Inc
-0.5085	365.1350	185.67	Edit	 
+0.4613	367.3400	169.45	Edit	 
  	10-13-26	
 SALEMARA Holdings Inc
 319.9643	9.1806	2,937.46	Edit	 
  	10-13-26	
 SALEMarvell Technology Inc
-1.8555	263.8700	489.61	Edit	 
+2.0090	266.6272	535.65	Edit	 
  	10-13-26	
 SALEServiceNow Inc
-18.2378	139.1101	2,537.06	Edit	 
+18.0225	139.1101	2,507.11	Edit	 
  	10-13-26	
 SALENVIDIA Corp
-2.3366	225.8900	527.81	Edit	 
+2.4708	227.3150	561.65	Edit	 
  	10-13-26	
 PURCHASENXP Semiconductors NV
-7.8186	226.4250	1,770.33	Edit	 
+7.8847	226.4250	1,785.29	Edit	 
  	10-13-26	
 SALEONEOK Inc
-2.6517	92.5800	245.49	Edit	 
+2.6607	92.8650	247.09	Edit	 
  	10-13-26	
 PURCHASEPagaya Technologies Ltd.
-64.4469	17.5550	1,131.37	Edit	 
+64.9267	17.5550	1,139.79	Edit	 
  	10-13-26	
 SALESoFi Technologies Inc
-117.8974	15.1950	1,791.45	Edit	 
+116.9120	15.1950	1,776.48	Edit	 
  	10-13-26	
 SALESynchrony Financial
-6.0416	73.5600	444.42	Edit	 
+5.8446	73.4125	429.07	Edit	 
  	10-13-26	
 SALEToll Brothers Inc
 26.4201	133.2400	3,520.21	Edit	 
  	10-13-26	
 PURCHASETaiwan Semiconductor Manufacturing Co Ltd ADR
-0.3520	442.6300	155.81	Edit	 
+0.3677	443.2925	163.00	Edit	 
  	10-13-26	
 PURCHASEVertiv Holdings Co
-22.5465	237.2899	5,350.06	Edit	 
+22.6096	237.2899	5,365.03	Edit	 
  	10-13-26	
 PURCHASEVistra Corp
-4.4639	160.5600	716.72	Edit	 
+3.9664	162.5025	644.55	Edit	 
  	10-13-26	
 SALEFull Truck Alliance Co Ltd
-137.5420	8.7206	1,199.45	Edit	 
+136.2542	8.7206	1,188.22	Edit	 
  	09-02-26	
 SALEEdison International
 42.8587	54.6600	2,342.66	Edit	 
