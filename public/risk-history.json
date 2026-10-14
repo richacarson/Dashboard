@@ -705,5 +705,12 @@
     "amber": 3,
     "green": 48,
     "headline": "AI-semiconductor weakness: CRDO -7.2% (no tier-1 catalyst; ties to its valuation key-risk), HRMY -5.1% unexplained, MRVL -3.4%. SPY ~17% above Carson's 645.80 support. RED is roster hygiene only: CWAN delisted, portfolios.json stale."
+  },
+  {
+    "date": "2026-10-14",
+    "red": 1,
+    "amber": 4,
+    "green": 48,
+    "headline": "No holding-level RED. CAT -3.3% (no catalyst found), HRMY down a second day (~-8% over two sessions), CRDO/LRCX still soft ahead of LRCX earnings ~Oct 21. RED is roster hygiene only: portfolios.json out of sync with live book, CWAN delisted."
   }
 ]
