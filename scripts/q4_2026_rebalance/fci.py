@@ -12,8 +12,10 @@ midpoint of the open and close of each name's 14:35 ET 5-minute bar (Yahoo),
 checked within 2.4% of the FMP close for all 173 names. That is the same
 execution time as the 10/13 dividend/growth rebalance.
 
-Holdings come from the builder's ledger replay; cash from the published JSON
-(base plus dividend credits), as in July's scripts/reconstitute-fci.py.
+Holdings come from the builder's ledger replay. Cash is replayed the way the
+builder does it, from the funding-day capital plus dividend credits. The published
+JSON cash was overstated by July's phantom $561 (see computed_start in the
+builder), so it is not used.
 
 Usage:  python3 -m scripts.q4_2026_rebalance.fci [--write]
 """
@@ -62,11 +64,39 @@ def company_names():
     return rev
 
 
+def replay_cash(sleeve, txs):
+    """Cash going into TRADE_DATE: funding-day capital, less later net purchases, plus
+    dividend credits (shares held on the ex-date x dps, credits before same-day trades),
+    in the same order as the builder's replay."""
+    fund = min(t["date"] for t in txs if t["type"] in ("PURCHASE", "SALE"))
+    cash = sum(t["amount"] * (1 if t["type"] == "PURCHASE" else -1)
+               for t in txs if t["date"] == fund and t["type"] in ("PURCHASE", "SALE"))
+    trade_iso = "20" + TRADE_DATE[6:] + "-" + TRADE_DATE[:5]
+    credits = json.load(open(REPO / "transactions" / f"dividend_credits_{sleeve}.json"))
+    ev = [(c["ex_date"], 0, {"type": "DIV", **c}) for c in credits
+          if bph.DIVIDEND_CUTOVER <= c["ex_date"] <= trade_iso]
+    ev += [(t["date"], 1 if t["type"] == "PURCHASE" else 2, t) for t in txs if t["type"] in ("PURCHASE", "SALE")]
+    held = {}
+    for _, _, e in sorted(ev, key=lambda x: (x[0], x[1])):
+        t = e["ticker"]
+        if e["type"] == "DIV":
+            cash += held.get(t, 0) * e["dps"]
+        elif e["type"] == "PURCHASE":
+            held[t] = held.get(t, 0) + e["shares"]
+            cash -= e["amount"]
+        else:
+            held[t] = held.get(t, 0) - e["shares"]
+            if held[t] <= 0.0001:
+                held[t] = 0
+            cash += e["amount"]
+    return cash
+
+
 def plan(sleeve):
     txs, _, _, _ = bph.parse_transactions(str(REPO / "transactions" / f"{sleeve}_strategy_transactions.txt"))
     assert not any(t["date"] >= "2026-10-14" for t in txs), f"{sleeve} already has 10/14 trades"
     cur = {t: s for t, s in bph.replay_holdings(txs).items() if s > 0.0001}
-    cash = json.load(open(REPO / "public" / f"portfolio-history-{sleeve}.json"))["cash"]
+    cash = replay_cash(sleeve, txs)
     roster = set(ROSTERS[sleeve]["roster"])
     assert len(roster) == 100
     nav = sum(s * PRICES[t] for t, s in cur.items()) + cash
