@@ -322,5 +322,14 @@
         "category": "Quarterly Rebalance Research",
         "summary": "Execution report for the Q4 2026 rebalance, traded mid-day 10/13/26. Dividend exits PCAR, NEE and CHD and adds AVGO, WM and YOU; growth exits MARA and TOL and adds VRT and GNRC. The 33 traded names are booked at their actual fills and every other name is brought to target at its 12:00 ET price, with a 1% cash reserve in each sleeve.",
         "file": "Q4 2026 Rebalance Execution Report.md"
+    },
+    {
+        "id": "q4-2026-fci-reconstitution",
+        "title": "Q4 2026 FCI Reconstitution \u2014 Execution Report",
+        "date": "2026-10-14",
+        "author": "Carson Rich",
+        "category": "Quarterly Rebalance Research",
+        "summary": "Reconstitution of FCI 100 and FCI Values 100 on 10/14/26 at 2:35 PM ET prices. FCI 100 holds the top 100 Stock-Screener names by score; FCI Values 100 holds the top 100 with an Inspire impact score of \u221249 or higher. Every name is equal-weighted at 1%. 44 names turn over in each sleeve.",
+        "file": "Q4 2026 FCI Reconstitution Report.md"
     }
 ]
