@@ -921,15 +921,20 @@ def main():
 
     # Build portfolio history
     print("Building portfolio history...")
-    # For FCI portfolios (100 stocks × $4K each), the starting capital = NET
-    # purchases (buys − sells). Gross buys alone would double-count any rebuys
-    # from a reconstitution as fresh capital, inflating cash/NAV. Net purchases
-    # keeps the index fully invested (cash ≈ 0) across reconstitutions.
+    # For FCI portfolios (100 stocks × $4K each), the starting capital is what the
+    # funding day bought: net purchases on the first trade date. It used to be net
+    # purchases over ALL dates, which re-inferred the capital at every
+    # reconstitution: a rebalance that put accrued dividend cash to work raised
+    # "starting capital" by the same amount, so the cash never left and the whole
+    # history rose with it (+$561 from 7/9/26, +$1,321 more from 10/14/26).
+    # Fixed at funding, reconstitution trades move cash like any other trade.
     # For dividend/growth, always use $100K (the actual starting capital).
     if sleeve_name in ("fci100", "fciValues"):
-        total_purchased = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "PURCHASE")
-        total_sold = sum(tx.get("amount", 0) for tx in transactions if tx["type"] == "SALE")
-        computed_start = max(100000, round(total_purchased - total_sold, 2))
+        fund_date = min(tx["date"] for tx in transactions if tx["type"] in ("PURCHASE", "SALE"))
+        funded = sum(tx.get("amount", 0) * (1 if tx["type"] == "PURCHASE" else -1)
+                     for tx in transactions
+                     if tx["date"] == fund_date and tx["type"] in ("PURCHASE", "SALE"))
+        computed_start = max(100000, round(funded, 2))
     else:
         computed_start = 100000
     history = build_portfolio_history(transactions, cash_transactions, prices, start_balance=computed_start, current_holdings=current_holdings, dividend_credits=dividend_credits)
