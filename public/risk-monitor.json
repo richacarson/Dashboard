@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-13T11:55:00Z",
-  "as_of_session": "2026-10-12",
+  "generated_at": "2026-10-14T12:05:00Z",
+  "as_of_session": "2026-10-13",
   "universe_count": 52,
   "universe_incomplete": false,
   "data_drop": {
-    "generated_at": "2026-10-13T11:48:30Z",
+    "generated_at": "2026-10-14T11:48:15Z",
     "priced": 52,
     "errors": 0,
-    "note": "Prior drop was stale (928 min); re-dispatched Risk Data Drop and used the fresh run."
+    "note": "Prior drop was stale (~1045 min); re-dispatched Risk Data Drop and used the fresh run. SPY quote equals prior-session close (pct_change 0.0), so index data may not reflect latest session."
   },
   "roster_integrity": {
     "ok": false,
@@ -16,69 +16,75 @@
         "ticker": "CWAN",
         "type": "stale_ticker",
         "severity": "red",
-        "detail": "Take-private closed 2026-06-25 and delisted. Still listed in data/portfolios.json (growth).",
+        "detail": "Take-private closed 2026-06-25; delisted. Still in data/portfolios.json (growth).",
         "action": "Remove CWAN from data/portfolios.json"
       },
       {
-        "ticker": "BKH,COIN,DVN,EIX,SUPV,VLO",
+        "ticker": "BKH,CHD,COIN,DVN,EIX,MARA,NEE,PCAR,SUPV,TOL,VLO",
         "type": "not_in_live_book",
         "severity": "amber",
-        "detail": "In data/portfolios.json but absent from the live 52-name universe in the data drop.",
+        "detail": "In portfolios.json but absent from the live 52-name universe in the data drop.",
         "action": "Reconcile portfolios.json with live book"
       },
       {
-        "ticker": "CEG,ETHA,IBIT,NOW,NWG,PGY,SOFI,SPGI,YMM",
+        "ticker": "AVGO,CEG,ETHA,GNRC,IBIT,NOW,NWG,PGY,SOFI,SPGI,VRT,WM,YMM,YOU",
         "type": "missing_from_file",
         "severity": "amber",
-        "detail": "In live book (data drop) but not in data/portfolios.json (ETHA/IBIT are the Digital sleeve).",
+        "detail": "In live book but not in portfolios.json (ETHA/IBIT are the Digital sleeve).",
         "action": "Add to data/portfolios.json"
       }
     ]
   },
   "summary": {
     "red": 1,
-    "amber": 3,
+    "amber": 4,
     "green": 48,
-    "headline": "AI-semiconductor weakness: CRDO -7.2% (no tier-1 catalyst; ties to its valuation key-risk), HRMY -5.1% unexplained, MRVL -3.4%. SPY ~17% above Carson's 645.80 support. RED is roster hygiene only: CWAN delisted, portfolios.json stale."
+    "headline": "No holding-level RED. CAT -3.3% (no catalyst found), HRMY down a second day (~-8% over two sessions), CRDO/LRCX still soft ahead of LRCX earnings ~Oct 21. RED is roster hygiene only: portfolios.json out of sync with live book, CWAN delisted."
   },
   "flags": [
     {
-      "id": "roster_CWAN",
+      "id": "roster_portfolios_json",
       "ticker": "CWAN",
       "sleeve": "Growth",
       "severity": "red",
       "category": "roster_integrity",
-      "headline": "CWAN delisted but still in data/portfolios.json",
-      "detail": "Take-private closed 2026-06-25.",
+      "headline": "data/portfolios.json is out of sync with the live 52-name book; CWAN still listed though delisted",
+      "detail": "CWAN take-private closed 2026-06-25 and it no longer trades. 12 file tickers are absent from the live book (BKH, CHD, COIN, CWAN, DVN, EIX, MARA, NEE, PCAR, SUPV, TOL, VLO) and 14 live names are missing from the file (AVGO, CEG, ETHA, GNRC, IBIT, NOW, NWG, PGY, SOFI, SPGI, VRT, WM, YMM, YOU). Monitoring used the data drop's live 52 names.",
       "metric": null,
       "thesis_link": null,
-      "evidence": [],
+      "evidence": [
+        {
+          "source": "Risk Data Drop universe vs data/portfolios.json",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-14"
+        }
+      ],
       "first_seen": "2026-06-25",
       "status": "persisting",
       "needs_review": false
     },
     {
-      "id": "CRDO_move_2026-10-13",
-      "ticker": "CRDO",
-      "sleeve": "Growth",
+      "id": "CAT_move_2026-10-14",
+      "ticker": "CAT",
+      "sleeve": "Dividend",
       "severity": "amber",
       "category": "price_move",
-      "headline": "CRDO -7.16% to $200.93: largest decline in the book; no company-specific catalyst found",
-      "detail": "Silent decliner. Web search surfaced only a Weiss Ratings alert attributing a similar drop to a broad semiconductor selloff; unconfirmed by tier-1 source, so capped at AMBER. Other AI-infrastructure names also lower (MRVL -3.4%, AMD -2.2%, TSM -1.9%, LRCX -2.9%, NVDA -1.3%) and QQQ -0.7%, consistent with sector pressure.",
+      "headline": "CAT -3.33% to $772.90, largest decline in the book; no catalyst found",
+      "detail": "Silent decliner. Web search found no Oct 2026 coverage explaining the move (only older 2025 articles); unconfirmed by tier-1 source, so AMBER only. Relevant to CAT cycle/tariff key-risk but nothing shows it materializing.",
       "metric": {
-        "price": 200.93,
-        "day_move_pct": -7.16,
+        "price": 772.9,
+        "day_move_pct": -3.33,
         "level_ref": null
       },
-      "thesis_link": "Related to CRDO key_risk: premium valuation (~98x trailing P/E) leaves it vulnerable to anything short of blowout expectations.",
+      "thesis_link": "Possibly related to CAT key_risk: construction equipment cycle risk / tariff cost escalation (not confirmed).",
       "evidence": [
         {
           "source": "Risk Data Drop (Alpaca quote)",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-13"
+          "as_of": "2026-10-14"
         }
       ],
-      "first_seen": "2026-10-13",
+      "first_seen": "2026-10-14",
       "status": "new"
     },
     {
@@ -87,11 +93,11 @@
       "sleeve": "Growth",
       "severity": "amber",
       "category": "price_move",
-      "headline": "HRMY -5.11% to $38.23: no catalyst found",
-      "detail": "Silent decliner. Web search found no October 2026 news and only low-quality auto-generated pages; no tier-1 source. Unexplained move to watch.",
+      "headline": "HRMY -3.22% to $37.00, second straight decline (about -8% over two sessions); no catalyst found",
+      "detail": "Prior session -5.1%. Web search found no October 2026 news and no tier-1 source. Unexplained persistent move to watch.",
       "metric": {
-        "price": 38.23,
-        "day_move_pct": -5.11,
+        "price": 37,
+        "day_move_pct": -3.22,
         "level_ref": null
       },
       "thesis_link": null,
@@ -99,23 +105,71 @@
         {
           "source": "Risk Data Drop (Alpaca quote)",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-13"
+          "as_of": "2026-10-14"
         }
       ],
       "first_seen": "2026-10-13",
-      "status": "new"
+      "status": "persisting"
     },
     {
-      "id": "MRVL_move_2026-10-13",
-      "ticker": "MRVL",
+      "id": "CRDO_move_2026-10-13",
+      "ticker": "CRDO",
       "sleeve": "Growth",
       "severity": "amber",
       "category": "price_move",
-      "headline": "MRVL -3.44% to $265.15 with AI-infrastructure peers lower",
-      "detail": "Part of a broad AI-semiconductor decline (CRDO, AMD, LRCX, TSM, NVDA all down). Sector move rather than idiosyncratic; no company news checked as tier-1 confirmed.",
+      "headline": "CRDO -1.27% to $198.37 after -7.2% prior session; sector pressure persists",
+      "detail": "No company-specific catalyst found; unconfirmed by tier-1 source. Easing versus yesterday; MRVL (+1.06%) and NVDA (+0.9%) rebounded while LRCX and KEYS stayed lower.",
       "metric": {
-        "price": 265.15,
-        "day_move_pct": -3.44,
+        "price": 198.37,
+        "day_move_pct": -1.27,
+        "level_ref": null
+      },
+      "thesis_link": "Related to CRDO key_risk: premium valuation vulnerable to anything short of blowout expectations.",
+      "evidence": [
+        {
+          "source": "Risk Data Drop (Alpaca quote)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-14"
+        }
+      ],
+      "first_seen": "2026-10-13",
+      "status": "persisting"
+    },
+    {
+      "id": "LRCX_move_2026-10-14",
+      "ticker": "LRCX",
+      "sleeve": "Dividend",
+      "severity": "amber",
+      "category": "price_move",
+      "headline": "LRCX -2.6% to $301.41 ahead of earnings ~Oct 21 (unconfirmed date); KEYS -2.0%",
+      "detail": "No tier-1 catalyst found. Move sits ahead of the earnings print, where WFE/valuation key-risks get tested.",
+      "metric": {
+        "price": 301.41,
+        "day_move_pct": -2.6,
+        "level_ref": null
+      },
+      "thesis_link": "Related to LRCX key_risk: premium valuation (36.55x forward P/E) and WFE cyclicality; guidance miss could compress multiple.",
+      "evidence": [
+        {
+          "source": "Risk Data Drop (Alpaca quote)",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-14"
+        }
+      ],
+      "first_seen": "2026-10-14",
+      "status": "new"
+    },
+    {
+      "id": "FAST_earnings_2026-10-14",
+      "ticker": "FAST",
+      "sleeve": "Dividend",
+      "severity": "green",
+      "category": "earnings",
+      "headline": "FAST Q3 reported: EPS $0.35 vs $0.344 est (+1.7% surprise); stock -0.1%",
+      "detail": "Modest beat, muted reaction.",
+      "metric": {
+        "price": 51.46,
+        "day_move_pct": -0.1,
         "level_ref": null
       },
       "thesis_link": null,
@@ -123,47 +177,23 @@
         {
           "source": "Risk Data Drop (Alpaca quote)",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-13"
+          "as_of": "2026-10-14"
         }
       ],
-      "first_seen": "2026-10-13",
+      "first_seen": "2026-10-14",
       "status": "new"
     },
     {
-      "id": "PGY_move_2026-10-13",
-      "ticker": "PGY",
-      "sleeve": "Growth",
-      "severity": "green",
-      "category": "price_move",
-      "headline": "PGY -4.53% and SOFI -3.67% (consumer-credit fintech)",
-      "detail": "Both fintech lenders lower together; no catalyst found. Related to listed consumer credit cycle key_risks in both reports; below amber threshold absent news.",
-      "metric": {
-        "price": 17.395,
-        "day_move_pct": -4.53,
-        "level_ref": null
-      },
-      "thesis_link": "Consumer credit cycle risk appears in the PGY and SOFI key_risks.",
-      "evidence": [
-        {
-          "source": "Risk Data Drop (Alpaca quote)",
-          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-13"
-        }
-      ],
-      "first_seen": "2026-10-13",
-      "status": "new"
-    },
-    {
-      "id": "OKE_move_2026-10-13",
-      "ticker": "OKE",
+      "id": "gainers_2026-10-14",
+      "ticker": "CNX",
       "sleeve": "Growth",
       "severity": "green",
       "category": "gainer",
-      "headline": "OKE +2.47% largest gainer; ABT +2.22%, GPC +2.06%, SYK +1.98%",
-      "detail": "Context only.",
+      "headline": "Gainers: CNX +2.67%, VST +2.66%, PGY +2.53%, NTR +2.52%, YOU +2.48%",
+      "detail": "Context only. MRVL and the PGY/SOFI weakness flagged yesterday have resolved.",
       "metric": {
-        "price": 92.01,
-        "day_move_pct": 2.47,
+        "price": 35.36,
+        "day_move_pct": 2.67,
         "level_ref": null
       },
       "thesis_link": null,
@@ -171,10 +201,10 @@
         {
           "source": "Risk Data Drop (Alpaca quote)",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-13"
+          "as_of": "2026-10-14"
         }
       ],
-      "first_seen": "2026-10-13",
+      "first_seen": "2026-10-14",
       "status": "new"
     }
   ],
@@ -182,12 +212,12 @@
     {
       "ticker": "CWAN",
       "type": "merger_arb",
-      "terms": "$24.55 take-private",
+      "terms": "$24.55 take-private (Permira / Warburg Pincus / Francisco Partners / Temasek)",
       "gate": "Australian FIRB clearance",
       "status": "closed",
-      "last_checked": "2026-10-13",
+      "last_checked": "2026-10-14",
       "severity": "green",
-      "note": "Closed 2026-06-25, delisted (per prior check 2026-10-06). Not re-verified via tier-1 search this run."
+      "note": "Closed 2026-06-25 and delisted; no open gate."
     }
   ],
   "levels": [
@@ -196,17 +226,11 @@
       "level": 645.8,
       "type": "support",
       "state": "active",
-      "distance_pct": 20.5,
+      "distance_pct": 17.0,
       "interaction": "none"
     }
   ],
   "calendar": [
-    {
-      "ticker": "FAST",
-      "event": "Earnings (bmo)",
-      "date": "2026-10-14",
-      "severity": "amber"
-    },
     {
       "ticker": "STLD",
       "event": "Earnings (amc)",
@@ -234,12 +258,6 @@
     {
       "ticker": "LRCX",
       "event": "Earnings",
-      "date": "2026-10-21",
-      "severity": "amber"
-    },
-    {
-      "ticker": "NEE",
-      "event": "Earnings (bmo)",
       "date": "2026-10-21",
       "severity": "amber"
     },
@@ -272,6 +290,12 @@
       "event": "Earnings",
       "date": "2026-10-22",
       "severity": "amber"
+    },
+    {
+      "ticker": "FAST",
+      "event": "Earnings reported 2026-10-14 (bmo)",
+      "date": "2026-10-14",
+      "severity": "green"
     }
   ]
 }
