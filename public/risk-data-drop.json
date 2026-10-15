@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-14T15:50:58Z",
+  "generated_at": "2026-10-15T11:48:01Z",
   "universe_count": 52,
   "universe": [
     "AVGO",
@@ -118,8 +118,8 @@
   "holdings": {
     "AVGO": {
       "sleeve": "Dividend",
-      "price": 347.34,
-      "pct_change": -2.74,
+      "price": 346.34,
+      "pct_change": -3.09,
       "prev_close": 357.37,
       "quote_source": "alpaca",
       "recommendation": {
@@ -142,8 +142,8 @@
     },
     "SSNC": {
       "sleeve": "Dividend",
-      "price": 81.59,
-      "pct_change": 0.12,
+      "price": 82.04,
+      "pct_change": 0.67,
       "prev_close": 81.495,
       "quote_source": "alpaca",
       "recommendation": {
@@ -166,8 +166,8 @@
     },
     "ADP": {
       "sleeve": "Dividend",
-      "price": 278.965,
-      "pct_change": 1.14,
+      "price": 280.475,
+      "pct_change": 1.69,
       "prev_close": 275.82,
       "quote_source": "alpaca",
       "recommendation": {
@@ -190,8 +190,8 @@
     },
     "SPGI": {
       "sleeve": "Dividend",
-      "price": 407.45,
-      "pct_change": -0.62,
+      "price": 408.61,
+      "pct_change": -0.34,
       "prev_close": 409.995,
       "quote_source": "alpaca",
       "recommendation": {
@@ -214,8 +214,8 @@
     },
     "CEG": {
       "sleeve": "Dividend",
-      "price": 281.805,
-      "pct_change": -4.88,
+      "price": 279.66,
+      "pct_change": -5.46,
       "prev_close": 295.81,
       "quote_source": "alpaca",
       "recommendation": {
@@ -238,8 +238,8 @@
     },
     "TEL": {
       "sleeve": "Dividend",
-      "price": 210.37,
-      "pct_change": -2.55,
+      "price": 210.3,
+      "pct_change": -2.61,
       "prev_close": 215.94,
       "quote_source": "alpaca",
       "recommendation": {
@@ -262,8 +262,8 @@
     },
     "WM": {
       "sleeve": "Dividend",
-      "price": 214.825,
-      "pct_change": 1.4,
+      "price": 215.73,
+      "pct_change": 1.82,
       "prev_close": 211.865,
       "quote_source": "alpaca",
       "recommendation": {
@@ -286,8 +286,8 @@
     },
     "SYK": {
       "sleeve": "Dividend",
-      "price": 280.78,
-      "pct_change": -0.63,
+      "price": 281.675,
+      "pct_change": -0.32,
       "prev_close": 282.57,
       "quote_source": "alpaca",
       "recommendation": {
@@ -310,8 +310,8 @@
     },
     "QCOM": {
       "sleeve": "Dividend",
-      "price": 172.93,
-      "pct_change": -2.27,
+      "price": 172.71,
+      "pct_change": -2.39,
       "prev_close": 176.94,
       "quote_source": "alpaca",
       "recommendation": {
@@ -334,8 +334,8 @@
     },
     "LMT": {
       "sleeve": "Dividend",
-      "price": 515.96,
-      "pct_change": 2.39,
+      "price": 522.095,
+      "pct_change": 3.61,
       "prev_close": 503.92,
       "quote_source": "alpaca",
       "recommendation": {
@@ -358,8 +358,8 @@
     },
     "CL": {
       "sleeve": "Dividend",
-      "price": 91.875,
-      "pct_change": 2.08,
+      "price": 92.82,
+      "pct_change": 3.21,
       "prev_close": 89.935,
       "quote_source": "alpaca",
       "recommendation": {
@@ -382,8 +382,8 @@
     },
     "GD": {
       "sleeve": "Dividend",
-      "price": 333.51,
-      "pct_change": 0.3,
+      "price": 334.64,
+      "pct_change": 0.64,
       "prev_close": 332.52,
       "quote_source": "alpaca",
       "recommendation": {
@@ -406,8 +406,8 @@
     },
     "ORI": {
       "sleeve": "Dividend",
-      "price": 38.43,
-      "pct_change": 0.64,
+      "price": 38.405,
+      "pct_change": 0.58,
       "prev_close": 38.185,
       "quote_source": "alpaca",
       "recommendation": {
@@ -430,8 +430,8 @@
     },
     "ABT": {
       "sleeve": "Dividend",
-      "price": 102.38,
-      "pct_change": -0.33,
+      "price": 102.99,
+      "pct_change": 0.29,
       "prev_close": 102.69,
       "quote_source": "alpaca",
       "recommendation": {
@@ -454,8 +454,8 @@
     },
     "NWG": {
       "sleeve": "Dividend",
-      "price": 17.61,
-      "pct_change": -0.2,
+      "price": 17.6,
+      "pct_change": -0.28,
       "prev_close": 17.65,
       "quote_source": "alpaca",
       "recommendation": {
@@ -478,8 +478,8 @@
     },
     "LRCX": {
       "sleeve": "Dividend",
-      "price": 288.98,
-      "pct_change": -4.13,
+      "price": 286.72,
+      "pct_change": -4.87,
       "prev_close": 301.41,
       "quote_source": "alpaca",
       "recommendation": {
@@ -502,8 +502,8 @@
     },
     "ADI": {
       "sleeve": "Dividend",
-      "price": 405.735,
-      "pct_change": -2.2,
+      "price": 403.56,
+      "pct_change": -2.68,
       "prev_close": 414.68,
       "quote_source": "alpaca",
       "recommendation": {
@@ -526,8 +526,8 @@
     },
     "CAT": {
       "sleeve": "Dividend",
-      "price": 750.94,
-      "pct_change": -2.72,
+      "price": 748.38,
+      "pct_change": -3.17,
       "prev_close": 772.9,
       "quote_source": "alpaca",
       "recommendation": {
@@ -550,8 +550,8 @@
     },
     "YOU": {
       "sleeve": "Dividend",
-      "price": 43.82,
-      "pct_change": 0.51,
+      "price": 44.305,
+      "pct_change": 1.8,
       "prev_close": 43.52,
       "quote_source": "alpaca",
       "recommendation": {
@@ -574,8 +574,8 @@
     },
     "GPC": {
       "sleeve": "Dividend",
-      "price": 129.98,
-      "pct_change": -0.35,
+      "price": 131.6,
+      "pct_change": 0.9,
       "prev_close": 130.43,
       "quote_source": "alpaca",
       "recommendation": {
@@ -598,8 +598,8 @@
     },
     "STLD": {
       "sleeve": "Dividend",
-      "price": 241.19,
-      "pct_change": 0.24,
+      "price": 242.915,
+      "pct_change": 0.95,
       "prev_close": 240.62,
       "quote_source": "alpaca",
       "recommendation": {
@@ -622,8 +622,8 @@
     },
     "NTR": {
       "sleeve": "Dividend",
-      "price": 69.52,
-      "pct_change": -0.27,
+      "price": 69.875,
+      "pct_change": 0.25,
       "prev_close": 69.7,
       "quote_source": "alpaca",
       "recommendation": {
@@ -646,8 +646,8 @@
     },
     "FAST": {
       "sleeve": "Dividend",
-      "price": 51.955,
-      "pct_change": 0.87,
+      "price": 52.02,
+      "pct_change": 1.09,
       "prev_close": 51.46,
       "quote_source": "alpaca",
       "recommendation": {
@@ -669,15 +669,15 @@
       "earnings": {
         "period": "2026-09-30",
         "eps_actual": 0.35,
-        "eps_estimate": 0.3443,
-        "surprise": 0.0057,
-        "surprise_pct": 1.6555
+        "eps_estimate": 0.3458,
+        "surprise": 0.0042,
+        "surprise_pct": 1.2146
       }
     },
     "DGX": {
       "sleeve": "Dividend",
-      "price": 233.99,
-      "pct_change": 1.48,
+      "price": 233.41,
+      "pct_change": 1.23,
       "prev_close": 230.57,
       "quote_source": "alpaca",
       "recommendation": {
@@ -700,8 +700,8 @@
     },
     "ATO": {
       "sleeve": "Dividend",
-      "price": 163.34,
-      "pct_change": -0.06,
+      "price": 163.97,
+      "pct_change": 0.33,
       "prev_close": 163.43,
       "quote_source": "alpaca",
       "recommendation": {
@@ -724,8 +724,8 @@
     },
     "NOW": {
       "sleeve": "Growth",
-      "price": 139.22,
-      "pct_change": 0.47,
+      "price": 139.93,
+      "pct_change": 0.99,
       "prev_close": 138.555,
       "quote_source": "alpaca",
       "recommendation": {
@@ -748,8 +748,8 @@
     },
     "NVDA": {
       "sleeve": "Growth",
-      "price": 222.46,
-      "pct_change": -2.57,
+      "price": 221.49,
+      "pct_change": -3.07,
       "prev_close": 228.5,
       "quote_source": "alpaca",
       "recommendation": {
@@ -772,8 +772,8 @@
     },
     "FCX": {
       "sleeve": "Growth",
-      "price": 69.625,
-      "pct_change": -3.78,
+      "price": 69.615,
+      "pct_change": -3.85,
       "prev_close": 72.405,
       "quote_source": "alpaca",
       "recommendation": {
@@ -796,8 +796,8 @@
     },
     "VST": {
       "sleeve": "Growth",
-      "price": 152.29,
-      "pct_change": -6.26,
+      "price": 151.77,
+      "pct_change": -6.5,
       "prev_close": 162.325,
       "quote_source": "alpaca",
       "recommendation": {
@@ -820,8 +820,8 @@
     },
     "HOOD": {
       "sleeve": "Growth",
-      "price": 103.02,
-      "pct_change": -6.63,
+      "price": 101.09,
+      "pct_change": -8.5,
       "prev_close": 110.48,
       "quote_source": "alpaca",
       "recommendation": {
@@ -844,8 +844,8 @@
     },
     "AEM": {
       "sleeve": "Growth",
-      "price": 175.58,
-      "pct_change": -5.41,
+      "price": 176.94,
+      "pct_change": -4.68,
       "prev_close": 185.625,
       "quote_source": "alpaca",
       "recommendation": {
@@ -868,8 +868,8 @@
     },
     "CRDO": {
       "sleeve": "Growth",
-      "price": 184.825,
-      "pct_change": -6.47,
+      "price": 179.14,
+      "pct_change": -9.69,
       "prev_close": 198.37,
       "quote_source": "alpaca",
       "recommendation": {
@@ -892,8 +892,8 @@
     },
     "SOFI": {
       "sleeve": "Growth",
-      "price": 14.195,
-      "pct_change": -6.73,
+      "price": 14.23,
+      "pct_change": -6.54,
       "prev_close": 15.225,
       "quote_source": "alpaca",
       "recommendation": {
@@ -916,8 +916,8 @@
     },
     "MRVL": {
       "sleeve": "Growth",
-      "price": 252.6,
-      "pct_change": -5.8,
+      "price": 244.39,
+      "pct_change": -8.64,
       "prev_close": 268.67,
       "quote_source": "alpaca",
       "recommendation": {
@@ -940,8 +940,8 @@
     },
     "TSM": {
       "sleeve": "Growth",
-      "price": 433.92,
-      "pct_change": -2.39,
+      "price": 430.12,
+      "pct_change": -3.33,
       "prev_close": 444.92,
       "quote_source": "alpaca",
       "recommendation": {
@@ -964,8 +964,8 @@
     },
     "KEYS": {
       "sleeve": "Growth",
-      "price": 362.19,
-      "pct_change": -2.15,
+      "price": 357.33,
+      "pct_change": -3.49,
       "prev_close": 370.27,
       "quote_source": "alpaca",
       "recommendation": {
@@ -988,8 +988,8 @@
     },
     "NXPI": {
       "sleeve": "Growth",
-      "price": 220.04,
-      "pct_change": -2.81,
+      "price": 220.865,
+      "pct_change": -2.43,
       "prev_close": 226.36,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1012,8 +1012,8 @@
     },
     "HRMY": {
       "sleeve": "Growth",
-      "price": 37.97,
-      "pct_change": 2.66,
+      "price": 37.48,
+      "pct_change": 1.3,
       "prev_close": 37,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1036,8 +1036,8 @@
     },
     "ATAT": {
       "sleeve": "Growth",
-      "price": 32.885,
-      "pct_change": 0.47,
+      "price": 32.61,
+      "pct_change": -0.37,
       "prev_close": 32.73,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1060,8 +1060,8 @@
     },
     "GNRC": {
       "sleeve": "Growth",
-      "price": 199.48,
-      "pct_change": -6.92,
+      "price": 198.07,
+      "pct_change": -7.57,
       "prev_close": 214.3,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1084,8 +1084,8 @@
     },
     "VRT": {
       "sleeve": "Growth",
-      "price": 224.945,
-      "pct_change": -5.02,
+      "price": 222.835,
+      "pct_change": -6.08,
       "prev_close": 237.26,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1108,8 +1108,8 @@
     },
     "YMM": {
       "sleeve": "Growth",
-      "price": 8.58,
-      "pct_change": -2.05,
+      "price": 8.53,
+      "pct_change": -2.63,
       "prev_close": 8.76,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1132,8 +1132,8 @@
     },
     "AMD": {
       "sleeve": "Growth",
-      "price": 578.83,
-      "pct_change": -4.4,
+      "price": 570.96,
+      "pct_change": -5.7,
       "prev_close": 605.47,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1156,8 +1156,8 @@
     },
     "FTNT": {
       "sleeve": "Growth",
-      "price": 185.565,
-      "pct_change": -2.48,
+      "price": 184.11,
+      "pct_change": -3.41,
       "prev_close": 190.6,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1180,7 +1180,7 @@
     },
     "HUT": {
       "sleeve": "Growth",
-      "price": 74.66,
+      "price": 74.855,
       "pct_change": -10.48,
       "prev_close": 83.62,
       "quote_source": "alpaca",
@@ -1204,8 +1204,8 @@
     },
     "CVX": {
       "sleeve": "Growth",
-      "price": 220.03,
-      "pct_change": 0.93,
+      "price": 222.09,
+      "pct_change": 1.96,
       "prev_close": 217.825,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1228,8 +1228,8 @@
     },
     "CNX": {
       "sleeve": "Growth",
-      "price": 34.845,
-      "pct_change": -1.53,
+      "price": 34.805,
+      "pct_change": -1.57,
       "prev_close": 35.36,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1252,8 +1252,8 @@
     },
     "OKE": {
       "sleeve": "Growth",
-      "price": 92.19,
-      "pct_change": -1.28,
+      "price": 91.955,
+      "pct_change": -1.54,
       "prev_close": 93.39,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1276,8 +1276,8 @@
     },
     "PGY": {
       "sleeve": "Growth",
-      "price": 16.665,
-      "pct_change": -6.56,
+      "price": 16.805,
+      "pct_change": -5.78,
       "prev_close": 17.835,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1300,8 +1300,8 @@
     },
     "SYF": {
       "sleeve": "Growth",
-      "price": 71.585,
-      "pct_change": -2.72,
+      "price": 71.72,
+      "pct_change": -2.54,
       "prev_close": 73.59,
       "quote_source": "alpaca",
       "recommendation": {
@@ -1324,8 +1324,8 @@
     },
     "IBIT": {
       "sleeve": "Digital",
-      "price": 46.22,
-      "pct_change": -1.91,
+      "price": 46.21,
+      "pct_change": -1.87,
       "prev_close": 47.12,
       "quote_source": "alpaca",
       "recommendation": null,
@@ -1333,8 +1333,8 @@
     },
     "ETHA": {
       "sleeve": "Digital",
-      "price": 55.045,
-      "pct_change": -2.85,
+      "price": 54.9,
+      "pct_change": -3.14,
       "prev_close": 56.68,
       "quote_source": "alpaca",
       "recommendation": null,
@@ -1343,14 +1343,14 @@
   },
   "index_refs": {
     "SPY": {
-      "price": 770.73,
-      "pct_change": -0.94,
+      "price": 768.84,
+      "pct_change": -1.08,
       "prev_close": 778.03,
       "quote_source": "alpaca"
     },
     "QQQ": {
-      "price": 732.555,
-      "pct_change": -1.45,
+      "price": 727.79,
+      "pct_change": -1.97,
       "prev_close": 743.64,
       "quote_source": "alpaca"
     }
