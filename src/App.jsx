@@ -352,7 +352,12 @@ function captureRatios(portSeries, bmSeries) {
 // scores higher than one that beats it by more in a few lurches. Above 0.5 is
 // good and above 1.0 rare over a long window; on a short one, read it loosely.
 // Null for the benchmark against itself, where tracking error is zero.
-function informationRatio(portSeries, bmSeries, periodsPerYear = 252) {
+//
+// Tracking error, returned alongside as te, is that denominator on its own, in
+// percent: how far the sleeve's return wanders from the benchmark's in a typical
+// year, either way. Low means it behaves like the index; high means it is
+// genuinely different, which is what makes a positive IR worth having.
+function activeRisk(portSeries, bmSeries, periodsPerYear = 252) {
   const bmAt = new Map((bmSeries || []).map(p => [p.date, p.value]));
   const act = [];
   for (let i = 1; i < portSeries.length; i++) {
@@ -361,11 +366,12 @@ function informationRatio(portSeries, bmSeries, periodsPerYear = 252) {
     if (!(d0.value > 0 && d1.value > 0 && b0 > 0 && b1 > 0)) continue;
     act.push((d1.value / d0.value - 1) - (b1 / b0 - 1));
   }
-  if (act.length < 20) return null;
+  if (act.length < 20) return { ir: null, te: null };
   const mean = act.reduce((a, b) => a + b, 0) / act.length;
   const sd = Math.sqrt(act.reduce((a, r) => a + (r - mean) ** 2, 0) / (act.length - 1));
-  if (!(sd > 1e-9)) return null;
-  return (mean * periodsPerYear) / (sd * Math.sqrt(periodsPerYear));
+  if (!(sd > 1e-9)) return { ir: null, te: null };
+  const te = sd * Math.sqrt(periodsPerYear);
+  return { ir: (mean * periodsPerYear) / te, te: te * 100 };
 }
 
 // Worst peak-to-trough fall, in percent (negative). Included because it is the
@@ -447,7 +453,7 @@ function computeRisk(series, bmSeries, periodsPerYear = 252) {
   const cap = captureRatios(series, bmSeries || []);
   return {
     sortino: sortinoRatio(dailyReturns(series), periodsPerYear),
-    ir: informationRatio(series, bmSeries, periodsPerYear),
+    ...activeRisk(series, bmSeries, periodsPerYear),
     maxDD: maxDrawdown(series),
     ret: series[0].value > 0 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
     up: cap.up, down: cap.down,
@@ -2628,7 +2634,7 @@ Instructions:
         ret: series.length > 1 ? (series[series.length - 1].value / series[0].value - 1) * 100 : null,
         value: series[series.length - 1]?.value ?? null,
         sortino: sortinoRatio(dailyReturns(series)),
-        ir: informationRatio(series, bmSeries),
+        ...activeRisk(series, bmSeries),
         maxDD: maxDrawdown(series),
         up: cap.up, down: cap.down,
         isLive: live > 0,
@@ -6491,7 +6497,7 @@ Instructions:
                               {thin && <span style={{ color: C.dn }}> · thin sample</span>}
                             </div>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
-                              <thead><tr>{["", "Return", "Sortino", "IR", "Max DD", "Up", "Down"].map((h, i) => <th key={h || i} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
+                              <thead><tr>{["", "Return", "Sortino", "IR", "TE", "Max DD", "Up", "Down"].map((h, i) => <th key={h || i} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
                               <tbody>
                                 {per.rows.map(r => (
                                   <tr key={r.name} style={{ borderTop: `1px solid ${C.border}`, background: r.isSelf ? C.accentSoft : "transparent" }}>
@@ -6499,6 +6505,7 @@ Instructions:
                                     <td style={{ ...tTd(), fontWeight: 600, color: r.ret == null ? C.t4 : r.ret >= 0 ? C.up : C.dn }}>{fPctR(r.ret)}</td>
                                     <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
                                     <td style={{ ...tTd(), color: C.t1 }}>{r.ir == null ? "—" : r.ir.toFixed(2)}</td>
+                                    <td style={{ ...tTd(), color: C.t2 }}>{r.te == null ? "—" : `${r.te.toFixed(1)}%`}</td>
                                     <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
                                     <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCapR(r.up)}</td>
                                     <td style={{ ...tTd(), color: thin ? C.t4 : C.t1 }}>{fCapR(r.down)}</td>
@@ -6569,7 +6576,7 @@ Instructions:
                         {allocationStats[0].isLive && <span style={{ color: C.up, fontWeight: 700 }}>  LIVE</span>}
                       </div>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontVariantNumeric: "tabular-nums" }}>
-                        <thead><tr>{["Mix", "Return", "Sortino", "IR", "Max DD", "Up", "Down"].map((h, i) => <th key={h} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
+                        <thead><tr>{["Mix", "Return", "Sortino", "IR", "TE", "Max DD", "Up", "Down"].map((h, i) => <th key={h} style={tTh(i ? "right" : "left", false)}>{h}</th>)}</tr></thead>
                         <tbody>
                           {allocationStats.map(r => (
                             <tr key={r.key} style={{ borderTop: `1px solid ${C.border}` }}>
@@ -6577,6 +6584,7 @@ Instructions:
                               <td style={{ ...tTd(), fontWeight: 600, color: r.ret >= 0 ? C.up : C.dn }}>{fPctR(r.ret)}</td>
                               <td style={{ ...tTd(), color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
                                     <td style={{ ...tTd(), color: C.t1 }}>{r.ir == null ? "—" : r.ir.toFixed(2)}</td>
+                                    <td style={{ ...tTd(), color: C.t2 }}>{r.te == null ? "—" : `${r.te.toFixed(1)}%`}</td>
                               <td style={{ ...tTd(), color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
                               <td style={{ ...tTd(), color: C.t1 }}>{fCapR(r.up)}</td>
                               <td style={{ ...tTd(), color: C.t1 }}>{fCapR(r.down)}</td>
@@ -13505,7 +13513,7 @@ Instructions:
                     <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontVariantNumeric: "tabular-nums" }}>
                       <thead>
                         <tr>
-                          {["Allocation", "Value", "Return", "Sortino", isDesktop ? "Info ratio" : "IR", "Max DD", isDesktop ? "Up capture" : "Up", isDesktop ? "Down capture" : "Down"].map((h, i) => (
+                          {["Allocation", "Value", "Return", "Sortino", isDesktop ? "Info ratio" : "IR", isDesktop ? "Tracking error" : "TE", "Max DD", isDesktop ? "Up capture" : "Up", isDesktop ? "Down capture" : "Down"].map((h, i) => (
                             <th key={h} style={{ textAlign: i === 0 ? "left" : "right", padding: isDesktop ? "8px 10px" : "8px 7px", fontSize: 10, fontWeight: 700,
                               letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap",
                               ...(i === 0 ? { position: "sticky", left: 0, zIndex: 2, background: C.card } : {}) }}>{h}</th>
@@ -13528,6 +13536,7 @@ Instructions:
                               <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: r.ret >= 0 ? C.up : C.dn }}>{fmtPct(r.ret)}</td>
                               <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
                               <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.t1 }}>{r.ir == null ? "—" : r.ir.toFixed(2)}</td>
+                              <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, color: C.t2 }}>{r.te == null ? "—" : `${r.te.toFixed(1)}%`}</td>
                               <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
                               <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, color: thinCapture ? C.t4 : C.t1 }}>{fmtCap(r.up)}</td>
                               <td style={{ padding: "9px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 13, color: thinCapture ? C.t4 : C.t1 }}>{fmtCap(r.down)}</td>
@@ -14147,7 +14156,7 @@ Instructions:
                               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontVariantNumeric: "tabular-nums" }}>
                                 <thead>
                                   <tr>
-                                    {["", "Return", "Sortino", isDesktop ? "Info ratio" : "IR", "Max DD", isDesktop ? "Up capture" : "Up", isDesktop ? "Down capture" : "Down"].map((h, i) => (
+                                    {["", "Return", "Sortino", isDesktop ? "Info ratio" : "IR", isDesktop ? "Tracking error" : "TE", "Max DD", isDesktop ? "Up capture" : "Up", isDesktop ? "Down capture" : "Down"].map((h, i) => (
                                       <th key={h || i} style={{ textAlign: i === 0 ? "left" : "right", padding: isDesktop ? "6px 10px" : "6px 7px", fontSize: 9.5, fontWeight: 700,
                                         letterSpacing: 1, textTransform: "uppercase", color: C.t4, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap",
                                         ...(i === 0 ? { position: "sticky", left: 0, zIndex: 2, background: C.card } : {}) }}>{h}</th>
@@ -14168,6 +14177,7 @@ Instructions:
                                       </td>
                                       <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.t1 }}>{r.sortino == null ? "—" : r.sortino.toFixed(2)}</td>
                                       <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.t1 }}>{r.ir == null ? "—" : r.ir.toFixed(2)}</td>
+                                      <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, color: C.t2 }}>{r.te == null ? "—" : `${r.te.toFixed(1)}%`}</td>
                                       <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.dn }}>{r.maxDD == null ? "—" : `${r.maxDD.toFixed(1)}%`}</td>
                                       <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, color: thin ? C.t3 : C.t1 }}>{r.up?.value == null ? "—" : `${r.up.value.toFixed(0)}%`}</td>
                                       <td style={{ padding: "8px 10px", textAlign: "right", borderBottom: `1px solid ${C.border}`, fontSize: 12.5, color: thin ? C.t3 : C.t1 }}>{r.down?.value == null ? "—" : `${r.down.value.toFixed(0)}%`}</td>
