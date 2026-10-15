@@ -712,5 +712,12 @@
     "amber": 4,
     "green": 48,
     "headline": "No holding-level RED. CAT -3.3% (no catalyst found), HRMY down a second day (~-8% over two sessions), CRDO/LRCX still soft ahead of LRCX earnings ~Oct 21. RED is roster hygiene only: portfolios.json out of sync with live book, CWAN delisted."
+  },
+  {
+    "date": "2026-10-15",
+    "red": 2,
+    "amber": 5,
+    "green": 29,
+    "headline": "Hot CPI (3.7%) + AI-chip rout on 10/14: SOX -4.3%, S&P -1.1%, Nasdaq -1.9%; 23 holdings under watch, led by HUT -10.5%, CRDO -9.7%, MRVL -8.6%, HOOD -8.5%. Valuation-compression key_risks materializing on MRVL/AMD/CRDO; no company-specific catalyst or capex cut confirmed. Roster file still out of sync (CWAN)."
   }
 ]
