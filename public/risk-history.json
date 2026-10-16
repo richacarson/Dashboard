@@ -719,5 +719,12 @@
     "amber": 5,
     "green": 29,
     "headline": "Hot CPI (3.7%) + AI-chip rout on 10/14: SOX -4.3%, S&P -1.1%, Nasdaq -1.9%; 23 holdings under watch, led by HUT -10.5%, CRDO -9.7%, MRVL -8.6%, HOOD -8.5%. Valuation-compression key_risks materializing on MRVL/AMD/CRDO; no company-specific catalyst or capex cut confirmed. Roster file still out of sync (CWAN)."
+  },
+  {
+    "date": "2026-10-16",
+    "red": 1,
+    "amber": 3,
+    "green": 48,
+    "headline": "No holding-level RED. 10/14 chip rout follows through but milder (KEYS -4.2%, VRT -3.6%, LRCX -3.2%, NVDA -1.9%); FAST -3.1% post-earnings with gross-margin slip (tier-1 unconfirmed); fintech and software rebounded. RED is roster hygiene only: CWAN delisted, portfolios.json out of sync with the live book."
   }
 ]
