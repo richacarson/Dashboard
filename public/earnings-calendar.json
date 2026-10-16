@@ -1394,9 +1394,9 @@
     "date": "2026-10-16",
     "hour": "",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.49,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 5610000,
     "source": "finnhub"
   },
   {
@@ -1504,7 +1504,7 @@
     "date": "2026-10-16",
     "hour": "",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.63,
     "revenueEstimate": null,
     "revenueActual": null,
     "source": "finnhub"
