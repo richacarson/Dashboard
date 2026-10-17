@@ -726,5 +726,12 @@
     "amber": 3,
     "green": 48,
     "headline": "No holding-level RED. 10/14 chip rout follows through but milder (KEYS -4.2%, VRT -3.6%, LRCX -3.2%, NVDA -1.9%); FAST -3.1% post-earnings with gross-margin slip (tier-1 unconfirmed); fintech and software rebounded. RED is roster hygiene only: CWAN delisted, portfolios.json out of sync with the live book."
+  },
+  {
+    "date": "2026-10-17",
+    "red": 1,
+    "amber": 4,
+    "green": 47,
+    "headline": "Sharp 10/16 tech selloff (QQQ -2.5%, SPY -1.1%; 34/52 down): HUT -11.0%, FTNT -7.1%, AMD -5.9%, MRVL -5.6%, CRDO/HOOD/LRCX -4.9%. Valuation-compression key_risks visible; no tier-1 cause or capex cut confirmed, so AMBER. RED is roster hygiene only: portfolios.json still out of sync with live book (CWAN delisted)."
   }
 ]
