@@ -733,5 +733,12 @@
     "amber": 4,
     "green": 47,
     "headline": "Sharp 10/16 tech selloff (QQQ -2.5%, SPY -1.1%; 34/52 down): HUT -11.0%, FTNT -7.1%, AMD -5.9%, MRVL -5.6%, CRDO/HOOD/LRCX -4.9%. Valuation-compression key_risks visible; no tier-1 cause or capex cut confirmed, so AMBER. RED is roster hygiene only: portfolios.json still out of sync with live book (CWAN delisted)."
+  },
+  {
+    "date": "2026-10-18",
+    "red": 1,
+    "amber": 4,
+    "green": 48,
+    "headline": "No new session since Fri 10/16 (weekend carry-forward): tech selloff flags persist (QQQ -2.5%, HUT -11.0%, FTNT -7.1%, AMD -5.9%; causes unconfirmed by tier-1, so AMBER). Earnings week ahead: STLD 10/19, GPC/SYF 10/20, ABT/LRCX 10/21. RED is roster hygiene only: portfolios.json out of sync with live book (CWAN delisted)."
   }
 ]
