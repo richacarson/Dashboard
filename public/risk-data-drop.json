@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-17T11:48:28Z",
+  "generated_at": "2026-10-19T11:48:46Z",
   "universe_count": 52,
   "universe": [
     "AVGO",
@@ -618,7 +618,13 @@
           "strongSell": 0
         }
       },
-      "earnings": null
+      "earnings": {
+        "period": "2026-06-30",
+        "eps_actual": 3.81,
+        "eps_estimate": 3.7092,
+        "surprise": 0.1008,
+        "surprise_pct": 2.7176
+      }
     },
     "NTR": {
       "sleeve": "Dividend",
@@ -666,13 +672,7 @@
           "strongSell": 2
         }
       },
-      "earnings": {
-        "period": "2026-09-30",
-        "eps_actual": 0.35,
-        "eps_estimate": 0.3458,
-        "surprise": 0.0042,
-        "surprise_pct": 1.2146
-      }
+      "earnings": null
     },
     "DGX": {
       "sleeve": "Dividend",
@@ -1356,7 +1356,7 @@
     }
   },
   "recent_reporters": [
-    "FAST"
+    "STLD"
   ],
   "errors": [],
   "sources": {
