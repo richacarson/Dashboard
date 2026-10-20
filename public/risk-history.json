@@ -747,5 +747,12 @@
     "amber": 4,
     "green": 48,
     "headline": "Monday pre-market, fresh data drop (52/52 priced): latest session is still Fri 10/16, so the tech selloff flags persist (QQQ -2.5%, HUT -11.0%, FTNT -7.1%, AMD -5.9%; no tier-1 cause found, so AMBER). Earnings: STLD today after close, GPC/SYF 10/20, ABT/LRCX 10/21. RED is roster hygiene only: portfolios.json out of sync with live book (CWAN delisted). SPY support 645.80 is 15.4% away."
+  },
+  {
+    "date": "2026-10-20",
+    "red": 1,
+    "amber": 2,
+    "green": 49,
+    "headline": "No holding-level red flags; the one RED is still roster hygiene (CWAN delisted, portfolios.json out of sync with the 52-name live book). The 10/16 tech selloff reversed (QQQ +1.2%); AMBER: GPC narrowed FY EPS guidance in today's print, LRCX reports ~10/21. Fresh drop 52/52 priced, 0 errors."
   }
 ]
