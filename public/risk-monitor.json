@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-21T12:10:00Z",
-  "as_of_session": "2026-10-20",
+  "generated_at": "2026-10-22T12:20:00Z",
+  "as_of_session": "2026-10-21",
   "universe_count": 52,
   "universe_incomplete": false,
   "roster_integrity": {
@@ -33,7 +33,7 @@
     "red": 1,
     "amber": 3,
     "green": 48,
-    "headline": "Roster hygiene is still the only RED (CWAN delisted; portfolios.json out of sync with the 52-name live book). Holdings: GPC -5.1% after its Q3 print (AMBER, guidance cut reported, tier-1 confirmation pending); LRCX reports tonight after the close; STLD Q3 miss vs consensus, shares flat. SPY +0.32%, QQQ -0.15%; SPY 645.80 support 16.2% away. Fresh drop 52/52 priced, 0 errors."
+    "headline": "Roster hygiene is still the only RED (CWAN delisted; portfolios.json out of sync with the 52-name live book). AMBER: LRCX small FQ1 EPS miss (guide/WFE tone unconfirmed), GPC post-print weakness unconfirmed by tier-1, ORI Q3 EPS -8.3% surprise (cause unknown). Defense/health/staples prints (LMT, GD, DGX, SSNC) beat. Pre-market SPY +0.53%, QQQ +1.12%; SPY 645.80 support 16.5% away. Fresh drop 52/52 priced, 0 errors."
   },
   "flags": [
     {
@@ -43,7 +43,7 @@
       "severity": "red",
       "category": "data_integrity",
       "headline": "data/portfolios.json still out of sync with the live 52-name book; CWAN listed though delisted",
-      "detail": "CWAN take-private closed 2026-06-25 and the ticker no longer trades, but it remains in portfolios.json (growth). The file lists 50 names vs 52 in the live book: 12 listed names are absent from the drop universe (BKH, CHD, COIN, CWAN, DVN, EIX, MARA, NEE, PCAR, SUPV, TOL, VLO) and 14 live names are missing from the file (AVGO, CEG, ETHA, GNRC, IBIT, NOW, NWG, PGY, SOFI, SPGI, VRT, WM, YMM, YOU). Monitoring this run used the live 52-name universe from the data drop (52/52 priced, 0 errors).  Unchanged since prior run (CTRA already replaced by DVN; DVN also absent from the live book). Monitoring used the live 52-name universe from the data drop (52/52 priced, 0 errors, generated 2026-10-21T11:48Z).",
+      "detail": "CWAN take-private closed 2026-06-25 and the ticker no longer trades, but it remains in portfolios.json (growth). The file lists 50 names vs 52 in the live book: 12 listed names are absent from the drop universe (BKH, CHD, COIN, CWAN, DVN, EIX, MARA, NEE, PCAR, SUPV, TOL, VLO) and 14 live names are missing from the file (AVGO, CEG, ETHA, GNRC, IBIT, NOW, NWG, PGY, SOFI, SPGI, VRT, WM, YMM, YOU). Monitoring this run used the live 52-name universe from the data drop (52/52 priced, 0 errors). Unchanged since prior run (raised every run until fixed). Monitoring used the live 52-name universe from the data drop (52/52 priced, 0 errors, generated 2026-10-22T11:49Z).",
       "metric": {
         "price": null,
         "day_move_pct": null,
@@ -54,11 +54,36 @@
         {
           "source": "Risk data drop vs data/portfolios.json",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-21"
+          "as_of": "2026-10-22"
         }
       ],
       "first_seen": "2026-10-19",
       "status": "persisting",
+      "needs_review": false
+    },
+    {
+      "id": "ORI_earnings_2026-10-22",
+      "ticker": "ORI",
+      "sleeve": "Dividend",
+      "severity": "amber",
+      "category": "earnings",
+      "headline": "ORI Q3 EPS shows an -8.3% surprise in the drop; shares +1.13% pre-market",
+      "detail": "ORI was scheduled to report before the open today (company announcement). The surprise figure is from the data drop; the release text and a tier-1 write-up were not found by search this run, so the cause (underwriting vs. investment gains/losses) is unknown. Single soft data point with a muted pre-market reaction.",
+      "metric": {
+        "price": 40.13,
+        "day_move_pct": 1.13,
+        "level_ref": null
+      },
+      "thesis_link": null,
+      "evidence": [
+        {
+          "source": "Risk data drop",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-22"
+        }
+      ],
+      "first_seen": "2026-10-22",
+      "status": "new",
       "needs_review": false
     },
     {
@@ -67,11 +92,11 @@
       "sleeve": "Dividend",
       "severity": "amber",
       "category": "guidance",
-      "headline": "GPC -5.1% in the session after its Q3 print; FY adjusted EPS outlook reported narrowed to $7.50-$7.75 (from $7.50-$8.00)",
-      "detail": "Shares at $123.45 vs prior close $130.08 (-5.1%) in the first read after the 10/20 release; this follows -2.86% on 10/19. The guidance figures come from a search summary of the 8-K and remain unverified against the filing text; Q3 EPS surprise per the drop is -0.24%. A tier-1 article confirming the cause of the move was not found, so this stays AMBER (unconfirmed by tier-1 source). Separation (GPC/Motion) reportedly still on track for Q1 2027. Adjacent to listed key_risks, not a direct match.",
+      "headline": "GPC +1.07% pre-market to $124.77 after -5.1% on the Q3 print; narrowed FY adjusted EPS outlook still unverified against the filing",
+      "detail": "Last session's -5.1% followed the 10/20 release; the reported narrowing of FY adjusted EPS to $7.50-$7.75 came from a search summary and has not been checked against the 8-K text. Q3 EPS surprise in the drop is -0.24%. No tier-1 article confirming the cause was found again today, so this stays AMBER (unconfirmed by tier-1 source). Modest bounce pre-market. Adjacent to listed key_risks, not a direct match.",
       "metric": {
-        "price": 123.45,
-        "day_move_pct": -5.1,
+        "price": 124.765,
+        "day_move_pct": 1.07,
         "level_ref": null
       },
       "thesis_link": "Adjacent to GPC key_risk: 'Business separation execution risk' and 'Thin normalized profit margin of ~3.4%' - not a direct match.",
@@ -84,7 +109,7 @@
         {
           "source": "Risk data drop",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-21"
+          "as_of": "2026-10-22"
         }
       ],
       "first_seen": "2026-10-20",
@@ -97,19 +122,19 @@
       "sleeve": "Dividend",
       "severity": "amber",
       "category": "earnings",
-      "headline": "LRCX reports FQ1'27 today after the close (date confirmed); shares -3.2% to $263.38 into the print",
-      "detail": "Options-implied move about +/-8.8% per one source. Last quarter was a beat (EPS $1.82 vs $1.69). Standing thesis risks are WFE cyclicality and premium valuation; a guidance or WFE-spending revision is what to watch. Also the first major AI-infrastructure-adjacent read this week.",
+      "headline": "LRCX reported FQ1'27 last night: EPS $2.20 vs $2.22 est (-0.97% surprise); pre-market -0.89% at $261.04",
+      "detail": "Slight EPS miss per the data drop. Guidance, WFE commentary and the after-hours reaction were not retrievable from search this run (no FQ1'27 release found), so the read is incomplete: confirm the guide and WFE tone from the company release. Standing thesis risks are WFE cyclicality and premium valuation. Pre-market quote only; the regular session will tell more.",
       "metric": {
-        "price": 263.38,
-        "day_move_pct": -3.16,
+        "price": 261.035,
+        "day_move_pct": -0.89,
         "level_ref": null
       },
-      "thesis_link": "LRCX key_risks: WFE cyclicality; premium valuation sensitive to guidance misses.",
+      "thesis_link": "LRCX key_risks: WFE cyclicality; premium valuation sensitive to guidance misses (not yet confirmed to be materializing).",
       "evidence": [
         {
           "source": "Risk data drop",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-21"
+          "as_of": "2026-10-22"
         }
       ],
       "first_seen": "2026-10-19",
@@ -117,41 +142,16 @@
       "needs_review": false
     },
     {
-      "id": "STLD_earnings_2026-10-19",
-      "ticker": "STLD",
-      "sleeve": "Dividend",
-      "severity": "amber",
-      "category": "earnings",
-      "headline": "STLD Q3 EPS shows a -4.7% surprise in the drop vs consensus; shares roughly flat (-0.16%) on the day",
-      "detail": "Company guided Q3 EPS to $5.34-$5.38 on 9/17, below the $5.40-$5.47 consensus range, so the drop's negative surprise is consistent with that guide. Actual results text was not retrieved this run, and no tier-1 article on the reaction was found. Single soft data point; stock reaction muted.",
-      "metric": {
-        "price": 244.4,
-        "day_move_pct": -0.16,
-        "level_ref": null
-      },
-      "thesis_link": null,
-      "evidence": [
-        {
-          "source": "Steel Dynamics Q3 2026 guidance 8-K (SEC)",
-          "url": "https://www.sec.gov/Archives/edgar/data/0001022671/000110465926108777/tm2625690d1_ex99-1.htm",
-          "as_of": "2026-09-17"
-        }
-      ],
-      "first_seen": "2026-10-21",
-      "status": "new",
-      "needs_review": false
-    },
-    {
-      "id": "movers_2026-10-21",
-      "ticker": "CEG",
-      "sleeve": "Dividend",
+      "id": "movers_2026-10-22",
+      "ticker": "CRDO",
+      "sleeve": "Growth",
       "severity": "green",
       "category": "price_move",
-      "headline": "Other decliners modest: CEG -1.62%, ABT -1.27%, FCX -1.18%, VRT -1.15%; gainers PGY +5.05%, NXPI +3.15%, HRMY +3.12%, NOW +2.88%",
-      "detail": "SPY +0.32%, QQQ -0.15%. No move beyond normal range outside GPC and LRCX; the 10/16 tech drawdown flags stay resolved. No catalyst searched for the gainers.",
+      "headline": "Broad risk-on pre-market: CRDO +6.2%, CEG +4.6%, GNRC +4.5%, VRT +4.3%, PGY +4.0%, VST +3.9%; decliners YMM -3.9%, SYK -2.3%, ABT -2.1%",
+      "detail": "SPY +0.53%, QQQ +1.12% (pre-market quotes). AI-infrastructure names (CRDO, VRT, AMD, NVDA) lead. YMM -3.9%, SYK -2.25% and ABT -2.05% are the largest decliners; no catalyst searched, none a thesis flag. ABT's Q3 EPS surprise is -0.68%.",
       "metric": {
-        "price": 258.82,
-        "day_move_pct": -1.62,
+        "price": 182.17,
+        "day_move_pct": 6.22,
         "level_ref": null
       },
       "thesis_link": null,
@@ -159,35 +159,60 @@
         {
           "source": "Risk data drop",
           "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
-          "as_of": "2026-10-21"
+          "as_of": "2026-10-22"
         }
       ],
-      "first_seen": "2026-10-21",
+      "first_seen": "2026-10-22",
       "status": "new",
       "needs_review": false
     },
     {
-      "id": "earnings_reported_2026-10-20",
-      "ticker": "SYF",
-      "sleeve": "Growth",
+      "id": "STLD_earnings_2026-10-19",
+      "ticker": "STLD",
+      "sleeve": "Dividend",
       "severity": "green",
       "category": "earnings",
-      "headline": "Reported without drama: SYF EPS $2.68 vs ~$2.40 est (+9.5% surprise, shares -1.05%); ABT +1.4% surprise (-1.27%)",
-      "detail": "SYF per its 8-K; record third-quarter purchase volume per CEO. ABT's Q3 release was not found by search this run; the drop shows a +1.4% surprise and a -1.27% move. Neither is a thesis-relevant concern on available data.",
+      "headline": "STLD Q3 miss (-4.7%) now two sessions old; shares +1.43% pre-market, no follow-through",
+      "detail": "Miss was consistent with the 9/17 guide below consensus. Reaction has been muted; downgraded from AMBER.",
       "metric": {
-        "price": 73.4,
-        "day_move_pct": -1.05,
+        "price": 247.9,
+        "day_move_pct": 1.43,
         "level_ref": null
       },
       "thesis_link": null,
       "evidence": [
         {
-          "source": "Synchrony Form 8-K (SEC)",
-          "url": "https://www.sec.gov/Archives/edgar/data/0001601712/000160171226000040/earningsrelease3q26.htm",
-          "as_of": "2026-10-20"
+          "source": "Risk data drop",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-22"
         }
       ],
       "first_seen": "2026-10-21",
+      "status": "resolved",
+      "needs_review": false
+    },
+    {
+      "id": "earnings_reported_2026-10-22",
+      "ticker": "LMT",
+      "sleeve": "Dividend",
+      "severity": "green",
+      "category": "earnings",
+      "headline": "Reported with positive surprises: LMT +6.2%, GD +3.7%, DGX +3.7%, SSNC +2.8% (pre-market moves +0.6%, +0.2%, +0.8%, +0.2%)",
+      "detail": "Surprise figures from the data drop; releases were not individually read this run. LMT/GD backlog commentary not retrieved. No thesis-relevant concern on available data. ORI is flagged separately.",
+      "metric": {
+        "price": 551.97,
+        "day_move_pct": 0.59,
+        "level_ref": null
+      },
+      "thesis_link": null,
+      "evidence": [
+        {
+          "source": "Risk data drop",
+          "url": "https://github.com/richacarson/Dashboard/blob/main/public/risk-data-drop.json",
+          "as_of": "2026-10-22"
+        }
+      ],
+      "first_seen": "2026-10-22",
       "status": "new",
       "needs_review": false
     }
@@ -202,7 +227,7 @@
       "firb_cleared_date": "2026-06-19",
       "close_date": "2026-06-25",
       "transaction_value_bn": 8.4,
-      "last_checked": "2026-10-20",
+      "last_checked": "2026-10-22",
       "severity": "green",
       "note": "Closed 2026-06-25 and delisted; reconfirmed 2026-10-06. Roster hygiene is the open item."
     }
@@ -213,45 +238,15 @@
       "level": 645.8,
       "type": "support",
       "state": "active",
-      "distance_pct": 16.2,
+      "distance_pct": 16.5,
       "interaction": "none"
     }
   ],
   "calendar": [
     {
       "ticker": "LRCX",
-      "event": "FQ1'27 earnings (amc, confirmed)",
+      "event": "FQ1'27 reported 10/21 amc - confirm guide/WFE tone",
       "date": "2026-10-21",
-      "severity": "amber"
-    },
-    {
-      "ticker": "DGX",
-      "event": "Earnings (bmo)",
-      "date": "2026-10-22",
-      "severity": "amber"
-    },
-    {
-      "ticker": "GD",
-      "event": "Earnings (bmo)",
-      "date": "2026-10-22",
-      "severity": "amber"
-    },
-    {
-      "ticker": "LMT",
-      "event": "Earnings (bmo)",
-      "date": "2026-10-22",
-      "severity": "amber"
-    },
-    {
-      "ticker": "ORI",
-      "event": "Earnings",
-      "date": "2026-10-22",
-      "severity": "amber"
-    },
-    {
-      "ticker": "SSNC",
-      "event": "Earnings",
-      "date": "2026-10-22",
       "severity": "amber"
     }
   ]

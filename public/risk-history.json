@@ -761,5 +761,12 @@
     "amber": 3,
     "green": 48,
     "headline": "Roster hygiene is still the only RED (CWAN delisted; portfolios.json out of sync with the 52-name live book). Holdings: GPC -5.1% after its Q3 print (AMBER, guidance cut reported, tier-1 confirmation pending); LRCX reports tonight after the close; STLD Q3 miss vs consensus, shares flat. SPY +0.32%, QQQ -0.15%; SPY 645.80 support 16.2% away. Fresh drop 52/52 priced, 0 errors."
+  },
+  {
+    "date": "2026-10-22",
+    "red": 1,
+    "amber": 3,
+    "green": 48,
+    "headline": "Roster hygiene is still the only RED (CWAN delisted; portfolios.json out of sync with the 52-name live book). AMBER: LRCX small FQ1 EPS miss (guide/WFE tone unconfirmed), GPC post-print weakness unconfirmed by tier-1, ORI Q3 EPS -8.3% surprise (cause unknown). Defense/health/staples prints (LMT, GD, DGX, SSNC) beat. Pre-market SPY +0.53%, QQQ +1.12%; SPY 645.80 support 16.5% away. Fresh drop 52/52 priced, 0 errors."
   }
 ]
