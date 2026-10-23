@@ -20,7 +20,16 @@ export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '', {
     persistSession: true,      // sticky login on your phone
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    // Implicit, not PKCE. PKCE puts the one-time token in the URL query string,
+    // where Microsoft Safe Links (our users are on Outlook/Teams) fetches and
+    // consumes it before the person clicks — so password-reset and confirmation
+    // links fail and loop. PKCE also keeps its verifier in the browser that
+    // requested the link, which breaks when the link opens in a mail app's
+    // in-app browser. Implicit carries the session in the URL fragment, which
+    // never reaches a server, so the link survives the scanner and works
+    // wherever it is opened. Mirrors the data-analysis app, which switched for
+    // the same reason.
+    flowType: 'implicit',
   },
 })
 
