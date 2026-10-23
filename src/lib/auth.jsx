@@ -124,7 +124,14 @@ function Login() {
           if (rpcErr) throw rpcErr
           if (!ok) { setError("This email isn't approved. Ask Carson to add you."); setBusy(false); return }
         }
-        const { error: suErr } = await supabase.auth.signUp({ email: em, password })
+        const { error: suErr } = await supabase.auth.signUp({
+          email: em,
+          password,
+          // Return the confirmation link to THIS app. Without it, Supabase falls
+          // back to the project's single Site URL — which points at the
+          // data-analysis app — and new dashboard users land there instead.
+          options: { emailRedirectTo: window.location.origin + window.location.pathname },
+        })
         if (suErr) throw suErr
         setInfo('Account created. If confirmation is on, check your inbox, then sign in.')
         setMode('signin')
