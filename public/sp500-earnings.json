@@ -1,55 +1,55 @@
 {
- "generated": "2026-10-18T07:42:08.166719+00:00",
+ "generated": "2026-10-25T08:02:21.746154+00:00",
  "source": "FMP \u2014 median constituent TTM net income growth (aggregate published alongside)",
- "cohort": 473,
+ "cohort": 442,
  "constituents": 503,
- "chgQoQ": 3.49,
- "aggChgQoQ": 16.89,
+ "chgQoQ": 3.52,
+ "aggChgQoQ": 9.54,
  "series": [
   {
-   "asof": "2024-10-20",
-   "ttmNetIncome": 1688067690698,
+   "asof": "2024-10-27",
+   "ttmNetIncome": 1561878083698,
    "medianGrowthPct": null
   },
   {
-   "asof": "2025-01-19",
-   "ttmNetIncome": 1746421990264,
-   "medianGrowthPct": 1.71
+   "asof": "2025-01-26",
+   "ttmNetIncome": 1614007774264,
+   "medianGrowthPct": 0.0
   },
   {
-   "asof": "2025-04-20",
-   "ttmNetIncome": 1815118250499,
-   "medianGrowthPct": 2.26
+   "asof": "2025-04-27",
+   "ttmNetIncome": 1708977724499,
+   "medianGrowthPct": 2.05
   },
   {
-   "asof": "2025-07-20",
-   "ttmNetIncome": 1845658191799,
-   "medianGrowthPct": 0.82
+   "asof": "2025-07-27",
+   "ttmNetIncome": 1715686852800,
+   "medianGrowthPct": 0.7
   },
   {
-   "asof": "2025-10-19",
-   "ttmNetIncome": 1897386076799,
-   "medianGrowthPct": 1.89
+   "asof": "2025-10-26",
+   "ttmNetIncome": 1753598749799,
+   "medianGrowthPct": 1.57
   },
   {
-   "asof": "2026-01-18",
-   "ttmNetIncome": 1994976593800,
-   "medianGrowthPct": 2.64
+   "asof": "2026-01-25",
+   "ttmNetIncome": 1842859619800,
+   "medianGrowthPct": 1.39
   },
   {
-   "asof": "2026-04-19",
-   "ttmNetIncome": 2075230626999,
-   "medianGrowthPct": 1.78
+   "asof": "2026-04-26",
+   "ttmNetIncome": 1923545073999,
+   "medianGrowthPct": 2.29
   },
   {
-   "asof": "2026-07-19",
-   "ttmNetIncome": 2312061353648,
-   "medianGrowthPct": 3.38
+   "asof": "2026-07-26",
+   "ttmNetIncome": 2304471941648,
+   "medianGrowthPct": 3.18
   },
   {
-   "asof": "2026-10-18",
-   "ttmNetIncome": 2702638588648,
-   "medianGrowthPct": 3.49
+   "asof": "2026-10-25",
+   "ttmNetIncome": 2524278981649,
+   "medianGrowthPct": 3.52
   }
  ]
 }
