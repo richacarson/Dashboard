@@ -740,16 +740,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "GCT",
-    "date": "2026-11-02",
-    "hour": "",
-    "epsEstimate": 1.1346,
-    "epsActual": null,
-    "revenueEstimate": 393280536,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "GDC",
     "date": "2026-11-02",
     "hour": "",
@@ -1786,6 +1776,16 @@
     "epsEstimate": 2.6415,
     "epsActual": null,
     "revenueEstimate": 1968957000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "VOYG",
+    "date": "2026-11-02",
+    "hour": "",
+    "epsEstimate": -0.8639,
+    "epsActual": null,
+    "revenueEstimate": 83010660,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -8523,9 +8523,9 @@
     "symbol": "SVC",
     "date": "2026-11-04",
     "hour": "amc",
-    "epsEstimate": -0.3333,
+    "epsEstimate": -0.2954,
     "epsActual": null,
-    "revenueEstimate": 379328730,
+    "revenueEstimate": 395087083,
     "revenueActual": null,
     "source": "finnhub"
   },
