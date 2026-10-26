@@ -1028,5 +1028,15 @@
     "ticker": "FCX",
     "ex_date": "2026-10-15",
     "dps": 0.15
+  },
+  {
+    "ticker": "GEHC",
+    "ex_date": "2026-10-23",
+    "dps": 0.04
+  },
+  {
+    "ticker": "NVT",
+    "ex_date": "2026-10-23",
+    "dps": 0.21
   }
 ]
