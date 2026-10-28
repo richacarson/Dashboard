@@ -948,5 +948,15 @@
     "ticker": "CAT",
     "ex_date": "2026-10-26",
     "dps": 1.63
+  },
+  {
+    "ticker": "ASML",
+    "ex_date": "2026-10-27",
+    "dps": 2.108
+  },
+  {
+    "ticker": "GEV",
+    "ex_date": "2026-10-27",
+    "dps": 0.5
   }
 ]
