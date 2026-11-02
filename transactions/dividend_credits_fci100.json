@@ -1053,5 +1053,15 @@
     "ticker": "GEV",
     "ex_date": "2026-10-27",
     "dps": 0.5
+  },
+  {
+    "ticker": "COST",
+    "ex_date": "2026-10-30",
+    "dps": 1.47
+  },
+  {
+    "ticker": "TXN",
+    "ex_date": "2026-10-30",
+    "dps": 1.52
   }
 ]
