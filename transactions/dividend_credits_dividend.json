@@ -383,5 +383,10 @@
     "ticker": "FAST",
     "ex_date": "2026-10-28",
     "dps": 0.26
+  },
+  {
+    "ticker": "MATX",
+    "ex_date": "2026-11-05",
+    "dps": 0.38
   }
 ]
