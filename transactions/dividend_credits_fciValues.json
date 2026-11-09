@@ -973,5 +973,15 @@
     "ticker": "WCN",
     "ex_date": "2026-11-05",
     "dps": 0.385
+  },
+  {
+    "ticker": "HWM",
+    "ex_date": "2026-11-06",
+    "dps": 0.14
+  },
+  {
+    "ticker": "PNFP",
+    "ex_date": "2026-11-06",
+    "dps": 0.5
   }
 ]
