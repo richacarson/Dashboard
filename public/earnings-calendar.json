@@ -1694,9 +1694,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.679,
-    "epsActual": null,
+    "epsActual": 1.44,
     "revenueEstimate": 101423190,
-    "revenueActual": null,
+    "revenueActual": 113480000,
     "source": "finnhub"
   },
   {
@@ -1704,9 +1704,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.0434,
-    "epsActual": null,
+    "epsActual": 0.04,
     "revenueEstimate": 15542250,
-    "revenueActual": null,
+    "revenueActual": 15320000,
     "source": "finnhub"
   },
   {
@@ -1732,11 +1732,11 @@
   {
     "symbol": "AMNF",
     "date": "2026-11-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.153,
-    "epsActual": null,
+    "epsActual": 0.18,
     "revenueEstimate": 21590850,
-    "revenueActual": null,
+    "revenueActual": 21700000,
     "source": "finnhub"
   },
   {
@@ -1744,9 +1744,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0122,
-    "epsActual": null,
+    "epsActual": -0.02,
     "revenueEstimate": 36583044,
-    "revenueActual": null,
+    "revenueActual": 39150000,
     "source": "finnhub"
   },
   {
@@ -1764,9 +1764,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0731,
-    "epsActual": null,
+    "epsActual": -0.07,
     "revenueEstimate": 143164140,
-    "revenueActual": null,
+    "revenueActual": 159020000,
     "source": "finnhub"
   },
   {
@@ -1844,9 +1844,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.408,
-    "epsActual": null,
+    "epsActual": -0.25,
     "revenueEstimate": 2095080,
-    "revenueActual": null,
+    "revenueActual": 1960000,
     "source": "finnhub"
   },
   {
@@ -1864,9 +1864,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.7487,
-    "epsActual": null,
+    "epsActual": 0.81,
     "revenueEstimate": 273388152,
-    "revenueActual": null,
+    "revenueActual": 271680000,
     "source": "finnhub"
   },
   {
@@ -1912,11 +1912,11 @@
   {
     "symbol": "AVR",
     "date": "2026-11-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.3108,
-    "epsActual": null,
+    "epsActual": -0.28,
     "revenueEstimate": 2929000,
-    "revenueActual": null,
+    "revenueActual": 520000,
     "source": "finnhub"
   },
   {
@@ -1924,9 +1924,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.1104,
-    "epsActual": null,
+    "epsActual": 0.28,
     "revenueEstimate": 163335996,
-    "revenueActual": null,
+    "revenueActual": 167090000,
     "source": "finnhub"
   },
   {
@@ -1944,9 +1944,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0578,
-    "epsActual": null,
+    "epsActual": -0.06,
     "revenueEstimate": 9721956,
-    "revenueActual": null,
+    "revenueActual": 9580000,
     "source": "finnhub"
   },
   {
@@ -1954,9 +1954,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.1489,
-    "epsActual": null,
+    "epsActual": 0.21,
     "revenueEstimate": 439365826,
-    "revenueActual": null,
+    "revenueActual": 459780000,
     "source": "finnhub"
   },
   {
@@ -1974,9 +1974,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.4998,
-    "epsActual": null,
+    "epsActual": -0.54,
     "revenueEstimate": 8611860,
-    "revenueActual": null,
+    "revenueActual": 8279999,
     "source": "finnhub"
   },
   {
@@ -1984,9 +1984,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.187,
-    "epsActual": null,
+    "epsActual": 0.03,
     "revenueEstimate": 47182956,
-    "revenueActual": null,
+    "revenueActual": 45190000,
     "source": "finnhub"
   },
   {
@@ -2014,9 +2014,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.0612,
-    "epsActual": null,
+    "epsActual": 0.05,
     "revenueEstimate": 68772816,
-    "revenueActual": null,
+    "revenueActual": 66760000,
     "source": "finnhub"
   },
   {
@@ -2084,9 +2084,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.263,
-    "epsActual": null,
+    "epsActual": 0.18,
     "revenueEstimate": 745775723,
-    "revenueActual": null,
+    "revenueActual": 677300000,
     "source": "finnhub"
   },
   {
@@ -2134,9 +2134,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.442,
-    "epsActual": null,
+    "epsActual": -0.73,
     "revenueEstimate": 42548575,
-    "revenueActual": null,
+    "revenueActual": 0,
     "source": "finnhub"
   },
   {
@@ -2144,9 +2144,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.4086,
-    "epsActual": null,
+    "epsActual": -0.34,
     "revenueEstimate": 19537080,
-    "revenueActual": null,
+    "revenueActual": 21550000,
     "source": "finnhub"
   },
   {
@@ -2214,9 +2214,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.0544,
-    "epsActual": null,
+    "epsActual": 0,
     "revenueEstimate": 41182500,
-    "revenueActual": null,
+    "revenueActual": 39340000,
     "source": "finnhub"
   },
   {
@@ -2242,11 +2242,11 @@
   {
     "symbol": "CPIX",
     "date": "2026-11-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": -0.07,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 2160000,
     "source": "finnhub"
   },
   {
@@ -2274,9 +2274,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -1.1816,
-    "epsActual": null,
+    "epsActual": -1,
     "revenueEstimate": 3617100805,
-    "revenueActual": null,
+    "revenueActual": 3661000000,
     "source": "finnhub"
   },
   {
@@ -2314,9 +2314,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0408,
-    "epsActual": null,
+    "epsActual": 0.02,
     "revenueEstimate": 15504000,
-    "revenueActual": null,
+    "revenueActual": 16020000,
     "source": "finnhub"
   },
   {
@@ -2324,9 +2324,9 @@
     "date": "2026-11-10",
     "hour": "",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.05,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 65230000,
     "source": "finnhub"
   },
   {
@@ -2354,9 +2354,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.2601,
-    "epsActual": null,
+    "epsActual": 0.32,
     "revenueEstimate": 19227000,
-    "revenueActual": null,
+    "revenueActual": 18680000,
     "source": "finnhub"
   },
   {
@@ -2374,9 +2374,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.8989,
-    "epsActual": null,
+    "epsActual": 0.6,
     "revenueEstimate": 79285000,
-    "revenueActual": null,
+    "revenueActual": 74980000,
     "source": "finnhub"
   },
   {
@@ -2384,9 +2384,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.0007,
-    "epsActual": null,
+    "epsActual": -0.01,
     "revenueEstimate": 22952250,
-    "revenueActual": null,
+    "revenueActual": 22570000,
     "source": "finnhub"
   },
   {
@@ -2434,9 +2434,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0238,
-    "epsActual": null,
+    "epsActual": -0.09,
     "revenueEstimate": 46520568,
-    "revenueActual": null,
+    "revenueActual": 47350000,
     "source": "finnhub"
   },
   {
@@ -2454,9 +2454,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0859,
-    "epsActual": null,
+    "epsActual": 0.07,
     "revenueEstimate": 0,
-    "revenueActual": null,
+    "revenueActual": 30000,
     "source": "finnhub"
   },
   {
@@ -2514,9 +2514,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.1111,
-    "epsActual": null,
+    "epsActual": -0.11,
     "revenueEstimate": 7806290,
-    "revenueActual": null,
+    "revenueActual": 4160000,
     "source": "finnhub"
   },
   {
@@ -2524,9 +2524,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.4826,
-    "epsActual": null,
+    "epsActual": -0.45,
     "revenueEstimate": 103320757,
-    "revenueActual": null,
+    "revenueActual": 110680000,
     "source": "finnhub"
   },
   {
@@ -2534,9 +2534,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.4182,
-    "epsActual": null,
+    "epsActual": 1.1,
     "revenueEstimate": 107983320,
-    "revenueActual": null,
+    "revenueActual": 183490000,
     "source": "finnhub"
   },
   {
@@ -2574,9 +2574,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.051,
-    "epsActual": null,
+    "epsActual": -0.09,
     "revenueEstimate": 56712000,
-    "revenueActual": null,
+    "revenueActual": 48740000,
     "source": "finnhub"
   },
   {
@@ -2584,9 +2584,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.09,
     "revenueEstimate": 55501260,
-    "revenueActual": null,
+    "revenueActual": 82950000,
     "source": "finnhub"
   },
   {
@@ -2624,9 +2624,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.1563,
-    "epsActual": null,
+    "epsActual": 0.16,
     "revenueEstimate": 1202094305,
-    "revenueActual": null,
+    "revenueActual": 1178290000,
     "source": "finnhub"
   },
   {
@@ -2644,9 +2644,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.051,
-    "epsActual": null,
+    "epsActual": -0.01,
     "revenueEstimate": 38046000,
-    "revenueActual": null,
+    "revenueActual": 36820000,
     "source": "finnhub"
   },
   {
@@ -2654,9 +2654,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.0138,
-    "epsActual": null,
+    "epsActual": 0,
     "revenueEstimate": 46456920,
-    "revenueActual": null,
+    "revenueActual": 44780000,
     "source": "finnhub"
   },
   {
@@ -2754,19 +2754,19 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0775,
-    "epsActual": null,
+    "epsActual": -0.06,
     "revenueEstimate": 4113996,
-    "revenueActual": null,
+    "revenueActual": 7450000,
     "source": "finnhub"
   },
   {
     "symbol": "IBIO",
     "date": "2026-11-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0748,
-    "epsActual": null,
+    "epsActual": -0.05,
     "revenueEstimate": 20400,
-    "revenueActual": null,
+    "revenueActual": 1080000,
     "source": "finnhub"
   },
   {
@@ -2824,9 +2824,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0909,
-    "epsActual": null,
+    "epsActual": -0.05,
     "revenueEstimate": 6435720,
-    "revenueActual": null,
+    "revenueActual": 10950000,
     "source": "finnhub"
   },
   {
@@ -2924,9 +2924,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0051,
-    "epsActual": null,
+    "epsActual": -0.02,
     "revenueEstimate": 16278618,
-    "revenueActual": null,
+    "revenueActual": 18190000,
     "source": "finnhub"
   },
   {
@@ -2944,9 +2944,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0179,
-    "epsActual": null,
+    "epsActual": 0,
     "revenueEstimate": 11553540,
-    "revenueActual": null,
+    "revenueActual": 11570000,
     "source": "finnhub"
   },
   {
@@ -2964,9 +2964,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.8387,
-    "epsActual": null,
+    "epsActual": -0.78,
     "revenueEstimate": 23338416,
-    "revenueActual": null,
+    "revenueActual": 22840000,
     "source": "finnhub"
   },
   {
@@ -3074,9 +3074,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.1862,
-    "epsActual": null,
+    "epsActual": 0.26,
     "revenueEstimate": 275292104,
-    "revenueActual": null,
+    "revenueActual": 271970000,
     "source": "finnhub"
   },
   {
@@ -3104,9 +3104,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0101,
-    "epsActual": null,
+    "epsActual": 0.09,
     "revenueEstimate": 15087380,
-    "revenueActual": null,
+    "revenueActual": 15380000,
     "source": "finnhub"
   },
   {
@@ -3114,9 +3114,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0357,
-    "epsActual": null,
+    "epsActual": -0.02,
     "revenueEstimate": 22371150,
-    "revenueActual": null,
+    "revenueActual": 20760000,
     "source": "finnhub"
   },
   {
@@ -3194,9 +3194,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.0408,
-    "epsActual": null,
+    "epsActual": 0.04,
     "revenueEstimate": 16568880,
-    "revenueActual": null,
+    "revenueActual": 15970000,
     "source": "finnhub"
   },
   {
@@ -3214,9 +3214,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.1377,
-    "epsActual": null,
+    "epsActual": -0.14,
     "revenueEstimate": 5431500,
-    "revenueActual": null,
+    "revenueActual": 2860000,
     "source": "finnhub"
   },
   {
@@ -3244,9 +3244,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.3061,
-    "epsActual": null,
+    "epsActual": 0.52,
     "revenueEstimate": 249827304,
-    "revenueActual": null,
+    "revenueActual": 253150000,
     "source": "finnhub"
   },
   {
@@ -3304,9 +3304,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.612,
-    "epsActual": null,
+    "epsActual": 0.22,
     "revenueEstimate": 314772000,
-    "revenueActual": null,
+    "revenueActual": 105100000,
     "source": "finnhub"
   },
   {
@@ -3324,9 +3324,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.1167,
-    "epsActual": null,
+    "epsActual": -0.1,
     "revenueEstimate": 1064329,
-    "revenueActual": null,
+    "revenueActual": 1580000,
     "source": "finnhub"
   },
   {
@@ -3344,9 +3344,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.153,
-    "epsActual": null,
+    "epsActual": -0.17,
     "revenueEstimate": 13551720,
-    "revenueActual": null,
+    "revenueActual": 13070000,
     "source": "finnhub"
   },
   {
@@ -3374,9 +3374,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.1111,
-    "epsActual": null,
+    "epsActual": 0.14,
     "revenueEstimate": 44064886,
-    "revenueActual": null,
+    "revenueActual": 53900000,
     "source": "finnhub"
   },
   {
@@ -3532,11 +3532,11 @@
   {
     "symbol": "PRKR",
     "date": "2026-11-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.01,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 0,
     "source": "finnhub"
   },
   {
@@ -3574,9 +3574,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.4896,
-    "epsActual": null,
+    "epsActual": -0.29,
     "revenueEstimate": 10396860,
-    "revenueActual": null,
+    "revenueActual": 14760000,
     "source": "finnhub"
   },
   {
@@ -3584,9 +3584,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.1148,
-    "epsActual": null,
+    "epsActual": -0.14,
     "revenueEstimate": 10840663,
-    "revenueActual": null,
+    "revenueActual": 7340000,
     "source": "finnhub"
   },
   {
@@ -3614,9 +3614,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0068,
-    "epsActual": null,
+    "epsActual": -0.36,
     "revenueEstimate": 293746740,
-    "revenueActual": null,
+    "revenueActual": 244300000,
     "source": "finnhub"
   },
   {
@@ -3624,9 +3624,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.2652,
-    "epsActual": null,
+    "epsActual": -0.27,
     "revenueEstimate": 8464980,
-    "revenueActual": null,
+    "revenueActual": 6510000,
     "source": "finnhub"
   },
   {
@@ -3644,9 +3644,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.7004,
-    "epsActual": null,
+    "epsActual": 0.52,
     "revenueEstimate": 1044480000,
-    "revenueActual": null,
+    "revenueActual": 727000000,
     "source": "finnhub"
   },
   {
@@ -3654,9 +3654,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0523,
-    "epsActual": null,
+    "epsActual": -0.06,
     "revenueEstimate": 3589808,
-    "revenueActual": null,
+    "revenueActual": 1410000,
     "source": "finnhub"
   },
   {
@@ -3674,9 +3674,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.049,
-    "epsActual": null,
+    "epsActual": -0.03,
     "revenueEstimate": 12823848,
-    "revenueActual": null,
+    "revenueActual": 16040000,
     "source": "finnhub"
   },
   {
@@ -3734,9 +3734,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.255,
-    "epsActual": null,
+    "epsActual": -0.25,
     "revenueEstimate": 4233000,
-    "revenueActual": null,
+    "revenueActual": 3980000,
     "source": "finnhub"
   },
   {
@@ -3774,9 +3774,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.0991,
-    "epsActual": null,
+    "epsActual": -0.11,
     "revenueEstimate": 10747291,
-    "revenueActual": null,
+    "revenueActual": 10580000,
     "source": "finnhub"
   },
   {
@@ -3792,11 +3792,11 @@
   {
     "symbol": "SND",
     "date": "2026-11-10",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0.2,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 112300000,
     "source": "finnhub"
   },
   {
@@ -3814,9 +3814,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.1836,
-    "epsActual": null,
+    "epsActual": 0.04,
     "revenueEstimate": 347134560,
-    "revenueActual": null,
+    "revenueActual": 344440000,
     "source": "finnhub"
   },
   {
@@ -3824,9 +3824,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.3494,
-    "epsActual": null,
+    "epsActual": -0.33,
     "revenueEstimate": 20962020,
-    "revenueActual": null,
+    "revenueActual": 18000000,
     "source": "finnhub"
   },
   {
@@ -3874,9 +3874,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.1049,
-    "epsActual": null,
+    "epsActual": 0.05,
     "revenueEstimate": 524155560,
-    "revenueActual": null,
+    "revenueActual": 501950000,
     "source": "finnhub"
   },
   {
@@ -3884,9 +3884,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.052,
-    "epsActual": null,
+    "epsActual": -0.07,
     "revenueEstimate": 9792000,
-    "revenueActual": null,
+    "revenueActual": 8930000,
     "source": "finnhub"
   },
   {
@@ -3904,9 +3904,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.136,
-    "epsActual": null,
+    "epsActual": 0.06,
     "revenueEstimate": 74413222,
-    "revenueActual": null,
+    "revenueActual": 76370000,
     "source": "finnhub"
   },
   {
@@ -3914,9 +3914,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.2601,
-    "epsActual": null,
+    "epsActual": 0.24,
     "revenueEstimate": 9393180,
-    "revenueActual": null,
+    "revenueActual": 5750000,
     "source": "finnhub"
   },
   {
@@ -3924,9 +3924,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": 0,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 28100000,
     "source": "finnhub"
   },
   {
@@ -3984,9 +3984,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": -0.1636,
-    "epsActual": null,
+    "epsActual": -0.13,
     "revenueEstimate": 20395104,
-    "revenueActual": null,
+    "revenueActual": 18960000,
     "source": "finnhub"
   },
   {
@@ -4074,9 +4074,9 @@
     "date": "2026-11-10",
     "hour": "amc",
     "epsEstimate": 0.017,
-    "epsActual": null,
+    "epsActual": 0.01,
     "revenueEstimate": 24459263,
-    "revenueActual": null,
+    "revenueActual": 23760000,
     "source": "finnhub"
   },
   {
@@ -5882,7 +5882,7 @@
   {
     "symbol": "PXLW",
     "date": "2026-11-11",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.2652,
     "epsActual": null,
     "revenueEstimate": 306000,
@@ -6362,7 +6362,7 @@
   {
     "symbol": "UCL",
     "date": "2026-11-11",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0404,
     "epsActual": null,
     "revenueEstimate": 20200000,
@@ -6542,7 +6542,7 @@
   {
     "symbol": "ACCV",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -6612,7 +6612,7 @@
   {
     "symbol": "AERT",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -6752,7 +6752,7 @@
   {
     "symbol": "AMPG",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": 14280000,
@@ -6762,7 +6762,7 @@
   {
     "symbol": "AMS",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0101,
     "epsActual": null,
     "revenueEstimate": 8615300,
@@ -6832,7 +6832,7 @@
   {
     "symbol": "ASND",
     "date": "2026-11-12",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 0.957,
     "epsActual": null,
     "revenueEstimate": 372367830,
@@ -7082,7 +7082,7 @@
   {
     "symbol": "BLTE",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.7836,
     "epsActual": null,
     "revenueEstimate": 0,
@@ -7142,7 +7142,7 @@
   {
     "symbol": "BRUN",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.2244,
     "epsActual": null,
     "revenueEstimate": 54468000,
@@ -7332,7 +7332,7 @@
   {
     "symbol": "CDRO",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0714,
     "epsActual": null,
     "revenueEstimate": 63036000,
@@ -7482,7 +7482,7 @@
   {
     "symbol": "CMDB",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -7532,7 +7532,7 @@
   {
     "symbol": "CRMD",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1063,
     "epsActual": null,
     "revenueEstimate": 54291366,
@@ -7552,7 +7552,7 @@
   {
     "symbol": "CRWS",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -7622,7 +7622,7 @@
   {
     "symbol": "CVSI",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -7682,7 +7682,7 @@
   {
     "symbol": "DERM",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0102,
     "epsActual": null,
     "revenueEstimate": 20727165,
@@ -7702,7 +7702,7 @@
   {
     "symbol": "DFLI",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -3.1008,
     "epsActual": null,
     "revenueEstimate": 13810800,
@@ -7952,7 +7952,7 @@
   {
     "symbol": "EYPT",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.9492,
     "epsActual": null,
     "revenueEstimate": 227541,
@@ -8022,7 +8022,7 @@
   {
     "symbol": "FENC",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0947,
     "epsActual": null,
     "revenueEstimate": 19189943,
@@ -8272,7 +8272,7 @@
   {
     "symbol": "GUTS",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -1.53,
     "epsActual": null,
     "revenueEstimate": 0,
@@ -8382,7 +8382,7 @@
   {
     "symbol": "ICCC",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -8452,7 +8452,7 @@
   {
     "symbol": "INTR",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.9836,
     "epsActual": null,
     "revenueEstimate": 2759301450,
@@ -8462,7 +8462,7 @@
   {
     "symbol": "INTZ",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0714,
     "epsActual": null,
     "revenueEstimate": 2142000,
@@ -8482,7 +8482,7 @@
   {
     "symbol": "INVE",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.153,
     "epsActual": null,
     "revenueEstimate": 4539000,
@@ -8662,7 +8662,7 @@
   {
     "symbol": "LCTX",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0291,
     "epsActual": null,
     "revenueEstimate": 2031258,
@@ -8682,7 +8682,7 @@
   {
     "symbol": "LFMD",
     "date": "2026-11-12",
-    "hour": "bmo",
+    "hour": "amc",
     "epsEstimate": -0.1443,
     "epsActual": null,
     "revenueEstimate": 49862700,
@@ -8762,7 +8762,7 @@
   {
     "symbol": "LSF",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0202,
     "epsActual": null,
     "revenueEstimate": 45633486,
@@ -8982,7 +8982,7 @@
   {
     "symbol": "MPTI",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.5661,
     "epsActual": null,
     "revenueEstimate": 15606000,
@@ -9002,7 +9002,7 @@
   {
     "symbol": "MSAI",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -1.2546,
     "epsActual": null,
     "revenueEstimate": 2142000,
@@ -9162,7 +9162,7 @@
   {
     "symbol": "NMAX",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0102,
     "epsActual": null,
     "revenueEstimate": 50829996,
@@ -9232,7 +9232,7 @@
   {
     "symbol": "NTWK",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0102,
     "epsActual": null,
     "revenueEstimate": 16840200,
@@ -9242,7 +9242,7 @@
   {
     "symbol": "NU",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.2311,
     "epsActual": null,
     "revenueEstimate": 5855005305,
@@ -9282,7 +9282,7 @@
   {
     "symbol": "NUWE",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.3978,
     "epsActual": null,
     "revenueEstimate": 2555100,
@@ -9312,7 +9312,7 @@
   {
     "symbol": "NXPL",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.4692,
     "epsActual": null,
     "revenueEstimate": 13260000,
@@ -9522,7 +9522,7 @@
   {
     "symbol": "PMN",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -1.2911,
     "epsActual": null,
     "revenueEstimate": 0,
@@ -9682,7 +9682,7 @@
   {
     "symbol": "REKR",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0204,
     "epsActual": null,
     "revenueEstimate": 14384040,
@@ -9782,7 +9782,7 @@
   {
     "symbol": "ROC",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0707,
     "epsActual": null,
     "revenueEstimate": 5959000,
@@ -9822,7 +9822,7 @@
   {
     "symbol": "RSSS",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0272,
     "epsActual": null,
     "revenueEstimate": 12405240,
@@ -9972,7 +9972,7 @@
   {
     "symbol": "SLND",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.1275,
     "epsActual": null,
     "revenueEstimate": 165729090,
@@ -9982,7 +9982,7 @@
   {
     "symbol": "SLSN",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -10042,7 +10042,7 @@
   {
     "symbol": "SPCB",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0306,
     "epsActual": null,
     "revenueEstimate": 7089000,
@@ -10092,7 +10092,7 @@
   {
     "symbol": "SPRU",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -10302,7 +10302,7 @@
   {
     "symbol": "TLPH",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0612,
     "epsActual": null,
     "revenueEstimate": 0,
@@ -10362,7 +10362,7 @@
   {
     "symbol": "TSHA",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1326,
     "epsActual": null,
     "revenueEstimate": 630543,
@@ -10422,7 +10422,7 @@
   {
     "symbol": "UAMY",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0153,
     "epsActual": null,
     "revenueEstimate": 16710996,
@@ -10472,7 +10472,7 @@
   {
     "symbol": "VATE",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -10512,7 +10512,7 @@
   {
     "symbol": "VINP",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.122,
     "epsActual": null,
     "revenueEstimate": 295338960,
@@ -10572,7 +10572,7 @@
   {
     "symbol": "VRCA",
     "date": "2026-11-12",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.5073,
     "epsActual": null,
     "revenueEstimate": 6324438,
@@ -10882,7 +10882,7 @@
   {
     "symbol": "BFRI",
     "date": "2026-11-13",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.2244,
     "epsActual": null,
     "revenueEstimate": 8415000,
@@ -10952,7 +10952,7 @@
   {
     "symbol": "EIC",
     "date": "2026-11-13",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3165,
     "epsActual": null,
     "revenueEstimate": 11682670,
@@ -11072,7 +11072,7 @@
   {
     "symbol": "OPHC",
     "date": "2026-11-13",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.2754,
     "epsActual": null,
     "revenueEstimate": null,
@@ -11092,7 +11092,7 @@
   {
     "symbol": "OWLT",
     "date": "2026-11-13",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": -0.0442,
     "epsActual": null,
     "revenueEstimate": 30561240,
@@ -11252,7 +11252,7 @@
   {
     "symbol": "XXI",
     "date": "2026-11-13",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -11382,7 +11382,7 @@
   {
     "symbol": "API",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -11392,7 +11392,7 @@
   {
     "symbol": "ARMK",
     "date": "2026-11-16",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 0.7693,
     "epsActual": null,
     "revenueEstimate": 5408601091,
@@ -11412,7 +11412,7 @@
   {
     "symbol": "BAER",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.6052,
     "epsActual": null,
     "revenueEstimate": 83683860,
@@ -11442,7 +11442,7 @@
   {
     "symbol": "BRFH",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0561,
     "epsActual": null,
     "revenueEstimate": 6749340,
@@ -11452,7 +11452,7 @@
   {
     "symbol": "BXDC",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.1204,
     "epsActual": null,
     "revenueEstimate": 16196580,
@@ -11532,7 +11532,7 @@
   {
     "symbol": "CREX",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.2907,
     "epsActual": null,
     "revenueEstimate": 26588003,
@@ -11602,7 +11602,7 @@
   {
     "symbol": "DTST",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": 510000,
@@ -11632,7 +11632,7 @@
   {
     "symbol": "ELWT",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.3264,
     "epsActual": null,
     "revenueEstimate": 5136720,
@@ -11712,7 +11712,7 @@
   {
     "symbol": "FTLF",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.2448,
     "epsActual": null,
     "revenueEstimate": 27336510,
@@ -11732,7 +11732,7 @@
   {
     "symbol": "GAME",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1224,
     "epsActual": null,
     "revenueEstimate": 21828000,
@@ -11752,7 +11752,7 @@
   {
     "symbol": "GETY",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0408,
     "epsActual": null,
     "revenueEstimate": null,
@@ -11762,7 +11762,7 @@
   {
     "symbol": "GFUZ",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -11862,7 +11862,7 @@
   {
     "symbol": "IMDX",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.2407,
     "epsActual": null,
     "revenueEstimate": 249084,
@@ -11892,7 +11892,7 @@
   {
     "symbol": "INFQ",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0469,
     "epsActual": null,
     "revenueEstimate": 11294460,
@@ -11912,7 +11912,7 @@
   {
     "symbol": "IQ",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0532,
     "epsActual": null,
     "revenueEstimate": 6304694508,
@@ -12012,7 +12012,7 @@
   {
     "symbol": "NIU",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1475,
     "epsActual": null,
     "revenueEstimate": 1666500000,
@@ -12082,7 +12082,7 @@
   {
     "symbol": "PAGS",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 2.1434,
     "epsActual": null,
     "revenueEstimate": 5288877480,
@@ -12092,7 +12092,7 @@
   {
     "symbol": "PARA",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -12.444,
     "epsActual": null,
     "revenueEstimate": 4080000,
@@ -12122,7 +12122,7 @@
   {
     "symbol": "PERI",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0204,
     "epsActual": null,
     "revenueEstimate": 120611093,
@@ -12142,7 +12142,7 @@
   {
     "symbol": "POET",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0714,
     "epsActual": null,
     "revenueEstimate": 1632000,
@@ -12152,7 +12152,7 @@
   {
     "symbol": "POWL",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.5893,
     "epsActual": null,
     "revenueEstimate": 341813046,
@@ -12162,7 +12162,7 @@
   {
     "symbol": "POWW",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.0051,
     "epsActual": null,
     "revenueEstimate": 13158000,
@@ -12182,7 +12182,7 @@
   {
     "symbol": "RCAT",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.2074,
     "epsActual": null,
     "revenueEstimate": 40297435,
@@ -12202,7 +12202,7 @@
   {
     "symbol": "SHAZ",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.5202,
     "epsActual": null,
     "revenueEstimate": 27475332,
@@ -12282,7 +12282,7 @@
   {
     "symbol": "TMS",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0337,
     "epsActual": null,
     "revenueEstimate": 178692230,
@@ -12292,7 +12292,7 @@
   {
     "symbol": "TRAK",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0816,
     "epsActual": null,
     "revenueEstimate": 5100000,
@@ -12312,7 +12312,7 @@
   {
     "symbol": "TSN",
     "date": "2026-11-16",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 0.5885,
     "epsActual": null,
     "revenueEstimate": 14310637480,
@@ -12342,7 +12342,7 @@
   {
     "symbol": "VENU",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.2958,
     "epsActual": null,
     "revenueEstimate": 5610000,
@@ -12362,7 +12362,7 @@
   {
     "symbol": "VIDA",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -12412,7 +12412,7 @@
   {
     "symbol": "XBP",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.7676,
     "epsActual": null,
     "revenueEstimate": 204626000,
@@ -12452,7 +12452,7 @@
   {
     "symbol": "XPEV",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.9066,
     "epsActual": null,
     "revenueEstimate": 23869999710,
@@ -12462,7 +12462,7 @@
   {
     "symbol": "XXII",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -6.12,
     "epsActual": null,
     "revenueEstimate": 8588400,
@@ -12472,7 +12472,7 @@
   {
     "symbol": "YALA",
     "date": "2026-11-16",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -12582,7 +12582,7 @@
   {
     "symbol": "AUNA",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.8527,
     "epsActual": null,
     "revenueEstimate": 1244625930,
@@ -12772,7 +12772,7 @@
   {
     "symbol": "ELTK",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": null,
     "epsActual": null,
     "revenueEstimate": null,
@@ -12782,7 +12782,7 @@
   {
     "symbol": "ENR",
     "date": "2026-11-17",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 1.309,
     "epsActual": null,
     "revenueEstimate": 818140400,
@@ -12832,7 +12832,7 @@
   {
     "symbol": "FUBO",
     "date": "2026-11-17",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": -0.5176,
     "epsActual": null,
     "revenueEstimate": 1539205724,
@@ -12842,7 +12842,7 @@
   {
     "symbol": "GBDC",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.3337,
     "epsActual": null,
     "revenueEstimate": 191379713,
@@ -12862,7 +12862,7 @@
   {
     "symbol": "GLAD",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.4871,
     "epsActual": null,
     "revenueEstimate": 26277648,
@@ -12912,7 +12912,7 @@
   {
     "symbol": "HD",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 3.9538,
     "epsActual": null,
     "revenueEstimate": 44043919362,
@@ -12942,7 +12942,7 @@
   {
     "symbol": "HUYA",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.1785,
     "epsActual": null,
     "revenueEstimate": 1840256970,
@@ -12992,7 +12992,7 @@
   {
     "symbol": "IRIX",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.0408,
     "epsActual": null,
     "revenueEstimate": 12897900,
@@ -13012,7 +13012,7 @@
   {
     "symbol": "KLAR",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1345,
     "epsActual": null,
     "revenueEstimate": 983154366,
@@ -13062,7 +13062,7 @@
   {
     "symbol": "LUXE",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.1275,
     "epsActual": null,
     "revenueEstimate": 611031000,
@@ -13072,7 +13072,7 @@
   {
     "symbol": "LZB",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.4814,
     "epsActual": null,
     "revenueEstimate": 511716166,
@@ -13092,7 +13092,7 @@
   {
     "symbol": "MFP",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.5212,
     "epsActual": null,
     "revenueEstimate": 222139400,
@@ -13142,7 +13142,7 @@
   {
     "symbol": "OCSL",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3434,
     "epsActual": null,
     "revenueEstimate": 71171928,
@@ -13162,7 +13162,7 @@
   {
     "symbol": "OPRA",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.3386,
     "epsActual": null,
     "revenueEstimate": 186042726,
@@ -13352,7 +13352,7 @@
   {
     "symbol": "SMWB",
     "date": "2026-11-17",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": 0.0775,
     "epsActual": null,
     "revenueEstimate": 83336682,
@@ -13372,7 +13372,7 @@
   {
     "symbol": "SR",
     "date": "2026-11-17",
-    "hour": "amc",
+    "hour": "bmo",
     "epsEstimate": -1.0721,
     "epsActual": null,
     "revenueEstimate": 282901860,
@@ -13432,7 +13432,7 @@
   {
     "symbol": "VIK",
     "date": "2026-11-17",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 1.2842,
     "epsActual": null,
     "revenueEstimate": 2232479063,
