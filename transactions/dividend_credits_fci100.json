@@ -1093,5 +1093,20 @@
     "ticker": "ETN",
     "ex_date": "2026-11-10",
     "dps": 1.1
+  },
+  {
+    "ticker": "AAPL",
+    "ex_date": "2026-11-12",
+    "dps": 0.27
+  },
+  {
+    "ticker": "AWK",
+    "ex_date": "2026-11-12",
+    "dps": 0.895
+  },
+  {
+    "ticker": "RMD",
+    "ex_date": "2026-11-12",
+    "dps": 0.66
   }
 ]
