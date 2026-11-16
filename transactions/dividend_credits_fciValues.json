@@ -1003,5 +1003,25 @@
     "ticker": "RMD",
     "ex_date": "2026-11-12",
     "dps": 0.66
+  },
+  {
+    "ticker": "EMR",
+    "ex_date": "2026-11-13",
+    "dps": 0.595
+  },
+  {
+    "ticker": "GLW",
+    "ex_date": "2026-11-13",
+    "dps": 0.28
+  },
+  {
+    "ticker": "LLY",
+    "ex_date": "2026-11-13",
+    "dps": 1.73
+  },
+  {
+    "ticker": "SCHW",
+    "ex_date": "2026-11-13",
+    "dps": 0.32
   }
 ]
