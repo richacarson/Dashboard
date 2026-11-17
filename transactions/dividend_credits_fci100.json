@@ -1123,5 +1123,20 @@
     "ticker": "SCHW",
     "ex_date": "2026-11-13",
     "dps": 0.32
+  },
+  {
+    "ticker": "CEG",
+    "ex_date": "2026-11-16",
+    "dps": 0.427
+  },
+  {
+    "ticker": "HSY",
+    "ex_date": "2026-11-16",
+    "dps": 1.452
+  },
+  {
+    "ticker": "KLAC",
+    "ex_date": "2026-11-16",
+    "dps": 0.23
   }
 ]
