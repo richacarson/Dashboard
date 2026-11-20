@@ -1043,5 +1043,15 @@
     "ticker": "TRI",
     "ex_date": "2026-11-18",
     "dps": 0.655
+  },
+  {
+    "ticker": "AMAT",
+    "ex_date": "2026-11-19",
+    "dps": 0.53
+  },
+  {
+    "ticker": "BWXT",
+    "ex_date": "2026-11-19",
+    "dps": 0.27
   }
 ]

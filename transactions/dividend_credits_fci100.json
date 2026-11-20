@@ -1138,5 +1138,25 @@
     "ticker": "KLAC",
     "ex_date": "2026-11-16",
     "dps": 0.23
+  },
+  {
+    "ticker": "AMAT",
+    "ex_date": "2026-11-19",
+    "dps": 0.53
+  },
+  {
+    "ticker": "BWXT",
+    "ex_date": "2026-11-19",
+    "dps": 0.27
+  },
+  {
+    "ticker": "KKR",
+    "ex_date": "2026-11-19",
+    "dps": 0.195
+  },
+  {
+    "ticker": "MSFT",
+    "ex_date": "2026-11-19",
+    "dps": 0.98
   }
 ]
