@@ -1158,5 +1158,15 @@
     "ticker": "MSFT",
     "ex_date": "2026-11-19",
     "dps": 0.98
+  },
+  {
+    "ticker": "AMGN",
+    "ex_date": "2026-11-20",
+    "dps": 2.52
+  },
+  {
+    "ticker": "TEL",
+    "ex_date": "2026-11-20",
+    "dps": 0.78
   }
 ]
