@@ -1168,5 +1168,15 @@
     "ticker": "TEL",
     "ex_date": "2026-11-20",
     "dps": 0.78
+  },
+  {
+    "ticker": "SLDE",
+    "ex_date": "2026-11-23",
+    "dps": 1.57
+  },
+  {
+    "ticker": "TER",
+    "ex_date": "2026-11-23",
+    "dps": 0.13
   }
 ]
