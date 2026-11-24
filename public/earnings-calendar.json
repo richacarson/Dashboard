@@ -1312,11 +1312,11 @@
   {
     "symbol": "ZSQR",
     "date": "2026-11-23",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": null,
-    "epsActual": null,
+    "epsActual": -0.19,
     "revenueEstimate": null,
-    "revenueActual": null,
+    "revenueActual": 10000,
     "source": "finnhub"
   },
   {
