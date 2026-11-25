@@ -2660,6 +2660,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "AI",
+    "date": "2026-12-02",
+    "hour": "",
+    "epsEstimate": -0.2195,
+    "epsActual": null,
+    "revenueEstimate": 54668280,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "AOUT",
     "date": "2026-12-02",
     "hour": "",
@@ -2746,16 +2756,6 @@
     "epsEstimate": 1.1983,
     "epsActual": null,
     "revenueEstimate": 1262472768,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "GIII",
-    "date": "2026-12-02",
-    "hour": "",
-    "epsEstimate": 1.443,
-    "epsActual": null,
-    "revenueEstimate": 886314720,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -3110,6 +3110,16 @@
     "source": "finnhub"
   },
   {
+    "symbol": "IDT",
+    "date": "2026-12-03",
+    "hour": "",
+    "epsEstimate": 1.0403,
+    "epsActual": null,
+    "revenueEstimate": 334310000,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
     "symbol": "IOT",
     "date": "2026-12-03",
     "hour": "",
@@ -3136,16 +3146,6 @@
     "epsEstimate": 1.1929,
     "epsActual": null,
     "revenueEstimate": 35595480374,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "LAKE",
-    "date": "2026-12-03",
-    "hour": "",
-    "epsEstimate": -0.0153,
-    "epsActual": null,
-    "revenueEstimate": 51037485,
     "revenueActual": null,
     "source": "finnhub"
   },
