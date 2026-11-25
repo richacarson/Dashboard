@@ -2382,7 +2382,7 @@
   {
     "symbol": "ASAN",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.0824,
     "epsActual": null,
     "revenueEstimate": 222510623,
@@ -2402,7 +2402,7 @@
   {
     "symbol": "BOX",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.3929,
     "epsActual": null,
     "revenueEstimate": 332346186,
@@ -2422,7 +2422,7 @@
   {
     "symbol": "CPRT",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.4057,
     "epsActual": null,
     "revenueEstimate": 1215628860,
@@ -2432,7 +2432,7 @@
   {
     "symbol": "CRDO",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.3129,
     "epsActual": null,
     "revenueEstimate": 542504676,
@@ -2492,7 +2492,7 @@
   {
     "symbol": "GTLB",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.2036,
     "epsActual": null,
     "revenueEstimate": 287958199,
@@ -2502,7 +2502,7 @@
   {
     "symbol": "HQY",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.165,
     "epsActual": null,
     "revenueEstimate": 350815106,
@@ -2532,7 +2532,7 @@
   {
     "symbol": "MDB",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.6274,
     "epsActual": null,
     "revenueEstimate": 770202305,
@@ -2542,7 +2542,7 @@
   {
     "symbol": "MRVL",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 1.1133,
     "epsActual": null,
     "revenueEstimate": 3220033175,
@@ -2562,7 +2562,7 @@
   {
     "symbol": "NCNO",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.3383,
     "epsActual": null,
     "revenueEstimate": 165823654,
@@ -2572,7 +2572,7 @@
   {
     "symbol": "NIO",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": -0.0939,
     "epsActual": null,
     "revenueEstimate": 33668882128,
@@ -2592,7 +2592,7 @@
   {
     "symbol": "NTAP",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 2.6603,
     "epsActual": null,
     "revenueEstimate": 2147955004,
@@ -2602,7 +2602,7 @@
   {
     "symbol": "OKTA",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.9528,
     "epsActual": null,
     "revenueEstimate": 833961873,
@@ -2612,7 +2612,7 @@
   {
     "symbol": "OOMA",
     "date": "2026-12-01",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": 0.3503,
     "epsActual": null,
     "revenueEstimate": 85699522,
