@@ -1178,5 +1178,25 @@
     "ticker": "TER",
     "ex_date": "2026-11-23",
     "dps": 0.13
+  },
+  {
+    "ticker": "COST",
+    "ex_date": "2026-11-24",
+    "dps": 30.0
+  },
+  {
+    "ticker": "JNJ",
+    "ex_date": "2026-11-24",
+    "dps": 1.34
+  },
+  {
+    "ticker": "VRT",
+    "ex_date": "2026-11-24",
+    "dps": 0.1
+  },
+  {
+    "ticker": "XYL",
+    "ex_date": "2026-11-24",
+    "dps": 0.43
   }
 ]
