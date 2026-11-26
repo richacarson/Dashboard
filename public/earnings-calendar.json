@@ -2202,7 +2202,7 @@
   {
     "symbol": "CANG",
     "date": "2026-11-30",
-    "hour": "",
+    "hour": "amc",
     "epsEstimate": -0.1122,
     "epsActual": null,
     "revenueEstimate": 61049040,
