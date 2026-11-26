@@ -100,16 +100,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "ANTA",
-    "date": "2026-11-23",
-    "hour": "",
-    "epsEstimate": 0.1224,
-    "epsActual": null,
-    "revenueEstimate": 11679000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "AURI",
     "date": "2026-11-23",
     "hour": "",
@@ -423,9 +413,9 @@
     "symbol": "DAVA",
     "date": "2026-11-23",
     "hour": "bmo",
-    "epsEstimate": 0.1302,
+    "epsEstimate": 0.1062,
     "epsActual": null,
-    "revenueEstimate": 184713503,
+    "revenueEstimate": 185864910,
     "revenueActual": null,
     "source": "finnhub"
   },
@@ -2206,6 +2196,16 @@
     "epsEstimate": 0.0643,
     "epsActual": null,
     "revenueEstimate": 11598420,
+    "revenueActual": null,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "CANG",
+    "date": "2026-11-30",
+    "hour": "",
+    "epsEstimate": -0.1122,
+    "epsActual": null,
+    "revenueEstimate": 61049040,
     "revenueActual": null,
     "source": "finnhub"
   },
