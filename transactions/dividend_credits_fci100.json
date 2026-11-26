@@ -1198,5 +1198,15 @@
     "ticker": "XYL",
     "ex_date": "2026-11-24",
     "dps": 0.43
+  },
+  {
+    "ticker": "AAON",
+    "ex_date": "2026-11-25",
+    "dps": 0.1
+  },
+  {
+    "ticker": "SPGI",
+    "ex_date": "2026-11-25",
+    "dps": 0.97
   }
 ]
