@@ -1440,16 +1440,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CLGN",
-    "date": "2026-11-24",
-    "hour": "",
-    "epsEstimate": -0.1275,
-    "epsActual": null,
-    "revenueEstimate": 877200,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CLSK",
     "date": "2026-11-24",
     "hour": "amc",
@@ -1717,6 +1707,16 @@
     "epsActual": -0.14,
     "revenueEstimate": null,
     "revenueActual": 810000,
+    "source": "finnhub"
+  },
+  {
+    "symbol": "OPHI",
+    "date": "2026-11-24",
+    "hour": "",
+    "epsEstimate": -0.1275,
+    "epsActual": null,
+    "revenueEstimate": 877200,
+    "revenueActual": null,
     "source": "finnhub"
   },
   {
@@ -2410,16 +2410,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "CANG",
-    "date": "2026-12-01",
-    "hour": "",
-    "epsEstimate": -0.1122,
-    "epsActual": null,
-    "revenueEstimate": 61049040,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "CPRT",
     "date": "2026-12-01",
     "hour": "bmo",
@@ -3060,16 +3050,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "HOFT",
-    "date": "2026-12-03",
-    "hour": "",
-    "epsEstimate": 0.306,
-    "epsActual": null,
-    "revenueEstimate": 71181210,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "HOV",
     "date": "2026-12-03",
     "hour": "",
@@ -3240,16 +3220,6 @@
     "source": "finnhub"
   },
   {
-    "symbol": "PPIH",
-    "date": "2026-12-03",
-    "hour": "",
-    "epsEstimate": 0.5202,
-    "epsActual": null,
-    "revenueEstimate": 65280000,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
     "symbol": "REX",
     "date": "2026-12-03",
     "hour": "bmo",
@@ -3356,16 +3326,6 @@
     "epsEstimate": 0.0984,
     "epsActual": null,
     "revenueEstimate": 96004572,
-    "revenueActual": null,
-    "source": "finnhub"
-  },
-  {
-    "symbol": "YEXT",
-    "date": "2026-12-03",
-    "hour": "",
-    "epsEstimate": 0.1938,
-    "epsActual": null,
-    "revenueEstimate": 114036000,
     "revenueActual": null,
     "source": "finnhub"
   },
