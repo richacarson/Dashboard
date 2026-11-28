@@ -3392,7 +3392,7 @@
   {
     "symbol": "KNOP",
     "date": "2026-12-04",
-    "hour": "",
+    "hour": "bmo",
     "epsEstimate": 0.2193,
     "epsActual": null,
     "revenueEstimate": 94711590,
